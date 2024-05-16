@@ -123,10 +123,10 @@ jobs:
           dotnet-version: 8.0.201
           
       - name: NuGet Restore
-        run: dotnet restore .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyGames.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj
+        run: dotnet restore .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj
 
       - name: Build Packages
-        run: dotnet build .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyGames.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj -c Release ${{ needs.compute_parameters.outputs.build_args }}
+        run: dotnet build .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj -c Release ${{ needs.compute_parameters.outputs.build_args }}
         
       - name: Upload Application
         uses: actions/upload-artifact@v3
