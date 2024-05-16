@@ -100,52 +100,20 @@ jobs:
             echo "pre_release=${{ steps.get_tag.outputs.pre_release }}" >> $Env:GITHUB_OUTPUT
           }
   
-  # Build
+  # Build project
   build:
     needs: [ compute_parameters ]
-    runs-on: windows-latest
-    name: Build project
-    env:
-      DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: true
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup .NET 8.0.201
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 8.0.201
-          
-      - name: NuGet Restore
-        run: dotnet restore .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj
-
-      - name: Build Packages
-        run: dotnet build .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj -c Release ${{ needs.compute_parameters.outputs.build_args }}
-        
-      - name: Upload Application
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ needs.compute_parameters.outputs.application }}
-          path: |
+    uses: avantipoint/workflow-templates/.github/workflows/dotnet-build.yml@master # https://github.com/AvantiPoint/workflow-templates/blob/master/.github/workflows/dotnet-build.yml
+    with:
+      dotnet-test-logger: GitHubActions --no-build --no-restore
+      build-args: ${{ needs.compute_parameters.outputs.build_args }}
+      name: Build
+      solution-path: .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj
+      artifact-name: ${{ needs.compute_parameters.outputs.application }}
+      artifacts-path: |
               ./build/${{ needs.compute_parameters.outputs.application }}/Release/**
-              !./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/
               !./build/${{ needs.compute_parameters.outputs.application }}/Release/*.xml
               !./build/${{ needs.compute_parameters.outputs.application }}/Release/*.pdb
-
-      - name: Upload Plugins
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ needs.compute_parameters.outputs.application }} Plugins 
-          path: |
-              ./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/**
-              !./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/*.xml
-              !./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/*.pdb
               
   # Create release
   release:
