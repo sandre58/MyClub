@@ -102,6 +102,7 @@ jobs:
   
   # Build
   build:
+    needs: [ compute_parameters ]
     runs-on: windows-latest
     name: Build project
     env:
