@@ -84,6 +84,8 @@ jobs:
           name: Teamup Plugins 
           path: |
               ./build/Teamup/Release/Plugins/**
+              !./build/Teamup/Release/Plugins/*.xml
+              !./build/Teamup/Release/Plugins/*.pdb
 
       - name: Upload Scorer Plugins
         uses: actions/upload-artifact@v3
@@ -91,3 +93,5 @@ jobs:
           name: Scorer Plugins
           path: |
               ./build/Scorer/Release/Plugins/**
+              !./build/Scorer/Release/Plugins/*.xml
+              !./build/Scorer/Release/Plugins/*.pdb

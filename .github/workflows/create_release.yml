@@ -143,6 +143,8 @@ jobs:
           name: ${{ needs.compute_parameters.outputs.application }} Plugins 
           path: |
               ./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/**
+              !./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/*.xml
+              !./build/${{ needs.compute_parameters.outputs.application }}/Release/Plugins/*.pdb
               
   # Create release
   release:
@@ -182,15 +184,25 @@ jobs:
           commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
           file_pattern: CHANGELOG.md
 
-      # Download artifacts
+      # Download application artifacts
       - uses: actions/download-artifact@v3
         with:
           name: ${{ needs.compute_parameters.outputs.application }}
           path: ${{ needs.compute_parameters.outputs.application }}/
+
+      # Download application artifacts
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.compute_parameters.outputs.application }} Plugins
+          path: ${{ needs.compute_parameters.outputs.application }}_plugins/
           
       # Zip application files
       - name: Zip artifact for deployment
         run: zip ${{ needs.compute_parameters.outputs.application }}_${{needs.compute_parameters.outputs.full_version}}.zip ${{ needs.compute_parameters.outputs.application }}/** -r
+
+      # Zip application files
+      - name: Zip plugins artifact for deployment
+        run: zip ${{ needs.compute_parameters.outputs.application }}_plugins_${{needs.compute_parameters.outputs.full_version}}.zip ${{ needs.compute_parameters.outputs.application }}_plugins/** -r
 
       # Get release labels
       - name: Define release parameters
@@ -215,7 +227,7 @@ jobs:
       - uses: ncipollo/release-action@main # https://github.com/marketplace/actions/create-release
         name: Create Release
         with:
-          artifacts: ${{ needs.compute_parameters.outputs.application }}_${{needs.compute_parameters.outputs.full_version}}.zip
+          artifacts: ${{ needs.compute_parameters.outputs.application }}_${{needs.compute_parameters.outputs.full_version}}.zip,${{ needs.compute_parameters.outputs.application }}_plugins_${{needs.compute_parameters.outputs.full_version}}.zip
           artifactErrorsFailBuild: true
           draft: true
           generateReleaseNotes: false
