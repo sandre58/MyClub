@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  
+  <PropertyGroup>
+    <Product>Team'up</Product>
+    <Description>Experience comprehensive football team management with this application designed to streamline every aspect of team organization. From scheduling and tracking training sessions to managing player rosters and facilitating communication, this tool empowers coaches and managers to efficiently oversee their football teams. With features for monitoring player attendance, assigning drills, accessing player profiles, and communicating important updates, this application simplifies the complexities of team management, enabling coaches to focus on maximizing team performance and fostering a cohesive and successful football program.</Description>
+  </PropertyGroup>
+</Project>

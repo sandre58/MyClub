@@ -1,0 +1,37 @@
+﻿<my:SelectionCommandsBar x:Class="MyClub.Teamup.Wpf.Views.CompetitionPage.MacthesSelectionCommandsBar"
+                         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         xmlns:my="http://mynet.com/xaml/themes"
+                         xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionPage"
+                         xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionPage"
+                         d:DataContext="{d:DesignInstance Type=vm:MatchesViewModel}"
+                         SelectedCount="{Binding SelectedWrappers.Count}"
+                         UnselectAllCommand="{Binding ClearSelectionCommand}"
+                         mc:Ignorable="d">
+    <my:SelectionCommandsBar.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:SelectionCommandsBar.Resources>
+
+    <Button my:IconAssist.Icon="{my:ToolIcon Kind=Edit}"
+            Command="{Binding EditSelectedItemsCommand}"
+            Content="{my:Resource Edit}"
+            ToolTip="Ctrl+E" />
+    <Button my:IconAssist.Icon="{my:ToolIcon Kind=Eye}"
+            Command="{Binding OpenSelectedItemCommand}"
+            Content="{my:Resource SeeItem}"
+            ToolTip="{my:Resource InputEnter}" />
+    <my:DropDownButton my:IconAssist.Icon="{my:Icon Kind=TimerRefreshOutline}" PopupPadding="0" ToggleContent="{my:Resource Update}">
+        <my:Submenu>
+            <MenuItem Command="{Binding ResetMatchesCommand}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
+            <MenuItem Command="{Binding StartCommand}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
+            <MenuItem Command="{Binding SuspendCommand}" Header="{my:Resource Suspend}" Icon="{my:ToolIcon Kind=ProgressAlert}" />
+            <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+            <MenuItem Command="{Binding CancelCommand}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
+        </my:Submenu>
+    </my:DropDownButton>
+    <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding RemoveSelectedItemsCommand}" />
+
+</my:SelectionCommandsBar>

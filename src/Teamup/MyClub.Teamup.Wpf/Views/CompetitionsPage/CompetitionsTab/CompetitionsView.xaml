@@ -1,0 +1,108 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionsPage.CompetitionsTab.CompetitionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionsPage.CompetitionsTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionsPage.CompetitionsTab"
+             d:DataContext="{d:DesignInstance Type=vm:CompetitionsViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddLeagueCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Alt" Key="N" Command="{Binding Data.AddCupCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Windows" Key="N" Command="{Binding Data.AddFriendlyCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding Data.ImportCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="T" Command="{Binding Data.ExportCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding Data.DuplicateSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.LeftCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.ToolBar.Elevation.Primary}"
+                                       my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
+                                       Background="{DynamicResource MyNet.Brushes.Primary}"
+                                       BorderBrush="{DynamicResource MyNet.Brushes.Primary}"
+                                       Foreground="{DynamicResource MyNet.Brushes.Primary.Foreground}"
+                                       PopupPadding="0"
+                                       ToggleContent="{my:Resource New}">
+                        <my:Submenu>
+                            <MenuItem Command="{Binding AddLeagueCommand}"
+                                      Header="{my:Resource League}"
+                                      Icon="{my:Icon Kind=FormatListNumbered}"
+                                      InputGestureText="Ctrl+N" />
+                            <MenuItem Command="{Binding AddCupCommand}"
+                                      Header="{my:Resource Cup}"
+                                      Icon="{my:Icon Kind=TrophyVariant}"
+                                      InputGestureText="Ctrl+Alt+N" />
+                            <MenuItem Command="{Binding AddFriendlyCommand}"
+                                      Header="{my:Resource Friendlies}"
+                                      Icon="{my:Icon Kind=Deal}"
+                                      InputGestureText="Ctrl+Windows+N" />
+                        </my:Submenu>
+                    </my:DropDownButton>
+                    <Button my:IconAssist.Icon="{my:ToolIcon Kind=Download}"
+                            Command="{Binding ImportCommand}"
+                            Content="{my:Resource Import}"
+                            ToolTip="Ctrl+Maj+N" />
+                    <Button my:IconAssist.Icon="{my:ToolIcon Kind=Upload}"
+                            Command="{Binding ExportCommand}"
+                            Content="{my:Resource Export}"
+                            ToolTip="Ctrl+T" />
+                </ToolBar>
+            </my:CommandsBar.LeftCommands>
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count.Selectable}" />
+                    <my:FiltersDropDownView DataContext="{Binding Filters}">
+                        <my:FiltersDropDownView.PopupContentTemplate>
+                            <DataTemplate>
+                                <v:CompetitionsSpeedFiltersView />
+                            </DataTemplate>
+                        </my:FiltersDropDownView.PopupContentTemplate>
+                    </my:FiltersDropDownView>
+                    <my:ExtendedSortingView DataContext="{Binding Sorting}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+            <my:SelectionCommandsBar SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
+                <Button my:IconAssist.Icon="{my:ToolIcon Kind=Edit}"
+                        Command="{Binding EditSelectedItemCommand}"
+                        Content="{my:Resource Edit}"
+                        ToolTip="Ctrl+E" />
+                <Button my:IconAssist.Icon="{my:ToolIcon Kind=ContentDuplicate}"
+                        Command="{Binding DuplicateSelectedItemCommand}"
+                        Content="{my:Resource Duplicate}"
+                        ToolTip="Ctrl+D" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding RemoveSelectedItemsCommand}" />
+            </my:SelectionCommandsBar>
+
+        </my:CommandsBar>
+
+        <!--  Content  -->
+        <my:GhostControl GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" ShowGhost="{Binding WrappersSource.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+            <v:CompetitionsGridView />
+        </my:GhostControl>
+
+    </DockPanel>
+</UserControl>

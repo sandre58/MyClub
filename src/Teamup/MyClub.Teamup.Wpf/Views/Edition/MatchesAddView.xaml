@@ -1,0 +1,182 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.MatchesAddView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Width="800"
+                  Height="600"
+                  Padding="0"
+                  d:DataContext="{d:DesignInstance Type=vm:MatchesAddViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  HeaderHeight="70"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:ContentDialog.Header>
+        <!--  Competition  -->
+        <DockPanel VerticalAlignment="Center">
+            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}"
+                               Width="40"
+                               Height="40"
+                               Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                               DataContext="{Binding Competition}"
+                               DockPanel.Dock="Left" />
+            <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Text="{my:Translation Title, Casing=AllCaps}" />
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="{my:Translation SubTitle}" Visibility="{Binding SubTitle, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+            </my:SimpleStackPanel>
+        </DockPanel>
+    </my:ContentDialog.Header>
+
+    <DataGrid CanUserAddRows="False" ItemsSource="{Binding Matches}">
+        <i:Interaction.Behaviors>
+            <my:DataGridSelectionBehavior SelectedItems="{Binding SelectedRows}" />
+        </i:Interaction.Behaviors>
+        <DataGrid.ContextMenu>
+            <ContextMenu>
+                <MenuItem Icon="{my:Icon Kind=CalendarEdit}">
+                    <MenuItem.Header>
+                        <my:SimpleStackPanel Orientation="Horizontal">
+                            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{Binding EditDate, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding Data.EditDateSelectedItemsCommand, Source={StaticResource Proxy}}" Content="{my:Resource Apply}" />
+                        </my:SimpleStackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <MenuItem Icon="{my:Icon Kind=ClockEdit}">
+                    <MenuItem.Header>
+                        <my:SimpleStackPanel Orientation="Horizontal">
+                            <my:TimePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding EditTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding Data.EditTimeSelectedItemsCommand, Source={StaticResource Proxy}}" Content="{my:Resource Apply}" />
+                        </my:SimpleStackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <Separator />
+                <MenuItem Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}"
+                          Header="{my:Resource Remove}"
+                          Icon="{my:Icon Kind=Trash}"
+                          InputGestureText="{my:Resource InputDelete}" />
+            </ContextMenu>
+        </DataGrid.ContextMenu>
+        <DataGrid.Columns>
+
+            <!--  Date  -->
+            <my:DataGridDateColumn Width="100" Binding="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Date}">
+                <my:DataGridDateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{my:Translation Format=ShortDatePattern}" />
+                    </DataTemplate>
+                </my:DataGridDateColumn.CellTemplate>
+            </my:DataGridDateColumn>
+
+            <!--  Time  -->
+            <my:DataGridTimeColumn Width="100" Binding="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Time}">
+                <my:DataGridTimeColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{my:Translation Format=ShortTimePattern}" />
+                    </DataTemplate>
+                </my:DataGridTimeColumn.CellTemplate>
+            </my:DataGridTimeColumn>
+
+            <!--  Home Team  -->
+            <my:DataGridComboBoxColumn Width="*"
+                                       Header="{my:Resource HomeTeam}"
+                                       IsEditable="True"
+                                       ItemsSourceBinding="{Binding HomeTeamSelection.Items}"
+                                       SelectedValueBinding="{Binding HomeTeamSelection.SelectedItem, UpdateSourceTrigger=PropertyChanged}">
+                <my:DataGridComboBoxColumn.CellTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}" Width="25" Height="25" />
+                            <TextBlock Text="{Binding Name}" />
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </my:DataGridComboBoxColumn.CellTemplate>
+            </my:DataGridComboBoxColumn>
+
+            <!--  Away Team  -->
+            <my:DataGridComboBoxColumn Width="*"
+                                       Header="{my:Resource AwayTeam}"
+                                       IsEditable="True"
+                                       ItemsSourceBinding="{Binding AwayTeamSelection.Items}"
+                                       SelectedValueBinding="{Binding AwayTeamSelection.SelectedItem, UpdateSourceTrigger=PropertyChanged}">
+                <my:DataGridComboBoxColumn.CellTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}" Width="25" Height="25" />
+                            <TextBlock Text="{Binding Name}" />
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </my:DataGridComboBoxColumn.CellTemplate>
+            </my:DataGridComboBoxColumn>
+
+            <!--  Stadium  -->
+            <my:DataGridComboBoxColumn Width="250"
+                                       HasClearButton="True"
+                                       Header="{my:Resource Stadium}"
+                                       IsEditable="True"
+                                       ItemsSourceBinding="{Binding StadiumSelection.Items}"
+                                       SelectedValueBinding="{Binding StadiumSelection.SelectedItem, UpdateSourceTrigger=PropertyChanged}">
+                <my:DataGridComboBoxColumn.Icon>
+                    <Grid>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                Command="{Binding StadiumSelection.AddCommand}"
+                                Content="{my:Icon Kind=Plus}"
+                                ToolTip="{my:Resource CreateStadium}"
+                                Visibility="{Binding StadiumSelection.SelectedItem, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                Command="{Binding StadiumSelection.EditCommand}"
+                                CommandParameter="{Binding StadiumSelection.SelectedItem}"
+                                Content="{my:Icon Kind=Edit,
+                                                  Size=18}"
+                                ToolTip="{my:Resource EditStadium}"
+                                Visibility="{Binding StadiumSelection.SelectedItem, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                    </Grid>
+                </my:DataGridComboBoxColumn.Icon>
+            </my:DataGridComboBoxColumn>
+
+            <!--  Delete  -->
+            <my:DataGridTemplateColumn Width="60">
+                <my:DataGridTemplateColumn.Header>
+                    <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
+                            Margin="-8 -15"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}"
+                            Content="{my:MediumIcon Kind=Plus}"
+                            ToolTip="{my:ShortcutResource Add,
+                                                          ShortcutKey='Ctrl+N'}" />
+                </my:DataGridTemplateColumn.Header>
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Remove}"
+                                HorizontalAlignment="Center"
+                                Command="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                CommandParameter="{Binding}"
+                                Validation.ErrorTemplate="{x:Null}" />
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+        </DataGrid.Columns>
+    </DataGrid>
+
+</my:ContentDialog>

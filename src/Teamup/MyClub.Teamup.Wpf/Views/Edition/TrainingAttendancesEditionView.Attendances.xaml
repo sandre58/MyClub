@@ -1,0 +1,354 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.TrainingAttendancesEditionAttendancesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dd="urn:gong-wpf-dragdrop"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingAttendancesEditionViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.ListBox.Players" BasedOn="{StaticResource MyNet.Styles.ListBox.Cards}" TargetType="{x:Type ListBox}">
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="1" IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="dd:DragDrop.IsDragSource" Value="True" />
+            <Setter Property="dd:DragDrop.IsDropTarget" Value="True" />
+            <Setter Property="dd:DragDrop.UseDefaultDragAdorner" Value="True" />
+            <Setter Property="my:ItemsControlAssist.SortingProperty" Value="Player.Team.Order;Player.InverseName" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Control.Border}" />
+            <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Small}" />
+            <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+            <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding SelfPath=(my:ThemeAssist.IsCheckedBackground), Contrast=True}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBox}">
+                        <Grid>
+                            <Rectangle Fill="{TemplateBinding Background}"
+                                       RadiusX="{StaticResource MyNet.UniformCornerRadius.Container}"
+                                       RadiusY="{StaticResource MyNet.UniformCornerRadius.Container}"
+                                       SnapsToDevicePixels="true"
+                                       Stroke="{TemplateBinding BorderBrush}"
+                                       StrokeDashArray="4 2"
+                                       StrokeThickness="{Binding BorderThickness.Left, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <my:DynamicScrollViewer Padding="{TemplateBinding Padding}"
+                                                    VerticalAlignment="Top"
+                                                    my:ScrollViewerAssist.BubbleVerticalScroll="{TemplateBinding my:ScrollViewerAssist.BubbleVerticalScroll}"
+                                                    my:ScrollViewerAssist.IsAutoHideEnabled="{Binding Path=(my:ScrollViewerAssist.IsAutoHideEnabled), RelativeSource={RelativeSource Mode=TemplatedParent}}"
+                                                    CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
+                                                    Focusable="false"
+                                                    HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                                    VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            </my:DynamicScrollViewer>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
+                        <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Default}" />
+                        <Setter Property="Background" Value="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                        <Setter Property="Foreground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                        <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Small}" DataContext="{Binding Player}" />
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{Binding Player.FullName}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Player.Team.Name}" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Teamup.Styles.ListBox.Players.Attendances" BasedOn="{StaticResource Teamup.Styles.ListBox.Players}" TargetType="{x:Type ListBox}">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{my:BrushBinding Path=BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type GroupBox}}}" />
+        </Style>
+
+        <Style x:Key="Teamup.Styles.GroupBox.Attendances" BasedOn="{StaticResource MyNet.Styles.GroupBox.Outlined.Custom}" TargetType="{x:Type GroupBox}">
+            <Setter Property="my:HeaderAssist.Foreground" Value="{my:BrushBinding SelfPath=BorderBrush, Contrast=True}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="{StaticResource MyNet.Margins.Default}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type GroupBox}">
+                        <Grid>
+                            <Rectangle Fill="Transparent"
+                                       RadiusX="{StaticResource MyNet.UniformCornerRadius.Container}"
+                                       RadiusY="{StaticResource MyNet.UniformCornerRadius.Container}"
+                                       SnapsToDevicePixels="true"
+                                       Stroke="{TemplateBinding BorderBrush}"
+                                       StrokeDashArray="4 2"
+                                       StrokeThickness="{Binding BorderThickness.Left, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <my:Card Style="{Binding Path=(my:CardAssist.Style), RelativeSource={RelativeSource TemplatedParent}}"
+                                     Padding="0"
+                                     my:ElevationAssist.Elevation="{Binding Path=(my:ElevationAssist.Elevation), RelativeSource={RelativeSource TemplatedParent}}"
+                                     Background="{TemplateBinding Background}"
+                                     BorderThickness="0"
+                                     UniformCornerRadius="{Binding Path=(my:ThemeAssist.UniformCornerRadius), RelativeSource={RelativeSource TemplatedParent}}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition x:Name="Row1" Height="{Binding Path=(my:HeaderAssist.Size), RelativeSource={RelativeSource TemplatedParent}}" />
+                                        <RowDefinition x:Name="Row2" Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <!--  Header  -->
+                                    <Border x:Name="Header"
+                                            Padding="{Binding Path=(my:HeaderAssist.Padding), RelativeSource={RelativeSource TemplatedParent}}"
+                                            Background="{Binding Path=(my:HeaderAssist.Background), RelativeSource={RelativeSource TemplatedParent}}"
+                                            CornerRadius="{Binding Path=(my:ThemeAssist.UniformCornerRadius), RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:DoubleToCornerRadiusConverter.Top}}"
+                                            DockPanel.Dock="Top">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <ContentPresenter HorizontalAlignment="{Binding Path=(my:HeaderAssist.HorizontalAlignment), RelativeSource={RelativeSource TemplatedParent}}"
+                                                              VerticalAlignment="{Binding Path=(my:HeaderAssist.VerticalAlignment), RelativeSource={RelativeSource TemplatedParent}}"
+                                                              ContentSource="Header"
+                                                              ContentStringFormat="{TemplateBinding HeaderStringFormat}"
+                                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                                              ContentTemplateSelector="{TemplateBinding HeaderTemplateSelector}"
+                                                              Opacity="{Binding Path=(my:HeaderAssist.Opacity), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type GroupBox}}}"
+                                                              RecognizesAccessKey="True"
+                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                              TextElement.FontSize="{Binding Path=(my:HeaderAssist.FontSize), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type GroupBox}}}"
+                                                              TextElement.Foreground="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type GroupBox}}}" />
+
+                                            <ContentControl Grid.Column="1"
+                                                            Margin="{StaticResource MyNet.Margins.Large.Left}"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            Content="{Binding Path=(my:GroupBoxAssist.MoreContent), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type GroupBox}}}"
+                                                            DockPanel.Dock="Right"
+                                                            Foreground="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type GroupBox}}}"
+                                                            Visibility="{Binding Path=(my:GroupBoxAssist.MoreContent), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type GroupBox}}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                                <ContentControl.Resources>
+                                                    <Style BasedOn="{StaticResource MyNet.Styles.Button.Icon.Foreground}" TargetType="{x:Type Button}">
+                                                        <Setter Property="Height" Value="22" />
+                                                        <Setter Property="Width" Value="22" />
+                                                    </Style>
+                                                </ContentControl.Resources>
+                                            </ContentControl>
+                                        </Grid>
+                                    </Border>
+
+                                    <!--  Content  -->
+                                    <ContentPresenter x:Name="Content"
+                                                      Grid.Row="1"
+                                                      Margin="{TemplateBinding Padding}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                </Grid>
+                            </my:Card>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Action  -->
+        <my:SimpleStackPanel Grid.ColumnSpan="5" HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Text}"
+                    my:IconAssist.Icon="{my:ToolIcon Kind=Sync}"
+                    Command="{Binding SyncAbsencesCommand}"
+                    Content="{my:Resource SyncAbsences}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Text}"
+                    my:IconAssist.Icon="{my:ToolIcon Kind=Clear}"
+                    Command="{Binding ClearCommand}"
+                    Content="{my:Resource ClearAll}" />
+        </my:SimpleStackPanel>
+
+        <!--  Available Players  -->
+        <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players}"
+                 Grid.Row="2"
+                 ItemsSource="{Binding AvailablePlayers}"
+                 Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+
+        <my:PackIcon Grid.Row="2"
+                     Grid.Column="2"
+                     Width="24"
+                     Height="24"
+                     Kind="ChevronDoubleRight" />
+
+        <!--  Attendances  -->
+        <Grid Grid.Row="2" Grid.Column="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Unknown  -->
+            <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                      Grid.Column="0"
+                      my:IconAssist.Icon="{my:ToolIcon Kind=QuestionMark}"
+                      BorderBrush="{DynamicResource MyNet.Brushes.None}"
+                      Header="{my:Translation Unknown.Count,
+                                              Format=UnknownX}">
+                <my:GroupBoxAssist.MoreContent>
+                    <Button Command="{Binding ClearListCommand}"
+                            CommandParameter="{Binding Unknown}"
+                            Content="{my:ToolIcon Kind=Clear}"
+                            ToolTip="{my:Resource Clear}" />
+                </my:GroupBoxAssist.MoreContent>
+                <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding Unknown}" />
+            </GroupBox>
+
+            <!--  Presences  -->
+            <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                      Grid.Column="1"
+                      my:IconAssist.Icon="{my:ToolIcon Kind=CheckCircle}"
+                      BorderBrush="{DynamicResource MyNet.Brushes.Positive}"
+                      Header="{my:Translation Presences.Count,
+                                              Format=PresentsX}">
+                <my:GroupBoxAssist.MoreContent>
+                    <Button Command="{Binding ClearListCommand}"
+                            CommandParameter="{Binding Presences}"
+                            Content="{my:ToolIcon Kind=Clear}"
+                            ToolTip="{my:Resource Clear}" />
+                </my:GroupBoxAssist.MoreContent>
+                <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding Presences}" />
+            </GroupBox>
+
+            <UniformGrid Grid.Column="2" Columns="2">
+
+                <!--  Absences  -->
+                <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                          my:IconAssist.Icon="{my:ToolIcon Kind=Cancel}"
+                          BorderBrush="{DynamicResource MyNet.Brushes.Negative}"
+                          Header="{my:Translation Absents.Count,
+                                                  Format=AbsentsX}">
+                    <my:GroupBoxAssist.MoreContent>
+                        <Button Command="{Binding ClearListCommand}"
+                                CommandParameter="{Binding Absents}"
+                                Content="{my:ToolIcon Kind=Clear}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:GroupBoxAssist.MoreContent>
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding Absents}" />
+                </GroupBox>
+
+                <!--  Apologized  -->
+                <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                          my:IconAssist.Icon="{my:ToolIcon Kind=MessageProcessing}"
+                          BorderBrush="{DynamicResource MyNet.Brushes.Warning}"
+                          Header="{my:Translation Apologized.Count,
+                                                  Format=ApologizedX}">
+                    <my:GroupBoxAssist.MoreContent>
+                        <Button Command="{Binding ClearListCommand}"
+                                CommandParameter="{Binding Apologized}"
+                                Content="{my:ToolIcon Kind=Clear}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:GroupBoxAssist.MoreContent>
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding Apologized}" />
+                </GroupBox>
+
+                <!--  Injured  -->
+                <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                          my:IconAssist.Icon="{my:ToolIcon Kind=Ambulance}"
+                          BorderBrush="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                          Header="{my:Translation Injured.Count,
+                                                  Format=InjuredX}">
+                    <my:GroupBoxAssist.MoreContent>
+                        <Button Command="{Binding ClearListCommand}"
+                                CommandParameter="{Binding Injured}"
+                                Content="{my:ToolIcon Kind=Clear}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:GroupBoxAssist.MoreContent>
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding Injured}" />
+                </GroupBox>
+
+                <!--  InHolidays  -->
+                <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                          my:IconAssist.Icon="{my:ToolIcon Kind=Beach}"
+                          BorderBrush="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                          Header="{my:Translation InHolidays.Count,
+                                                  Format=InHolidaysX}">
+                    <my:GroupBoxAssist.MoreContent>
+                        <Button Command="{Binding ClearListCommand}"
+                                CommandParameter="{Binding InHolidays}"
+                                Content="{my:ToolIcon Kind=Clear}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:GroupBoxAssist.MoreContent>
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding InHolidays}" />
+                </GroupBox>
+
+                <!--  InSelection  -->
+                <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                          my:IconAssist.Icon="{my:ToolIcon Kind=Star}"
+                          BorderBrush="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                          Header="{my:Translation InSelection.Count,
+                                                  Format=InSelectionX}">
+                    <my:GroupBoxAssist.MoreContent>
+                        <Button Command="{Binding ClearListCommand}"
+                                CommandParameter="{Binding InSelection}"
+                                Content="{my:ToolIcon Kind=Clear}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:GroupBoxAssist.MoreContent>
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding InSelection}" />
+                </GroupBox>
+
+                <!--  Resting  -->
+                <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Attendances}"
+                          my:IconAssist.Icon="{my:ToolIcon Kind=Sleep}"
+                          BorderBrush="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                          Header="{my:Translation Resting.Count,
+                                                  Format=RestingX}">
+                    <my:GroupBoxAssist.MoreContent>
+                        <Button Command="{Binding ClearListCommand}"
+                                CommandParameter="{Binding Resting}"
+                                Content="{my:ToolIcon Kind=Clear}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:GroupBoxAssist.MoreContent>
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Players.Attendances}" ItemsSource="{Binding Resting}" />
+                </GroupBox>
+            </UniformGrid>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,40 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.HomePage.HomePageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vD="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage.DashboardContent"
+             xmlns:vO="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage.OpenAssistantContent"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.HomePage"
+             d:DataContext="{d:DesignInstance Type=vm:HomePageViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:ViewModelAssist.AutoWire="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+    <Grid>
+        <my:TransitioningContent>
+            <my:TransitioningContent.Style>
+                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                    <Setter Property="Content">
+                        <Setter.Value>
+                            <vO:OpenAssistantView DataContext="{Binding Data.OpenAssistant, Source={StaticResource Proxy}}" />
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasCurrentProject}" Value="True">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <vD:DashboardView DataContext="{Binding Data.Dashboard, Source={StaticResource Proxy}}" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </my:TransitioningContent.Style>
+        </my:TransitioningContent>
+    </Grid>
+</UserControl>

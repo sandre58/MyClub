@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="MyNet.Humanizer" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.Application\MyClub.Application.csproj" />
+    <ProjectReference Include="..\MyClub.DatabaseContext.Domain\MyClub.DatabaseContext.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

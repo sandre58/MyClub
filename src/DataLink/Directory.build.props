@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  
+  <PropertyGroup>
+    <Product>Data'Link Updater</Product>
+    <Description>This console application simplifies the process of populating database by fetching data from a Web API.</Description>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.KnockoutEditionTeamsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:KnockoutEditionViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Teams  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" my:HeaderAssist.HorizontalAlignment="Left">
+            <GroupBox.Header>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Select team  -->
+                    <v:EditableTeamSelectionView Width="250" my:CommandsAssist.EnterCommand="{Binding Data.AddSelectedTeamCommand, Source={StaticResource Proxy}}" DataContext="{Binding TeamSelectionViewModel}" />
+
+                    <!--  Add team  -->
+                    <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+                            Grid.Column="2"
+                            my:IconAssist.Icon="{my:Icon Kind=PlusCircle}"
+                            Command="{Binding AddSelectedTeamCommand}"
+                            Content="{my:Resource Add}"
+                            ToolTip="{my:Resource AddTeam}" />
+                </Grid>
+            </GroupBox.Header>
+            <ItemsControl VerticalAlignment="Top" ItemsSource="{Binding Teams}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2" IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <my:Card x:Name="card"
+                                 Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                 Margin="{StaticResource MyNet.Margins.Small}"
+                                 Padding="{StaticResource MyNet.Margins.Default}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Rectangle Width="5"
+                                           Margin="0 2"
+                                           VerticalAlignment="Stretch"
+                                           Fill="{Binding HomeColor, Converter={x:Static my:BrushConverter.Default}}"
+                                           RadiusX="2"
+                                           RadiusY="2" />
+
+                                <!--  Logo  -->
+                                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                                   Grid.Column="2"
+                                                   Width="20"
+                                                   Height="20"
+                                                   Image="{Binding Logo, Converter={x:Static my:BytesToImageConverter.Default}}" />
+
+                                <DockPanel Grid.Column="4">
+                                    <!--  Name  -->
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Name}" />
+
+                                    <!--  MyTeam  -->
+                                    <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Left}"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="{DynamicResource MyNet.Brushes.Primary}"
+                                                 Kind="CheckCircle"
+                                                 Visibility="{Binding IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                </DockPanel>
+
+                                <!--  Delete team  -->
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Remove}"
+                                        Grid.Column="6"
+                                        Command="{Binding Data.RemoveTeamCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </my:Card>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMyTeam}" Value="True">
+                                <Setter TargetName="card" Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </GroupBox>
+
+        <!--  Warning  -->
+        <Label Style="{StaticResource MyNet.Styles.Label.Warning.Dialog}"
+               Grid.Row="1"
+               Margin="{StaticResource MyNet.Margins.Medium.Top}"
+               my:ThemeAssist.UniformCornerRadius="{StaticResource MyNet.UniformCornerRadius.Container}"
+               Content="{my:Resource RemovingTeamWarning}"
+               DockPanel.Dock="Top"
+               Visibility="{Binding ShowRemovingTeamWarning, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Domain.Randomize\MyClub.Teamup.Domain.Randomize.csproj" />
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Infrastructure.Packaging\MyClub.Teamup.Infrastructure.Packaging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="xunit" Version="2.8.0" />
+    <PackageReference Update="xunit.runner.visualstudio" Version="2.8.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

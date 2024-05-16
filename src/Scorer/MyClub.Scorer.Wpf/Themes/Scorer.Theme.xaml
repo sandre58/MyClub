@@ -1,0 +1,104 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:dial="clr-namespace:MyNet.UI.Dialogs;assembly=MyNet.UI"
+                    xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+                    xmlns:filters="clr-namespace:MyClub.Scorer.Wpf.Filters"
+                    xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.MessageBox">
+
+    <ResourceDictionary.MergedDictionaries>
+        <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--  MessageBox  -->
+    <DataTemplate DataType="{x:Type vm:RemoveTeamsMessageBoxViewModel}">
+        <Grid Width="400" MinHeight="80">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <my:PackIcon x:Name="Icon"
+                         Grid.RowSpan="3"
+                         Grid.Column="0"
+                         Width="60"
+                         Height="60"
+                         VerticalAlignment="Center" />
+
+            <DockPanel Grid.Column="1" Margin="{StaticResource MyNet.Margins.Medium.Left}">
+                <TextBlock VerticalAlignment="Center"
+                           DockPanel.Dock="Top"
+                           Text="{Binding Message, Mode=OneTime}"
+                           TextWrapping="Wrap" />
+                <CheckBox Grid.Row="2"
+                          Grid.Column="1"
+                          Content="{my:Resource RemoveStadiumOfTeam}"
+                          IsChecked="{Binding RemoveStadium}" />
+            </DockPanel>
+        </Grid>
+
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Success}">
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.CheckCircle}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Error}">
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.RemoveCircle}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Warning}">
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.WarningCircle}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Information}">
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.InformationCircle}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Information}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Question}">
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.QuestionMarkCircle}" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Information}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Custom}">
+                <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!--  Filters  -->
+    <DataTemplate DataType="{x:Type filters:MatchTeamFilterViewModel}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
+                      Grid.Column="0"
+                      Width="Auto"
+                      HorizontalAlignment="Stretch"
+                      my:HintAssist.Hint="{my:Resource Team}"
+                      my:HintAssist.IsFloating="True"
+                      my:ItemsControlAssist.SortingProperty="Name"
+                      my:TextFieldAssist.HasClearButton="True"
+                      IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                      IsReadOnly="{Binding IsReadOnly}"
+                      ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                      ItemsSource="{Binding AvailableValues}"
+                      SelectedValue="{Binding Value, Mode=TwoWay}" />
+
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     Grid.Column="2"
+                     VerticalAlignment="Stretch"
+                     IsEnabled="{Binding Value, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}"
+                     SelectedValue="{Binding VenueFilter.Value}"
+                     SelectedValuePath="DataContext"
+                     SelectionMode="Single">
+                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:Venue.Home}" ToolTip="{my:Resource LocationHome}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=NullOff}" DataContext="{x:Null}" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:Venue.Away}" ToolTip="{my:Resource LocationAway}" />
+            </ListBox>
+        </Grid>
+    </DataTemplate>
+
+</ResourceDictionary>

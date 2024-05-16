@@ -1,0 +1,166 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.RosterPage.PlayersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:collections="clr-namespace:MyClub.Teamup.Wpf.Collections"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.RosterPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.RosterPage"
+             d:DataContext="{d:DesignInstance Type=vm:PlayersViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding Data.ImportCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="T" Command="{Binding Data.ExportCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="M" Command="{Binding Data.OpenMailClientSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="M" Command="{Binding Data.OpenCommunicationCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.LeftCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                            my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
+                            Command="{Binding AddCommand}"
+                            Content="{my:Resource New}"
+                            ToolTip="Ctrl+N" />
+                    <Button my:IconAssist.Icon="{my:ToolIcon Kind=Download}"
+                            Command="{Binding ImportCommand}"
+                            Content="{my:Resource Import}"
+                            ToolTip="Ctrl+Maj+N" />
+                    <Button my:IconAssist.Icon="{my:ToolIcon Kind=Upload}"
+                            Command="{Binding ExportCommand}"
+                            Content="{my:Resource Export}"
+                            ToolTip="Ctrl+T" />
+                </ToolBar>
+            </my:CommandsBar.LeftCommands>
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count.Selectable}" />
+                    <my:ExtendedFiltersView DataContext="{Binding Filters}" DropDownWidth="570" DropDownHeight="450">
+                        <my:ExtendedFiltersView.SpeedFilters>
+                            <v:PlayersSpeedFiltersView />
+                        </my:ExtendedFiltersView.SpeedFilters>
+                    </my:ExtendedFiltersView>
+                    <my:ExtendedSortingView DataContext="{Binding Sorting}" />
+                    <my:ExtendedGroupingView DataContext="{Binding Grouping}" />
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" Margin="{StaticResource MyNet.Margins.Default.Vertical}" />
+                    <my:DisplayView DataContext="{Binding Display}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+            <my:SelectionCommandsBar SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
+                <Button my:IconAssist.Icon="{my:Icon Kind=Edit}"
+                        Command="{Binding EditSelectedItemsCommand}"
+                        Content="{my:Resource Edit}"
+                        ToolTip="Ctrl+E" />
+                <my:DropDownButton my:IconAssist.Icon="{my:Icon Kind=PersonArrowLeft}"
+                                   IsEnabled="{Binding Data.CanMoveSelectedItems, Source={StaticResource Proxy}}"
+                                   PopupPadding="0"
+                                   ToggleContent="{my:Resource Move}">
+                    <my:Submenu my:ItemsControlAssist.SortingProperty="Order" ItemsSource="{Binding Source={x:Static collections:TeamsCollection.MyTeams}}">
+                        <my:Submenu.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="MenuItem">
+                                <Setter Property="Command" Value="{Binding Data.MoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
+                                <Setter Property="CommandParameter" Value="{Binding}" />
+                                <Setter Property="Visibility" Value="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            </Style>
+                        </my:Submenu.ItemContainerStyle>
+                        <my:Submenu.ItemTemplate>
+                            <DataTemplate>
+                                <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                    <TextBlock Text="{my:Resource MovingPlayerInTeam}" />
+                                    <TextBlock Text="{Binding Name}" />
+                                </my:SimpleStackPanel>
+                            </DataTemplate>
+                        </my:Submenu.ItemTemplate>
+                    </my:Submenu>
+                </my:DropDownButton>
+                <Button my:IconAssist.Icon="{my:Icon Kind=AccountArrowRight}"
+                        Command="{Binding MoveSelectedItemsCommand}"
+                        CommandParameter="{x:Null}"
+                        Content="{my:Resource GoOut}" />
+                <my:DropDownButton my:IconAssist.Icon="{my:Icon Kind=AccountOff}" PopupPadding="0" ToggleContent="{my:Resource AddAbsence}">
+                    <my:Submenu>
+                        <MenuItem Command="{Binding AddAbsenceToSelectedItemsCommand}"
+                                  CommandParameter="{x:Static enums2:AbsenceType.InHolidays}"
+                                  Header="{my:Resource InHolidays}"
+                                  Icon="{my:ToolIcon Kind=Beach}" />
+                        <MenuItem Command="{Binding AddAbsenceToSelectedItemsCommand}"
+                                  CommandParameter="{x:Static enums2:AbsenceType.InHolidays}"
+                                  Header="{my:Resource InSelection}"
+                                  Icon="{my:ToolIcon Kind=Star}" />
+                        <MenuItem Command="{Binding AddAbsenceToSelectedItemsCommand}"
+                                  CommandParameter="{x:Static enums2:AbsenceType.Other}"
+                                  Header="{my:Resource Other}"
+                                  Icon="{my:ToolIcon Kind=QuestionMark}" />
+                    </my:Submenu>
+                </my:DropDownButton>
+                <Button my:IconAssist.Icon="{my:Icon Kind=EmailSend}"
+                        Command="{Binding OpenMailClientSelectedItemsCommand}"
+                        Content="{my:Resource Send}"
+                        ToolTip="Ctrl+M" />
+                <Button my:IconAssist.Icon="{my:Icon Kind=EmailEdit}"
+                        Command="{Binding OpenCommunicationCommand}"
+                        Content="{my:Resource Write}"
+                        ToolTip="Ctrl+Maj+M" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding RemoveSelectedItemsCommand}" />
+            </my:SelectionCommandsBar>
+
+        </my:CommandsBar>
+
+        <!--  Content  -->
+        <my:TransitioningContent>
+            <my:TransitioningContent.Style>
+                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeGrid">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:PlayersGridView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeList">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:PlayersListView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding WrappersSource.Count}" Value="0">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <ContentControl ContentTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </my:TransitioningContent.Style>
+        </my:TransitioningContent>
+    </DockPanel>
+
+</UserControl>

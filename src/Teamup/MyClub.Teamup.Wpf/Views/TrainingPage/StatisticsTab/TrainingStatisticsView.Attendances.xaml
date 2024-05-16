@@ -1,0 +1,294 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingPage.StatisticsTab.TrainingStatisticsAttendancesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingPage.SessionsTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingPage.StatisticsTab"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingStatisticsAttendancesViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+        <sys:Double x:Key="ChartOpacity">0.3</sys:Double>
+
+        <Style x:Key="Teamup.Styles.ToggleButton.Attendance" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Filled.Custom}" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Height" Value="50" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="my:ThemeAssist.CornerRadius" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size}" />
+            <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="50" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ContentControl x:Name="Icon" HorizontalAlignment="Center" Content="{Binding Path=(my:IconAssist.Icon), RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+
+                            <ContentControl Grid.Column="1" Content="{Binding}" />
+
+                            <Label x:Name="Value"
+                                   Style="{StaticResource MyNet.Styles.Label.Elevation.Foreground}"
+                                   Grid.Column="2"
+                                   Margin="{StaticResource MyNet.Margins.Medium.Horizontal}"
+                                   Content="{my:Translation Tag,
+                                                            FallbackValue=0,
+                                                            RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}},
+                                                            ConverterParameter=F2}"
+                                   ContentStringFormat="F2"
+                                   FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                   Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="False">
+                                <Setter TargetName="Icon" Property="Foreground" Value="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Data.ShowInPercent, Source={StaticResource Proxy}}" Value="True">
+                                <Setter TargetName="Value" Property="Tag">
+                                    <Setter.Value>
+                                        <MultiBinding Converter="{x:Static my:MathConverter.Divide}">
+                                            <Binding FallbackValue="0" Path="Tag" RelativeSource="{RelativeSource AncestorType={x:Type ToggleButton}}" />
+                                            <Binding Path="Data.AverageAttendances" Source="{StaticResource Proxy}" />
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="Value" Property="Content" Value="{my:Translation Tag, ConverterParameter=P2, ElementName=Value}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="F" Command="{Binding Data.ParentPage.SessionsViewModel.ShowFiltersCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="F" Command="{Binding Data.ParentPage.SessionsViewModel.Filters.ClearCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Alt" Key="F" Command="{Binding Data.ParentPage.SessionsViewModel.Filters.ResetCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding ParentPage.SessionsViewModel}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count}" />
+                    <my:FiltersDropDownView DataContext="{Binding ParentPage.SessionsViewModel.Filters}">
+                        <my:FiltersDropDownView.PopupContentTemplate>
+                            <DataTemplate>
+                                <v:TrainingSessionsSpeedFiltersView />
+                            </DataTemplate>
+                        </my:FiltersDropDownView.PopupContentTemplate>
+                    </my:FiltersDropDownView>
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+            <!--  Content  -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption.Left}" HorizontalAlignment="Right" Header="{my:Resource Show}">
+                <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:Icon Kind=Label}"
+                                  Content="{my:Resource Labels}"
+                                  ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                  IsChecked="{Binding ShowLabels}" />
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:Icon Kind=Beach}"
+                                  Content="{my:Resource Holidays}"
+                                  ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                  IsChecked="{Binding ShowHolidaysSections}" />
+                </my:SimpleStackPanel>
+            </GroupBox>
+
+        </my:CommandsBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <my:Card Padding="0">
+                <my:ContentExpander x:Name="Expander" Style="{StaticResource MyNet.Styles.ContentExpander.Horizontal.Alternate}">
+                    <my:DynamicScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <my:SimpleStackPanel>
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}"
+                                      HorizontalAlignment="Center"
+                                      Header="{my:Resource InPercent}"
+                                      Visibility="{Binding IsExpanded, ElementName=Expander, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                                <ToggleButton IsChecked="{Binding ShowInPercent}" />
+                            </GroupBox>
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=Check}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Positive}"
+                                          Content="{my:Resource AttendancePresent}"
+                                          IsChecked="{Binding PresentsSerie.IsVisible}"
+                                          Tag="{Binding AveragePresents}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=Cancel}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Negative}"
+                                          Content="{my:Resource AttendanceAbsent}"
+                                          IsChecked="{Binding AbsentsSerie.IsVisible}"
+                                          Tag="{Binding AverageAbsents}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=MessageProcessing}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Warning}"
+                                          Content="{my:Resource AttendanceApology}"
+                                          IsChecked="{Binding ApologySerie.IsVisible}"
+                                          Tag="{Binding AverageApologized}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=Ambulance}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                                          Content="{my:Resource AttendanceInjured}"
+                                          IsChecked="{Binding InjuredSerie.IsVisible}"
+                                          Tag="{Binding AverageInjured}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=Beach}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                                          Content="{my:Resource AttendanceInHolidays}"
+                                          IsChecked="{Binding InHolidaysSerie.IsVisible}"
+                                          Tag="{Binding AverageInHolidays}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=Star}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                                          Content="{my:Resource AttendanceInSelection}"
+                                          IsChecked="{Binding InSelectionSerie.IsVisible}"
+                                          Tag="{Binding AverageInSelection}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=Sleep}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                                          Content="{my:Resource AttendanceResting}"
+                                          IsChecked="{Binding RestingSerie.IsVisible}"
+                                          Tag="{Binding AverageResting}" />
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Attendance}"
+                                          my:IconAssist.Icon="{my:MediumIcon Kind=QuestionMark}"
+                                          my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.None}"
+                                          Content="{my:Resource AttendanceUnknown}"
+                                          IsChecked="{Binding UnknownSerie.IsVisible}"
+                                          Tag="{Binding AverageUnknown}" />
+                        </my:SimpleStackPanel>
+                    </my:DynamicScrollViewer>
+                </my:ContentExpander>
+            </my:Card>
+
+            <my:GhostControl Grid.Column="2" GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}">
+                <my:GhostControl.ShowGhost>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.Or}">
+                        <Binding Converter="{x:Static my:ComparaisonToBooleanConverter.IsLessThan}" ConverterParameter="1" Path="CountPlayers" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.NotAny}" Path="AxeXLabels.Count" />
+                    </MultiBinding>
+                </my:GhostControl.ShowGhost>
+
+                <lvc:CartesianChart Hoverable="False">
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Labels="{Binding AxeXLabels}"
+                                  LabelsRotation="75"
+                                  MaxValue="{Binding AxeXLabels.Count, UpdateSourceTrigger=PropertyChanged}"
+                                  MinValue="0"
+                                  Sections="{Binding HolidaysSections}"
+                                  ShowLabels="True">
+                            <lvc:Axis.Separator>
+                                <lvc:Separator Step="1" />
+                            </lvc:Axis.Separator>
+                        </lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="{my:Resource Players}"
+                                  MaxValue="{Binding CountPlayers}"
+                                  MinValue="0"
+                                  ShowLabels="True">
+                            <lvc:Axis.Separator>
+                                <lvc:Separator Step="2" />
+                            </lvc:Axis.Separator>
+                        </lvc:Axis>
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.Series>
+                        <lvc:LineSeries Title="{my:Resource AttendancePresent}"
+                                        Configuration="{Binding PresentsSerie.Mapper}"
+                                        DataLabels="{Binding ShowLabels}"
+                                        DataLabelsTemplate="{StaticResource Teamup.DataTemplates.ChartPoint.TrainingSession}"
+                                        Fill="{my:BrushBinding Source={StaticResource MyNet.Brushes.Positive},
+                                                               Opacity={StaticResource ChartOpacity}}"
+                                        LineSmoothness="0"
+                                        PointGeometry="{x:Static lvc:DefaultGeometries.Diamond}"
+                                        PointGeometrySize="8"
+                                        Stroke="{DynamicResource MyNet.Brushes.Positive}"
+                                        Values="{Binding PresentsSerie.Values}"
+                                        Visibility="{Binding PresentsSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceAbsent}"
+                                                 Configuration="{Binding AbsentsSerie.Mapper}"
+                                                 Fill="{DynamicResource MyNet.Brushes.Negative}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource MyNet.Brushes.Negative}"
+                                                 Values="{Binding AbsentsSerie.Values}"
+                                                 Visibility="{Binding AbsentsSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceApology}"
+                                                 Configuration="{Binding ApologySerie.Mapper}"
+                                                 Fill="{DynamicResource MyNet.Brushes.Warning}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource MyNet.Brushes.Warning}"
+                                                 Values="{Binding ApologySerie.Values}"
+                                                 Visibility="{Binding ApologySerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceInjured}"
+                                                 Configuration="{Binding InjuredSerie.Mapper}"
+                                                 Fill="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                                                 Values="{Binding InjuredSerie.Values}"
+                                                 Visibility="{Binding InjuredSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceInHolidays}"
+                                                 Configuration="{Binding InHolidaysSerie.Mapper}"
+                                                 Fill="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                                                 Values="{Binding InHolidaysSerie.Values}"
+                                                 Visibility="{Binding InHolidaysSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceInSelection}"
+                                                 Configuration="{Binding InSelectionSerie.Mapper}"
+                                                 Fill="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                                                 Values="{Binding InSelectionSerie.Values}"
+                                                 Visibility="{Binding InSelectionSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceResting}"
+                                                 Configuration="{Binding RestingSerie.Mapper}"
+                                                 Fill="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                                                 Values="{Binding RestingSerie.Values}"
+                                                 Visibility="{Binding RestingSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <lvc:StackedColumnSeries Title="{my:Resource AttendanceUnknown}"
+                                                 Configuration="{Binding UnknownSerie.Mapper}"
+                                                 Fill="{DynamicResource MyNet.Brushes.None}"
+                                                 StackMode="Values"
+                                                 Stroke="{DynamicResource MyNet.Brushes.None}"
+                                                 Values="{Binding UnknownSerie.Values}"
+                                                 Visibility="{Binding UnknownSerie.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    </lvc:CartesianChart.Series>
+                    <lvc:CartesianChart.DataTooltip>
+                        <my:DefaultDataToolTip />
+                    </lvc:CartesianChart.DataTooltip>
+                </lvc:CartesianChart>
+            </my:GhostControl>
+        </Grid>
+    </DockPanel>
+
+</UserControl>

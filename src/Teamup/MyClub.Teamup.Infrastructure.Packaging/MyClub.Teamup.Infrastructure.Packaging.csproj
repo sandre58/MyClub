@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="DynamicData" Version="8.4.1" />
+    <PackageReference Include="System.IO.Packaging" Version="9.0.0-preview.3.24172.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.FileSystem\MyClub.CrossCutting.FileSystem.csproj" />
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Packaging\MyClub.CrossCutting.Packaging.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Application.Contracts\MyClub.Teamup.Application.Contracts.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

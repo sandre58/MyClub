@@ -1,0 +1,119 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingPage.SchedulingTab.SchedulingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingPage.SchedulingTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingPage.SchedulingTab"
+             d:DataContext="{d:DesignInstance Type=vm:SchedulingViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCycleCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding Data.AddHolidaysCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditPeriodInSelectedDatesCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.RemovePeriodsInSelectedDatesCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.LeftCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.ToolBar.Elevation.Primary}"
+                                       my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
+                                       Background="{DynamicResource MyNet.Brushes.Primary}"
+                                       BorderBrush="{DynamicResource MyNet.Brushes.Primary}"
+                                       Foreground="{DynamicResource MyNet.Brushes.Primary.Foreground}"
+                                       PopupPadding="0"
+                                       ToggleContent="{my:Resource New}">
+                        <my:Submenu>
+                            <MenuItem Command="{Binding AddCycleCommand}"
+                                      Header="{my:Resource Cycle}"
+                                      Icon="{my:Icon Kind=CalendarWeekend}"
+                                      InputGestureText="Ctrl+N" />
+                            <MenuItem Command="{Binding AddHolidaysCommand}"
+                                      Header="{my:Resource Holidays}"
+                                      Icon="{my:Icon Kind=Beach}"
+                                      InputGestureText="Ctrl+Maj+N" />
+                        </my:Submenu>
+                    </my:DropDownButton>
+                </ToolBar>
+            </my:CommandsBar.LeftCommands>
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <Border VerticalAlignment="Center"
+                            BorderBrush="{DynamicResource MyNet.Brushes.Control.Border}"
+                            BorderThickness="1"
+                            CornerRadius="17">
+                        <my:SimpleStackPanel Margin="11 5"
+                                             Orientation="Horizontal"
+                                             Spacing="{StaticResource MyNet.Margin.Default}"
+                                             TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
+                            <TextBlock FontWeight="Bold" Text="{Binding CountCycles}" />
+                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Cycles}" Typography.Capitals="AllSmallCaps" />
+                        </my:SimpleStackPanel>
+                    </Border>
+                    <Border VerticalAlignment="Center"
+                            BorderBrush="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                            BorderThickness="1"
+                            CornerRadius="17">
+                        <my:SimpleStackPanel Margin="11 5"
+                                             Orientation="Horizontal"
+                                             Spacing="{StaticResource MyNet.Margin.Default}"
+                                             TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
+                            <TextBlock FontWeight="Bold" Text="{Binding CountHolidays}" />
+                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Holidays}" Typography.Capitals="AllSmallCaps" />
+                        </my:SimpleStackPanel>
+                    </Border>
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" Margin="{StaticResource MyNet.Margins.Default.Vertical}" />
+                    <my:DisplayView DataContext="{Binding Display}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+        </my:CommandsBar>
+
+        <!--  Content  -->
+        <my:TransitioningContent Content="{Binding}" TriggerObject="{Binding Display.Mode}">
+            <my:TransitioningContent.ContentTemplateSelector>
+                <my:DisplayContentTemplateSelector>
+                    <my:DisplayContentTemplateSelector.Templates>
+                        <my:DataTemplatesCollection>
+                            <DataTemplate>
+                                <my:TransitioningContent x:Name="content" Content="{Binding}" TriggerObject="{Binding Items.Count}">
+                                    <my:TransitioningContent.ContentTemplate>
+                                        <DataTemplate>
+                                            <v:SchedulingListView />
+                                        </DataTemplate>
+                                    </my:TransitioningContent.ContentTemplate>
+                                </my:TransitioningContent>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Items.Count}" Value="False">
+                                        <Setter TargetName="content" Property="ContentTemplate" Value="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                            <DataTemplate>
+                                <v:SchedulingCalendarView />
+                            </DataTemplate>
+                        </my:DataTemplatesCollection>
+                    </my:DisplayContentTemplateSelector.Templates>
+                </my:DisplayContentTemplateSelector>
+            </my:TransitioningContent.ContentTemplateSelector>
+        </my:TransitioningContent>
+
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.PlayerEditionClubView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:PlayerEditionViewModel}"
+             Focusable="False"
+             mc:Ignorable="d">
+
+    <my:SimpleStackPanel>
+
+        <!--  Category  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Label}">
+            <ComboBox my:HintAssist.Hint="{my:Resource Category}"
+                      my:ItemsControlAssist.SortingProperty="Value"
+                      my:TextFieldAssist.HasClearButton="True"
+                      DisplayMemberPath="Display"
+                      IsTextSearchEnabled="True"
+                      ItemsSource="{my:EnumerationSource EnumType={x:Type enums:Category}}"
+                      SelectedValue="{Binding Category}"
+                      SelectedValuePath="Value" />
+        </GroupBox>
+
+        <!--  Number  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Numeric}">
+            <my:NumericUpDown my:HintAssist.Hint="{my:Resource NumberAbbr}" my:NumericUpDownAssist.AcceptableValue="{Binding Number}" />
+        </GroupBox>
+
+        <!--  FromDate  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarArrowRight}">
+            <DatePicker my:HintAssist.Hint="{my:Resource InClubFromDate}" SelectedDate="{Binding FromDate, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Licence  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=BadgeAccountHorizontal}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <my:SimpleStackPanel>
+                    <TextBox Width="133"
+                             my:HintAssist.Hint="{my:Resource LicenseNumber}"
+                             my:TextFieldAssist.Mask="PositiveInteger"
+                             MaxLength="10"
+                             Text="{Binding LicenseNumber, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Width="140" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Margin="{StaticResource MyNet.Margins.Medium.Right}" Text="{my:Resource IsMutation}" />
+                        <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}"
+                                      my:ToggleButtonAssist.OnContent="{my:Resource Yes}"
+                                      Content="{my:Resource No}"
+                                      IsChecked="{Binding IsMutation}" />
+                    </StackPanel>
+                </my:SimpleStackPanel>
+
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                         VerticalAlignment="Bottom"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                         SelectedValue="{Binding LicenseState, UpdateSourceTrigger=PropertyChanged}"
+                         SelectedValuePath="DataContext">
+                    <ListBoxItem Width="70"
+                                 Height="50"
+                                 my:IconAssist.Icon="{my:Icon Kind=QuestionMarkRhombus}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Teamup.Brushes.License.Unknown}"
+                                 my:ListBoxItemAssist.IsSelectedForeground="{StaticResource MyNet.Brushes.White}"
+                                 Content="{my:Resource LicenseStateUnknown}"
+                                 DataContext="{x:Static enums2:LicenseState.Unknown}" />
+                    <ListBoxItem Width="70"
+                                 my:IconAssist.Icon="{my:Icon Kind=CardBulletedSettings}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Teamup.Brushes.License.Given}"
+                                 my:ListBoxItemAssist.IsSelectedForeground="{StaticResource MyNet.Brushes.White}"
+                                 Content="{my:Resource LicenseStateGiven}"
+                                 DataContext="{x:Static enums2:LicenseState.Given}" />
+                    <ListBoxItem Width="70"
+                                 my:IconAssist.Icon="{my:Icon Kind=AssignmentReturn}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Teamup.Brushes.License.Back}"
+                                 my:ListBoxItemAssist.IsSelectedForeground="{StaticResource MyNet.Brushes.White}"
+                                 Content="{my:Resource LicenseStateBack}"
+                                 DataContext="{x:Static enums2:LicenseState.Back}" />
+                    <ListBoxItem Width="70"
+                                 my:IconAssist.Icon="{my:Icon Kind=Dollar}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Teamup.Brushes.License.Paid}"
+                                 my:ListBoxItemAssist.IsSelectedForeground="{StaticResource MyNet.Brushes.White}"
+                                 Content="{my:Resource LicenseStatePaid}"
+                                 DataContext="{x:Static enums2:LicenseState.Paid}" />
+                </ListBox>
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <!--  Description  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=TextSubject}">
+            <TextBox Style="{StaticResource MyNet.Styles.TextBox.Outlined}"
+                     Height="170"
+                     HorizontalAlignment="Stretch"
+                     VerticalContentAlignment="Top"
+                     my:HintAssist.Hint="{my:Resource Description}"
+                     my:HintAssist.IsFloating="True"
+                     AcceptsReturn="True"
+                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto" />
+        </GroupBox>
+    </my:SimpleStackPanel>
+</UserControl>

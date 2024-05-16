@@ -1,0 +1,208 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net8.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <Description>This software allows you to manage a football team.</Description>
+    <AssemblyName>Teamup</AssemblyName>
+    <Company>MyClub</Company>
+    <Product>Team'Up</Product>
+    <ExtrasEnableWpfProjectSetup>true</ExtrasEnableWpfProjectSetup>
+    <ApplicationIcon>Resources\Images\Teamup.ico</ApplicationIcon>
+    <OutputPath>..\..\..\build\$(AssemblyName)\$(Configuration)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fody" Version="6.8.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="gong-wpf-dragdrop" Version="3.2.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.VisualStudio.SlowCheetah" Version="4.0.50">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="XAMLTools.MSBuild" Version="1.0.0-alpha0100">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MyUI\Wpf\My.UI.Wpf.DragAndDrop\My.UI.Wpf.DragAndDrop.csproj" />
+    <ProjectReference Include="..\..\MyUI\My.UI.ViewModels.FileHistory\My.UI.ViewModels.FileHistory.csproj" />
+    <ProjectReference Include="..\..\MyUI\Wpf\LiveCharts\My.UI.Wpf.LiveCharts\My.UI.Wpf.LiveCharts.csproj" />
+    <ProjectReference Include="..\..\MyUI\Wpf\My.UI.Wpf.Collections\My.UI.Wpf.Collections.csproj" />
+    <ProjectReference Include="..\..\MyUI\Wpf\My.UI.Wpf.Countries\My.UI.Wpf.Countries.csproj" />
+    <ProjectReference Include="..\..\MyUI\Wpf\My.UI.Wpf.FileHistory\My.UI.Wpf.FileHistory.csproj" />
+    <ProjectReference Include="..\..\MyUI\Wpf\My.UI.Wpf.Presentation\My.UI.Wpf.Presentation.csproj" />
+    <ProjectReference Include="..\..\MyUI\Wpf\My.UI.Wpf.Web\My.UI.Wpf.Web.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.CsvHelper.Extensions\MyNet.Utilities.CsvHelper.Extensions.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Encryption.Aes\MyNet.Utilities.Encryption.Aes.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.FileHistory.Registry\MyNet.Utilities.FileHistory.Registry.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Generator\MyNet.Utilities.Generator.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Google\MyNet.Utilities.Google.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Humanizer\MyNet.Utilities.Humanizer.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Logging.NLog\MyNet.Utilities.Logging.NLog.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Mail.MailKit\MyNet.Utilities.Mail.MailKit.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Mail.Mock\MyNet.Utilities.Mail.Mock.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Mail\MyNet.Utilities.Mail.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Observable.Models.Statistics\MyNet.Utilities.Observable.Models.Statistics.csproj" />
+    <ProjectReference Include="..\..\MyUtilities\MyNet.Utilities.Observable.Models\MyNet.Utilities.Observable.Models.csproj" />
+    <ProjectReference Include="..\Core\DatabaseContext\MyClub.DatabaseContext.Application\MyClub.DatabaseContext.Application.csproj" />
+    <ProjectReference Include="..\Core\DatabaseContext\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\Core\ClubContext\MyClub.ClubContext.Application.Contracts\MyClub.ClubContext.Application.Contracts.csproj" />
+    <ProjectReference Include="..\Core\ClubContext\MyClub.ClubContext.Application\MyClub.ClubContext.Application.csproj" />
+    <ProjectReference Include="..\Core\ClubContext\MyClub.ClubContext.Domain.Factories\MyClub.ClubContext.Domain.Factories.csproj" />
+    <ProjectReference Include="..\Core\UserContext\MyClub.UserContext.Application\MyClub.UserContext.Application.csproj" />
+    <ProjectReference Include="..\Core\UserContext\MyClub.UserContext.Infrastructure.Authentication.Registry\MyClub.UserContext.Infrastructure.Authentication.Registry.csproj" />
+    <ProjectReference Include="..\Core\ClubContext\MyClub.ClubContext.Infrastructure.Packaging\MyClub.ClubContext.Infrastructure.Packaging.csproj" />
+    <ProjectReference Include="..\Core\ClubContext\MyClub.ClubContext.Infrastructure.Repositories\MyClub.ClubContext.Infrastructure.Repositories.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="config\appsettings.json">
+      <TransformOnBuild>true</TransformOnBuild>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Update="config\appsettings.Release.json">
+      <DependentUpon>appsettings.json</DependentUpon>
+      <IsTransformFile>true</IsTransformFile>
+    </None>
+    <Content Include="config\NLog.config">
+      <TransformOnBuild>true</TransformOnBuild>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Update="config\NLog.Release.config">
+      <DependentUpon>NLog.config</DependentUpon>
+      <IsTransformFile>true</IsTransformFile>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Files\import_competitions_sample.xlsx" />
+    <EmbeddedResource Include="Resources\Files\import_players_sample.xlsx" />
+    <EmbeddedResource Include="Resources\Files\import_teams_sample.xlsx" />
+    <Resource Include="Resources\Images\artificialGrass.jpg" />
+    <Resource Include="Resources\Images\background.png" />
+    <Resource Include="Resources\Images\background2.png" />
+    <Resource Include="Resources\Images\female.png" />
+    <Resource Include="Resources\Images\Grass.jpg" />
+    <Resource Include="Resources\Images\ground_3D.png" />
+    <Resource Include="Resources\Images\Indoor.jpg" />
+    <Resource Include="Resources\Images\male.png" />
+    <Resource Include="Resources\Images\Sand.jpg" />
+    <Resource Include="Resources\Images\Teamup.ico" />
+    <Resource Include="Resources\Images\Teamup.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Settings\ExportCompetitionsSettings.settings">
+      <LastGenOutput>ExportCompetitionsSettings.Designer.cs</LastGenOutput>
+      <Generator>SettingsSingleFileGenerator</Generator>
+    </None>
+    <None Update="Settings\ExportTeamsSettings.settings">
+      <LastGenOutput>ExportTeamsSettings.Designer.cs</LastGenOutput>
+      <Generator>SettingsSingleFileGenerator</Generator>
+    </None>
+    <None Update="Settings\ExportPlayersSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>ExportPlayersSettings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Settings\LanguageSettings.settings">
+      <LastGenOutput>LanguageSettings.Designer.cs</LastGenOutput>
+      <Generator>SettingsSingleFileGenerator</Generator>
+    </None>
+    <None Update="Settings\AppSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>AppSettings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Settings\ThemeSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>ThemeSettings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Update="Settings\ExportCompetitionsSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>ExportCompetitionsSettings.settings</DependentUpon>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="Settings\ExportTeamsSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>ExportTeamsSettings.settings</DependentUpon>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="Settings\LanguageSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>LanguageSettings.settings</DependentUpon>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="Settings\ExportPlayersSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ExportPlayersSettings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="Settings\AppSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>AppSettings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="Settings\SmtpSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SmtpSettings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="Settings\ThemeSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ThemeSettings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="Views\CompetitionPage\GroupStageDetailsView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <XAMLColorSchemeGeneratorEnabled>False</XAMLColorSchemeGeneratorEnabled>
+    <XAMLCombineEnabled>True</XAMLCombineEnabled>
+    <XAMLCombineImportMergedResourceDictionaryReferences>True</XAMLCombineImportMergedResourceDictionaryReferences>
+    <RemoveXAMLCombineItemsFromPages>False</RemoveXAMLCombineItemsFromPages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <XAMLCombineItems Include="Styles/*.xaml">
+      <TargetFile>Themes/Teamup.Styles.xaml</TargetFile>
+    </XAMLCombineItems>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(IsBuildingInsideRider)' == 'True'">
+    <DefaultItemExcludes>$(DefaultItemExcludes);Styles\*.xaml</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsBuildingInsideRider)' == 'True'">
+    <Page Include="Styles\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Files\import_competitions_sample.xlsx" />
+    <None Remove="Resources\Files\import_teams_sample.xlsx" />
+    <None Remove="Resources\Images\artificialGrass.jpg" />
+    <None Remove="Resources\Images\Grass.jpg" />
+    <None Remove="Resources\Images\ground_3D.png" />
+    <None Remove="Resources\Images\ground_mini.jpg" />
+    <None Remove="Resources\Images\ground_transparent.png" />
+    <None Remove="Resources\Images\Indoor.jpg" />
+    <None Remove="Resources\Images\Sand.jpg" />
+  </ItemGroup>
+
+</Project>

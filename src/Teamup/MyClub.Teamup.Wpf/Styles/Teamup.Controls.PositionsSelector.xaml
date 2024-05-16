@@ -1,0 +1,250 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+                    xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+                    xmlns:my="http://mynet.com/xaml/themes">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="Teamup.Styles.Label.Embedded.PositionItem" BasedOn="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}" TargetType="{x:Type Label}">
+        <Setter Property="Width" Value="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.8}" />
+        <Setter Property="Height" Value="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.8}" />
+        <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" />
+        <Setter Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" />
+        <Setter Property="BorderThickness" Value="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" />
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True" />
+                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="my:ElevationAssist.Elevation" Value="Dp4" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True" />
+                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="my:ElevationAssist.Elevation" Value="Dp6" />
+            </MultiDataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Teamup.Styles.PositionItem" TargetType="{x:Type ctrl:PositionItem}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource MyNet.Styles.FocusVisualStyle.Rectangle.Margin}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.White}" />
+        <Setter Property="Foreground" Value="{my:BrushBinding SelfPath=Background, Contrast=True}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Primary}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ClipToBounds" Value="False" />
+        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Overlay}" />
+        <Setter Property="my:RippleAssist.IsCentered" Value="True" />
+        <Setter Property="my:RippleAssist.ClipToBounds" Value="False" />
+        <Setter Property="my:RippleAssist.RippleSizeMultiplier" Value="0.4" />
+        <Setter Property="my:RippleAssist.Feedback" Value="{my:BrushBinding SelfPath=Background}" />
+        <Setter Property="ToolTip" Value="{my:Translation Position}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ctrl:PositionItem}">
+                    <Grid HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                        <my:Ripple Padding="{TemplateBinding Padding}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                   Content="{TemplateBinding Content}"
+                                   ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                   ContentTemplate="{TemplateBinding ContentTemplate}"
+                                   Focusable="False"
+                                   SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True" />
+                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True" />
+                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+            </MultiDataTrigger>
+            <DataTrigger Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="False">
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+                <Setter Property="my:RippleAssist.IsDisabled" Value="True" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True">
+                <Setter Property="Cursor" Value="Hand" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding CanMove, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True">
+                <Setter Property="Cursor" Value="SizeAll" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="Teamup.Styles.PositionItem.RatedPosition" BasedOn="{StaticResource Teamup.Styles.PositionItem}" TargetType="{x:Type ctrl:PositionItem}">
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Poor}" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Poor}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Average}" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Average}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Good}" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Good}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.VeryGood}" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Position.VeryGood}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Natural}" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Natural}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Poor}" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Poor}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsNatural}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="BorderThickness" Value="3" />
+            </MultiDataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Teamup.Styles.PositionsSelector" TargetType="{x:Type ctrl:PositionsSelector}">
+        <Setter Property="Height" Value="Auto" />
+        <Setter Property="Width" Value="Auto" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <ImageBrush ImageSource="pack://application:,,,/Teamup;component/Resources/Images/ground_3D.png"
+                            RenderOptions.BitmapScalingMode="Fant"
+                            RenderOptions.EdgeMode="Aliased"
+                            Stretch="Fill" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Stylus.IsFlicksEnabled" Value="False" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource Teamup.Styles.PositionItem}" />
+        <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size.Secondary}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <ctrl:PositionsCanvas IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ctrl:PositionsSelector}">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" />
+                        <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Label x:Name="label" Style="{StaticResource Teamup.Styles.Label.Embedded.PositionItem}" Content="{my:Translation Position, Abbreviation=True}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="{DynamicResource MyNet.Opacity.Disabled}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="Teamup.Styles.PositionsSelector.RatedPosition" BasedOn="{StaticResource Teamup.Styles.PositionsSelector}" TargetType="{x:Type ctrl:PositionsSelector}">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource Teamup.Styles.PositionItem.RatedPosition}" />
+    </Style>
+    <Style x:Key="Teamup.Styles.PositionsSelector.TacticPosition" BasedOn="{StaticResource Teamup.Styles.PositionsSelector}" TargetType="{x:Type ctrl:PositionsSelector}">
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <my:PackIcon Grid.Row="0"
+                                     Width="Auto"
+                                     Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.65}"
+                                     HorizontalAlignment="Center"
+                                     Foreground="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
+                                     Kind="TshirtCrew" />
+                        <Label x:Name="label"
+                               Style="{StaticResource MyNet.Styles.Label.Elevation.Custom}"
+                               Grid.Row="2"
+                               Width="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.5}"
+                               MinWidth="40"
+                               Margin="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static my:DoubleThicknessToConverter.Top}}"
+                               Padding="0 2"
+                               HorizontalAlignment="Center"
+                               my:ThemeAssist.UniformCornerRadius="8"
+                               Background="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
+                               Content="{my:Translation Position,
+                                                        Abbreviation=True}"
+                               FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
+                               Foreground="{my:BrushBinding BorderBrush,
+                                                            Contrast=True,
+                                                            RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
+                               Tag="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=-0.15}" />
+                        <TextBlock Grid.RowSpan="2"
+                                   HorizontalAlignment="Center"
+                                   FontSize="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.18}"
+                                   Text="{Binding Number}" />
+                    </Grid>
+
+                    <DataTemplate.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True" />
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="label" Property="my:ElevationAssist.Elevation" Value="Dp4" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding CanSelect, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionsSelector}}}" Value="True" />
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="label" Property="my:ElevationAssist.Elevation" Value="Dp6" />
+                        </MultiDataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,855 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="InjuryTypeLeftElbow" xml:space="preserve">
+    <value>Elbow left</value>
+  </data>
+  <data name="InjuryTypeRightArm" xml:space="preserve">
+    <value>Right arm</value>
+  </data>
+  <data name="CategoryU10Abbr" xml:space="preserve">
+    <value>U10</value>
+  </data>
+  <data name="CategoryU23" xml:space="preserve">
+    <value>U23</value>
+  </data>
+  <data name="CategoryU22" xml:space="preserve">
+    <value>U22</value>
+  </data>
+  <data name="CategoryU21" xml:space="preserve">
+    <value>U21</value>
+  </data>
+  <data name="CategoryU20" xml:space="preserve">
+    <value>U20</value>
+  </data>
+  <data name="CategoryU19" xml:space="preserve">
+    <value>U19</value>
+  </data>
+  <data name="CategoryU18" xml:space="preserve">
+    <value>U18</value>
+  </data>
+  <data name="CategoryU17" xml:space="preserve">
+    <value>U17</value>
+  </data>
+  <data name="CategoryU16" xml:space="preserve">
+    <value>U16</value>
+  </data>
+  <data name="CategoryU15" xml:space="preserve">
+    <value>U15</value>
+  </data>
+  <data name="InjuryTypeRightCalf" xml:space="preserve">
+    <value>Calf right</value>
+  </data>
+  <data name="CategoryU14" xml:space="preserve">
+    <value>U14</value>
+  </data>
+  <data name="CategoryU12" xml:space="preserve">
+    <value>U12</value>
+  </data>
+  <data name="CategoryU11" xml:space="preserve">
+    <value>U11</value>
+  </data>
+  <data name="CategoryU10" xml:space="preserve">
+    <value>U10</value>
+  </data>
+  <data name="CategoryU9" xml:space="preserve">
+    <value>U9</value>
+  </data>
+  <data name="CategoryU8" xml:space="preserve">
+    <value>U8</value>
+  </data>
+  <data name="CategoryU7" xml:space="preserve">
+    <value>U7</value>
+  </data>
+  <data name="CategoryU6" xml:space="preserve">
+    <value>U6</value>
+  </data>
+  <data name="InjuryTypeRightElbow" xml:space="preserve">
+    <value>Elbow right</value>
+  </data>
+  <data name="CategoryU13" xml:space="preserve">
+    <value>U13</value>
+  </data>
+  <data name="InjuryTypeLeftCalf" xml:space="preserve">
+    <value>Calf left</value>
+  </data>
+  <data name="RecentFilesSortingPropertyName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="InjuryTypeRightWrist" xml:space="preserve">
+    <value>Right wrist</value>
+  </data>
+  <data name="ImportModeAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="ImportModeUpdate" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="CategoryU11Abbr" xml:space="preserve">
+    <value>U11</value>
+  </data>
+  <data name="InjuryTypeStomach" xml:space="preserve">
+    <value>Abdomen</value>
+  </data>
+  <data name="RankingSortingColumnWins" xml:space="preserve">
+    <value>Number of games won</value>
+  </data>
+  <data name="RankingSortingColumnGoalsAgainst" xml:space="preserve">
+    <value>Goals against</value>
+  </data>
+  <data name="RankingSortingColumnGoalsFor" xml:space="preserve">
+    <value>Goals for</value>
+  </data>
+  <data name="RankingSortingColumnResultsBetweenTeams" xml:space="preserve">
+    <value>Results between teams</value>
+  </data>
+  <data name="RankingSortingColumnGoalDifference" xml:space="preserve">
+    <value>Goals difference</value>
+  </data>
+  <data name="RankingSortingColumnPoints" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="CategoryAdult" xml:space="preserve">
+    <value>Adult</value>
+  </data>
+  <data name="CategoryAdultAbbr" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="CategorySeniors" xml:space="preserve">
+    <value>Senior</value>
+  </data>
+  <data name="InjuryTypeRightThigh" xml:space="preserve">
+    <value>Thigh right</value>
+  </data>
+  <data name="InjuryTypeRightShoulder" xml:space="preserve">
+    <value>Right soulder</value>
+  </data>
+  <data name="InjuryTypeTorso" xml:space="preserve">
+    <value>Torso</value>
+  </data>
+  <data name="InjuryTypeRightKnee" xml:space="preserve">
+    <value>Knee right</value>
+  </data>
+  <data name="RecentFilesSortingPropertyLastAccessDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="InjuryTypeLeftArm" xml:space="preserve">
+    <value>Left arm</value>
+  </data>
+  <data name="InjuryTypeLeftAnkle" xml:space="preserve">
+    <value>Ankle left</value>
+  </data>
+  <data name="InjuryTypeHead" xml:space="preserve">
+    <value>Head</value>
+  </data>
+  <data name="InjuryTypeBack" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="InjuryTypeRightShin" xml:space="preserve">
+    <value>Right shin</value>
+  </data>
+  <data name="CategoryU6Abbr" xml:space="preserve">
+    <value>U6</value>
+  </data>
+  <data name="CategoryU8Abbr" xml:space="preserve">
+    <value>U8</value>
+  </data>
+  <data name="InjuryTypeAdductors" xml:space="preserve">
+    <value>Adductors</value>
+  </data>
+  <data name="InjuryTypeRightFoot" xml:space="preserve">
+    <value>Right foot</value>
+  </data>
+  <data name="InjuryTypeRightHand" xml:space="preserve">
+    <value>Right hand</value>
+  </data>
+  <data name="CategoryU7Abbr" xml:space="preserve">
+    <value>U7</value>
+  </data>
+  <data name="CategoryU12Abbr" xml:space="preserve">
+    <value>U12</value>
+  </data>
+  <data name="CategoryU9Abbr" xml:space="preserve">
+    <value>U9</value>
+  </data>
+  <data name="CategorySeniorsAbbr" xml:space="preserve">
+    <value>V</value>
+  </data>
+  <data name="CategoryU14Abbr" xml:space="preserve">
+    <value>U14</value>
+  </data>
+  <data name="CategoryU22Abbr" xml:space="preserve">
+    <value>U22</value>
+  </data>
+  <data name="CategoryU23Abbr" xml:space="preserve">
+    <value>U23</value>
+  </data>
+  <data name="CategoryU21Abbr" xml:space="preserve">
+    <value>U21</value>
+  </data>
+  <data name="CategoryU20Abbr" xml:space="preserve">
+    <value>U20</value>
+  </data>
+  <data name="CategoryU19Abbr" xml:space="preserve">
+    <value>U19</value>
+  </data>
+  <data name="CategoryU18Abbr" xml:space="preserve">
+    <value>U18</value>
+  </data>
+  <data name="CategoryU17Abbr" xml:space="preserve">
+    <value>U17</value>
+  </data>
+  <data name="CategoryU16Abbr" xml:space="preserve">
+    <value>U16</value>
+  </data>
+  <data name="CategoryU15Abbr" xml:space="preserve">
+    <value>U15</value>
+  </data>
+  <data name="CategoryU13Abbr" xml:space="preserve">
+    <value>U13</value>
+  </data>
+  <data name="KnownTactic_343" xml:space="preserve">
+    <value>3-4-3</value>
+  </data>
+  <data name="KnownTactic_442Diamond" xml:space="preserve">
+    <value>4-4-2 Diamond</value>
+  </data>
+  <data name="KnownTactic_442" xml:space="preserve">
+    <value>4-4-2</value>
+  </data>
+  <data name="PositionRightForward" xml:space="preserve">
+    <value>Forward</value>
+  </data>
+  <data name="PositionLeftForwardAbbr" xml:space="preserve">
+    <value>CF</value>
+  </data>
+  <data name="PositionLeftForward" xml:space="preserve">
+    <value>Forward</value>
+  </data>
+  <data name="PositionCenterLeftAttackingMidfielderAbbr" xml:space="preserve">
+    <value>AM</value>
+  </data>
+  <data name="PositionCenterRightAttackingMidfielderAbbr" xml:space="preserve">
+    <value>AM</value>
+  </data>
+  <data name="PositionCenterRightAttackingMidfielder" xml:space="preserve">
+    <value>Attacking midfielder</value>
+  </data>
+  <data name="PositionCenterLeftAttackingMidfielder" xml:space="preserve">
+    <value>Attacking midfielder</value>
+  </data>
+  <data name="PositionCenterRightMidfielder" xml:space="preserve">
+    <value>Central midfielder</value>
+  </data>
+  <data name="PositionCenterLeftMidfielderAbbr" xml:space="preserve">
+    <value>CM</value>
+  </data>
+  <data name="PositionCenterLeftMidfielder" xml:space="preserve">
+    <value>central midfielder</value>
+  </data>
+  <data name="PositionDefensiveRightMidfielderAbbr" xml:space="preserve">
+    <value>DM</value>
+  </data>
+  <data name="PositionDefensiveRightMidfielder" xml:space="preserve">
+    <value>Defensive midfielder</value>
+  </data>
+  <data name="PositionDefensiveLeftMidfielderAbbr" xml:space="preserve">
+    <value>DM</value>
+  </data>
+  <data name="PositionDefensiveLeftMidfielder" xml:space="preserve">
+    <value>Defensive midfielder</value>
+  </data>
+  <data name="PositionCenterRightBack" xml:space="preserve">
+    <value>Central back</value>
+  </data>
+  <data name="PositionCenterLeftBackAbbr" xml:space="preserve">
+    <value>CB</value>
+  </data>
+  <data name="PositionCenterLeftBack" xml:space="preserve">
+    <value>Central back</value>
+  </data>
+  <data name="PositionRightAttackingMidfielder" xml:space="preserve">
+    <value>Right attacking midfielder</value>
+  </data>
+  <data name="PositionRatingVeryGood" xml:space="preserve">
+    <value>Very good</value>
+  </data>
+  <data name="PositionRatingPoor" xml:space="preserve">
+    <value>Uneasy</value>
+  </data>
+  <data name="PositionRatingNatural" xml:space="preserve">
+    <value>Natural</value>
+  </data>
+  <data name="PositionRatingGood" xml:space="preserve">
+    <value>Correct</value>
+  </data>
+  <data name="PositionRatingAverage" xml:space="preserve">
+    <value>Unconvincing</value>
+  </data>
+  <data name="PositionLeftWingerAbbr" xml:space="preserve">
+    <value>LF</value>
+  </data>
+  <data name="PositionLeftWinger" xml:space="preserve">
+    <value>Left forward</value>
+  </data>
+  <data name="PositionLeftWingBackAbbr" xml:space="preserve">
+    <value>LWB</value>
+  </data>
+  <data name="PositionLeftWingBack" xml:space="preserve">
+    <value>Left wing back</value>
+  </data>
+  <data name="PositionLeftMidfielderAbbr" xml:space="preserve">
+    <value>LM</value>
+  </data>
+  <data name="PositionLeftFullBackAbbr" xml:space="preserve">
+    <value>LB</value>
+  </data>
+  <data name="PositionLeftFullBack" xml:space="preserve">
+    <value>Left full back</value>
+  </data>
+  <data name="PositionLeftAttackingMidfielderAbbr" xml:space="preserve">
+    <value>LAM</value>
+  </data>
+  <data name="PositionLeftAttackingMidfielder" xml:space="preserve">
+    <value>Left attacking midfielder</value>
+  </data>
+  <data name="PositionGoalKeeperAbbr" xml:space="preserve">
+    <value>GK</value>
+  </data>
+  <data name="PositionGoalKeeper" xml:space="preserve">
+    <value>Goal Keeper</value>
+  </data>
+  <data name="PositionForwardAbbr" xml:space="preserve">
+    <value>ST</value>
+  </data>
+  <data name="PositionDefensiveMidfielderAbbr" xml:space="preserve">
+    <value>DM</value>
+  </data>
+  <data name="PositionDefensiveMidfielder" xml:space="preserve">
+    <value>Defensive Midfielder</value>
+  </data>
+  <data name="PositionTypeWinger" xml:space="preserve">
+    <value>Winger</value>
+  </data>
+  <data name="PositionRightWinger" xml:space="preserve">
+    <value>Right forward</value>
+  </data>
+  <data name="PositionSideLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="PositionSideCenter" xml:space="preserve">
+    <value>Center</value>
+  </data>
+  <data name="PositionRightWingerAbbr" xml:space="preserve">
+    <value>RF</value>
+  </data>
+  <data name="PositionTypeDefensiveMidfielder" xml:space="preserve">
+    <value>Midfielder</value>
+  </data>
+  <data name="PositionTypeCenterBack" xml:space="preserve">
+    <value>Defending</value>
+  </data>
+  <data name="PositionTypeAttackingMidfielder" xml:space="preserve">
+    <value>Attacking Midfield</value>
+  </data>
+  <data name="PositionSweeperAbbr" xml:space="preserve">
+    <value>SW</value>
+  </data>
+  <data name="PositionSweeper" xml:space="preserve">
+    <value>Sweeper</value>
+  </data>
+  <data name="PositionSideRight" xml:space="preserve">
+    <value>Entitlement</value>
+  </data>
+  <data name="PositionTypeForward" xml:space="preserve">
+    <value>Striker</value>
+  </data>
+  <data name="PositionForward" xml:space="preserve">
+    <value>Striker</value>
+  </data>
+  <data name="PositionCenterMidfielderAbbr" xml:space="preserve">
+    <value>CM</value>
+  </data>
+  <data name="PositionCenterMidfielder" xml:space="preserve">
+    <value>Central midfielder</value>
+  </data>
+  <data name="PositionCenterBackAbbr" xml:space="preserve">
+    <value>CB</value>
+  </data>
+  <data name="PositionCenterBack" xml:space="preserve">
+    <value>Central back</value>
+  </data>
+  <data name="PositionCenterAttackingMidfielderAbbr" xml:space="preserve">
+    <value>AM</value>
+  </data>
+  <data name="PositionCenterAttackingMidfielder" xml:space="preserve">
+    <value>Attacking midfielder</value>
+  </data>
+  <data name="PositionTypeWingBack" xml:space="preserve">
+    <value>Wing back</value>
+  </data>
+  <data name="PositionTypeSweeper" xml:space="preserve">
+    <value>Libero</value>
+  </data>
+  <data name="PositionTypeStriker" xml:space="preserve">
+    <value>Striker</value>
+  </data>
+  <data name="PositionTypeMidfielder" xml:space="preserve">
+    <value>Middle</value>
+  </data>
+  <data name="PositionTypeGoalKeeper" xml:space="preserve">
+    <value>Goal Keeper</value>
+  </data>
+  <data name="PositionTypeFullBack" xml:space="preserve">
+    <value>Backward</value>
+  </data>
+  <data name="PositionRightAttackingMidfielderAbbr" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="SendingStateUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="SendingStateFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="SendingStateSuccess" xml:space="preserve">
+    <value>Successful</value>
+  </data>
+  <data name="SendingStateInProgress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="SendingStateDraft" xml:space="preserve">
+    <value>Draft</value>
+  </data>
+  <data name="LateralityUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="PositionRightWingBackAbbr" xml:space="preserve">
+    <value>RWB</value>
+  </data>
+  <data name="PositionRightWingBack" xml:space="preserve">
+    <value>Right wing back</value>
+  </data>
+  <data name="PositionRightMidfielderAbbr" xml:space="preserve">
+    <value>RM</value>
+  </data>
+  <data name="PositionRightMidfielder" xml:space="preserve">
+    <value>Right midfielder</value>
+  </data>
+  <data name="InjuryTypeNeck" xml:space="preserve">
+    <value>Neck</value>
+  </data>
+  <data name="InjuryTypeRightAnkle" xml:space="preserve">
+    <value>Ankle right</value>
+  </data>
+  <data name="InjuryTypeOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="InjuryTypeLeftWrist" xml:space="preserve">
+    <value>Wrist left</value>
+  </data>
+  <data name="InjuryTypeLeftThigh" xml:space="preserve">
+    <value>Thigh left</value>
+  </data>
+  <data name="InjuryTypeLeftShoulder" xml:space="preserve">
+    <value>Left shoulder</value>
+  </data>
+  <data name="InjuryTypeLeftShin" xml:space="preserve">
+    <value>Left shin</value>
+  </data>
+  <data name="InjuryTypeLeftKnee" xml:space="preserve">
+    <value>Left Knee</value>
+  </data>
+  <data name="InjuryTypeLeftHand" xml:space="preserve">
+    <value>Left Hand</value>
+  </data>
+  <data name="InjuryTypeLeftFoot" xml:space="preserve">
+    <value>Left Foot</value>
+  </data>
+  <data name="PositionRightFullBackAbbr" xml:space="preserve">
+    <value>RB</value>
+  </data>
+  <data name="PositionRightFullBack" xml:space="preserve">
+    <value>Right full back</value>
+  </data>
+  <data name="ExerciceTypeExercice" xml:space="preserve">
+    <value>Exercice</value>
+  </data>
+  <data name="ExerciceTypeGame" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="ExerciceTypeOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="PositionCenterRightBackAbbr" xml:space="preserve">
+    <value>CB</value>
+  </data>
+  <data name="KnownTactic_532" xml:space="preserve">
+    <value>5-3-2</value>
+  </data>
+  <data name="KnownTactic_433Defensive" xml:space="preserve">
+    <value>4-3-3 Defensive</value>
+  </data>
+  <data name="KnownTactic_5221" xml:space="preserve">
+    <value>5-2-2-1</value>
+  </data>
+  <data name="GroundSand" xml:space="preserve">
+    <value>Sand</value>
+  </data>
+  <data name="GroundIndoor" xml:space="preserve">
+    <value>Indoor</value>
+  </data>
+  <data name="CompetitionTypeFriendly" xml:space="preserve">
+    <value>Friendly</value>
+  </data>
+  <data name="CompetitionTypeLeague" xml:space="preserve">
+    <value>League</value>
+  </data>
+  <data name="CompetitionTypeCup" xml:space="preserve">
+    <value>Cup</value>
+  </data>
+  <data name="GroundArtificialGrass" xml:space="preserve">
+    <value>Artificial grass</value>
+  </data>
+  <data name="GroundGrass" xml:space="preserve">
+    <value>Grass</value>
+  </data>
+  <data name="KnownTactic_523" xml:space="preserve">
+    <value>5-2-3</value>
+  </data>
+  <data name="KnownTactic_5212" xml:space="preserve">
+    <value>5-2-1-2</value>
+  </data>
+  <data name="KnownTactic_433Offensive" xml:space="preserve">
+    <value>4-3-3 Offensive</value>
+  </data>
+  <data name="KnownTactic_4321" xml:space="preserve">
+    <value>4-3-2-1</value>
+  </data>
+  <data name="KnownTactic_424" xml:space="preserve">
+    <value>4-2-4</value>
+  </data>
+  <data name="KnownTactic_4231" xml:space="preserve">
+    <value>4-2-3-1</value>
+  </data>
+  <data name="KnownTactic_4222" xml:space="preserve">
+    <value>4-2-2-2</value>
+  </data>
+  <data name="PositionRightForwardAbbr" xml:space="preserve">
+    <value>CF</value>
+  </data>
+  <data name="PositionCenterRightMidfielderAbbr" xml:space="preserve">
+    <value>CM</value>
+  </data>
+  <data name="ExerciceTypeSituation" xml:space="preserve">
+    <value>Situation</value>
+  </data>
+  <data name="ExerciceTypeWarmUp" xml:space="preserve">
+    <value>Warm Up</value>
+  </data>
+  <data name="PositionRatingInefficient" xml:space="preserve">
+    <value>Ineffective</value>
+  </data>
+  <data name="PositionLeftMidfielder" xml:space="preserve">
+    <value>Left midfielder</value>
+  </data>
+  <data name="InjurySeverityModerate" xml:space="preserve">
+    <value>Moderate</value>
+  </data>
+  <data name="MatchStateNone" xml:space="preserve">
+    <value>Incoming</value>
+  </data>
+  <data name="MatchStatePlayed" xml:space="preserve">
+    <value>Played</value>
+  </data>
+  <data name="MatchStatePostponed" xml:space="preserve">
+    <value>Postponed</value>
+  </data>
+  <data name="MatchStateInProgress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="InjurySeveritySevere" xml:space="preserve">
+    <value>Severe</value>
+  </data>
+  <data name="InjurySeveritySerious" xml:space="preserve">
+    <value>Serious</value>
+  </data>
+  <data name="InjuryCategoryMuscular" xml:space="preserve">
+    <value>Muscular</value>
+  </data>
+  <data name="MatchStateSuspended" xml:space="preserve">
+    <value>Suspended</value>
+  </data>
+  <data name="AttendancePresent" xml:space="preserve">
+    <value>Present</value>
+  </data>
+  <data name="AttendanceInSelection" xml:space="preserve">
+    <value>In Selection</value>
+  </data>
+  <data name="AttendanceInjured" xml:space="preserve">
+    <value>Injured</value>
+  </data>
+  <data name="AttendanceInHolidays" xml:space="preserve">
+    <value>In holidays</value>
+  </data>
+  <data name="AttendanceApology" xml:space="preserve">
+    <value>Apologized</value>
+  </data>
+  <data name="AttendanceAbsent" xml:space="preserve">
+    <value>Absent</value>
+  </data>
+  <data name="AttendanceUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="InjurySeverityMinor" xml:space="preserve">
+    <value>Minor</value>
+  </data>
+  <data name="LicenseStateUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="LicenseStateGiven" xml:space="preserve">
+    <value>Given</value>
+  </data>
+  <data name="LicenseStateBack" xml:space="preserve">
+    <value>Rendered</value>
+  </data>
+  <data name="InjuryCategoryFracture" xml:space="preserve">
+    <value>Fracture</value>
+  </data>
+  <data name="InjuryCategorySickness" xml:space="preserve">
+    <value>Sickness</value>
+  </data>
+  <data name="InjuryCategoryTrauma" xml:space="preserve">
+    <value>Trauma</value>
+  </data>
+  <data name="InjuryCategoryOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="InjuryCategoryLigament" xml:space="preserve">
+    <value>Ligament</value>
+  </data>
+  <data name="InjuryRightHand" xml:space="preserve">
+    <value>Right hand contusion</value>
+  </data>
+  <data name="InjuryRightFoot" xml:space="preserve">
+    <value>Right foot fracture</value>
+  </data>
+  <data name="LateralityLeftHander" xml:space="preserve">
+    <value>Left-handed</value>
+  </data>
+  <data name="LateralityRightHander" xml:space="preserve">
+    <value>Right-handed</value>
+  </data>
+  <data name="InjuryRightShin" xml:space="preserve">
+    <value>Right shin fracture</value>
+  </data>
+  <data name="InjuryRightThigh" xml:space="preserve">
+    <value>Tear in the right thigh</value>
+  </data>
+  <data name="InjuryRightCalf" xml:space="preserve">
+    <value>Elongation of the right calf</value>
+  </data>
+  <data name="InjuryStomach" xml:space="preserve">
+    <value>my nose hurts</value>
+  </data>
+  <data name="InjuryAdductors" xml:space="preserve">
+    <value>Pubalgia</value>
+  </data>
+  <data name="InjuryBack" xml:space="preserve">
+    <value>Back pain</value>
+  </data>
+  <data name="InjuryHead" xml:space="preserve">
+    <value>Bruise on the head</value>
+  </data>
+  <data name="InjuryLeftAnkle" xml:space="preserve">
+    <value>Sprained ankle</value>
+  </data>
+  <data name="InjuryLeftArm" xml:space="preserve">
+    <value>Left arm fracture</value>
+  </data>
+  <data name="InjuryLeftCalf" xml:space="preserve">
+    <value>Elongation of the left calf</value>
+  </data>
+  <data name="InjuryLeftElbow" xml:space="preserve">
+    <value>Left elbow fracture</value>
+  </data>
+  <data name="InjuryLeftFoot" xml:space="preserve">
+    <value>Left foot fracture</value>
+  </data>
+  <data name="InjuryLeftHand" xml:space="preserve">
+    <value>Contusion in the left hand</value>
+  </data>
+  <data name="InjuryLeftKnee" xml:space="preserve">
+    <value>Sprained left knee</value>
+  </data>
+  <data name="InjuryLeftShin" xml:space="preserve">
+    <value>Left shin fracture</value>
+  </data>
+  <data name="InjuryLeftShoulder" xml:space="preserve">
+    <value>Dislocated shoulder</value>
+  </data>
+  <data name="InjuryLeftThigh" xml:space="preserve">
+    <value>Tear in the left thigh</value>
+  </data>
+  <data name="InjuryLeftWrist" xml:space="preserve">
+    <value>Left wrist sprain</value>
+  </data>
+  <data name="InjuryNeck" xml:space="preserve">
+    <value>Neck pain</value>
+  </data>
+  <data name="InjuryOptionalPlural" xml:space="preserve">
+    <value>Injury(ies)</value>
+  </data>
+  <data name="InjuryRightAnkle" xml:space="preserve">
+    <value>Sprained ankle</value>
+  </data>
+  <data name="InjuryRightArm" xml:space="preserve">
+    <value>Right arm fracture</value>
+  </data>
+  <data name="InjuryRightElbow" xml:space="preserve">
+    <value>Fracture of the right elbow</value>
+  </data>
+  <data name="InjuryRightKnee" xml:space="preserve">
+    <value>Right knee sprain</value>
+  </data>
+  <data name="InjuryRightShoulder" xml:space="preserve">
+    <value>Dislocated shoulder</value>
+  </data>
+  <data name="InjuryRightWrist" xml:space="preserve">
+    <value>Right wrist sprain</value>
+  </data>
+  <data name="LicenseStatePaid" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="InjuryTorso" xml:space="preserve">
+    <value>Fractured ribs</value>
+  </data>
+  <data name="PositionTypeDefender" xml:space="preserve">
+    <value>Défender</value>
+  </data>
+  <data name="TournamentTypeCup" xml:space="preserve">
+    <value>Cup</value>
+  </data>
+  <data name="TournamentTypeLeague" xml:space="preserve">
+    <value>League</value>
+  </data>
+  <data name="InverseName" xml:space="preserve">
+    <value>Full name</value>
+  </data>
+</root>

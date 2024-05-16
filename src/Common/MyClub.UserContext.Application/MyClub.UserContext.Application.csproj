@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.UserContext.Domain\MyClub.UserContext.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

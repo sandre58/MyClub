@@ -1,0 +1,72 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionPage.FriendlyMatchesSpeedFiltersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionPage"
+             Width="350"
+             d:DataContext="{d:DesignInstance Type=vm:FriendlyMatchesSpeedFiltersViewModel}"
+             mc:Ignorable="d">
+
+    <my:SimpleStackPanel>
+
+        <!--  Teams  -->
+        <ContentControl Content="{Binding TeamFilter}" />
+
+        <!--  Date  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" my:HeaderAssist.Size="60" Header="{my:Resource ComplexComparableOperatorIsBetween}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <DatePicker Style="{StaticResource MyNet.Styles.DatePicker.Filled}"
+                            Width="120"
+                            my:TextFieldAssist.HasClearButton="True"
+                            SelectedDate="{Binding DateFilter.From}" />
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Disablable}" Text="{my:Resource And}" />
+                <DatePicker Style="{StaticResource MyNet.Styles.DatePicker.Filled}"
+                            Width="120"
+                            my:TextFieldAssist.HasClearButton="True"
+                            SelectedDate="{Binding DateFilter.To}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValuePath="DataContext" SelectionMode="Multiple">
+            <i:Interaction.Behaviors>
+                <my:ListBoxSelectionBehavior SelectedValues="{Binding StateFilter.Values}" />
+            </i:Interaction.Behaviors>
+            <ListBoxItem Width="82"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClock}"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.None}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         Content="{my:Resource MatchStateNone}"
+                         DataContext="{x:Static enums:MatchState.None}" />
+            <ListBoxItem Width="82"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressHelper}"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Information}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         Content="{my:Resource MatchStateInProgress}"
+                         DataContext="{x:Static enums:MatchState.InProgress}" />
+            <ListBoxItem Width="82"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressTick}"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Positive}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         Content="{my:Resource MatchStatePlayed}"
+                         DataContext="{x:Static enums:MatchState.Played}" />
+            <ListBoxItem Width="82"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressQuestion}"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Warning}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         Content="{my:Resource MatchStatePostponed}"
+                         DataContext="{x:Static enums:MatchState.Postponed}" />
+        </ListBox>
+    </my:SimpleStackPanel>
+</UserControl>

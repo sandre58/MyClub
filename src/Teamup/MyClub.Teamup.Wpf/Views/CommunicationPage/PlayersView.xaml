@@ -1,0 +1,88 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CommunicationPage.PlayersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CommunicationPage"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             d:DataContext="{d:DesignInstance Type=vm:PlayersViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="PlayersProxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <my:GhostControl GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Medium}" ShowGhost="{Binding Wrappers.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+        <TreeView ItemsSource="{Binding Wrappers}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <TreeView.Resources>
+                <HierarchicalDataTemplate DataType="{x:Type vm:PlayerEmailsWrapper}" ItemsSource="{Binding Emails}">
+                    <DockPanel>
+                        <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Player}"
+                                      Width="30"
+                                      Height="30"
+                                      Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                      HorizontalAlignment="Left"
+                                      Command="{Binding ToggleAllEmailsCommand}"
+                                      CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}"
+                                      Content="{Binding Item}"
+                                      DockPanel.Dock="Left"
+                                      IsChecked="{Binding IsSelected, Mode=OneWay}" />
+                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                            <ctrl:PlayerButton Margin="{StaticResource MyNet.Margins.Large.Right}"
+                                                   VerticalAlignment="Center"
+                                                   Item="{Binding Item}"
+                                                   Orientation="Horizontal" />
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                           Padding="0"
+                                           Text="{Binding SelectedEmails.Count}"
+                                           Visibility="{Binding SelectedEmails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                           Padding="0"
+                                           Text="/"
+                                           Visibility="{Binding SelectedEmails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Padding="0" Text="{my:Translation Emails.Count, Format=XMails, Plural=True}" />
+                            </StackPanel>
+                        </my:SimpleStackPanel>
+
+                    </DockPanel>
+                </HierarchicalDataTemplate>
+                <DataTemplate DataType="{x:Type vm:EmailWrapper}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox IsChecked="{Binding IsSelected}" />
+                        <my:PackIcon Grid.Column="2"
+                                     Width="20"
+                                     Height="20"
+                                     Kind="Check"
+                                     Visibility="{Binding Item.Default, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                        <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                       FontStyle="Italic"
+                                       Text="{Binding Item.Label}"
+                                       Visibility="{Binding Item.Label, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                            <TextBlock FontSize="11" Text="{Binding Item.Value}" />
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </TreeView.Resources>
+            <TreeView.ItemContainerStyle>
+                <Style BasedOn="{StaticResource {x:Type TreeViewItem}}" TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="my:TreeViewAssist.ShowSelection" Value="False" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=OneWay}" />
+                </Style>
+            </TreeView.ItemContainerStyle>
+        </TreeView>
+    </my:GhostControl>
+</UserControl>

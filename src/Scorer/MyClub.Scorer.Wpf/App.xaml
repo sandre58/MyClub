@@ -1,0 +1,39 @@
+﻿<Application x:Class="MyClub.Scorer.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--  It's only for autocompletion in Design Mode  -->
+                <my:SharedResourceDictionary DesignMode="True" Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+
+                <!--  Theme Styles  -->
+                <my:ThemeDictionary>
+                    <my:ThemeDictionary.ThemeResourcePatterns>
+                        <x:Array Type="{x:Type sys:String}">
+                            <sys:String>pack://application:,,,/Scorer;component/Styles/Themes/Theme.{0}.xaml</sys:String>
+                        </x:Array>
+                    </my:ThemeDictionary.ThemeResourcePatterns>
+                </my:ThemeDictionary>
+                <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf.LiveCharts;component/Themes/MyNet.Theme.xaml" />
+                <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf.Presentation;component/Themes/MyNet.Theme.xaml" />
+                <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Themes/Scorer.Theme.xaml" />
+
+                <!--  MyClub used styles  -->
+                <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Themes/Scorer.Styles.xaml" />
+                <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf.Presentation;component/Themes/MyNet.Styles.xaml" />
+                <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf.LiveCharts;component/Themes/MyNet.Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style BasedOn="{StaticResource MyNet.Styles.ApplicationIcon}" TargetType="{x:Type my:ApplicationIcon}">
+                <Setter Property="Text" Value="S" />
+                <Setter Property="Data" Value="{StaticResource Scorer.Geometries.Scorer}" />
+                <Setter Property="TextSize" Value="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.58}" />
+                <Setter Property="FontSize" Value="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static my:FontSizeConverter.Default}, ConverterParameter=0.5}" />
+                <Setter Property="IconSize" Value="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.98}" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

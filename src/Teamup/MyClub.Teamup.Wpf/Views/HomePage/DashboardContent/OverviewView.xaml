@@ -1,0 +1,102 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.HomePage.DashboardContent.OverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage.DashboardContent"
+             xmlns:v1="clr-namespace:MyClub.Teamup.Wpf.Views.MedicalCenterPage.OverviewTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent"
+             d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="ProxyOverview" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <my:DynamicScrollViewer>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="500" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" MinWidth="370" />
+            </Grid.ColumnDefinitions>
+
+            <!--  First Column  -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!--  Teams  -->
+                <v:OverviewTeamsView Grid.Row="0" />
+            </Grid>
+
+            <!--  Second Column  -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" MinHeight="250" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" MinHeight="250" />
+                </Grid.RowDefinitions>
+
+                <!--  Next Training  -->
+                <v:OverviewTrainingSessionView Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Accent}"
+                                               Grid.Row="0"
+                                               my:IconAssist.Icon="{my:MediumIcon Kind=PageNext}"
+                                               DataContext="{Binding NextTrainingSessionViewModel}"
+                                               Header="{my:Resource NextTraining}">
+                    <my:ToggleButtonAssist.OnContentTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource MyNet.Styles.Button.Text.Foreground}"
+                                    Width="300"
+                                    Height="Auto"
+                                    MinHeight="80"
+                                    HorizontalAlignment="Center"
+                                    HorizontalContentAlignment="Left"
+                                    Background="{my:BrushBinding SelfPath=Foreground,
+                                                                 Opacity={StaticResource MyNet.Opacity.Filled}}"
+                                    Command="{Binding Data.AddTrainingSessionCommand, Source={StaticResource ProxyOverview}}">
+                                <Grid>
+                                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=Plus, Size=50}">
+                                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                            <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource AddSession, Casing=AllCaps}" />
+                                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource AddSessionDescription}" TextWrapping="Wrap" />
+                                        </my:SimpleStackPanel>
+                                    </GroupBox>
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </my:ToggleButtonAssist.OnContentTemplate>
+                </v:OverviewTrainingSessionView>
+
+                <!--  Last Training  -->
+                <v:OverviewTrainingSessionView Grid.Row="2"
+                                               my:IconAssist.Icon="{my:MediumIcon Kind=PagePrevious}"
+                                               my:ToggleButtonAssist.OnContentTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Medium}"
+                                               DataContext="{Binding LastTrainingSessionViewModel}"
+                                               Header="{my:Resource LastTraining}" />
+            </Grid>
+
+            <!--  Third Column  -->
+            <Grid Grid.Column="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  Medical Center  -->
+                <v1:OverviewInjuriesView Grid.Row="0" my:GroupBoxAssist.Command="{Binding Data.NavigateToMedicalCenterCommand, Source={StaticResource ProxyOverview}}" DataContext="{Binding MedicalCenterViewModel}" />
+
+                <!--  Absences  -->
+                <v:OverviewAbsencesView Grid.Row="2" my:GroupBoxAssist.Command="{Binding Data.NavigateToRosterCommand, Source={StaticResource ProxyOverview}}" DataContext="{Binding AbsencesViewModel}" />
+            </Grid>
+        </Grid>
+    </my:DynamicScrollViewer>
+</UserControl>

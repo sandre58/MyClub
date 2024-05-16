@@ -1,0 +1,367 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.PlayerPage.PlayerPageOverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:h="clr-namespace:MyNet.Humanizer;assembly=MyNet.Humanizer"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.PlayerPage"
+             d:DataContext="{d:DesignInstance Type=vm:PlayerPageOverviewViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="Teamup.Styles.GroupBox.Label.Presences.Count" BasedOn="{StaticResource MyNet.Styles.GroupBox.Label.Custom}" TargetType="{x:Type GroupBox}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}}" Value="0">
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Column 1  -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="105" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="235" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Availability  -->
+            <GroupBox my:GroupBoxAssist.Command="{Binding ParentPage.GoToTabCommand}">
+                <GroupBox.Style>
+                    <Style BasedOn="{StaticResource MyNet.Styles.GroupBox.Elevation.Custom}" TargetType="{x:Type GroupBox}">
+                        <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                        <Setter Property="my:IconAssist.Icon" Value="{my:MediumIcon Kind=Check}" />
+                        <Setter Property="Header" Value="{my:Resource Available, Casing=AllCaps}" />
+                        <Setter Property="my:GroupBoxAssist.CommandParameter" Value="{x:Static tabs:PlayerPageTab.Injuries}" />
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <!--  Title  -->
+                                    <TextBlock FontWeight="DemiBold" Text="{my:Resource IsPresent, Casing=AllCaps}" />
+
+                                    <my:GhostControl Grid.Row="2"
+                                                     VerticalAlignment="Bottom"
+                                                     Ghost="{my:Resource NoExpectedAbsence}"
+                                                     ShowGhost="{Binding Item.NextAbsence, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean}"
+                                                  my:HeaderAssist.HorizontalAlignment="Left"
+                                                  my:HeaderAssist.Padding="0"
+                                                  FontStyle="Italic"
+                                                  Header="{my:Resource NextExpectedAbsence}">
+                                            <TextBlock Typography.Capitals="AllSmallCaps">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{x:Static my:DatesIntervalToStringConverter.Date}" ConverterParameter="{x:Static h:LetterCasing.Sentence}">
+                                                        <Binding Path="Item.NextAbsence.StartDate" />
+                                                        <Binding Source="{x:Static sys:DateTime.Today}" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </GroupBox>
+                                    </my:GhostControl>
+                                </Grid>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Item.IsAbsent}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter Property="Header" Value="{my:Resource Absent, Casing=AllCaps}" />
+                                <Setter Property="my:IconAssist.Icon" Value="{my:MediumIcon Kind=PersonOff}" />
+                                <Setter Property="my:GroupBoxAssist.CommandParameter" Value="{x:Static tabs:PlayerPageTab.Absences}" />
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="5" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+
+                                            <!--  Title  -->
+                                            <TextBlock FontWeight="DemiBold" Text="{my:Translation Item.Absence.Label, Casing=AllCaps}" />
+
+                                            <!--  Expected Return  -->
+                                            <my:GhostControl Grid.Row="2"
+                                                             VerticalAlignment="Bottom"
+                                                             Ghost="{my:Resource NoExpectedReturn}"
+                                                             ShowGhost="{Binding Item.Absence.EndDate, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                                                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean}"
+                                                          my:HeaderAssist.HorizontalAlignment="Left"
+                                                          my:HeaderAssist.Padding="0"
+                                                          FontStyle="Italic"
+                                                          Header="{my:Resource ExpectedReturn}">
+                                                    <TextBlock Typography.Capitals="AllSmallCaps">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding Converter="{x:Static my:DatesIntervalToStringConverter.Date}" ConverterParameter="{x:Static h:LetterCasing.Sentence}">
+                                                                <Binding Path="Item.Absence.EndDate" />
+                                                                <Binding Source="{x:Static sys:DateTime.Today}" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </GroupBox>
+                                            </my:GhostControl>
+                                        </Grid>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.IsInjured}" Value="True">
+                                <Setter Property="Header" Value="{my:Resource Injured, Casing=AllCaps}" />
+                                <Setter Property="my:IconAssist.Icon" Value="{my:MediumIcon Kind=Ambulance}" />
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="5" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+
+                                            <!--  Condition  -->
+                                            <TextBlock FontWeight="DemiBold" Text="{my:Translation Item.Injury.Condition, Casing=AllCaps}" />
+
+                                            <!--  Expected Return  -->
+                                            <my:GhostControl Grid.Row="2"
+                                                             VerticalAlignment="Bottom"
+                                                             Ghost="{my:Resource NoExpectedReturn}"
+                                                             ShowGhost="{Binding Item.Injury.EndDate, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                                                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean}"
+                                                          my:HeaderAssist.HorizontalAlignment="Left"
+                                                          my:HeaderAssist.Padding="0"
+                                                          FontStyle="Italic"
+                                                          Header="{my:Resource ExpectedReturn}">
+                                                    <TextBlock Typography.Capitals="AllSmallCaps">
+                                                        <TextBlock.Text>
+                                                            <MultiBinding Converter="{x:Static my:DatesIntervalToStringConverter.Date}" ConverterParameter="{x:Static h:LetterCasing.Sentence}">
+                                                                <Binding Path="Item.Injury.EndDate" />
+                                                                <Binding Source="{x:Static sys:DateTime.Today}" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </GroupBox>
+                                            </my:GhostControl>
+                                        </Grid>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:InjurySeverity.Severe}">
+                                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Severe}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:InjurySeverity.Minor}">
+                                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Minor}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:InjurySeverity.Moderate}">
+                                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Moderate}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:InjurySeverity.Serious}">
+                                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Serious}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </GroupBox.Style>
+            </GroupBox>
+
+            <!--  Trainings  -->
+            <GroupBox Grid.Row="2"
+                      VerticalAlignment="Top"
+                      my:GroupBoxAssist.Command="{Binding ParentPage.GoToTabCommand}"
+                      my:GroupBoxAssist.CommandParameter="{x:Static tabs:PlayerPageTab.Trainings}"
+                      my:IconAssist.Icon="{my:MediumIcon Data={StaticResource Teamup.Geometries.Training}}"
+                      Header="{my:Resource Training,
+                                           Casing=AllCaps}">
+                <my:GhostControl ShowGhost="{Binding Item.TrainingStatistics.PerformedAttendances.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <UniformGrid Columns="3">
+                            <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                                      Width="80"
+                                      HorizontalAlignment="Center"
+                                      Background="{DynamicResource MyNet.Brushes.Positive}"
+                                      Content="{Binding Item.TrainingStatistics.Presents.Count}"
+                                      Header="{my:Resource Presences}" />
+                            <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                                      Width="80"
+                                      HorizontalAlignment="Center"
+                                      Background="{DynamicResource MyNet.Brushes.Negative}"
+                                      Content="{Binding Item.TrainingStatistics.Absents.Count}"
+                                      Header="{my:Resource Absences}" />
+                            <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                                      Width="80"
+                                      HorizontalAlignment="Center"
+                                      Background="{DynamicResource MyNet.Brushes.Warning}"
+                                      Content="{Binding Item.TrainingStatistics.AllApologized.Count}"
+                                      Header="{my:Resource AllApologized}" />
+                        </UniformGrid>
+
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean}"
+                                  Grid.Row="2"
+                                  my:HeaderAssist.Capitals="AllSmallCaps"
+                                  Header="{my:Resource AverageRating}">
+                            <my:Gauge Style="{StaticResource Teamup.Styles.Gauge.Rating}"
+                                      Width="70"
+                                      Height="70"
+                                      GaugeBackground="{DynamicResource MyNet.Brushes.Control.Background.Secondary}"
+                                      HighFontSize="{StaticResource MyNet.Font.Size.Title}"
+                                      InnerRadius="34"
+                                      LabelFormatter="{x:Static my:ChartFormatters.ToValueWithoutZero}"
+                                      Value="{my:NotNullableBinding Item.TrainingStatistics.Ratings.Average}" />
+                        </GroupBox>
+                    </Grid>
+                </my:GhostControl>
+            </GroupBox>
+
+        </Grid>
+
+        <!--  Column 2  -->
+        <Grid Grid.Column="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Phones  -->
+            <GroupBox my:IconAssist.Icon="{my:MediumIcon Kind=CardAccountPhone}" Header="{my:Resource Phones, Casing=AllCaps}">
+                <my:GhostControl ShowGhost="{Binding Item.Phones.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                    <ItemsControl my:ItemsControlAssist.SortDirection="Descending" my:ItemsControlAssist.SortingProperty="Default" ItemsSource="{Binding Item.Phones}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Margin="{StaticResource MyNet.Margins.Medium.Bottom}">
+                                    <GroupBox.Header>
+                                        <my:PackIcon Width="25"
+                                                     Height="25"
+                                                     Kind="Check"
+                                                     ToolTip="{my:Resource Default}"
+                                                     Visibility="{Binding Default, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                    </GroupBox.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                                   FontStyle="Italic"
+                                                   Text="{Binding Label}"
+                                                   Visibility="{Binding Label, Converter={x:Static my:NullToVisibilityConverter.HiddenIfNull}}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="text" Text="{my:Translation Value, Format=PhoneFormat}" />
+                                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool.ClipBoard}" CommandParameter="{my:Translation Value, Format=PhoneFormat}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </my:GhostControl>
+            </GroupBox>
+
+            <!--  Emails  -->
+            <GroupBox Grid.Row="2" my:IconAssist.Icon="{my:MediumIcon Kind=CardAccountMail}" Header="{my:Resource Emails, Casing=AllCaps}">
+                <my:GhostControl ShowGhost="{Binding Item.Emails.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                    <ItemsControl my:ItemsControlAssist.SortDirection="Descending" my:ItemsControlAssist.SortingProperty="Default" ItemsSource="{Binding Item.Emails}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Margin="{StaticResource MyNet.Margins.Medium.Bottom}">
+                                    <GroupBox.Header>
+                                        <my:PackIcon Width="25"
+                                                     Height="25"
+                                                     Kind="Check"
+                                                     ToolTip="{my:Resource Default}"
+                                                     Visibility="{Binding Default, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                    </GroupBox.Header>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                                   FontStyle="Italic"
+                                                   Text="{Binding Label}"
+                                                   Visibility="{Binding Label, Converter={x:Static my:NullToVisibilityConverter.HiddenIfNull}}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="button"
+                                                    Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                                    MaxWidth="220"
+                                                    VerticalAlignment="Center"
+                                                    Command="{Binding DataContext.Item.OpenEmailInMailClientCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                    CommandParameter="{Binding Value}"
+                                                    Content="{Binding Value}"
+                                                    FontWeight="Normal"
+                                                    ToolTip="{Binding Value}" />
+                                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool.ClipBoard}" CommandParameter="{my:Translation Value}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </my:GhostControl>
+            </GroupBox>
+
+            <!--  Address  -->
+            <GroupBox Grid.Row="4" my:IconAssist.Icon="{my:MediumIcon Kind=HomeMapMarker}" Header="{my:Resource Address, Casing=AllCaps}">
+                <my:GhostControl VerticalContentAlignment="Center" Ghost="{my:Resource UnknownAddress}" ShowGhost="{Binding Item.Address, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Elevation.Custom}"
+                                Width="30"
+                                Height="30"
+                                Background="{DynamicResource MyNet.Brushes.Information}"
+                                Command="{Binding ShowGoogleMapCommand}"
+                                Content="{my:MediumIcon Kind=GoogleMaps}" />
+                        <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                Grid.Column="2"
+                                Command="{Binding Item.OpenGoogleMapsCommand}"
+                                FontWeight="Normal"
+                                ToolTip="{my:Resource OpenInGoogleMaps}">
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <TextBlock Text="{Binding Item.Address.Street}" />
+                                <TextBlock Text="{Binding Item.Address.PostalCode}" />
+                                <TextBlock Text="{Binding Item.Address.City, Converter={x:Static my:StringConverter.ToUpper}}" />
+                            </my:SimpleStackPanel>
+                        </Button>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool.ClipBoard}" Grid.Column="3" CommandParameter="{Binding Item.FullAddress}" />
+                    </Grid>
+                </my:GhostControl>
+
+            </GroupBox>
+
+            <!--  Description  -->
+            <GroupBox Grid.Row="6" my:IconAssist.Icon="{my:MediumIcon Kind=TextSubject}" Header="{my:Resource Description, Casing=AllCaps}">
+                <my:GhostControl VerticalAlignment="Top" ShowGhost="{Binding Item.Description, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                    <my:DynamicScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock VerticalAlignment="Stretch"
+                                   Text="{Binding Item.Description}"
+                                   TextAlignment="Justify"
+                                   TextWrapping="Wrap" />
+                    </my:DynamicScrollViewer>
+                </my:GhostControl>
+            </GroupBox>
+        </Grid>
+    </Grid>
+
+</UserControl>

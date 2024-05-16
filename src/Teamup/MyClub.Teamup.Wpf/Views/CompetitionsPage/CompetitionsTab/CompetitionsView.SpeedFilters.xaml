@@ -1,0 +1,45 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionsPage.CompetitionsTab.CompetitionsSpeedFiltersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionsPage.CompetitionsTab"
+             d:DataContext="{d:DesignInstance Type=vm:CompetitionsSpeedFiltersViewModel}"
+             Width="490"
+             mc:Ignorable="d">
+
+    <my:SimpleStackPanel>
+
+        <!--  Teams  -->
+        <ContentControl Content="{Binding TeamsFilter}" />
+
+        <!--  Name  -->
+        <TextBox Style="{StaticResource MyNet.Styles.TextBox.Filled}"
+                 HorizontalAlignment="Stretch"
+                 my:FocusAssist.IsDefault="True"
+                 my:HintAssist.Hint="{my:Resource Name}"
+                 my:HintAssist.IsFloating="True"
+                 my:TextFieldAssist.HasClearButton="True"
+                 Text="{Binding NameFilter.Value, UpdateSourceTrigger=PropertyChanged}" />
+
+        <my:SimpleStackPanel Orientation="Horizontal">
+            <!--  Type  -->
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                     ItemsSource="{Binding TypeFilter.AvailableValues}"
+                     SelectedValuePath="{Binding TypeFilter.SelectedValuePath}"
+                     SelectionMode="Multiple">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectionBehavior SelectedValues="{Binding TypeFilter.Values}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
+
+            <!--  IsCurrent  -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" my:HeaderAssist.HorizontalAlignment="Left" Header="{my:Resource IsCurrent}">
+                <ContentControl Content="{Binding IsCurrentFilter}" />
+            </GroupBox>
+        </my:SimpleStackPanel>
+
+    </my:SimpleStackPanel>
+</UserControl>

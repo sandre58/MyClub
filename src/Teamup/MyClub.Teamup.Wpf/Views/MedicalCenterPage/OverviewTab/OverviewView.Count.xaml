@@ -1,0 +1,231 @@
+﻿<GroupBox x:Class="MyClub.Teamup.Wpf.Views.MedicalCenterPage.OverviewTab.OverviewCountView"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+          xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:my="http://mynet.com/xaml/themes"
+          xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+          xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.OverviewTab"
+          Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+          d:DataContext="{d:DesignInstance Type=vm:OverviewCountViewModel}"
+          d:DesignHeight="450"
+          d:DesignWidth="800"
+          my:IconAssist.Icon="{my:MediumIcon Kind=Ambulance}"
+          Header="{my:Resource Injuries,
+                               Casing=AllCaps}"
+          mc:Ignorable="d">
+    <GroupBox.Resources>
+        <my:BindingProxy x:Key="CountProxy" Data="{Binding}" />
+        <sys:Double x:Key="MinItemSize">10</sys:Double>
+        <sys:Double x:Key="IncreaseItemSize">5</sys:Double>
+    </GroupBox.Resources>
+
+    <my:DynamicScrollViewer>
+        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.VeryLarge}">
+
+            <!--  Count  -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <!--  Count chart  -->
+                <Grid>
+
+                    <!--  Categories  -->
+                    <my:PieChart Width="200"
+                                  Height="200"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  DataTooltip="{x:Null}"
+                                  Hoverable="False"
+                                  InnerRadius="60"
+                                  LegendLocation="None">
+                        <my:PieChart.Series>
+                            <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Muscular}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Musculars}" />
+                            <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Fracture}"
+                                           Foreground="Black"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Fractures}" />
+                            <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Ligament}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Ligaments}" />
+                            <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Trauma}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Traumas}" />
+                            <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Sickness}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Sicknesses}" />
+                            <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource MyNet.Brushes.None}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Others}" />
+                        </my:PieChart.Series>
+                    </my:PieChart>
+
+                    <!--  Severity  -->
+                    <my:PieChart Width="124"
+                                  Height="124"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Hoverable="False"
+                                  InnerRadius="40"
+                                  LegendLocation="None">
+                        <my:PieChart.DataTooltip>
+                            <my:DefaultDataToolTip ShowHeader="False" />
+                        </my:PieChart.DataTooltip>
+                        <my:PieChart.Series>
+                            <my:PieSeries Title="{my:Resource InjurySeveritySevere}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Severe}"
+                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Severe}" />
+                            <my:PieSeries Title="{my:Resource InjurySeveritySerious}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Serious}"
+                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Serious}" />
+                            <my:PieSeries Title="{my:Resource InjurySeverityModerate}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Moderate}"
+                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Moderate}" />
+                            <my:PieSeries Title="{my:Resource InjurySeverityMinor}"
+                                           DataLabels="True"
+                                           Fill="{DynamicResource Teamup.Brushes.Injury.Minor}"
+                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                           Foreground="White"
+                                           LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                           Values="{Binding Minor}" />
+                        </my:PieChart.Series>
+                    </my:PieChart>
+                    <TextBlock HorizontalAlignment="Center" FontSize="34" Text="{Binding Count}" />
+
+                </Grid>
+
+                <!--  Count legend  -->
+                <my:SimpleStackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource Teamup.Brushes.Injury.Muscular}" Content="{my:Resource InjuryCategoryMuscular}" />
+                    <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource Teamup.Brushes.Injury.Fracture}" Content="{my:Resource InjuryCategoryFracture}" />
+                    <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource Teamup.Brushes.Injury.Ligament}" Content="{my:Resource InjuryCategoryLigament}" />
+                    <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource Teamup.Brushes.Injury.Trauma}" Content="{my:Resource InjuryCategoryTrauma}" />
+                    <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource Teamup.Brushes.Injury.Sickness}" Content="{my:Resource InjuryCategorySickness}" />
+                    <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource MyNet.Brushes.None}" Content="{my:Resource InjuryCategoryOther}" />
+                </my:SimpleStackPanel>
+            </Grid>
+
+            <!--  12 Last months  -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.SubCaption}" Header="{my:Resource OnLast12Months}">
+
+                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Default}">
+
+                    <!--  By Months  -->
+                    <my:CartesianChart Height="260"
+                                        Margin="{StaticResource MyNet.Margins.Large.Bottom}"
+                                        DataTooltip="{x:Null}"
+                                        Hoverable="False"
+                                        LegendLocation="None"
+                                        Zoom="None">
+                        <my:CartesianChart.AxisX>
+                            <my:Axis Labels="{Binding MonthLabels}"
+                                      LabelsRotation="0"
+                                      MaxValue="{Binding MonthLabels.Count, UpdateSourceTrigger=PropertyChanged}"
+                                      MinValue="0"
+                                      ShowLabels="True">
+                                <my:Axis.Separator>
+                                    <my:Separator Step="1" />
+                                </my:Axis.Separator>
+                            </my:Axis>
+                        </my:CartesianChart.AxisX>
+                        <my:CartesianChart.AxisY>
+                            <my:Axis MaxValue="{Binding MaxCountInjuriesByMonth}" MinValue="0" ShowLabels="True">
+                                <my:Axis.Separator>
+                                    <my:Separator Step="1" />
+                                </my:Axis.Separator>
+                            </my:Axis>
+                        </my:CartesianChart.AxisY>
+                        <my:CartesianChart.Series>
+                            <my:LineSeries Configuration="{Binding InjuriesByMonths.Mapper}"
+                                            DataLabels="False"
+                                            Fill="Transparent"
+                                            LineSmoothness="0"
+                                            PointGeometry="{x:Static my:DefaultGeometries.Diamond}"
+                                            PointGeometrySize="8"
+                                            Stroke="{DynamicResource MyNet.Brushes.Primary}"
+                                            StrokeThickness="2"
+                                            Values="{Binding InjuriesByMonths.Values}"
+                                            Visibility="{Binding InjuriesByMonths.IsVisible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        </my:CartesianChart.Series>
+                    </my:CartesianChart>
+
+                    <!--  By Types  -->
+                    <ctrl:InjurySelector Width="260" ItemsSource="{Binding InjuriesByTypes}">
+                        <ctrl:InjurySelector.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource Teamup.Styles.ListBoxItem.Injury}" TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="Canvas.Left" Value="{Binding Key, Converter={x:Static c:InjuryTypeToCanvasPositionConverter.Left}}" />
+                                <Setter Property="Canvas.Top" Value="{Binding Key, Converter={x:Static c:InjuryTypeToCanvasPositionConverter.Top}}" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                <Setter Property="Margin" Value="10 0 0 0" />
+                                <Setter Property="Height">
+                                    <Setter.Value>
+                                        <MultiBinding Converter="{x:Static my:MathConverter.Add}">
+                                            <Binding Source="{StaticResource MinItemSize}" />
+                                            <Binding Converter="{x:Static my:MathConverter.Multiply}" ConverterParameter="{StaticResource IncreaseItemSize}" Path="Value" />
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Width" Value="{Binding Height, RelativeSource={RelativeSource Self}}" />
+                                <Setter Property="Visibility" Value="{Binding Value, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                            </Style>
+                        </ctrl:InjurySelector.ItemContainerStyle>
+                        <ctrl:InjurySelector.ItemTemplate>
+                            <DataTemplate>
+                                <Grid x:Name="templateRoot" Background="Transparent" ToolTip="{my:Translation Key}">
+                                    <Ellipse x:Name="Ellipse2"
+                                             HorizontalAlignment="Stretch"
+                                             VerticalAlignment="Stretch"
+                                             Fill="{DynamicResource MyNet.Brushes.Negative}">
+                                        <Ellipse.Effect>
+                                            <BlurEffect KernelType="Gaussian" Radius="10" RenderingBias="Quality" />
+                                        </Ellipse.Effect>
+                                    </Ellipse>
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Text="{Binding Value}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ctrl:InjurySelector.ItemTemplate>
+                    </ctrl:InjurySelector>
+                </my:SimpleStackPanel>
+            </GroupBox>
+        </my:SimpleStackPanel>
+    </my:DynamicScrollViewer>
+</GroupBox>

@@ -1,0 +1,73 @@
+﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.Edition.SettingsEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+                  xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  Width="500"
+                  Height="320"
+                  d:DataContext="{d:DesignInstance Type=vm:SettingsEditionViewModel}"
+                  my:ViewModelAssist.AutoWire="True"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{Binding Title}"
+                  ShowCloseButton="True"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Key="F5" Command="{Binding Data.RefreshCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Refresh}" HorizontalAlignment="Right" Command="{Binding RefreshCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <DockPanel>
+
+        <!--  Warning  -->
+        <Label Style="{StaticResource MyNet.Styles.Label.Elevation.Custom}"
+               Margin="-10 -10 -10 10"
+               Padding="{StaticResource MyNet.Margins.Medium}"
+               HorizontalAlignment="Stretch"
+               HorizontalContentAlignment="Left"
+               my:ThemeAssist.UniformCornerRadius="0"
+               Background="{DynamicResource MyNet.Brushes.Warning}"
+               DockPanel.Dock="Top">
+            <Label.Visibility>
+                <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.OrCollapse}">
+                    <Binding Path="MustRestart" />
+                    <Binding Path="SavedAndMustRestart" />
+                </MultiBinding>
+            </Label.Visibility>
+            <DockPanel>
+                <my:PackIcon Width="25"
+                             Height="25"
+                             Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                             VerticalAlignment="Center"
+                             DockPanel.Dock="Left"
+                             Kind="WarningCircle" />
+                <TextBlock Text="{my:Resource RestartApplicationWarning}" TextWrapping="Wrap" />
+            </DockPanel>
+        </Label>
+
+        <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
+            <TabItem my:IconAssist.Icon="{my:Icon Kind=Web}" Header="{my:Resource Smtp}">
+                <v:SmtpSettingsEditionView DataContext="{Binding SmtpSettingsEditionViewModel}" />
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+
+</my:ContentDialog>

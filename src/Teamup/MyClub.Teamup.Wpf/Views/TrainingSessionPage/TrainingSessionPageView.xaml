@@ -1,0 +1,297 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingSessionPage.TrainingSessionPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingSessionPage"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingSessionPageViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             my:ViewModelAssist.AutoWire="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.Item.EditCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding Data.Item.DuplicateCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.Item.RemoveCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="E" Command="{Binding Data.Item.EditAttendancesCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="I" Command="{Binding Data.Item.InitializeAttendancesCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding Data.Item.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="110" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="33" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header Background  -->
+        <Border Grid.RowSpan="3"
+                Background="{Binding CurrentProject.Color, Converter={x:Static my:ColorToGradientBrushConverter.Lighten}}"
+                CornerRadius="15 0 0 0"
+                Effect="{StaticResource MyNet.Shadows.Elevation6}" />
+
+        <!--  Header  -->
+        <my:TransitioningContent Margin="{StaticResource MyNet.Margins.Medium}" Content="{Binding Item}" Foreground="{Binding CurrentProject.Color, Converter={x:Static my:BrushConverter.Contrast}}">
+            <my:TransitioningContent.ContentTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="315" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  First block  -->
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="10" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Item selection  -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Filled.Foreground.SemiTransparent}"
+                                                   Grid.RowSpan="2"
+                                                   Grid.Column="0"
+                                                   HorizontalAlignment="Stretch"
+                                                   VerticalAlignment="Stretch"
+                                                   HorizontalContentAlignment="Stretch"
+                                                   PopupPadding="0"
+                                                   ToggleContent="{Binding}">
+                                    <my:DropDownButton.ToggleContentTemplate>
+                                        <DataTemplate>
+                                            <my:SimpleStackPanel x:Name="panel" Orientation="Horizontal">
+
+                                                <!--  Date  -->
+                                                <ContentControl x:Name="date"
+                                                                Style="{StaticResource Teamup.Styles.ContentControl.Date.Foreground}"
+                                                                Content="{Binding StartDate}"
+                                                                FontSize="40" />
+
+                                                <!--  Time  -->
+                                                <my:SimpleStackPanel>
+                                                    <ContentControl x:Name="time1"
+                                                                    Style="{StaticResource Teamup.Styles.ContentControl.Time.Foreground}"
+                                                                    Content="{Binding StartDate}"
+                                                                    FontSize="15" />
+                                                    <ContentControl x:Name="time2"
+                                                                    Style="{StaticResource Teamup.Styles.ContentControl.Time.Foreground}"
+                                                                    Content="{Binding EndDate}"
+                                                                    FontSize="15" />
+                                                </my:SimpleStackPanel>
+
+                                                <my:PackIcon x:Name="iconCancelled"
+                                                             Width="40"
+                                                             Height="40"
+                                                             HorizontalAlignment="Center"
+                                                             Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                                             Kind="Cancel"
+                                                             ToolTip="{my:Resource IsCancelled}"
+                                                             Visibility="Collapsed" />
+
+                                                <my:PackIcon x:Name="iconPerformed"
+                                                             Width="40"
+                                                             Height="40"
+                                                             HorizontalAlignment="Center"
+                                                             Foreground="{DynamicResource MyNet.Brushes.Positive}"
+                                                             Kind="Check"
+                                                             ToolTip="{my:Resource Performed}"
+                                                             Visibility="Collapsed" />
+
+                                            </my:SimpleStackPanel>
+
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                                                    <Setter TargetName="date" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                    <Setter TargetName="time1" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                    <Setter TargetName="time2" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                    <Setter TargetName="iconCancelled" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+
+                                                <DataTrigger Binding="{Binding IsPerformed}" Value="True">
+                                                    <Setter TargetName="iconPerformed" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </my:DropDownButton.ToggleContentTemplate>
+                                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Embedded.Popup.OtherItems}" ItemsSource="{Binding Data.OtherItems, Source={StaticResource Proxy}}" Tag="{Binding Data, Source={StaticResource Proxy}}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="50" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Label x:Name="Ellipse"
+                                                           Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                                           Width="37"
+                                                           Height="37"
+                                                           HorizontalAlignment="Center"
+                                                           Background="{DynamicResource MyNet.Brushes.None}"
+                                                           ToolTip="{my:Translation StartDate,
+                                                                                    Format=LongDatePattern}">
+                                                        <StackPanel HorizontalAlignment="Center">
+                                                            <TextBlock HorizontalAlignment="Center" Text="{my:Translation StartDate, Format=DateDayNumberFormat}" />
+                                                            <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=DateShortMonthFormat}" />
+                                                        </StackPanel>
+                                                    </Label>
+                                                    <my:SimpleStackPanel Grid.Column="1" Spacing="{StaticResource MyNet.Margin.Small}">
+                                                        <TextBlock Text="{my:Translation StartDate, Casing=Title, Format=LongDatePattern}" TextWrapping="NoWrap" />
+                                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Theme}" TextWrapping="NoWrap" />
+                                                    </my:SimpleStackPanel>
+                                                </Grid>
+
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                                                        <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsPerformed}" Value="True">
+                                                        <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </my:DropDownButton>
+
+                                <!--  Navigation buttons  -->
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                        Grid.Row="0"
+                                        Grid.Column="2"
+                                        Command="{Binding Data.NavigateToPreviousItemCommand, Source={StaticResource Proxy}}"
+                                        Content="{my:MediumIcon Kind=ChevronUp}"
+                                        ToolTip="{my:Translation Data.PreviousItem.StartDate,
+                                                                 Format=LongDatePattern,
+                                                                 Source={StaticResource Proxy}}" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                        Grid.Row="1"
+                                        Grid.Column="2"
+                                        Command="{Binding Data.NavigateToNextItemCommand, Source={StaticResource Proxy}}"
+                                        Content="{my:MediumIcon Kind=ChevronDown}"
+                                        ToolTip="{my:Translation Data.NextItem.StartDate,
+                                                                 Format=LongDatePattern,
+                                                                 Source={StaticResource Proxy}}" />
+                            </Grid>
+
+                            <!--  Place  -->
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}"
+                                      Grid.Row="2"
+                                      my:HeaderAssist.Size="30"
+                                      my:IconAssist.Icon="{my:ToolIcon Kind=Place}">
+                                <my:GhostControl VerticalAlignment="Center"
+                                                 Content="{Binding Place}"
+                                                 Ghost="{my:Resource UnknownPlace}"
+                                                 ShowGhost="{Binding Place, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" />
+                            </GroupBox>
+                        </Grid>
+
+                        <!--  Second block  -->
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="10" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Teams  -->
+                            <ItemsControl ItemsSource="{Binding Teams}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <my:SimpleStackPanel IsItemsHost="True" Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label Style="{StaticResource MyNet.Styles.Label.Elevation.Foreground}" Content="{Binding}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!--  Theme  -->
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                       Grid.Row="2"
+                                       FontWeight="Bold"
+                                       Opacity="{StaticResource MyNet.Opacity.Default}"
+                                       Text="{my:Translation Theme}"
+                                       TextWrapping="NoWrap" />
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </my:TransitioningContent.ContentTemplate>
+        </my:TransitioningContent>
+
+        <!--  Tabs  -->
+        <my:NavigationView Style="{StaticResource Teamup.Styles.NavigationView.Top.Secondary}"
+                           Grid.Row="2"
+                           Grid.RowSpan="2"
+                           my:ThemeAssist.IsCheckedBorderBrush="{Binding CurrentProject.Color, Converter={x:Static my:BrushConverter.Contrast}}"
+                           HeaderForeground="{Binding CurrentProject.Color, Converter={x:Static my:BrushConverter.Contrast}}"
+                           NavigationService="{Binding NavigationService}">
+            <my:NavigationView.PaneFooter>
+                <my:SimpleStackPanel Margin="0 -10 10 0"
+                                     Orientation="Horizontal"
+                                     Spacing="{StaticResource MyNet.Margin.Default}"
+                                     TextElement.Foreground="{Binding CurrentProject.Color, Converter={x:Static my:BrushConverter.Contrast}}">
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=Edit}"
+                            Command="{Binding Item.EditCommand}"
+                            Content="{my:Resource Edit}"
+                            ToolTip="Ctrl+E" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=ContentDuplicate}"
+                            Command="{Binding Item.DuplicateCommand}"
+                            Content="{my:Resource Duplicate}"
+                            ToolTip="Ctrl+D" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=AccountMultipleCheck}"
+                            Command="{Binding Item.InitializeAttendancesCommand}"
+                            Content="{my:Resource InitializeAttendances}"
+                            ToolTip="Ctrl+I"
+                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=AccountMultipleAdd}"
+                            Command="{Binding Item.EditAttendancesCommand}"
+                            Content="{my:Resource EditAttendances}"
+                            ToolTip="Ctrl+Maj+E"
+                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=Cancel}"
+                            Command="{Binding Item.CancelCommand}"
+                            Content="{my:Resource Cancel}"
+                            ToolTip="Ctrl+R"
+                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding Item.RemoveCommand}" />
+                </my:SimpleStackPanel>
+            </my:NavigationView.PaneFooter>
+            <my:NavigationViewItem Header="{my:Resource Overview}" Icon="{my:Icon Kind=ViewDashboard}" TargetPage="{Binding OverviewViewModel}" />
+            <my:NavigationViewItem Header="{my:Resource Presences}"
+                                   Icon="{my:Icon Kind=UserCheck}"
+                                   TargetPage="{Binding AttendancesViewModel}"
+                                   Visibility="{Binding Item.IsCancelled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+        </my:NavigationView>
+
+    </Grid>
+</UserControl>

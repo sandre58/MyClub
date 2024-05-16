@@ -1,0 +1,241 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.MedicalCenterPage.StatisticsTab.InjuriesStatisticsInjuriesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.MedicalCenterPage.InjuriesTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.StatisticsTab"
+             d:DataContext="{d:DesignInstance Type=vm:InjuriesStatisticsInjuriesViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+        <sys:Double x:Key="MinItemSize">20</sys:Double>
+        <sys:Double x:Key="IncreaseItemSize">7</sys:Double>
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding ParentPage.InjuriesViewModel}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count}" />
+                    <my:ExtendedFiltersView DataContext="{Binding ParentPage.InjuriesViewModel.Filters}" DropDownHeight="400">
+                        <my:ExtendedFiltersView.SpeedFilters>
+                            <v:InjuriesSpeedFiltersView />
+                        </my:ExtendedFiltersView.SpeedFilters>
+                    </my:ExtendedFiltersView>
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+        </my:CommandsBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ctrl:InjurySelector ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" SelectedValuePath="{x:Null}">
+                <ctrl:InjurySelector.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource Teamup.Styles.ListBoxItem.Injury}" TargetType="{x:Type ListBoxItem}">
+                        <Setter Property="Canvas.Left" Value="{Binding Item, Converter={x:Static c:InjuryTypeToCanvasPositionConverter.Left}}" />
+                        <Setter Property="Canvas.Top" Value="{Binding Item, Converter={x:Static c:InjuryTypeToCanvasPositionConverter.Top}}" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                        <Setter Property="HorizontalAlignment" Value="Center" />
+                        <Setter Property="Cursor" Value="Hand" />
+                        <Setter Property="Margin" Value="10 0 0 0" />
+                        <Setter Property="Height">
+                            <Setter.Value>
+                                <MultiBinding Converter="{x:Static my:MathConverter.Add}">
+                                    <Binding Source="{StaticResource MinItemSize}" />
+                                    <Binding Converter="{x:Static my:MathConverter.Multiply}" ConverterParameter="{StaticResource IncreaseItemSize}" Path="Injuries.Count" />
+                                </MultiBinding>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="Width" Value="{Binding Height, RelativeSource={RelativeSource Self}}" />
+                        <Setter Property="Visibility" Value="{Binding Injuries.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                    </Style>
+                </ctrl:InjurySelector.ItemContainerStyle>
+                <ctrl:InjurySelector.ItemTemplate>
+                    <DataTemplate>
+                        <Grid x:Name="templateRoot" Background="Transparent" ToolTip="{my:Translation Item}">
+                            <Ellipse x:Name="Ellipse2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <Ellipse.Effect>
+                                    <BlurEffect KernelType="Gaussian" Radius="10" RenderingBias="Quality" />
+                                </Ellipse.Effect>
+                            </Ellipse>
+                            <TextBlock HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource MyNet.Brushes.White}"
+                                       Text="{Binding Injuries.Count}" />
+                        </Grid>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Severe}">
+                                <Setter TargetName="Ellipse2" Property="Fill" Value="{DynamicResource Teamup.Brushes.Injury.Severe}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Minor}">
+                                <Setter TargetName="Ellipse2" Property="Fill" Value="{DynamicResource Teamup.Brushes.Injury.Minor}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Moderate}">
+                                <Setter TargetName="Ellipse2" Property="Fill" Value="{DynamicResource Teamup.Brushes.Injury.Moderate}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Serious}">
+                                <Setter TargetName="Ellipse2" Property="Fill" Value="{DynamicResource Teamup.Brushes.Injury.Serious}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                <Setter TargetName="Ellipse2" Property="Effect">
+                                    <Setter.Value>
+                                        <BlurEffect KernelType="Gaussian" Radius="6" RenderingBias="Quality" />
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                <Setter TargetName="Ellipse2" Property="Stroke" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                <Setter TargetName="Ellipse2" Property="StrokeThickness" Value="2" />
+                                <Setter TargetName="Ellipse2" Property="Effect">
+                                    <Setter.Value>
+                                        <BlurEffect KernelType="Gaussian" Radius="0" RenderingBias="Quality" />
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ctrl:InjurySelector.ItemTemplate>
+            </ctrl:InjurySelector>
+
+            <GroupBox Grid.Column="2"
+                      my:IconAssist.Icon="{my:MediumIcon Kind=FormatListBulleted}"
+                      Header="{my:Translation SelectedItem.Item}"
+                      ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                <my:GhostControl ShowGhost="{Binding SelectedItem, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                    <my:GhostControl.GhostTemplate>
+                        <DataTemplate>
+                            <my:SimpleStackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <my:PackIcon Width="100"
+                                             Height="100"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Kind="CheckboxBlankOffOutline"
+                                             Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                           HorizontalAlignment="Center"
+                                           Text="{my:Resource PleaseSelectItem}"
+                                           TextAlignment="Center" />
+                            </my:SimpleStackPanel>
+                        </DataTemplate>
+                    </my:GhostControl.GhostTemplate>
+                    <ListView my:ListBoxItemAssist.ShowSelection="False" my:ListViewAssist.ItemMinHeight="50" ItemsSource="{Binding SelectedItem.Injuries}">
+                        <ListView.View>
+                            <GridView>
+                                <GridView.Columns>
+
+
+                                    <!--  Date  -->
+                                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Date" my:GridViewColumnAssist.Width="2*" Header="{my:Resource Date}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{my:Translation Date, Format=ShortDatePattern}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+
+                                    <!--  Name  -->
+                                    <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                                    my:GridViewColumnAssist.PropertyName="Player"
+                                                    my:GridViewColumnAssist.Width="3*"
+                                                    Header="{my:Resource LastName}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                                    <ctrl:PlayerButton Command="{Binding OpenCommand}"
+                                                                       CommandParameter="{Binding}"
+                                                                       Item="{Binding Player}"
+                                                                       Orientation="Horizontal" />
+                                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Player.Team.Name}" Visibility="{Binding Player.Team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                                </my:SimpleStackPanel>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+
+                                    <!--  Severity  -->
+                                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Severity" my:GridViewColumnAssist.Width="*" Header="{my:Resource Severity}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <my:PackIcon x:Name="icon"
+                                                             Width="30"
+                                                             Height="30"
+                                                             HorizontalAlignment="Center" />
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Serious}">
+                                                        <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Injury.Serious}" />
+                                                        <Setter TargetName="icon" Property="ToolTip" Value="{my:Resource InjurySeveritySerious}" />
+                                                        <Setter TargetName="icon" Property="Kind" Value="Injection" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Moderate}">
+                                                        <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Injury.Moderate}" />
+                                                        <Setter TargetName="icon" Property="ToolTip" Value="{my:Resource InjurySeverityModerate}" />
+                                                        <Setter TargetName="icon" Property="Kind" Value="Sleep" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Minor}">
+                                                        <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Injury.Minor}" />
+                                                        <Setter TargetName="icon" Property="ToolTip" Value="{my:Resource InjurySeverityMinor}" />
+                                                        <Setter TargetName="icon" Property="Kind" Value="BatteryAlert" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Severe}">
+                                                        <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Injury.Severe}" />
+                                                        <Setter TargetName="icon" Property="ToolTip" Value="{my:Resource InjurySeveritySevere}" />
+                                                        <Setter TargetName="icon" Property="Kind" Value="Ambulance" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+
+                                    <!--  Condition  -->
+                                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Condition" my:GridViewColumnAssist.Width="5*" Header="{my:Resource Condition}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                                        HorizontalAlignment="Left"
+                                                        Command="{Binding OpenCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding Condition}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+
+                                    <!--  ExpectedReturn  -->
+                                    <GridViewColumn my:GridViewColumnAssist.PropertyName="ExpectedReturn" my:GridViewColumnAssist.Width="2*" Header="{my:Resource ExpectedReturn}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <TextBlock Text="{my:Translation EndDate, Format=ShortDatePattern}" TextWrapping="NoWrap" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+                                </GridView.Columns>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </my:GhostControl>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</UserControl>

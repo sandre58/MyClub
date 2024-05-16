@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.PastPositionsPage.PastPositionsToolTipView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.PastPositionsPage"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <StackPanel>
+        <Border Padding="{StaticResource MyNet.Margins.Default}"
+                Background="{DynamicResource MyNet.Brushes.Control.Background.Inverse}"
+                CornerRadius="{StaticResource MyNet.CornerRadius.Container}"
+                TextElement.Foreground="{my:BrushBinding SelfPath=Background,
+                                                         Contrast=True}">
+            <Grid>
+                <ctrl:MatchControl Width="300"
+                                   EnableContextMenu="False"
+                                   Match="{Binding Match, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:PastPositionsToolTipView}}}"
+                                   Visibility="{Binding Match, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:PastPositionsToolTipView}}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Text="{my:Resource Exempt}" Visibility="{Binding Match, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type v:PastPositionsToolTipView}}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+            </Grid>
+        </Border>
+    </StackPanel>
+</UserControl>

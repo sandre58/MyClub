@@ -1,0 +1,66 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.UserEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  d:DataContext="{d:DesignInstance Type=vm:UserEditionViewModel}"
+                  d:DesignHeight="420"
+                  d:DesignWidth="800"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{Binding Title}"
+                  ShowCloseButton="True"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Key="F5" Command="{Binding Data.RefreshCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Refresh}" HorizontalAlignment="Right" Command="{Binding RefreshCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{DynamicResource MyNet.Margin.VeryLarge}">
+
+        <my:SimpleStackPanel>
+            <!--  Display name From  -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Eye}">
+                <TextBox my:HintAssist.Hint="{my:Resource DisplayName}" Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+            </GroupBox>
+
+            <!--  Address From  -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=At}">
+                <TextBox my:HintAssist.Hint="{my:Resource MailAddress}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+            </GroupBox>
+        </my:SimpleStackPanel>
+
+        <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+                        Width="100"
+                        Height="100"
+                        Margin="{StaticResource MyNet.Margins.Large.Horizontal}"
+                        VerticalAlignment="Center"
+                        SelectedImage="{Binding Image, Converter={x:Static my:BytesToImageConverter.Default}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+            <my:IconAssist.Icon>
+                <my:GeometryIcon Width="100"
+                                 Height="100"
+                                 Margin="0 0 0 -28"
+                                 Data="{StaticResource MyNet.Geometries.Male}"
+                                 Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+            </my:IconAssist.Icon>
+        </my:ImagePicker>
+
+    </my:SimpleStackPanel>
+</my:ContentDialog>

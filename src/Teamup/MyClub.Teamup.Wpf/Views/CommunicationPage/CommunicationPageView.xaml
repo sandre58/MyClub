@@ -1,0 +1,113 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CommunicationPage.CommunicationPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:m="http://myclub.net/winfx/xaml/themes"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CommunicationPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CommunicationPage"
+             d:DataContext="{d:DesignInstance Type=vm:CommunicationPageViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             my:ViewModelAssist.AutoWire="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding Data.SaveAsDraftCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding Data.ResetAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="M" Command="{Binding Data.OpenMailClientCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="M" Command="{Binding Data.SendMailCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="H" Command="{Binding Data.ToggleHistoryCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.PlayersViewModel.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.PlayersViewModel.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:DrawerHost my:FocusAssist.SetFocus="{Binding ShowHistory}"
+                   Focusable="False"
+                   IsRightDrawerOpen="{Binding ShowHistory}"
+                   OpenMode="Standard"
+                   RightDrawerBackground="{DynamicResource MyNet.Brushes.Control.Background}"
+                   RightDrawerCloseOnClickAway="False">
+        <my:DrawerHost.RightDrawerContent>
+            <v:HistoryView Width="370" DataContext="{Binding Data.HistoryViewModel, Source={StaticResource Proxy}}" />
+        </my:DrawerHost.RightDrawerContent>
+
+        <DockPanel Margin="{StaticResource MyNet.Margins.Medium}">
+
+            <!--  ToolBar  -->
+            <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+                <my:CommandsBar.LeftCommands>
+                    <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                        <Button my:IconAssist.Icon="{my:ToolIcon Kind=ContentSave}"
+                                Command="{Binding SaveAsDraftCommand}"
+                                Content="{my:Resource Save}"
+                                ToolTip="Ctrl+D" />
+                        <Button my:IconAssist.Icon="{my:ToolIcon Kind=Restore}"
+                                Command="{Binding ResetAsyncCommand}"
+                                Content="{my:Resource Reset}"
+                                ToolTip="Ctrl+R" />
+                    </ToolBar>
+                </my:CommandsBar.LeftCommands>
+
+                <my:CommandsBar.RightCommands>
+                    <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                        <ContentControl Content="{Binding PlayersViewModel}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count.Selectable.DropDownButton}" />
+                        <my:FiltersDropDownView DataContext="{Binding PlayersViewModel.Filters}">
+                            <my:FiltersDropDownView.PopupContentTemplate>
+                                <DataTemplate>
+                                    <v:PlayersSpeedFiltersView />
+                                </DataTemplate>
+                            </my:FiltersDropDownView.PopupContentTemplate>
+                        </my:FiltersDropDownView>
+                        <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" />
+                        <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                      my:IconAssist.Icon="{my:ToolIcon Kind=History}"
+                                      Content="{my:Resource ShowHistory}"
+                                      ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                      IsChecked="{Binding ShowHistory}"
+                                      ToolTip="Ctrl+H" />
+                    </ToolBar>
+                </my:CommandsBar.RightCommands>
+
+                <my:SelectionCommandsBar SelectedCount="{Binding PlayersViewModel.SelectedWrappers.Count}" UnselectAllCommand="{Binding PlayersViewModel.ClearSelectionCommand}">
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                            my:IconAssist.Icon="{my:Icon Kind=Send}"
+                            Command="{Binding SendMailCommand}"
+                            Content="{my:Resource Send}"
+                            ToolTip="Ctrl+M" />
+                    <Button my:IconAssist.Icon="{my:Icon Kind=ContactMail}"
+                            Command="{Binding OpenMailClientCommand}"
+                            Content="{my:Resource OpenMailClient}"
+                            ToolTip="Ctrl+Shift+M" />
+                </my:SelectionCommandsBar>
+
+            </my:CommandsBar>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Players  -->
+                <my:Card Width="300">
+                    <v:PlayersView DataContext="{Binding PlayersViewModel}" />
+                </my:Card>
+
+                <!--  Email  -->
+                <v:EmailView Grid.Column="2" MinWidth="300" DataContext="{Binding EmailViewModel}" />
+            </Grid>
+
+        </DockPanel>
+    </my:DrawerHost>
+</UserControl>

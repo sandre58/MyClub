@@ -1,0 +1,217 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingPage.StatisticsTab.TrainingStatisticsPerformancesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="clr-namespace:MyClub.Teamup.Domain.TrainingAggregate;assembly=MyClub.Teamup.Domain"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingPage.SessionsTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingPage.StatisticsTab"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingStatisticsPerformancesViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="F" Command="{Binding Data.ParentPage.SessionsViewModel.ShowFiltersCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="F" Command="{Binding Data.ParentPage.SessionsViewModel.Filters.ClearCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Alt" Key="F" Command="{Binding Data.ParentPage.SessionsViewModel.Filters.ResetCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding ParentPage.SessionsViewModel}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count}" />
+                    <my:FiltersDropDownView DataContext="{Binding ParentPage.SessionsViewModel.Filters}">
+                        <my:FiltersDropDownView.PopupContentTemplate>
+                            <DataTemplate>
+                                <v:TrainingSessionsSpeedFiltersView />
+                            </DataTemplate>
+                        </my:FiltersDropDownView.PopupContentTemplate>
+                    </my:FiltersDropDownView>
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+            <!--  Content  -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption.Left}" HorizontalAlignment="Right" Header="{my:Resource Show}">
+                <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:Icon Kind=Beach}"
+                                  Content="{my:Resource Holidays}"
+                                  ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                  IsChecked="{Binding ShowHolidaysSections}" />
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:Icon Kind=HorizontalLine}"
+                                  Content="{my:Resource Average}"
+                                  ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                  IsChecked="{Binding ShowAverageSection}" />
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:Icon Kind=ChartTimelineVariant}"
+                                  Content="{my:Resource Averages}"
+                                  ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                  IsChecked="{Binding ShowAverageSerie}" />
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:Icon Kind=UserGroup}"
+                                  Content="{my:Resource OnlyMyPlayers}"
+                                  ContentTemplate="{StaticResource MyNet.DataTemplates.Icon}"
+                                  IsChecked="{Binding Filters.OnlyMyPlayers}" />
+                </my:SimpleStackPanel>
+            </GroupBox>
+
+        </my:CommandsBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <my:Card Padding="0">
+                <my:ContentExpander x:Name="Expander" Style="{StaticResource MyNet.Styles.ContentExpander.Horizontal.Alternate}">
+                    <ListBox Style="{StaticResource Teamup.Styles.ListBox.Embedded.Expander}" ItemsSource="{Binding Items}" SelectionMode="Multiple">
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource Teamup.Styles.ListBoxItem.Embedded.Expander}" TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{Binding Serie.Stroke}" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding Serie.Stroke, Contrast=True}" />
+                                <Setter Property="IsSelected" Value="{Binding IsVisible}" />
+                                <Setter Property="IsEnabled" Value="True" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="50" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.SmallMedium}"
+                                                       HorizontalAlignment="Center"
+                                                       DataContext="{Binding Item.Player}"
+                                                       ToolTip="{Binding FullName}" />
+                                    <my:SimpleStackPanel Grid.Column="1" Spacing="{StaticResource MyNet.Margin.Small}">
+                                        <ctrl:PlayerButton CommandParameter="{x:Static tabs:PlayerPageTab.Trainings}" Item="{Binding Item.Player}" Orientation="Horizontal" />
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Item.Player.Team.Name}" TextWrapping="NoWrap" />
+                                    </my:SimpleStackPanel>
+                                    <my:Card x:Name="card"
+                                             Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                                             Grid.Column="2"
+                                             Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                             Padding="5 2"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Center"
+                                             Content="{Binding Item.Ratings.Average, StringFormat='{}{0}ddd'}"
+                                             ContentStringFormat="F2" />
+                                </Grid>
+
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Item.Ratings.Average, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max10}}" Value="True">
+                                        <Setter TargetName="card" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.8To10}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Item.Ratings.Average, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max8}}" Value="True">
+                                        <Setter TargetName="card" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.6To8}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Item.Ratings.Average, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max6}}" Value="True">
+                                        <Setter TargetName="card" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.45To6}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Item.Ratings.Average, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max45}}" Value="True">
+                                        <Setter TargetName="card" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.35To45}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Item.Ratings.Average, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max35}}" Value="True">
+                                        <Setter TargetName="card" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.2To35}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Item.Ratings.Average, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max2}}" Value="True">
+                                        <Setter TargetName="card" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.0To2}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </my:ContentExpander>
+            </my:Card>
+
+            <my:GhostControl Grid.Column="2" GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}">
+                <my:GhostControl.ShowGhost>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.Or}">
+                        <Binding Converter="{x:Static my:ComparaisonToBooleanConverter.IsLessThan}" ConverterParameter="1" Path="Items.Count" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.NotAny}" Path="AxeXLabels.Count" />
+                    </MultiBinding>
+                </my:GhostControl.ShowGhost>
+
+                <my:CartesianChart Hoverable="False"
+                                   LegendLocation="None"
+                                   Series="{Binding Series}"
+                                   Zoom="None">
+                    <my:CartesianChart.AxisX>
+                        <my:Axis Labels="{Binding AxeXLabels}"
+                                 LabelsRotation="75"
+                                 MaxValue="{Binding AxeXLabels.Count, UpdateSourceTrigger=PropertyChanged}"
+                                 MinValue="0"
+                                 Sections="{Binding HolidaysSections, UpdateSourceTrigger=PropertyChanged}"
+                                 ShowLabels="True">
+                            <my:Axis.Separator>
+                                <my:Separator Step="1" />
+                            </my:Axis.Separator>
+                        </my:Axis>
+                    </my:CartesianChart.AxisX>
+                    <my:CartesianChart.AxisY>
+                        <my:Axis MaxValue="{Binding Max, Source={x:Static models:TrainingAttendance.AcceptableRangeRating}}" MinValue="0" ShowLabels="True">
+                            <my:Axis.Separator>
+                                <my:Separator Step="1" />
+                            </my:Axis.Separator>
+                            <my:Axis.Sections>
+                                <my:AxisSection x:Name="RatingSection"
+                                                StrokeDashArray="3,3"
+                                                StrokeThickness="2"
+                                                Visibility="{Binding ShowAverageSection, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}"
+                                                Value="{Binding AverageRating}">
+                                    <my:AxisSection.Style>
+                                        <Style TargetType="{x:Type my:AxisSection}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding AverageRating, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max10}}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Teamup.Brushes.Rating.8To10}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AverageRating, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max8}}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Teamup.Brushes.Rating.6To8}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AverageRating, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max6}}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Teamup.Brushes.Rating.45To6}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AverageRating, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max45}}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Teamup.Brushes.Rating.35To45}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AverageRating, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max35}}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Teamup.Brushes.Rating.2To35}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding AverageRating, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max2}}" Value="True">
+                                                    <Setter Property="Stroke" Value="{DynamicResource Teamup.Brushes.Rating.0To2}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </my:AxisSection.Style>
+                                </my:AxisSection>
+                            </my:Axis.Sections>
+                        </my:Axis>
+                    </my:CartesianChart.AxisY>
+                    <my:CartesianChart.DataTooltip>
+                        <my:DefaultDataToolTip />
+                    </my:CartesianChart.DataTooltip>
+                </my:CartesianChart>
+            </my:GhostControl>
+        </Grid>
+    </DockPanel>
+</UserControl>

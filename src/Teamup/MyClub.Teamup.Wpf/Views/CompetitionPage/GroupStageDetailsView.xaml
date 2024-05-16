@@ -1,0 +1,103 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionPage.GroupStageDetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:competitionpage="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionPage"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionPage"
+             d:DataContext="{d:DesignInstance Type=competitionpage:GroupStageDetailsViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <CollectionViewSource x:Key="MyClub.Collection.Matches.ByMatchdays" Source="{Binding MatchesViewModel.Wrappers}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Item.Parent" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+    </UserControl.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddMatchdayCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding Data.AddMatchdaysCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:GhostControl ShowGhost="{Binding Item.Matchdays.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+        <my:GhostControl.GhostTemplate>
+            <DataTemplate>
+                <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+                        Width="370"
+                        Height="Auto"
+                        MinHeight="80"
+                        HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Left"
+                        Command="{Binding Data.AddMatchdaysCommand, Source={StaticResource Proxy}}">
+                    <Grid>
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=LibraryAdd, Size=50}">
+                            <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource AddMatchdays, Casing=AllCaps}" />
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource AddMatchdaysDescription}" TextWrapping="Wrap" />
+                            </my:SimpleStackPanel>
+                        </GroupBox>
+                    </Grid>
+                </Button>
+            </DataTemplate>
+        </my:GhostControl.GhostTemplate>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="10*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="10*" />
+            </Grid.ColumnDefinitions>
+
+            <ItemsControl ItemsSource="{Binding Item.Groups}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid VerticalAlignment="Top" Columns="2" IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" Margin="{StaticResource MyNet.Margins.Large}" Header="{Binding Name}">
+                            <StackPanel>
+                                <v:RankingSmallView DataContext="{Binding Ranking}" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                        HorizontalAlignment="Right"
+                                        my:IconAssist.Icon="{my:ToolIcon Kind=ViewList}"
+                                        Command="{Binding Data.ShowRankingDetailsCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:Resource ShowDetails}" />
+                            </StackPanel>
+                        </GroupBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <v:MatchesView Grid.Column="2" DataContext="{Binding MatchesViewModel}" ItemsSource="{Binding Source={StaticResource MyClub.Collection.Matches.ByMatchdays}}">
+                <v:MatchesView.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.ContainerStyle>
+                            <Style TargetType="{x:Type GroupItem}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" Margin="{StaticResource MyNet.Margins.Large.Bottom}" Header="{Binding Name}">
+                                                <ItemsPresenter />
+                                            </GroupBox>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </GroupStyle.ContainerStyle>
+                    </GroupStyle>
+                </v:MatchesView.GroupStyle>
+            </v:MatchesView>
+        </Grid>
+    </my:GhostControl>
+</UserControl>

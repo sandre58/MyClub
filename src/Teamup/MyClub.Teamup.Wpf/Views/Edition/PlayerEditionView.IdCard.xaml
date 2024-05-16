@@ -1,0 +1,58 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.PlayerEditionIdCardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.Edition"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:PlayerEditionViewModel}"
+             mc:Ignorable="d">
+
+    <my:SimpleStackPanel>
+
+        <!--  Gender  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=GenderMaleFemale}">
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding Gender, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="DataContext">
+                <ListBoxItem x:Name="Gender"
+                             Width="100"
+                             my:IconAssist.Icon="{my:Icon Kind=GenderMale}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Male}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                             Content="{my:Resource GenderTypeMale}"
+                             DataContext="{x:Static utils:GenderType.Male}" />
+                <ListBoxItem Width="100"
+                             my:IconAssist.Icon="{my:Icon Kind=GenderFemale}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Female}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                             Content="{my:Resource GenderTypeFemale}"
+                             DataContext="{x:Static utils:GenderType.Female}" />
+            </ListBox>
+        </GroupBox>
+
+        <!--  Country  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Globe}">
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Country}"
+                      Width="{StaticResource MyNet.Widths.Control.VeryLarge}"
+                      my:HintAssist.Hint="{my:Resource Nationality}"
+                      my:HintAssist.IsFloating="True"
+                      my:TextFieldAssist.HasClearButton="True"
+                      SelectedValue="{Binding Country}" />
+        </GroupBox>
+
+        <!--  Birthdate  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarAccount}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <DatePicker VerticalAlignment="Bottom" my:HintAssist.Hint="{my:Resource Birthdate}" SelectedDate="{Binding Birthdate, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}" VerticalAlignment="Bottom" Text="{my:Resource To}" />
+                <TextBox Width="180" my:HintAssist.Hint="{my:Resource PlaceOfBirth}" Text="{Binding PlaceOfBirth, UpdateSourceTrigger=PropertyChanged}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Map}">
+            <v:EditableAddressView DataContext="{Binding Address}" />
+        </GroupBox>
+    </my:SimpleStackPanel>
+</UserControl>

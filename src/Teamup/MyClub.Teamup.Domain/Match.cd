@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.Match">
+    <Position X="5.5" Y="11.75" Width="1.5" />
+    <AssociationLine Name="Stadium" Type="MyClub.Teamup.Domain.StadiumAggregate.Stadium" FixedFromPoint="true">
+      <Path>
+        <Point X="6.125" Y="11.75" />
+        <Point X="6.125" Y="10.963" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AEAAAUAAUCIERIAUACCoAAgAQgwAgCADAAgABQQhmAA=</HashCode>
+      <FileName>MatchAggregate\Match.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Format" />
+      <Property Name="Home" />
+      <Property Name="Away" />
+      <Property Name="Stadium" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.MatchFormat">
+    <Position X="3" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAQAAAAQEAAAAIAAAAQCAAAACAAAAAAAAAIA=</HashCode>
+      <FileName>MatchAggregate\Match.Format.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="RegulationTime" />
+      <Property Name="ExtraTime" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.HalfFormat">
+    <Position X="0.5" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQACAAAEAEAAIAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>MatchAggregate\Match.HalfFormat.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.StadiumAggregate.Stadium">
+    <Position X="5.5" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAEAAAAAAQAAAAAAAACAAAAAAAAEAA=</HashCode>
+      <FileName>StadiumAggregate\Stadium.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.MatchOpponent">
+    <Position X="8" Y="12.5" Width="1.5" />
+    <AssociationLine Name="Team" Type="MyClub.Teamup.Domain.TeamAggregate.Team" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="8.094" Y="12.5" />
+        <Point X="8.094" Y="11.774" />
+        <Point X="10.684" Y="11.774" />
+        <Point X="10.684" Y="11.75" />
+        <Point X="11" Y="11.75" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AEoAoACIQQAgBAAAAIAAAAAAAgAAAAAAEAgAgAAgEAA=</HashCode>
+      <FileName>MatchAggregate\Match.Opponent.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Team" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="Events" />
+      <Property Name="Shootout" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.MatchEvent">
+    <Position X="11" Y="12.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAA=</HashCode>
+      <FileName>MatchAggregate\Match.Event.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.PenaltyShootout">
+    <Position X="8" Y="18" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAAAQAAAAAAAAABAAAAAAAAAA=</HashCode>
+      <FileName>MatchAggregate\PenaltyShootout.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Taker" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.Card">
+    <Position X="9.75" Y="15" Width="1.5" />
+    <InheritanceLine Type="MyClub.Teamup.Domain.MatchAggregate.MatchEvent" FixedToPoint="true">
+      <Path>
+        <Point X="11.75" Y="14.184" />
+        <Point X="11.75" Y="14.625" />
+        <Point X="11.188" Y="14.625" />
+        <Point X="11.188" Y="15" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAEAAAAAAAAAAAAAAAAAAAAgQAgAAA=</HashCode>
+      <FileName>MatchAggregate\Match.Event.Card.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Player" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.Goal">
+    <Position X="12.25" Y="15" Width="1.5" />
+    <InheritanceLine Type="MyClub.Teamup.Domain.MatchAggregate.MatchEvent" FixedToPoint="true">
+      <Path>
+        <Point X="11.75" Y="14.184" />
+        <Point X="11.75" Y="14.625" />
+        <Point X="12.438" Y="14.625" />
+        <Point X="12.438" Y="15" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAQAgEAAAAAAAAAAUAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>MatchAggregate\Match.Event.Goal.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Scorer" />
+      <Property Name="Assist" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TeamAggregate.Team">
+    <Position X="11" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAQQAAAAAAACQFAACAAAAAAACAAAAAACAAAACACAA=</HashCode>
+      <FileName>TeamAggregate\Team.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Club" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.ClubAggregate.Club">
+    <Position X="8.25" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAASwBAAAAAAAAAAACCAAEAAAKAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ClubAggregate\Club.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Stadium" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.PersonAggregate.Player">
+    <Position X="15.25" Y="12.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABCAACRkGBIgAgAAAAIAAAACQAQBQAIAAAAAAAQQQ=</HashCode>
+      <FileName>PersonAggregate\Player.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

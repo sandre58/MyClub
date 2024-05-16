@@ -1,0 +1,23 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls">
+
+    <ResourceDictionary.MergedDictionaries>
+        <my:SharedResourceDictionary Source="Themes/Teamup.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style TargetType="{x:Type ctrl:MatchButton}" BasedOn="{StaticResource Teamup.Styles.MatchButton}" />
+    <Style TargetType="{x:Type ctrl:MatchControl}" BasedOn="{StaticResource Teamup.Styles.MatchControl}" />
+    <Style TargetType="{x:Type ctrl:MatchdayButton}" BasedOn="{StaticResource Teamup.Styles.MatchdayButton}" />
+    <Style TargetType="{x:Type ctrl:KnockoutButton}" BasedOn="{StaticResource Teamup.Styles.KnockoutButton}" />
+    <Style TargetType="{x:Type ctrl:GroupStageButton}" BasedOn="{StaticResource Teamup.Styles.GroupStageButton}" />
+    <Style TargetType="{x:Type ctrl:CompetitionButton}" BasedOn="{StaticResource Teamup.Styles.CompetitionButton}" />
+    <Style TargetType="{x:Type ctrl:PlayerButton}" BasedOn="{StaticResource Teamup.Styles.PlayerButton}" />
+    <Style TargetType="{x:Type ctrl:TeamButton}" BasedOn="{StaticResource Teamup.Styles.TeamButton}" />
+    <Style TargetType="{x:Type ctrl:StadiumButton}" BasedOn="{StaticResource Teamup.Styles.StadiumButton}" />
+    <Style TargetType="{x:Type ctrl:TrainingSessionButton}" BasedOn="{StaticResource Teamup.Styles.TrainingSessionButton}" />
+    <Style TargetType="{x:Type ctrl:InjurySelector}" BasedOn="{StaticResource Teamup.Styles.InjurySelector}" />
+    <Style TargetType="{x:Type ctrl:PositionsSelector}" BasedOn="{StaticResource Teamup.Styles.PositionsSelector}" />
+    <Style TargetType="{x:Type ctrl:PlayerGauge}" BasedOn="{StaticResource Teamup.Styles.PlayerGauge}" />
+</ResourceDictionary>

@@ -1,0 +1,113 @@
+﻿<ToolBar x:Class="MyClub.Teamup.Wpf.Views.RosterPage.PlayerToolBar"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:my="http://mynet.com/xaml/themes"
+         x:Name="local"
+         Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+         d:DataContext="{d:DesignInstance Type=entities:PlayerViewModel}"
+         d:DesignHeight="450"
+         d:DesignWidth="800"
+         mc:Ignorable="d">
+    <ToolBar.Resources>
+        <my:BindingProxy x:Key="PlayerProxy" Data="{Binding}" />
+        <my:BindingProxy x:Key="LocalProxy" Data="{Binding ElementName=local}" />
+    </ToolBar.Resources>
+
+    <Button Command="{Binding EditCommand}" Content="{my:ToolIcon Kind=Edit}" ToolTip="{my:Resource Edit}" />
+
+    <my:DropDownButton x:Name="DropDownButton"
+                       PopupPadding="0"
+                       ShowDropDownButton="False"
+                       ToggleContent="{my:ToolIcon Kind=DotsVertical}">
+        <my:Submenu>
+            <MenuItem Command="{Binding OpenCommand}" Header="{my:Resource SeeItem}" Icon="{my:ToolIcon Kind=Eye}" />
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+            <MenuItem Header="{my:Resource Add}" Icon="{my:ToolIcon Kind=PlusThick}">
+                <MenuItem Command="{Binding AddInjuryCommand}" Header="{my:Resource AnInjury}" Icon="{my:ToolIcon Kind=Ambulance}" />
+                <MenuItem Header="{my:Resource AnAbsence}" Icon="{my:ToolIcon Kind=Cancel}">
+                    <MenuItem Command="{Binding AddAbsenceHolidaysCommand}" Header="{my:Resource InHolidays}" Icon="{my:ToolIcon Kind=Beach}" />
+                    <MenuItem Command="{Binding AddAbsenceInSelectionCommand}" Header="{my:Resource InSelection}" Icon="{my:ToolIcon Kind=Star}" />
+                    <MenuItem Command="{Binding AddAbsenceOtherCommand}" Header="{my:Resource Other}" Icon="{my:ToolIcon Kind=QuestionMark}" />
+                </MenuItem>
+            </MenuItem>
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+            <MenuItem my:ItemsControlAssist.SortingProperty="Order"
+                      Header="{my:Resource MovingTo}"
+                      Icon="{my:ToolIcon Kind=PersonArrowLeft}"
+                      ItemsSource="{Binding OtherTeams}"
+                      Visibility="{Binding OtherTeams.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                <MenuItem.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="MenuItem">
+                        <Setter Property="Command" Value="{Binding Data.MoveCommand, Source={StaticResource PlayerProxy}}" />
+                        <Setter Property="CommandParameter" Value="{Binding}" />
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+                <MenuItem.ItemTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                            <TextBlock Text="{my:Resource MovingPlayerInTeam}" />
+                            <TextBlock Text="{Binding Name}" />
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
+            </MenuItem>
+            <MenuItem Command="{Binding MoveCommand}"
+                      CommandParameter="{x:Null}"
+                      Header="{my:Resource GoOut}"
+                      Icon="{my:ToolIcon Kind=PersonArrowRight}" />
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+            <MenuItem Command="{Binding OpenMailClientCommand}"
+                      Header="{my:Resource SendMail}"
+                      Icon="{my:ToolIcon Kind=Email}"
+                      Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotOne}}" />
+            <MenuItem my:ItemsControlAssist.SortDirection="Descending"
+                      my:ItemsControlAssist.SortingProperty="Default"
+                      Header="{my:Resource SendMail}"
+                      Icon="{my:ToolIcon Kind=Email}"
+                      ItemsSource="{Binding Emails, Mode=OneWay}"
+                      Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotMany}}">
+                <MenuItem.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="MenuItem">
+                        <Setter Property="Command" Value="{Binding Data.OpenEmailInMailClientCommand, Source={StaticResource PlayerProxy}}" />
+                        <Setter Property="CommandParameter" Value="{Binding Value}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Default}" Value="True">
+                                <Setter Property="Icon" Value="{my:ToolIcon Kind=Check}" />
+                                <Setter Property="my:MenuAssist.IconTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <my:PackIcon Width="18" Height="18" Kind="Check" />
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="ToolTip" Value="{my:Resource Default}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+                <MenuItem.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                       FontStyle="Italic"
+                                       Text="{Binding Label}"
+                                       Visibility="{Binding Label, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                            <TextBlock Text="{Binding Value}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
+            </MenuItem>
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" />
+            <MenuItem Background="{DynamicResource MyNet.Brushes.Negative}"
+                      Command="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}}"
+                      CommandParameter="{Binding}"
+                      Foreground="{my:BrushBinding SelfPath=Background,
+                                                   Contrast=True}"
+                      Header="{my:Resource Remove}"
+                      Icon="{my:ToolIcon Kind=Trash}" />
+        </my:Submenu>
+    </my:DropDownButton>
+</ToolBar>

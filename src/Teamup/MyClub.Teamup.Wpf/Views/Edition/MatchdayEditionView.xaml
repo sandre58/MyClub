@@ -1,0 +1,122 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.MatchdayEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  Width="580"
+                  Height="260"
+                  d:DataContext="{d:DesignInstance Type=vm:MatchdayEditionViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  HeaderHeight="70"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Key="F5" Command="{Binding Data.RefreshCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Refresh}" HorizontalAlignment="Right" Command="{Binding RefreshCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:ContentDialog.Header>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Competition  -->
+            <DockPanel VerticalAlignment="Center">
+                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}"
+                                   Width="40"
+                                   Height="40"
+                                   Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                   DataContext="{Binding Competition}"
+                                   DockPanel.Dock="Left" />
+                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Text="{my:Translation Title, Casing=AllCaps}" />
+                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="{my:Translation SubTitle}" Visibility="{Binding SubTitle, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                </my:SimpleStackPanel>
+            </DockPanel>
+
+            <!--  Name  -->
+            <TextBox Grid.Column="2"
+                     Width="Auto"
+                     HorizontalAlignment="Stretch"
+                     my:FocusAssist.IsDefault="True"
+                     my:HintAssist.FloatingScale="0.4"
+                     my:HintAssist.Hint="{my:Resource Name}"
+                     my:HintAssist.IsFloating="True"
+                     FontSize="{StaticResource MyNet.Font.Size.Title}"
+                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!--  Info  -->
+            <ContentControl Grid.Column="4"
+                            VerticalAlignment="Top"
+                            Content="{StaticResource MyNet.PackIcon.ItemTraking}"
+                            Focusable="False" />
+        </Grid>
+    </my:ContentDialog.Header>
+
+    <my:SimpleStackPanel>
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Information}">
+            <TextBox Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource ShortName}" Text="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarOutline}">
+            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Large}">
+
+                <!--  Date  -->
+                <my:SimpleStackPanel Orientation="Horizontal">
+                    <my:SimpleStackPanel.Style>
+                        <Style BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}" TargetType="{x:Type my:SimpleStackPanel}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowPostponedDate}" Value="True">
+                                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </my:SimpleStackPanel.Style>
+                    <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
+                    <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                </my:SimpleStackPanel>
+
+                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon}"
+                              my:ThemeAssist.IsCheckedForeground="{DynamicResource MyNet.Brushes.Warning}"
+                              Content="{my:MediumIcon Kind=CalendarSync}"
+                              IsChecked="{Binding ShowPostponedDate}"
+                              ToolTip="{my:Resource PostponedDate}" />
+
+                <!--  Postponed Date  -->
+                <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding ShowPostponedDate, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" SelectedDate="{my:NullableBinding PostponedDate, UpdateSourceTrigger=PropertyChanged}" />
+                    <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:NullableBinding PostponedTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                </my:SimpleStackPanel>
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <!--  IsPostponed  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:Resource Postponed}">
+            <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding IsPostponed}" />
+        </GroupBox>
+
+    </my:SimpleStackPanel>
+
+</my:ContentDialog>

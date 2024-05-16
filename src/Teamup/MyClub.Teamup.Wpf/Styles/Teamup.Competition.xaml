@@ -1,0 +1,100 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+                    xmlns:cmd="clr-namespace:MyClub.Teamup.Wpf.Commands"
+                    xmlns:my="http://mynet.com/xaml/themes">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="Teamup.Styles.PictureControl.Competition" BasedOn="{StaticResource {x:Type my:PictureControl}}" TargetType="{x:Type my:PictureControl}">
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu>
+                    <MenuItem Command="{x:Static cmd:ImageCommands.DownloadCommand}"
+                              CommandParameter="{Binding PlacementTarget.Image, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                              Header="{my:Resource Download}"
+                              Icon="{my:ToolIcon Kind=Download}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="Image" Value="{Binding DataContext.Logo, RelativeSource={RelativeSource Self}, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:BytesToImageConverter.Default}}" />
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <my:PackIcon Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type my:PictureControl}}}"
+                                 Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type my:PictureControl}}}"
+                                 Kind="FavoriteCircle"
+                                 Visibility="{Binding Image, RelativeSource={RelativeSource AncestorType={x:Type my:PictureControl}}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Teamup.Styles.ListView.Ranking" BasedOn="{StaticResource MyNet.Styles.ListView}" TargetType="{x:Type ListView}">
+        <Style.Resources>
+            <Style BasedOn="{StaticResource MyNet.Styles.GridViewColumnHeader}" TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="my:DataGridAssist.ColumnHeaderPadding" Value="3" />
+            </Style>
+        </Style.Resources>
+        <Setter Property="ItemsSource" Value="{Binding Items}" />
+        <Setter Property="my:ListAssist.SynchronizedList" Value="{Binding}" />
+        <Setter Property="my:ListViewAssist.HeaderHeight" Value="32" />
+        <Setter Property="my:ListViewAssist.ItemMinHeight" Value="37" />
+        <Setter Property="my:ListBoxItemAssist.ShowSelection" Value="False" />
+        <Setter Property="my:ListViewAssist.AutoResizeIsEnabled" Value="True" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style BasedOn="{StaticResource MyNet.Styles.ListViewItem}" TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                <Border Margin="{TemplateBinding Margin}"
+                                        Padding="{Binding RelativeSource={RelativeSource Self}, Path=(my:ListViewAssist.ListViewItemPadding)}"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        ClipToBounds="{TemplateBinding ClipToBounds}">
+                                    <Grid>
+                                        <Border x:Name="rankBorder" Opacity="{StaticResource MyNet.Opacity.Checked}">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{x:Static c:RankingRankToLabelConverter.Background}">
+                                                    <Binding Path="Rank" />
+                                                    <Binding Path="DataContext.RankingRules" RelativeSource="{RelativeSource AncestorType={x:Type ListView}}" />
+                                                </MultiBinding>
+                                            </Border.Background>
+                                        </Border>
+                                        <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+                                            <GridViewRowPresenter.Resources>
+                                                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+                                                    <Setter Property="TextWrapping" Value="NoWrap" />
+                                                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                                </Style>
+                                            </GridViewRowPresenter.Resources>
+                                        </GridViewRowPresenter>
+                                    </Grid>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Teamup.Styles.ListView.Ranking.Small" BasedOn="{StaticResource Teamup.Styles.ListView.Ranking}" TargetType="{x:Type ListView}">
+        <Setter Property="my:ListViewAssist.HeaderHeight" Value="25" />
+        <Setter Property="my:ListViewAssist.ItemMinHeight" Value="22" />
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,360 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionsPage.CompetitionsTab.CompetitionsGridView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionsPage.CompetitionsTab"
+             xmlns:v1="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionsPage.CompetitionsTab"
+             d:DataContext="{d:DesignInstance Type=vm:CompetitionsViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <ListView x:Key="Teamup.ListView.Ranking" Style="{StaticResource Teamup.Styles.ListView.Ranking.Small}" x:Shared="false">
+            <ListView.View>
+                <GridView>
+                    <GridView.Columns>
+
+                        <!--  Rank  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Rank" my:GridViewColumnAssist.Width="30">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource RankAbbr}"
+                                           ToolTip="{my:Resource Rank}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding Rank}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  Team  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Team" my:GridViewColumnAssist.Width="*">
+                            <GridViewColumn.Header>
+                                <TextBlock Text="{my:Resource Team}" Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ContentControl Content="{Binding Team}" ContentTemplate="{StaticResource Teamup.DataTemplates.Team.Small.Away}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  Played  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Played" my:GridViewColumnAssist.Width="30">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource GamesPlayedAbbr}"
+                                           ToolTip="{my:Resource GamesPlayed}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding Played}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  Won  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesWon" my:GridViewColumnAssist.Width="30">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource GamesWonAbbr}"
+                                           ToolTip="{my:Resource GamesWon}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding GamesWon}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  GamesDrawn  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesDrawn" my:GridViewColumnAssist.Width="30">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource GamesDrawnAbbr}"
+                                           ToolTip="{my:Resource GamesDrawn}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding GamesDrawn}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  GamesLost  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesLost" my:GridViewColumnAssist.Width="30">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource GamesLostAbbr}"
+                                           ToolTip="{my:Resource GamesLost}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding GamesLost}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  GoalDifference  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="GoalDifference" my:GridViewColumnAssist.Width="32">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource GoalsDifferenceAbbr}"
+                                           ToolTip="{my:Resource GoalsDifference}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding GoalDifference}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!--  Points  -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Points" my:GridViewColumnAssist.Width="30">
+                            <GridViewColumn.Header>
+                                <TextBlock HorizontalAlignment="Center"
+                                           Text="{my:Resource PointsAbbr}"
+                                           ToolTip="{my:Resource Points}"
+                                           Typography.Capitals="AllSmallCaps" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" Text="{Binding Points}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView.Columns>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <DataTemplate DataType="{x:Type entities:FriendlyViewModel}">
+            <ItemsControl AlternationCount="2" ItemsSource="{Binding Matches}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
+                            <ctrl:MatchControl Style="{StaticResource Teamup.Styles.MatchControl.Small}" Match="{Binding}" />
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:LeagueViewModel}">
+            <v1:RankingSmallView DataContext="{Binding Ranking}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:CupViewModel}">
+            <ItemsControl AlternationCount="2" ItemsSource="{Binding Matches}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
+                            <ctrl:MatchControl Style="{StaticResource Teamup.Styles.MatchControl.Small}" Match="{Binding}" />
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Teamup.DataTemplates.Competition">
+            <Grid Width="400">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  Header  -->
+                <my:Card x:Name="header" Foreground="{Binding Tag, Converter={x:Static my:BrushConverter.Contrast}, RelativeSource={RelativeSource Self}}" UniformCornerRadius="0">
+                    <my:Card.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Offset="0" Color="{Binding Tag, Converter={x:Static my:ColorConverter.Darken}, ElementName=header}" />
+                                <GradientStop Offset="0.2" Color="{Binding Tag, Converter={x:Static my:ColorConverter.Darken}, ElementName=header}" />
+                                <GradientStop Offset="0.2" Color="{Binding Tag, ElementName=header}" />
+                                <GradientStop Offset="1" Color="{Binding Tag, ElementName=header}" />
+                            </LinearGradientBrush.GradientStops>
+                            <LinearGradientBrush.Transform>
+                                <RotateTransform Angle="20" />
+                            </LinearGradientBrush.Transform>
+                        </LinearGradientBrush>
+                    </my:Card.Background>
+
+                    <Grid>
+                        <!--  Logo  -->
+                        <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}" HorizontalAlignment="Left" DataContext="{Binding Item}" />
+
+                        <!--  Name  -->
+                        <ctrl:CompetitionButton HorizontalAlignment="Center"
+                                                ContextMenu="{x:Null}"
+                                                FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                                IsEnabled="{Binding Data.SelectedWrappers.Count, Converter={x:Static my:CountToBooleanConverter.NotMany}, Source={StaticResource Proxy}}"
+                                                Item="{Binding Item}"
+                                                Typography.Capitals="AllSmallCaps" />
+                    </Grid>
+                </my:Card>
+
+                <!--  Content  -->
+                <DockPanel Grid.Row="2"
+                           Margin="{StaticResource MyNet.Margins.Medium}"
+                           VerticalAlignment="Top"
+                           LastChildFill="False">
+
+                    <my:GhostControl Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                                     DockPanel.Dock="Bottom"
+                                     Ghost="{my:Resource NoMatches}"
+                                     GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Medium}"
+                                     ShowGhost="{Binding Item.AllMatches.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Large}">
+
+                            <!--  Next match  -->
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Accent}"
+                                      my:HeaderAssist.HorizontalAlignment="Center"
+                                      Header="{my:Resource NextMatch}"
+                                      Visibility="{Binding Item.NextMatch, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <ctrl:MatchControl Match="{Binding Item.NextMatch}" />
+                            </GroupBox>
+
+                            <!--  Previous match  -->
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Header.Application}"
+                                      my:HeaderAssist.HorizontalAlignment="Center"
+                                      Header="{my:Resource PreviousMatch}"
+                                      Visibility="{Binding Item.PreviousMatch, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <ctrl:MatchControl Match="{Binding Item.PreviousMatch}" />
+                            </GroupBox>
+                        </my:SimpleStackPanel>
+                    </my:GhostControl>
+
+                    <!--  Specific content  -->
+                    <ContentControl Margin="{StaticResource MyNet.Margins.Large.Bottom}" Content="{Binding Item}" DockPanel.Dock="Bottom" />
+
+                </DockPanel>
+
+                <!--  Actions  -->
+                <DockPanel Grid.Row="4" Margin="{StaticResource MyNet.Margins.Medium}">
+
+                    <my:SimpleStackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+
+                        <!--  Selection  -->
+                        <CheckBox x:Name="Selection"
+                                  Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                                  BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                                Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                                  Focusable="False"
+                                  IsChecked="{Binding IsSelected}"
+                                  IsTabStop="False"
+                                  Visibility="Hidden" />
+                    </my:SimpleStackPanel>
+
+                    <!--  Item ToolBar  -->
+                    <ContentControl x:Name="ToolBar"
+                                    HorizontalAlignment="Right"
+                                    Content="{Binding Item}"
+                                    Visibility="Hidden">
+                        <ContentControl.Style>
+                            <Style BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type ContentControl}">
+                                <Style.Resources>
+                                    <DataTemplate DataType="{x:Type entities:LeagueViewModel}">
+                                        <v:CompetitionToolBar Padding="0" DataContext="{Binding}" RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}" />
+                                    </DataTemplate>
+                                    <DataTemplate DataType="{x:Type entities:CupViewModel}">
+                                        <v:CompetitionToolBar Padding="0" DataContext="{Binding}" RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}" />
+                                    </DataTemplate>
+                                    <DataTemplate DataType="{x:Type entities:FriendlyViewModel}">
+                                        <v:CompetitionToolBar Padding="0" DataContext="{Binding}" RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}" />
+                                    </DataTemplate>
+                                </Style.Resources>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+
+                </DockPanel>
+
+                <!--  Border  -->
+                <Border x:Name="border" Grid.RowSpan="5" BorderThickness="2" />
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Primary}" />
+                    <Setter TargetName="border" Property="BorderThickness" Value="2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Type}" Value="{x:Static entities:CompetitionType.Friendly}">
+                    <Setter TargetName="header" Property="Tag" Value="{DynamicResource Teamup.Colors.Competition.Friendly}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Type}" Value="{x:Static entities:CompetitionType.League}">
+                    <Setter TargetName="header" Property="Tag" Value="{DynamicResource Teamup.Colors.Competition.League}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Type}" Value="{x:Static entities:CompetitionType.Cup}">
+                    <Setter TargetName="header" Property="Tag" Value="{DynamicResource Teamup.Colors.Competition.Cup}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}"
+             ItemTemplate="{StaticResource Teamup.DataTemplates.Competition}"
+             ItemsSource="{Binding Wrappers}"
+             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+             ScrollViewer.VerticalScrollBarVisibility="Disabled">
+        <ListBox.ItemContainerStyle>
+            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
+                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Item.IsCurrent}" Value="False">
+                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ListBox.ItemContainerStyle>
+        <ListBox.ItemsPanel>
+            <ItemsPanelTemplate>
+                <VirtualizingStackPanel IsItemsHost="True" Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+    </ListBox>
+</UserControl>

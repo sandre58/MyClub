@@ -1,0 +1,313 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingSessionPage.TrainingSessionPageOverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:h="clr-namespace:MyNet.Humanizer;assembly=MyNet.Humanizer"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="clr-namespace:MyClub.Teamup.Domain.TrainingAggregate;assembly=MyClub.Teamup.Domain"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingSessionPage"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingSessionPageOverviewViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="Teamup.DataTemplates.PlayerPerformances">
+            <my:Card x:Name="base"
+                     Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                     Margin="{StaticResource MyNet.Margins.Small.Vertical}"
+                     Background="{DynamicResource MyNet.Brushes.Control.Background.Secondary}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Medium}"
+                                       Margin="{StaticResource MyNet.Margins.Medium.Horizontal}"
+                                       VerticalAlignment="Center"
+                                       Background="{Binding Foreground, ElementName=base}"
+                                       DataContext="{Binding Player}"
+                                       Foreground="{my:BrushBinding SelfPath=Tag,
+                                                                    Opacity={StaticResource MyNet.Opacity.Medium}}"
+                                       Tag="{my:BrushBinding SelfPath=Background,
+                                                             Contrast=True}" />
+
+                    <StackPanel Grid.Column="1">
+                        <ctrl:PlayerButton x:Name="button"
+                                           Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                                           CommandParameter="{x:Static tabs:PlayerPageTab.Trainings}"
+                                           Item="{Binding Player}"
+                                           Orientation="Horizontal" />
+                        <TextBlock x:Name="text" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Player.Positions, Converter={x:Static c:RatedPositionsToStringConverter.BestCodes}}" />
+                    </StackPanel>
+
+                    <my:Gauge x:Name="Gauge"
+                              Grid.Column="2"
+                              Width="36"
+                              Height="36"
+                              Foreground="{Binding Foreground, ElementName=base}"
+                              GaugeActiveFill="{Binding Foreground, ElementName=base}"
+                              GaugeBackground="{my:BrushBinding Foreground,
+                                                                ElementName=base,
+                                                                Opacity={StaticResource MyNet.Opacity.Overlay}}"
+                              HighFontSize="{StaticResource MyNet.Font.Size}"
+                              InnerRadius="17"
+                              LabelFormatter="{x:Static my:ChartFormatters.ToValue}"
+                              Uses360Mode="True"
+                              Value="{Binding Rating}"
+                              From="0"
+                              To="{Binding Max, Source={x:Static models:TrainingAttendance.AcceptableRangeRating}}" />
+                </Grid>
+            </my:Card>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max10}}" Value="True">
+                    <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.8To10}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max8}}" Value="True">
+                    <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.6To8}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max6}}" Value="True">
+                    <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.45To6}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max45}}" Value="True">
+                    <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.35To45}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max35}}" Value="True">
+                    <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.2To35}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max2}}" Value="True">
+                    <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.0To2}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="500" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="180" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  State  -->
+        <my:Card HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="{Binding Item}">
+            <my:Card.Style>
+                <Style BasedOn="{StaticResource MyNet.Styles.Card.Elevation.Custom}" TargetType="{x:Type my:Card}">
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <my:SimpleStackPanel>
+                                    <my:PackIcon Width="70"
+                                                 Height="70"
+                                                 Kind="Update"
+                                                 Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Opacity="{StaticResource MyNet.Opacity.Default}" Text="{my:Resource TrainingSessionIsScheduled}" />
+                                    <TextBlock HorizontalAlignment="Center" FontSize="{StaticResource MyNet.Font.Size.Caption}" Typography.Capitals="AllSmallCaps">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{x:Static my:DatesIntervalToStringConverter.Date}" ConverterParameter="{x:Static h:LetterCasing.Sentence}">
+                                                <Binding Path="StartDate" />
+                                                <Binding Source="{x:Static sys:DateTime.Today}" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </my:SimpleStackPanel>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Item.IsCancelled}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <my:SimpleStackPanel>
+                                            <my:PackIcon Width="70"
+                                                         Height="70"
+                                                         Kind="Cancel"
+                                                         Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                       FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                                       Opacity="{StaticResource MyNet.Opacity.Default}"
+                                                       Text="{my:Resource TrainingSessionHasBeenCancelled}" />
+                                        </my:SimpleStackPanel>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Item.IsPerformed}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <my:SimpleStackPanel>
+                                            <my:PackIcon Width="70"
+                                                         Height="70"
+                                                         Kind="Check"
+                                                         Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Opacity="{StaticResource MyNet.Opacity.Default}" Text="{my:Resource TrainingSessionHasBeenPerformed}" />
+                                            <TextBlock HorizontalAlignment="Center" FontSize="{StaticResource MyNet.Font.Size.Caption}" Typography.Capitals="AllSmallCaps">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{x:Static my:DatesIntervalToStringConverter.Date}" ConverterParameter="{x:Static h:LetterCasing.Sentence}">
+                                                        <Binding Path="StartDate" />
+                                                        <Binding Source="{x:Static sys:DateTime.Today}" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </my:SimpleStackPanel>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </my:Card.Style>
+        </my:Card>
+
+        <!--  Average  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+                  Grid.Row="2"
+                  VerticalAlignment="Top"
+                  my:GroupBoxAssist.Command="{Binding ParentPage.GoToTabCommand}"
+                  my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingSessionPageTab.Attendances}"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=ChartLineVariant}"
+                  Header="{my:Resource Average,
+                                       Casing=AllCaps}"
+                  Visibility="{Binding Item.IsPerformed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+            <my:Gauge Style="{StaticResource Teamup.Styles.Gauge.Rating}"
+                      Width="130"
+                      Height="130"
+                      VerticalAlignment="Center"
+                      HighFontSize="{StaticResource MyNet.Font.Size.Header}"
+                      InnerRadius="50"
+                      LabelFormatter="{x:Static my:ChartFormatters.ToValueWithoutZero}"
+                      Value="{Binding Item.Ratings.Average}" />
+        </GroupBox>
+
+        <!--  Attendances  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+                  Grid.Column="2"
+                  my:GroupBoxAssist.Command="{Binding ParentPage.GoToTabCommand}"
+                  my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingSessionPageTab.Attendances}"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=CheckMultiple}"
+                  Header="{my:Resource Presences,
+                                       Casing=AllCaps}"
+                  Visibility="{Binding Item.IsCancelled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}">
+            <UniformGrid Columns="4" DockPanel.Dock="Top">
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Positive}"
+                          Content="{Binding Item.Presents.Count}"
+                          Header="{my:Resource Presents,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Negative}"
+                          Content="{Binding Item.Absents.Count}"
+                          Header="{my:Resource Absents,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Warning}"
+                          Content="{Binding Item.Apologized.Count}"
+                          Header="{my:Resource Apologized,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                          Content="{Binding Item.Injured.Count}"
+                          Header="{my:Resource InjuredPlural,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                          Content="{Binding Item.InSelection.Count}"
+                          Header="{my:Resource InSelections,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                          Content="{Binding Item.InHolidays.Count}"
+                          Header="{my:Resource InHolidays,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                          Content="{Binding Item.Resting.Count}"
+                          Header="{my:Resource Resting,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.None}"
+                          Content="{Binding Item.Unknown.Count}"
+                          Header="{my:Resource Unknown,
+                                               Casing=AllCaps}" />
+
+            </UniformGrid>
+        </GroupBox>
+
+        <!--  Performances  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+                  Grid.Row="2"
+                  Grid.Column="2"
+                  my:GroupBoxAssist.Command="{Binding ParentPage.GoToTabCommand}"
+                  my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingSessionPageTab.Attendances}"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=Numeric10BoxMultiple}"
+                  Header="{my:Resource Performances,
+                                       Casing=AllCaps}"
+                  Visibility="{Binding Item.IsPerformed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+            <my:DynamicScrollViewer>
+                <my:SimpleStackPanel Grid.Row="2" Spacing="{StaticResource MyNet.Margin.VeryLarge}">
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" my:HeaderAssist.Padding="{StaticResource MyNet.Margins.Small.Bottom}" Header="{my:Resource BestPlural}">
+                        <my:GhostControl ShowGhost="{Binding BestPerformances.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                            <my:GhostControl.GhostTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" HorizontalAlignment="Center" Text="{my:Resource NoData}" />
+                                </DataTemplate>
+                            </my:GhostControl.GhostTemplate>
+                            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemTemplate="{StaticResource Teamup.DataTemplates.PlayerPerformances}" ItemsSource="{Binding BestPerformances}" />
+                        </my:GhostControl>
+                    </GroupBox>
+
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                              Grid.Row="2"
+                              my:HeaderAssist.Padding="{StaticResource MyNet.Margins.Small.Bottom}"
+                              Header="{my:Resource WorstPlural}">
+                        <my:GhostControl ShowGhost="{Binding WorstPerformances.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                            <my:GhostControl.GhostTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" HorizontalAlignment="Center" Text="{my:Resource NoData}" />
+                                </DataTemplate>
+                            </my:GhostControl.GhostTemplate>
+                            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemTemplate="{StaticResource Teamup.DataTemplates.PlayerPerformances}" ItemsSource="{Binding WorstPerformances}" />
+                        </my:GhostControl>
+                    </GroupBox>
+                </my:SimpleStackPanel>
+            </my:DynamicScrollViewer>
+        </GroupBox>
+    </Grid>
+</UserControl>

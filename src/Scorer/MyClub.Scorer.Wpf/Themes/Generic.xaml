@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
+                    xmlns:my="http://mynet.com/xaml/themes">
+
+    <ResourceDictionary.MergedDictionaries>
+        <my:SharedResourceDictionary Source="Themes/Scorer.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style BasedOn="{StaticResource Scorer.Styles.TeamButton}" TargetType="{x:Type ctrl:TeamButton}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.StadiumButton}" TargetType="{x:Type ctrl:StadiumButton}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.TeamButton}" TargetType="{x:Type ctrl:PlayerButton}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.MatchButton}" TargetType="{x:Type ctrl:MatchButton}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.MatchdayButton}" TargetType="{x:Type ctrl:MatchdayButton}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.MatchControl}" TargetType="{x:Type ctrl:MatchControl}" />
+
+</ResourceDictionary>

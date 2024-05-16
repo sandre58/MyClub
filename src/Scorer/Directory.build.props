@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  
+  <PropertyGroup>
+    <Product>Scor'er</Product>
+    <Description>Introducing a versatile tournament management application that empowers users to create and oversee customized sports tournaments effortlessly. With intuitive features for scheduling matches, managing participant registrations, and tracking scores, this application caters to a wide range of sporting events and formats. Whether organizing local leagues, friendly competitions, or large-scale tournaments, users can tailor the experience to suit their specific needs, ensuring seamless and enjoyable sporting experiences for all participants.</Description>
+  </PropertyGroup>
+</Project>

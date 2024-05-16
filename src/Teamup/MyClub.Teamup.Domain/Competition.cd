@@ -1,0 +1,230 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.Matchday">
+    <Position X="14.75" Y="16.25" Width="1.5" />
+    <AssociationLine Name="Matches" Type="MyClub.Teamup.Domain.MatchAggregate.Match" FixedToPoint="true">
+      <Path>
+        <Point X="15.5" Y="20.117" />
+        <Point X="15.5" Y="21" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>ABAAABAAABAAQgAEAAAAAAAAQEAAAAIDCAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Matchday.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Matches" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.League">
+    <Position X="12.75" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.League.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.Cup">
+    <Position X="12.75" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.Cup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.Friendly">
+    <Position X="12.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.Friendly.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.Match">
+    <Position X="14.75" Y="21" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAUAAUCIERIAUACCoAAgAQgwAgCADAAgABQQhmAA=</HashCode>
+      <FileName>MatchAggregate\Match.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.RankingRules">
+    <Position X="15.25" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CABAAIAAEAAAAAAYAAAAIABAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Ranking.Rules.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.MatchFormat">
+    <Position X="7.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAQAAAAQEAAAAIAAAAQCAAAACAAAAAAAAAIA=</HashCode>
+      <FileName>MatchAggregate\Match.Format.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="RegulationTime" />
+      <Property Name="ExtraTime" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.MatchAggregate.HalfFormat">
+    <Position X="5" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQACAAAEAEAAIAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>MatchAggregate\Match.HalfFormat.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.SeasonAggregate.Season">
+    <Position X="17.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQEAACAAAACAAAAAAAAAAAQAAAAAAI=</HashCode>
+      <FileName>SeasonAggregate\Season.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TeamAggregate.Team">
+    <Position X="17.25" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAQAAAAAAAAAQAAACAAAAAAACAAAAAAAAAAACACAA=</HashCode>
+      <FileName>TeamAggregate\Team.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Club" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.ClubAggregate.Club">
+    <Position X="19.75" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAASwAAAAAAAAAAAACCAAEAAAKAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ClubAggregate\Club.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.Round&lt;TRules&gt;">
+    <Position X="19.75" Y="13.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAACgAAgAAAAACAAAACAAEAACAAAAIAIAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Round.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.GroupStage">
+    <Position X="18" Y="18.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAgAABACABAAAAAIAACAAgQAIAAAgAAABAAAI=</HashCode>
+      <FileName>CompetitionAggregate\Round.GroupStage.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Matchdays" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.Knockout">
+    <Position X="21.5" Y="18.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAABAAgBAAQAAAAAIAAAAAQEAAAAIDCAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Round.Knockout.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Matches" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.CompetitionRules">
+    <Position X="10.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgACAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\CompetitionRules.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="MatchFormat" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.CupRules">
+    <Position X="8.75" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.Cup.Rules.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.FriendlyRules">
+    <Position X="10.75" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.Friendly.Rules.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.LeagueRules">
+    <Position X="12.5" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.League.Rules.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.ChampionshipRules">
+    <Position X="12.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\IChampionship.Rules.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="RankingRules" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.CompetitionSeason&lt;TRules&gt;">
+    <Position X="14.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAACgAAgQAAAACEAAACAAEAACCAAAIAIAAAAAAAAAI=</HashCode>
+      <FileName>CompetitionAggregate\CompetitionSeason.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Season" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.CupSeason">
+    <Position X="17.5" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAIgAAAAAAAAAAAAAAAAIIAAABAAAIAIAI=</HashCode>
+      <FileName>CompetitionAggregate\Competition.Cup.Season.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Rounds" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.FriendlySeason">
+    <Position X="12" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAgAAAQAAAAAIAAAAAAAAAAAIACAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.Friendly.Season.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Matches" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.LeagueSeason">
+    <Position X="14.75" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAIAAgAABACAEEAAAAAAACAAAAAIAAAgAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.League.Season.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Matchdays" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CompetitionAggregate.Competition&lt;TRules, TSeason&gt;">
+    <Position X="10.25" Y="7.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAQIAAAAQAAAAAAAQAAAAQAgAAAAAAAAAgAgADAA=</HashCode>
+      <FileName>CompetitionAggregate\Competition.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="MyClub.Teamup.Domain.CompetitionAggregate.IRound" Collapsed="true">
+    <Position X="19.75" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAACAAAgAAAAAAAAAACAAUAACAAAIIAAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\IRound.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

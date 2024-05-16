@@ -1,0 +1,215 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionPage.FriendlyPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:s="clr-namespace:MyClub.Teamup.Wpf.Selectors"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionPage"
+             d:DataContext="{d:DesignInstance Type=vm:FriendlyPageViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             my:ViewModelAssist.AutoWire="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.Item.EditCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding Data.Item.DuplicateCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.Item.RemoveCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="140" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="33" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header Background  -->
+        <Border Grid.RowSpan="3"
+                Background="{Binding Source={StaticResource Teamup.Brushes.Competition.Friendly}, Converter={x:Static my:ColorToGradientBrushConverter.Lighten}}"
+                CornerRadius="15 0 0 0"
+                Effect="{StaticResource MyNet.Shadows.Elevation6}" />
+
+        <!--  Header  -->
+        <my:TransitioningContent Margin="{StaticResource MyNet.Margins.Medium}" Content="{Binding Item}" Foreground="{Binding Source={StaticResource Teamup.Brushes.Competition.Friendly}, Converter={x:Static my:BrushConverter.Contrast}}">
+            <my:TransitioningContent.ContentTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="450" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  First Block  -->
+                        <DockPanel>
+
+                            <!--  Photo  -->
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}"
+                                               Width="120"
+                                               Height="120"
+                                               Margin="{StaticResource MyNet.Margins.Large.Right}"
+                                               DataContext="{Binding}"
+                                               DockPanel.Dock="Left" />
+
+                            <my:SimpleStackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                                <!--  Competition selection  -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <!--  Competition  -->
+                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Filled.Foreground.SemiTransparent}"
+                                                       Grid.RowSpan="2"
+                                                       Grid.Column="0"
+                                                       HorizontalAlignment="Stretch"
+                                                       VerticalAlignment="Stretch"
+                                                       HorizontalContentAlignment="Stretch"
+                                                       PopupPadding="0">
+                                        <my:DropDownButton.ToggleContent>
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                                       Grid.Column="2"
+                                                       FontWeight="Bold"
+                                                       Opacity="{StaticResource MyNet.Opacity.Default}"
+                                                       Text="{Binding Name}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       TextWrapping="NoWrap" />
+                                        </my:DropDownButton.ToggleContent>
+                                        <ListBox Style="{StaticResource Teamup.Styles.ListBox.Embedded.Popup.OtherItems}" ItemsSource="{Binding Data.OtherItems, Source={StaticResource Proxy}}" Tag="{Binding Data, Source={StaticResource Proxy}}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <DockPanel>
+                                                        <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}"
+                                                                           Width="32"
+                                                                           Height="32"
+                                                                           Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                                                           DockPanel.Dock="Left" />
+                                                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                                            <TextBlock FontSize="{StaticResource MyNet.Font.Size.Menu}" Text="{Binding Name}" />
+                                                            <ContentControl Margin="{StaticResource MyNet.Margins.Small.Left}" Content="{Binding}">
+                                                                <ContentControl.ContentTemplateSelector>
+                                                                    <s:CompetitionDataTemplateSelector>
+                                                                        <s:CompetitionDataTemplateSelector.FriendlyTemplate>
+                                                                            <DataTemplate DataType="{x:Type entities:FriendlyViewModel}">
+                                                                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Matches.Count, Plural=True, Format=XMatches}" />
+                                                                            </DataTemplate>
+                                                                        </s:CompetitionDataTemplateSelector.FriendlyTemplate>
+                                                                        <s:CompetitionDataTemplateSelector.CupTemplate>
+                                                                            <DataTemplate DataType="{x:Type entities:CupViewModel}">
+                                                                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding CurrentRound.Name}" />
+                                                                            </DataTemplate>
+                                                                        </s:CompetitionDataTemplateSelector.CupTemplate>
+                                                                        <s:CompetitionDataTemplateSelector.LeagueTemplate>
+                                                                            <DataTemplate DataType="{x:Type entities:LeagueViewModel}">
+                                                                                <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                                                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Resource Ranking}" />
+                                                                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text=":" />
+                                                                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Ranking.MyRank, Converter={x:Static my:IntegerToOrdinalizeConverter.Default}}" />
+                                                                                </my:SimpleStackPanel>
+                                                                            </DataTemplate>
+                                                                        </s:CompetitionDataTemplateSelector.LeagueTemplate>
+                                                                    </s:CompetitionDataTemplateSelector>
+                                                                </ContentControl.ContentTemplateSelector>
+                                                            </ContentControl>
+                                                        </my:SimpleStackPanel>
+                                                    </DockPanel>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </my:DropDownButton>
+
+                                    <!--  Navigation buttons  -->
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                            Grid.Row="0"
+                                            Grid.Column="2"
+                                            Command="{Binding Data.NavigateToPreviousItemCommand, Source={StaticResource Proxy}}"
+                                            Content="{my:MediumIcon Kind=ChevronUp}"
+                                            ToolTip="{Binding Data.PreviousItem.Name, Source={StaticResource Proxy}}" />
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                            Grid.Row="1"
+                                            Grid.Column="2"
+                                            Command="{Binding Data.NavigateToNextItemCommand, Source={StaticResource Proxy}}"
+                                            Content="{my:MediumIcon Kind=ChevronDown}"
+                                            ToolTip="{Binding Data.NextItem.Name, Source={StaticResource Proxy}}" />
+                                </Grid>
+
+                                <!--  Date  -->
+                                <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                    <TextBlock Text="{my:Resource From1}" />
+                                    <TextBlock Text="{my:Translation StartDate, Format=MidDateFormat, Casing=Title}" />
+                                    <TextBlock Text="{my:Resource To1, Casing=LowerCase}" />
+                                    <TextBlock Text="{my:Translation EndDate, Format=MidDateFormat, Casing=Title}" />
+                                </my:SimpleStackPanel>
+                            </my:SimpleStackPanel>
+                        </DockPanel>
+
+                        <!--  Second block  -->
+                        <Grid Grid.Column="2">
+
+                            <!--  Stats  -->
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Foreground}"
+                                          Width="80"
+                                          Content="{Binding Teams.Count}"
+                                          Header="{my:Resource Teams}" />
+                                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Foreground}"
+                                          Width="80"
+                                          Content="{Binding AllMatches.Count}"
+                                          Header="{my:Resource Matches}" />
+                            </my:SimpleStackPanel>
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </my:TransitioningContent.ContentTemplate>
+        </my:TransitioningContent>
+
+        <!--  Tabs  -->
+        <my:NavigationView Style="{StaticResource Teamup.Styles.NavigationView.Top.Secondary}"
+                           Grid.Row="2"
+                           Grid.RowSpan="2"
+                           my:ThemeAssist.IsCheckedBorderBrush="{Binding Source={StaticResource Teamup.Brushes.Competition.League}, Converter={x:Static my:BrushConverter.Contrast}}"
+                           HeaderForeground="{Binding Source={StaticResource Teamup.Brushes.Competition.League}, Converter={x:Static my:BrushConverter.Contrast}}"
+                           NavigationService="{Binding NavigationService}">
+            <my:NavigationView.PaneFooter>
+                <my:SimpleStackPanel Margin="0 -10 10 0"
+                                     Orientation="Horizontal"
+                                     Spacing="{StaticResource MyNet.Margin.Default}"
+                                     TextElement.Foreground="{Binding Source={StaticResource Teamup.Brushes.Competition.Friendly}, Converter={x:Static my:BrushConverter.Contrast}}">
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=Edit}"
+                            Command="{Binding Item.EditCommand}"
+                            Content="{my:Resource Edit}"
+                            ToolTip="Ctrl+E" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=ContentDuplicate}"
+                            Command="{Binding Item.DuplicateCommand}"
+                            Content="{my:Resource Duplicate}"
+                            ToolTip="Ctrl+D" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding Item.RemoveCommand}" />
+                </my:SimpleStackPanel>
+            </my:NavigationView.PaneFooter>
+            <my:NavigationViewItem Header="{my:Resource Overview}" Icon="{my:Icon Kind=ViewDashboard}" TargetPage="{Binding OverviewViewModel}" />
+            <my:NavigationViewItem Header="{my:Resource Fixtures}" Icon="{my:Icon Kind=Soccer}" TargetPage="{Binding MatchesViewModel}" />
+            <my:NavigationViewItem Header="{my:Resource Stadiums}" Icon="{my:Icon Kind=Stadium}" TargetPage="{Binding StadiumsViewModel}" />
+            <my:NavigationViewItem Header="{my:Resource Rules}" Icon="{my:Icon Kind=CardBulletedSettings}" TargetPage="{Binding RulesViewModel}" />
+        </my:NavigationView>
+    </Grid>
+</UserControl>

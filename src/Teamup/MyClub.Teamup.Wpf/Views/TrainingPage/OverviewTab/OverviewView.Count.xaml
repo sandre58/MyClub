@@ -1,0 +1,130 @@
+﻿<GroupBox x:Class="MyClub.Teamup.Wpf.Views.TrainingPage.OverviewTab.OverviewCountView"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:my="http://mynet.com/xaml/themes"
+          xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingPage.OverviewTab"
+          Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+          d:DataContext="{d:DesignInstance Type=vm:OverviewCountViewModel}"
+          d:DesignHeight="450"
+          d:DesignWidth="800"
+          my:IconAssist.Icon="{my:MediumIcon Data={StaticResource Teamup.Geometries.Training}}"
+          Header="{my:Resource Sessions,
+                               Casing=AllCaps}"
+          mc:Ignorable="d">
+    <GroupBox.Resources>
+        <my:BindingProxy x:Key="CountProxy" Data="{Binding}" />
+    </GroupBox.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto">
+                <ColumnDefinition.Style>
+                    <Style TargetType="{x:Type ColumnDefinition}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding TeamValues.Count, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True">
+                                <Setter Property="MaxWidth" Value="0" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ColumnDefinition.Style>
+            </ColumnDefinition>
+            <ColumnDefinition Width="*">
+                <ColumnDefinition.Style>
+                    <Style TargetType="{x:Type ColumnDefinition}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding TeamValues.Count, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True">
+                                <Setter Property="MaxWidth" Value="0" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ColumnDefinition.Style>
+            </ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Count chart  -->
+            <Grid VerticalAlignment="Top">
+
+                <my:PieChart Width="200"
+                              Height="200"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              DataTooltip="{x:Null}"
+                              Hoverable="False"
+                              InnerRadius="55"
+                              LegendLocation="None"
+                              StartingRotationAngle="180">
+                    <my:PieChart.Series>
+                        <my:PieSeries Title="{my:Resource Performed}"
+                                       DataLabels="True"
+                                       Fill="{DynamicResource MyNet.Brushes.Primary}"
+                                       Foreground="{DynamicResource MyNet.Brushes.Primary.Foreground}"
+                                       LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                       Values="{Binding Performed}" />
+                        <my:PieSeries Title="{my:Resource CancelledPlural}"
+                                       DataLabels="True"
+                                       Fill="{DynamicResource MyNet.Brushes.Negative}"
+                                       Foreground="{DynamicResource MyNet.Brushes.White}"
+                                       LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                       Values="{Binding Cancelled}" />
+                        <my:PieSeries Title="{my:Resource NotPerformed}"
+                                       DataLabels="True"
+                                       Fill="{DynamicResource MyNet.Brushes.Control.Background.Secondary}"
+                                       LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                       Values="{Binding NotPerformed}" />
+                    </my:PieChart.Series>
+                </my:PieChart>
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="34"
+                           Text="{Binding Count}" />
+
+            </Grid>
+
+            <!--  Count legend  -->
+            <my:SimpleStackPanel Grid.Row="2" HorizontalAlignment="Center" Orientation="Horizontal">
+                <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource MyNet.Brushes.Primary}" Content="{my:Resource Performed}" />
+                <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource MyNet.Brushes.Negative}" Content="{my:Resource CancelledPlural}" />
+                <Label Style="{StaticResource MyNet.Styles.Label.Legend}" Background="{DynamicResource MyNet.Brushes.Control.Background.Secondary}" Content="{my:Resource NotPerformed}" />
+            </my:SimpleStackPanel>
+
+        </Grid>
+
+        <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" Grid.Column="1" />
+
+        <ItemsControl Grid.Column="2" ItemsSource="{Binding TeamValues}" Visibility="{Binding TeamValues.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotMany}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Bottom}">
+                        <TextBlock DockPanel.Dock="Top" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Title}" />
+                        <Grid Margin="{StaticResource MyNet.Margins.Default.Top}">
+                            <ProgressBar Style="{StaticResource MyNet.Styles.ProgressBar.Linear}"
+                                         Height="20"
+                                         HorizontalAlignment="Stretch"
+                                         my:ProgressBarAssist.ShowValue="False"
+                                         Background="{DynamicResource MyNet.Brushes.Control.Background.Secondary}"
+                                         Maximum="{Binding Data.Count, Source={StaticResource CountProxy}}"
+                                         Value="{my:NotNullableBinding Item,
+                                                                       Mode=OneWay}" />
+                            <TextBlock Margin="{StaticResource MyNet.Margins.Default.Left}"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource MyNet.Brushes.Primary.Foreground}"
+                                       Text="{Binding Item}" />
+                        </Grid>
+                    </DockPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</GroupBox>

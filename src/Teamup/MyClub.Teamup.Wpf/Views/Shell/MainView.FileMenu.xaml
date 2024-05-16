@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Shell.FileMenuView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Shell"
+             xmlns:vmS="clr-namespace:MyNet.UI.ViewModels.Shell;assembly=MyNet.UI"
+             d:DataContext="{d:DesignInstance Type=vm:FileMenuViewModel}"
+             mc:Ignorable="d">
+    <Grid>
+        <my:DrawerHost IsLeftDrawerOpen="{Binding Content, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" LeftDrawerBackground="{DynamicResource MyNet.Brushes.Accent}">
+            <my:DrawerHost.LeftDrawerContent>
+                <my:TransitioningContent Width="600"
+                                         Margin="200 0 0 0"
+                                         Content="{Binding Content, Converter={x:Static my:ViewModelToViewConverter.Default}}"
+                                         DockPanel.Dock="Right"
+                                         Focusable="False" />
+            </my:DrawerHost.LeftDrawerContent>
+        </my:DrawerHost>
+        <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.FileMenu}" HorizontalAlignment="Left" DockPanel.Dock="Left">
+            <DockPanel Width="200" Margin="0 45 0 0">
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Separator />
+                    <ToggleButton my:IconAssist.Icon="{my:MediumIcon Kind=Tune}"
+                                  Command="{Binding ToggleFileMenuContentCommand}"
+                                  CommandParameter="{x:Type vm:PreferencesViewModel}"
+                                  Content="{my:Resource Preferences}"
+                                  IsChecked="{Binding PreferencesIsVisible, Mode=OneWay}"
+                                  ToolTip="F2" />
+                    <ToggleButton my:IconAssist.Icon="{my:MediumIcon Kind=About}"
+                                  Command="{Binding ToggleFileMenuContentCommand}"
+                                  CommandParameter="{x:Type vmS:AboutViewModel}"
+                                  Content="{my:Resource About}"
+                                  IsChecked="{Binding AboutIsVisible, Mode=OneWay}"
+                                  ToolTip="F1" />
+                    <Button my:IconAssist.Icon="{my:MediumIcon Kind=Power}"
+                            Command="{Binding ExitCommand}"
+                            Content="{my:Resource Close}"
+                            ToolTip="Ctrl+Q" />
+                </StackPanel>
+
+                <my:DynamicScrollViewer Margin="{StaticResource MyNet.Margins.Large.Top}" DockPanel.Dock="Top" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=File}" Command="{Binding NewCommand}" Content="{my:Resource New}" />
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=FileEdit}"
+                                Command="{Binding CreateCommand}"
+                                Content="{my:Resource Create}"
+                                ToolTip="Ctrl+Maj+N" />
+                        <ToggleButton my:IconAssist.Icon="{my:MediumIcon Kind=FolderOpen}"
+                                      Command="{Binding ToggleFileMenuContentCommand}"
+                                      CommandParameter="{x:Type vm:OpenViewModel}"
+                                      Content="{my:Resource Open}"
+                                      IsChecked="{Binding OpenIsVisible, Mode=OneWay}"
+                                      ToolTip="Ctrl+O" />
+                        <Separator />
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=FolderRemove}"
+                                Command="{Binding CloseCommand}"
+                                Content="{my:Resource CloseProject}"
+                                ToolTip="Ctrl+Maj+Q" />
+                        <Separator />
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=ContentSave}"
+                                Command="{Binding SaveCommand}"
+                                Content="{my:Resource Save}"
+                                ToolTip="Ctrl+S" />
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=ContentSaveMove}"
+                                Command="{Binding SaveAsCommand}"
+                                Content="{my:Resource SaveAs}"
+                                ToolTip="Ctrl+Maj+S" />
+                        <Separator />
+                        <ToggleButton my:IconAssist.Icon="{my:MediumIcon Kind=FolderInformation}"
+                                      Command="{Binding ToggleFileMenuContentCommand}"
+                                      CommandParameter="{x:Type vm:PropertiesViewModel}"
+                                      Content="{my:Resource Properties}"
+                                      IsChecked="{Binding PropertiesIsVisible, Mode=OneWay}"
+                                      IsEnabled="{Binding HasCurrentProject}"
+                                      ToolTip="Ctrl+P" />
+                    </StackPanel>
+                </my:DynamicScrollViewer>
+            </DockPanel>
+        </ToolBar>
+    </Grid>
+
+</UserControl>

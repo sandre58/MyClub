@@ -1,0 +1,91 @@
+﻿<ToolBar x:Class="MyClub.Teamup.Wpf.Views.TrainingSessionPage.TrainingSessionPageAttendancesPlayerToolBar"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:my="http://mynet.com/xaml/themes"
+         x:Name="local"
+         Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+         d:DataContext="{d:DesignInstance Type=entities:TrainingAttendanceViewModel}"
+         d:DesignHeight="450"
+         d:DesignWidth="800"
+         mc:Ignorable="d">
+    <ToolBar.Resources>
+        <my:BindingProxy x:Key="ItemProxy" Data="{Binding}" />
+        <my:BindingProxy x:Key="LocalProxy" Data="{Binding ElementName=local}" />
+    </ToolBar.Resources>
+
+    <my:DropDownButton x:Name="DropDownButton"
+                       PopupPadding="0"
+                       ShowDropDownButton="False"
+                       ToggleContent="{my:ToolIcon Kind=DotsVertical}">
+        <my:Submenu>
+            <MenuItem Command="{Binding Data.SetAttendanceToPresentCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendancePresent}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource MyNet.Brushes.Positive}"
+                                 Kind="CheckboxMarkedCircle" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToAbsentCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceAbsent}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                 Kind="Cancel" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToApologyCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceApology}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                                 Kind="MessageProcessing" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToInjuredCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceInjured}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                                 Kind="Ambulance" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToInHolidaysCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceInHolidays}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                                 Kind="Beach" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToInSelectionCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceInSelection}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                                 Kind="Star" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToRestingCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceResting}">
+                <MenuItem.Icon>
+                    <my:PackIcon Width="18"
+                                 Height="18"
+                                 Foreground="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                                 Kind="Sleep" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding Data.SetAttendanceToUnknownCommand, Source={StaticResource ItemProxy}}" Header="{my:Resource AttendanceUnknown}" Icon="{my:ToolIcon Kind=QuestionMarkCircle}" />
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" IsEnabled="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" />
+            <MenuItem Background="{DynamicResource MyNet.Brushes.Negative}"
+                      Command="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}}"
+                      CommandParameter="{Binding}"
+                      Foreground="{my:BrushBinding SelfPath=Background,
+                                                   Contrast=True}"
+                      Header="{my:Resource Remove}"
+                      Icon="{my:ToolIcon Kind=Trash}" />
+        </my:Submenu>
+    </my:DropDownButton>
+</ToolBar>

@@ -1,0 +1,89 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.MedicalCenterPage.InjuriesTab.InjuriesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:m="http://myclub.net/winfx/xaml/themes"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.MedicalCenterPage.InjuriesTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.InjuriesTab"
+             d:DataContext="{d:DesignInstance Type=vm:InjuriesViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count.Selectable}" />
+                    <my:ExtendedFiltersView DataContext="{Binding Filters}" DropDownHeight="400">
+                        <my:ExtendedFiltersView.SpeedFilters>
+                            <v:InjuriesSpeedFiltersView />
+                        </my:ExtendedFiltersView.SpeedFilters>
+                    </my:ExtendedFiltersView>
+                    <my:ExtendedSortingView DataContext="{Binding Sorting}" />
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" Margin="{StaticResource MyNet.Margins.Default.Vertical}" />
+                    <my:DisplayView DataContext="{Binding Display}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+            <my:SelectionCommandsBar SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
+                <Button my:IconAssist.Icon="{my:ToolIcon Kind=Edit}"
+                            Command="{Binding EditSelectedItemCommand}"
+                            Content="{my:Resource Edit}"
+                            ToolTip="Ctrl+E" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding RemoveSelectedItemsCommand}" />
+            </my:SelectionCommandsBar>
+
+        </my:CommandsBar>
+
+        <!--  Content  -->
+        <my:TransitioningContent>
+            <my:TransitioningContent.Style>
+                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeGrid">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:InjuriesGridView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeList">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:InjuriesListView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding WrappersSource.Count}" Value="0">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <ContentControl ContentTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </my:TransitioningContent.Style>
+        </my:TransitioningContent>
+    </DockPanel>
+</UserControl>

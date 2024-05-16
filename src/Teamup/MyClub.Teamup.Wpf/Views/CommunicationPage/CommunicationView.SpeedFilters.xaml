@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CommunicationPage.PlayersSpeedFiltersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CommunicationPage"
+             Width="470"
+             d:DataContext="{d:DesignInstance Type=vm:PlayersSpeedFiltersViewModel}"
+             Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+             mc:Ignorable="d">
+
+    <my:SimpleStackPanel>
+
+        <!--  Teams  -->
+        <ContentControl Content="{Binding TeamsFilter}" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Name  -->
+            <TextBox x:Name="NameTextBox"
+                     Style="{StaticResource MyNet.Styles.TextBox.Filled}"
+                     HorizontalAlignment="Stretch"
+                     my:FocusAssist.IsDefault="True"
+                     my:HintAssist.Hint="{my:Resource Name}"
+                     my:HintAssist.IsFloating="True"
+                     my:TextFieldAssist.HasClearButton="True"
+                     Text="{Binding NameFilter.Value, UpdateSourceTrigger=PropertyChanged}" />
+
+            <!--  Gender  -->
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle.Foreground}"
+                     Grid.Column="2"
+                     SelectedValue="{Binding GenderFilter.Value}"
+                     SelectedValuePath="DataContext">
+                <ListBoxItem Width="50"
+                             Height="38"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Male}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                             Content="{my:MediumIcon Kind=GenderMale}"
+                             DataContext="{x:Static utils:GenderType.Male}"
+                             ToolTip="{my:Resource GenderTypeMale}" />
+
+                <ListBoxItem Width="50"
+                             Height="38"
+                             Content="{my:MediumIcon Kind=GenderMaleFemale}"
+                             DataContext="{x:Null}"
+                             ToolTip="{my:Resource AllMale}" />
+                <ListBoxItem Width="50"
+                             Height="38"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Female}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                             Content="{my:MediumIcon Kind=GenderFemale}"
+                             DataContext="{x:Static utils:GenderType.Female}"
+                             ToolTip="{my:Resource GenderTypeFemale}" />
+            </ListBox>
+        </Grid>
+
+        <!--  Categories  -->
+        <my:MultiComboBox Style="{StaticResource MyNet.Styles.MultiComboBox.Filled}"
+                          HorizontalAlignment="Stretch"
+                          my:HintAssist.Hint="{my:Resource Category}"
+                          my:HintAssist.IsFloating="True"
+                          my:TextFieldAssist.HasClearButton="True"
+                          ItemsSource="{Binding CategoryFilter.AvailableValues, Mode=OneWay}"
+                          SelectedValuePath="{Binding CategoryFilter.SelectedValuePath}">
+            <i:Interaction.Behaviors>
+                <my:ListBoxSelectionBehavior SelectedValues="{Binding CategoryFilter.Values}" />
+            </i:Interaction.Behaviors>
+        </my:MultiComboBox>
+
+        <!--  License state  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean}" my:HeaderAssist.HorizontalAlignment="Left" Header="{my:Resource License}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle.Foreground}"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         SelectedValuePath="DataContext"
+                         SelectionMode="Multiple">
+                    <i:Interaction.Behaviors>
+                        <my:ListBoxSelectionBehavior SelectedValues="{Binding LicenseStateFilter.Values}" />
+                    </i:Interaction.Behaviors>
+
+                    <ListBoxItem Width="75"
+                                 my:IconAssist.Icon="{my:MediumIcon Kind=QuestionMarkRhombus}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.None}"
+                                 Content="{my:Resource LicenseStateUnknown}"
+                                 DataContext="{x:Static enums2:LicenseState.Unknown}" />
+                    <ListBoxItem Width="75"
+                                 my:IconAssist.Icon="{my:MediumIcon Kind=CardBulletedSettings}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Warning}"
+                                 Content="{my:Resource LicenseStateGiven}"
+                                 DataContext="{x:Static enums2:LicenseState.Given}" />
+                    <ListBoxItem Width="75"
+                                 my:IconAssist.Icon="{my:MediumIcon Kind=AssignmentReturn}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Information}"
+                                 Content="{my:Resource LicenseStateBack}"
+                                 DataContext="{x:Static enums2:LicenseState.Back}" />
+                    <ListBoxItem Width="75"
+                                 my:IconAssist.Icon="{my:MediumIcon Kind=Dollar}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Positive}"
+                                 Content="{my:Resource LicenseStatePaid}"
+                                 DataContext="{x:Static enums2:LicenseState.Paid}" />
+                </ListBox>
+
+                <!--  Is Mutation  -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean}" my:HeaderAssist.HorizontalAlignment="Left" Header="{my:Resource IsMutation}">
+                    <ContentControl Content="{Binding IsMutationFilter}" />
+                </GroupBox>
+
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+    </my:SimpleStackPanel>
+</UserControl>

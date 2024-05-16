@@ -1,0 +1,200 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                    xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities"
+                    xmlns:comparaison="clr-namespace:MyNet.Utilities.Comparaison;assembly=MyNet.Utilities"
+                    xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+                    xmlns:filters="clr-namespace:MyClub.Teamup.Wpf.Filters">
+
+    <DataTemplate DataType="{x:Type filters:TeamsFilterViewModel}">
+        <my:SimpleStackPanel Orientation="Horizontal">
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
+                      Width="60"
+                      DisplayMemberPath="Display"
+                      ItemsSource="{my:EnumSource {x:Type comparaison:LogicalOperator}}"
+                      SelectedValue="{Binding LogicalOperator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      SelectedValuePath="Value"
+                      Visibility="{Binding ShowLogicalOperator, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                         my:ItemsControlAssist.SortingProperty="Order"
+                         ItemsSource="{Binding AvailableValues}"
+                         SelectedValuePath="{Binding SelectedValuePath}"
+                         SelectionMode="Multiple">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                    <i:Interaction.Behaviors>
+                        <my:ListBoxSelectionBehavior SelectedValues="{Binding Values}" />
+                    </i:Interaction.Behaviors>
+                </ListBox>
+                <CheckBox Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                          Content="{my:Resource ExternalPlayers}"
+                          IsChecked="{Binding ExternalPlayers}"
+                          Visibility="{Binding ShowExternalPlayers, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+            </my:SimpleStackPanel>
+        </my:SimpleStackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type filters:GenderFilterViewModel}">
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle.Foreground}" SelectedValue="{Binding Value}" SelectedValuePath="DataContext">
+            <ListBoxItem Width="100"
+                         my:IconAssist.Icon="{my:Icon Kind=GenderMale}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Male}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         Content="{my:Resource GenderTypeMale}"
+                         DataContext="{x:Static utils:GenderType.Male}" />
+
+            <ListBoxItem Width="100"
+                         HorizontalContentAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         my:IconAssist.Icon="{my:Icon Kind=GenderMaleFemale}"
+                         Content="{my:Resource AllMale}"
+                         DataContext="{x:Null}" />
+            <ListBoxItem Width="100"
+                         my:IconAssist.Icon="{my:Icon Kind=GenderFemale}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Female}"
+                         my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                         Content="{my:Resource GenderTypeFemale}"
+                         DataContext="{x:Static utils:GenderType.Female}" />
+        </ListBox>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type filters:RatedPositionFilterViewModel}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="134" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="134" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox x:Name="ValueControl"
+                      HorizontalAlignment="Stretch"
+                      my:FocusAssist.IsDefault="True"
+                      DisplayMemberPath="Display"
+                      ItemsSource="{my:EnumerationSource EnumType={x:Type enums:Position}}"
+                      SelectedValue="{Binding Position, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      SelectedValuePath="Value" />
+
+            <ComboBox Grid.Column="2"
+                      HorizontalAlignment="Stretch"
+                      DisplayMemberPath="Display"
+                      ItemsSource="{my:EnumSource {x:Type comparaison:ComplexComparableOperator}}"
+                      SelectedValue="{Binding Operator, Mode=TwoWay}"
+                      SelectedValuePath="Value" />
+
+            <StackPanel Grid.Row="0" Grid.Column="4">
+                <my:RatingBar x:Name="From" Value="{Binding From, Mode=TwoWay}" />
+                <my:RatingBar x:Name="To" Value="{Binding To, Mode=TwoWay}" />
+            </StackPanel>
+        </Grid>
+
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Operator}" Value="{x:Static comparaison:ComplexComparableOperator.EqualsTo}">
+                <Setter TargetName="To" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Operator}" Value="{x:Static comparaison:ComplexComparableOperator.GreaterEqualThan}">
+                <Setter TargetName="To" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Operator}" Value="{x:Static comparaison:ComplexComparableOperator.GreaterThan}">
+                <Setter TargetName="To" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Operator}" Value="{x:Static comparaison:ComplexComparableOperator.LessEqualThan}">
+                <Setter TargetName="From" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Operator}" Value="{x:Static comparaison:ComplexComparableOperator.LessThan}">
+                <Setter TargetName="From" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Operator}" Value="{x:Static comparaison:ComplexComparableOperator.NotEqualsTo}">
+                <Setter TargetName="To" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type filters:MatchdayFilterViewModel}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="3"
+                      Width="230"
+                      Padding="4 4 50 4"
+                      HorizontalContentAlignment="Center"
+                      my:ComboBoxAssist.ShowCaret="False"
+                      my:HintAssist.Hint="{my:Resource AllMatchdays}"
+                      my:HintAssist.IsFloating="False"
+                      my:ItemsControlAssist.SortingProperty="OriginDate"
+                      my:TextFieldAssist.HasClearButton="True"
+                      my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Control}"
+                      BorderThickness="1"
+                      DisplayMemberPath="Name"
+                      ItemsSource="{Binding AvailableValues}"
+                      SelectedItem="{Binding Value}">
+                <my:IconAssist.Icon>
+                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                            Command="{Binding Value.EditCommand}"
+                            Content="{my:ToolIcon Kind=Edit}"
+                            ToolTip="{my:Resource Edit}"
+                            Visibility="{Binding Value, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                </my:IconAssist.Icon>
+            </ComboBox>
+            <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
+                    Grid.Column="1"
+                    Command="{Binding PreviousMatchdayCommand}"
+                    Content="{my:MediumIcon Kind=ChevronLeft}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
+                    Grid.Column="2"
+                    Command="{Binding NextMatchdayCommand}"
+                    Content="{my:MediumIcon Kind=ChevronRight}" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type filters:MatchTeamFilterViewModel}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
+                      Grid.Column="0"
+                      Width="Auto"
+                      HorizontalAlignment="Stretch"
+                      my:ItemsControlAssist.SortingProperty="Name"
+                      my:HintAssist.Hint="{my:Resource Team}"
+                      my:HintAssist.IsFloating="True"
+                      my:TextFieldAssist.HasClearButton="True"
+                      DisplayMemberPath="Name"
+                      IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                      IsReadOnly="{Binding IsReadOnly}"
+                      ItemsSource="{Binding AvailableValues}"
+                      SelectedValue="{Binding Value, Mode=TwoWay}" />
+
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     Grid.Column="2"
+                     VerticalAlignment="Stretch"
+                     IsEnabled="{Binding Value, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}"
+                     SelectedValue="{Binding VenueFilter.Value}"
+                     SelectedValuePath="DataContext"
+                     SelectionMode="Single">
+                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:Venue.Home}" ToolTip="{my:Resource LocationHome}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=NullOff}" DataContext="{x:Null}" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:Venue.Away}" ToolTip="{my:Resource LocationAway}" />
+            </ListBox>
+        </Grid>
+    </DataTemplate>
+
+</ResourceDictionary>

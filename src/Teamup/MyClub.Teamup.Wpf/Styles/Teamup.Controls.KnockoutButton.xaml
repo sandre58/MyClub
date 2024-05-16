@@ -1,0 +1,55 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+                    xmlns:my="http://mynet.com/xaml/themes">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="Teamup.Styles.KnockoutButton" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}" TargetType="{x:Type ctrl:KnockoutButton}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="ToolTip" Value="{my:Resource SeeItem}" />
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                               FontSize="{Binding FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                               Text="{Binding Item.Name, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:KnockoutButton}}, UpdateSourceTrigger=PropertyChanged}"
+                               TextWrapping="NoWrap" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu DataContext="{Binding PlacementTarget.Item, RelativeSource={RelativeSource Self}}">
+                    <ContextMenu.Resources>
+                        <my:BindingProxy x:Key="KnockoutProxy" Data="{Binding}" />
+                    </ContextMenu.Resources>
+                    <MenuItem Command="{Binding OpenCommand}" Header="{Binding Name}" />
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                    <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                    <MenuItem Command="{Binding EditResultsCommand}" Header="{my:Resource EditResults}" Icon="{my:ToolIcon Kind=LibraryEdit}" />
+                    <MenuItem Command="{Binding AddMatchesCommand}" Header="{my:Resource AddMatches}" Icon="{my:ToolIcon Kind=LibraryAdd}" />
+                    <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                    <MenuItem Background="{DynamicResource MyNet.Brushes.Negative}"
+                              Command="{Binding RemoveCommand}"
+                              Foreground="{my:BrushBinding SelfPath=Background,
+                                                           Contrast=True}"
+                              Header="{my:Resource Remove}"
+                              Icon="{my:ToolIcon Kind=Trash}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="false">
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

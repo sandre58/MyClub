@@ -1,0 +1,153 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.TrainingSessionsEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:collections="clr-namespace:MyClub.Teamup.Wpf.Collections"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Width="550"
+                  Height="370"
+                  d:DataContext="{d:DesignInstance Type=vm:TrainingSessionsEditionViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{Binding}"
+                  HeaderHeight="70"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CloseCommand, Source={StaticResource Proxy}}" CommandParameter="{x:Static my:Booleans.False}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Reset}" HorizontalAlignment="Right" Command="{Binding ResetCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}"
+                    HorizontalAlignment="Right"
+                    Command="{Binding CloseCommand}"
+                    CommandParameter="{x:Static my:Booleans.False}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:ContentDialog.HeaderTemplate>
+        <DataTemplate>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="{my:Translation Trainings.Count, Format=EditionOfXItems, Plural=True}" />
+                <ItemsControl Grid.Row="2" Focusable="True" ItemsSource="{Binding Trainings}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Label x:Name="Ellipse"
+                                   Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                   Width="37"
+                                   Height="37"
+                                   Margin="{StaticResource MyNet.Margins.Small}"
+                                   HorizontalAlignment="Center"
+                                   Background="{DynamicResource MyNet.Brushes.None}"
+                                   ToolTip="{my:Translation StartDate,
+                                                            Format=LongDatePattern}">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock HorizontalAlignment="Center" Text="{my:Translation StartDate, Format=DateDayNumberFormat}" />
+                                    <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=DateShortMonthFormat}" />
+                                </StackPanel>
+                            </Label>
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                                    <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsPerformed}" Value="True">
+                                    <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+    </my:ContentDialog.HeaderTemplate>
+
+    <my:SimpleStackPanel>
+
+        <!--  Theme  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Large.Bottom}" Header="{my:MediumIcon Kind=Information}">
+            <TextBox Width="400"
+                     my:EditionAssist.MultipleEditableValue="{Binding Theme, Mode=OneWay}"
+                     my:HintAssist.HelperTextMargin="28 -30 0 0"
+                     my:HintAssist.Hint="{my:Resource Theme}"
+                     Text="{Binding Theme.Value, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Time  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Clock}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <my:TimePicker Width="130"
+                               my:EditionAssist.MultipleEditableValue="{Binding StartTime, Mode=OneWay}"
+                               my:HintAssist.HelperTextMargin="28 -45 0 0"
+                               my:HintAssist.Hint="{my:Resource StartTime}"
+                               SelectedTime="{Binding StartTime.Value, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <TextBlock Text="{my:Resource To}" />
+                <my:TimePicker Width="130"
+                               my:EditionAssist.MultipleEditableValue="{Binding EndTime, Mode=OneWay}"
+                               my:HintAssist.HelperTextMargin="28 -45 0 0"
+                               my:HintAssist.Hint="{my:Resource EndTime}"
+                               SelectedTime="{Binding EndTime.Value, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <!--  Place  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=MapMarker}">
+            <TextBox my:EditionAssist.MultipleEditableValue="{Binding Place, Mode=OneWay}"
+                     my:HintAssist.HelperTextMargin="28 -30 0 0"
+                     my:HintAssist.Hint="{my:Resource Place}"
+                     Text="{Binding Place.Value, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Teams  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=AccountGroup}">
+            <my:SimpleStackPanel Margin="2 0 0 0" Orientation="Horizontal">
+                <CheckBox IsChecked="{Binding SelectedTeamIds.IsActive}" ToolTip="{my:Resource Edit}">
+                    <CheckBox.Style>
+                        <Style BasedOn="{StaticResource MyNet.Styles.CheckBox}" TargetType="{x:Type CheckBox}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedTeamIds.IsActive}" Value="False">
+                                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </CheckBox.Style>
+                </CheckBox>
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                         my:EditionAssist.MultipleEditableValue="{Binding SelectedTeamIds}"
+                         my:ItemsControlAssist.SortingProperty="Order"
+                         DisplayMemberPath="Name"
+                         ItemsSource="{Binding Source={x:Static collections:TeamsCollection.MyTeams}}"
+                         SelectedValuePath="Id"
+                         SelectionMode="Multiple">
+                    <i:Interaction.Behaviors>
+                        <my:ListBoxSelectionBehavior SelectedValues="{Binding SelectedTeamIds.Value}" />
+                    </i:Interaction.Behaviors>
+                </ListBox>
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+    </my:SimpleStackPanel>
+
+</my:ContentDialog>

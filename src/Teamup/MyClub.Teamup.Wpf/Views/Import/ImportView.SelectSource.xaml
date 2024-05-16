@@ -1,0 +1,407 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Import.ImportSelectSourceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:csv="clr-namespace:MyNet.CsvHelper.Extensions.Exceptions;assembly=MyNet.CsvHelper.Extensions"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:selectors="clr-namespace:MyClub.Teamup.Wpf.Selectors"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Import"
+             d:DataContext="{d:DesignInstance Type=vm:ImportSelectSourceViewModel`1}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate x:Key="Teamup.DataTemplates.ImportSource.Database">
+            <DockPanel>
+                <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" Margin="{StaticResource MyNet.Margins.VeryLarge.Vertical}" DockPanel.Dock="Right" />
+                <DockPanel Margin="{StaticResource MyNet.Margins.VeryLarge}">
+                    <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Large.Bottom}" DockPanel.Dock="Top" Orientation="Horizontal">
+                        <my:PackIcon Width="50" Height="50" Kind="Database" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" Text="{my:Resource Database}" />
+                    </my:SimpleStackPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="150" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!--  Informations  -->
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                                  my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Information}"
+                                  my:IconAssist.Icon="{my:MediumIcon Kind=InformationCircle}"
+                                  Header="{my:Resource Informations}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                           Grid.Row="0"
+                                           Grid.Column="0"
+                                           Text="{my:Resource Name}"
+                                           Typography.Capitals="AllSmallCaps" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Value.Name}" />
+
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                           Grid.Row="1"
+                                           Grid.Column="0"
+                                           Text="{my:Resource Host}"
+                                           Typography.Capitals="AllSmallCaps" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Value.Host}" />
+
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                           Grid.Row="2"
+                                           Grid.Column="0"
+                                           Text="{my:Resource State}"
+                                           Typography.Capitals="AllSmallCaps" />
+                                <Button Grid.Row="2"
+                                        Grid.Column="1"
+                                        Width="30"
+                                        Height="30"
+                                        Command="{Binding Value.TestConnectionCommand}"
+                                        ToolTip="{my:Resource CheckConnection}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource MyNet.Styles.Button.Rounded.Outlined.Custom}" TargetType="{x:Type Button}">
+                                            <Setter Property="Content" Value="{my:Icon Kind=Connection}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Value.CanConnect}" Value="False">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                    <Setter Property="Content" Value="{my:MediumIcon Kind=Close}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Value.CanConnect}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                                    <Setter Property="Content" Value="{my:MediumIcon Kind=Check}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Value.ConnectionBusyService.IsBusy}" Value="True">
+                                                    <Setter Property="ContentTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <ProgressBar Style="{StaticResource MyNet.Styles.ProgressBar.Circular}"
+                                                                             Width="28"
+                                                                             Height="28"
+                                                                             my:ProgressBarAssist.StrokeThickness="3"
+                                                                             IsIndeterminate="True" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </GroupBox>
+
+                        <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+                                Grid.Row="2"
+                                Width="300"
+                                Height="Auto"
+                                MinHeight="80"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding Data.SelectSourceCommand, Source={StaticResource Proxy}}"
+                                CommandParameter="{x:Static vm:ImportSource.Database}">
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=DatabaseArrowRight, Size=50}">
+                                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                    <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource Import, Casing=AllCaps}" />
+                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ImportFromDatabaseDescription}" TextWrapping="Wrap" />
+                                </my:SimpleStackPanel>
+                            </GroupBox>
+                        </Button>
+                    </Grid>
+                </DockPanel>
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Teamup.DataTemplates.ImportSource.File">
+            <DockPanel Margin="{StaticResource MyNet.Margins.VeryLarge}">
+                <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Large.Bottom}" DockPanel.Dock="Top" Orientation="Horizontal">
+                    <my:PackIcon Width="50" Height="50" Kind="File" />
+                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" Text="{my:Resource File}" />
+                </my:SimpleStackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="150" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Help  -->
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                              my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Information}"
+                              my:IconAssist.Icon="{my:MediumIcon Kind=HelpCircle}"
+                              Header="{my:Resource Help}"
+                              Visibility="{Binding Value.HasSampleFile, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                        <my:SimpleStackPanel Visibility="{Binding Value.HasSampleFile, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                            <TextBlock Text="{Binding Value.SampleFileDescription}" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal">
+                                <my:PackIcon Kind="ChevronRight" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}" Command="{Binding Value.DownloadSampleFileCommand}" Content="{my:Resource ImportDownloadSampleFile}" />
+                            </StackPanel>
+                        </my:SimpleStackPanel>
+                    </GroupBox>
+
+                    <!--  Buttons  -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  Select file  -->
+                        <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+                                Width="300"
+                                Height="80"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding Data.SelectSourceCommand, Source={StaticResource Proxy}}"
+                                CommandParameter="{x:Static vm:ImportSource.File}">
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=FileDocumentArrowRight, Size=50}">
+                                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                    <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource SelectFile, Casing=AllCaps}" />
+                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ImportFromFileDescription}" TextWrapping="Wrap" />
+                                </my:SimpleStackPanel>
+                            </GroupBox>
+                        </Button>
+
+                        <!--  Reload file  -->
+                        <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+                                Grid.Column="1"
+                                Width="230"
+                                Height="80"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding Data.ReloadSourceCommand, Source={StaticResource Proxy}}"
+                                CommandParameter="{x:Static vm:ImportSource.File}"
+                                Visibility="{Binding Value.CurrentFilename, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=Refresh, Size=50}">
+                                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                                    <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource Reload, Casing=AllCaps}" />
+                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Value.CurrentFilename}" TextWrapping="Wrap" />
+                                </my:SimpleStackPanel>
+                            </GroupBox>
+                        </Button>
+                    </Grid>
+
+                    <!--  Exceptions  -->
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                              Grid.Row="4"
+                              my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                              my:IconAssist.Icon="{my:MediumIcon Kind=Warning}"
+                              Header="{my:Resource ImportHasErrors}"
+                              Visibility="{Binding Data.HasErrors, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                        <my:SimpleStackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <my:PackIcon Kind="ChevronRight" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                        Command="{Binding Data.IgnoreErrorsCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{x:Static vm:ImportSource.File}"
+                                        Content="{my:Resource ImportIgnoreErrors}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <my:PackIcon Kind="ChevronRight" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                        Command="{Binding Value.OpenCurrentFileCommand}"
+                                        Content="{my:Resource ImportSetFile}"
+                                        ToolTip="{Binding Value.CurrentFilename}" />
+                                <TextBlock Margin="{StaticResource MyNet.Margins.Small.Left}" Text="{my:Resource ImportSaveBeforeReload}" />
+                            </StackPanel>
+                            <ItemsControl ItemsSource="{Binding Value.Exceptions}">
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="{x:Type ContentPresenter}">
+                                        <Setter Property="Margin" Value="{StaticResource MyNet.Margins.Small}" />
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                            </ItemsControl>
+                        </my:SimpleStackPanel>
+                    </GroupBox>
+                </Grid>
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type csv:ColumnsMissingException}">
+            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}" Background="{DynamicResource MyNet.Brushes.Warning}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <my:PackIcon Grid.RowSpan="2"
+                                 Width="40"
+                                 Height="40"
+                                 HorizontalAlignment="Center"
+                                 Kind="Warning" />
+                    <my:SimpleStackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <TextBlock FontWeight="Bold" Text="{my:Resource ImportColumnsAreMissing}" />
+                        <my:PackIcon Kind="ArrowRight" />
+                        <TextBlock Grid.Column="1" Text="{my:Resource ImportDefaultValues}" />
+                    </my:SimpleStackPanel>
+
+                    <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding ColumnsMissing}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Opacity="{StaticResource MyNet.Opacity.Secondary}" Orientation="Horizontal">
+                                    <TextBlock FontStyle="Italic" Text="{Binding}" />
+                                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Horizontal}" Text="|" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </my:Card>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type csv:ImportRowException}">
+            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}" Background="{DynamicResource MyNet.Brushes.Negative}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <my:PackIcon Grid.RowSpan="2"
+                                 Width="40"
+                                 Height="40"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Kind="Error" />
+                    <my:SimpleStackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <TextBlock FontWeight="Bold" Text="{my:Translation RowIndex, Format=ImportErrorInRowFormat}" />
+                        <my:PackIcon Kind="ArrowRight" />
+                        <TextBlock Grid.Column="1" Text="{my:Resource ImportRowWillBeIgnored}" />
+                    </my:SimpleStackPanel>
+                    <Grid Grid.Row="1" Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                                  my:HeaderAssist.HorizontalAlignment="Left"
+                                  my:HeaderAssist.Size="60"
+                                  FontStyle="Italic"
+                                  Header="{my:Resource ImportColumn}">
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <TextBlock FontWeight="Bold" Text="{Binding ColumnIndex}" />
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding ColumnHeader, StringFormat='({0})'}" />
+                            </my:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                                  Grid.Row="1"
+                                  my:HeaderAssist.HorizontalAlignment="Left"
+                                  my:HeaderAssist.Size="60"
+                                  FontStyle="Italic"
+                                  Header="{my:Resource ImportRow}">
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                <TextBlock FontWeight="Bold" Text="{Binding RowIndex}" />
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding RowValue, StringFormat='({0})'}" />
+                                <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Left}" Kind="InformationCircle" ToolTip="{Binding Row}" />
+                                <my:PackIcon Kind="ArrowRight" />
+                                <TextBlock Width="200"
+                                           Height="12"
+                                           FontStyle="Normal"
+                                           Text="{Binding Message}"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap" />
+                                <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Left}" Kind="InformationCircle" ToolTip="{Binding Message}" />
+                            </my:SimpleStackPanel>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </my:Card>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type csv:ImportValueException}">
+            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}" Background="{DynamicResource MyNet.Brushes.Negative}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <my:PackIcon Grid.RowSpan="2"
+                                 Width="40"
+                                 Height="40"
+                                 HorizontalAlignment="Center"
+                                 Kind="Error" />
+                    <my:SimpleStackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <TextBlock FontWeight="Bold" Text="{my:Translation RowIndex, Format=ImportErrorInRowFormat}" />
+                        <my:PackIcon Kind="ArrowRight" />
+                        <TextBlock Grid.Column="1" Text="{my:Resource ImportValueWillBeIgnored}" />
+                    </my:SimpleStackPanel>
+                    <Grid Grid.Row="1" Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:Resource ImportColumn}">
+                            <TextBlock FontWeight="Bold" Text="{Binding ColumnHeader}" />
+                        </GroupBox>
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                                  Grid.Row="1"
+                                  my:HeaderAssist.HorizontalAlignment="Left"
+                                  my:HeaderAssist.Size="60"
+                                  FontStyle="Italic"
+                                  Header="{my:Resource ImportRow}">
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                <TextBlock FontWeight="Bold" Text="{Binding RowIndex}" />
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding RowValue, StringFormat='({0})'}" />
+                                <my:PackIcon Kind="ArrowRight" />
+                                <TextBlock Width="200"
+                                           Height="12"
+                                           FontStyle="Normal"
+                                           Text="{Binding Message}"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap" />
+                                <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Left}" Kind="InformationCircle" ToolTip="{Binding Message}" />
+                            </my:SimpleStackPanel>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </my:Card>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ItemsControl ItemsSource="{Binding SourceViewModels}">
+        <ItemsControl.ItemTemplateSelector>
+            <selectors:ImportSourceDataTemplateSelector DatabaseTemplate="{StaticResource Teamup.DataTemplates.ImportSource.Database}" FileTemplate="{StaticResource Teamup.DataTemplates.ImportSource.File}" />
+        </ItemsControl.ItemTemplateSelector>
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid Columns="{Binding SourceViewModels.Count}" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+    </ItemsControl>
+</UserControl>

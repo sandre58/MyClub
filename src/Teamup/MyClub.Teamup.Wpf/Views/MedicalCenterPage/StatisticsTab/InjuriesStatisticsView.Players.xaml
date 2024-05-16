@@ -1,0 +1,300 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.MedicalCenterPage.StatisticsTab.InjuriesStatisticsPlayersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+             xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.MedicalCenterPage.InjuriesTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.StatisticsTab"
+             d:DataContext="{d:DesignInstance Type=vm:InjuriesStatisticsPlayersViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!-- ToolBar -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding ParentPage.InjuriesViewModel}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count}" />
+                    <my:ExtendedFiltersView DataContext="{Binding ParentPage.InjuriesViewModel.Filters}" DropDownHeight="400">
+                        <my:ExtendedFiltersView.SpeedFilters>
+                            <v:InjuriesSpeedFiltersView />
+                        </my:ExtendedFiltersView.SpeedFilters>
+                    </my:ExtendedFiltersView>
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+        </my:CommandsBar>
+
+        <my:GhostControl GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" ShowGhost="{Binding Items.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+            <ListView my:ListAssist.SynchronizedList="{Binding}"
+                      my:ListBoxItemAssist.ShowSelection="False"
+                      my:ListViewAssist.ItemMinHeight="45"
+                      ItemsSource="{Binding Items}">
+                <ListView.View>
+                    <GridView>
+
+                        <!-- Name -->
+                        <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                        my:GridViewColumnAssist.PropertyName="Player.InverseName"
+                                        my:GridViewColumnAssist.Width="3*"
+                                        Header="{my:Resource LastName}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default.Vertical}" Orientation="Horizontal">
+                                        <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Medium}" DataContext="{Binding Player}" />
+                                        <ctrl:PlayerButton CommandParameter="{x:Static tabs:PlayerPageTab.Injuries}" Item="{Binding Player}" />
+                                    </my:SimpleStackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Team -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.Team"
+                                        my:GridViewColumnAssist.Width="2*"
+                                        DisplayMemberBinding="{Binding Player.Team.Name}"
+                                        Header="{my:Resource Team}" />
+
+                        <!-- Gender -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.Gender" my:GridViewColumnAssist.Width="*" Header="{my:Resource Gender}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <my:PackIcon Width="25"
+                                                     Height="25"
+                                                     Foreground="{DynamicResource MyNet.Brushes.Male}"
+                                                     Kind="GenderMale"
+                                                     Visibility="{Binding Player.Gender, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static utils:GenderType.Male}}" />
+                                        <my:PackIcon Width="25"
+                                                     Height="25"
+                                                     Foreground="{DynamicResource MyNet.Brushes.Female}"
+                                                     Kind="GenderFemale"
+                                                     Visibility="{Binding Player.Gender, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static utils:GenderType.Female}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Category -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.Category" my:GridViewColumnAssist.Width="2*" Header="{my:Resource CategoryAbbr}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{my:Translation Player.Category}" TextWrapping="NoWrap" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Position -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.NaturalPosition" my:GridViewColumnAssist.Width="2*" Header="{my:Resource Positions}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Player.Positions, Converter={x:Static c:RatedPositionsToStringConverter.NaturalCodes}}" TextWrapping="NoWrap" />
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Player.Positions, Converter={x:Static c:RatedPositionsToStringConverter.GoodCodes}}" TextWrapping="NoWrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Fettle -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.Injury" my:GridViewColumnAssist.Width="4*" Header="{my:Resource Fettle}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ContentControl Content="{Binding Player.Injury}">
+                                        <ContentControl.Style>
+                                            <Style TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
+                                                <Setter Property="ContentTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <DockPanel>
+                                                                <Label x:Name="Ellipse"
+                                                                       Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                                                       Width="25"
+                                                                       Height="25"
+                                                                       Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                                                       Content="{my:Icon Kind=PlusThick,
+                                                                                         Size=22}"
+                                                                       DockPanel.Dock="Left"
+                                                                       Foreground="{DynamicResource MyNet.Brushes.White}" />
+                                                                <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default.Vertical}" Spacing="{StaticResource MyNet.Margin.Small}">
+                                                                    <Button x:Name="Condition"
+                                                                            Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                                                            Command="{Binding OpenCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Content="{Binding Condition}" />
+
+                                                                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Resource ExpectedReturn}">
+                                                                        <my:GhostControl Content="{my:Translation NullableDuration, Casing=Sentence}" Ghost="{my:Resource UnknownMale}" ShowGhost="{Binding NullableDuration, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" />
+                                                                    </GroupBox>
+                                                                </my:SimpleStackPanel>
+                                                            </DockPanel>
+
+                                                            <DataTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Severe}">
+                                                                    <Setter TargetName="Condition" Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Injury.Severe}" />
+                                                                    <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Severe}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Minor}">
+                                                                    <Setter TargetName="Condition" Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Injury.Minor}" />
+                                                                    <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Minor}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Moderate}">
+                                                                    <Setter TargetName="Condition" Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Injury.Moderate}" />
+                                                                    <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Moderate}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Severity}" Value="{x:Static enums:InjurySeverity.Serious}">
+                                                                    <Setter TargetName="Condition" Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Injury.Serious}" />
+                                                                    <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Serious}" />
+                                                                </DataTrigger>
+                                                            </DataTemplate.Triggers>
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Player.Injury}" Value="{x:Null}">
+                                                        <Setter Property="ContentTemplate">
+                                                            <Setter.Value>
+                                                                <DataTemplate>
+                                                                    <my:SimpleStackPanel Orientation="Horizontal">
+                                                                        <my:PackIcon Width="25"
+                                                                                     Height="25"
+                                                                                     Foreground="{DynamicResource MyNet.Brushes.Positive}"
+                                                                                     Kind="Check" />
+                                                                        <TextBlock Text="{my:Resource InFettle}" />
+                                                                    </my:SimpleStackPanel>
+                                                                </DataTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ContentControl.Style>
+                                    </ContentControl>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Count injuries -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="Injuries.Count" my:GridViewColumnAssist.Width="*" Header="{my:Resource Injuries}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid x:Name="grid">
+
+                                        <my:PieChart Width="40"
+                                                     Height="40"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"
+                                                     Hoverable="False"
+                                                     InnerRadius="12"
+                                                     LegendLocation="None">
+                                            <my:PieChart.DataTooltip>
+                                                <my:DefaultDataToolTip ShowHeader="False" />
+                                            </my:PieChart.DataTooltip>
+                                            <my:PieChart.Series>
+                                                <my:PieSeries Title="{my:Resource InjuryCategoryMuscular}"
+                                                              DataLabels="False"
+                                                              Fill="{DynamicResource Teamup.Brushes.Injury.Muscular}"
+                                                              LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                                              Values="{Binding Musculars.Count, Converter={x:Static my:DoubleToChartValuesConverter.Default}}" />
+                                                <my:PieSeries Title="{my:Resource InjuryCategoryFracture}"
+                                                              DataLabels="False"
+                                                              Fill="{DynamicResource Teamup.Brushes.Injury.Fracture}"
+                                                              LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                                              Values="{Binding Fractures.Count, Converter={x:Static my:DoubleToChartValuesConverter.Default}}" />
+                                                <my:PieSeries Title="{my:Resource InjuryCategoryTrauma}"
+                                                              DataLabels="False"
+                                                              Fill="{DynamicResource Teamup.Brushes.Injury.Trauma}"
+                                                              LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                                              Values="{Binding Traumas.Count, Converter={x:Static my:DoubleToChartValuesConverter.Default}}" />
+                                                <my:PieSeries Title="{my:Resource InjuryCategoryLigament}"
+                                                              DataLabels="False"
+                                                              Fill="{DynamicResource Teamup.Brushes.Injury.Ligament}"
+                                                              LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                                              Values="{Binding Ligaments.Count, Converter={x:Static my:DoubleToChartValuesConverter.Default}}" />
+                                                <my:PieSeries Title="{my:Resource InjuryCategorySickness}"
+                                                              DataLabels="False"
+                                                              Fill="{DynamicResource Teamup.Brushes.Injury.Sickness}"
+                                                              LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                                              Values="{Binding Sicknesses.Count, Converter={x:Static my:DoubleToChartValuesConverter.Default}}" />
+                                                <my:PieSeries Title="{my:Resource InjuryCategoryOther}"
+                                                              DataLabels="False"
+                                                              Fill="{DynamicResource MyNet.Brushes.None}"
+                                                              LabelPoint="{x:Static my:ChartFormatters.ChartPointToValueWithoutZero}"
+                                                              Values="{Binding Others.Count, Converter={x:Static my:DoubleToChartValuesConverter.Default}}" />
+                                            </my:PieChart.Series>
+                                        </my:PieChart>
+                                        <TextBlock HorizontalAlignment="Center" FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{Binding Injuries.Count}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Unaivalability -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="UnaivalableDurationInDays.Sum" my:GridViewColumnAssist.Width="*" Header="{my:Resource Unaivalability}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="text" Text="{my:Translation UnaivalableDurationInDays.Sum, Format=DaysFormat}" />
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding UnaivalableDurationInDays.Sum}" Value="0">
+                                            <Setter TargetName="text" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Min Unaivalability -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="UnaivalableDurationInDays.Min" my:GridViewColumnAssist.Width="*" Header="{my:Resource MinUnaivalability}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="text" Text="{my:Translation UnaivalableDurationInDays.Min, Format=DaysFormat}" />
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding UnaivalableDurationInDays.Min}" Value="{x:Static sys:Double.NaN}">
+                                            <Setter TargetName="text" Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Max Unaivalability -->
+                        <GridViewColumn my:GridViewColumnAssist.PropertyName="UnaivalableDurationInDays.Max" my:GridViewColumnAssist.Width="*" Header="{my:Resource MaxUnaivalability}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="text" Text="{my:Translation UnaivalableDurationInDays.Max, Format=DaysFormat}" />
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding UnaivalableDurationInDays.Max}" Value="{x:Static sys:Double.NaN}">
+                                            <Setter TargetName="text" Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                        my:GridViewColumnAssist.CanSort="False"
+                                        my:GridViewColumnAssist.Width="70"
+                                        HeaderTemplate="{StaticResource MyNet.DataTemplates.ListView.ColumnsVisibility}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate />
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </my:GhostControl>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CommunicationPage.EmailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dd="urn:gong-wpf-dragdrop"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CommunicationPage"
+             d:DataContext="{d:DesignInstance Type=vm:EmailViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             Validation.ErrorTemplate="{x:Null}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="EmailProxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid dd:DragDrop.DropHandler="{Binding DropHandler}" dd:DragDrop.IsDropTarget="True">
+        <Border Background="White" Opacity="0.001" />
+        <DockPanel>
+
+            <TextBox Style="{StaticResource MyNet.Styles.TextBox.Outlined}"
+                     Margin="{StaticResource MyNet.Margins.Large.Bottom}"
+                     HorizontalAlignment="Stretch"
+                     my:HintAssist.Hint="{my:Resource Subject}"
+                     my:HintAssist.IsFloating="True"
+                     DockPanel.Dock="Top"
+                     TabIndex="1"
+                     Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=False}" />
+
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered.Foreground}"
+                      my:IconAssist.Icon="{my:MediumIcon Kind=AttachmentVertical}"
+                      DockPanel.Dock="Bottom"
+                      Header="{my:Resource Attachments,
+                                           Casing=AllCaps}">
+                <my:GroupBoxAssist.MoreContent>
+                    <Button Command="{Binding AddAttachmentCommand}" Content="{my:MediumIcon Kind=Plus}" ToolTip="{my:Resource AddAttachment}" />
+                </my:GroupBoxAssist.MoreContent>
+
+                <!--  Files  -->
+                <my:GhostControl Ghost="{my:Resource NoAttachment}" ShowGhost="{Binding Attachments.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                    <ItemsControl ItemsSource="{Binding Attachments}" TabIndex="5">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <my:Chip Command="{x:Static my:AppCommands.OpenFileCommand}"
+                                         CommandParameter="{Binding}"
+                                         Content="{Binding Converter={x:Static my:FilePathConverter.ToFilename}}"
+                                         DeleteCommand="{Binding Data.RemoveAttachmentCommand, Source={StaticResource EmailProxy}}"
+                                         DeleteCommandParameter="{Binding}"
+                                         DeleteToolTip="{my:Resource Remove}"
+                                         Icon="{my:ToolIcon Kind=File}"
+                                         IsDeletable="True"
+                                         ToolTip="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </my:GhostControl>
+            </GroupBox>
+
+            <!--  Send a copy  -->
+            <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Large.Bottom}"
+                                 HorizontalAlignment="Right"
+                                 DockPanel.Dock="Bottom"
+                                 Orientation="Horizontal">
+                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding SendACopy}" TabIndex="3" />
+                <TextBlock Text="{my:Resource SendACopy}" />
+            </my:SimpleStackPanel>
+
+            <!--  Body  -->
+            <my:RichTextEditor Margin="{StaticResource MyNet.Margins.Medium.Bottom}"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Stretch"
+                               my:HintAssist.Hint="{my:Resource Body}"
+                               Html="{Binding Body, ValidatesOnNotifyDataErrors=False, UpdateSourceTrigger=PropertyChanged}"
+                               TabIndex="2" />
+
+        </DockPanel>
+    </Grid>
+</UserControl>

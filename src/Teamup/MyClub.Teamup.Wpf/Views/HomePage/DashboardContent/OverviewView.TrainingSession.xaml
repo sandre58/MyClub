@@ -1,0 +1,294 @@
+﻿<GroupBox x:Class="MyClub.Teamup.Wpf.Views.HomePage.DashboardContent.OverviewTrainingSessionView"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:my="http://mynet.com/xaml/themes"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+          xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+          xmlns:models="clr-namespace:MyClub.Teamup.Domain.TrainingAggregate;assembly=MyClub.Teamup.Domain"
+          xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent"
+          xmlns:local="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage.DashboardContent"
+          Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+          d:DataContext="{d:DesignInstance Type=vm:OverviewTrainingSessionViewModel}"
+          d:DesignHeight="450"
+          d:DesignWidth="800"
+          my:GroupBoxAssist.Command="{Binding Session.OpenCommand}"
+          mc:Ignorable="d">
+    <GroupBox.Resources>
+        <my:BindingProxy x:Key="ProxyDashboard" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.ItemsControl.LastPerformances" BasedOn="{StaticResource MyNet.Styles.ItemsControl}" TargetType="{x:Type ItemsControl}">
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <my:Card x:Name="base"
+                                 Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                                 Padding="{StaticResource MyNet.Margins.Default}"
+                                 Background="{DynamicResource MyNet.Brushes.Control.Background.Secondary}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="5" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="5" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Small}"
+                                                   Background="{Binding Foreground, ElementName=base}"
+                                                   DataContext="{Binding Player}"
+                                                   Foreground="{my:BrushBinding SelfPath=Tag,
+                                                                                Opacity={StaticResource MyNet.Opacity.Medium}}"
+                                                   Tag="{my:BrushBinding SelfPath=Background,
+                                                                         Contrast=True}" />
+                                <ctrl:PlayerButton Grid.Column="2"
+                                                   CommandParameter="{x:Static tabs:PlayerPageTab.Trainings}"
+                                                   Item="{Binding Player}"
+                                                   Orientation="Vertical" />
+                                <my:Gauge x:Name="Gauge"
+                                          Grid.Column="4"
+                                          Width="25"
+                                          Height="25"
+                                          HorizontalAlignment="Right"
+                                          Foreground="{Binding Foreground, ElementName=base}"
+                                          GaugeActiveFill="{Binding Foreground, ElementName=base}"
+                                          GaugeBackground="{my:BrushBinding Foreground,
+                                                                            ElementName=base,
+                                                                            Opacity={StaticResource MyNet.Opacity.Overlay}}"
+                                          HighFontSize="{StaticResource MyNet.Font.Size}"
+                                          InnerRadius="13"
+                                          LabelFormatter="{x:Static my:ChartFormatters.ToValue}"
+                                          Uses360Mode="True"
+                                          Value="{Binding Rating}"
+                                          From="0"
+                                          To="{Binding Max, Source={x:Static models:TrainingAttendance.AcceptableRangeRating}}" />
+                            </Grid>
+                        </my:Card>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max10}}" Value="True">
+                                <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.8To10}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max8}}" Value="True">
+                                <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.6To8}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max6}}" Value="True">
+                                <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.45To6}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max45}}" Value="True">
+                                <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.35To45}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max35}}" Value="True">
+                                <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.2To35}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Value, ElementName=Gauge, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max2}}" Value="True">
+                                <Setter TargetName="base" Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.0To2}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <my:SimpleStackPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </GroupBox.Resources>
+
+    <my:GhostControl GhostTemplate="{Binding Path=(my:ToggleButtonAssist.OnContentTemplate), RelativeSource={RelativeSource AncestorType={x:Type local:OverviewTrainingSessionView}}}" ShowGhost="{Binding Session, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <my:SimpleStackPanel Orientation="Horizontal">
+
+                <!--  Date  -->
+                <ContentControl Style="{StaticResource Teamup.Styles.ContentControl.Date}"
+                                Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                             Opacity={StaticResource MyNet.Opacity.Filled}}"
+                                BorderBrush="{DynamicResource MyNet.Brushes.Black}"
+                                Content="{Binding Session.StartDate}"
+                                Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+
+                <my:SimpleStackPanel>
+
+                    <!--  Time  -->
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <ContentControl Style="{StaticResource Teamup.Styles.ContentControl.Time}"
+                                        Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                                     Opacity={StaticResource MyNet.Opacity.Filled}}"
+                                        Content="{Binding Session.StartDate}"
+                                        Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+                        <TextBlock Text="-" />
+                        <ContentControl Style="{StaticResource Teamup.Styles.ContentControl.Time}"
+                                        Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                                     Opacity={StaticResource MyNet.Opacity.Filled}}"
+                                        Content="{Binding Session.EndDate}"
+                                        Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+                    </my:SimpleStackPanel>
+
+                    <!--  Place  -->
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" my:HeaderAssist.Size="30" my:IconAssist.Icon="{my:ToolIcon Kind=Place}">
+                        <my:GhostControl VerticalAlignment="Center"
+                                         Content="{Binding Session.Place}"
+                                         Ghost="{my:Resource UnknownPlace}"
+                                         ShowGhost="{Binding Session.Place, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" />
+                    </GroupBox>
+
+                </my:SimpleStackPanel>
+            </my:SimpleStackPanel>
+
+            <!--  Theme  -->
+            <my:SimpleStackPanel Grid.Column="2" Spacing="{StaticResource MyNet.Margin.Default}">
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="{Binding Session.Theme}" TextWrapping="Wrap" />
+                <Label Style="{StaticResource MyNet.Styles.Label.Elevation.Custom}" Background="{Binding Session.Cycle.Color, Converter={x:Static my:BrushConverter.Default}}" Content="{Binding Session.Cycle.Label}" />
+            </my:SimpleStackPanel>
+
+            <!--  Attendances  -->
+            <UniformGrid Grid.Row="2" Grid.ColumnSpan="3" Visibility="{Binding Session.Attendances.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                <UniformGrid.Style>
+                    <Style TargetType="{x:Type UniformGrid}">
+                        <Setter Property="Columns" Value="3" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Session.IsPerformed}" Value="True">
+                                <Setter Property="Columns" Value="4" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </UniformGrid.Style>
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.None}"
+                          Content="{Binding Session.Unknown.Count}"
+                          Header="{my:Resource Unknown,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Positive}"
+                          Content="{Binding Session.Presents.Count}"
+                          Header="{my:Resource Presents,
+                                               Casing=AllCaps}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Warning}"
+                          Content="{Binding Session.AllApologized.Count}"
+                          Header="{my:Resource Apologized,
+                                               Casing=AllCaps}"
+                          Visibility="{Binding Session.IsPerformed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Negative}"
+                          Content="{Binding Session.Absents.Count}"
+                          Header="{my:Resource Absents,
+                                               Casing=AllCaps}"
+                          Visibility="{Binding Session.IsPerformed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Custom}"
+                          Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource MyNet.Brushes.Negative}"
+                          Content="{Binding Session.AllAbsents.Count}"
+                          Header="{my:Resource Absents,
+                                               Casing=AllCaps}"
+                          Visibility="{Binding Session.IsPerformed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+            </UniformGrid>
+
+            <!--  Initialize attendances  -->
+            <Button Style="{StaticResource MyNet.Styles.Button.Text.Foreground}"
+                    Grid.Row="2"
+                    Grid.ColumnSpan="3"
+                    Height="Auto"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Background="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                 Opacity={StaticResource MyNet.Opacity.Filled}}"
+                    Command="{Binding Session.InitializeAttendancesCommand}"
+                    Visibility="{Binding Session.Attendances.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfAny}}">
+                <Grid>
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=AccountMultipleCheck, Size=50}">
+                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                            <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource InitializeAttendances, Casing=AllCaps}" />
+                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource InitializeAttendancesDescription}" TextWrapping="Wrap" />
+                        </my:SimpleStackPanel>
+                    </GroupBox>
+                </Grid>
+            </Button>
+
+            <!--  Performances  -->
+            <Grid Grid.Row="4" Grid.ColumnSpan="3" Visibility="{Binding Session.Ratings.Sum, Converter={x:Static my:EqualityToVisibilityConverter.CollapsedIfEqual}, ConverterParameter=0}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Average  -->
+                <my:Gauge Style="{StaticResource Teamup.Styles.Gauge.Rating}"
+                          Width="90"
+                          Height="90"
+                          VerticalAlignment="Bottom"
+                          HighFontSize="{StaticResource MyNet.Font.Size.Title}"
+                          InnerRadius="35"
+                          LabelFormatter="{x:Static my:ChartFormatters.ToValueWithoutZero}"
+                          Value="{Binding Session.Ratings.Average}" />
+
+                <!--  Ratings  -->
+                <Grid Grid.Column="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.SubCaption}" Header="{my:Resource Best}">
+                        <ItemsControl Style="{StaticResource Teamup.Styles.ItemsControl.LastPerformances}" ItemsSource="{Binding BestPerformances}" />
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.SubCaption}" Grid.Column="2" Header="{my:Resource Worst}">
+                        <ItemsControl Style="{StaticResource Teamup.Styles.ItemsControl.LastPerformances}" ItemsSource="{Binding WorstPerformances}" />
+                    </GroupBox>
+
+                </Grid>
+            </Grid>
+
+            <!--  Actions  -->
+            <my:SimpleStackPanel Grid.Row="6"
+                                 Grid.ColumnSpan="3"
+                                 HorizontalAlignment="Right"
+                                 VerticalAlignment="Bottom"
+                                 Orientation="Horizontal">
+                <Button Style="{StaticResource MyNet.Styles.Button.Text.Foreground}"
+                        my:IconAssist.Icon="{my:Icon Kind=AccountMultipleAdd}"
+                        Background="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                     Opacity={StaticResource MyNet.Opacity.Filled}}"
+                        Command="{Binding Session.EditAttendancesCommand}"
+                        Content="{my:Resource EditAttendances}" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Text.Foreground}"
+                        my:IconAssist.Icon="{my:Icon Kind=Edit}"
+                        Command="{Binding Session.EditCommand}"
+                        Content="{my:Resource Edit}" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Text.Foreground}"
+                        my:IconAssist.Icon="{my:Icon Kind=Cancel}"
+                        Command="{Binding Session.CancelCommand}"
+                        Content="{my:Resource Cancel}" />
+            </my:SimpleStackPanel>
+        </Grid>
+    </my:GhostControl>
+</GroupBox>

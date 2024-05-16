@@ -1,0 +1,71 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingPage.OverviewTab.OverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingPage.OverviewTab"
+             xmlns:vMC="clr-namespace:MyClub.Teamup.Wpf.Views.MedicalCenterPage.OverviewTab"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingPage.OverviewTab"
+             d:DataContext="{d:DesignInstance Type=vm:OverviewViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="290" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <v:OverviewCountView my:GroupBoxAssist.Command="{Binding Data.ParentPage.GoToTabCommand, Source={StaticResource Proxy}}" my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingPageTab.Calendar}" DataContext="{Binding CountViewModel}" />
+            <v:OverviewTrainingSessionsView Grid.Row="2"
+                                            my:GroupBoxAssist.Command="{Binding Data.ParentPage.GoToTabCommand, Source={StaticResource Proxy}}"
+                                            my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingPageTab.Calendar}"
+                                            DataContext="{Binding SessionsViewModel}" />
+        </Grid>
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="160" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <v:OverviewAttendanceView my:GroupBoxAssist.Command="{Binding Data.ParentPage.GoToTabCommand, Source={StaticResource Proxy}}" my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingPageTab.StatisticsAttendances}" DataContext="{Binding AttendanceViewModel}" />
+            <v:OverviewAttendancesView Grid.Row="2"
+                                       my:GroupBoxAssist.Command="{Binding Data.ParentPage.GoToTabCommand, Source={StaticResource Proxy}}"
+                                       my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingPageTab.StatisticsPlayers}"
+                                       DataContext="{Binding AttendancesViewModel}" />
+            <vMC:OverviewInjuriesView Grid.Row="4" my:GroupBoxAssist.Command="{Binding Data.NavigateToMedicalCenterCommand, Source={StaticResource Proxy}}" DataContext="{Binding MedicalCenterViewModel}" />
+        </Grid>
+
+        <Grid Grid.Column="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="270" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <v:OverviewPerformancesView my:GroupBoxAssist.Command="{Binding Data.ParentPage.GoToTabCommand, Source={StaticResource Proxy}}" my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingPageTab.StatisticsPerformances}" DataContext="{Binding PerformancesViewModel}" />
+            <v:OverviewFettleView Grid.Row="2"
+                                  my:GroupBoxAssist.Command="{Binding Data.ParentPage.GoToTabCommand, Source={StaticResource Proxy}}"
+                                  my:GroupBoxAssist.CommandParameter="{x:Static tabs:TrainingPageTab.StatisticsPlayers}"
+                                  DataContext="{Binding FettleViewModel}" />
+        </Grid>
+    </Grid>
+</UserControl>

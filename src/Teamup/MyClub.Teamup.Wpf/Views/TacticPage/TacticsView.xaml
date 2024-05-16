@@ -1,0 +1,143 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TacticPage.TacticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TacticPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TacticPage"
+             d:DataContext="{d:DesignInstance Type=vm:TacticsViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding Data.DuplicateSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.LeftCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.ToolBar.Elevation.Primary}"
+                                    my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
+                                    Command="{Binding AddCommand}"
+                                    PopupPadding="0"
+                                    ToggleContent="{my:Resource New}"
+                                    ToolTip="Ctrl+N">
+                        <my:Submenu ItemsSource="{my:EnumerationSource EnumType={x:Type enums2:KnownTactic}}">
+                            <my:Submenu.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="{x:Type MenuItem}">
+                                    <Setter Property="Header" Value="{Binding Display}" />
+                                    <Setter Property="Command" Value="{Binding Data.AddKnownTacticCommand, Source={StaticResource Proxy}}" />
+                                    <Setter Property="CommandParameter" Value="{Binding Value}" />
+                                </Style>
+                            </my:Submenu.ItemContainerStyle>
+                        </my:Submenu>
+                    </my:SplitButton>
+                </ToolBar>
+            </my:CommandsBar.LeftCommands>
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count.Selectable}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+            <my:SelectionCommandsBar SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
+                <Button my:IconAssist.Icon="{my:ToolIcon Kind=Edit}"
+                        Command="{Binding EditSelectedItemCommand}"
+                        Content="{my:Resource Edit}"
+                        ToolTip="Ctrl+E" />
+                <Button my:IconAssist.Icon="{my:ToolIcon Kind=ContentDuplicate}"
+                        Command="{Binding DuplicateSelectedItemCommand}"
+                        Content="{my:Resource Duplicate}"
+                        ToolTip="Ctrl+D" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding RemoveSelectedItemsCommand}" />
+            </my:SelectionCommandsBar>
+
+        </my:CommandsBar>
+
+        <!--  Content  -->
+        <my:GhostControl GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" ShowGhost="{Binding WrappersSource.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Tactics  -->
+                <my:Card Padding="0">
+                    <ListBox ItemsSource="{Binding Wrappers}" SelectionMode="Extended">
+                        <i:Interaction.Behaviors>
+                            <my:ScrollSelectedItemBehavior Item="{Binding SelectedWrapper, Mode=OneWay}" />
+                        </i:Interaction.Behaviors>
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem}" TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                                <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="10" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <ctrl:PositionsSelector Grid.Row="2"
+                                                            Width="160"
+                                                            Height="120"
+                                                            CanMove="False"
+                                                            CanSelect="False"
+                                                            IsHitTestVisible="False"
+                                                            ItemsSource="{Binding Item.Positions}">
+                                        <ctrl:PositionsSelector.ItemTemplate>
+                                            <DataTemplate>
+                                                <Label Style="{StaticResource Teamup.Styles.Label.Embedded.PositionItem}" Width="12" Height="12" />
+                                            </DataTemplate>
+                                        </ctrl:PositionsSelector.ItemTemplate>
+                                    </ctrl:PositionsSelector>
+
+                                    <TextBlock Grid.Row="0"
+                                               HorizontalAlignment="Center"
+                                               Text="{Binding Item.Label}"
+                                               TextWrapping="NoWrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </my:Card>
+
+                <!--  Details  -->
+                <my:GhostControl Grid.Column="2" GhostTemplate="{StaticResource MyNet.DataTemplates.NoItems.Large}" ShowGhost="{Binding SelectedItems.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                    <my:GhostControl GhostTemplate="{StaticResource MyNet.DataTemplates.ManyItems.Large}" ShowGhost="{Binding SelectedItems.Count, Converter={x:Static my:CountToBooleanConverter.Many}}">
+                        <v:TacticDetailsView DataContext="{Binding TacticDetailsViewModel}" />
+                    </my:GhostControl>
+                </my:GhostControl>
+            </Grid>
+        </my:GhostControl>
+
+    </DockPanel>
+</UserControl>

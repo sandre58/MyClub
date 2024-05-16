@@ -1,0 +1,180 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.SchedulePage.MatchesPlanningView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:contracts="clr-namespace:MyNet.UI.ViewModels;assembly=MyNet.UI"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulePage"
+             d:DataContext="{d:DesignInstance Type=vm:MatchesPlanningViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <sys:Int32 x:Key="One">1</sys:Int32>
+        <sys:Int32 x:Key="Two">2</sys:Int32>
+        <sys:Int32 x:Key="Five">5</sys:Int32>
+        <sys:Int32 x:Key="Ten">10</sys:Int32>
+        <sys:Int32 x:Key="Fifteen">15</sys:Int32>
+        <sys:Int32 x:Key="Thirty">30</sys:Int32>
+
+        <DataTemplate DataType="{x:Type vm:DisplayModeByParent}">
+            <my:PackIcon Width="24" Height="24" Kind="FormatListText" />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DisplayModeByDate}">
+            <my:PackIcon Width="24" Height="24" Kind="CalendarCursor" />
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding Data.ValidateResultsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelResultsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="E" Command="{Binding Data.EditResultsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding Data.RandomizeSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Return" Command="{Binding Data.OpenSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <DockPanel>
+
+        <!--  ToolBar  -->
+        <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+            <my:CommandsBar.LeftCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <!--  Read  -->
+                    <Button my:IconAssist.Icon="{my:Icon Kind=CircleEditOutline}"
+                            Command="{Binding EditResultsCommand}"
+                            Content="{my:Resource EditResults}"
+                            ToolTip="Ctrl+Maj+E"
+                            Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+
+                    <!--  Edition  -->
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation}"
+                            my:IconAssist.Icon="{my:Icon Kind=Cancel}"
+                            Command="{Binding CancelResultsCommand}"
+                            Content="{my:Resource Cancel}"
+                            ToolTip="Esc"
+                            Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                            my:IconAssist.Icon="{my:Icon Kind=Check}"
+                            Command="{Binding ValidateResultsCommand}"
+                            Content="{my:Resource Validate}"
+                            ToolTip="Ctrl+Maj+S"
+                            Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}" />
+                </ToolBar>
+            </my:CommandsBar.LeftCommands>
+
+            <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
+                <Button Command="{Binding EditSelectedItemsCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
+                <my:DropDownButton IsEnabled="{Binding CanRescheduleSelectedItems}"
+                                   PopupPadding="0"
+                                   ToggleContent="{my:MediumIcon Kind=ClockPlus}"
+                                   ToolTip="{my:Resource Reschedule}">
+                    <my:Submenu>
+                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
+                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
+                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />
+                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}" />
+                        <MenuItem Command="{Binding Data.RescheduleXHoursCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Plural=True}" />
+                        <MenuItem Command="{Binding Data.RescheduleXHoursCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Plural=True}" />
+                        <MenuItem Height="50"
+                                  my:RippleAssist.Feedback="Transparent"
+                                  my:ThemeAssist.IsMouseOverBackground="Transparent"
+                                  Header="{Binding Data.RescheduleCommand, Source={StaticResource Proxy}}"
+                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}" />
+                    </my:Submenu>
+                </my:DropDownButton>
+                <Button Command="{Binding InvertTeamsSelectedItemsCommand}" Content="{my:MediumIcon Kind=SwapHorizontal}" ToolTip="{my:Resource InvertTeams}" />
+                <my:DropDownButton IsEnabled="{Binding SelectedWrappers.Count, Converter={x:Static my:CountToBooleanConverter.Any}}"
+                                   PopupPadding="0"
+                                   ToggleContent="{my:MediumIcon Kind=TimerRefreshOutline}"
+                                   ToolTip="{my:Resource Update}">
+                    <my:Submenu>
+                        <MenuItem Command="{Binding Data.ResetSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
+                        <MenuItem Command="{Binding Data.StartSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
+                        <MenuItem Command="{Binding Data.SuspendSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Suspend}" Icon="{my:ToolIcon Kind=ProgressAlert}" />
+                        <MenuItem Command="{Binding Data.FinishSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Finish}" Icon="{my:ToolIcon Kind=ProgressCheck}" />
+                        <MenuItem Command="{Binding Data.PostponeSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+                        <MenuItem Command="{Binding Data.CancelSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
+                    </my:Submenu>
+                </my:DropDownButton>
+                <Button Command="{Binding RandomizeSelectedItemsCommand}" Content="{my:MediumIcon Kind=Counter}" ToolTip="{my:ShortcutResource Randomize, ShortcutKey=Ctrl+R}" />
+            </my:SelectionCommandsBar>
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                    Content="{Binding}"
+                                    ContentTemplate="{StaticResource Scorer.DataTemplates.List.Count.Selectable}"
+                                    Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+                    <my:FiltersDropDownView DataContext="{Binding Filters}">
+                        <my:FiltersDropDownView.PopupContentTemplate>
+                            <DataTemplate>
+                                <v:MatchesSpeedFiltersView DataContext="{Binding SpeedFilters}" />
+                            </DataTemplate>
+                        </my:FiltersDropDownView.PopupContentTemplate>
+                    </my:FiltersDropDownView>
+                    <Separator />
+                    <my:DisplayView DataContext="{Binding Display}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+        </my:CommandsBar>
+
+        <!--  Content  -->
+        <my:TransitioningContent>
+            <my:TransitioningContent.Style>
+                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeList">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:MatchesPlanningListView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeByParent">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:MatchesPlanningByParentView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeByDate">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:MatchesPlanningByDateView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding WrappersSource.Count}" Value="0">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <ContentControl ContentTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Large}" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeDay">
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <v:MatchesPlanningDayView />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </my:TransitioningContent.Style>
+        </my:TransitioningContent>
+    </DockPanel>
+</UserControl>

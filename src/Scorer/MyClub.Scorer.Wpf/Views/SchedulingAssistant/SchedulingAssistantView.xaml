@@ -1,0 +1,352 @@
+﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.SchedulingAssistant.SchedulingAssistantView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  Width="1100"
+                  Height="700"
+                  d:DataContext="{d:DesignInstance Type=vm:SchedulingAssistantViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{my:Resource SchedulingAssistant}"
+                  ShowCloseButton="True"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Appointment.Match" DataType="{x:Type entities:MatchViewModel}">
+            <WrapPanel>
+                <!--  Home  -->
+                <ContentControl Margin="{StaticResource MyNet.Margins.Small}"
+                                Content="{Binding HomeTeam}"
+                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Small.Home}"
+                                IsEnabled="False" />
+
+                <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
+                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                           Text="{my:Resource VersusAbbr}"
+                           Typography.Capitals="AllSmallCaps" />
+
+                <!--  Away  -->
+                <ContentControl Margin="{StaticResource MyNet.Margins.Small}"
+                                Content="{Binding AwayTeam}"
+                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Small.Away}"
+                                IsEnabled="False" />
+            </WrapPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:TeamViewModel}">
+            <ContentControl Content="{Binding Name}" />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type entities:StadiumViewModel}">
+            <ContentControl Content="{Binding DisplayName}" />
+        </DataTemplate>
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.VeryLarge.Horizontal}" Orientation="Horizontal">
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ScheduleTo}" />
+                <DatePicker Width="90" my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
+                <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Time}"
+                          Width="80"
+                          my:ComboBoxAssist.DownCommand="{Binding DecrementTimeCommand}"
+                          my:ComboBoxAssist.UpCommand="{Binding IncrementTimeCommand}"
+                          Text="{Binding Time, Converter={x:Static my:DateTimeToStringConverter.Default}, ConverterParameter='HH:mm'}" />
+            </my:SimpleStackPanel>
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <Grid>
+        <my:DrawerHost IsLeftDrawerOpen="{Binding IsChecked, ElementName=toggleButton}"
+                       LeftDrawerBackground="Transparent"
+                       LeftDrawerCloseOnClickAway="False"
+                       OpenMode="Standard">
+            <my:DrawerHost.LeftDrawerContent>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="80" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Date selection  -->
+                    <DockPanel Grid.Row="1">
+                        <DockPanel Margin="{StaticResource MyNet.Margins.Default.Bottom}" DockPanel.Dock="Top">
+                            <my:SimpleStackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:MediumIcon Kind=ChevronLeft}" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToNextDateCommand}" Content="{my:MediumIcon Kind=ChevronRight}" />
+                            </my:SimpleStackPanel>
+                            <TextBlock Text="{my:Translation DateSelection.DisplayDate, Casing=AllCaps, Format='MMMM yyyy'}" />
+                        </DockPanel>
+                        <my:Card Width="300"
+                                 Height="300"
+                                 Padding="0"
+                                 VerticalAlignment="Top"
+                                 Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+                            <my:CalendarDaysByMonth my:HeaderAssist.Background="Transparent"
+                                                    my:HeaderAssist.Height="25"
+                                                    Appointments="{Binding Appointments.Items}"
+                                                    AppointmentsMargin="3 15 3 3"
+                                                    AppointmentsSpacing="0"
+                                                    Background="{DynamicResource MyNet.Brushes.Application.Background}"
+                                                    BorderThickness="0"
+                                                    DatesSelectionMode="SingleDate"
+                                                    DisplayDate="{Binding DateSelection.DisplayDate, Mode=OneWay}"
+                                                    ItemsOrientation="Vertical"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                    SelectedDate="{Binding DateSelection.DisplayDate}"
+                                                    ShowHeader="False">
+                                <my:CalendarDaysByMonth.ColumnHeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock HorizontalAlignment="Center" Text="{my:Translation Converter={x:Static my:DayOfWeekStringConverter.ToFirstLetterToUpper}}" />
+                                    </DataTemplate>
+                                </my:CalendarDaysByMonth.ColumnHeaderTemplate>
+                                <my:CalendarDaysByMonth.CalendarItemStyle>
+                                    <Style BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByMonth}" TargetType="{x:Type my:CalendarItem}">
+                                        <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                                        <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Small}" />
+                                        <Setter Property="ContentTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate>
+                                                    <TextBlock VerticalAlignment="Top" FontSize="{StaticResource MyNet.Font.Size.Secondary}" Text="{Binding Converter={x:Static my:DayNumberToStringConverter.ToTitle}}" />
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsNow" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </my:CalendarDaysByMonth.CalendarItemStyle>
+                                <my:CalendarDaysByMonth.ItemContainerStyle>
+                                    <Style TargetType="{x:Type my:CalendarAppointment}">
+                                        <Setter Property="Background" Value="{Binding Color, Converter={x:Static my:BrushConverter.Default}}" />
+                                        <Setter Property="Height" Value="10" />
+                                        <Setter Property="Width" Value="10" />
+                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                        <Setter Property="VerticalAlignment" Value="Top" />
+                                        <Setter Property="ContentTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="5" />
+                                                            <RowDefinition Height="*" />
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                                                        <ContentControl Grid.Row="2" Content="{Binding Item}" ContentTemplate="{StaticResource Scorer.DataTemplates.Appointment.Match}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type my:CalendarAppointment}">
+                                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                        <my:DropDownButton.ToggleContent>
+                                                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                                                   Width="{Binding Width, RelativeSource={RelativeSource AncestorType={x:Type my:CalendarAppointment}}}"
+                                                                   Height="{Binding Height, RelativeSource={RelativeSource AncestorType={x:Type my:CalendarAppointment}}}"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Stretch"
+                                                                   Background="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type my:CalendarAppointment}}}" />
+                                                        </my:DropDownButton.ToggleContent>
+                                                        <ContentPresenter ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                                    </my:DropDownButton>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </my:CalendarDaysByMonth.ItemContainerStyle>
+                            </my:CalendarDaysByMonth>
+                        </my:Card>
+                    </DockPanel>
+
+                    <!--  Legend  -->
+                    <ItemsControl Grid.Row="3" ItemsSource="{Binding Series}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Label Style="{StaticResource MyNet.Styles.Label.Legend}"
+                                       Margin="{StaticResource MyNet.Margins.Default}"
+                                       Background="{Binding Color, Converter={x:Static my:BrushConverter.Default}}"
+                                       Content="{Binding Legend}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </my:DrawerHost.LeftDrawerContent>
+
+            <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Left}">
+
+                <!--  Header  -->
+                <DockPanel Margin="{StaticResource MyNet.Margins.Default.Bottom}" DockPanel.Dock="Top">
+                    <my:SimpleStackPanel Margin="40 0 0 0" VerticalAlignment="Center" Orientation="Horizontal">
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Display}" />
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Outlined}"
+                                  Width="{StaticResource MyNet.Widths.Control.Medium}"
+                                  ItemsSource="{my:IntegerRange Start=1,
+                                                                End=7}"
+                                  SelectedItem="{Binding DateTimeSelection.DisplayDaysCount}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{my:Translation Plural=True, Format=TimeSpanDay}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Of, Casing=LowerCase}" />
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Outlined}"
+                                  Width="80"
+                                  my:ComboBoxAssist.ShowCaret="False"
+                                  my:ComboBoxAssist.ShowUpDownButton="True"
+                                  ItemsSource="{my:HourRange Start=0,
+                                                             End=22}"
+                                  SelectedItem="{Binding DateTimeSelection.DisplayTimeStart}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Outlined}"
+                                  Width="80"
+                                  my:ComboBoxAssist.ShowCaret="False"
+                                  my:ComboBoxAssist.ShowUpDownButton="True"
+                                  ItemsSource="{my:HourRange Start=1,
+                                                             End=23}"
+                                  SelectedItem="{Binding DateTimeSelection.DisplayTimeEnd}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </my:SimpleStackPanel>
+                    <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                             VerticalAlignment="Center"
+                                             DockPanel.Dock="Right"
+                                             Orientation="Horizontal"
+                                             TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                             TextElement.FontWeight="Bold">
+                            <TextBlock Text="{my:Translation Path=DisplayDateStart, ElementName=CalendarHoursByDay, Casing=Title, Format='dd MMMM'}" />
+                            <TextBlock Text="-" />
+                            <TextBlock Text="{my:Translation Path=DisplayDateEnd, ElementName=CalendarHoursByDay, Casing=Title, Format='dd MMMM'}" />
+                        </my:SimpleStackPanel>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateTimeSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateTimeSelection.MoveToNextDateCommand}" Content="{my:LargeIcon Kind=ChevronRight}" />
+                    </my:SimpleStackPanel>
+                </DockPanel>
+
+                <!--  DateTime selection  -->
+                <my:CalendarHoursByDay x:Name="CalendarHoursByDay"
+                                       Grid.RowSpan="4"
+                                       Grid.Column="2"
+                                       my:HeaderAssist.Background="Transparent"
+                                       my:HeaderAssist.Height="50"
+                                       my:HeaderAssist.Width="35"
+                                       AccurateDate="{Binding FullDate}"
+                                       Appointments="{Binding Appointments.Items}"
+                                       AppointmentsMargin="0"
+                                       AppointmentsSpacing="0"
+                                       BorderThickness="0"
+                                       DatesSelectionMode="None"
+                                       DisplayDate="{Binding DateTimeSelection.DisplayDate, Mode=OneWay}"
+                                       DisplayDaysCount="{Binding DateTimeSelection.DisplayDaysCount}"
+                                       DisplayTimeEnd="{Binding DateTimeSelection.DisplayTimeEnd}"
+                                       DisplayTimeStart="{Binding DateTimeSelection.DisplayTimeStart}"
+                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                       ShowAccurateDate="True"
+                                       ShowHeader="False"
+                                       UseAccurateItemPosition="True">
+                    <my:CalendarHoursByDay.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource MyNet.Styles.CalendarAppointment.HoursByDay}" TargetType="{x:Type my:CalendarAppointment}">
+                            <Setter Property="Background" Value="{Binding Color, Converter={x:Static my:BrushConverter.Default}}" />
+                            <Setter Property="Foreground" Value="{my:BrushBinding SelfPath=Background, Contrast=True}" />
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="5" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                                            <ContentControl Grid.Row="2" Content="{Binding Item}" ContentTemplate="{StaticResource Scorer.DataTemplates.Appointment.Match}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type my:CalendarAppointment}">
+                                        <my:Card Padding="{StaticResource MyNet.Margins.Small}" Background="{TemplateBinding Background}">
+                                            <ContentPresenter VerticalAlignment="Top" ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                        </my:Card>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </my:CalendarHoursByDay.ItemContainerStyle>
+                    <my:CalendarHoursByDay.ColumnHeaderTemplate>
+                        <DataTemplate>
+                            <my:SimpleStackPanel HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <TextBlock HorizontalAlignment="Center"
+                                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                           Text="{my:Translation Format=ddd}"
+                                           Typography.Capitals="AllSmallCaps" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                                           HorizontalAlignment="Center"
+                                           Opacity="{StaticResource MyNet.Opacity.Default}"
+                                           Text="{my:Translation Format=dd}" />
+                            </my:SimpleStackPanel>
+                        </DataTemplate>
+                    </my:CalendarHoursByDay.ColumnHeaderTemplate>
+                    <my:CalendarHoursByDay.RowHeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                       Margin="0 -6 0 0"
+                                       VerticalAlignment="Top"
+                                       Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
+                        </DataTemplate>
+                    </my:CalendarHoursByDay.RowHeaderTemplate>
+                    <my:CalendarHoursByDay.CalendarItemStyle>
+                        <Style BasedOn="{StaticResource MyNet.Styles.CalendarItem.HoursByDay}" TargetType="{x:Type my:CalendarItem}">
+                            <Setter Property="Height" Value="60" />
+                            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                            <Style.Triggers>
+                                <Trigger Property="IsNow" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </my:CalendarHoursByDay.CalendarItemStyle>
+                </my:CalendarHoursByDay>
+            </DockPanel>
+        </my:DrawerHost>
+        <ToggleButton x:Name="toggleButton"
+                      Style="{StaticResource MyNet.Styles.ToggleButton.Icon.Foreground}"
+                      VerticalAlignment="Top"
+                      Content="{my:LargeIcon Kind=Menu}"
+                      IsChecked="True" />
+    </Grid>
+
+</my:ContentDialog>

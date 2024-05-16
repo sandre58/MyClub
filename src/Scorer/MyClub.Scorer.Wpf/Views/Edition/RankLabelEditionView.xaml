@@ -1,0 +1,80 @@
+﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.Edition.RankLabelEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  Width="400"
+                  Height="300"
+                  d:DataContext="{d:DesignInstance Type=vm:RankLabelEditionViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{my:Resource Label}"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:SimpleStackPanel>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Information}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <TextBox Width="{StaticResource MyNet.Widths.Control.Large}" my:HintAssist.Hint="{my:Resource Name}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource ShortName}" Text="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Podium}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon}"
+                              Content="{my:MediumIcon Kind=FormatListGroup}"
+                              IsChecked="{Binding IsRange}"
+                              ToolTip="{my:Resource DefineARange}" />
+                <TextBlock Text="{my:Resource From}" Visibility="{Binding IsRange, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <my:NumericUpDown Width="70"
+                                  my:HintAssist.IsFloating="False"
+                                  Minimum="1"
+                                  Value="{my:NullableBinding FromRank}" />
+                <TextBlock Text="{my:Resource To}" Visibility="{Binding IsRange, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <my:NumericUpDown Width="70"
+                                  my:HintAssist.IsFloating="False"
+                                  Minimum="1"
+                                  Visibility="{Binding IsRange, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}"
+                                  Value="{my:NullableBinding ToRank}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Palette}">
+            <my:ColorPicker my:HintAssist.Hint="{my:Resource LocationHome}" SelectedColor="{Binding Color, Delay=50, Mode=TwoWay}" />
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=TextSubject}">
+            <TextBox Style="{StaticResource MyNet.Styles.TextBox.Outlined}"
+                     Height="60"
+                     HorizontalAlignment="Stretch"
+                     VerticalContentAlignment="Top"
+                     my:HintAssist.Hint="{my:Resource Description}"
+                     my:HintAssist.IsFloating="True"
+                     AcceptsReturn="True"
+                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto" />
+        </GroupBox>
+
+    </my:SimpleStackPanel>
+</my:ContentDialog>

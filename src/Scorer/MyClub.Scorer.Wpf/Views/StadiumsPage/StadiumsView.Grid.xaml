@@ -1,0 +1,102 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.StadiumsPage.StadiumsGridView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.StadiumsPage"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.StadiumsPage" xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             d:DataContext="{d:DesignInstance Type=vm:StadiumsViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate x:Key="Scorer.DataTemplates.ListBoxItem.Stadium">
+            <Grid Width="300" Height="40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Icon  -->
+                <my:PictureControl Width="35"
+                                   Height="35"
+                                   my:ThemeAssist.UniformCornerRadius="100"
+                                   DockPanel.Dock="Left"
+                                   Image="{Binding Item.GroundImagePath, UpdateSourceTrigger=PropertyChanged}"
+                                   ToolTip="{my:Translation Item.Ground}" />
+
+                <!--  Name and City  -->
+                <my:SimpleStackPanel Grid.Column="2" Spacing="{StaticResource MyNet.Margin.Small}">
+
+                    <!--  Name  -->
+                    <TextBlock VerticalAlignment="Top"
+                               FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                               Text="{Binding Item.Name}"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Item.Address.City, Converter={x:Static my:StringConverter.ToUpper}}" />
+
+                </my:SimpleStackPanel>
+
+                <!--  Actions  -->
+                <my:SimpleStackPanel Grid.Column="2"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Bottom"
+                                     Orientation="Horizontal"
+                                     Spacing="{StaticResource MyNet.Margin.Small}">
+
+                    <!--  Item ToolBar  -->
+                    <v:StadiumToolBar x:Name="ToolBar"
+                                      Padding="0"
+                                      DataContext="{Binding Item}"
+                                      RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                      Visibility="Hidden" />
+
+                    <!--  Selection  -->
+                    <CheckBox x:Name="Selection"
+                              Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                              BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                            Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                              Focusable="False"
+                              IsChecked="{Binding IsSelected}"
+                              IsTabStop="False"
+                              Visibility="Hidden" />
+
+                </my:SimpleStackPanel>
+
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Stadium}" ItemsSource="{Binding Wrappers}">
+        <i:Interaction.Behaviors>
+            <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
+        </i:Interaction.Behaviors>
+        <ListBox.ItemContainerStyle>
+            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
+                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+            </Style>
+        </ListBox.ItemContainerStyle>
+    </ListBox>
+</UserControl>

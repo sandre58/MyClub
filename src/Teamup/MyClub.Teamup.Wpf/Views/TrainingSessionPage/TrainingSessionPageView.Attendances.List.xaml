@@ -1,0 +1,174 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingSessionPage.TrainingSessionPageAttendancesListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingSessionPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingSessionPage"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingSessionPageAttendancesViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <ListView Style="{StaticResource Teamup.Styles.ListView.Selectable}" my:ListAssist.SynchronizedList="{Binding}" ItemsSource="{Binding Wrappers}">
+
+        <ListView.View>
+            <GridView>
+
+                <!--  Is Selected  -->
+                <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                my:GridViewColumnAssist.CanSort="False"
+                                my:GridViewColumnAssist.Width="60"
+                                HeaderTemplate="{StaticResource Teamup.DataTemplates.ListView.SelectAll}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Player}"
+                                          Margin="{StaticResource MyNet.Margins.Default.Vertical}"
+                                          Content="{Binding Item.Player}"
+                                          IsChecked="{Binding IsSelected}"
+                                          IsEnabled="{Binding IsSelectable}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Name  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.InverseName" my:GridViewColumnAssist.Width="200" Header="{my:Resource LastName}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:PlayerButton Item="{Binding Item.Player}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Team  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.Team"
+                                my:GridViewColumnAssist.Width="120"
+                                DisplayMemberBinding="{Binding Item.Player.Team.Name}"
+                                Header="{my:Resource Team}" />
+
+                <!--  Position  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Player.NaturalPosition" my:GridViewColumnAssist.Width="120" Header="{my:Resource Positions}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Item.Player.Positions, Converter={x:Static c:RatedPositionsToStringConverter.NaturalCodes}}" TextWrapping="NoWrap" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Item.Player.Positions, Converter={x:Static c:RatedPositionsToStringConverter.GoodCodes}}" TextWrapping="NoWrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Attendance  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Attendance" my:GridViewColumnAssist.Width="150" Header="{my:Resource Attendance}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <my:PackIcon x:Name="AttendanceIcon"
+                                             Width="20"
+                                             Height="20"
+                                             Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                             VerticalAlignment="Center"
+                                             Foreground="{DynamicResource MyNet.Brushes.None}"
+                                             Kind="QuestionMarkCircle" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Item.Attendance}" TextWrapping="NoWrap" />
+                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                               Margin="{StaticResource MyNet.Margins.Small.Top}"
+                                               FontStyle="Italic"
+                                               Text="{Binding Item.Reason}"
+                                               TextWrapping="NoWrap"
+                                               Visibility="{Binding Item.Reason, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Present}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="CheckboxMarkedCircle" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Absent}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="Cancel" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Apology}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="MessageProcessing" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Injured}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="Ambulance" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Attendance.Injured}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.InHolidays}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="Beach" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Attendance.InHolidays}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.InSelection}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="Star" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Attendance.InSelection}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Resting}">
+                                    <Setter TargetName="AttendanceIcon" Property="Kind" Value="Sleep" />
+                                    <Setter TargetName="AttendanceIcon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Attendance.Resting}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Rating  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Item.Rating" my:GridViewColumnAssist.Width="100" Header="{my:Resource Rating}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <my:Gauge Style="{StaticResource Teamup.Styles.Gauge.Rating}"
+                                      Width="32"
+                                      Height="32"
+                                      Margin="{StaticResource MyNet.Margins.Default.Vertical}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      InnerRadius="15"
+                                      Value="{my:NotNullableBinding Item.Rating}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Comment  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Comment"
+                                my:GridViewColumnAssist.Width="*"
+                                DisplayMemberBinding="{Binding Item.Comment}"
+                                Header="{my:Resource Comment}" />
+
+                <!--  Actions  -->
+                <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                my:GridViewColumnAssist.CanSort="False"
+                                my:GridViewColumnAssist.Width="90"
+                                HeaderTemplate="{StaticResource MyNet.DataTemplates.ListView.ColumnsVisibility}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <v:TrainingSessionPageAttendancesPlayerToolBar x:Name="ToolBar"
+                                                                           HorizontalAlignment="Right"
+                                                                           DataContext="{Binding Item}"
+                                                                           DockPanel.Dock="Right"
+                                                                           RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                                                           Visibility="Collapsed" />
+
+                            <DataTemplate.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}" Value="True" />
+                                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                                </MultiDataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+            </GridView>
+        </ListView.View>
+    </ListView>
+</UserControl>

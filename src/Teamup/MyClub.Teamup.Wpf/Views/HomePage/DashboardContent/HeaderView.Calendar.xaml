@@ -1,0 +1,316 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.HomePage.DashboardContent.HeaderCalendarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage.DashboardContent"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent"
+             d:DataContext="{d:DesignInstance Type=vm:OverviewCalendarViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="ProxyCalendar" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.MatchButton.Filled" BasedOn="{StaticResource MyNet.Styles.Button.Filled.Custom}" TargetType="{x:Type ctrl:MatchButton}">
+            <Setter Property="my:ThemeAssist.CornerRadius" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
+            <Setter Property="ToolTip" Value="{my:Resource SeeItem}" />
+            <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="{Binding Item.Color, RelativeSource={RelativeSource Self}, Converter={x:Static my:ColorToBrushConverter.Default}}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                               Grid.RowSpan="2"
+                                               Grid.Column="0"
+                                               Width="40"
+                                               Height="40"
+                                               DataContext="{Binding AwayTeam}"
+                                               Visibility="{Binding IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                               Grid.RowSpan="2"
+                                               Grid.Column="0"
+                                               Width="40"
+                                               Height="40"
+                                               DataContext="{Binding HomeTeam}"
+                                               Visibility="{Binding IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                            <TextBlock Grid.Column="2" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                            <my:SimpleStackPanel Grid.Row="1"
+                                                 Grid.Column="2"
+                                                 Orientation="Horizontal"
+                                                 Spacing="{StaticResource MyNet.Margin.Small}">
+                                <Grid Grid.RowSpan="2" Grid.Column="0" Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}">
+                                    <my:PackIcon Width="20"
+                                                 Height="20"
+                                                 Kind="Plane"
+                                                 Visibility="{Binding AwayTeam.IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                    <my:PackIcon Width="20"
+                                                 Height="20"
+                                                 Kind="Home"
+                                                 Visibility="{Binding HomeTeam.IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                </Grid>
+                                <!--  Score  -->
+                                <Grid x:Name="score" Margin="{StaticResource MyNet.Margins.Default.Right}" Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="4" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label x:Name="homeScore"
+                                           Style="{StaticResource Teamup.Styles.Label.Score.Small}"
+                                           Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
+                                           Content="{Binding HomeScore}" />
+                                    <Label x:Name="awayScore"
+                                           Style="{StaticResource Teamup.Styles.Label.Score.Small}"
+                                           Grid.Column="2"
+                                           Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
+                                           Content="{Binding AwayScore}" />
+                                </Grid>
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
+                                <ctrl:TeamButton Item="{Binding HomeTeam}" Visibility="{Binding HomeTeam.IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                                <ctrl:TeamButton Item="{Binding AwayTeam}" Visibility="{Binding AwayTeam.IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                            </my:SimpleStackPanel>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding HomeHasWon}" Value="True" />
+                                    <Condition Binding="{Binding HomeTeam.IsMyTeam}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding AwayHasWon}" Value="True" />
+                                    <Condition Binding="{Binding AwayTeam.IsMyTeam}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding AwayHasWon}" Value="True" />
+                                    <Condition Binding="{Binding HomeTeam.IsMyTeam}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding HomeHasWon}" Value="True" />
+                                    <Condition Binding="{Binding AwayTeam.IsMyTeam}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                            </MultiDataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Teamup.Styles.TrainingSessionButton.Filled" BasedOn="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}" TargetType="{x:Type ctrl:TrainingSessionButton}">
+            <Setter Property="my:ThemeAssist.CornerRadius" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
+            <Setter Property="ToolTip" Value="{my:Resource SeeItem}" />
+            <Setter Property="Orientation" Value="Vertical" />
+            <Setter Property="ContextMenu" Value="{StaticResource Teamup.ContextMenu.TrainingSession}" />
+            <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Label x:Name="label"
+                                   Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                   Grid.RowSpan="2"
+                                   Grid.Column="0"
+                                   Width="30"
+                                   Height="30"
+                                   Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
+                                   Content="{my:Icon Kind=Crossfit,
+                                                     Size=22}" />
+                            <my:SimpleStackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                <TextBlock Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                                <TextBlock Text="-" />
+                                <TextBlock Text="{my:Translation EndDate, Format=ShortTimePattern}" />
+                            </my:SimpleStackPanel>
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                       Grid.Row="1"
+                                       Grid.Column="2"
+                                       Text="{Binding Theme}" />
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                                <Setter TargetName="label" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter TargetName="label" Property="ToolTip" Value="{my:Resource Cancel}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsPerformed}" Value="True">
+                                <Setter TargetName="label" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Item.IsCancelled, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate DataType="{x:Type entities:TrainingSessionViewModel}">
+            <ctrl:TrainingSessionButton Style="{StaticResource Teamup.Styles.TrainingSessionButton.Filled}"
+                                        HorizontalAlignment="Stretch"
+                                        Content="{Binding}"
+                                        Item="{Binding}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:MatchViewModel}">
+            <ctrl:MatchButton Style="{StaticResource Teamup.Styles.MatchButton.Filled}"
+                              HorizontalAlignment="Stretch"
+                              Content="{Binding}"
+                              Item="{Binding}" />
+        </DataTemplate>
+
+        <Style x:Key="Teamup.Styles.CalendarItem" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysRange}" TargetType="{x:Type my:CalendarItem}">
+            <Setter Property="my:HeaderAssist.Foreground" Value="{my:BrushBinding SelfPath=Foreground}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="my:ElevationAssist.Elevation" Value="Dp0" />
+            <Setter Property="my:ThemeAssist.UniformCornerRadius" Value="0" />
+            <Setter Property="BorderThickness" Value="0 0 1 0" />
+            <Setter Property="BorderBrush" Value="{my:BrushBinding SelfPath=Owner.Background, Converter={x:Static my:BrushConverter.Darken}}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                VerticalAlignment="Top"
+                                Command="{Binding Data.NavigateToCalendarCommand, Source={StaticResource ProxyCalendar}}"
+                                FontSize="{StaticResource MyNet.Font.Size.Caption}">
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Format=ddd}" Typography.Capitals="AllSmallCaps" />
+                                <TextBlock Text="{Binding Converter={x:Static my:DayNumberToStringConverter.ToTitle}}" />
+                            </my:SimpleStackPanel>
+                        </Button>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type my:CalendarItem}">
+                        <my:Card Margin="{TemplateBinding Margin}"
+                                 Padding="{TemplateBinding Padding}"
+                                 my:ElevationAssist.Elevation="{TemplateBinding my:ElevationAssist.Elevation}"
+                                 Background="{TemplateBinding Background}"
+                                 BorderBrush="{TemplateBinding BorderBrush}"
+                                 BorderThickness="{TemplateBinding BorderThickness}"
+                                 ClipToBounds="{TemplateBinding ClipToBounds}"
+                                 UniformCornerRadius="{TemplateBinding my:ThemeAssist.UniformCornerRadius}">
+                            <Grid x:Name="base">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <DockPanel Margin="2 2 5 2">
+                                    <Button x:Name="PART_AddButton"
+                                            Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            VerticalAlignment="Center"
+                                            Content="{my:ToolIcon Kind=Plus}"
+                                            DockPanel.Dock="Right"
+                                            Visibility="Hidden" />
+                                    <ContentPresenter x:Name="DayText"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding Content}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                </DockPanel>
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding Appointments, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Small}" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Grid>
+                        </my:Card>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="PART_AddButton" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding Owner.AddCommand, RelativeSource={RelativeSource Self}, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" Value="True">
+                                <Setter TargetName="PART_AddButton" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsToday" Value="True">
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="Background" Value="{my:BrushBinding Path=Background, RelativeSource={RelativeSource AncestorType={x:Type v:HeaderCalendarView}}, Converter={x:Static my:BrushConverter.Darken}}" />
+                    <Setter Property="Margin" Value="-2 -5" />
+                    <Setter Property="Padding" Value="0 10" />
+                    <Setter Property="Panel.ZIndex" Value="10" />
+                    <Setter Property="my:ThemeAssist.UniformCornerRadius" Value="{StaticResource MyNet.UniformCornerRadius.Container}" />
+                    <Setter Property="my:ElevationAssist.Elevation" Value="{StaticResource MyNet.Elevation.Container}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Teamup.Styles.Calendar.Events" BasedOn="{StaticResource MyNet.Styles.Calendar.DaysRange.Alternate}" TargetType="{x:Type my:CalendarDaysRange}">
+            <Setter Property="CalendarItemStyle" Value="{StaticResource Teamup.Styles.CalendarItem}" />
+            <Setter Property="InnerBorderThickess" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type my:CalendarDaysRange}">
+                        <my:CalendarItemsControl x:Name="PART_DatesItemsControl"
+                                                 Style="{StaticResource MyNet.Styles.CalendarItemsControl}"
+                                                 Grid.Column="1"
+                                                 ItemContainerStyle="{TemplateBinding CalendarItemStyle}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <my:CalendarDaysRange Style="{StaticResource Teamup.Styles.Calendar.Events}"
+                          AddCommand="{Binding AddToDateCommand}"
+                          Appointments="{Binding Items}"
+                          Background="{my:BrushBinding Path=Background,
+                                                       RelativeSource={RelativeSource AncestorType={x:Type v:HeaderCalendarView}}}"
+                          DatesSelectionMode="None"
+                          DisplayDate="{Binding DisplayDate}"
+                          DisplayDaysCount="9" />
+</UserControl>

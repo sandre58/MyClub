@@ -1,0 +1,146 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+                    xmlns:my="http://mynet.com/xaml/themes">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Teamup;component/Styles/Teamup.Player.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="Teamup.Styles.PlayerButton" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}" TargetType="{x:Type ctrl:PlayerButton}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="ToolTip" Value="{my:Resource SeeItem}" />
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <StackPanel Orientation="{Binding Orientation, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}}">
+                        <DockPanel HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                            <TextBlock Padding="0"
+                                       HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                       DockPanel.Dock="Left"
+                                       FontSize="{Binding FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                       Text="{Binding Item.LastName, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}, Converter={x:Static my:StringConverter.ToUpper}, UpdateSourceTrigger=PropertyChanged}"
+                                       TextWrapping="NoWrap" />
+                            <TextBlock Padding="{StaticResource MyNet.Margins.Small.Horizontal}" Visibility="{Binding Orientation, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static Orientation.Horizontal}}" />
+                        </DockPanel>
+                        <TextBlock Padding="0"
+                                   HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                   Text="{Binding Item.FirstName, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}, UpdateSourceTrigger=PropertyChanged}"
+                                   TextWrapping="NoWrap" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu DataContext="{Binding PlacementTarget.Item, RelativeSource={RelativeSource Self}}">
+                    <ContextMenu.Resources>
+                        <my:BindingProxy x:Key="PlayerProxy" Data="{Binding}" />
+                    </ContextMenu.Resources>
+                    <MenuItem Command="{Binding OpenCommand}" Header="{Binding FullName}">
+                        <MenuItem.Icon>
+                            <Grid>
+                                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Small}" DataContext="{Binding Data, Source={StaticResource PlayerProxy}}" />
+                            </Grid>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                    <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                    <MenuItem Header="{my:Resource Add}" Icon="{my:ToolIcon Kind=PlusThick}">
+                        <MenuItem Command="{Binding AddInjuryCommand}" Header="{my:Resource AnInjury}" Icon="{my:ToolIcon Kind=Ambulance}" />
+                        <MenuItem Header="{my:Resource AnAbsence}" Icon="{my:ToolIcon Kind=AccountOff}">
+                            <MenuItem Command="{Binding AddAbsenceHolidaysCommand}" Header="{my:Resource InHolidays}" Icon="{my:ToolIcon Kind=Beach}" />
+                            <MenuItem Command="{Binding AddAbsenceInSelectionCommand}" Header="{my:Resource InSelection}" Icon="{my:ToolIcon Kind=Star}" />
+                            <MenuItem Command="{Binding AddAbsenceOtherCommand}" Header="{my:Resource Other}" Icon="{my:ToolIcon Kind=QuestionMark}" />
+                        </MenuItem>
+                    </MenuItem>
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding OtherTeams.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                    <MenuItem my:ItemsControlAssist.SortingProperty="Order"
+                              Header="{my:Resource MovingTo}"
+                              Icon="{my:ToolIcon Kind=PersonArrowLeft}"
+                              ItemsSource="{Binding OtherTeams}"
+                              Visibility="{Binding OtherTeams.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                        <MenuItem.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="MenuItem">
+                                <Setter Property="Command" Value="{Binding DataContext.MoveCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                                <Setter Property="CommandParameter" Value="{Binding}" />
+                            </Style>
+                        </MenuItem.ItemContainerStyle>
+                        <MenuItem.ItemTemplate>
+                            <DataTemplate>
+                                <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                    <TextBlock Text="{my:Resource MovingPlayerInTeam}" />
+                                    <TextBlock Text="{Binding Name}" />
+                                </my:SimpleStackPanel>
+                            </DataTemplate>
+                        </MenuItem.ItemTemplate>
+                    </MenuItem>
+                    <MenuItem Command="{Binding DataContext.MoveCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                              CommandParameter="{x:Null}"
+                              Header="{my:Resource GoOut}"
+                              Icon="{my:ToolIcon Kind=PersonArrowRight}" />
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                    <MenuItem Command="{Binding OpenMailClientCommand}"
+                              Header="{my:Resource SendMail}"
+                              Icon="{my:ToolIcon Kind=Email}"
+                              Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotOne}}" />
+                    <MenuItem my:ItemsControlAssist.SortDirection="Descending"
+                              my:ItemsControlAssist.SortingProperty="Default"
+                              Header="{my:Resource SendMail}"
+                              Icon="{my:ToolIcon Kind=Email}"
+                              ItemsSource="{Binding Emails}"
+                              Visibility="{Binding Emails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotMany}}">
+                        <MenuItem.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="MenuItem">
+                                <Setter Property="Command" Value="{Binding DataContext.OpenEmailInMailClientCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                                <Setter Property="CommandParameter" Value="{Binding Value}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Default}" Value="True">
+                                        <Setter Property="Icon" Value="{my:ToolIcon Kind=Check}" />
+                                        <Setter Property="my:MenuAssist.IconTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate>
+                                                    <my:PackIcon Width="18" Height="18" Kind="Check" />
+                                                </DataTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="ToolTip" Value="{my:Resource Default}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.ItemContainerStyle>
+                        <MenuItem.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                               FontStyle="Italic"
+                                               Text="{Binding Label}"
+                                               Visibility="{Binding Label, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                    <TextBlock Text="{Binding Value}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </MenuItem.ItemTemplate>
+                    </MenuItem>
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                    <MenuItem Background="{DynamicResource MyNet.Brushes.Negative}"
+                              Command="{Binding RemoveCommand}"
+                              Foreground="{my:BrushBinding SelfPath=Background,
+                                                           Contrast=True}"
+                              Header="{my:Resource Remove}"
+                              Icon="{my:ToolIcon Kind=Trash}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="false">
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

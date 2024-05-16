@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyClub.Teamup.Domain.ClubAggregate.Club">
+    <Position X="9" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAASwAAAAAAAAAAAACCAAEAAAKAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ClubAggregate\Club.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Stadium" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.StadiumAggregate.Stadium">
+    <Position X="11.25" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAEAAAAAAQAAAAAAAACAAAAAAAAEAA=</HashCode>
+      <FileName>StadiumAggregate\Stadium.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.HolidaysAggregate.Holidays">
+    <Position X="3.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAAAAAAEABAAAAAAAAAAAAAAAAAAAAAAAAI=</HashCode>
+      <FileName>HolidaysAggregate\Holidays.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.CycleAggregate.Cycle">
+    <Position X="3.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAEAAQAEABAAAAAAAAAAAAEBAAAAgAAAAAI=</HashCode>
+      <FileName>CycleAggregate\Cycle.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.SendedMailAggregate.SendedMail">
+    <Position X="3.5" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEBIABAAAAACAAAAABAAAABCAABAA=</HashCode>
+      <FileName>SendedMailAggregate\SendedMail.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TacticAggregate.Tactic">
+    <Position X="11.25" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAgAAAAIAAAAAAIQAAAAAAAAAAAQAA=</HashCode>
+      <FileName>TacticAggregate\Tactic.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.SeasonAggregate.Season">
+    <Position X="9" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQEAACAAAACAAAAAAAAAAAQAAAAAAI=</HashCode>
+      <FileName>SeasonAggregate\Season.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.SquadAggregate.SquadPlayer">
+    <Position X="5.5" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAADAAAEAAAgAAkAkAAMAAAAAAAQBAAEAAAAQBBSAA=</HashCode>
+      <FileName>SquadAggregate\SquadPlayer.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Player" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.PersonAggregate.Player">
+    <Position X="3.5" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABCAACRkGBIgAgAAAAIAAAACQAQBQAIAAAAAAAQQQ=</HashCode>
+      <FileName>PersonAggregate\Player.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.TrainingSession">
+    <Position X="7.5" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAJCAQCEAAAAUAAAIAAAAABAAABAAAEAAIAQAAEA=</HashCode>
+      <FileName>TrainingAggregate\TrainingSession.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

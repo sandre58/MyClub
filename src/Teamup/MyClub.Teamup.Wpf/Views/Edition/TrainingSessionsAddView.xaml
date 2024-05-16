@@ -1,0 +1,106 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.TrainingSessionsAddView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:collections="clr-namespace:MyClub.Teamup.Wpf.Collections"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Width="550"
+                  Height="350"
+                  d:DataContext="{d:DesignInstance Type=vm:TrainingSessionsAddViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{my:Translation Dates.Count,
+                                          Format=XSelectedDates,
+                                          Plural=True}"
+                  ShowCloseButton="True"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:SimpleStackPanel>
+
+        <!--  Theme  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Large.Bottom}" Header="{my:MediumIcon Kind=Information}">
+            <TextBox Width="400"
+                     my:FocusAssist.IsDefault="True"
+                     my:HintAssist.Hint="{my:Resource Theme}"
+                     Text="{Binding Theme, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Dates  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Calendar}">
+            <ListBox BorderThickness="0" ItemsSource="{Binding AllDays}" SelectionMode="Multiple">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectionBehavior SelectedItems="{Binding SelectedDays}" />
+                </i:Interaction.Behaviors>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Rounded.Filled}"
+                                                  Margin="{StaticResource MyNet.Margins.Default.Horizontal}"
+                                                  Content="{Binding Converter={x:Static my:DayOfWeekStringConverter.ToFirstLetterToUpper}}"
+                                                  IsChecked="{Binding IsSelected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Mode=TwoWay}"
+                                                  ToolTip="{Binding Converter={x:Static my:DayOfWeekStringConverter.ToTitle}}" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+        </GroupBox>
+
+        <!--  Time  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Clock}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <my:TimePicker my:HintAssist.Hint="{my:Resource StartTime}" SelectedTime="{Binding StartTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <TextBlock Text="{my:Resource To}" />
+                <my:TimePicker my:HintAssist.Hint="{my:Resource EndTime}" SelectedTime="{Binding EndTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <!--  Place  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=MapMarker}">
+            <TextBox my:HintAssist.Hint="{my:Resource Place}" Text="{Binding Place, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Teams  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=AccountGroup}">
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                     my:ItemsControlAssist.SortingProperty="Order"
+                     DisplayMemberPath="Name"
+                     ItemsSource="{Binding Source={x:Static collections:TeamsCollection.MyTeams}}"
+                     SelectedValuePath="Id"
+                     SelectionMode="Multiple">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectionBehavior SelectedValues="{Binding SelectedTeamIds}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
+        </GroupBox>
+
+    </my:SimpleStackPanel>
+
+</my:ContentDialog>

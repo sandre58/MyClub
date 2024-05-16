@@ -1,0 +1,272 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Shell.SearchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:s="clr-namespace:MyClub.Teamup.Wpf.Selectors"
+             xmlns:shell="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Shell"
+             d:DataContext="{d:DesignInstance Type=shell:SearchViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+
+        <DataTemplate DataType="{x:Type entities:ActionViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <my:PackIcon Width="40"
+                             Height="40"
+                             HorizontalAlignment="Center"
+                             Kind="{Binding Icon}" />
+
+                <DockPanel Grid.Column="1">
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                               DockPanel.Dock="Top"
+                               FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                               Text="{my:Translation Value,
+                                                     Casing=AllCaps}" />
+                    <TextBlock VerticalAlignment="Top"
+                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                               Text="{my:Translation Description}"
+                               TextWrapping="Wrap" />
+                </DockPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:PlayerViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Medium}"
+                                   Width="50"
+                                   Height="50"
+                                   HorizontalAlignment="Center" />
+
+                <DockPanel Grid.Column="1">
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                               DockPanel.Dock="Top"
+                               FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                               Text="{my:Translation FullName,
+                                                     Casing=AllCaps}" />
+
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Small.Bottom}" DockPanel.Dock="Top" Text="{Binding Team.Name}" />
+
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <my:GhostControl HorizontalAlignment="Left" Ghost="{my:Resource UnknownNationality}" ShowGhost="{Binding Country, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                            <Image Width="15" Source="{Binding Country, Converter={x:Static my:CountryToFlagConverter.To24}}" ToolTip="{my:Translation Country}" />
+                        </my:GhostControl>
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Age, Format=AgeFormat}" />
+                    </my:SimpleStackPanel>
+                </DockPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:CompetitionViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}"
+                                   Width="50"
+                                   Height="50"
+                                   HorizontalAlignment="Center" />
+
+                <DockPanel Grid.Column="1">
+
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                               DockPanel.Dock="Top"
+                               FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                               Text="{my:Translation Name,
+                                                     Casing=AllCaps}" />
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.ContentTemplateSelector>
+                            <s:CompetitionDataTemplateSelector>
+                                <s:CompetitionDataTemplateSelector.FriendlyTemplate>
+                                    <DataTemplate DataType="{x:Type entities:FriendlyViewModel}">
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" VerticalAlignment="Top" Text="{my:Translation Matches.Count, Plural=True, Format=XMatches}" />
+                                    </DataTemplate>
+                                </s:CompetitionDataTemplateSelector.FriendlyTemplate>
+                                <s:CompetitionDataTemplateSelector.CupTemplate>
+                                    <DataTemplate DataType="{x:Type entities:CupViewModel}">
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" VerticalAlignment="Top" Text="{Binding CurrentRound.Name}" />
+                                    </DataTemplate>
+                                </s:CompetitionDataTemplateSelector.CupTemplate>
+                                <s:CompetitionDataTemplateSelector.LeagueTemplate>
+                                    <DataTemplate DataType="{x:Type entities:LeagueViewModel}">
+                                        <my:SimpleStackPanel VerticalAlignment="Top" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Resource Ranking}" />
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text=":" />
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Ranking.MyRank, Converter={x:Static my:IntegerToOrdinalizeConverter.Default}}" />
+                                        </my:SimpleStackPanel>
+                                    </DataTemplate>
+                                </s:CompetitionDataTemplateSelector.LeagueTemplate>
+                            </s:CompetitionDataTemplateSelector>
+                        </ContentControl.ContentTemplateSelector>
+                    </ContentControl>
+                </DockPanel>
+            </Grid>
+
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:TrainingSessionViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid x:Name="date" HorizontalAlignment="Center">
+                    <ContentControl Style="{StaticResource Teamup.Styles.ContentControl.Date.Foreground}"
+                                    my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                                    Content="{Binding StartDate}"
+                                    FontSize="25" />
+                </Grid>
+
+                <DockPanel Grid.Column="1">
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                               DockPanel.Dock="Top"
+                               FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                               Text="{my:Translation StartDate,
+                                                     Casing=AllCaps,
+                                                     Format=LongDatePattern}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Theme}" TextWrapping="Wrap" />
+                </DockPanel>
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsPerformed}" Value="False">
+                    <Setter TargetName="date" Property="TextElement.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                    <Setter TargetName="date" Property="TextElement.Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsPerformed}" Value="True">
+                    <Setter TargetName="date" Property="TextElement.Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:TeamViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                   Width="50"
+                                   Height="50"
+                                   HorizontalAlignment="Center" />
+
+                <DockPanel Grid.Column="1">
+
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                               DockPanel.Dock="Top"
+                               FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                               Text="{my:Translation Name,
+                                                     Casing=AllCaps}" />
+
+                    <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default.Bottom}" DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Image Width="15" Source="{Binding Country, Converter={x:Static my:CountryToFlagConverter.To24}}" ToolTip="{my:Translation Country}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Category}" />
+                    </my:SimpleStackPanel>
+
+                    <my:SimpleStackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <my:PackIcon Kind="Stadium" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Stadium.DisplayName}" />
+                    </my:SimpleStackPanel>
+                </DockPanel>
+            </Grid>
+
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type entities:StadiumViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <my:PackIcon Width="40" Height="40" Kind="Stadium" />
+
+                <DockPanel Grid.Column="1">
+
+                    <TextBlock DockPanel.Dock="Top"
+                               FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                               Text="{my:Translation Name,
+                                                     Casing=AllCaps}" />
+
+                    <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                            VerticalAlignment="Top"
+                            Command="{Binding OpenGoogleMapsCommand}"
+                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                            ToolTip="{my:Resource OpenInGoogleMaps}">
+                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <TextBlock Text="{Binding Address.Street}" />
+                                <TextBlock Text="{Binding Address.PostalCode}" />
+                            </my:SimpleStackPanel>
+                            <TextBlock Text="{Binding Address.City, Converter={x:Static my:StringConverter.ToUpper}}" />
+                        </my:SimpleStackPanel>
+                    </Button>
+                </DockPanel>
+            </Grid>
+
+        </DataTemplate>
+
+    </UserControl.Resources>
+    <Grid>
+        <my:AutoSuggestBox Style="{StaticResource MyNet.Styles.AutoSuggestBox.Filled}"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch"
+                           my:HintAssist.Hint="{my:Resource Search}"
+                           my:IconAssist.Icon="{my:MediumIcon Kind=Search}"
+                           my:TextFieldAssist.HasClearButton="True"
+                           my:ThemeAssist.CornerRadius="0"
+                           BorderThickness="0"
+                           DisplayMemberPath="SearchDisplayName"
+                           GroupMemberPath="SearchCategory"
+                           PopupWidth="400"
+                           Provider="{Binding}"
+                           SelectedItem="{Binding SelectedItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                           Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <my:AutoSuggestBox.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate>
+                                        <Grid Margin="{StaticResource MyNet.Margins.Large.Bottom}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock}"
+                                                       Margin="30 7"
+                                                       FontWeight="Bold"
+                                                       Text="{my:Translation Name,
+                                                                             Format='\{0\}'}" />
+                                            <ItemsPresenter Grid.Row="1" />
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </my:AutoSuggestBox.GroupStyle>
+        </my:AutoSuggestBox>
+    </Grid>
+</UserControl>

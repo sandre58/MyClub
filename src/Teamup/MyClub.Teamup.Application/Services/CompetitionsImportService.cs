@@ -1,0 +1,143 @@
+﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using CsvHelper;
+using MyClub.CrossCutting.Localization;
+using MyClub.Domain.Enums;
+using MyClub.Teamup.Application.Contracts;
+using MyClub.Teamup.Application.Converters;
+using MyClub.Teamup.Application.Dtos;
+using MyClub.Teamup.Domain.CompetitionAggregate;
+using MyNet.CsvHelper.Extensions;
+using MyNet.CsvHelper.Extensions.Converters;
+using MyNet.CsvHelper.Extensions.Excel;
+using MyNet.CsvHelper.Extensions.Exceptions;
+using MyNet.Utilities;
+using MyNet.Utilities.Exceptions;
+using MyNet.Utilities.Extensions;
+using MyNet.Utilities.IO.FileExtensions;
+
+namespace MyClub.Teamup.Application.Services
+{
+    public class CompetitionsImportService(IReadService readService)
+    {
+        public static readonly IEnumerable<ColumnMapping<CompetitionExportDto, object?>> DefaultColumns =
+        [
+            new(x => x.Type, nameof(MyClubResources.Type)),
+            new(x => x.Name, nameof(MyClubResources.Name)),
+            new(x => x.ShortName, nameof(MyClubResources.ShortName)),
+            new(x => x.Category, nameof(MyClubResources.Category), new EnumerationConverter<Category>()),
+            new(x => x.MatchTime, nameof(MyClubResources.DefaultTime)),
+            new(x => x.HasExtraTime, nameof(MyClubResources.ExtraTime)),
+            new(x => x.RegulationTime, nameof(MyClubResources.RegulationTimeFormat), new CsvHalfFormatConverter()),
+            new(x => x.ExtraTime, nameof(MyClubResources.ExtraTimeFormat), new CsvHalfFormatConverter()),
+            new(x => x.HasShootouts, nameof(MyClubResources.Shootouts)),
+            new(x => x.NumberOfShootouts, nameof(MyClubResources.NumberOfShootouts)),
+            new(x => x.ByGamesWon, nameof(MyClubResources.ByGamesWon)),
+            new(x => x.ByGamesDrawn, nameof(MyClubResources.ByGamesDrawn)),
+            new(x => x.ByGamesLost, nameof(MyClubResources.ByGamesLost)),
+            new(x => x.RankingSortingColumns, nameof(MyClubResources.RankingSortingColumns), new EnumsConverter<RankingSortingColumn>()),
+            new(x => x.Labels, nameof(MyClubResources.Labels), new CsvRankingLabelsConverter())
+        ];
+
+        private readonly IReadService _readService = readService;
+
+        public (ICollection<CompetitionExportDto> Competitions, ICollection<Exception> Errors) ExtractCompetitions(string filename)
+            => _readService.CanRead(filename)
+                ? (ExtractCompetitionsFromProjectFile(filename), Array.Empty<Exception>())
+                : ExtractCompetitionsFromFile(filename);
+
+        private List<CompetitionExportDto> ExtractCompetitionsFromProjectFile(string filename)
+        {
+            var competitions = _readService.ReadCompetitionsAsync(filename).Result;
+
+            return competitions.Select(x =>
+            {
+                var item = new CompetitionExportDto
+                {
+                    MatchTime = x.Rules.MatchTime,
+                    Type = x.GetType().Name,
+                    Logo = x.Logo,
+                    Name = x.Name,
+                    Category = x.Category,
+                    ShortName = x.ShortName,
+                    ExtraTime = x.Rules.MatchFormat.ExtraTime,
+                    RegulationTime = x.Rules.MatchFormat.RegulationTime,
+                    HasExtraTime = x.Rules.MatchFormat.ExtraTimeIsEnabled,
+                    HasShootouts = x.Rules.MatchFormat.ShootoutIsEnabled,
+                    NumberOfShootouts = x.Rules.MatchFormat.NumberOfPenaltyShootouts,
+                    ByGamesDrawn = (x as League)?.Rules.RankingRules.PointsByGamesDrawn,
+                    ByGamesWon = (x as League)?.Rules.RankingRules.PointsByGamesWon,
+                    ByGamesLost = (x as League)?.Rules.RankingRules.PointsByGamesLost,
+                    RankingSortingColumns = (x as League)?.Rules.RankingRules.SortingColumns,
+                    Labels = (x as League)?.Rules.RankingRules.Labels
+                };
+
+                return item;
+            }).ToList();
+        }
+
+        private static (ICollection<CompetitionExportDto>, ICollection<Exception>) ExtractCompetitionsFromFile(string filename)
+        {
+            var exceptions = new List<Exception>();
+            var configuration = CsvConfigurations.GetConfigurationWithNoThrowException(exceptions);
+
+            using var reader = FileExtensionInfoProvider.Excel.IsValid(filename)
+                ? new CsvReader(new ExcelParser(filename, configuration))
+                : FileExtensionInfoProvider.Csv.IsValid(filename)
+                ? new CsvReader(new StreamReader(filename), configuration)
+                : throw new TranslatableException(MyClubResources.FileMustBeExcelOrCsvError);
+
+            reader.Context.RegisterClassMap(new DynamicClassMap<CompetitionExportDto>(DefaultColumns, false, false));
+
+            var competitions = reader.GetRecords<CompetitionExportDto>().ToList();
+
+            var index = 1;
+            var convertedCompetitions = competitions.Select(x =>
+            {
+                var competition = new CompetitionExportDto();
+
+                trySetValue(() => competition.Name = x.Name, nameof(CompetitionExportDto.Name), x.Name);
+                trySetValue(() => competition.ShortName = x.ShortName, nameof(CompetitionExportDto.ShortName), x.ShortName);
+                trySetValue(() => competition.MatchTime = x.MatchTime, nameof(CompetitionExportDto.MatchTime), x.MatchTime);
+                trySetValue(() => competition.Type = x.Type, nameof(CompetitionExportDto.Type), x.Type);
+                trySetValue(() => competition.Category = x.Category, nameof(CompetitionExportDto.Category), x.Category);
+                trySetValue(() => competition.ByGamesDrawn = x.ByGamesDrawn, nameof(CompetitionExportDto.ByGamesDrawn), x.ByGamesDrawn);
+                trySetValue(() => competition.ByGamesWon = x.ByGamesWon, nameof(CompetitionExportDto.ByGamesWon), x.ByGamesWon);
+                trySetValue(() => competition.ByGamesLost = x.ByGamesLost, nameof(CompetitionExportDto.ByGamesLost), x.ByGamesLost);
+                trySetValue(() => competition.RankingSortingColumns = x.RankingSortingColumns, nameof(CompetitionExportDto.RankingSortingColumns), x.RankingSortingColumns);
+                trySetValue(() => competition.Labels = x.Labels, nameof(CompetitionExportDto.Labels), x.Labels);
+                trySetValue(() => competition.HasExtraTime = x.HasExtraTime, nameof(MyClubResources.ExtraTime), x.HasExtraTime);
+                trySetValue(() => competition.HasShootouts = x.HasShootouts, nameof(MyClubResources.Shootouts), x.HasShootouts);
+                trySetValue(() => competition.ExtraTime = x.ExtraTime, nameof(MyClubResources.ExtraTimeFormat), x.ExtraTime);
+                trySetValue(() => competition.RegulationTime = x.RegulationTime, nameof(MyClubResources.RegulationTimeFormat), x.RegulationTime);
+                trySetValue(() => competition.NumberOfShootouts = x.NumberOfShootouts, nameof(MyClubResources.NumberOfShootouts), x.NumberOfShootouts);
+
+                index++;
+                return competition;
+
+                void trySetValue<T>(Action action, string columnHeader, T value)
+                {
+                    try
+                    {
+                        action();
+                    }
+                    catch (TranslatableException e)
+                    {
+                        exceptions?.Add(new ImportValueException(index, columnHeader, value, e.Parameters is not null ? e.ResourceKey.Translate()?.FormatWith(e.Parameters) : e.ResourceKey.Translate(), e));
+                    }
+                    catch (Exception e)
+                    {
+                        exceptions?.Add(new ImportValueException(index, columnHeader, value, e.Message, e));
+                    }
+                }
+
+            }).ToList();
+            return (convertedCompetitions, exceptions);
+        }
+    }
+}

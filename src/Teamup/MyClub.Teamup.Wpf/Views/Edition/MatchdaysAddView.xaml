@@ -1,0 +1,135 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.MatchdaysAddView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Width="750"
+                  Height="600"
+                  Padding="0"
+                  d:DataContext="{d:DesignInstance Type=vm:MatchdaysAddViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  HeaderHeight="70"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <my:ContentDialog.Header>
+        <!--  Competition  -->
+        <DockPanel VerticalAlignment="Center">
+            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Competition}"
+                               Width="40"
+                               Height="40"
+                               Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                               DataContext="{Binding Competition}"
+                               DockPanel.Dock="Left" />
+            <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Text="{my:Translation Title, Casing=AllCaps}" />
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="{my:Translation SubTitle}" Visibility="{Binding SubTitle, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+            </my:SimpleStackPanel>
+        </DockPanel>
+    </my:ContentDialog.Header>
+
+    <DataGrid CanUserAddRows="False" ItemsSource="{Binding Matchdays}">
+        <DataGrid.Columns>
+
+            <!--  Date  -->
+            <my:DataGridDateColumn Width="100" Binding="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Date}">
+                <my:DataGridDateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{my:Translation Format=ShortDatePattern}" />
+                    </DataTemplate>
+                </my:DataGridDateColumn.CellTemplate>
+            </my:DataGridDateColumn>
+
+            <!--  Name  -->
+            <my:DataGridTextColumn Width="*" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Name}" />
+
+            <!--  ShortName  -->
+            <my:DataGridTextColumn Width="80" Binding="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource ShortName}" />
+
+            <!--  Copy From  -->
+            <my:DataGridTemplateColumn Width="320" Header="{my:Resource CopyFrom}">
+                <my:DataGridTemplateColumn.CellEditingTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Embedded.DataGrid.Edition}"
+                                      Width="150"
+                                      my:ItemsControlAssist.SortingProperty="OriginDate"
+                                      my:TextFieldAssist.HasClearButton="True"
+                                      my:ValidationAssist.UsePopup="True"
+                                      DisplayMemberPath="Name"
+                                      ItemsSource="{Binding Data.Parent.Matchdays, Source={StaticResource Proxy}}"
+                                      SelectedItem="{Binding DuplicatedMatchday, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <CheckBox Style="{StaticResource MyNet.Styles.CheckBox.Embedded.DataGrid.Edition}" Content="{my:Resource InvertTeams}" IsChecked="{Binding InvertTeams}" />
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellEditingTemplate>
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                            <TextBlock Width="150" Text="{Binding DuplicatedMatchday.Name}" />
+
+                            <my:SimpleStackPanel Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                                 Orientation="Horizontal"
+                                                 Spacing="{StaticResource MyNet.Margin.Default}"
+                                                 TextBlock.FontStyle="Italic">
+                                <my:SimpleStackPanel.Visibility>
+                                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="DuplicatedMatchday" />
+                                        <Binding Path="InvertTeams" />
+                                    </MultiBinding>
+                                </my:SimpleStackPanel.Visibility>
+                                <my:PackIcon Kind="Check" />
+                                <TextBlock Text="{my:Resource InvertTeams}" />
+                            </my:SimpleStackPanel>
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+
+            <!--  Delete  -->
+            <my:DataGridTemplateColumn Width="60">
+                <my:DataGridTemplateColumn.Header>
+                    <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
+                            Margin="-8 -15"
+                            Padding="0"
+                            HorizontalAlignment="Center"
+                            Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}"
+                            Content="{my:MediumIcon Kind=Plus}"
+                            ToolTip="{my:ShortcutResource Add,
+                                                          ShortcutKey='Ctrl+N'}" />
+                </my:DataGridTemplateColumn.Header>
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Remove}"
+                                HorizontalAlignment="Center"
+                                Command="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                CommandParameter="{Binding}"
+                                Validation.ErrorTemplate="{x:Null}" />
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+
+        </DataGrid.Columns>
+    </DataGrid>
+
+</my:ContentDialog>

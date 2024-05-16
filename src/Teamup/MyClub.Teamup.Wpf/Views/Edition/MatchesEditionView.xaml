@@ -1,0 +1,338 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Edition.MatchesEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+                  Width="850"
+                  MaxHeight="800"
+                  d:DataContext="{d:DesignInstance Type=vm:MatchesEditionViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{my:Translation Matches.Count, Format=XMatches, Plural=True}"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.ShowDetails" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Icon.Foreground}" TargetType="{x:Type CheckBox}">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="ToolTip" Value="{my:Resource ShowDetails}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <my:PackIcon Width="24"
+                                         Height="24"
+                                         Kind="ChevronUp"
+                                         Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            <my:PackIcon Width="24"
+                                         Height="24"
+                                         Kind="ChevronDown"
+                                         Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                        </Grid>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.ShowDetails.Edition" BasedOn="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.ShowDetails}" TargetType="{x:Type CheckBox}">
+            <Setter Property="IsHitTestVisible" Value="True" />
+            <Setter Property="Focusable" Value="True" />
+        </Style>
+
+        <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Rounded.Filled.Foreground}" TargetType="{x:Type CheckBox}">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Filled}}" />
+            <Setter Property="Foreground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+            <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+            <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.White}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="ToolTip" Value="{my:Resource Withdraw}" />
+            <Setter Property="Content" Value="{my:Resource WithdrawAbbr}" />
+        </Style>
+        <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw.Edition" BasedOn="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw}" TargetType="{x:Type CheckBox}">
+            <Setter Property="IsHitTestVisible" Value="True" />
+            <Setter Property="Focusable" Value="True" />
+        </Style>
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <DataGrid CanUserAddRows="False"
+              HeadersVisibility="None"
+              ItemsSource="{Binding Matches}"
+              SelectionMode="Single">
+        <DataGrid.RowDetailsTemplate>
+            <DataTemplate>
+                <Grid Margin="0 5 0 15">
+                    <Grid.Visibility>
+                        <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                            <MultiBinding.Bindings>
+                                <Binding Path="CanEditExtraTimeOrShootout" />
+                                <Binding Path="ShowDetails" />
+                            </MultiBinding.Bindings>
+                        </MultiBinding>
+                    </Grid.Visibility>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="250" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="2">
+                        <Grid.IsEnabled>
+                            <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
+                                <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="HomeIsWithdrawn" />
+                                <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="AwayIsWithdrawn" />
+                            </MultiBinding>
+                        </Grid.IsEnabled>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!--  After extra time  -->
+                        <CheckBox HorizontalAlignment="Center"
+                                  Content="{my:Resource AfterExtraTime}"
+                                  IsChecked="{Binding AfterExtraTime}"
+                                  IsEnabled="{Binding HasDraw, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                  Visibility="{Binding MatchFormat.ExtraTimeIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                        <my:SimpleStackPanel Grid.Row="2"
+                                             IsEnabled="{Binding HasDraw}"
+                                             Orientation="Horizontal"
+                                             Visibility="{Binding MatchFormat.ShootoutsIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                            <!--  Home shootout  -->
+                            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Filled}"
+                                              Width="55"
+                                              my:NumericUpDownAssist.AcceptableValue="{Binding HomeShootoutScore}"
+                                              ButtonsAlignment="Opposite"
+                                              FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                              TextAlignment="Center" />
+
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" HorizontalAlignment="Center" Text="{my:Resource ShootoutsAbbr}" />
+
+                            <!--  Away shootout  -->
+                            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Filled}"
+                                              Width="55"
+                                              my:NumericUpDownAssist.AcceptableValue="{Binding AwayShootoutScore}"
+                                              ButtonsAlignment="Opposite"
+                                              FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                              TextAlignment="Center" />
+                        </my:SimpleStackPanel>
+                    </Grid>
+
+                </Grid>
+            </DataTemplate>
+        </DataGrid.RowDetailsTemplate>
+        <DataGrid.Columns>
+
+            <my:DataGridTemplateColumn Width="40">
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Parent.ShortName}" />
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+
+            <!--  State  -->
+            <my:DataGridComboBoxColumn Width="80"
+                                       DisplayMemberPath="Display"
+                                       Header="{my:Resource State}"
+                                       ItemsSource="{my:EnumSource {x:Type enums:MatchState}}"
+                                       SelectedValueBinding="{Binding State, UpdateSourceTrigger=PropertyChanged}"
+                                       SelectedValuePath="Value">
+                <my:DataGridComboBoxColumn.CellTemplate>
+                    <DataTemplate>
+                        <my:PackIcon x:Name="icon"
+                                     Width="25"
+                                     Height="25"
+                                     HorizontalAlignment="Left"
+                                     ToolTip="{my:Translation}" />
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding}" Value="{x:Static enums:MatchState.None}">
+                                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.None}" />
+                                <Setter TargetName="icon" Property="Kind" Value="ProgressClock" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding}" Value="{x:Static enums:MatchState.InProgress}">
+                                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Information}" />
+                                <Setter TargetName="icon" Property="Kind" Value="ProgressHelper" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding}" Value="{x:Static enums:MatchState.Suspended}">
+                                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Match.State.Suspended}" />
+                                <Setter TargetName="icon" Property="Kind" Value="ProgressAlert" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding}" Value="{x:Static enums:MatchState.Played}">
+                                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                <Setter TargetName="icon" Property="Kind" Value="ProgressCheck" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding}" Value="{x:Static enums:MatchState.Postponed}">
+                                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                                <Setter TargetName="icon" Property="Kind" Value="ProgressQuestion" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding}" Value="{x:Static enums:MatchState.Cancelled}">
+                                <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter TargetName="icon" Property="Kind" Value="ProgressClose" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </my:DataGridComboBoxColumn.CellTemplate>
+            </my:DataGridComboBoxColumn>
+
+            <!--  Date  -->
+            <my:DataGridDateColumn Width="100" Binding="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Date}">
+                <my:DataGridDateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{my:Translation Format=ShortDatePattern}" />
+                    </DataTemplate>
+                </my:DataGridDateColumn.CellTemplate>
+            </my:DataGridDateColumn>
+
+            <!--  Time  -->
+            <my:DataGridTimeColumn Width="70" Binding="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Time}">
+                <my:DataGridTimeColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{my:Translation Format=ShortTimePattern}" />
+                    </DataTemplate>
+                </my:DataGridTimeColumn.CellTemplate>
+            </my:DataGridTimeColumn>
+
+            <!--  Home withdraw  -->
+            <my:DataGridCheckBoxColumn Binding="{Binding HomeIsWithdrawn, UpdateSourceTrigger=PropertyChanged}" EditingElementStyle="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw.Edition}" ElementStyle="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw}" />
+
+            <!--  Home Team  -->
+            <my:DataGridTemplateColumn Width="*" Header="{my:Resource HomeTeam}">
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                               Width="25"
+                                               Height="25"
+                                               DataContext="{Binding HomeTeam}" />
+                            <TextBlock Text="{Binding HomeTeam.Name}" />
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+
+            <my:DataGridTemplateColumn Width="180">
+                <my:DataGridTemplateColumn.CellStyle>
+                    <Style BasedOn="{StaticResource MyNet.Styles.DataGridCell}" TargetType="{x:Type DataGridCell}">
+                        <Setter Property="IsEnabled">
+                            <Setter.Value>
+                                <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
+                                    <Binding.ConverterParameter>
+                                        <x:Array Type="{x:Type enums:MatchState}">
+                                            <x:Static Member="enums:MatchState.None" />
+                                            <x:Static Member="enums:MatchState.Played" />
+                                            <x:Static Member="enums:MatchState.InProgress" />
+                                            <x:Static Member="enums:MatchState.Suspended" />
+                                        </x:Array>
+                                    </Binding.ConverterParameter>
+                                </Binding>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </my:DataGridTemplateColumn.CellStyle>
+                <my:DataGridTemplateColumn.CellEditingTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+
+                            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Foreground}"
+                                              Grid.Column="0"
+                                              HorizontalAlignment="Stretch"
+                                              my:NumericUpDownAssist.AcceptableValue="{Binding HomeScore}"
+                                              ButtonsAlignment="Left"
+                                              TextAlignment="Right" />
+                            <ToggleButton x:Name="showDetails"
+                                          Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                          Grid.Column="2"
+                                          HorizontalAlignment="Center"
+                                          Content="{my:Icon Kind=ChevronDown}"
+                                          IsChecked="{Binding ShowDetails, UpdateSourceTrigger=PropertyChanged}"
+                                          Visibility="{Binding CanEditExtraTimeOrShootout, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                            <TextBlock Grid.Column="2"
+                                       HorizontalAlignment="Center"
+                                       Text="-"
+                                       Visibility="{Binding CanEditExtraTimeOrShootout, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfTrue}}" />
+                            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Foreground}"
+                                              Grid.Column="4"
+                                              HorizontalAlignment="Stretch"
+                                              my:NumericUpDownAssist.AcceptableValue="{Binding AwayScore}" />
+                        </Grid>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding ShowDetails}" Value="True">
+                                <Setter TargetName="showDetails" Property="Content" Value="{my:Icon Kind=ChevronUp}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellEditingTemplate>
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="60" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Padding="2 4 2 4" HorizontalAlignment="Right" Text="{Binding HomeScore.Value}" />
+                            <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="-" />
+                            <TextBlock Grid.Column="4" Padding="2 4 2 4" Text="{Binding AwayScore.Value}" />
+                        </Grid>
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+
+            <!--  Away withdraw  -->
+            <my:DataGridCheckBoxColumn Binding="{Binding AwayIsWithdrawn, UpdateSourceTrigger=PropertyChanged}" EditingElementStyle="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw.Edition}" ElementStyle="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Withdraw}" />
+
+            <!--  Away Team  -->
+            <my:DataGridTemplateColumn Width="*" Header="{my:Resource AwayTeam}">
+                <my:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                               Width="25"
+                                               Height="25"
+                                               DataContext="{Binding AwayTeam}" />
+                            <TextBlock Text="{Binding AwayTeam.Name}" />
+                        </my:SimpleStackPanel>
+                    </DataTemplate>
+                </my:DataGridTemplateColumn.CellTemplate>
+            </my:DataGridTemplateColumn>
+
+        </DataGrid.Columns>
+    </DataGrid>
+</my:ContentDialog>

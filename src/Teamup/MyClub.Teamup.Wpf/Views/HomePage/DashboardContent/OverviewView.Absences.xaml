@@ -1,0 +1,118 @@
+﻿<GroupBox x:Class="MyClub.Teamup.Wpf.Views.HomePage.DashboardContent.OverviewAbsencesView"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:h="clr-namespace:MyNet.Humanizer;assembly=MyNet.Humanizer"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:my="http://mynet.com/xaml/themes"
+          xmlns:sys="clr-namespace:System;assembly=mscorlib"
+          xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+          xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage.DashboardContent"
+          xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent"
+          Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+          d:DataContext="{d:DesignInstance Type=vm:OverviewAbsencesViewModel}"
+          d:DesignHeight="450"
+          d:DesignWidth="800"
+          my:IconAssist.Icon="{my:MediumIcon Kind=PersonOff}"
+          Header="{my:Resource Absences,
+                               Casing=AllCaps}"
+          mc:Ignorable="d">
+    <GroupBox.Resources>
+        <my:BindingProxy x:Key="AbsencesProxy" Data="{Binding}" />
+        <DataTemplate x:Key="Teamup.DataTemplates.Absence">
+            <my:Card x:Name="base"
+                     Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                     Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                     Background="{DynamicResource MyNet.Brushes.Negative}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Player.Medium}"
+                                       Margin="{StaticResource MyNet.Margins.Medium.Horizontal}"
+                                       VerticalAlignment="Center"
+                                       Background="{Binding Foreground, ElementName=base}"
+                                       DataContext="{Binding Player}"
+                                       Foreground="{my:BrushBinding SelfPath=Tag,
+                                                                    Opacity={StaticResource MyNet.Opacity.Medium}}"
+                                       Tag="{my:BrushBinding SelfPath=Background,
+                                                             Contrast=True}" />
+
+                    <StackPanel Grid.Column="1">
+                        <ctrl:PlayerButton x:Name="button"
+                                           Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                                           BorderBrush="{Binding Foreground, ElementName=base}"
+                                           CommandParameter="{x:Static tabs:PlayerPageTab.Absences}"
+                                           Foreground="{Binding Foreground, ElementName=base}"
+                                           Item="{Binding Player}"
+                                           Orientation="Horizontal" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Label}" />
+                    </StackPanel>
+
+                    <GroupBox x:Name="return"
+                              Style="{StaticResource MyNet.Styles.GroupBox.Clean}"
+                              Grid.Column="2"
+                              VerticalAlignment="Center"
+                              HorizontalContentAlignment="Right"
+                              my:HeaderAssist.Padding="{StaticResource MyNet.Margins.Default.Bottom}"
+                              Content="{Binding EndDate}"
+                              Header="{my:Resource ExpectedReturn}"
+                              Visibility="{Binding EndDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                        <GroupBox.ContentTemplate>
+                            <DataTemplate>
+                                <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Typography.Capitals="AllSmallCaps">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{x:Static my:DatesIntervalToStringConverter.Date}" ConverterParameter="{x:Static h:LetterCasing.Sentence}">
+                                            <Binding />
+                                            <Binding Source="{x:Static sys:DateTime.Today}" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </DataTemplate>
+                        </GroupBox.ContentTemplate>
+                    </GroupBox>
+
+                    <Label x:Name="Ellipse"
+                           Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                           Grid.Column="3"
+                           Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Background="{Binding Foreground, ElementName=base}"
+                           Content="{my:MediumIcon Kind=PersonOff}"
+                           Foreground="{Binding Background, ElementName=base}" />
+                </Grid>
+            </my:Card>
+        </DataTemplate>
+    </GroupBox.Resources>
+
+    <my:GhostControl Content="{Binding Absences}" ShowGhost="{Binding Absences.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+        <my:GhostControl.Style>
+            <Style BasedOn="{StaticResource MyNet.Styles.GhostControl}" TargetType="{x:Type my:GhostControl}">
+                <Setter Property="ContentTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemTemplate="{StaticResource Teamup.DataTemplates.Absence}" ItemsSource="{Binding}" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsScrollable, RelativeSource={RelativeSource AncestorType={x:Type v:OverviewAbsencesView}}}" Value="True">
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl.Scrollable}" ItemTemplate="{StaticResource Teamup.DataTemplates.Absence}" ItemsSource="{Binding}" />
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </my:GhostControl.Style>
+    </my:GhostControl>
+</GroupBox>

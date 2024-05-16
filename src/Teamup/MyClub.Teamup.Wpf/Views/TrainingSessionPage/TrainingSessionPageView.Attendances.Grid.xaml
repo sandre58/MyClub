@@ -1,0 +1,247 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.TrainingSessionPage.TrainingSessionPageAttendancesGridView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:tabs="clr-namespace:MyClub.Teamup.Wpf.Enums"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingSessionPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.TrainingSessionPage"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingSessionPageAttendancesViewModel}"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate x:Key="Teamup.DataTemplates.ListBoxItem.Attendance">
+            <Grid Width="170" Height="110">
+
+                <!--  Body  -->
+                <DockPanel Margin="{StaticResource MyNet.Margins.Medium}">
+
+                    <DockPanel DockPanel.Dock="Top">
+
+                        <!--  Photo  -->
+                        <my:PictureControl x:Name="Picture"
+                                           Style="{StaticResource Teamup.Styles.PictureControl.Player.SmallMedium}"
+                                           Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                           VerticalAlignment="Top"
+                                           DataContext="{Binding Item.Player}"
+                                           DockPanel.Dock="Left" />
+
+                        <!--  Name  -->
+                        <ctrl:PlayerButton CommandParameter="{x:Static tabs:PlayerPageTab.Trainings}" Item="{Binding Item.Player}" Orientation="Vertical" />
+                    </DockPanel>
+
+                    <Grid Margin="{StaticResource MyNet.Margins.Default.Top}" VerticalAlignment="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                            <!--  Team  -->
+                            <TextBlock FontSize="{StaticResource MyNet.Font.Size}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Item.Player.Team.Name}" />
+                            <!--  Positions  -->
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Item.Player.Positions, Converter={x:Static c:RatedPositionsToStringConverter.BestCodes}}" />
+                        </my:SimpleStackPanel>
+
+                        <!--  Rating  -->
+                        <my:Gauge x:Name="Rating"
+                                  Style="{StaticResource Teamup.Styles.Gauge.Rating}"
+                                  Grid.Column="2"
+                                  Width="30"
+                                  Height="30"
+                                  FontWeight="Normal"
+                                  HighFontSize="{StaticResource MyNet.Font.Size}"
+                                  InnerRadius="14"
+                                  Value="{my:NotNullableBinding Item.Rating}">
+                            <my:Gauge.Visibility>
+                                <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndHidden}">
+                                    <Binding Path="Item.Attendance" Converter="{x:Static my:EqualityToBooleanConverter.Default}" ConverterParameter="{x:Static enums2:Attendance.Present}" />
+                                    <Binding Path="Item.Rating" Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" />
+                                </MultiBinding>
+                            </my:Gauge.Visibility>
+                        </my:Gauge>
+
+                        <!--  Comment  -->
+                        <my:DropDownButton x:Name="ShowComment"
+                                           Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}"
+                                           Grid.Column="4"
+                                           HorizontalAlignment="Right"
+                                           PlacementMode="BottomAndAlignCentres"
+                                           ToggleContent="{my:ToolIcon Kind=Comment}">
+                            <my:DropDownButton.Visibility>
+                                <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndHidden}">
+                                    <Binding Path="Item.Comment" Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" />
+                                </MultiBinding>
+                            </my:DropDownButton.Visibility>
+                            <my:DynamicScrollViewer Width="250" MaxHeight="200" HorizontalScrollBarVisibility="Disabled">
+                                <TextBlock VerticalAlignment="Top"
+                                           Text="{Binding Item.Comment}"
+                                           TextAlignment="Justify"
+                                           TextWrapping="Wrap" />
+                            </my:DynamicScrollViewer>
+                        </my:DropDownButton>
+
+                    </Grid>
+
+                </DockPanel>
+
+                <!--  Actions  -->
+                <DockPanel Margin="{StaticResource MyNet.Margins.Default}" VerticalAlignment="Bottom">
+
+
+                    <!--  ToolBar  -->
+                    <v:TrainingSessionPageAttendancesPlayerToolBar x:Name="ToolBar"
+                                                                   Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                                                   HorizontalAlignment="Right"
+                                                                   DataContext="{Binding Item}"
+                                                                   DockPanel.Dock="Right"
+                                                                   RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                                                   Visibility="Hidden" />
+
+                    <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                             MinHeight="32"
+                             HorizontalAlignment="Left"
+                             DockPanel.Dock="Left">
+
+                        <!--  Selection  -->
+                        <CheckBox x:Name="Selection"
+                                  Style="{StaticResource MyNet.Styles.CheckBox.Circle.Foreground}"
+                                  BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                                Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                                  Focusable="False"
+                                  IsChecked="{Binding IsSelected}"
+                                  IsTabStop="False"
+                                  Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                  Visibility="Collapsed" />
+
+                    </ToolBar>
+
+                </DockPanel>
+
+                <!--  Info  -->
+                <Canvas Width="33"
+                        Height="33"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top">
+                    <Canvas.ToolTip>
+                        <StackPanel>
+                            <TextBlock HorizontalAlignment="Center" Text="{my:Translation Item.Attendance}" />
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                       HorizontalAlignment="Center"
+                                       Text="{Binding Item.Reason}"
+                                       Visibility="{Binding Item.Reason, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                        </StackPanel>
+                    </Canvas.ToolTip>
+                    <Path x:Name="InfoPath" Data="M1,33V1H33" />
+
+                    <my:PackIcon x:Name="InfoIcon"
+                                 Canvas.Left="4"
+                                 Canvas.Top="4"
+                                 Width="12"
+                                 Height="12"
+                                 Foreground="{DynamicResource MyNet.Brushes.White}"
+                                 Kind="Check" />
+                </Canvas>
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Present}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Check" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Absent}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Cancel" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Apology}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="MessageProcessing" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Injured}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource Teamup.Brushes.Attendance.Injured}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Ambulance" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.InHolidays}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource Teamup.Brushes.Attendance.InHolidays}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Beach" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.InSelection}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource Teamup.Brushes.Attendance.InSelection}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Star" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Resting}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource Teamup.Brushes.Attendance.Resting}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Sleep" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Unknown}">
+                    <Setter TargetName="InfoPath" Property="Fill" Value="{DynamicResource MyNet.Brushes.None}" />
+                    <Setter TargetName="InfoIcon" Property="Kind" Value="Help" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IsMouseOver, ElementName=Selection}" Value="True">
+                    <Setter TargetName="Selection" Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="Selection" Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+                    <Setter TargetName="Selection" Property="Style" Value="{StaticResource MyNet.Styles.CheckBox.Circle}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Teamup.DataTemplates.ListBoxItem.Attendance}" ItemsSource="{Binding Wrappers}">
+        <ListBox.ItemContainerStyle>
+            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
+                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                <Setter Property="Padding" Value="0" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Present}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Absent}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Apology}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Injured}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Attendance.Injured}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.InHolidays}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Attendance.InHolidays}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.InSelection}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Attendance.InSelection}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Resting}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource Teamup.Brushes.Attendance.Resting}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Item.Attendance}" Value="{x:Static enums2:Attendance.Unknown}">
+                        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.None}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ListBox.ItemContainerStyle>
+    </ListBox>
+</UserControl>

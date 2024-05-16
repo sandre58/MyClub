@@ -1,0 +1,112 @@
+﻿<ListBox x:Class="MyClub.Teamup.Wpf.Views.CompetitionPage.MatchesView"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:my="http://mynet.com/xaml/themes"
+         xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionPage"
+         xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionPage" xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+         Style="{StaticResource MyNet.Styles.ListBox.Cards}"
+         d:DataContext="{d:DesignInstance Type=vm:MatchesViewModel}"
+         ItemsSource="{Binding Wrappers}"
+         mc:Ignorable="d">
+    <ListBox.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+    </ListBox.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Key="Return" Command="{Binding Data.OpenSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="E" Command="{Binding Data.EditSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <ListBox.ItemTemplate>
+        <DataTemplate>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="150" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="matchday"
+                           HorizontalAlignment="Center"
+                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                           Text="{Binding Item.Parent.ShortName}" />
+
+                <!--  Selection  -->
+                <CheckBox x:Name="Selection"
+                          Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                          HorizontalAlignment="Center"
+                          BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                        Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                          Focusable="False"
+                          IsChecked="{Binding IsSelected}"
+                          IsTabStop="False"
+                          Visibility="Hidden" />
+
+                <!--  Date  -->
+                <TextBlock Grid.Column="1" Text="{my:Translation Item.Date, Format=LongDateFormat, Casing=Title}" />
+
+                <!--  Match  -->
+                <ctrl:MatchControl Grid.Column="3" Match="{Binding Item}" Style="{StaticResource Teamup.Styles.MatchControl.Medium}" EnableContextMenu="False" />
+
+                <!--  Toolbar  -->
+                <v:MatchToolBar x:Name="ToolBar"
+                                Grid.Column="4"
+                                Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                Padding="0"
+                                HorizontalAlignment="Right"
+                                DataContext="{Binding Item}"
+                                Visibility="Hidden" />
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="matchday" Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="matchday" Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </ListBox.ItemTemplate>
+
+    <ListBox.ItemContainerStyle>
+        <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+            <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Cancelled}">
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ListBox.ItemContainerStyle>
+    <ListBox.ItemsPanel>
+        <ItemsPanelTemplate>
+            <VirtualizingStackPanel IsVirtualizing="{TemplateBinding VirtualizingPanel.IsVirtualizing}" VirtualizationMode="{TemplateBinding VirtualizingPanel.VirtualizationMode}" />
+        </ItemsPanelTemplate>
+    </ListBox.ItemsPanel>
+</ListBox>

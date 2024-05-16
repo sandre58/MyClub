@@ -1,0 +1,666 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.SchedulePage.MatchesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:contracts="clr-namespace:MyNet.UI.ViewModels;assembly=MyNet.UI"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulePage"
+             d:DataContext="{d:DesignInstance Type=vm:MatchesPlanningViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <sys:Int32 x:Key="One">1</sys:Int32>
+        <sys:Int32 x:Key="Two">2</sys:Int32>
+        <sys:Int32 x:Key="Five">5</sys:Int32>
+        <sys:Int32 x:Key="Ten">10</sys:Int32>
+        <sys:Int32 x:Key="Fifteen">15</sys:Int32>
+        <sys:Int32 x:Key="Thirty">30</sys:Int32>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Match">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="95" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="200" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Date  -->
+                <TextBlock Text="{my:Translation Item.Date, Format=LongDateFormat, Casing=Title}" />
+
+                <!--  Time  -->
+                <TextBlock Grid.Column="1" Text="{my:Translation Item.Date, Format=ShortTimeFormat, Casing=Title}" />
+
+                <!--  Stadium  -->
+                <my:GhostControl Grid.Column="2"
+                                 VerticalAlignment="Center"
+                                 Ghost="{my:Resource NoStadium}"
+                                 ShowGhost="{Binding Item.Stadium, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}">
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Content="{Binding Item.Stadium.DisplayName}" Header="{my:Icon Size=14, Kind=Stadium}" />
+                </my:GhostControl>
+
+                <!--  Home  -->
+                <ContentControl x:Name="home"
+                                Grid.Column="4"
+                                HorizontalAlignment="Right"
+                                Content="{Binding Item.HomeTeam}"
+                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Home}"
+                                IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+
+                <Grid Grid.Column="6">
+                    <Grid Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  Home is withdrawn  -->
+                        <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                               Grid.Column="0"
+                               Width="18"
+                               Height="18"
+                               HorizontalAlignment="Center"
+                               Background="{DynamicResource MyNet.Brushes.Negative}"
+                               Content="{my:Resource WithdrawAbbr,
+                                                     Casing=AllCaps}"
+                               ToolTip="{my:Resource Withdraw}"
+                               Visibility="{Binding Item.HomeIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+
+                        <!--  Home won after extra time  -->
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                   Grid.Column="0"
+                                   HorizontalAlignment="Center"
+                                   Text="{my:Resource AfterExtraTimeAbbr2}"
+                                   ToolTip="{my:Resource AfterExtraTime}"
+                                   Visibility="{Binding Item.HomeHasWonAfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+
+                        <!--  Home won after shootouts  -->
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                   Grid.Column="0"
+                                   HorizontalAlignment="Center"
+                                   Text="{my:Resource ShootoutsAbbr2}"
+                                   ToolTip="{my:Resource Shootouts}"
+                                   Visibility="{Binding Item.HomeHasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+
+                        <Grid Grid.Column="1">
+
+                            <!--  IsCancelled  -->
+                            <my:PackIcon x:Name="cancel"
+                                         Width="20"
+                                         Height="20"
+                                         Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                         Kind="ProgressClose"
+                                         ToolTip="{my:Resource Cancelled}"
+                                         Visibility="Collapsed" />
+
+                            <!--  IsPostponed  -->
+                            <my:PackIcon x:Name="postponed"
+                                         Width="20"
+                                         Height="20"
+                                         Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                                         Kind="ProgressQuestion"
+                                         ToolTip="{my:Resource Postponed}"
+                                         Visibility="Collapsed" />
+
+                            <!--  None  -->
+                            <my:PackIcon x:Name="versus"
+                                         Width="20"
+                                         Height="20"
+                                         Kind="ProgressClock"
+                                         Opacity="{StaticResource MyNet.Opacity.Overlay}"
+                                         Visibility="Visible" />
+
+                            <!--  Score  -->
+                            <Grid x:Name="score" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="4" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Item.HomeScore}" />
+                                <Label x:Name="awayScore"
+                                       Style="{StaticResource Scorer.Styles.Label.Score.Small}"
+                                       Grid.Column="2"
+                                       Content="{Binding Item.AwayScore}" />
+                            </Grid>
+
+                        </Grid>
+
+                        <!--  Away won after extra time  -->
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                   Grid.Column="2"
+                                   HorizontalAlignment="Center"
+                                   Text="{my:Resource AfterExtraTimeAbbr2}"
+                                   ToolTip="{my:Resource AfterExtraTime}"
+                                   Visibility="{Binding Item.AwayHasWonAfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+
+                        <!--  Away won after shootouts  -->
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                   Grid.Column="2"
+                                   HorizontalAlignment="Center"
+                                   Text="{my:Resource ShootoutsAbbr2}"
+                                   ToolTip="{my:Resource Shootouts}"
+                                   Visibility="{Binding Item.AwayHasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+
+                        <!--  Away is withdrawn  -->
+                        <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                               Grid.Column="2"
+                               Width="18"
+                               Height="18"
+                               HorizontalAlignment="Center"
+                               Background="{DynamicResource MyNet.Brushes.Negative}"
+                               Content="{my:Resource WithdrawAbbr,
+                                                     Casing=AllCaps}"
+                               ToolTip="{my:Resource Withdraw}"
+                               Visibility="{Binding Item.AwayIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+
+                    </Grid>
+                    <Grid Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Outlined}"
+                                          HorizontalAlignment="Stretch"
+                                          my:IconAssist.Margin="0"
+                                          my:NumericUpDownAssist.AcceptableValue="{Binding HomeScore}"
+                                          Background="{my:BrushBinding SelfPath=Foreground,
+                                                                       Opacity={StaticResource MyNet.Opacity.Filled}}"
+                                          HideUpDownButtons="True"
+                                          TextAlignment="Center">
+                            <my:IconAssist.Icon>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="2" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <RepeatButton Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                  Grid.Row="0"
+                                                  Height="8"
+                                                  Command="{Binding UpCommand}"
+                                                  CommandParameter="{Binding HomeScore}"
+                                                  Content="{my:SmallIcon Kind=Plus}"
+                                                  Focusable="False" />
+
+                                    <RepeatButton Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                  Grid.Row="2"
+                                                  Height="8"
+                                                  Command="{Binding DownCommand}"
+                                                  CommandParameter="{Binding HomeScore}"
+                                                  Content="{my:SmallIcon Kind=Minus}"
+                                                  Focusable="False" />
+                                </Grid>
+                            </my:IconAssist.Icon>
+                        </my:NumericUpDown>
+                        <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Outlined}"
+                                          Grid.Column="2"
+                                          HorizontalAlignment="Stretch"
+                                          my:IconAssist.Alignment="Right"
+                                          my:IconAssist.Margin="0"
+                                          my:NumericUpDownAssist.AcceptableValue="{Binding AwayScore}"
+                                          Background="{my:BrushBinding SelfPath=Foreground,
+                                                                       Opacity={StaticResource MyNet.Opacity.Filled}}"
+                                          HideUpDownButtons="True"
+                                          TextAlignment="Center">
+                            <my:IconAssist.Icon>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="2" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <RepeatButton Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                  Grid.Row="0"
+                                                  Height="8"
+                                                  Command="{Binding UpCommand}"
+                                                  CommandParameter="{Binding AwayScore}"
+                                                  Content="{my:SmallIcon Kind=Plus}"
+                                                  Focusable="False" />
+
+                                    <RepeatButton Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                  Grid.Row="2"
+                                                  Height="8"
+                                                  Command="{Binding DownCommand}"
+                                                  CommandParameter="{Binding AwayScore}"
+                                                  Content="{my:SmallIcon Kind=Minus}"
+                                                  Focusable="False" />
+                                </Grid>
+                            </my:IconAssist.Icon>
+                        </my:NumericUpDown>
+                    </Grid>
+                </Grid>
+
+                <!--  Away  -->
+                <ContentControl x:Name="away"
+                                Grid.Column="8"
+                                HorizontalAlignment="Left"
+                                Content="{Binding Item.AwayTeam}"
+                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Away}"
+                                IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Played}">
+                    <Setter TargetName="score" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.InProgress}">
+                    <Setter TargetName="score" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
+                    <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Suspended}">
+                    <Setter TargetName="score" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
+                    <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
+                    <Setter TargetName="score" Property="ToolTip" Value="{my:Resource MatchStateSuspended}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Cancelled}">
+                    <Setter TargetName="cancel" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Postponed}">
+                    <Setter TargetName="postponed" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.HomeHasWon}" Value="True">
+                    <Setter TargetName="away" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item.AwayHasWon}" Value="True">
+                    <Setter TargetName="home" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Match.ListBox">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="110" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Parent  -->
+                <TextBlock x:Name="parent"
+                           HorizontalAlignment="Center"
+                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                           Text="{Binding Item.Parent.ShortName}" />
+
+                <!--  Selection  -->
+                <CheckBox x:Name="selection"
+                          Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                          HorizontalAlignment="Center"
+                          BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                        Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                          Focusable="False"
+                          IsChecked="{Binding IsSelected}"
+                          IsTabStop="False"
+                          Visibility="Hidden" />
+
+                <!--  Conflicts  -->
+                <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation.Custom}"
+                                   Grid.Column="1"
+                                   Padding="{StaticResource MyNet.Margins.Small}"
+                                   HorizontalAlignment="Center"
+                                   my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Warning}"
+                                   Background="{DynamicResource MyNet.Brushes.Warning}"
+                                   BorderBrush="{DynamicResource MyNet.Brushes.Warning}"
+                                   Foreground="{my:BrushBinding SelfPath=Background,
+                                                                Contrast=True}"
+                                   PopupPadding="0"
+                                   ToggleContent="{my:Icon Kind=Alert}"
+                                   ToolTip="{my:Resource HasConflictsWarning}"
+                                   Visibility="{Binding Item.Conflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                    <my:Submenu>
+                        <MenuItem Command="{Binding Data.EditCommand, Source={StaticResource Proxy}}"
+                                  CommandParameter="{Binding Item}"
+                                  Header="{my:Resource Edit}"
+                                  Icon="{my:ToolIcon Kind=Edit}" />
+                        <MenuItem Command="{Binding Data.EditConflictsCommand, Source={StaticResource Proxy}}"
+                                  CommandParameter="{Binding Item}"
+                                  Header="{my:Resource EditConflicts}"
+                                  Icon="{my:ToolIcon Kind=LibraryEdit}"
+                                  Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                        <MenuItem Header="{my:Resource EditConflict}"
+                                  Icon="{my:ToolIcon Kind=EditBox}"
+                                  ItemsSource="{Binding Item.MatchesInConflicts}"
+                                  Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                            <MenuItem.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="{x:Type MenuItem}">
+                                    <Setter Property="Command" Value="{Binding Data.EditCommand, Source={StaticResource Proxy}}" />
+                                    <Setter Property="CommandParameter" Value="{Binding}" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Header" Value="{Binding}" />
+                                    <Setter Property="HeaderTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="60" />
+                                                        <ColumnDefinition Width="5" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="5" />
+                                                        <ColumnDefinition Width="60" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" IsEnabled="False" />
+                                                    <TextBlock Grid.Column="2" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
+                                                    <ContentControl Grid.Column="4"
+                                                                    Content="{Binding AwayTeam}"
+                                                                    ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Away}"
+                                                                    IsEnabled="False" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </MenuItem.ItemContainerStyle>
+                        </MenuItem>
+                        <Separator Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                        <MenuItem Command="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
+                                  CommandParameter="{Binding Item}"
+                                  Header="{my:Resource SelectConflicts}"
+                                  Icon="{my:ToolIcon Kind=CheckAll}"
+                                  Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                    </my:Submenu>
+                </my:DropDownButton>
+
+                <!--  Content  -->
+                <ContentControl Grid.Column="2" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
+
+                <!--  Toolbar  -->
+                <v:MatchToolBar x:Name="toolBar"
+                                Grid.Column="3"
+                                Padding="0"
+                                HorizontalAlignment="Right"
+                                DataContext="{Binding Item}"
+                                Visibility="Hidden" />
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                    <Setter TargetName="selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="parent" Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="toolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="parent" Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Match.ItemsControl">
+            <my:Card Height="35"
+                     Margin="{StaticResource MyNet.Margins.Small}"
+                     Padding="0"
+                     HorizontalContentAlignment="Stretch"
+                     VerticalContentAlignment="Center">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="60" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="110" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Parent  -->
+                    <TextBlock x:Name="parent"
+                               HorizontalAlignment="Center"
+                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                               Text="{Binding Item.Parent.ShortName}" />
+
+                    <!--  Content  -->
+                    <ContentControl Grid.Column="2" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
+                </Grid>
+            </my:Card>
+        </DataTemplate>
+
+        <Style x:Key="Scorer.Styles.GroupItem.Matches" TargetType="{x:Type GroupItem}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <GroupBox x:Name="groupBox"
+                                  Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                                  Margin="{StaticResource MyNet.Margins.VeryLarge.Bottom}"
+                                  my:HeaderAssist.HorizontalAlignment="Stretch"
+                                  Header="{Binding Name}">
+                            <ItemsPresenter />
+                        </GroupBox>
+
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Name, Converter={x:Static my:TypeConverter.Default}}" Value="{x:Type entities:MatchdayViewModel}">
+                                <Setter TargetName="groupBox" Property="HeaderTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate DataType="{x:Type entities:MatchdayViewModel}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="50" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="10" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid HorizontalAlignment="Center">
+                                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                            Command="{Binding Data.SelectAllByParentCommand, Source={StaticResource Proxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="{my:ToolIcon Kind=CheckCircleOutline}"
+                                                            ToolTip="{my:Resource SelectAll}"
+                                                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                            Command="{Binding Data.UnselectAllByParentCommand, Source={StaticResource Proxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="{my:ToolIcon Kind=CloseCircleOutline}"
+                                                            ToolTip="{my:Resource UnselectAll}"
+                                                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                                </Grid>
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" Typography.Capitals="AllSmallCaps" />
+                                                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Tools}" Grid.Column="3" Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}">
+                                                    <my:DropDownButton x:Name="DropDownButton"
+                                                                       PopupPadding="0"
+                                                                       ShowDropDownButton="False"
+                                                                       ToggleContent="{my:ToolIcon Kind=DotsHorizontal}">
+                                                        <my:Submenu>
+                                                            <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                                                            <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+                                                        </my:Submenu>
+                                                    </my:DropDownButton>
+                                                </ToolBar>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Name, Converter={x:Static my:TypeConverter.Default}}" Value="{x:Type sys:DateTime}">
+                                <Setter TargetName="groupBox" Property="HeaderTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="50" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid HorizontalAlignment="Center">
+                                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                            Command="{Binding Data.SelectAllByDateCommand, Source={StaticResource Proxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="{my:ToolIcon Kind=CheckCircleOutline}"
+                                                            ToolTip="{my:Resource SelectAll}"
+                                                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                            Command="{Binding Data.UnselectAllByDateCommand, Source={StaticResource Proxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="{my:ToolIcon Kind=CloseCircleOutline}"
+                                                            ToolTip="{my:Resource UnselectAll}"
+                                                            Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                                </Grid>
+                                                <TextBlock Grid.Column="1" Text="{my:Translation Format=LongDatePattern, Casing=Title}" Typography.Capitals="AllSmallCaps" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <ContentControl Grid.IsSharedSizeScope="True">
+            <ContentControl.Style>
+                <Style BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type ContentControl}">
+                    <Setter Property="Content" Value="{Binding Wrappers}" />
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <ListBox ItemTemplate="{StaticResource Scorer.DataTemplates.Match.ListBox}" ScrollViewer.HorizontalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+                                    <ListBox.Style>
+                                        <Style BasedOn="{StaticResource MyNet.Styles.ListBox.Cards}" TargetType="{x:Type ListBox}">
+                                            <Setter Property="ItemsSource" Value="{Binding}" />
+                                            <Setter Property="my:ListAssist.SynchronizedGrouping" Value="{Binding ShowGrouping, RelativeSource={RelativeSource AncestorType={x:Type v:MatchesView}}}" />
+                                            <Setter Property="my:ListAssist.SynchronizedList" Value="{Binding Data, Source={StaticResource Proxy}}" />
+                                        </Style>
+                                    </ListBox.Style>
+                                    <i:Interaction.Behaviors>
+                                        <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
+                                    </i:Interaction.Behaviors>
+
+                                    <ListBox.GroupStyle>
+                                        <GroupStyle ContainerStyle="{StaticResource Scorer.Styles.GroupItem.Matches}" />
+                                    </ListBox.GroupStyle>
+
+                                    <ListBox.ItemContainerStyle>
+                                        <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
+                                            <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                                            <Setter Property="Height" Value="35" />
+                                            <Setter Property="Padding" Value="0" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                                            <Setter Property="my:ListBoxItemAssist.ShowSelection" Value="True" />
+                                            <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                            <Setter Property="my:ListBoxItemAssist.IsMouseOverBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Hovered}}" />
+                                            <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Checked}}" />
+                                            <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding SelfPath=Foreground}" />
+                                            <Setter Property="my:IconAssist.Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                            <Setter Property="my:IconAssist.Alignment" Value="Left" />
+                                            <Setter Property="my:IconAssist.Margin" Value="{StaticResource MyNet.Margins.Default.Right}" />
+                                            <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Primary}" />
+                                            <Setter Property="my:ThemeAssist.CornerRadius" Value="{StaticResource MyNet.CornerRadius.Control}" />
+                                            <Setter Property="ContextMenu">
+                                                <Setter.Value>
+                                                    <ContextMenu>
+                                                        <MenuItem Command="{Binding Data.EditSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                                                        <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                                                        <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}">
+                                                            <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
+                                                            <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
+                                                            <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />
+                                                            <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}" />
+                                                            <MenuItem Command="{Binding Data.RescheduleXHoursCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Plural=True}" />
+                                                            <MenuItem Command="{Binding Data.RescheduleXHoursCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Plural=True}" />
+                                                            <MenuItem Height="50"
+                                                                      my:RippleAssist.Feedback="Transparent"
+                                                                      my:ThemeAssist.IsMouseOverBackground="Transparent"
+                                                                      Header="{Binding Data.RescheduleCommand, Source={StaticResource Proxy}}"
+                                                                      HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
+                                                                      StaysOpenOnClick="True" />
+                                                        </MenuItem>
+                                                        <MenuItem Command="{Binding Data.InvertTeamsSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource InvertTeams}" Icon="{my:ToolIcon Kind=SwapHorizontal}" />
+                                                        <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                                                        <MenuItem Header="{my:Resource Update}" Icon="{my:ToolIcon Kind=TimerRefreshOutline}">
+                                                            <MenuItem Command="{Binding Data.ResetSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
+                                                            <MenuItem Command="{Binding Data.StartSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
+                                                            <MenuItem Command="{Binding Data.SuspendSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Suspend}" Icon="{my:ToolIcon Kind=ProgressAlert}" />
+                                                            <MenuItem Command="{Binding Data.FinishSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Finish}" Icon="{my:ToolIcon Kind=ProgressCheck}" />
+                                                            <MenuItem Command="{Binding Data.PostponeSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+                                                            <MenuItem Command="{Binding Data.CancelSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
+                                                        </MenuItem>
+                                                        <MenuItem Command="{Binding Data.RandomizeSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Randomize}" Icon="{my:ToolIcon Kind=Counter}" />
+                                                        <MenuItem Header="{my:Resource DoWithdraw}" Icon="{my:ToolIcon Kind=Close}" IsEnabled="{Binding Data.CanDoWithdrawSelectedItems, Source={StaticResource Proxy}}">
+                                                            <MenuItem Command="{Binding Data.DoWithdrawForHomeTeamSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
+                                                            <MenuItem Command="{Binding Data.DoWithdrawForAwayTeamSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Cancelled}">
+                                                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel IsItemsHost="True" IsVirtualizing="{TemplateBinding VirtualizingPanel.IsVirtualizing}" VirtualizationMode="{TemplateBinding VirtualizingPanel.VirtualizationMode}" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ShowPaging, RelativeSource={RelativeSource AncestorType={x:Type v:MatchesView}}}" Value="True">
+                            <Setter Property="Content" Value="{Binding PagedWrappers}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Mode}" Value="{x:Static contracts:ScreenMode.Edition}">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <ItemsControl my:ListAssist.SynchronizedGrouping="{Binding ShowGrouping, RelativeSource={RelativeSource AncestorType={x:Type v:MatchesView}}}"
+                                                      my:ListAssist.SynchronizedList="{Binding Data, Source={StaticResource Proxy}}"
+                                                      ItemTemplate="{StaticResource Scorer.DataTemplates.Match.ItemsControl}"
+                                                      ItemsSource="{Binding}"
+                                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                                      VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+
+                                            <ItemsControl.GroupStyle>
+                                                <GroupStyle ContainerStyle="{StaticResource Scorer.Styles.GroupItem.Matches}" />
+                                            </ItemsControl.GroupStyle>
+
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <VirtualizingStackPanel IsItemsHost="True" IsVirtualizing="{TemplateBinding VirtualizingPanel.IsVirtualizing}" VirtualizationMode="{TemplateBinding VirtualizingPanel.VirtualizationMode}" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
+    </Grid>
+</UserControl>

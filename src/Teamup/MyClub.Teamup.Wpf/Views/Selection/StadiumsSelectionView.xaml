@@ -1,0 +1,129 @@
+﻿<my:ContentDialog x:Class="MyClub.Teamup.Wpf.Views.Selection.StadiumsSelectionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:selection="clr-namespace:MyClub.Teamup.Wpf.Views.Selection"
+                  xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Selection"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  Width="1000"
+                  Height="550"
+                  Padding="0"
+                  d:DataContext="{d:DesignInstance Type=vm:StadiumsSelectionViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{Binding Title}"
+                  ShowCloseButton="True"
+                  mc:Ignorable="d">
+
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.ValidateCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="F5" Command="{Binding Data.RefreshAsyncCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Refresh}"
+                    HorizontalAlignment="Right"
+                    Command="{Binding RefreshAsyncCommand}"
+                    Content="{my:Resource Refresh}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding ValidateCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <DockPanel>
+
+        <!--  Filters  -->
+        <DockPanel Margin="{StaticResource MyNet.Margins.Medium}" DockPanel.Dock="Top">
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count}" DockPanel.Dock="Right" />
+            <selection:StadiumsSpeedFiltersView DataContext="{Binding Filters.SpeedFilters}" />
+        </DockPanel>
+
+        <!--  Items  -->
+        <ListView Style="{StaticResource Teamup.Styles.ListView.Selectable}" my:ListAssist.SynchronizedList="{Binding}" ItemsSource="{Binding Wrappers}">
+            <ListView.ItemContainerStyle>
+                <Style BasedOn="{StaticResource Teamup.Styles.ListViewItem.Selectable}" TargetType="{x:Type ListViewItem}">
+                    <Setter Property="my:CommandsAssist.DoubleClickCommand" Value="{Binding Data.DoubleClickCommand, Source={StaticResource Proxy}}" />
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.View>
+                <GridView>
+
+                    <!--  Is Selected  -->
+                    <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                    my:GridViewColumnAssist.CanSort="False"
+                                    my:GridViewColumnAssist.Width="60"
+                                    HeaderTemplate="{StaticResource Teamup.DataTemplates.ListView.SelectAll}">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Embedded.ListView.Selection}"
+                                              Margin="{StaticResource MyNet.Margins.Default.Vertical}"
+                                              IsChecked="{Binding IsSelected}"
+                                              IsEnabled="{Binding IsSelectable}">
+                                    <my:PackIcon Width="24" Height="24" Kind="Stadium" />
+                                </ToggleButton>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <!--  Name  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Name"
+                                    my:GridViewColumnAssist.Width="*"
+                                    DisplayMemberBinding="{Binding Item.Name}"
+                                    Header="{my:Resource Name}" />
+
+                    <!--  Address  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Address"
+                                    my:GridViewColumnAssist.Width="160"
+                                    DisplayMemberBinding="{Binding Item.Address}"
+                                    Header="{my:Resource Street}" />
+
+                    <!--  PostalCode  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="PostalCode"
+                                    my:GridViewColumnAssist.Width="80"
+                                    DisplayMemberBinding="{Binding Item.PostalCode}"
+                                    Header="{my:Resource PostalCode}" />
+
+                    <!--  City  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="City"
+                                    my:GridViewColumnAssist.Width="120"
+                                    DisplayMemberBinding="{Binding Item.City}"
+                                    Header="{my:Resource City}" />
+
+                    <!--  Country  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Country" my:GridViewColumnAssist.Width="70" Header="{my:Resource Country}">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Width="20"
+                                       HorizontalAlignment="Center"
+                                       Source="{Binding Item.Country, Converter={x:Static my:CountryToFlagConverter.To24}}"
+                                       ToolTip="{my:Translation Item.Country}" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <!--  Latitude  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Latitude"
+                                    my:GridViewColumnAssist.Width="120"
+                                    DisplayMemberBinding="{Binding Item.Latitude}"
+                                    Header="{my:Resource Latitude}" />
+
+                    <!--  Longitude  -->
+                    <GridViewColumn my:GridViewColumnAssist.PropertyName="Longitude"
+                                    my:GridViewColumnAssist.Width="120"
+                                    DisplayMemberBinding="{Binding Item.Longitude}"
+                                    Header="{my:Resource Longitude}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</my:ContentDialog>

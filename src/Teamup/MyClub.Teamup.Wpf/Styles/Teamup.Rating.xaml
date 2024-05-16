@@ -1,0 +1,72 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:models="clr-namespace:MyClub.Teamup.Domain.TrainingAggregate;assembly=MyClub.Teamup.Domain"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <sys:Double x:Key="Teamup.Rating.Max10">10.0001</sys:Double>
+    <sys:Double x:Key="Teamup.Rating.Max8">8</sys:Double>
+    <sys:Double x:Key="Teamup.Rating.Max6">6</sys:Double>
+    <sys:Double x:Key="Teamup.Rating.Max45">4.5</sys:Double>
+    <sys:Double x:Key="Teamup.Rating.Max35">3.5</sys:Double>
+    <sys:Double x:Key="Teamup.Rating.Max2">2</sys:Double>
+
+    <Style x:Key="Teamup.Styles.Gauge.Rating" BasedOn="{StaticResource MyNet.Styles.Gauge}" TargetType="{x:Type my:Gauge}">
+        <Setter Property="Uses360Mode" Value="True" />
+        <Setter Property="From" Value="{Binding Min, Source={x:Static models:TrainingAttendance.AcceptableRangeRating}}" />
+        <Setter Property="To" Value="{Binding Max, Source={x:Static models:TrainingAttendance.AcceptableRangeRating}}" />
+        <Setter Property="HighFontSize" Value="{StaticResource MyNet.Font.Size}" />
+        <Setter Property="GaugeBackground" Value="{DynamicResource MyNet.Brushes.Control.Background.Secondary}" />
+        <Setter Property="Foreground" Value="{Binding GaugeActiveFill, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="LabelFormatter" Value="{x:Static my:ChartFormatters.ToValueWithoutZero}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max10}}" Value="True">
+                <Setter Property="GaugeActiveFill" Value="{DynamicResource Teamup.Brushes.Rating.8To10}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max8}}" Value="True">
+                <Setter Property="GaugeActiveFill" Value="{DynamicResource Teamup.Brushes.Rating.6To8}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max6}}" Value="True">
+                <Setter Property="GaugeActiveFill" Value="{DynamicResource Teamup.Brushes.Rating.45To6}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max45}}" Value="True">
+                <Setter Property="GaugeActiveFill" Value="{DynamicResource Teamup.Brushes.Rating.35To45}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max35}}" Value="True">
+                <Setter Property="GaugeActiveFill" Value="{DynamicResource Teamup.Brushes.Rating.2To35}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max2}}" Value="True">
+                <Setter Property="GaugeActiveFill" Value="{DynamicResource Teamup.Brushes.Rating.0To2}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Teamup.Styles.Label.Rating" BasedOn="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}" TargetType="{x:Type Label}">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Width" Value="30" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max10}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.8To10}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max8}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.6To8}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max6}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.45To6}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max45}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.35To45}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max35}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.2To35}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter={StaticResource Teamup.Rating.Max2}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource Teamup.Brushes.Rating.0To2}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

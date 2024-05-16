@@ -1,0 +1,99 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.PlayerPage.PlayerPagePositionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.PlayerPage"
+             d:DataContext="{d:DesignInstance Type=vm:PlayerPagePositionsViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="500" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Positions  -->
+        <GroupBox my:IconAssist.Icon="{my:MediumIcon Kind=TargetVariant}" Header="{my:Resource Versatility, Casing=AllCaps}">
+            <my:DynamicScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                               HorizontalAlignment="Center"
+                               Opacity="{StaticResource MyNet.Opacity.Default}"
+                               Text="{my:Translation Item.NaturalPosition,
+                                                     Casing=AllCaps}" />
+                    <ctrl:PositionsSelector Style="{StaticResource Teamup.Styles.PositionsSelector.RatedPosition}"
+                                            Grid.Row="1"
+                                            Width="450"
+                                            Height="350"
+                                            CanMove="False"
+                                            SelectionMode="Single"
+                                            ItemsSource="{Binding Positions}"
+                                            SelectedItem="{Binding SelectedPosition}" />
+
+                    <StackPanel Grid.Row="2" Margin="{StaticResource MyNet.Margins.Large.Vertical}" Visibility="{Binding SelectedPosition, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                        <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                                   HorizontalAlignment="Center"
+                                   Text="{my:Translation SelectedPosition.Position}"
+                                   Typography.Capitals="AllSmallCaps" />
+                        <ContentControl HorizontalAlignment="Center" Content="{Binding SelectedPosition}">
+                            <ContentControl.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label x:Name="Ellipse"
+                                               Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                               Width="17"
+                                               Height="17"
+                                               Margin="{StaticResource MyNet.Margins.Default.Right}" />
+                                        <TextBlock x:Name="Text" Text="{my:Translation Rating, Casing=AllCaps}" />
+                                    </StackPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Inefficient}">
+                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Position.Inefficient}" />
+                                            <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Inefficient}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Poor}">
+                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Position.Poor}" />
+                                            <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Poor}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Average}">
+                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Position.Average}" />
+                                            <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Average}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Good}">
+                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Position.Good}" />
+                                            <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Good}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.VeryGood}">
+                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Position.VeryGood}" />
+                                            <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Position.VeryGood}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Rating}" Value="{x:Static enums:PositionRating.Natural}">
+                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Teamup.Brushes.Position.Natural}" />
+                                            <Setter TargetName="Ellipse" Property="Background" Value="{DynamicResource Teamup.Brushes.Position.Natural}" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ContentControl.ContentTemplate>
+                        </ContentControl>
+                    </StackPanel>
+
+                </Grid>
+            </my:DynamicScrollViewer>
+        </GroupBox>
+
+    </Grid>
+
+</UserControl>

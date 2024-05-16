@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />
+    <ProjectReference Include="..\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,2120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="UnkownReason" xml:space="preserve">
+    <value>Unknown reason</value>
+  </data>
+  <data name="InSelection" xml:space="preserve">
+    <value>In selection</value>
+  </data>
+  <data name="InHolidays" xml:space="preserve">
+    <value>In holidays</value>
+  </data>
+  <data name="SizesList" xml:space="preserve">
+    <value>XXS;XS;M;L;XL;XXL</value>
+  </data>
+  <data name="InjuryTorso" xml:space="preserve">
+    <value>Fractured ribs</value>
+  </data>
+  <data name="TrainingStagesList" xml:space="preserve">
+    <value>Oppose to progression; Oppose to protect one's goal; Hold / Advance; Unbalance / Finish; Free kicks; Other</value>
+  </data>
+  <data name="FileXNotTmprojError" xml:space="preserve">
+    <value>File "{0}" is not a .tmproj file.</value>
+  </data>
+  <data name="ProjectXLoadedError" xml:space="preserve">
+    <value>Unable to load project "{0}". See logs for more details.</value>
+  </data>
+  <data name="ProjectXSavedError" xml:space="preserve">
+    <value>Unable to save project "{0}". See logs for more details.</value>
+  </data>
+  <data name="TmprojFile" xml:space="preserve">
+    <value>Tmproj file</value>
+  </data>
+  <data name="Anonymous" xml:space="preserve">
+    <value>Anonymous</value>
+  </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>Display name</value>
+  </data>
+  <data name="EditProfile" xml:space="preserve">
+    <value>Edit profile</value>
+  </data>
+  <data name="AboutWarning" xml:space="preserve">
+    <value>Warning: This computer program is protected by copyright law and international treaties.Unauthorized reproduction or distribution of this program, or any portion of it, may result insevere civil and criminal penalties, and will be prosecuted to the maximum extent possible under thelaw.</value>
+  </data>
+  <data name="Image" xml:space="preserve">
+    <value>Picture</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Authentication" xml:space="preserve">
+    <value>Authentication</value>
+  </data>
+  <data name="OpeningOptions" xml:space="preserve">
+    <value>Opening options</value>
+  </data>
+  <data name="InvalidSmtpWarning" xml:space="preserve">
+    <value>The SMTP settings are not valid. The application will not be able to send mail.
+Please check the information in the "Messenger" tab of the "Settings" window.</value>
+  </data>
+  <data name="SmtpErrorTitle" xml:space="preserve">
+    <value>SMTP error</value>
+  </data>
+  <data name="ProjectIsDirtyQuestion" xml:space="preserve">
+    <value>Project has been modified, do you want to save it?</value>
+  </data>
+  <data name="ProjectXLoadedSuccess" xml:space="preserve">
+    <value>Project "{0}" has been successfully loaded.</value>
+  </data>
+  <data name="ProjectXSavedSuccess" xml:space="preserve">
+    <value>Project has been successfully saved.</value>
+  </data>
+  <data name="NoProjectLoaded" xml:space="preserve">
+    <value>No project loaded.</value>
+  </data>
+  <data name="OpeningProjectX" xml:space="preserve">
+    <value>Opening of project "{0}"</value>
+  </data>
+  <data name="SettingsValidation" xml:space="preserve">
+    <value>Validating settings</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="StartDate" xml:space="preserve">
+    <value>Start date</value>
+  </data>
+  <data name="EndDate" xml:space="preserve">
+    <value>End date</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>StartTime</value>
+  </data>
+  <data name="EndTime" xml:space="preserve">
+    <value>End time</value>
+  </data>
+  <data name="Nationality" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="EditProject" xml:space="preserve">
+    <value>Edit project</value>
+  </data>
+  <data name="NewProject" xml:space="preserve">
+    <value>New project</value>
+  </data>
+  <data name="SmtpSettings" xml:space="preserve">
+    <value>SMTP Parameters</value>
+  </data>
+  <data name="RestartApplicationWarning" xml:space="preserve">
+    <value>You must restart the application for the settings to take effect.</value>
+  </data>
+  <data name="SmtpConnectionSuccess" xml:space="preserve">
+    <value>The connection to the SMTP server has ended successfully.</value>
+  </data>
+  <data name="SmtpConnectionError" xml:space="preserve">
+    <value>The connection to server has failed.</value>
+  </data>
+  <data name="CloseProject" xml:space="preserve">
+    <value>Close project</value>
+  </data>
+  <data name="Properties" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="PleaseSelectOneItem" xml:space="preserve">
+    <value>Several items are selected.
+Please select only one item.</value>
+  </data>
+  <data name="PleaseSelectItem" xml:space="preserve">
+    <value>None item is selected.
+Please select an item.</value>
+  </data>
+  <data name="WillBeDeletedItem" xml:space="preserve">
+    <value>This item will be deleted</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="SystemLanguage" xml:space="preserve">
+    <value>System Language</value>
+  </data>
+  <data name="RemoveFileFromList" xml:space="preserve">
+    <value>Supprimer de la liste</value>
+  </data>
+  <data name="RemoveFile" xml:space="preserve">
+    <value>Remove file</value>
+  </data>
+  <data name="Project" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="Product" xml:space="preserve">
+    <value>Product</value>
+  </data>
+  <data name="PrimaryColor" xml:space="preserve">
+    <value>Primary color</value>
+  </data>
+  <data name="PinOff" xml:space="preserve">
+    <value>Pin off</value>
+  </data>
+  <data name="Pin" xml:space="preserve">
+    <value>Pin</value>
+  </data>
+  <data name="OpenNotificationsCenter" xml:space="preserve">
+    <value>Open notifications center</value>
+  </data>
+  <data name="OpenFolderLocation" xml:space="preserve">
+    <value>Open file location</value>
+  </data>
+  <data name="OpenProjectDescription" xml:space="preserve">
+    <value>Open file browser and choose an existing file</value>
+  </data>
+  <data name="OpenCopy" xml:space="preserve">
+    <value>Open copy</value>
+  </data>
+  <data name="OpenRecent" xml:space="preserve">
+    <value>Open recent</value>
+  </data>
+  <data name="NoAddressMail" xml:space="preserve">
+    <value>No address mail defined</value>
+  </data>
+  <data name="NewProjectDescription" xml:space="preserve">
+    <value>Create a default new project and start now</value>
+  </data>
+  <data name="LoadLastFileOnStart" xml:space="preserve">
+    <value>Load last opened project at application start</value>
+  </data>
+  <data name="IsDefault" xml:space="preserve">
+    <value>Is default</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="GetStarted" xml:space="preserve">
+    <value>Get started</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="FileSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="AccentColor" xml:space="preserve">
+    <value>Secondary color</value>
+  </data>
+  <data name="AddAttachment" xml:space="preserve">
+    <value>Add attachment</value>
+  </data>
+  <data name="AscendingSort" xml:space="preserve">
+    <value>Ascending sort</value>
+  </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Attachment(s)</value>
+  </data>
+  <data name="ClearNotifications" xml:space="preserve">
+    <value>Clear notifications</value>
+  </data>
+  <data name="CopyFilePath" xml:space="preserve">
+    <value>Copy file path in clipboard</value>
+  </data>
+  <data name="Copyright" xml:space="preserve">
+    <value>Copyright</value>
+  </data>
+  <data name="DescendingSort" xml:space="preserve">
+    <value>Descending sort</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="FileNotFound" xml:space="preserve">
+    <value>File not found</value>
+  </data>
+  <data name="Key" xml:space="preserve">
+    <value>Key</value>
+  </data>
+  <data name="Labels" xml:space="preserve">
+    <value>Labels</value>
+  </data>
+  <data name="MailAddress" xml:space="preserve">
+    <value>Mail address</value>
+  </data>
+  <data name="CreateProjectDescription" xml:space="preserve">
+    <value>Create and parameter a new project</value>
+  </data>
+  <data name="Company" xml:space="preserve">
+    <value>Enterprise</value>
+  </data>
+  <data name="Players" xml:space="preserve">
+    <value>Players</value>
+  </data>
+  <data name="Trainings" xml:space="preserve">
+    <value>Trainings</value>
+  </data>
+  <data name="Consolidate" xml:space="preserve">
+    <value>Consolidate</value>
+  </data>
+  <data name="ConsolidateTeamsWarning" xml:space="preserve">
+    <value>There are inconsistencies in the order of the squads.
+Please consolidate or change the order of the items.</value>
+  </data>
+  <data name="Age" xml:space="preserve">
+    <value>Age</value>
+  </data>
+  <data name="EditTeams" xml:space="preserve">
+    <value>Edit squads</value>
+  </data>
+  <data name="InvalidOrder" xml:space="preserve">
+    <value>Invalid order</value>
+  </data>
+  <data name="LoadingRecentFiles" xml:space="preserve">
+    <value>Loading recent files</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Birthdate" xml:space="preserve">
+    <value>Birthdate</value>
+  </data>
+  <data name="Body" xml:space="preserve">
+    <value>Body</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="CategoryAbbr" xml:space="preserve">
+    <value>Cat.</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="Club" xml:space="preserve">
+    <value>Club</value>
+  </data>
+  <data name="Comment" xml:space="preserve">
+    <value>Comment</value>
+  </data>
+  <data name="Condition" xml:space="preserve">
+    <value>Condition</value>
+  </data>
+  <data name="Contacts" xml:space="preserve">
+    <value>Contacts</value>
+  </data>
+  <data name="Emails" xml:space="preserve">
+    <value>Emails</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="FromDate" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="Gender" xml:space="preserve">
+    <value>Gender</value>
+  </data>
+  <data name="GoOut" xml:space="preserve">
+    <value>Go out</value>
+  </data>
+  <data name="Height" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="LicenseNumber" xml:space="preserve">
+    <value>N° License</value>
+  </data>
+  <data name="LicenseNumberFormat" xml:space="preserve">
+    <value># ### ### ###</value>
+  </data>
+  <data name="LicenseState" xml:space="preserve">
+    <value>License state</value>
+  </data>
+  <data name="Morphology" xml:space="preserve">
+    <value>Morphology</value>
+  </data>
+  <data name="Number" xml:space="preserve">
+    <value>Number</value>
+  </data>
+  <data name="NumberAbbr" xml:space="preserve">
+    <value>N°</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Phones" xml:space="preserve">
+    <value>Phones</value>
+  </data>
+  <data name="Photo" xml:space="preserve">
+    <value>Photo</value>
+  </data>
+  <data name="Place" xml:space="preserve">
+    <value>Place</value>
+  </data>
+  <data name="PlaceOfBirth" xml:space="preserve">
+    <value>Place of birth</value>
+  </data>
+  <data name="Player" xml:space="preserve">
+    <value>Player</value>
+  </data>
+  <data name="Position" xml:space="preserve">
+    <value>Position</value>
+  </data>
+  <data name="Positions" xml:space="preserve">
+    <value>Positions</value>
+  </data>
+  <data name="PostalCode" xml:space="preserve">
+    <value>Postal code</value>
+  </data>
+  <data name="Rating" xml:space="preserve">
+    <value>Rating</value>
+  </data>
+  <data name="Ratings" xml:space="preserve">
+    <value>Rating(s)</value>
+  </data>
+  <data name="Roster" xml:space="preserve">
+    <value>Roster</value>
+  </data>
+  <data name="ShoesSize" xml:space="preserve">
+    <value>Shoes size</value>
+  </data>
+  <data name="ShoesSizeAbbr" xml:space="preserve">
+    <value>Shoes s.</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="UnknownAddress" xml:space="preserve">
+    <value>Unknown address</value>
+  </data>
+  <data name="UnknownAge" xml:space="preserve">
+    <value>Unknown age</value>
+  </data>
+  <data name="UnknownNationality" xml:space="preserve">
+    <value>Unknown country</value>
+  </data>
+  <data name="UnknownFromDate" xml:space="preserve">
+    <value>Unknown from date</value>
+  </data>
+  <data name="UnknownPlace" xml:space="preserve">
+    <value>No defined place</value>
+  </data>
+  <data name="Versatility" xml:space="preserve">
+    <value>Versatility</value>
+  </data>
+  <data name="Weight" xml:space="preserve">
+    <value>Weight</value>
+  </data>
+  <data name="Laterality" xml:space="preserve">
+    <value>Laterality</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="Injured" xml:space="preserve">
+    <value>Injured</value>
+  </data>
+  <data name="Absent" xml:space="preserve">
+    <value>Absent</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="AutoUpdateOff" xml:space="preserve">
+    <value>Auto update desactivated</value>
+  </data>
+  <data name="AutoUpdateOn" xml:space="preserve">
+    <value>Auto update activated</value>
+  </data>
+  <data name="NationalityAbbr" xml:space="preserve">
+    <value>Nat.</value>
+  </data>
+  <data name="EnableSsl" xml:space="preserve">
+    <value>SSL</value>
+  </data>
+  <data name="External" xml:space="preserve">
+    <value>External</value>
+  </data>
+  <data name="ExternalPlayers" xml:space="preserve">
+    <value>External players</value>
+  </data>
+  <data name="Host" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="Move" xml:space="preserve">
+    <value>Move</value>
+  </data>
+  <data name="MovingPlayerInTeam" xml:space="preserve">
+    <value>Move to</value>
+  </data>
+  <data name="Overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Port" xml:space="preserve">
+    <value>Port</value>
+  </data>
+  <data name="SmtpRequiresAuthentication" xml:space="preserve">
+    <value>Authenfication</value>
+  </data>
+  <data name="OpenMailClientError" xml:space="preserve">
+    <value>Impossible to open your messaging client.</value>
+  </data>
+  <data name="AnInjury" xml:space="preserve">
+    <value>An injury</value>
+  </data>
+  <data name="Absences" xml:space="preserve">
+    <value>Absences</value>
+  </data>
+  <data name="Absents" xml:space="preserve">
+    <value>Absent(s)</value>
+  </data>
+  <data name="AtClubFrom" xml:space="preserve">
+    <value>Tri</value>
+  </data>
+  <data name="Attendance" xml:space="preserve">
+    <value>Attendance</value>
+  </data>
+  <data name="Apologized" xml:space="preserve">
+    <value>Apologized</value>
+  </data>
+  <data name="AllApologized" xml:space="preserve">
+    <value>Apologize(s)</value>
+  </data>
+  <data name="AllAbsencesAbbr" xml:space="preserve">
+    <value>All abs.</value>
+  </data>
+  <data name="AddHolidays" xml:space="preserve">
+    <value>Add holidays</value>
+  </data>
+  <data name="AddCycle" xml:space="preserve">
+    <value>Add cycle</value>
+  </data>
+  <data name="AllApologizedAbbr" xml:space="preserve">
+    <value>All apol.</value>
+  </data>
+  <data name="Average" xml:space="preserve">
+    <value>Average</value>
+  </data>
+  <data name="AverageRating" xml:space="preserve">
+    <value>Average rating</value>
+  </data>
+  <data name="Averages" xml:space="preserve">
+    <value>Averages</value>
+  </data>
+  <data name="Best" xml:space="preserve">
+    <value>Best</value>
+  </data>
+  <data name="Calendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="Cancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="CancelledPlural" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="CancelSessions" xml:space="preserve">
+    <value>Cancel sessions</value>
+  </data>
+  <data name="ChartDateFormat" xml:space="preserve">
+    <value>MMM dd</value>
+  </data>
+  <data name="ExpectedReturn" xml:space="preserve">
+    <value>Expected return date</value>
+  </data>
+  <data name="Holidays" xml:space="preserve">
+    <value>Holidays</value>
+  </data>
+  <data name="InFettle" xml:space="preserve">
+    <value>Player is in fettle</value>
+  </data>
+  <data name="InitializeAttendances" xml:space="preserve">
+    <value>Initialize Attendances</value>
+  </data>
+  <data name="IsPresent" xml:space="preserve">
+    <value>The player is available</value>
+  </data>
+  <data name="IsNatural" xml:space="preserve">
+    <value>Is natural</value>
+  </data>
+  <data name="IsMutation" xml:space="preserve">
+    <value>Is mutation</value>
+  </data>
+  <data name="IsInjured" xml:space="preserve">
+    <value>Is injured</value>
+  </data>
+  <data name="IsCancelled" xml:space="preserve">
+    <value>Is cancelled</value>
+  </data>
+  <data name="IsAbsent" xml:space="preserve">
+    <value>Is absent</value>
+  </data>
+  <data name="MedicalCenter" xml:space="preserve">
+    <value>Medical center</value>
+  </data>
+  <data name="NoExpectedReturn" xml:space="preserve">
+    <value>No expected return date</value>
+  </data>
+  <data name="NotInjured" xml:space="preserve">
+    <value>In fettle</value>
+  </data>
+  <data name="NotPerformed" xml:space="preserve">
+    <value>Not performed</value>
+  </data>
+  <data name="Presents" xml:space="preserve">
+    <value>Present(s)</value>
+  </data>
+  <data name="Presences" xml:space="preserve">
+    <value>Presences</value>
+  </data>
+  <data name="RemoveSessions" xml:space="preserve">
+    <value>Remove sessions</value>
+  </data>
+  <data name="ReplaceAllUnknownAttendances" xml:space="preserve">
+    <value>Replace all unknown attendances</value>
+  </data>
+  <data name="ReturnDate" xml:space="preserve">
+    <value>Return date</value>
+  </data>
+  <data name="Unaivalability" xml:space="preserve">
+    <value>Unaivalability</value>
+  </data>
+  <data name="GenderTypeMale" xml:space="preserve">
+    <value>Male</value>
+  </data>
+  <data name="GenderTypeFemale" xml:space="preserve">
+    <value>Female</value>
+  </data>
+  <data name="EmailLabels" xml:space="preserve">
+    <value>Home;Professional;Father;Mother;Other</value>
+  </data>
+  <data name="PhoneLabels" xml:space="preserve">
+    <value>Mobile;Home;Professional;Father;Mother;Fax;Other</value>
+  </data>
+  <data name="Level" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="CurrentInjuries" xml:space="preserve">
+    <value>Current injuries</value>
+  </data>
+  <data name="InjuredPlural" xml:space="preserve">
+    <value>Injured</value>
+  </data>
+  <data name="Injuries" xml:space="preserve">
+    <value>Injuries</value>
+  </data>
+  <data name="InjuriesHistory" xml:space="preserve">
+    <value>Injuries history</value>
+  </data>
+  <data name="InjuriesMinor" xml:space="preserve">
+    <value>Minor(s) injuries</value>
+  </data>
+  <data name="InjuriesModerate" xml:space="preserve">
+    <value>Moderate(s) injuries</value>
+  </data>
+  <data name="InjuriesSerious" xml:space="preserve">
+    <value>Serious injuries</value>
+  </data>
+  <data name="InjuriesSevere" xml:space="preserve">
+    <value>Severe(s) injuries</value>
+  </data>
+  <data name="MinUnaivalability" xml:space="preserve">
+    <value>Min. Unaival.</value>
+  </data>
+  <data name="RecentInjuries" xml:space="preserve">
+    <value>Recents injuries</value>
+  </data>
+  <data name="Severity" xml:space="preserve">
+    <value>Severity</value>
+  </data>
+  <data name="AbsenceInHolidays" xml:space="preserve">
+    <value>in holidays</value>
+  </data>
+  <data name="AbsenceInSelection" xml:space="preserve">
+    <value>In selection</value>
+  </data>
+  <data name="AbsenceOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="InSelections" xml:space="preserve">
+    <value>In selection</value>
+  </data>
+  <data name="AnAbsence" xml:space="preserve">
+    <value>An absence</value>
+  </data>
+  <data name="Label" xml:space="preserve">
+    <value>Label</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="ClearFromDateColumn" xml:space="preserve">
+    <value>Clear from date</value>
+  </data>
+  <data name="ClearNumberColumn" xml:space="preserve">
+    <value>Clear number</value>
+  </data>
+  <data name="ClearShoesSizeColumn" xml:space="preserve">
+    <value>Clear shoes size</value>
+  </data>
+  <data name="ClearSizeColumn" xml:space="preserve">
+    <value>Clear size</value>
+  </data>
+  <data name="ColumnHeader" xml:space="preserve">
+    <value>Column header</value>
+  </data>
+  <data name="Columns" xml:space="preserve">
+    <value>Columns</value>
+  </data>
+  <data name="Destination" xml:space="preserve">
+    <value>Destination</value>
+  </data>
+  <data name="ExportXItems" xml:space="preserve">
+    <value>Export : # item(s)</value>
+  </data>
+  <data name="ImportInjuries" xml:space="preserve">
+    <value>Import injuries</value>
+  </data>
+  <data name="ImportPlayersSampleFileTitle" xml:space="preserve">
+    <value>Players import - Sample</value>
+  </data>
+  <data name="Traduction" xml:space="preserve">
+    <value>Traduction</value>
+  </data>
+  <data name="ExportNoColumnsError" xml:space="preserve">
+    <value>No column has been selected.</value>
+  </data>
+  <data name="ExportNoItemsError" xml:space="preserve">
+    <value>Players list to exported is empty.</value>
+  </data>
+  <data name="ImportColumn" xml:space="preserve">
+    <value>Column:</value>
+  </data>
+  <data name="ImportColumnsAreMissing" xml:space="preserve">
+    <value>Columns are missing.</value>
+  </data>
+  <data name="ImportDefaultValues" xml:space="preserve">
+    <value>She will be replaced by default values.</value>
+  </data>
+  <data name="ImportDownloadSampleFile" xml:space="preserve">
+    <value>Download sample file</value>
+  </data>
+  <data name="ImportErrorInRowFormat" xml:space="preserve">
+    <value>An error is occured at row #</value>
+  </data>
+  <data name="ImportSampleFileTmprojDescription" xml:space="preserve">
+    <value>The file must be to xlsx, xls, csv or tmproj format.
+
+It must be contain headers specified in sample file. Columns order don't matter.</value>
+  </data>
+  <data name="ImportHasErrors" xml:space="preserve">
+    <value>Errors are occured during your file import</value>
+  </data>
+  <data name="ImportIgnoreErrors" xml:space="preserve">
+    <value>Ignore errors and import valid rows</value>
+  </data>
+  <data name="ImportRow" xml:space="preserve">
+    <value>Row:</value>
+  </data>
+  <data name="ImportRowWillBeIgnored" xml:space="preserve">
+    <value>The row will be ignored</value>
+  </data>
+  <data name="ImportSaveBeforeReload" xml:space="preserve">
+    <value>(don't forget to save your file before reload it)</value>
+  </data>
+  <data name="ImportSetFile" xml:space="preserve">
+    <value>Modify your file</value>
+  </data>
+  <data name="FileMustBeExcelOrCsvError" xml:space="preserve">
+    <value>The specified file must be a Excel or CSV file.</value>
+  </data>
+  <data name="SelectColumnsToExport" xml:space="preserve">
+    <value>Select columns to export:</value>
+  </data>
+  <data name="SaveConfiguration" xml:space="preserve">
+    <value>Save configuration</value>
+  </data>
+  <data name="Street" xml:space="preserve">
+    <value>Street</value>
+  </data>
+  <data name="LicenseNumberAlreadyExistsError" xml:space="preserve">
+    <value>The specified license number already exists among of existing players.</value>
+  </data>
+  <data name="PositionOptionalPlural" xml:space="preserve">
+    <value>Position(s)</value>
+  </data>
+  <data name="PhoneOptionalPlural" xml:space="preserve">
+    <value>Phone(s)</value>
+  </data>
+  <data name="EmailOptionalPlural" xml:space="preserve">
+    <value>Email(s)</value>
+  </data>
+  <data name="ImportValueWillBeIgnored" xml:space="preserve">
+    <value>The value will be ignored</value>
+  </data>
+  <data name="ImportFromFileDescription" xml:space="preserve">
+    <value>Select file containing items to import</value>
+  </data>
+  <data name="Communication" xml:space="preserve">
+    <value>Communication</value>
+  </data>
+  <data name="XMails" xml:space="preserve">
+    <value># email address</value>
+  </data>
+  <data name="XMailsPlural" xml:space="preserve">
+    <value># email addresses</value>
+  </data>
+  <data name="NoAttachment" xml:space="preserve">
+    <value>No attachment is linked</value>
+  </data>
+  <data name="SelectOnlyDefaultEmails" xml:space="preserve">
+    <value>Only default emails</value>
+  </data>
+  <data name="SendACopy" xml:space="preserve">
+    <value>Send a copy</value>
+  </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="EmailIsModifiedQuestion" xml:space="preserve">
+    <value>An email is being written. Do you want to replace it ?</value>
+  </data>
+  <data name="SaveMailAsDraftSuccess" xml:space="preserve">
+    <value>The email has been successfully saved as a draft.</value>
+  </data>
+  <data name="SendMailError" xml:space="preserve">
+    <value>Mail could not be sent.</value>
+  </data>
+  <data name="SendMailInProgress" xml:space="preserve">
+    <value>The email is being sent.</value>
+  </data>
+  <data name="SendMailSuccess" xml:space="preserve">
+    <value>The email has been successfully sent to all recipients.</value>
+  </data>
+  <data name="OnLast12Months" xml:space="preserve">
+    <value>On last 12 months</value>
+  </data>
+  <data name="PlayersLeastUnaivable" xml:space="preserve">
+    <value>Players least injured</value>
+  </data>
+  <data name="PlayersMostUnaivable" xml:space="preserve">
+    <value>Players most injured</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="MostPerformances" xml:space="preserve">
+    <value>Most performances</value>
+  </data>
+  <data name="MaxUnaivalability" xml:space="preserve">
+    <value>Max. Unaival.</value>
+  </data>
+  <data name="Fettle" xml:space="preserve">
+    <value>Fettle</value>
+  </data>
+  <data name="DaysFormat" xml:space="preserve">
+    <value>0 day(s)</value>
+  </data>
+  <data name="Training" xml:space="preserve">
+    <value>Training</value>
+  </data>
+  <data name="Cycle" xml:space="preserve">
+    <value>Cycle</value>
+  </data>
+  <data name="Cycles" xml:space="preserve">
+    <value>Cycles</value>
+  </data>
+  <data name="DuringHolidays" xml:space="preserve">
+    <value>During holidays</value>
+  </data>
+  <data name="LeastAttendances" xml:space="preserve">
+    <value>LeastAttendances</value>
+  </data>
+  <data name="LeastPerformances" xml:space="preserve">
+    <value>Worst performances</value>
+  </data>
+  <data name="MentalGoals" xml:space="preserve">
+    <value>Mental goals</value>
+  </data>
+  <data name="NoTheme" xml:space="preserve">
+    <value>No theme defined</value>
+  </data>
+  <data name="OnLastFiveSessions" xml:space="preserve">
+    <value>On last 5 sessions</value>
+  </data>
+  <data name="Performed" xml:space="preserve">
+    <value>Performed</value>
+  </data>
+  <data name="PhysicalGoals" xml:space="preserve">
+    <value>Physical goals</value>
+  </data>
+  <data name="Planning" xml:space="preserve">
+    <value>Planning</value>
+  </data>
+  <data name="Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="Resting" xml:space="preserve">
+    <value>In resting</value>
+  </data>
+  <data name="Scheduling" xml:space="preserve">
+    <value>Scheduling</value>
+  </data>
+  <data name="SelectSessions" xml:space="preserve">
+    <value>Select sessions</value>
+  </data>
+  <data name="SyncAbsences" xml:space="preserve">
+    <value>Synchronize absences</value>
+  </data>
+  <data name="TacticalGoals" xml:space="preserve">
+    <value>Tactical goals</value>
+  </data>
+  <data name="TechnicalGoals" xml:space="preserve">
+    <value>Technical goals</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="UnselectSessions" xml:space="preserve">
+    <value>Unselect sessions</value>
+  </data>
+  <data name="Worst" xml:space="preserve">
+    <value>Worst</value>
+  </data>
+  <data name="Excuses" xml:space="preserve">
+    <value>Excuses</value>
+  </data>
+  <data name="InPercent" xml:space="preserve">
+    <value>in %</value>
+  </data>
+  <data name="MostAttendances" xml:space="preserve">
+    <value>Most attendances</value>
+  </data>
+  <data name="Performances" xml:space="preserve">
+    <value>Performances</value>
+  </data>
+  <data name="AnySelectedDaysError" xml:space="preserve">
+    <value>At least one day must be selected.</value>
+  </data>
+  <data name="AnySelectedSquadsError" xml:space="preserve">
+    <value>At least one club team must be selected.</value>
+  </data>
+  <data name="XSessionsAddedSuccess" xml:space="preserve">
+    <value>1 training session have been added.</value>
+  </data>
+  <data name="AttendanceResting" xml:space="preserve">
+    <value>At rest</value>
+  </data>
+  <data name="XSelectedDatesPlural" xml:space="preserve">
+    <value># selected dates</value>
+  </data>
+  <data name="XSelectedDates" xml:space="preserve">
+    <value># selected date</value>
+  </data>
+  <data name="CycleDatesIsBetweenOtherCyclesError" xml:space="preserve">
+    <value>It exists already a cycle during specified dates.</value>
+  </data>
+  <data name="CheckConnection" xml:space="preserve">
+    <value>Check connection</value>
+  </data>
+  <data name="HasBetween" xml:space="preserve">
+    <value>Has between</value>
+  </data>
+  <data name="Years" xml:space="preserve">
+    <value>Years</value>
+  </data>
+  <data name="Available" xml:space="preserve">
+    <value>Available</value>
+  </data>
+  <data name="NaturalPosition" xml:space="preserve">
+    <value>Natural position</value>
+  </data>
+  <data name="NextExpectedAbsence" xml:space="preserve">
+    <value>Next expected absence</value>
+  </data>
+  <data name="NoExpectedAbsence" xml:space="preserve">
+    <value>No expected absence</value>
+  </data>
+  <data name="NoNaturalPosition" xml:space="preserve">
+    <value>No natural position</value>
+  </data>
+  <data name="ClearPhotoColumn" xml:space="preserve">
+    <value>Clear photo</value>
+  </data>
+  <data name="ReturnIn" xml:space="preserve">
+    <value>Return in</value>
+  </data>
+  <data name="InjuredBetween" xml:space="preserve">
+    <value>Injured between</value>
+  </data>
+  <data name="DurationBetween" xml:space="preserve">
+    <value>Duration between</value>
+  </data>
+  <data name="MentalGoalsAbbr" xml:space="preserve">
+    <value>Ment. g.</value>
+  </data>
+  <data name="PhysicalGoalsAbbr" xml:space="preserve">
+    <value>Phys. g.</value>
+  </data>
+  <data name="TacticalGoalsAbbr" xml:space="preserve">
+    <value>Tac. g.</value>
+  </data>
+  <data name="TechnicalGoalsAbbr" xml:space="preserve">
+    <value>Tech. g.</value>
+  </data>
+  <data name="ShowHistory" xml:space="preserve">
+    <value>Show history</value>
+  </data>
+  <data name="CurrentlyInjured" xml:space="preserve">
+    <value>Currently injured</value>
+  </data>
+  <data name="OnlyMyPlayers" xml:space="preserve">
+    <value>My players</value>
+  </data>
+  <data name="EditAttendances" xml:space="preserve">
+    <value>Edit attendances</value>
+  </data>
+  <data name="InitializeAttendancesDescription" xml:space="preserve">
+    <value>Initialize attendances based on injured and absent players on the training date.</value>
+  </data>
+  <data name="EditAttendancesDescription" xml:space="preserve">
+    <value>Edit player attendances and ratings for training.</value>
+  </data>
+  <data name="AddPlayer" xml:space="preserve">
+    <value>Add player</value>
+  </data>
+  <data name="LastTraining" xml:space="preserve">
+    <value>Last training</value>
+  </data>
+  <data name="NextTraining" xml:space="preserve">
+    <value>Next training</value>
+  </data>
+  <data name="AddSessionDescription" xml:space="preserve">
+    <value>Add a training session for your squad.</value>
+  </data>
+  <data name="Period" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="Weeks" xml:space="preserve">
+    <value>Weeks</value>
+  </data>
+  <data name="ProgressReadingFile" xml:space="preserve">
+    <value>Reading of file '{0}'</value>
+  </data>
+  <data name="ProgressSaveFileX" xml:space="preserve">
+    <value>Save in '{0}'</value>
+  </data>
+  <data name="ProgressLoadingFileX" xml:space="preserve">
+    <value>Loading file '{0}'</value>
+  </data>
+  <data name="ProgressNewProject" xml:space="preserve">
+    <value>Creation of new project</value>
+  </data>
+  <data name="AddSessions" xml:space="preserve">
+    <value>Add sessions</value>
+  </data>
+  <data name="AddSession" xml:space="preserve">
+    <value>Add session</value>
+  </data>
+  <data name="Sessions" xml:space="preserve">
+    <value>sessions</value>
+  </data>
+  <data name="ProgressAddRecentFile" xml:space="preserve">
+    <value>Adding in recent files</value>
+  </data>
+  <data name="ProgressGeneratingRandomData" xml:space="preserve">
+    <value>Generation of random data</value>
+  </data>
+  <data name="ProgressGetWebData" xml:space="preserve">
+    <value>Get data</value>
+  </data>
+  <data name="LoadingFileCancelledWarning" xml:space="preserve">
+    <value>Loading file has been cancelled.</value>
+  </data>
+  <data name="SavingCancelledWarning" xml:space="preserve">
+    <value>Saving has been cancelled.</value>
+  </data>
+  <data name="AutoSave" xml:space="preserve">
+    <value>Auto save</value>
+  </data>
+  <data name="Interval" xml:space="preserve">
+    <value>Interval</value>
+  </data>
+  <data name="AutoSaved" xml:space="preserve">
+    <value>Automatically saved</value>
+  </data>
+  <data name="NoPlace" xml:space="preserve">
+    <value>No defined place</value>
+  </data>
+  <data name="Tactics" xml:space="preserve">
+    <value>Tactics</value>
+  </data>
+  <data name="Tactic" xml:space="preserve">
+    <value>Tactic</value>
+  </data>
+  <data name="Instructions" xml:space="preserve">
+    <value>Instructions</value>
+  </data>
+  <data name="BestPlayersOfPosition" xml:space="preserve">
+    <value>Best player at this position</value>
+  </data>
+  <data name="PleaseSelectAPosition" xml:space="preserve">
+    <value>Please select a position</value>
+  </data>
+  <data name="OtherTeams" xml:space="preserve">
+    <value>Other(s) squad(s)</value>
+  </data>
+  <data name="NewTactic" xml:space="preserve">
+    <value>New tactic</value>
+  </data>
+  <data name="AwayColor" xml:space="preserve">
+    <value>Away color</value>
+  </data>
+  <data name="HomeColor" xml:space="preserve">
+    <value>Home color</value>
+  </data>
+  <data name="LocationAway" xml:space="preserve">
+    <value>Away</value>
+  </data>
+  <data name="LocationHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Colors" xml:space="preserve">
+    <value>Colors</value>
+  </data>
+  <data name="XInstructions" xml:space="preserve">
+    <value>+# instruction(s)</value>
+  </data>
+  <data name="Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="Stadium" xml:space="preserve">
+    <value>Stadium</value>
+  </data>
+  <data name="ShortName" xml:space="preserve">
+    <value>Short name</value>
+  </data>
+  <data name="Ground" xml:space="preserve">
+    <value>Ground</value>
+  </data>
+  <data name="NewStadiumName" xml:space="preserve">
+    <value>City stadium</value>
+  </data>
+  <data name="Latitude" xml:space="preserve">
+    <value>Latitude</value>
+  </data>
+  <data name="Longitude" xml:space="preserve">
+    <value>Longitude</value>
+  </data>
+  <data name="ComputeCoordinates" xml:space="preserve">
+    <value>Compute coordinates</value>
+  </data>
+  <data name="GetFromClipboard" xml:space="preserve">
+    <value>Get from clipboard</value>
+  </data>
+  <data name="Inherited" xml:space="preserve">
+    <value>Inherited</value>
+  </data>
+  <data name="Friendlies" xml:space="preserve">
+    <value>Friendlies</value>
+  </data>
+  <data name="Competitions" xml:space="preserve">
+    <value>Competitions</value>
+  </data>
+  <data name="League" xml:space="preserve">
+    <value>League</value>
+  </data>
+  <data name="Cup" xml:space="preserve">
+    <value>Cup</value>
+  </data>
+  <data name="IsCurrent" xml:space="preserve">
+    <value>Is current</value>
+  </data>
+  <data name="Matchday" xml:space="preserve">
+    <value>Matchday</value>
+  </data>
+  <data name="Rank" xml:space="preserve">
+    <value>Position</value>
+  </data>
+  <data name="RankAbbr" xml:space="preserve">
+    <value>POS</value>
+  </data>
+  <data name="GamesPlayed" xml:space="preserve">
+    <value>Games played</value>
+  </data>
+  <data name="GamesPlayedAbbr" xml:space="preserve">
+    <value>PLD</value>
+  </data>
+  <data name="GamesDrawn" xml:space="preserve">
+    <value>Games drawn</value>
+  </data>
+  <data name="GamesDrawnAbbr" xml:space="preserve">
+    <value>D</value>
+  </data>
+  <data name="GamesLost" xml:space="preserve">
+    <value>Games lost</value>
+  </data>
+  <data name="GamesLostAbbr" xml:space="preserve">
+    <value>L</value>
+  </data>
+  <data name="GamesWon" xml:space="preserve">
+    <value>Games won</value>
+  </data>
+  <data name="GamesWonAbbr" xml:space="preserve">
+    <value>W</value>
+  </data>
+  <data name="GoalsAgainst" xml:space="preserve">
+    <value>Goals against</value>
+  </data>
+  <data name="GoalsAgainstAbbr" xml:space="preserve">
+    <value>GA</value>
+  </data>
+  <data name="GoalsFor" xml:space="preserve">
+    <value>Goals for</value>
+  </data>
+  <data name="GoalsForAbbr" xml:space="preserve">
+    <value>GF</value>
+  </data>
+  <data name="GoalsDifference" xml:space="preserve">
+    <value>Goals difference</value>
+  </data>
+  <data name="GoalsDifferenceAbbr" xml:space="preserve">
+    <value>GD</value>
+  </data>
+  <data name="Team" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="Points" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="PointsAbbr" xml:space="preserve">
+    <value>PTS</value>
+  </data>
+  <data name="Promotion" xml:space="preserve">
+    <value>Promotion</value>
+  </data>
+  <data name="PromotionAbbr" xml:space="preserve">
+    <value>PRO</value>
+  </data>
+  <data name="RelegationAbbr" xml:space="preserve">
+    <value>REL</value>
+  </data>
+  <data name="Relegation" xml:space="preserve">
+    <value>Relegation</value>
+  </data>
+  <data name="Rules" xml:space="preserve">
+    <value>Rules</value>
+  </data>
+  <data name="Teams" xml:space="preserve">
+    <value>Teams</value>
+  </data>
+  <data name="EditTeam" xml:space="preserve">
+    <value>Edit team</value>
+  </data>
+  <data name="AddTeam" xml:space="preserve">
+    <value>Add team</value>
+  </data>
+  <data name="CreateTeam" xml:space="preserve">
+    <value>Create a team</value>
+  </data>
+  <data name="CreateStadium" xml:space="preserve">
+    <value>Create a stadium</value>
+  </data>
+  <data name="EditStadium" xml:space="preserve">
+    <value>Edit stadium</value>
+  </data>
+  <data name="DuplicatedTeamNameError" xml:space="preserve">
+    <value>A team with same name already exists.</value>
+  </data>
+  <data name="RemovingTeamWarning" xml:space="preserve">
+    <value>Becareful, removing of a team will remove every matches of this team.</value>
+  </data>
+  <data name="ByGamesDrawn" xml:space="preserve">
+    <value>By games drawn</value>
+  </data>
+  <data name="ByGamesLost" xml:space="preserve">
+    <value>By games lost</value>
+  </data>
+  <data name="ByGamesWon" xml:space="preserve">
+    <value>By games won</value>
+  </data>
+  <data name="Penalties" xml:space="preserve">
+    <value>Penalties</value>
+  </data>
+  <data name="FieldFromRankMustBeUpperOrEqualsThanToRankError" xml:space="preserve">
+    <value>Edited ranks are inconsistents</value>
+  </data>
+  <data name="DefineARange" xml:space="preserve">
+    <value>Define several ranks</value>
+  </data>
+  <data name="Rule" xml:space="preserve">
+    <value>Rule</value>
+  </data>
+  <data name="MatchesFormat" xml:space="preserve">
+    <value>Matches format</value>
+  </data>
+  <data name="ExtraTime" xml:space="preserve">
+    <value>Extra time</value>
+  </data>
+  <data name="Shootouts" xml:space="preserve">
+    <value>Shootouts</value>
+  </data>
+  <data name="NumberOfShootouts" xml:space="preserve">
+    <value>Number</value>
+  </data>
+  <data name="Periods" xml:space="preserve">
+    <value>Period(s)</value>
+  </data>
+  <data name="Ranking" xml:space="preserve">
+    <value>Ranking</value>
+  </data>
+  <data name="NextMatch" xml:space="preserve">
+    <value>Next match</value>
+  </data>
+  <data name="PreviousMatch" xml:space="preserve">
+    <value>Previous match</value>
+  </data>
+  <data name="ShootoutsAbbr" xml:space="preserve">
+    <value>P</value>
+  </data>
+  <data name="AfterExtraTimeAbbr" xml:space="preserve">
+    <value>a. extra.</value>
+  </data>
+  <data name="NoMatches" xml:space="preserve">
+    <value>There are no matches scheduled at the moment</value>
+  </data>
+  <data name="AfterExtraTime" xml:space="preserve">
+    <value>After extra time</value>
+  </data>
+  <data name="AfterExtraTimeAbbr2" xml:space="preserve">
+    <value>e</value>
+  </data>
+  <data name="ShootoutsAbbr2" xml:space="preserve">
+    <value>p</value>
+  </data>
+  <data name="XMatchesPlural" xml:space="preserve">
+    <value># matches</value>
+  </data>
+  <data name="XMatches" xml:space="preserve">
+    <value>1 match</value>
+  </data>
+  <data name="PastPositions" xml:space="preserve">
+    <value>Past positions</value>
+  </data>
+  <data name="Stadiums" xml:space="preserve">
+    <value>Stadiums</value>
+  </data>
+  <data name="Matches" xml:space="preserve">
+    <value>Matches</value>
+  </data>
+  <data name="GamesWithdrawn" xml:space="preserve">
+    <value>Games withdrawn</value>
+  </data>
+  <data name="GamesWithdrawnAbbr" xml:space="preserve">
+    <value>WD</value>
+  </data>
+  <data name="LabelAbbr" xml:space="preserve">
+    <value>LAB</value>
+  </data>
+  <data name="FormAbbr" xml:space="preserve">
+    <value>FOR</value>
+  </data>
+  <data name="Form" xml:space="preserve">
+    <value>Form</value>
+  </data>
+  <data name="XPoints" xml:space="preserve">
+    <value># point</value>
+  </data>
+  <data name="XPointsPlural" xml:space="preserve">
+    <value># points</value>
+  </data>
+  <data name="OpenInGoogleMaps" xml:space="preserve">
+    <value>Open in Google Maps</value>
+  </data>
+  <data name="NextFixtures" xml:space="preserve">
+    <value>Next fixtures</value>
+  </data>
+  <data name="LatestResults" xml:space="preserve">
+    <value>Latest results</value>
+  </data>
+  <data name="Fixtures" xml:space="preserve">
+    <value>Fixtures</value>
+  </data>
+  <data name="Matchdays" xml:space="preserve">
+    <value>Matchdays</value>
+  </data>
+  <data name="AddMatchdays" xml:space="preserve">
+    <value>Add matchdays</value>
+  </data>
+  <data name="InvertTeams" xml:space="preserve">
+    <value>Invert teams</value>
+  </data>
+  <data name="MatchStateCancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="AllMatchdays" xml:space="preserve">
+    <value>All matchdays</value>
+  </data>
+  <data name="VersusAbbr" xml:space="preserve">
+    <value>vs</value>
+  </data>
+  <data name="DefaultTime" xml:space="preserve">
+    <value>Default time</value>
+  </data>
+  <data name="NeutralVenue" xml:space="preserve">
+    <value>Neutral venue</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Withdraw" xml:space="preserve">
+    <value>Withdraw</value>
+  </data>
+  <data name="PostponedDate" xml:space="preserve">
+    <value>Postponed date</value>
+  </data>
+  <data name="Postponed" xml:space="preserve">
+    <value>Postponed</value>
+  </data>
+  <data name="WithdrawAbbr" xml:space="preserve">
+    <value>W</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Postpone" xml:space="preserve">
+    <value>Postpone</value>
+  </data>
+  <data name="Suspend" xml:space="preserve">
+    <value>Suspend</value>
+  </data>
+  <data name="HomeTeam" xml:space="preserve">
+    <value>Home team</value>
+  </data>
+  <data name="AwayTeam" xml:space="preserve">
+    <value>Away team</value>
+  </data>
+  <data name="DoWithdraw" xml:space="preserve">
+    <value>Do withdraw</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="EditResults" xml:space="preserve">
+    <value>Edit results</value>
+  </data>
+  <data name="DuplicateMatchday" xml:space="preserve">
+    <value>Duplicate matchday</value>
+  </data>
+  <data name="AddMatches" xml:space="preserve">
+    <value>Add matches</value>
+  </data>
+  <data name="AddMatchesDescription" xml:space="preserve">
+    <value>Allow to add matches for this matchday initialized with date and time of this matchday.</value>
+  </data>
+  <data name="XMatchesZero" xml:space="preserve">
+    <value>No matches</value>
+  </data>
+  <data name="AddMatchdaysDescription" xml:space="preserve">
+    <value>Allow to add matchdays in this item.</value>
+  </data>
+  <data name="Country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="NewStadiumWillBeCreated" xml:space="preserve">
+    <value>A new stadium will be created</value>
+  </data>
+  <data name="ProgressLoadingProject" xml:space="preserve">
+    <value>Loading project</value>
+  </data>
+  <data name="ProgressGeneratingProject" xml:space="preserve">
+    <value>Generation of project</value>
+  </data>
+  <data name="LoadingNewProjectCancelledWarning" xml:space="preserve">
+    <value>Project creation has been cancelled.</value>
+  </data>
+  <data name="GetDataFromWebError" xml:space="preserve">
+    <value>Error retrieving data from server : 
+    - Check your internet connection
+    - You may have exceeded the request quota for the day.</value>
+  </data>
+  <data name="Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="ImportTeams" xml:space="preserve">
+    <value>Import teams</value>
+  </data>
+  <data name="ImportXItems" xml:space="preserve">
+    <value>Import (0)</value>
+  </data>
+  <data name="ImportFromDatabaseDescription" xml:space="preserve">
+    <value>Load items from database</value>
+  </data>
+  <data name="SelectFile" xml:space="preserve">
+    <value>Select file</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="ImportTeamsSampleFileTitle" xml:space="preserve">
+    <value>Teams import - Sample</value>
+  </data>
+  <data name="DoNotImport" xml:space="preserve">
+    <value>Do not import</value>
+  </data>
+  <data name="ExportTeams" xml:space="preserve">
+    <value>Export teams</value>
+  </data>
+  <data name="ImportFromDatabase" xml:space="preserve">
+    <value>Import from database</value>
+  </data>
+  <data name="XPlayersHasBeenMovedInSuccessPlural" xml:space="preserve">
+    <value># players has been moved in following squad :</value>
+  </data>
+  <data name="XPlayersHasBeenMovedInSuccess" xml:space="preserve">
+    <value>The player has been moved in following squad :</value>
+  </data>
+  <data name="XPlayersHasBeenMovedOutSuccessPlural" xml:space="preserve">
+    <value># players has been go out of squad.</value>
+  </data>
+  <data name="XPlayersHasBeenMovedOutSuccess" xml:space="preserve">
+    <value>The player has been moved go out of squad.</value>
+  </data>
+  <data name="XPlayersHasBeenImportedSuccessPlural" xml:space="preserve">
+    <value># players has been imported.</value>
+  </data>
+  <data name="XPlayersHasBeenImportedSuccess" xml:space="preserve">
+    <value>1 player has been imported.</value>
+  </data>
+  <data name="XTrainingsHasBeenCancelledSuccess" xml:space="preserve">
+    <value>1 training session have been cancelled.</value>
+  </data>
+  <data name="XTrainingsHasBeenCancelledSuccessPlural" xml:space="preserve">
+    <value># training sessions have been cancelled.</value>
+  </data>
+  <data name="XSessionsAddedSuccessPlural" xml:space="preserve">
+    <value># training sessions have been added.</value>
+  </data>
+  <data name="DatabaseConnectionWarning" xml:space="preserve">
+    <value>Connection to Database 'Host={0}, Name={1}' has failed.</value>
+  </data>
+  <data name="CheckMailConnection" xml:space="preserve">
+    <value>Check mail connection</value>
+  </data>
+  <data name="CheckDatabaseConnection" xml:space="preserve">
+    <value>Check database connection</value>
+  </data>
+  <data name="ImportCompetitionsSampleFileTitle" xml:space="preserve">
+    <value>Competitions import - Sample</value>
+  </data>
+  <data name="ClearEndDateColumn" xml:space="preserve">
+    <value>Clear end date</value>
+  </data>
+  <data name="ClearLogoColumn" xml:space="preserve">
+    <value>Clear logo</value>
+  </data>
+  <data name="ClearStartDateColumn" xml:space="preserve">
+    <value>Clear start date</value>
+  </data>
+  <data name="RegulationTimeFormat" xml:space="preserve">
+    <value>Regulation time format</value>
+  </data>
+  <data name="ExtraTimeFormat" xml:space="preserve">
+    <value>Extra time format</value>
+  </data>
+  <data name="RankingSortingColumns" xml:space="preserve">
+    <value>Order of ranking sorting</value>
+  </data>
+  <data name="RegulationTime" xml:space="preserve">
+    <value>Regulation time</value>
+  </data>
+  <data name="AddInstructions" xml:space="preserve">
+    <value>Add instructions</value>
+  </data>
+  <data name="GoogleRequestDenied" xml:space="preserve">
+    <value>Google API access has been forbidden. Check your key in settings.</value>
+  </data>
+  <data name="GoogleQueryLimitExceededError" xml:space="preserve">
+    <value>Your limit query has been exceeded. Check your Google dashboard.</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="RoundX" xml:space="preserve">
+    <value>Round #</value>
+  </data>
+  <data name="IndividualInstructions" xml:space="preserve">
+    <value>Individual instructions</value>
+  </data>
+  <data name="ShowDetails" xml:space="preserve">
+    <value>Show details</value>
+  </data>
+  <data name="DefaultClubName" xml:space="preserve">
+    <value>My Club</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="MainTeam" xml:space="preserve">
+    <value>Main team</value>
+  </data>
+  <data name="GroupX" xml:space="preserve">
+    <value>Group #</value>
+  </data>
+  <data name="Rounds" xml:space="preserve">
+    <value>Rounds</value>
+  </data>
+  <data name="Round" xml:space="preserve">
+    <value>Round</value>
+  </data>
+  <data name="Knockout" xml:space="preserve">
+    <value>Knockout</value>
+  </data>
+  <data name="GroupStage" xml:space="preserve">
+    <value>Group stage</value>
+  </data>
+  <data name="Groups" xml:space="preserve">
+    <value>Groups</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="AddGroup" xml:space="preserve">
+    <value>Add group</value>
+  </data>
+  <data name="EditGroupStage" xml:space="preserve">
+    <value>Edit group stage</value>
+  </data>
+  <data name="AddKnockoutDescription" xml:space="preserve">
+    <value>Allow to add round with knockout format.</value>
+  </data>
+  <data name="AddGroupStageDescription" xml:space="preserve">
+    <value>Allow to add round with group stage format.</value>
+  </data>
+  <data name="AllRounds" xml:space="preserve">
+    <value>All rounds</value>
+  </data>
+  <data name="AddGroupStage" xml:space="preserve">
+    <value>Add group stage</value>
+  </data>
+  <data name="AddKnockout" xml:space="preserve">
+    <value>Add knockout</value>
+  </data>
+  <data name="AddPlayerSuccess" xml:space="preserve">
+    <value>Player has been added with success.
+Click here for his profile.</value>
+  </data>
+  <data name="AddLeague" xml:space="preserve">
+    <value>Add league</value>
+  </data>
+  <data name="AddCup" xml:space="preserve">
+    <value>Add cup</value>
+  </data>
+  <data name="AddFriendly" xml:space="preserve">
+    <value>Add friendlies</value>
+  </data>
+  <data name="AddCompetitionSuccess" xml:space="preserve">
+    <value>Competition has been added with success.
+Click here for his profile.</value>
+  </data>
+  <data name="AddTrainingSessionSuccess" xml:space="preserve">
+    <value>Training session has been added with success.
+Click here for his profile.</value>
+  </data>
+  <data name="AddTrainingSession" xml:space="preserve">
+    <value>Add training session</value>
+  </data>
+  <data name="InjuryCategory" xml:space="preserve">
+    <value>Injury category</value>
+  </data>
+  <data name="PresentsX" xml:space="preserve">
+    <value>Présents (0)</value>
+  </data>
+  <data name="ApologizedX" xml:space="preserve">
+    <value>Apologized (0)</value>
+  </data>
+  <data name="AbsentsX" xml:space="preserve">
+    <value>Absents (0)</value>
+  </data>
+  <data name="InSelectionX" xml:space="preserve">
+    <value>In selection (0)</value>
+  </data>
+  <data name="InjuredX" xml:space="preserve">
+    <value>Injured (0)</value>
+  </data>
+  <data name="RestingX" xml:space="preserve">
+    <value>In resting (0)</value>
+  </data>
+  <data name="UnknownX" xml:space="preserve">
+    <value>Inconnu (0)</value>
+  </data>
+  <data name="InHolidaysX" xml:space="preserve">
+    <value>In holidays (0)</value>
+  </data>
+  <data name="BestPlural" xml:space="preserve">
+    <value>Best players</value>
+  </data>
+  <data name="WorstPlural" xml:space="preserve">
+    <value>Wort players</value>
+  </data>
+  <data name="TrainingSessionHasBeenCancelled" xml:space="preserve">
+    <value>Training session has been cancelled</value>
+  </data>
+  <data name="TrainingSessionHasBeenPerformed" xml:space="preserve">
+    <value>Training session has been performed</value>
+  </data>
+  <data name="TrainingSessionIsScheduled" xml:space="preserve">
+    <value>Training session is scheduled</value>
+  </data>
+  <data name="AddPlayerDescription" xml:space="preserve">
+    <value>Allow to add a player un current roster.</value>
+  </data>
+  <data name="AddLeagueDescription" xml:space="preserve">
+    <value>Allow to add a competition with matchday and final ranking.</value>
+  </data>
+  <data name="AddCupDescription" xml:space="preserve">
+    <value>Allow to add a compétition with knockout round or group stages.</value>
+  </data>
+  <data name="AddFriendlyDescription" xml:space="preserve">
+    <value>Allow to add a competition with only friendly matches.</value>
+  </data>
+  <data name="AddTrainingSessionDescription" xml:space="preserve">
+    <value>Allow to add a training session.</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="AddAbsence" xml:space="preserve">
+    <value>Add an absence</value>
+  </data>
+  <data name="BirthYear" xml:space="preserve">
+    <value>Birth year</value>
+  </data>
+  <data name="ScprojFile" xml:space="preserve">
+    <value>Scproj file</value>
+  </data>
+  <data name="FileXNotScprojError" xml:space="preserve">
+    <value>File "{0}" is not a .scproj file.</value>
+  </data>
+  <data name="NewCup" xml:space="preserve">
+    <value>New cup</value>
+  </data>
+  <data name="NewLeague" xml:space="preserve">
+    <value>New league</value>
+  </data>
+  <data name="NewLeagueDescription" xml:space="preserve">
+    <value>Create a default new league and start now</value>
+  </data>
+  <data name="NewCupDescription" xml:space="preserve">
+    <value>Create a default new cup and start now</value>
+  </data>
+  <data name="NewTeam" xml:space="preserve">
+    <value>New team</value>
+  </data>
+  <data name="UseTeamVenues" xml:space="preserve">
+    <value>Use team venues</value>
+  </data>
+  <data name="UseTeamVenuesDescription" xml:space="preserve">
+    <value>Matches are played by teams playing at home.
+Disable this option if the competition is grouped into a defined stadium set.</value>
+  </data>
+  <data name="DuplicatedStadiumNameError" xml:space="preserve">
+    <value>A stadium with same name already exists.</value>
+  </data>
+  <data name="NewStadium" xml:space="preserve">
+    <value>New stadium</value>
+  </data>
+  <data name="ImportStadiums" xml:space="preserve">
+    <value>Import stadiums</value>
+  </data>
+  <data name="ExportStadiums" xml:space="preserve">
+    <value>Export stadiums</value>
+  </data>
+  <data name="AddStadium" xml:space="preserve">
+    <value>Add stadium</value>
+  </data>
+  <data name="NoStadium" xml:space="preserve">
+    <value>No stadium defined</value>
+  </data>
+  <data name="ImportStadiumsSampleFileTitle" xml:space="preserve">
+    <value>Stadium import - Sample</value>
+  </data>
+  <data name="ImportSampleFileScprojDescription" xml:space="preserve">
+    <value>The file must be to xlsx, xls, csv or scproj format.
+
+It must be contain headers specified in sample file. Columns order don't matter.</value>
+  </data>
+  <data name="RemoveStadiumOfTeam" xml:space="preserve">
+    <value>Also delete the associated stadium</value>
+  </data>
+  <data name="Schedule" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="AtFollowingDate" xml:space="preserve">
+    <value>At following date</value>
+  </data>
+  <data name="AtUnknownDate" xml:space="preserve">
+    <value>At unknown date</value>
+  </data>
+  <data name="AutomaticGeneration" xml:space="preserve">
+    <value>Automatic generation</value>
+  </data>
+  <data name="MatchdaysNumber" xml:space="preserve">
+    <value>Matchdays number</value>
+  </data>
+  <data name="MatchdaysAlt" xml:space="preserve">
+    <value>Matchday(s)</value>
+  </data>
+  <data name="InClubFromDate" xml:space="preserve">
+    <value>At club from</value>
+  </data>
+  <data name="ToDate" xml:space="preserve">
+    <value>To date</value>
+  </data>
+  <data name="Patterns" xml:space="preserve">
+    <value>Patterns</value>
+  </data>
+  <data name="AutomaticGenerationPatternDescription" xml:space="preserve">
+    <value># is remplaced by matchday index</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>Add rule</value>
+  </data>
+  <data name="IncrementEvery" xml:space="preserve">
+    <value>Increment every</value>
+  </data>
+  <data name="AnyRulesError" xml:space="preserve">
+    <value>At least one rule must be defined.</value>
+  </data>
+  <data name="DayOfWeekRuleName" xml:space="preserve">
+    <value>Day(s) of week</value>
+  </data>
+  <data name="NoGeneratedMatchdaysWarning" xml:space="preserve">
+    <value>No matchday has been generated. Check parameters consistency.</value>
+  </data>
+  <data name="XMatchdaysGeneratedSuccess" xml:space="preserve">
+    <value>1 matchday has been generated.</value>
+  </data>
+  <data name="XMatchdaysGeneratedSuccessPlural" xml:space="preserve">
+    <value># matchdays has been generated.</value>
+  </data>
+  <data name="AddMatch" xml:space="preserve">
+    <value>Add match</value>
+  </data>
+  <data name="NewMatch" xml:space="preserve">
+    <value>New match</value>
+  </data>
+  <data name="XSelectedMatchesZero" xml:space="preserve">
+    <value>No selected matches</value>
+  </data>
+  <data name="XSelectedMatchesPlural" xml:space="preserve">
+    <value># selected matches</value>
+  </data>
+  <data name="XSelectedMatches" xml:space="preserve">
+    <value>1 selected match</value>
+  </data>
+  <data name="Bracket" xml:space="preserve">
+    <value>Bracket</value>
+  </data>
+  <data name="SelectMatchday" xml:space="preserve">
+    <value>Select matchday</value>
+  </data>
+  <data name="DuplicationOf" xml:space="preserve">
+    <value>Duplication of</value>
+  </data>
+  <data name="Kits" xml:space="preserve">
+    <value>Kits</value>
+  </data>
+  <data name="ConflictBetweenMatchXAndMatchY" xml:space="preserve">
+    <value>There is a conflict between match {0} and match {1}.</value>
+  </data>
+  <data name="ConflictsStadiumOccupancyWarning" xml:space="preserve">
+    <value>The matches take place in the same stadium.</value>
+  </data>
+  <data name="ConflictsTeamBusyWarning" xml:space="preserve">
+    <value>1 team plays in 2 matches taking place at the same time.</value>
+  </data>
+  <data name="Reschedule" xml:space="preserve">
+    <value>Reschedule</value>
+  </data>
+  <data name="NewConflictsWarning" xml:space="preserve">
+    <value>New conflicts have been detected between matches.
+See Notification Center for details.</value>
+  </data>
+  <data name="Conflict" xml:space="preserve">
+    <value>Conflict</value>
+  </data>
+  <data name="SelectConflicts" xml:space="preserve">
+    <value>Select conflicts</value>
+  </data>
+  <data name="EditConflicts" xml:space="preserve">
+    <value>Edit conflicts</value>
+  </data>
+  <data name="RescheduleOf" xml:space="preserve">
+    <value>Reschedule of</value>
+  </data>
+  <data name="Personalize" xml:space="preserve">
+    <value>Personnalize</value>
+  </data>
+  <data name="ConflictsRotationTimeNotRespectedWarning" xml:space="preserve">
+    <value>The rotation time between the 2 matches is not respected.</value>
+  </data>
+  <data name="ConflictsRestTimeNotRespectedWarning" xml:space="preserve">
+    <value>A team's rest time is not respected.</value>
+  </data>
+  <data name="ConflictsEndDatePassedWarning" xml:space="preserve">
+    <value>The match goes beyond the end of the competition.</value>
+  </data>
+  <data name="ConflictsStartDatePassedWarning" xml:space="preserve">
+    <value>The match begins before the start of the competition.</value>
+  </data>
+  <data name="ConflictWithMatchX" xml:space="preserve">
+    <value>There is a conflict with match {0}.</value>
+  </data>
+  <data name="EditConflict" xml:space="preserve">
+    <value>Edit conflict</value>
+  </data>
+  <data name="DisplayModeByParent" xml:space="preserve">
+    <value>View by matchday</value>
+  </data>
+  <data name="DisplayModeByDate" xml:space="preserve">
+    <value>View by date</value>
+  </data>
+  <data name="Finish" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="Randomize" xml:space="preserve">
+    <value>Randomize</value>
+  </data>
+  <data name="Exempt" xml:space="preserve">
+    <value>Exempt</value>
+  </data>
+  <data name="Progression" xml:space="preserve">
+    <value>Progression</value>
+  </data>
+  <data name="GamesWonAfterShootouts" xml:space="preserve">
+    <value>Games won after shootouts</value>
+  </data>
+  <data name="GamesLostAfterShootouts" xml:space="preserve">
+    <value>Games lost after shootouts</value>
+  </data>
+  <data name="GamesWonAfterShootoutsAbbr" xml:space="preserve">
+    <value>W (sho)</value>
+  </data>
+  <data name="GamesLostAfterShootoutsAbbr" xml:space="preserve">
+    <value>L (sho)</value>
+  </data>
+  <data name="Live" xml:space="preserve">
+    <value>Live</value>
+  </data>
+  <data name="EditRules" xml:space="preserve">
+    <value>Edit rules</value>
+  </data>
+  <data name="RankingRules" xml:space="preserve">
+    <value>Ranking rules</value>
+  </data>
+  <data name="ByGamesLostAfterShootouts" xml:space="preserve">
+    <value>By games lost (sh)</value>
+  </data>
+  <data name="ByGamesWonAfterShootouts" xml:space="preserve">
+    <value>By games won (sh)</value>
+  </data>
+  <data name="ByGamesWithdrawn" xml:space="preserve">
+    <value>By withdrawn</value>
+  </data>
+  <data name="SortingByGamesWon" xml:space="preserve">
+    <value>Number of games won</value>
+  </data>
+  <data name="SortingByResultsBetweenTeams" xml:space="preserve">
+    <value>Results between teams</value>
+  </data>
+  <data name="SortingByPoints" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="SortingByGoalsFor" xml:space="preserve">
+    <value>Goals for</value>
+  </data>
+  <data name="SortingByGoalsAgainst" xml:space="preserve">
+    <value>Goals against</value>
+  </data>
+  <data name="SortingByGoalsDifference" xml:space="preserve">
+    <value>Goals difference</value>
+  </data>
+  <data name="SortingByGamesWithdrawn" xml:space="preserve">
+    <value>Number of games withdrawn</value>
+  </data>
+  <data name="SortingByGamesLost" xml:space="preserve">
+    <value>Number of games lost</value>
+  </data>
+  <data name="Compute" xml:space="preserve">
+    <value>Compute</value>
+  </data>
+  <data name="RankingComputersDescription" xml:space="preserve">
+    <value>Select the columns that will be evaluated for ranking. Unselected columns will automatically remain at 0.
+Deselect the columns that you will not display to gain performance when calculating the ranking.</value>
+  </data>
+  <data name="RankingComparersDescription" xml:space="preserve">
+    <value>Select the columns used to calculate the order of teams in the standings.
+The columns in the first position will be evaluated first. The following columns will be evaluated only in case of a tie.</value>
+  </data>
+  <data name="RankingRowComparers" xml:space="preserve">
+    <value>Sorting columns</value>
+  </data>
+  <data name="TeamsAvailableAtDate" xml:space="preserve">
+    <value>Teams are available on this date</value>
+  </data>
+  <data name="TeamsUnavailableAtDate" xml:space="preserve">
+    <value>A team is not available on this date</value>
+  </data>
+  <data name="TeamsPartiallyUnavailableAtDate" xml:space="preserve">
+    <value>A team will not respect its minimum rest time</value>
+  </data>
+  <data name="SearchAvailableDate" xml:space="preserve">
+    <value>Search an available date</value>
+  </data>
+  <data name="StadiumUnavailableAtDate" xml:space="preserve">
+    <value>Stadium is not available on this date</value>
+  </data>
+  <data name="StadiumAvailableAtDate" xml:space="preserve">
+    <value>Stadium is available on this date</value>
+  </data>
+  <data name="StadiumPartiallyUnavailableAtDate" xml:space="preserve">
+    <value>Rotation time is not respected compared to other matches</value>
+  </data>
+  <data name="AvailableFrom" xml:space="preserve">
+    <value>Available from</value>
+  </data>
+  <data name="SchedulingAssistant" xml:space="preserve">
+    <value>Scheduling assistant</value>
+  </data>
+  <data name="ScheduleTo" xml:space="preserve">
+    <value>Schedule to</value>
+  </data>
+  <data name="HasConflictsWarning" xml:space="preserve">
+    <value>This match has scheduling conflicts. See Notification Center for details.</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>System</value>
+  </data>
+</root>

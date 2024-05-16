@@ -1,0 +1,65 @@
+﻿<ToolBar x:Class="MyClub.Scorer.Wpf.Views.SchedulePage.MatchToolBar"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:my="http://mynet.com/xaml/themes"
+         xmlns:sys="clr-namespace:System;assembly=mscorlib"
+         x:Name="local"
+         Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+         d:DataContext="{d:DesignInstance Type=entities:MatchViewModel}"
+         d:DesignHeight="450"
+         d:DesignWidth="800"
+         mc:Ignorable="d">
+    <ToolBar.Resources>
+        <my:BindingProxy x:Key="MatchProxy" Data="{Binding}" />
+        <my:BindingProxy x:Key="LocalProxy" Data="{Binding ElementName=local}" />
+
+        <sys:Int32 x:Key="One">1</sys:Int32>
+        <sys:Int32 x:Key="Two">2</sys:Int32>
+        <sys:Int32 x:Key="Five">5</sys:Int32>
+        <sys:Int32 x:Key="Ten">10</sys:Int32>
+        <sys:Int32 x:Key="Fifteen">15</sys:Int32>
+        <sys:Int32 x:Key="Thirty">30</sys:Int32>
+    </ToolBar.Resources>
+
+    <Button Command="{Binding EditCommand}" Content="{my:ToolIcon Kind=Edit}" ToolTip="{my:Resource Edit}" />
+
+    <my:DropDownButton x:Name="DropDownButton"
+                       PopupPadding="0"
+                       ShowDropDownButton="False"
+                       StaysOpen="True"
+                       ToggleContent="{my:ToolIcon Kind=DotsVertical}">
+        <my:Submenu>
+            <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding CanBeRescheduled}">
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}" />
+                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Plural=True}" />
+                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Plural=True}" />
+                <MenuItem Height="50"
+                          my:RippleAssist.Feedback="Transparent"
+                          my:ThemeAssist.IsMouseOverBackground="Transparent"
+                          Header="{Binding Data.RescheduleCommand, Source={StaticResource MatchProxy}}"
+                          HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}" />
+            </MenuItem>
+            <MenuItem Command="{Binding InvertTeamsCommand}" Header="{my:Resource InvertTeams}" Icon="{my:ToolIcon Kind=SwapHorizontal}" />
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+            <MenuItem Header="{my:Resource Update}" Icon="{my:ToolIcon Kind=TimerRefreshOutline}">
+                <MenuItem Command="{Binding ResetCommand}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
+                <MenuItem Command="{Binding StartCommand}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
+                <MenuItem Command="{Binding SuspendCommand}" Header="{my:Resource Suspend}" Icon="{my:ToolIcon Kind=ProgressAlert}" />
+                <MenuItem Command="{Binding FinishCommand}" Header="{my:Resource Finish}" Icon="{my:ToolIcon Kind=ProgressCheck}" />
+                <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+                <MenuItem Command="{Binding CancelCommand}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
+            </MenuItem>
+            <MenuItem Command="{Binding RandomizeCommand}" Header="{my:Resource Randomize}" Icon="{my:ToolIcon Kind=Counter}" />
+            <MenuItem Header="{my:Resource DoWithdraw}" Icon="{my:ToolIcon Kind=Close}" IsEnabled="{Binding CanBeWithdraw}">
+                <MenuItem Command="{Binding DoWithdrawForHomeTeamCommand}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
+                <MenuItem Command="{Binding DoWithdrawForAwayTeamCommand}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
+            </MenuItem>
+        </my:Submenu>
+    </my:DropDownButton>
+</ToolBar>

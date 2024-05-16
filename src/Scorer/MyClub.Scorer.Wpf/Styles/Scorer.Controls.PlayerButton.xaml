@@ -1,0 +1,64 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
+                    xmlns:my="http://mynet.com/xaml/themes">
+
+    <ResourceDictionary.MergedDictionaries>
+        <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+        <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Styles/Scorer.Player.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="Scorer.Styles.PlayerButton" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}" TargetType="{x:Type ctrl:PlayerButton}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="ToolTip" Value="{my:Resource SeeItem}" />
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <StackPanel Orientation="{Binding Orientation, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}}">
+                        <DockPanel HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                            <TextBlock Padding="0"
+                                       HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                       DockPanel.Dock="Left"
+                                       FontSize="{Binding FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                       Text="{Binding Item.LastName, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}, Converter={x:Static my:StringConverter.ToUpper}, UpdateSourceTrigger=PropertyChanged}"
+                                       TextWrapping="NoWrap" />
+                            <TextBlock Padding="{StaticResource MyNet.Margins.Small.Horizontal}" Visibility="{Binding Orientation, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static Orientation.Horizontal}}" />
+                        </DockPanel>
+                        <TextBlock Padding="0"
+                                   HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                   FontSize="{Binding FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}"
+                                   Text="{Binding Item.FirstName, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:PlayerButton}}, UpdateSourceTrigger=PropertyChanged}"
+                                   TextWrapping="NoWrap" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu DataContext="{Binding PlacementTarget.Item, RelativeSource={RelativeSource Self}}">
+                    <ContextMenu.Resources>
+                        <my:BindingProxy x:Key="PlayerProxy" Data="{Binding}" />
+                    </ContextMenu.Resources>
+                    <MenuItem Command="{Binding OpenCommand}" Header="{Binding FullName}">
+                        <MenuItem.Icon>
+                            <Grid>
+                                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}" DataContext="{Binding Data, Source={StaticResource PlayerProxy}}" />
+                            </Grid>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                    <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="false">
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

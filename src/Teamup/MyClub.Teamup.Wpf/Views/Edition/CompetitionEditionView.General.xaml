@@ -1,0 +1,37 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.CompetitionEditionGeneralView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition" xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:FriendlyEditionViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <my:SimpleStackPanel>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Information}">
+            <TextBox Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource ShortName}" Text="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  StartDate  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarStart}">
+            <DatePicker my:HintAssist.Hint="{my:Resource StartDate}" SelectedDate="{Binding StartDate, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  EndDate  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarEnd}">
+            <DatePicker my:HintAssist.Hint="{my:Resource EndDate}" SelectedDate="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  DefaultTime  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ClockOutline}">
+            <my:TimePicker my:HintAssist.Hint="{my:Resource DefaultTime}" SelectedTime="{Binding MatchTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" my:HeaderAssist.HorizontalAlignment="Left" Header="{my:Resource MatchesFormat}">
+            <v:EditableMatchFormatView DataContext="{Binding MatchFormat}" />
+        </GroupBox>
+    </my:SimpleStackPanel>
+</UserControl>

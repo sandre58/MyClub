@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.TrainingSessionBase">
+    <Position X="9.25" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAAAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>TrainingAggregate\TrainingSessionBase.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Items" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.Drill">
+    <Position X="6" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAAAAAAAAAAEAAAIAAAAAQAIgQBAAAA=</HashCode>
+      <FileName>TrainingAggregate\Drill.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Area" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.Area">
+    <Position X="3.25" Y="9.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABACAAAAEAAAAAGAAABAAAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>TrainingAggregate\Area.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.TrainingBase">
+    <Position X="7.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAgAAAAAAEAAQC0AIAAAAAAAAAAJQEBAAgEAAAAEAA=</HashCode>
+      <FileName>TrainingAggregate\TrainingBase.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.TrainingSessionTemplate">
+    <Position X="8" Y="12.75" Width="1.5" />
+    <InheritanceLine Type="MyClub.Teamup.Domain.TrainingAggregate.TrainingSessionBase" ManuallyRouted="true">
+      <Path>
+        <Point X="10" Y="11.184" />
+        <Point X="10" Y="11.663" />
+        <Point X="8.75" Y="11.663" />
+        <Point X="8.75" Y="12.75" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>TrainingAggregate\TrainingSessionTemplate.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.TrainingSession">
+    <Position X="10.5" Y="12.75" Width="1.5" />
+    <InheritanceLine Type="MyClub.Teamup.Domain.TrainingAggregate.TrainingSessionBase" ManuallyRouted="true" FixedToPoint="true">
+      <Path>
+        <Point X="10" Y="11.184" />
+        <Point X="10" Y="11.66" />
+        <Point X="11.25" Y="11.66" />
+        <Point X="11.25" Y="12.75" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAIAAJCAQCEAAAAUAAAIAAAAABAAABAAAEAAIAQAAEA=</HashCode>
+      <FileName>TrainingAggregate\TrainingSession.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Attendances" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.TrainingAggregate.TrainingAttendance">
+    <Position X="13.25" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAEAAAAAAIEAAAAAAAAAQAABAEAAAAAAQAAAMA=</HashCode>
+      <FileName>TrainingAggregate\TrainingAttendance.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Player" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MyClub.Teamup.Domain.PersonAggregate.Player">
+    <Position X="16" Y="12.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABCAACRkGBIgAgAAAAIAAAACQAQBQAIAAAAAAAQQQ=</HashCode>
+      <FileName>PersonAggregate\Player.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="MyClub.Teamup.Domain.TrainingAggregate.ITrainingItem">
+    <Position X="12.25" Y="8.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>TrainingAggregate\ITrainingItem.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

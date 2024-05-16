@@ -1,0 +1,512 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.RosterPage.PlayersListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities"
+             xmlns:enums2="clr-namespace:MyClub.Teamup.Domain.Enums;assembly=MyClub.Teamup.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.RosterPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.RosterPage"
+             d:DataContext="{d:DesignInstance Type=vm:PlayersViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.ContentControl.Actions" BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type ContentControl}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <my:SimpleStackPanel Orientation="Horizontal">
+
+                            <!--  IsInjured  -->
+                            <Button x:Name="InjuryButton"
+                                    Style="{StaticResource MyNet.Styles.Button.Rounded.Elevation.Custom}"
+                                    Width="22"
+                                    Height="22"
+                                    Command="{Binding Item.OpenInjuriesCommand}"
+                                    Content="{my:Icon Kind=Ambulance,
+                                                      Size=14}"
+                                    ToolTip="{Binding Item.Injury.Condition}"
+                                    Visibility="{Binding Item.IsInjured, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                            <!--  IsAbsent  -->
+                            <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Elevation.Custom}"
+                                    Width="22"
+                                    Height="22"
+                                    Background="{DynamicResource MyNet.Brushes.Negative}"
+                                    Command="{Binding Item.OpenAbsencesCommand}"
+                                    Content="{my:Icon Kind=Cancel,
+                                                      Size=14}"
+                                    ToolTip="{my:Resource Absent}"
+                                    Visibility="{Binding Item.IsAbsent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        </my:SimpleStackPanel>
+
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity}" Value="{x:Static enums:InjurySeverity.Severe}">
+                                <Setter TargetName="InjuryButton" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Severe}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity}" Value="{x:Static enums:InjurySeverity.Minor}">
+                                <Setter TargetName="InjuryButton" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Minor}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity}" Value="{x:Static enums:InjurySeverity.Moderate}">
+                                <Setter TargetName="InjuryButton" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Moderate}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.Injury.Severity}" Value="{x:Static enums:InjurySeverity.Serious}">
+                                <Setter TargetName="InjuryButton" Property="Background" Value="{DynamicResource Teamup.Brushes.Injury.Serious}" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!--  Items  -->
+    <ListView Style="{StaticResource Teamup.Styles.ListView.Selectable}" my:ListAssist.SynchronizedList="{Binding}" ItemsSource="{Binding Wrappers}">
+        <ListView.ItemContainerStyle>
+            <Style BasedOn="{StaticResource Teamup.Styles.ListViewItem.Selectable}" TargetType="{x:Type ListViewItem}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Item.IsAbsent}" Value="True">
+                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ListView.ItemContainerStyle>
+        <ListView.GroupStyle>
+            <GroupStyle>
+                <GroupStyle.ContainerStyle>
+                    <Style TargetType="{x:Type GroupItem}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate>
+                                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}" Margin="{StaticResource MyNet.Margins.Large.Bottom}" Header="{my:Translation Name}">
+                                        <ItemsPresenter />
+                                    </GroupBox>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </GroupStyle.ContainerStyle>
+            </GroupStyle>
+        </ListView.GroupStyle>
+
+        <ListView.View>
+            <GridView>
+
+                <!--  Is Selected  -->
+                <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                my:GridViewColumnAssist.CanSort="False"
+                                my:GridViewColumnAssist.Width="60"
+                                HeaderTemplate="{StaticResource Teamup.DataTemplates.ListView.SelectAll}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <ToggleButton Style="{StaticResource Teamup.Styles.ToggleButton.Player}"
+                                          Margin="{StaticResource MyNet.Margins.Default.Vertical}"
+                                          Content="{Binding Item}"
+                                          IsChecked="{Binding IsSelected}"
+                                          IsEnabled="{Binding IsSelectable}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Infos  -->
+                <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                my:GridViewColumnAssist.CanSort="False"
+                                my:GridViewColumnAssist.PropertyName="IsInjured"
+                                my:GridViewColumnAssist.Width="50"
+                                Header="Informations">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <my:PackIcon Width="22"
+                                         Height="22"
+                                         HorizontalAlignment="Center"
+                                         Kind="InformationCircle" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <ContentControl HorizontalAlignment="Center" Content="{Binding}">
+                                <ContentControl.Style>
+                                    <Style BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type ContentControl}">
+                                        <Setter Property="ContentTemplate">
+                                            <Setter.Value>
+                                                <DataTemplate />
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Item.CountInformations, Converter={x:Static my:CountToBooleanConverter.Many}}" Value="True">
+                                                <Setter Property="ContentTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Rounded.Outlined.Accent}"
+                                                                               Width="22"
+                                                                               Height="22"
+                                                                               Padding="0"
+                                                                               my:PopupAssist.Background="Transparent"
+                                                                               PlacementMode="RightAndAlignMiddles"
+                                                                               PopupAnimation="Fade"
+                                                                               PopupMode="MouseOverEager"
+                                                                               ShowDropDownButton="False"
+                                                                               ToggleContent="{Binding Item.CountInformations}"
+                                                                               UnfurlOrientation="Horizontal"
+                                                                               Visibility="{Binding Item.CountInformations, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotMany}}">
+                                                                <ContentControl Style="{StaticResource Teamup.Styles.ContentControl.Actions}" />
+                                                            </my:DropDownButton>
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Item.CountInformations, Converter={x:Static my:CountToBooleanConverter.One}}" Value="True">
+                                                <Setter Property="ContentTemplate">
+                                                    <Setter.Value>
+                                                        <DataTemplate>
+                                                            <ContentControl Style="{StaticResource Teamup.Styles.ContentControl.Actions}" />
+                                                        </DataTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ContentControl.Style>
+                            </ContentControl>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Number  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Number" my:GridViewColumnAssist.Width="*" Header="{my:Resource NumberAbbr}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}"
+                                       FontFamily="{StaticResource MyNet.Font.Family.Jersey}"
+                                       Text="{Binding Item.Number}"
+                                       TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Name  -->
+                <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                my:GridViewColumnAssist.PropertyName="InverseName"
+                                my:GridViewColumnAssist.Width="5*"
+                                Header="{my:Resource LastName}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <ctrl:PlayerButton ContextMenu="{x:Null}" IsEnabled="{Binding Data.SelectedWrappers.Count, Converter={x:Static my:CountToBooleanConverter.NotMany}, Source={StaticResource Proxy}}" Item="{Binding Item}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Team  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Team"
+                                my:GridViewColumnAssist.Width="2*"
+                                DisplayMemberBinding="{Binding Item.Team.Name}"
+                                Header="{my:Resource Team}" />
+
+                <!--  Age  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Age" my:GridViewColumnAssist.Width="2*" Header="{my:Resource Age}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:Translation Item.Age, Format=AgeFormat, TargetNullValue=''}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Birthdate  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Birthdate" my:GridViewColumnAssist.Width="2*" Header="{my:Resource Birthdate}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:Translation Item.Birthdate, Format=ShortDatePattern}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Category  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Category" my:GridViewColumnAssist.Width="2*" Header="{my:Resource CategoryAbbr}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:Translation Item.Category}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  License Number  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="LicenseNumber" my:GridViewColumnAssist.Width="3*" Header="{my:Resource LicenseNumber}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <my:SimpleStackPanel Orientation="Horizontal">
+                                <TextBlock Text="{my:Translation Item.LicenseNumber, Format=LicenseNumberFormat}" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool.ClipBoard}" CommandParameter="{my:Translation Item.LicenseNumber, Format=LicenseNumberFormat}" />
+                            </my:SimpleStackPanel>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  License state  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="LicenseState" my:GridViewColumnAssist.Width="2*" Header="{my:Resource LicenseState}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Orientation="Horizontal" ToolTip="{my:Translation Item.LicenseState}">
+                                        <my:PackIcon x:Name="Ellipse1"
+                                                     Width="18"
+                                                     Height="18"
+                                                     Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                                     Foreground="{DynamicResource MyNet.Brushes.Control.Background}"
+                                                     Kind="CheckboxBlankCircle" />
+                                        <my:PackIcon x:Name="Ellipse2"
+                                                     Width="18"
+                                                     Height="18"
+                                                     Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                                     Foreground="{DynamicResource MyNet.Brushes.Control.Background}"
+                                                     Kind="CheckboxBlankCircle" />
+                                        <my:PackIcon x:Name="Ellipse3"
+                                                     Width="18"
+                                                     Height="18"
+                                                     Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                                     Foreground="{DynamicResource MyNet.Brushes.Control.Background}"
+                                                     Kind="CheckboxBlankCircle" />
+                                        <my:PackIcon x:Name="Ellipse4"
+                                                     Width="18"
+                                                     Height="18"
+                                                     Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                                     Foreground="{DynamicResource MyNet.Brushes.Control.Background}"
+                                                     Kind="CheckboxBlankCircle" />
+                                    </StackPanel>
+                                    <my:PackIcon Grid.Column="1"
+                                                 Margin="{StaticResource MyNet.Margins.Default.Horizontal}"
+                                                 Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                                                 Kind="WarningOctagon"
+                                                 ToolTip="{my:Resource IsMutation}"
+                                                 Visibility="{Binding Item.IsMutation, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Item.LicenseState}" Value="{x:Static enums2:LicenseState.Paid}">
+                                    <Setter TargetName="Ellipse4" Property="Foreground" Value="{DynamicResource Teamup.Brushes.License.Paid}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.LicenseState}" Value="{x:Static enums2:LicenseState.Back}">
+                                    <Setter TargetName="Ellipse3" Property="Foreground" Value="{DynamicResource Teamup.Brushes.License.Back}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.LicenseState}" Value="{x:Static enums2:LicenseState.Given}">
+                                    <Setter TargetName="Ellipse2" Property="Foreground" Value="{DynamicResource Teamup.Brushes.License.Given}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.LicenseState}" Value="{x:Static enums2:LicenseState.Unknown}">
+                                    <Setter TargetName="Ellipse1" Property="Foreground" Value="{DynamicResource Teamup.Brushes.License.Unknown}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  FromDate  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="FromDate" my:GridViewColumnAssist.Width="2*" Header="{my:Resource InClubFromDate}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:Translation Item.FromDate, Format=ShortDatePattern}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Gender  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Gender" my:GridViewColumnAssist.Width="*" Header="{my:Resource Gender}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <my:PackIcon Width="25"
+                                             Height="25"
+                                             Foreground="{DynamicResource MyNet.Brushes.Male}"
+                                             Kind="GenderMale"
+                                             Visibility="{Binding Item.Gender, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static utils:GenderType.Male}}" />
+                                <my:PackIcon Width="25"
+                                             Height="25"
+                                             Foreground="{DynamicResource MyNet.Brushes.Female}"
+                                             Kind="GenderFemale"
+                                             Visibility="{Binding Item.Gender, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static utils:GenderType.Female}}" />
+                            </Grid>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Country  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Country" my:GridViewColumnAssist.Width="*" Header="{my:Resource NationalityAbbr}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Width="20"
+                                   HorizontalAlignment="Left"
+                                   Source="{Binding Item.Country, Converter={x:Static my:CountryToFlagConverter.To24}}"
+                                   ToolTip="{my:Translation Item.Country}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Position  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="NaturalPosition" my:GridViewColumnAssist.Width="2*" Header="{my:Resource Positions}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Item.Positions, Converter={x:Static c:RatedPositionsToStringConverter.NaturalCodes}}" TextWrapping="NoWrap" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{Binding Item.Positions, Converter={x:Static c:RatedPositionsToStringConverter.GoodCodes}}" TextWrapping="NoWrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Address  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Address" my:GridViewColumnAssist.Width="5*" Header="{my:Resource Address}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Item.Address.Street}" TextWrapping="NoWrap" />
+                                <DockPanel>
+                                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                               DockPanel.Dock="Left"
+                                               Text="{Binding Item.Address.PostalCode, StringFormat='{}{0}'}"
+                                               TextWrapping="NoWrap" />
+                                    <TextBlock Text="{Binding Item.Address.City, Converter={x:Static my:StringConverter.ToUpper}}" TextWrapping="NoWrap" />
+                                </DockPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Phone  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Phone" my:GridViewColumnAssist.Width="4*" Header="{my:Resource Phone}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding Item.Phone, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <TextBlock Text="{my:Translation Item.Phone.Value, Format=PhoneFormat}" TextWrapping="NoWrap" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool.ClipBoard}" CommandParameter="{my:Translation Item.Phone, Format=PhoneFormat}" />
+                            </my:SimpleStackPanel>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Email  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Email" my:GridViewColumnAssist.Width="6*" Header="{my:Resource Email}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding Item.Email, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding Item.OpenEmailInMailClientCommand}"
+                                        CommandParameter="{Binding Item.Email.Value}"
+                                        Content="{Binding Item.Email.Value}"
+                                        FontSize="11"
+                                        FontWeight="Normal"
+                                        ToolTip="{Binding Item.Email.Value}" />
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool.ClipBoard}" CommandParameter="{Binding Item.Email.Value}" />
+                            </my:SimpleStackPanel>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Laterality  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Laterality" my:GridViewColumnAssist.Width="2*" Header="{my:Resource Laterality}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" ToolTip="{my:Translation Item.Laterality}">
+                                <my:GeometryIcon x:Name="LeftFootIcon"
+                                                 Width="35"
+                                                 Height="35"
+                                                 Margin="-5 2"
+                                                 Data="{DynamicResource MyNet.Geometries.LeftFoot}"
+                                                 Opacity="{StaticResource MyNet.Opacity.Medium}" />
+                                <my:GeometryIcon x:Name="RightFootIcon"
+                                                 Width="35"
+                                                 Height="35"
+                                                 Margin="-5 2"
+                                                 Data="{DynamicResource MyNet.Geometries.RightFoot}"
+                                                 Opacity="{StaticResource MyNet.Opacity.Medium}" />
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Item.Laterality}" Value="{x:Static enums:Laterality.LeftHander}">
+                                    <Setter TargetName="LeftFootIcon" Property="Opacity" Value="1" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Item.Laterality}" Value="{x:Static enums:Laterality.RightHander}">
+                                    <Setter TargetName="RightFootIcon" Property="Opacity" Value="1" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Height  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Height" my:GridViewColumnAssist.Width="*" Header="{my:Resource Height}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:UnitTranslation Item.Height, Simplify=False}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Weight  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Weight" my:GridViewColumnAssist.Width="*" Header="{my:Resource Weight}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:UnitTranslation Item.Weight, Simplify=False}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Size  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Size" my:GridViewColumnAssist.Width="*" Header="{my:Resource Size}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Item.Size}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Shoes Size  -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="ShoesSize" my:GridViewColumnAssist.Width="*" Header="{my:Resource ShoesSizeAbbr}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Item.ShoesSize}" TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!--  Actions  -->
+                <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
+                                my:GridViewColumnAssist.CanSort="False"
+                                my:GridViewColumnAssist.Width="90"
+                                HeaderTemplate="{StaticResource MyNet.DataTemplates.ListView.ColumnsVisibility}">
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <v:PlayerToolBar x:Name="ToolBar"
+                                             HorizontalAlignment="Right"
+                                             DataContext="{Binding Item}"
+                                             RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                             Visibility="Collapsed" />
+
+                            <DataTemplate.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}}" Value="True" />
+                                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                                </MultiDataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+            </GridView>
+        </ListView.View>
+    </ListView>
+</UserControl>

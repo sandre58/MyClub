@@ -1,0 +1,58 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.PlayerEditionMorphologyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:PlayerEditionViewModel}"
+             Focusable="False"
+             mc:Ignorable="d">
+
+    <my:SimpleStackPanel>
+
+        <!--  Laterality  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Data={StaticResource MyNet.Geometries.Foot}}">
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding Laterality, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="DataContext">
+                <ListBoxItem my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Left}"
+                             Content="{my:MediumIcon Data={StaticResource MyNet.Geometries.LeftFoot}}"
+                             DataContext="{x:Static enums:Laterality.LeftHander}"
+                             ToolTip="{my:Resource LateralityLeftHander}" />
+                <ListBoxItem Content="{my:MediumIcon Data={StaticResource MyNet.Geometries.RightFoot}}" DataContext="{x:Static enums:Laterality.RightHander}" ToolTip="{my:Resource LateralityRightHander}" />
+            </ListBox>
+        </GroupBox>
+
+        <!--  Height  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=HumanMaleHeightVariant}">
+            <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource Height}" my:NumericUpDownAssist.AcceptableValue="{Binding Height}" />
+        </GroupBox>
+
+        <!--  Weight  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=TshirtCrew}">
+            <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource Weight}" Minimum="10" Maximum="200" />
+        </GroupBox>
+
+
+        <!--  Clothes  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=TshirtCrew}">
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.AutoCompletion}"
+                      Width="{StaticResource MyNet.Widths.Control.Medium}"
+                      my:ComboBoxAssist.DownCommand="{Binding DownSizeCommand}"
+                      my:ComboBoxAssist.ShowCaret="False"
+                      my:ComboBoxAssist.ShowDropDownPopup="True"
+                      my:ComboBoxAssist.ShowUpDownButton="True"
+                      my:ComboBoxAssist.UpCommand="{Binding UpSizeCommand}"
+                      my:HintAssist.Hint="{my:Resource Size}"
+                      my:HintAssist.IsFloating="True"
+                      ItemsSource="{Binding Sizes}"
+                      Text="{Binding Size, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+
+        <!--  Shoes  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ShoeFormal}">
+            <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource ShoesSize}" my:NumericUpDownAssist.AcceptableValue="{Binding ShoesSize}" />
+        </GroupBox>
+    </my:SimpleStackPanel>
+</UserControl>

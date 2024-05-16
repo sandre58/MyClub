@@ -1,0 +1,181 @@
+﻿<my:ExtendedWindow x:Class="MyClub.Teamup.Wpf.Views.Shell.MainWindow"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:my="http://mynet.com/xaml/themes"
+                   xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.Shell"
+                   xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Shell"
+                   Title="{Binding Title}"
+                   d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
+                   my:ViewModelAssist.AutoWire="True"
+                   AllowDrop="False"
+                   BusyService="{Binding BusyService}"
+                   DialogService="{Binding DialogService}"
+                   TitleAlignment="Center"
+                   TitleBarHeight="45"
+                   WindowState="Maximized"
+                   mc:Ignorable="d">
+    <my:ExtendedWindow.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </my:ExtendedWindow.Resources>
+
+    <!--  Style (for Title)  -->
+    <my:ExtendedWindow.Style>
+        <Style BasedOn="{StaticResource MyNet.Styles.ExtendedWindow}" TargetType="{x:Type my:ExtendedWindow}">
+            <Setter Property="TitleTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+
+                            <my:SimpleStackPanel Orientation="Horizontal">
+                                <!--  Save Button  -->
+                                <my:Badged BadgeMargin="0 0 7 2" BadgePlacementMode="BottomRight">
+                                    <my:Badged.Style>
+                                        <Style BasedOn="{StaticResource MyNet.Styles.Badged}" TargetType="{x:Type my:Badged}">
+                                            <Setter Property="BadgeBackground" Value="{DynamicResource Teamup.Brushes.Saved}" />
+                                            <Setter Property="BadgeForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
+                                            <Setter Property="Badge" Value="{my:Icon Kind=Check, Size=10}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Data.IsDirty, Source={StaticResource Proxy}}" Value="True">
+                                                    <Setter Property="BadgeBackground" Value="{DynamicResource Teamup.Brushes.Dirty}" />
+                                                    <Setter Property="Badge" Value="{my:Icon Kind=EditOutline, Size=10}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Data.Filename, Source={StaticResource Proxy}, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" Value="True">
+                                                    <Setter Property="BadgeBackground" Value="{DynamicResource Teamup.Brushes.Dirty}" />
+                                                    <Setter Property="Badge" Value="{my:Icon Kind=ExclamationBold, Size=10}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </my:Badged.Style>
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Text}" Command="{Binding Data.SaveCommand, Source={StaticResource Proxy}}" Content="{my:MediumIcon Kind=ContentSave}">
+                                        <Button.ToolTip>
+                                            <StackPanel>
+                                                <TextBlock HorizontalAlignment="Center" Text="{my:ShortcutResource Save, ShortcutKey='Ctrl+S'}" />
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           FontStyle="Italic"
+                                                           Text="{Binding Data.Filename, Source={StaticResource Proxy}, StringFormat='[{0}]'}"
+                                                           Visibility="{Binding Data.Filename, Source={StaticResource Proxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                            </StackPanel>
+                                        </Button.ToolTip>
+                                    </Button>
+                                </my:Badged>
+                            </my:SimpleStackPanel>
+
+                            <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" />
+
+                            <DockPanel>
+
+                                <!--  Image  -->
+                                <my:PackIcon Width="24"
+                                             Height="24"
+                                             Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                             VerticalAlignment="Center"
+                                             DockPanel.Dock="Left"
+                                             Kind="UserSupervisorCircle"
+                                             Visibility="{Binding Data.CurrentProject.Image, Source={StaticResource Proxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                <Image Width="25"
+                                       Height="25"
+                                       Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                       VerticalAlignment="Center"
+                                       DockPanel.Dock="Left"
+                                       Source="{Binding Data.CurrentProject.Image, Source={StaticResource Proxy}, Converter={x:Static my:BytesToImageConverter.Default}}"
+                                       Stretch="Uniform"
+                                       Visibility="{Binding Data.CurrentProject.Image, Source={StaticResource Proxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+
+                                <StackPanel Margin="{StaticResource MyNet.Margins.Default.Left}" VerticalAlignment="Center">
+
+                                    <!--  Name  -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Data.CurrentProject.Name, Source={StaticResource Proxy}}" />
+                                        <TextBlock Margin="{StaticResource MyNet.Margins.Default.Left}"
+                                                   Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                                   Text="[Debug]"
+                                                   Visibility="{Binding Data.IsDebug, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                    </StackPanel>
+
+                                    <!--  Season  -->
+                                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Data.CurrentProject.Season.Period.Start, Source={StaticResource Proxy}, Format=DateShortMonthYearFormat, Casing=Title}" />
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="-" />
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Data.CurrentProject.Season.Period.End, Source={StaticResource Proxy}, Format=DateShortMonthYearFormat, Casing=Title}" />
+                                    </my:SimpleStackPanel>
+
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasCurrentProject}" Value="False">
+                    <Setter Property="TitleTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Data.ProductName, Source={StaticResource Proxy}}" Typography.Capitals="AllSmallCaps" />
+                                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Left}"
+                                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                               Text="[Debug]"
+                                               Visibility="{Binding Data.IsDebug, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </my:ExtendedWindow.Style>
+
+    <!--  HotKeys  -->
+    <my:ExtendedWindow.InputBindings>
+
+        <!--  Settings Menu  -->
+        <KeyBinding Modifiers="Ctrl" Key="Space" Command="{Binding ToggleNotificationsCommand}" />
+        <KeyBinding Modifiers="Alt" Key="F" Command="{Binding ToggleFileMenuCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="O" Command="{Binding ToggleOpenCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="P" Command="{Binding TogglePropertiesCommand}" />
+        <KeyBinding Key="F1" Command="{Binding ToggleAboutCommand}" />
+        <KeyBinding Key="F2" Command="{Binding TogglePreferencesCommand}" />
+        <KeyBinding Key="F3" Command="{Binding OpenSettingsCommand}" />
+        <KeyBinding Key="F4" Command="{Binding OpenUserProfileCommand}" />
+        <KeyBinding Key="F6" Command="{Binding IsLightCommand}" />
+        <KeyBinding Key="F7" Command="{Binding IsDarkCommand}" />
+
+        <!--  Project  -->
+        <KeyBinding Key="F8" Command="{Binding EditProjectCommand}" />
+        <KeyBinding Key="F9" Command="{Binding EditTeamsCommand}" />
+        <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding CreateCommand}" />
+        <KeyBinding Modifiers="Ctrl+Shift" Key="O" Command="{Binding LoadCommand}" />
+        <KeyBinding Modifiers="Ctrl+Shift" Key="Q" Command="{Binding CloseCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}" />
+        <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding SaveAsCommand}" />
+
+        <!--  Navigation  -->
+        <KeyBinding Key="PageUp" Command="{Binding GoBackCommand}" />
+        <KeyBinding Key="PageDown" Command="{Binding GoForwardCommand}" />
+
+        <!--  Exit and close  -->
+        <KeyBinding Key="Esc" Command="{Binding CloseDrawersCommand}" />
+        <KeyBinding Modifiers="Ctrl" Key="Q" Command="{Binding ExitCommand}" />
+
+    </my:ExtendedWindow.InputBindings>
+
+    <!--  Left Commands  -->
+    <my:ExtendedWindow.LeftWindowCommands>
+        <v:LeftWindowsCommands />
+    </my:ExtendedWindow.LeftWindowCommands>
+
+    <!--  Right Commands  -->
+    <my:ExtendedWindow.RightWindowCommands>
+        <v:RightWindowsCommands />
+    </my:ExtendedWindow.RightWindowCommands>
+
+    <!--  TaskBar  -->
+    <my:ExtendedWindow.TaskbarItemInfo>
+        <TaskbarItemInfo ProgressState="{Binding ProgressState, Converter={x:Static my:TaskBarProgressStateConverter.Default}, ConverterParameter=2}" ProgressValue="{Binding ProgressValue}" />
+    </my:ExtendedWindow.TaskbarItemInfo>
+
+    <!--  Main View  -->
+    <v:MainView Margin="0 -45 0 0" />
+</my:ExtendedWindow>

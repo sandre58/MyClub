@@ -1,0 +1,19 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
+
+    <!--  Project  -->
+    <Color x:Key="Scorer.Colors.Saved">#22CD17</Color>
+    <Color x:Key="Scorer.Colors.Dirty">#FFBD00</Color>
+
+    <!-- Competition -->
+    <Color x:Key="Scorer.Colors.League">#4E2FAA</Color>
+    <Color x:Key="Scorer.Colors.Cup">#30A032</Color>
+    
+    <!-- Match -->
+    <Color x:Key="Scorer.Colors.Match.State.Suspended">#CE3B3B</Color>
+    
+    <SolidColorBrush x:Key="Scorer.Brushes.Saved" po:Freeze="true" Color="{StaticResource Scorer.Colors.Saved}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Dirty" po:Freeze="true" Color="{StaticResource Scorer.Colors.Dirty}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.League" po:Freeze="true" Color="{StaticResource Scorer.Colors.League}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Cup" po:Freeze="true" Color="{StaticResource Scorer.Colors.Cup}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Match.State.Suspended" po:Freeze="true" Color="{StaticResource Scorer.Colors.Match.State.Suspended}" />
+</ResourceDictionary>

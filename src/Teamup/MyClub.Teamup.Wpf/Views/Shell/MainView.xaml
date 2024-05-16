@@ -1,0 +1,284 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Shell.MainView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vS="clr-namespace:MyNet.Wpf.Presentation.Views.Shell;assembly=MyNet.Wpf.Presentation"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Shell"
+             xmlns:vCa="clr-namespace:MyClub.Teamup.Wpf.Views.CalendarPage"
+             xmlns:vC="clr-namespace:MyClub.Teamup.Wpf.Views.CommunicationPage"
+             xmlns:vCo="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionsPage"
+             xmlns:vH="clr-namespace:MyClub.Teamup.Wpf.Views.HomePage"
+             xmlns:vMC="clr-namespace:MyClub.Teamup.Wpf.Views.MedicalCenterPage"
+             xmlns:vR="clr-namespace:MyClub.Teamup.Wpf.Views.RosterPage"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.Shell"
+             xmlns:vT="clr-namespace:MyClub.Teamup.Wpf.Views.TacticPage"
+             xmlns:vTr="clr-namespace:MyClub.Teamup.Wpf.Views.TrainingPage"
+             xmlns:dd="urn:gong-wpf-dragdrop"
+             d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="Teamup.Styles.HeaderedContentControl.MainMenu" BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type HeaderedContentControl}">
+            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Information}" />
+            <Setter Property="my:HeaderAssist.Foreground" Value="{my:BrushBinding SelfPath=(my:HeaderAssist.Background), Contrast=True}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type HeaderedContentControl}">
+                        <Grid>
+                            <ContentPresenter />
+                            <Label x:Name="label"
+                                   Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation}"
+                                   Width="18"
+                                   Height="18"
+                                   Margin="0 0 8 -5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Bottom"
+                                   Background="{Binding Path=(my:HeaderAssist.Background), RelativeSource={RelativeSource TemplatedParent}}"
+                                   Content="{TemplateBinding Header}"
+                                   FontWeight="Bold"
+                                   Foreground="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource TemplatedParent}}"
+                                   Visibility="{Binding HasHeader, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <my:DrawerHost IsLeftDrawerOpen="{Binding FileMenuViewModel.IsVisible}"
+                   IsRightDrawerOpen="{Binding NotificationsViewModel.IsVisible}"
+                   LeftDrawerBackground="{DynamicResource MyNet.Brushes.Accent}"
+                   LeftDrawerCloseOnClickAway="True"
+                   RightDrawerCloseOnClickAway="True">
+
+        <!--  File Menu Panel  -->
+        <my:DrawerHost.LeftDrawerContent>
+            <v:FileMenuView DataContext="{Binding FileMenuViewModel}" Foreground="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
+        </my:DrawerHost.LeftDrawerContent>
+
+        <!--  Notifications Panel  -->
+        <my:DrawerHost.RightDrawerContent>
+            <vS:NotificationsView DataContext="{Binding NotificationsViewModel}" />
+        </my:DrawerHost.RightDrawerContent>
+
+        <!--  Drop container  -->
+        <Grid x:Name="Root"
+              Margin="0 55 0 0"
+              dd:DragDrop.DropHandler="{Binding DropHandler}"
+              dd:DragDrop.IsDropTarget="{Binding CanDropTmprojFiles}">
+
+            <Border Grid.ColumnSpan="2" Background="White" Opacity="0.001" />
+
+            <!--  Main Menu  -->
+            <my:NavigationView Style="{StaticResource MyNet.Styles.NavigationView.Compact}"
+                               FrameCornerRadius="15 0 0 0"
+                               NavigationService="{Binding NavigationService}"
+                               ShowHeader="False"
+                               ShowNavigationButtons="False">
+                <my:NavigationView.ContentTemplateSelector>
+                    <my:NullTemplateSelector>
+                        <my:NullTemplateSelector.NullTemplate>
+                            <DataTemplate>
+                                <my:ApplicationIcon Grid.Column="1"
+                                                    Width="300"
+                                                    Height="300"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Background="{DynamicResource MyNet.Brushes.Control.Background}"
+                                                    Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                                                    OffsetX="75"
+                                                    OffsetY="75"
+                                                    Opacity="0.2"
+                                                    ShowText="False" />
+                            </DataTemplate>
+                        </my:NullTemplateSelector.NullTemplate>
+                    </my:NullTemplateSelector>
+                </my:NavigationView.ContentTemplateSelector>
+                <!--  Home  -->
+                <my:NavigationViewItem Header="{my:Resource Home}"
+                                       Icon="{my:MediumIcon Kind=Home}"
+                                       TargetViewType="{x:Type vH:HomePageView}"
+                                       ToolTip="{my:Resource Home}" />
+
+                <my:NavigationViewItemSeparator Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                <!--  Roster  -->
+                <my:NavigationViewItem Header="{my:Resource Roster}"
+                                       TargetViewType="{x:Type vR:RosterPageView}"
+                                       ToolTip="{my:Resource Roster}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <my:NavigationViewItem.Icon>
+                        <HeaderedContentControl Content="{my:MediumIcon Kind=UserGroup}" Header="{Binding CountPlayers}">
+                            <HeaderedContentControl.Style>
+                                <Style BasedOn="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CountPlayers}" Value="0">
+                                            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                                            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </HeaderedContentControl.Style>
+                        </HeaderedContentControl>
+                    </my:NavigationViewItem.Icon>
+                </my:NavigationViewItem>
+
+                <!--  Tactics  -->
+                <my:NavigationViewItem Header="{my:Resource Tactic}"
+                                       TargetViewType="{x:Type vT:TacticPageView}"
+                                       ToolTip="{my:Resource Tactic}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <my:NavigationViewItem.Icon>
+                        <HeaderedContentControl Content="{my:MediumIcon Data={StaticResource Teamup.Geometries.Tactic}}" Header="{Binding CountTactics}">
+                            <HeaderedContentControl.Style>
+                                <Style BasedOn="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CountTactics}" Value="0">
+                                            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                                            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </HeaderedContentControl.Style>
+                        </HeaderedContentControl>
+                    </my:NavigationViewItem.Icon>
+                </my:NavigationViewItem>
+
+                <!--  Trainings  -->
+                <my:NavigationViewItem Header="{my:Resource Training}"
+                                       TargetViewType="{x:Type vTr:TrainingPageView}"
+                                       ToolTip="{my:Resource Training}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <my:NavigationViewItem.Icon>
+                        <HeaderedContentControl Content="{my:MediumIcon Data={StaticResource Teamup.Geometries.Training}}" Header="{Binding CountTrainingSessions}">
+                            <HeaderedContentControl.Style>
+                                <Style BasedOn="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CountTrainingSessions}" Value="0">
+                                            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                                            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </HeaderedContentControl.Style>
+                        </HeaderedContentControl>
+                    </my:NavigationViewItem.Icon>
+                </my:NavigationViewItem>
+
+                <!--  Medical Center  -->
+                <my:NavigationViewItem Header="{my:Resource MedicalCenter}"
+                                       TargetViewType="{x:Type vMC:MedicalCenterPageView}"
+                                       ToolTip="{my:Resource MedicalCenter}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <my:NavigationViewItem.Icon>
+                        <HeaderedContentControl Content="{my:MediumIcon Kind=MedicalBag}" Header="{Binding CountInjuries}">
+                            <HeaderedContentControl.Style>
+                                <Style BasedOn="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CountInjuries}" Value="0">
+                                            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                                            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </HeaderedContentControl.Style>
+                        </HeaderedContentControl>
+                    </my:NavigationViewItem.Icon>
+                </my:NavigationViewItem>
+
+                <my:NavigationViewItemSeparator Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                <!--  Calendar  -->
+                <my:NavigationViewItem Header="{my:Resource Calendar}"
+                                       Icon="{my:MediumIcon Kind=CalendarBlank}"
+                                       TargetViewType="{x:Type vCa:CalendarPageView}"
+                                       ToolTip="{my:Resource Calendar}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                <!--  Competitions  -->
+                <my:NavigationViewItem Header="{my:Resource Competitions}"
+                                       TargetViewType="{x:Type vCo:CompetitionsPageView}"
+                                       ToolTip="{my:Resource Competitions}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <my:NavigationViewItem.Icon>
+                        <HeaderedContentControl Content="{my:MediumIcon Kind=Trophy}" Header="{Binding CountCompetitions}">
+                            <HeaderedContentControl.Style>
+                                <Style BasedOn="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CountCompetitions}" Value="0">
+                                            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                                            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </HeaderedContentControl.Style>
+                        </HeaderedContentControl>
+                    </my:NavigationViewItem.Icon>
+                </my:NavigationViewItem>
+
+                <my:NavigationViewItemSeparator Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                <!--  Communication  -->
+                <my:NavigationViewItem Header="{my:Resource Communication}"
+                                       Icon="{my:MediumIcon Kind=Envelope}"
+                                       TargetViewType="{x:Type vC:CommunicationPageView}"
+                                       ToolTip="{my:Resource Communication}"
+                                       Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                <my:NavigationView.FooterMenuItems>
+                    <my:NavigationViewItemSeparator Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                    <!--  Edit teams  -->
+                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditTeamsCommand}"
+                                           Header="{my:Resource Teams}"
+                                           ToolTip="{my:ShortcutResource EditTeams,
+                                                                         ShortcutKey=F9}"
+                                           Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                        <my:NavigationViewItem.Icon>
+                            <HeaderedContentControl Content="{my:MediumIcon Kind=AccountSupervisorCircle}" Header="{Binding CountTeams}">
+                                <HeaderedContentControl.Style>
+                                    <Style BasedOn="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CountTeams}" Value="0">
+                                                <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                                                <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </HeaderedContentControl.Style>
+                            </HeaderedContentControl>
+                        </my:NavigationViewItem.Icon>
+                    </my:NavigationViewItem>
+
+                    <!--  Edit project  -->
+                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditProjectCommand}"
+                                           Header="{my:Resource Edit}"
+                                           ToolTip="{my:ShortcutResource EditProject,
+                                                                         ShortcutKey=F8}"
+                                           Visibility="{Binding HasCurrentProject, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                        <my:NavigationViewItem.Icon>
+                            <HeaderedContentControl Style="{StaticResource Teamup.Styles.HeaderedContentControl.MainMenu}">
+                                <Grid Width="24" Height="24" VerticalAlignment="Top">
+
+                                    <!--  Image  -->
+                                    <my:PackIcon Width="24"
+                                                 Height="24"
+                                                 Kind="ShieldEdit"
+                                                 Visibility="{Binding CurrentProject.Club.Logo, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                    <Image HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch"
+                                           Source="{Binding CurrentProject.Club.Logo, Converter={x:Static my:BytesToImageConverter.Default}}"
+                                           Stretch="Uniform"
+                                           Visibility="{Binding CurrentProject.Club.Logo, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                </Grid>
+                            </HeaderedContentControl>
+                        </my:NavigationViewItem.Icon>
+                    </my:NavigationViewItem>
+                </my:NavigationView.FooterMenuItems>
+            </my:NavigationView>
+        </Grid>
+
+    </my:DrawerHost>
+</UserControl>

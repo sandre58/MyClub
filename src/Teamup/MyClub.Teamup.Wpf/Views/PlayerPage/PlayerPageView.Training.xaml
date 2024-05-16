@@ -1,0 +1,127 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.PlayerPage.PlayerPageTrainingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:display="clr-namespace:MyNet.UI.ViewModels.Display;assembly=MyNet.UI"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.PlayerPage"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.PlayerPage"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             d:DataContext="{d:DesignInstance Type=vm:PlayerPageTrainingViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.GroupBox.Label.Presences.Count" BasedOn="{StaticResource MyNet.Styles.GroupBox.Label.Custom}" TargetType="{x:Type GroupBox}">
+            <Setter Property="Width" Value="80" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource Self}}" Value="0">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
+    <my:GhostControl GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" ShowGhost="{Binding Item.TrainingStatistics.Attendances.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <DockPanel>
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                         DockPanel.Dock="Right"
+                         ItemsSource="{Binding Display.AllowedModes}"
+                         SelectedItem="{Binding Display.Mode}">
+                    <ListBox.Resources>
+                        <DataTemplate DataType="{x:Type display:DisplayModeList}">
+                            <my:PackIcon Width="24"
+                                         Height="24"
+                                         Kind="ViewList"
+                                         ToolTip="{my:Resource DisplayModeList}" />
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type display:DisplayModeChart}">
+                            <my:PackIcon Width="24"
+                                         Height="24"
+                                         Kind="ChartAreaspline"
+                                         ToolTip="{my:Resource DisplayModeChart}" />
+                        </DataTemplate>
+                    </ListBox.Resources>
+                </ListBox>
+
+
+                <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding Item.TrainingStatistics.PerformedAttendances.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource MyNet.Brushes.Positive}"
+                              Content="{Binding Item.TrainingStatistics.Presents.Count}"
+                              Header="{my:Resource Presences}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource MyNet.Brushes.Negative}"
+                              Content="{Binding Item.TrainingStatistics.Absents.Count}"
+                              Header="{my:Resource Absences}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource MyNet.Brushes.Warning}"
+                              Content="{Binding Item.TrainingStatistics.Apologized.Count}"
+                              Header="{my:Resource AllApologized}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource Teamup.Brushes.Attendance.Injured}"
+                              Content="{Binding Item.TrainingStatistics.Injured.Count}"
+                              Header="{my:Resource Injuries}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource Teamup.Brushes.Attendance.InHolidays}"
+                              Content="{Binding Item.TrainingStatistics.InHolidays.Count}"
+                              Header="{my:Resource InHolidays}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource Teamup.Brushes.Attendance.InSelection}"
+                              Content="{Binding Item.TrainingStatistics.InSelection.Count}"
+                              Header="{my:Resource InSelection}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource Teamup.Brushes.Attendance.Resting}"
+                              Content="{Binding Item.TrainingStatistics.Resting.Count}"
+                              Header="{my:Resource Resting}" />
+                    <GroupBox Style="{StaticResource Teamup.Styles.GroupBox.Label.Presences.Count}"
+                              Background="{DynamicResource MyNet.Brushes.None}"
+                              Content="{Binding Item.TrainingStatistics.Unknown.Count}"
+                              Header="{my:Resource UnknownMale}" />
+                    <Separator Style="{StaticResource MyNet.Styles.Separator.Vertical}" Visibility="{Binding Item.TrainingStatistics.Ratings.Average, Converter={x:Static my:EqualityToVisibilityConverter.HiddenIfEqual}, ConverterParameter={x:Static sys:Double.NaN}}" />
+                    <my:Gauge Style="{StaticResource Teamup.Styles.Gauge.Rating}"
+                              Width="50"
+                              Height="50"
+                              GaugeBackground="{DynamicResource MyNet.Brushes.Control.Background.Secondary}"
+                              HighFontSize="{StaticResource MyNet.Font.Size.Caption}"
+                              InnerRadius="23"
+                              LabelFormatter="{x:Static my:ChartFormatters.ToValueWithoutZero}"
+                              Visibility="{Binding Item.TrainingStatistics.Ratings.Average, Converter={x:Static my:EqualityToVisibilityConverter.HiddenIfEqual}, ConverterParameter={x:Static sys:Double.NaN}}"
+                              Value="{my:NotNullableBinding Item.TrainingStatistics.Ratings.Average}" />
+                </my:SimpleStackPanel>
+            </DockPanel>
+
+            <my:TransitioningContent Grid.Row="2">
+                <my:TransitioningContent.Style>
+                    <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeChart">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <v:PlayerPageTrainingChartView />
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeList">
+                                <Setter Property="Content">
+                                    <Setter.Value>
+                                        <v:PlayerPageTrainingListView />
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </my:TransitioningContent.Style>
+            </my:TransitioningContent>
+        </Grid>
+    </my:GhostControl>
+</UserControl>

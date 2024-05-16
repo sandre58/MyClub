@@ -1,0 +1,99 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Shell.UserPopupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Shell"
+             Width="260"
+             d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
+             mc:Ignorable="d">
+    <StackPanel>
+        <Grid Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+            <Grid Margin="{StaticResource MyNet.Margins.Medium}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="15" />
+                    <RowDefinition Height="45" />
+                </Grid.RowDefinitions>
+
+                <!--  Image  -->
+                <my:PictureControl Grid.RowSpan="3"
+                                   Width="80"
+                                   Height="80"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Top"
+                                   Background="{DynamicResource MyNet.Brushes.Accent}"
+                                   Foreground="{DynamicResource MyNet.Brushes.Accent.Foreground}"
+                                   Image="{Binding User.Image, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:BytesToImageConverter.Default}}">
+                    <my:GeometryIcon Width="85"
+                                     Height="85"
+                                     Margin="0 0 -4 -20"
+                                     Data="{StaticResource MyNet.Geometries.Male}"
+                                     Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                     Visibility="{Binding User.Image, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                </my:PictureControl>
+
+                <!--  User Name  -->
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
+                           Grid.Row="0"
+                           Grid.Column="1"
+                           Opacity="{StaticResource MyNet.Opacity.Default}"
+                           Text="{Binding User.PreferredName, Converter={x:Static my:StringConverter.ToTitle}}" />
+
+                <!--  Email  -->
+                <TextBlock Grid.Row="1"
+                           Grid.Column="1"
+                           FontSize="11"
+                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                           Text="{Binding User.Email}"
+                           Visibility="{Binding User.Email, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                <TextBlock Grid.Row="1"
+                           Grid.Column="1"
+                           FontSize="11"
+                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                           Text="{my:Resource NoAddressMail}"
+                           Visibility="{Binding User.Email, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+
+                <!--  Edit  -->
+                <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        my:IconAssist.Icon="{my:Icon Kind=Edit,
+                                                     Size=16}"
+                        Command="{Binding OpenUserProfileCommand}"
+                        Content="{my:Resource EditProfile}"
+                        FontSize="{StaticResource MyNet.Font.Size}"
+                        FontStyle="Italic" />
+            </Grid>
+        </Grid>
+        <Separator Margin="0" />
+        <Grid>
+            <my:Submenu Style="{StaticResource MyNet.Styles.Menu.Embedded}" Margin="{StaticResource MyNet.Margins.Default.Vertical}">
+                <MenuItem Command="{Binding TogglePreferencesCommand}"
+                          Header="{my:Resource Preferences}"
+                          Icon="{my:ToolIcon Kind=Tune}"
+                          InputGestureText="F2" />
+                <MenuItem Command="{Binding OpenSettingsCommand}"
+                          Header="{my:Resource Settings}"
+                          Icon="{my:ToolIcon Kind=Settings}"
+                          InputGestureText="F3" />
+                <Separator />
+                <MenuItem Command="{Binding ToggleAboutCommand}"
+                          Header="{my:Resource About}"
+                          Icon="{my:ToolIcon Kind=Information}"
+                          InputGestureText="F1" />
+                <Separator />
+                <MenuItem Command="{Binding ExitCommand}"
+                          Header="{my:Resource Exit}"
+                          Icon="{my:ToolIcon Kind=Power}"
+                          InputGestureText="Ctrl+Q" />
+            </my:Submenu>
+        </Grid>
+    </StackPanel>
+</UserControl>

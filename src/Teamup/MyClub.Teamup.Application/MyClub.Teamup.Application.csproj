@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0" />
+    <PackageReference Include="MyNet.Humanizer" Version="1.0.0" />
+    <PackageReference Include="System.Reactive" Version="6.0.1-preview.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.Application\MyClub.Application.csproj" />
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Application.Contracts\MyClub.Teamup.Application.Contracts.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Domain.Factories\MyClub.Teamup.Domain.Factories.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Domain.Randomize\MyClub.Teamup.Domain.Randomize.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj" />
+  </ItemGroup>
+</Project>

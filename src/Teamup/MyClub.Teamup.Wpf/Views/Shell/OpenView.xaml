@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Shell.OpenView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyNet.Wpf.Presentation.Views.FileHistory;assembly=MyNet.Wpf.Presentation"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Shell"
+             d:DataContext="{d:DesignInstance Type=vm:OpenViewModel}"
+             mc:Ignorable="d">
+    <DockPanel Margin="{StaticResource MyNet.Margins.Medium}">
+
+        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}"
+                   Margin="{StaticResource MyNet.Margins.Huge.Vertical}"
+                   DockPanel.Dock="Top"
+                   Text="{my:Resource Open}" />
+
+        <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Large.Bottom}"
+                             HorizontalAlignment="Right"
+                             DockPanel.Dock="Top"
+                             Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Foreground}"
+                    my:IconAssist.Icon="{my:ToolIcon Kind=FolderOpen}"
+                    Command="{Binding LoadCommand}"
+                    Content="{my:Resource Browse}" />
+        </my:SimpleStackPanel>
+
+        <v:RecentFilesForegroundView DataContext="{Binding RecentFilesViewModel}" />
+    </DockPanel>
+
+</UserControl>

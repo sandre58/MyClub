@@ -1,0 +1,327 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.CompetitionPage.CompetitionPageMatchdaysYearView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters"
+             xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:selectors="clr-namespace:MyClub.Teamup.Wpf.Selectors"
+             xmlns:v="clr-namespace:MyClub.Teamup.Wpf.Views.CompetitionPage"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.CompetitionPage"
+             d:DataContext="{d:DesignInstance Type=vm:CompetitionPageMatchdaysViewModel}"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Teamup.Styles.CalendarAppointment" TargetType="{x:Type my:CalendarAppointment}">
+            <Setter Property="my:AppointmentsPanel.IsStretch" Value="True" />
+            <Setter Property="Background" Value="{my:BrushBinding Item.Color, Mode=OneWay, Opacity={StaticResource MyNet.Opacity.Default}}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{my:BrushBinding SelfPath=Background, Contrast=True}" />
+            <Setter Property="my:ListBoxItemAssist.IsMouseOverBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Hovered}}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Checked}}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding SelfPath=Background, Contrast=True}" />
+            <Setter Property="my:RippleAssist.Feedback" Value="{my:BrushBinding SelfPath=Foreground}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="Transparent" />
+            <Setter Property="Height" Value="Auto" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource MyNet.Styles.FocusVisualStyle.Rectangle.Margin}" />
+            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Is Postponed  -->
+                            <Path Grid.Column="2"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Top"
+                                  Data="M 15 15 V 0 H 0 Z"
+                                  Fill="{DynamicResource MyNet.Brushes.Warning}"
+                                  Stretch="Fill"
+                                  ToolTip="{my:Resource Postponed}"
+                                  Visibility="{Binding Item.IsPostponed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                            <!--  Selection  -->
+                            <CheckBox x:Name="selection"
+                                      Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                                      HorizontalAlignment="Center"
+                                      BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                                    Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                                      IsChecked="{Binding IsSelected}"
+                                      Visibility="Hidden" />
+
+                            <!--  Content  -->
+                            <DockPanel Grid.Column="1" Grid.ColumnSpan="2" Margin="5 0 0 0">
+
+                                <ContentControl x:Name="ToolBar"
+                                                HorizontalAlignment="Right"
+                                                Content="{Binding Item}"
+                                                DockPanel.Dock="Right"
+                                                Visibility="Hidden">
+                                    <ContentControl.ContentTemplateSelector>
+                                        <selectors:RoundDataTemplateSelector>
+                                            <selectors:RoundDataTemplateSelector.MatchdayTemplate>
+                                                <DataTemplate>
+                                                    <v:MatchdayToolBar x:Name="ToolBar" Style="{StaticResource MyNet.Styles.ToolBar.Tools}" RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}" />
+                                                </DataTemplate>
+                                            </selectors:RoundDataTemplateSelector.MatchdayTemplate>
+                                            <selectors:RoundDataTemplateSelector.KnockoutTemplate>
+                                                <DataTemplate>
+                                                    <v:KnockoutToolBar x:Name="ToolBar" Style="{StaticResource MyNet.Styles.ToolBar.Tools}" RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}" />
+                                                </DataTemplate>
+                                            </selectors:RoundDataTemplateSelector.KnockoutTemplate>
+                                        </selectors:RoundDataTemplateSelector>
+                                    </ContentControl.ContentTemplateSelector>
+                                </ContentControl>
+
+                                <ContentControl Margin="{StaticResource MyNet.Margins.Default.Left}" Content="{Binding Item}" IsEnabled="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}">
+                                    <ContentControl.ContentTemplateSelector>
+                                        <selectors:RoundDataTemplateSelector>
+                                            <selectors:RoundDataTemplateSelector.MatchdayTemplate>
+                                                <DataTemplate>
+                                                    <ctrl:MatchdayButton ContextMenu="{x:Null}" Item="{Binding}">
+                                                        <ctrl:MatchdayButton.ContentTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Item.ShortName, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:MatchdayButton}}, UpdateSourceTrigger=PropertyChanged}" />
+                                                            </DataTemplate>
+                                                        </ctrl:MatchdayButton.ContentTemplate>
+                                                    </ctrl:MatchdayButton>
+                                                </DataTemplate>
+                                            </selectors:RoundDataTemplateSelector.MatchdayTemplate>
+                                            <selectors:RoundDataTemplateSelector.KnockoutTemplate>
+                                                <DataTemplate>
+                                                    <ctrl:KnockoutButton ContextMenu="{x:Null}" Item="{Binding}">
+                                                        <ctrl:KnockoutButton.ContentTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Item.ShortName, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:KnockoutButton}}, UpdateSourceTrigger=PropertyChanged}" />
+                                                            </DataTemplate>
+                                                        </ctrl:KnockoutButton.ContentTemplate>
+                                                    </ctrl:KnockoutButton>
+                                                </DataTemplate>
+                                            </selectors:RoundDataTemplateSelector.KnockoutTemplate>
+                                        </selectors:RoundDataTemplateSelector>
+                                    </ContentControl.ContentTemplateSelector>
+                                </ContentControl>
+
+                            </DockPanel>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                                    <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                <Setter TargetName="selection" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="selection" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type my:CalendarAppointment}">
+                        <Border x:Name="BackBorder" ClipToBounds="{TemplateBinding ClipToBounds}" SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="column1" Width="40" />
+                                        <ColumnDefinition x:Name="column2" Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Path Grid.Column="1"
+                                          Data="M 10 0 V 10 H 0 Z"
+                                          Fill="{TemplateBinding Background}"
+                                          Stretch="Fill" />
+                                    <Border Grid.Column="2" Background="{TemplateBinding Background}" />
+
+                                </Grid>
+                                <Border x:Name="MouseOverBorder"
+                                        Background="{TemplateBinding my:ListBoxItemAssist.IsMouseOverBackground}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Opacity="0"
+                                        SnapsToDevicePixels="True" />
+                                <Border x:Name="SelectedBorder"
+                                        Background="{TemplateBinding my:ListBoxItemAssist.IsSelectedBackground}"
+                                        BorderBrush="{TemplateBinding my:ListBoxItemAssist.IsSelectedBorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Opacity="0"
+                                        RenderTransformOrigin="0.5,0.5" />
+                                <my:Ripple x:Name="Ripple"
+                                           Padding="{TemplateBinding Padding}"
+                                           HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch"
+                                           HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                           VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                           Content="{TemplateBinding Content}"
+                                           ContentTemplate="{TemplateBinding ContentTemplate}"
+                                           ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                           Feedback="{TemplateBinding Foreground}"
+                                           Focusable="False"
+                                           RecognizesAccessKey="False"
+                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            </Grid>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.3" To="Normal">
+                                            <VisualTransition.GeneratedEasingFunction>
+                                                <CircleEase EasingMode="EaseOut" />
+                                            </VisualTransition.GeneratedEasingFunction>
+                                        </VisualTransition>
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState Name="Normal" />
+                                    <VisualState Name="MouseOver">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="MouseOverBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup Name="SelectionStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.3" />
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState Name="Selected">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Unselected" />
+                                </VisualStateGroup>
+                                <VisualStateGroup Name="FocusStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.3" To="Unfocused" />
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState Name="Focused">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="MouseOverBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Unfocused" />
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="column1" Property="Width" Value="0" />
+                                <Setter TargetName="column2" Property="Width" Value="0" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="column1" Property="Width" Value="0" />
+                                <Setter TargetName="column2" Property="Width" Value="0" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="true">
+                    <Setter Property="Foreground" Value="{Binding Path=(my:ListBoxItemAssist.IsSelectedForeground), RelativeSource={RelativeSource Self}}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Teamup.Styles.CalendarItem" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByYear}" TargetType="{x:Type my:CalendarItem}">
+            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
+            <Setter Property="ContextMenu">
+                <Setter.Value>
+                    <ContextMenu>
+                        <MenuItem Command="{Binding Data.AddMultipleCommand, Source={StaticResource Proxy}}"
+                                  Header="{my:Resource Add}"
+                                  Icon="{my:ToolIcon Kind=Plus}"
+                                  InputGestureText="Ctrl+Shift+N" />
+                        <MenuItem Command="{Binding Data.DuplicateCommand, Source={StaticResource Proxy}}"
+                                  Header="{my:Resource Duplicate}"
+                                  Icon="{my:ToolIcon Kind=ContentDuplicate}"
+                                  InputGestureText="Ctrl+D" />
+                        <MenuItem Command="{Binding Data.RemoveMatchdaysInSelectedDatesCommand, Source={StaticResource Proxy}}"
+                                  Header="{my:Resource Remove}"
+                                  Icon="{my:ToolIcon Kind=Trash}"
+                                  InputGestureText="Ctrl+Suppr" />
+                        <Separator />
+                        <MenuItem Command="{Binding Data.SelectMatchdaysInSelectedDatesCommand, Source={StaticResource Proxy}}" Header="{my:Resource Select}" Icon="{my:ToolIcon Kind=CheckboxesMarked}" />
+                        <MenuItem Command="{Binding Data.UnselectMatchdaysInSelectedDatesCommand, Source={StaticResource Proxy}}" Header="{my:Resource Unselect}" Icon="{my:ToolIcon Kind=CheckboxesBlank}" />
+                    </ContextMenu>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Data.ShowHolidays, Source={StaticResource Proxy}}" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <MultiBinding Converter="{x:Static c:DateToPeriodColorConverter.Brush}" ConverterParameter="0.25">
+                                <Binding Path="" />
+                                <Binding Path="Data.Holidays" Source="{StaticResource Proxy}" UpdateSourceTrigger="PropertyChanged" />
+                            </MultiBinding>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="ToolTip">
+                        <Setter.Value>
+                            <MultiBinding Converter="{x:Static c:DateToPeriodColorConverter.Label}">
+                                <Binding Path="" />
+                                <Binding Path="Data.Holidays" Source="{StaticResource Proxy}" UpdateSourceTrigger="PropertyChanged" />
+                            </MultiBinding>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <Trigger Property="IsNow" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
+    <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+        <my:DynamicScrollViewer>
+            <my:CalendarDaysByYear my:HeaderAssist.Background="{DynamicResource MyNet.Brushes.Control.Background}"
+                                   Appointments="{Binding Wrappers}"
+                                   AppointmentsMargin="0"
+                                   BorderThickness="0"
+                                   CalendarItemStyle="{StaticResource Teamup.Styles.CalendarItem}"
+                                   DatesSelectionMode="MultipleRange"
+                                   DisplayEndMonth="{Binding EndDate.Month, Mode=OneWay}"
+                                   DisplayStartMonth="{Binding StartDate.Month, Mode=OneWay}"
+                                   ItemContainerStyle="{StaticResource Teamup.Styles.CalendarAppointment}"
+                                   LastDayOfWeekIsHighlighted="True"
+                                   MaximumDate="{Binding EndDate}"
+                                   MinimumDate="{Binding StartDate}"
+                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                   SelectedDates="{Binding SelectedDates, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   SelectionMode="Extended"
+                                   ShowHeader="False" />
+        </my:DynamicScrollViewer>
+    </my:Card>
+</UserControl>

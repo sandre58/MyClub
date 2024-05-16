@@ -1,0 +1,42 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.Edition.TrainingSessionEditionGeneralView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:collections="clr-namespace:MyClub.Teamup.Wpf.Collections"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:TrainingSessionEditionViewModel}"
+             mc:Ignorable="d">
+    <my:SimpleStackPanel>
+
+        <!--  Theme  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=InformationCircle}">
+            <TextBox Width="400"
+                     my:FocusAssist.IsDefault="True"
+                     my:HintAssist.Hint="{my:Resource Theme}"
+                     Text="{Binding Theme, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Place  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=MapMarker}">
+            <TextBox my:HintAssist.Hint="{my:Resource Place}" Text="{Binding Place, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!--  Teams  -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=AccountGroup}">
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                     my:ItemsControlAssist.SortingProperty="Order"
+                     DisplayMemberPath="Name"
+                     ItemsSource="{Binding Source={x:Static collections:TeamsCollection.MyTeams}}"
+                     SelectedValuePath="Id"
+                     SelectionMode="Multiple">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectionBehavior SelectedValues="{Binding SelectedTeamIds}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
+        </GroupBox>
+
+    </my:SimpleStackPanel>
+</UserControl>

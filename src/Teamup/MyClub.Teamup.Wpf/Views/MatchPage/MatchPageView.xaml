@@ -1,0 +1,211 @@
+﻿<UserControl x:Class="MyClub.Teamup.Wpf.Views.MatchPage.MatchPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.MatchPage"
+             d:DataContext="{d:DesignInstance Type=vm:MatchPageViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             my:ViewModelAssist.AutoWire="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <!--  Shortcuts  -->
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.Item.EditCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Delete" Command="{Binding Data.Item.RemoveCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="150" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="33" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header Background  -->
+        <Border Grid.RowSpan="3" CornerRadius="15 0 0 0" Effect="{StaticResource MyNet.Shadows.Elevation6}">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Offset="0" Color="{Binding Item.HomeTeam.HomeColor}" />
+                    <GradientStop Offset="0.4" Color="{Binding Item.HomeTeam.HomeColor}" />
+                    <GradientStop Offset="0.6" Color="{Binding Item.AwayTeam.AwayColor}" />
+                    <GradientStop Offset="1" Color="{Binding Item.AwayTeam.AwayColor}" />
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+
+        <!--  Header  -->
+        <my:TransitioningContent Margin="{StaticResource MyNet.Margins.Medium}" Content="{Binding Item}">
+            <my:TransitioningContent.ContentTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="10*" />
+                            <ColumnDefinition Width="40*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="40*" />
+                            <ColumnDefinition Width="10*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  Home Team  -->
+                        <Grid Grid.Column="1" TextElement.Foreground="{my:BrushBinding Path=HomeTeam.HomeColor, Contrast=True}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="10" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                               Grid.RowSpan="4"
+                                               Width="110"
+                                               Height="110"
+                                               DataContext="{Binding HomeTeam}" />
+                            <my:SimpleStackPanel Grid.Row="1"
+                                                 Grid.Column="2"
+                                                 HorizontalAlignment="Left"
+                                                 Spacing="{StaticResource MyNet.Margin.Small}">
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" Text="{my:Translation HomeTeam.Name, Casing=AllCaps}" />
+                                <!--  Home is withdrawn  -->
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Top"
+                                           FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                           Text="{my:Resource Withdraw,
+                                                              Casing=AllCaps}"
+                                           ToolTip="{my:Resource Withdraw}"
+                                           Visibility="{Binding HomeIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            </my:SimpleStackPanel>
+                        </Grid>
+
+                        <!--  Score  -->
+                        <Grid x:Name="score" Grid.Column="3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="15" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="5" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Label x:Name="homeScore"
+                                   Style="{StaticResource Teamup.Styles.Label.Score.Large}"
+                                   Grid.Row="1"
+                                   Content="{Binding HomeScore}" />
+                            <Label x:Name="awayScore"
+                                   Style="{StaticResource Teamup.Styles.Label.Score.Large}"
+                                   Grid.Row="1"
+                                   Grid.Column="2"
+                                   Content="{Binding AwayScore}" />
+
+                            <TextBlock Grid.Row="3"
+                                       Grid.ColumnSpan="3"
+                                       HorizontalAlignment="Center"
+                                       Text="{my:Resource AfterExtraTimeAbbr}"
+                                       ToolTip="{my:Resource AfterExtraTime}"
+                                       Visibility="{Binding AfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            <my:SimpleStackPanel Grid.Row="4"
+                                                 Grid.ColumnSpan="3"
+                                                 HorizontalAlignment="Center"
+                                                 Orientation="Horizontal"
+                                                 Spacing="{StaticResource MyNet.Margin.Large}"
+                                                 Visibility="{Binding AfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                                <Label x:Name="homeShootoutScore"
+                                       Style="{StaticResource Teamup.Styles.Label.Score.Medium}"
+                                       Grid.Row="3"
+                                       Content="{Binding HomeShootoutScore}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Resource ShootoutsAbbr}" ToolTip="{my:Resource Shootouts}" />
+                                <Label x:Name="awayShootoutScore"
+                                       Style="{StaticResource Teamup.Styles.Label.Score.Medium}"
+                                       Grid.Row="3"
+                                       Grid.Column="2"
+                                       Content="{Binding AwayShootoutScore}" />
+                            </my:SimpleStackPanel>
+                        </Grid>
+
+                        <!--  Away Team  -->
+                        <Grid Grid.Column="5" TextElement.Foreground="{my:BrushBinding Path=AwayTeam.AwayColor, Contrast=True}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="10" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <my:SimpleStackPanel Grid.Row="1" HorizontalAlignment="Right" Spacing="{StaticResource MyNet.Margin.Small}">
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" Text="{my:Translation AwayTeam.Name, Casing=AllCaps}" />
+                                <!--  Away is withdrawn  -->
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Top"
+                                           FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                           Text="{my:Resource Withdraw,
+                                                              Casing=AllCaps}"
+                                           ToolTip="{my:Resource Withdraw}"
+                                           Visibility="{Binding AwayIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            </my:SimpleStackPanel>
+                            <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
+                                               Grid.RowSpan="4"
+                                               Grid.Column="2"
+                                               Width="110"
+                                               Height="110"
+                                               DataContext="{Binding AwayTeam}" />
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </my:TransitioningContent.ContentTemplate>
+        </my:TransitioningContent>
+
+        <!--  Tabs  -->
+        <my:NavigationView Style="{StaticResource Teamup.Styles.NavigationView.Top.Secondary}"
+                           Grid.Row="2"
+                           Grid.RowSpan="2"
+                           my:ThemeAssist.IsCheckedBorderBrush="{my:BrushBinding Path=Item.HomeTeam.HomeColor,
+                                                                                 Contrast=True}"
+                           HeaderForeground="{my:BrushBinding Path=Item.HomeTeam.HomeColor,
+                                                              Contrast=True}"
+                           NavigationService="{Binding NavigationService}">
+            <my:NavigationView.PaneFooter>
+                <my:SimpleStackPanel Margin="0 -10 10 0"
+                                     Orientation="Horizontal"
+                                     Spacing="{StaticResource MyNet.Margin.Default}"
+                                     TextElement.Foreground="{my:BrushBinding Path=Item.AwayTeam.AwayColor,
+                                                                              Contrast=True}">
+                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground.SemiTransparent}"
+                            my:IconAssist.Icon="{my:Icon Kind=Edit}"
+                            Command="{Binding Item.EditCommand}"
+                            Content="{my:Resource Edit}"
+                            ToolTip="Ctrl+E" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Remove}" Command="{Binding Item.RemoveCommand}" />
+                </my:SimpleStackPanel>
+            </my:NavigationView.PaneFooter>
+        </my:NavigationView>
+    </Grid>
+</UserControl>
