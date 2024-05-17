@@ -4,23 +4,24 @@
 # This continuous integration pipeline is triggered anytime a user pushes code to main branch.
 # This pipeline create a release
 
-name: Create Release for specific application
+name: Create Release for specific plugin
 
 on:  
   push:
     tags:
-    - '*-v*.*.*'
-    - '!plg.*-v*.*.*'
+    - 'plg.*-v*.*.*'
   workflow_dispatch:
     inputs:
-      application:
+      plugin:
         type: choice
-        description: Name of application
+        description: Name of plugin
         options: 
-        - Teamup
-        - Scorer
+        - MyClub.Plugins.Scorer.Factory.Database
+        - MyClub.Plugins.Teamup.Factory.Database
+        - MyClub.Plugins.Teamup.Factory.Random
+        - MyClub.Plugins.Teamup.Factory.Web
       version: 
-        description: New version of application. If empty, use version in .csproj.
+        description: New version of plugin. If empty, use version in .csproj.
       pre_release: 
         description: Label of pre-release (pre, alpha, beta, etc...)
 
@@ -31,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build_args: ${{ steps.get_parameters.outputs.build_args }}
-      application: ${{ steps.get_application.outputs.application }}
+      plugin: ${{ steps.get_plugin.outputs.plugin }}
       full_version: ${{ steps.get_parameters.outputs.full_version }}
       version: ${{ steps.get_parameters.outputs.version }}
       pre_release: ${{ steps.get_parameters.outputs.pre_release }}
@@ -42,29 +43,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Find application name and version from tag
+      # Find plugin name and version from tag
       - name: Get tag informations
         uses: olegtarasov/get-tag@v2.1.3 # https://github.com/marketplace/actions/get-tag-name
         id: get_tag
         with:
-          tagRegex: (?<application>.*)-v(?<version>(\d|\.)*)(-(?<pre_release>.*))?
+          tagRegex: plg\.(?<plugin>.*)-v(?<version>(\d|\.)*)(-(?<pre_release>.*))?
 
-      # Return application name
-      - name: Get Application name
+      # Return plugin name
+      - name: Get plugin name
         shell: pwsh
-        id: get_application
+        id: get_plugin
         run: |
-          if ('${{ steps.get_tag.outputs.application }}' -eq '') {
-            echo "application=${{ inputs.application }}" >> $Env:GITHUB_OUTPUT
+          if ('${{ steps.get_tag.outputs.plugin }}' -eq '') {
+            echo "plugin=${{ inputs.plugin }}" >> $Env:GITHUB_OUTPUT
           } else {
-            echo "application=${{ steps.get_tag.outputs.application }}" >> $Env:GITHUB_OUTPUT
+            echo "plugin=${{ steps.get_tag.outputs.plugin }}" >> $Env:GITHUB_OUTPUT
           }
 
       # Find version from csproj
       - uses: bbonkr/get-version-action@v1
         id: get_version
         with:
-          project: src/${{ steps.get_application.outputs.application }}/MyClub.${{ steps.get_application.outputs.application }}.Wpf/MyClub.${{ steps.get_application.outputs.application }}.Wpf.csproj
+          project: src/Plugins/${{ steps.get_plugin.outputs.plugin }}/${{ steps.get_plugin.outputs.plugin }}.csproj
           show_log_message: true
 
       # Return version
@@ -109,12 +110,12 @@ jobs:
       dotnet-test-logger: GitHubActions --no-build --no-restore
       build-args: ${{ needs.compute_parameters.outputs.build_args }}
       name: Build
-      solution-path: .\src\${{ needs.compute_parameters.outputs.application }}\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf\MyClub.${{ needs.compute_parameters.outputs.application }}.Wpf.csproj
-      artifact-name: ${{ needs.compute_parameters.outputs.application }}
+      solution-path: .\src\Plugins\${{ needs.compute_parameters.outputs.plugin }}\${{ needs.compute_parameters.outputs.plugin }}.csproj
+      artifact-name: ${{ needs.compute_parameters.outputs.plugin }}
       artifacts-path: |
-              ./build/${{ needs.compute_parameters.outputs.application }}/Release/**
-              !./build/${{ needs.compute_parameters.outputs.application }}/Release/*.xml
-              !./build/${{ needs.compute_parameters.outputs.application }}/Release/*.pdb
+              ./build/**/${{ needs.compute_parameters.outputs.plugin }}/Release/**
+              !./build/**/${{ needs.compute_parameters.outputs.plugin }}/Release/*.xml
+              !./build/**/${{ needs.compute_parameters.outputs.plugin }}/Release/*.pdb
               
   # Create release
   release:
@@ -154,15 +155,15 @@ jobs:
           commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
           file_pattern: CHANGELOG.md
 
-      # Download application artifacts
+      # Download plugin artifacts
       - uses: actions/download-artifact@v3
         with:
-          name: ${{ needs.compute_parameters.outputs.application }}
-          path: ${{ needs.compute_parameters.outputs.application }}/
+          name: ${{ needs.compute_parameters.outputs.plugin }}
+          path: ${{ needs.compute_parameters.outputs.plugin }}/
           
-      # Zip application files
+      # Zip plugin files
       - name: Zip artifact for deployment
-        run: zip ${{ needs.compute_parameters.outputs.application }}_${{needs.compute_parameters.outputs.full_version}}.zip ${{ needs.compute_parameters.outputs.application }}/** -r
+        run: zip ${{ needs.compute_parameters.outputs.plugin }}_${{needs.compute_parameters.outputs.full_version}}.zip ${{ needs.compute_parameters.outputs.plugin }}/** -r
 
       # Get release labels
       - name: Define release parameters
@@ -187,12 +188,12 @@ jobs:
       - uses: ncipollo/release-action@main # https://github.com/marketplace/actions/create-release
         name: Create Release
         with:
-          artifacts: ${{ needs.compute_parameters.outputs.application }}_${{needs.compute_parameters.outputs.full_version}}.zip
+          artifacts: ${{ needs.compute_parameters.outputs.plugin }}_${{needs.compute_parameters.outputs.full_version}}.zip
           artifactErrorsFailBuild: true
           draft: true
           generateReleaseNotes: false
           token: ${{ github.token }}
-          name: ${{ needs.compute_parameters.outputs.application }} ${{ steps.compute_parameters.outputs.release_display_name }}
+          name: ${{ needs.compute_parameters.outputs.plugin }} ${{ steps.compute_parameters.outputs.release_display_name }}
           prerelease: ${{ steps.compute_parameters.outputs.is_preview }}
-          tag: ${{ needs.compute_parameters.outputs.application }}-v${{ steps.compute_parameters.outputs.full_version }}
+          tag: ${{ needs.compute_parameters.outputs.plugin }}-v${{ steps.compute_parameters.outputs.full_version }}
           body: ${{ steps.changelog.outputs.changes }}
