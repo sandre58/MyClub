@@ -113,9 +113,9 @@ jobs:
       solution-path: .\src\Plugins\${{ needs.compute_parameters.outputs.plugin }}\${{ needs.compute_parameters.outputs.plugin }}.csproj
       artifact-name: ${{ needs.compute_parameters.outputs.plugin }}
       artifacts-path: |
-              ./build/**/${{ needs.compute_parameters.outputs.plugin }}/Release/**
-              !./build/**/${{ needs.compute_parameters.outputs.plugin }}/Release/*.xml
-              !./build/**/${{ needs.compute_parameters.outputs.plugin }}/Release/*.pdb
+              ./build/**/Release/Plugins/${{ needs.compute_parameters.outputs.plugin }}/**
+              !./build/**/Release/Plugins/${{ needs.compute_parameters.outputs.plugin }}/*.xml
+              !./build/**/Release/Plugins/${{ needs.compute_parameters.outputs.plugin }}/*.pdb
               
   # Create release
   release:
