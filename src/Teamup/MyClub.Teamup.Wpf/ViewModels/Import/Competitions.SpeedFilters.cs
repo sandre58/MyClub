@@ -4,6 +4,7 @@
 using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyClub.Teamup.Application.Dtos;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Import
 {

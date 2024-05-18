@@ -1583,9 +1583,6 @@ Il doit contenir les entêtes spécifiées dans le fichier d'exemple. L'ordre de
   <data name="ExportTeams" xml:space="preserve">
     <value>Exporter les équipes</value>
   </data>
-  <data name="ImportFromDatabase" xml:space="preserve">
-    <value>Importer de la base de données</value>
-  </data>
   <data name="XPlayersHasBeenMovedInSuccessPlural" xml:space="preserve">
     <value># joueurs ont été déplacés dans l'équipe suivante :</value>
   </data>
@@ -1613,14 +1610,8 @@ Il doit contenir les entêtes spécifiées dans le fichier d'exemple. L'ordre de
   <data name="XSessionsAddedSuccessPlural" xml:space="preserve">
     <value># séances d'entrainement ont été ajoutées.</value>
   </data>
-  <data name="DatabaseConnectionWarning" xml:space="preserve">
-    <value>La connexion à la base de données 'Hôte={0}, Nom={1}' a échoué.</value>
-  </data>
   <data name="CheckMailConnection" xml:space="preserve">
     <value>Vérifier la connexion au serveur de mail</value>
-  </data>
-  <data name="CheckDatabaseConnection" xml:space="preserve">
-    <value>Vérifier la connexion à la base de données</value>
   </data>
   <data name="ImportCompetitionsSampleFileTitle" xml:space="preserve">
     <value>Import de compétitions - Exemple</value>

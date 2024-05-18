@@ -16,13 +16,10 @@ namespace MyClub.Teamup.Wpf.ViewModels.Shell
 
         public virtual bool CheckMailConnection { get => AppSettings.Default.CheckMailConnectionOnStart; set => AppSettings.Default.CheckMailConnectionOnStart = value; }
 
-        public virtual bool CheckDatabaseConnection { get => AppSettings.Default.CheckDatabaseConnectionOnStart; set => AppSettings.Default.CheckDatabaseConnectionOnStart = value; }
-
         public OpeningViewModel()
             => Disposables.AddRange([
                 AppSettings.Default.WhenPropertyChanged(x => x.OpenLastProjectOnStart).Subscribe(_ => RaisePropertyChanged(nameof(OpenLastFile))),
-                AppSettings.Default.WhenPropertyChanged(x => x.CheckMailConnectionOnStart).Subscribe(_ => RaisePropertyChanged(nameof(CheckMailConnection))),
-                AppSettings.Default.WhenPropertyChanged(x => x.CheckDatabaseConnectionOnStart).Subscribe(_ => RaisePropertyChanged(nameof(CheckDatabaseConnection))),
+                AppSettings.Default.WhenPropertyChanged(x => x.CheckMailConnectionOnStart).Subscribe(_ => RaisePropertyChanged(nameof(CheckMailConnection)))
         ]);
 
         protected override string CreateTitle() => MyClubResources.OpeningOptions;

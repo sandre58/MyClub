@@ -3,26 +3,30 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MyNet.UI.Dialogs;
-using MyNet.UI.Locators;
-using MyNet.UI.Extensions;
-using MyNet.UI.Selection;
-using MyNet.Utilities;
+using MyClub.Teamup.Application.Contracts;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;
-using MyClub.DatabaseContext.Application.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Edition;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyClub.Teamup.Wpf.ViewModels.Import;
 using MyClub.Teamup.Wpf.ViewModels.Selection;
+using MyNet.UI.Dialogs;
+using MyNet.UI.Extensions;
+using MyNet.UI.Locators;
+using MyNet.UI.Selection;
+using MyNet.Utilities;
+using MyNet.Utilities.Providers;
 
 namespace MyClub.Teamup.Wpf.Services
 {
-    internal class StadiumPresentationService(StadiumService stadiumService, DatabaseService databaseService, IViewModelLocator viewModelLocator)
+    internal class StadiumPresentationService(StadiumService stadiumService,
+                                              ImportStadiumsProvider importStadiumsProvider,
+                                              IViewModelLocator viewModelLocator)
     {
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
         private readonly StadiumService _stadiumService = stadiumService;
-        private readonly DatabaseService _databaseService = databaseService;
+        private readonly ImportStadiumsProvider _importStadiumsProvider = importStadiumsProvider;
 
         public async Task<EditableStadiumViewModel?> CreateAsync(string? name = null)
         {
@@ -87,9 +91,9 @@ namespace MyClub.Teamup.Wpf.Services
             }
         }
 
-        public async Task<EditableStadiumViewModel?> ImportFromDatabaseAsync(IEnumerable<(string name, string? city)> excludeStadiuNamesAndCity)
+        public async Task<EditableStadiumViewModel?> ImportAsync(IEnumerable<(string name, string? city)> excludeStadiumNamesAndCity)
         {
-            var vm = new StadiumsSelectionViewModel(new StadiumsDatabaseProvider(_databaseService, _stadiumService, x => !excludeStadiuNamesAndCity.Contains((x.Name, x.City))), SelectionMode.Single);
+            var vm = new StadiumsSelectionViewModel(new PredicateItemsProvider<StadiumImportableViewModel>(_importStadiumsProvider, x => !excludeStadiumNamesAndCity.Contains((x.Name, x.City))), SelectionMode.Single);
 
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
@@ -108,6 +112,6 @@ namespace MyClub.Teamup.Wpf.Services
             return null;
         }
 
-        public bool CanImportFromDatabase() => _databaseService.CanConnect();
+        public bool CanImport() => _importStadiumsProvider.CanImport();
     }
 }

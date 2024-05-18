@@ -9,7 +9,8 @@ namespace MyClub.Teamup.Wpf.ViewModels.Selection
 {
     internal class StadiumsSelectionViewModel : ItemsSelectionViewModel<StadiumImportableViewModel>
     {
-        public StadiumsSelectionViewModel(IItemsProvider<StadiumImportableViewModel> itemsProvider, SelectionMode selectionMode = SelectionMode.Multiple)
+        public StadiumsSelectionViewModel(IItemsProvider<StadiumImportableViewModel> itemsProvider,
+                                          SelectionMode selectionMode = SelectionMode.Multiple)
             : base(itemsProvider,
                   parametersProvider: new StadiumsSelectionListParametersProvider(),
                   selectionMode: selectionMode)

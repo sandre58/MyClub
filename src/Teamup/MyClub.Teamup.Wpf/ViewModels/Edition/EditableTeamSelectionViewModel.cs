@@ -22,7 +22,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
     {
         private readonly TeamPresentationService? _teamPresentationService;
         public event EventHandler<EditableTeamViewModel>? TeamCreated;
-        private readonly SingleTaskRunner _checkDatabaseConnectionRunner;
+        private readonly SingleTaskRunner _checkImportConnectionRunner;
 
         public EditableTeamSelectionViewModel(Subject<Func<EditableTeamViewModel, bool>>? filterChanged = null) : this(null, filterChanged) { }
 
@@ -30,9 +30,9 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
             : base(parametersProvider: new ListParametersProvider($"{nameof(EditableTeamViewModel.Name)}"))
         {
             _teamPresentationService = teamPresentationService;
-            _checkDatabaseConnectionRunner = new SingleTaskRunner(_ => CanImportFromDatabase = _teamPresentationService?.CanImportFromDatabase() ?? false);
+            _checkImportConnectionRunner = new SingleTaskRunner(_ => CanImport = _teamPresentationService?.CanImport() ?? false);
 
-            ImportFromDatabaseCommand = CommandsManager.Create(async () => await ImportFromDatabaseAsync().ConfigureAwait(false), () => SelectedItem is null && string.IsNullOrEmpty(TextSearch) && CanImportFromDatabase);
+            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => SelectedItem is null && string.IsNullOrEmpty(TextSearch) && CanImport);
 
             if (filterChanged != null)
             {
@@ -54,21 +54,21 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public bool CanImportFromDatabase { get; private set; }
+        public bool CanImport { get; private set; }
 
         public override bool CanAdd => _teamPresentationService is not null && SelectedItem is null && string.IsNullOrEmpty(TextSearch);
 
         public override bool CanEdit => _teamPresentationService is not null && SelectedItem is not null;
 
-        public ICommand ImportFromDatabaseCommand { get; }
+        public ICommand ImportCommand { get; }
 
         public void Select(Guid? id) => SelectedItem = Items.FirstOrDefault(x => x.Id == id);
 
-        public async Task ImportFromDatabaseAsync()
+        public async Task ImportAsync()
         {
             if (_teamPresentationService is null) return;
 
-            var item = await _teamPresentationService.ImportFromDatabaseAsync(Collection.Source.Select(x => x.Name)).ConfigureAwait(false);
+            var item = await _teamPresentationService.ImportAsync(Collection.Source.Select(x => x.Name)).ConfigureAwait(false);
 
             if (item is not null)
                 AddNewItem(item);
@@ -110,7 +110,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         protected override void ResetCore()
         {
-            _checkDatabaseConnectionRunner.Run();
+            _checkImportConnectionRunner.Run();
             SelectedItem = null;
             TextSearch = null;
         }

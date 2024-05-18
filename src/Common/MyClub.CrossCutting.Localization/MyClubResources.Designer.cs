@@ -1000,15 +1000,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Vérifier la connexion à la base de données.
-        /// </summary>
-        public static string CheckDatabaseConnection {
-            get {
-                return ResourceManager.GetString("CheckDatabaseConnection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Vérifier la connexion au serveur de mail.
         /// </summary>
         public static string CheckMailConnection {
@@ -1447,15 +1438,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Database {
             get {
                 return ResourceManager.GetString("Database", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to La connexion à la base de données &apos;Hôte={0}, Nom={1}&apos; a échoué..
-        /// </summary>
-        public static string DatabaseConnectionWarning {
-            get {
-                return ResourceManager.GetString("DatabaseConnectionWarning", resourceCulture);
             }
         }
         
@@ -2529,15 +2511,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string ImportErrorInRowFormat {
             get {
                 return ResourceManager.GetString("ImportErrorInRowFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Importer de la base de données.
-        /// </summary>
-        public static string ImportFromDatabase {
-            get {
-                return ResourceManager.GetString("ImportFromDatabase", resourceCulture);
             }
         }
         

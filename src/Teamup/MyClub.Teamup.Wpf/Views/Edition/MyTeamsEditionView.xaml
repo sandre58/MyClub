@@ -152,9 +152,9 @@
                     <my:DataGridComboBoxColumn.Icon>
                         <StackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
-                                    Command="{Binding Data.StadiumSelection.ImportFromDatabaseCommand, Source={StaticResource Proxy}}"
+                                    Command="{Binding Data.StadiumSelection.ImportCommand, Source={StaticResource Proxy}}"
                                     Content="{my:Icon Kind=DatabaseSearch}"
-                                    ToolTip="{my:Resource ImportFromDatabase}"
+                                    ToolTip="{my:Resource Import}"
                                     Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                             <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                     Command="{Binding Data.StadiumSelection.AddCommand, Source={StaticResource Proxy}}"

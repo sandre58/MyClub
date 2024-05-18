@@ -44,7 +44,7 @@
         <!--  Filters  -->
         <DockPanel Margin="{StaticResource MyNet.Margins.Medium}" DockPanel.Dock="Top">
             <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count}" DockPanel.Dock="Right" />
-            <selection:TeamsSpeedFiltersView DataContext="{Binding Filters.SpeedFilters}" />
+            <selection:TeamsSpeedFiltersView DataContext="{Binding Filters}" />
         </DockPanel>
 
         <!--  Items  -->

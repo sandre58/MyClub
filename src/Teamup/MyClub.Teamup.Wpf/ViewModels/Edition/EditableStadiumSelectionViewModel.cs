@@ -19,16 +19,16 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
     {
         private readonly StadiumPresentationService _stadiumPresentationService;
         private readonly StadiumsProvider _stadiumsProvider;
-        private readonly SingleTaskRunner _checkDatabaseConnectionRunner;
+        private readonly SingleTaskRunner _checkImportConnectionRunner;
 
         public EditableStadiumSelectionViewModel(StadiumsProvider stadiumsProvider, StadiumPresentationService stadiumPresentationService)
             : base(parametersProvider: new ListParametersProvider([$"{nameof(EditableStadiumViewModel.Address)}.{nameof(Address.City)}", $"{nameof(EditableStadiumViewModel.Name)}"]))
         {
             _stadiumPresentationService = stadiumPresentationService;
             _stadiumsProvider = stadiumsProvider;
-            _checkDatabaseConnectionRunner = new SingleTaskRunner(_ => CanImportFromDatabase = _stadiumPresentationService.CanImportFromDatabase());
+            _checkImportConnectionRunner = new SingleTaskRunner(_ => CanImport = _stadiumPresentationService.CanImport());
 
-            ImportFromDatabaseCommand = CommandsManager.Create(async () => await ImportFromDatabaseAsync().ConfigureAwait(false), () => SelectedItem is null && CanImportFromDatabase);
+            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => SelectedItem is null && CanImport);
 
             Reset();
         }
@@ -39,13 +39,13 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public bool CanImportFromDatabase { get; private set; }
+        public bool CanImport { get; private set; }
 
-        public ICommand ImportFromDatabaseCommand { get; }
+        public ICommand ImportCommand { get; }
 
-        public async Task ImportFromDatabaseAsync()
+        public async Task ImportAsync()
         {
-            var item = await _stadiumPresentationService.ImportFromDatabaseAsync(Collection.Source.Select(x => (x.Name.OrEmpty(), x.Address?.City))).ConfigureAwait(false);
+            var item = await _stadiumPresentationService.ImportAsync(Collection.Source.Select(x => (x.Name.OrEmpty(), x.Address?.City))).ConfigureAwait(false);
 
             if (item is not null)
                 AddNewItem(item);
@@ -84,7 +84,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         protected override void ResetCore()
         {
-            _checkDatabaseConnectionRunner.Run();
+            _checkImportConnectionRunner.Run();
             SelectedItem = null;
             Collection.Set(_stadiumsProvider.Items.Select(x => new EditableStadiumViewModel(x.Id)
             {

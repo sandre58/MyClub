@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>1.0.0-alpha</Version>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\..\build\Teamup\$(Configuration)\Plugins\$(MSBuildProjectName)</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="config\appsettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="config\appsettings.json">
+      <TransformOnBuild>true</TransformOnBuild>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyNet.Utilities" Version="2.2.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

@@ -90,37 +90,37 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task LaunchImportAsync()
         {
-            var vm = _viewModelLocator.Get<CompetitionsImportViewModel>();
-            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            //var vm = _viewModelLocator.Get<CompetitionsImportViewModel>();
+            //var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
-            if (result.IsTrue())
-            {
-                await AppBusyManager.WaitAsync(() =>
-                {
-                    var defaultValues = _competitionService.NewCup();
-                    var competitions = vm.Items.Where(x => x.Import).Select(x =>
-                    {
-                        CompetitionDto competition = x.Type switch
-                        {
-                            CompetitionType.League => new LeagueDto(),
-                            CompetitionType.Cup => new CupDto(),
-                            _ => new FriendlyDto(),
-                        };
-                        competition.Rules = x.CompetitionRules;
-                        competition.EndDate = x.EndDate ?? defaultValues.EndDate;
-                        competition.Logo = x.Logo;
-                        competition.Name = x.Name;
-                        competition.Category = x.Category;
-                        competition.ShortName = x.ShortName;
-                        competition.StartDate = x.StartDate ?? defaultValues.StartDate;
+            //if (result.IsTrue())
+            //{
+            //    await AppBusyManager.WaitAsync(() =>
+            //    {
+            //        var defaultValues = _competitionService.NewCup();
+            //        var competitions = vm.Items.Where(x => x.Import).Select(x =>
+            //        {
+            //            CompetitionDto competition = x.Type switch
+            //            {
+            //                CompetitionType.League => new LeagueDto(),
+            //                CompetitionType.Cup => new CupDto(),
+            //                _ => new FriendlyDto(),
+            //            };
+            //            competition.Rules = x.CompetitionRules;
+            //            competition.EndDate = x.EndDate ?? defaultValues.EndDate;
+            //            competition.Logo = x.Logo;
+            //            competition.Name = x.Name;
+            //            competition.Category = x.Category;
+            //            competition.ShortName = x.ShortName;
+            //            competition.StartDate = x.StartDate ?? defaultValues.StartDate;
 
-                        return competition;
-                    }).ToList();
-                    _competitionService.Import(competitions);
+            //            return competition;
+            //        }).ToList();
+            //        _competitionService.Import(competitions);
 
-                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(competitions.Count));
-                }).ConfigureAwait(false);
-            }
+            //        ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(competitions.Count));
+            //    }).ConfigureAwait(false);
+            //}
         }
     }
 }

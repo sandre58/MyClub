@@ -32,12 +32,6 @@ namespace MyClub.Teamup.Wpf.Configuration
         {
             public string Directory { get; set; } = string.Empty;
         }
-
-        public class ConnectionStringsConfiguration
-        {
-            public string Default { get; set; } = string.Empty;
-        }
-
         public TeamupConfiguration() { }
 
         public TeamupConfiguration(IOptions<TeamupConfiguration> configuration)
@@ -50,7 +44,6 @@ namespace MyClub.Teamup.Wpf.Configuration
             RecentFiles.Registry = configuration.Value.RecentFiles.Registry;
             RecentFiles.Max = configuration.Value.RecentFiles.Max;
             Authentication.Registry = configuration.Value.Authentication.Registry;
-            ConnectionStrings.Default = configuration.Value.ConnectionStrings.Default;
         }
 
         public bool DisableMail { get; set; }
@@ -62,8 +55,6 @@ namespace MyClub.Teamup.Wpf.Configuration
         public MockConfiguration Mock { get; } = new();
 
         public PluginsConfiguration Plugins { get; } = new();
-
-        public ConnectionStringsConfiguration ConnectionStrings { get; } = new();
 
         public string TempDirectory { get; set; } = string.Empty;
     }

@@ -8,7 +8,6 @@ using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
-using MyClub.DatabaseContext.Application.Services;
 using MyClub.Domain.Enums;
 using MyClub.Teamup.Application.Services;
 using MyClub.Teamup.Domain.Enums;
@@ -33,7 +32,6 @@ namespace MyClub.Teamup.Wpf.ViewModels.Import
 
         public PlayersImportViewModel(
             ProjectInfoProvider projectInfoProvider,
-            DatabaseService databaseService,
             PlayersImportService playersImportService,
             PlayerService playerService) : base(
                 projectInfoProvider,

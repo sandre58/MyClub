@@ -48,14 +48,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\MyClub.CrossCutting.FileSystem\MyClub.CrossCutting.FileSystem.csproj" />
     <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />
-    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Application\MyClub.DatabaseContext.Application.csproj" />
-    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
     <ProjectReference Include="..\..\Common\MyClub.UserContext.Application\MyClub.UserContext.Application.csproj" />
     <ProjectReference Include="..\..\Common\MyClub.UserContext.Infrastructure.Authentication.Registry\MyClub.UserContext.Infrastructure.Authentication.Registry.csproj" />
     <ProjectReference Include="..\MyClub.Teamup.Application\MyClub.Teamup.Application.csproj" />
     <ProjectReference Include="..\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj" />
     <ProjectReference Include="..\MyClub.Teamup.Infrastructure.Packaging\MyClub.Teamup.Infrastructure.Packaging.csproj" />
     <ProjectReference Include="..\MyClub.Teamup.Infrastructure.Repositories\MyClub.Teamup.Infrastructure.Repositories.csproj" />
+    <ProjectReference Include="..\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -181,6 +180,13 @@
 
   <ItemGroup Condition="'$(IsBuildingInsideRider)' == 'True'">
     <Page Include="Styles\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ViewModels\Import\CompetitionsImportViewModel.cs" />
+    <Compile Remove="ViewModels\Import\ImportViewModel.Source.Database.cs" />
+    <Compile Remove="ViewModels\Import\PlayersImportViewModel.cs" />
+    <Compile Remove="ViewModels\Import\TeamsImportViewModel.cs" />
   </ItemGroup>
 
 </Project>

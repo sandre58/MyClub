@@ -7,20 +7,19 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using MyClub.Teamup.Wpf.Services.Providers.Base;
 using MyNet.UI.Commands;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Dialogs.Settings;
 using MyNet.UI.Messages;
+using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.UI.Toasting;
 using MyNet.Utilities;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Helpers;
 using MyNet.Utilities.IO.FileExtensions;
-using MyNet.Utilities.Localization.Extensions;
 using MyNet.Utilities.Messaging;
-using MyNet.UI.Resources;
-using MyClub.Teamup.Wpf.Services.Providers.Base;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Import
 {

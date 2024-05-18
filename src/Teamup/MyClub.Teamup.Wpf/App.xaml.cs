@@ -10,16 +10,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyClub.Application.Identity.Services;
 using MyClub.CrossCutting.FileSystem;
-using MyClub.DatabaseContext.Application.Services;
-using MyClub.DatabaseContext.Domain;
-using MyClub.DatabaseContext.Infrastructure.Data;
 using MyClub.Domain.Services;
 using MyClub.Teamup.Application.Contracts;
 using MyClub.Teamup.Application.Deferrers;
@@ -41,11 +37,13 @@ using MyClub.Teamup.Domain.TrainingAggregate;
 using MyClub.Teamup.Infrastructure.Packaging;
 using MyClub.Teamup.Infrastructure.Packaging.Services;
 using MyClub.Teamup.Infrastructure.Repositories;
+using MyClub.Teamup.Plugins.Contracts;
 using MyClub.Teamup.Wpf.Configuration;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Factories;
 using MyClub.Teamup.Wpf.Services.Handlers;
 using MyClub.Teamup.Wpf.Services.Providers;
+using MyClub.Teamup.Wpf.Services.Providers.Fakes;
 using MyClub.Teamup.Wpf.Settings;
 using MyClub.Teamup.Wpf.ViewModels.CalendarPage;
 using MyClub.Teamup.Wpf.ViewModels.CommunicationPage;
@@ -197,13 +195,6 @@ namespace MyClub.Teamup.Wpf
             .AddScoped<IMatchdayRepository, MatchdayRepository>()
             .AddScoped<IRoundRepository, RoundRepository>()
             .AddScoped<IMyTeamDomainService, MyTeamDomainService>()
-            .AddScoped<IUnitOfWork, UnitOfWork>(x =>
-                {
-                    var optionsBuilder = new DbContextOptionsBuilder<MyTeamup>();
-                    optionsBuilder.UseSqlServer(x.GetRequiredService<TeamupConfiguration>().ConnectionStrings.Default);
-
-                    return new UnitOfWork(new MyTeamup(optionsBuilder.Options));
-                })
 
             // Application Services
             .AddSingleton<InjuriesStatisticsRefreshDeferrer>()
@@ -228,7 +219,8 @@ namespace MyClub.Teamup.Wpf
             .AddScoped<PlayersImportService>()
             .AddScoped<TeamsImportService>()
             .AddScoped<CompetitionsImportService>()
-            .AddScoped<DatabaseService>()
+            .AddScoped(CreateImportStadiumsProvider)
+            .AddScoped(CreateImportTeamsProvider)
 
             // Infrastructure Service
             .AddSingleton<ITempService>(x => new TempService(x.GetRequiredService<TeamupConfiguration>().TempDirectory))
@@ -279,7 +271,6 @@ namespace MyClub.Teamup.Wpf
 
             // Notifications handlers
             .AddSingleton<MailConnectionHandler>()
-            .AddSingleton<DatabaseConnectionHandler>()
             .AddSingleton<FileNotificationHandler>()
             .AddSingleton<TeamsValidationHandler>()
 
@@ -330,11 +321,11 @@ namespace MyClub.Teamup.Wpf
             .AddSingleton<MatchEditionViewModel>()
             // ViewModels - Other dialogs
             .AddSingleton<PlayersExportViewModel>()
-            .AddSingleton<PlayersImportViewModel>()
-            .AddSingleton<TeamsImportViewModel>()
+            //.AddSingleton<PlayersImportViewModel>()
+            //.AddSingleton<TeamsImportViewModel>()
             .AddSingleton<TeamsExportViewModel>()
             .AddSingleton<CompetitionsExportViewModel>()
-            .AddSingleton<CompetitionsImportViewModel>()
+            //.AddSingleton<CompetitionsImportViewModel>()
 
             // Configuration
             .Configure<TeamupConfiguration>(context.Configuration)
@@ -384,6 +375,24 @@ namespace MyClub.Teamup.Wpf
 
             return pluginProvider.Create<IProjectFactory>(configuration.Mock.FactoryPluginName, serviceProvider.GetRequiredService<IProgresser>(), serviceProvider.GetRequiredService<MyNet.Utilities.Logging.ILogger>())
                 ?? new ProjectFactory(serviceProvider.GetRequiredService<IAuditService>());
+        }
+
+        private static ImportStadiumsProvider CreateImportStadiumsProvider(IServiceProvider serviceProvider)
+        {
+            var pluginProvider = serviceProvider.GetRequiredService<PluginsProvider>();
+
+            var plugin = pluginProvider.Create<IImportStadiumsPlugin>() ?? new FakeImportStadiumsPlugin();
+
+            return new ImportStadiumsProvider(plugin, serviceProvider.GetRequiredService<StadiumService>());
+        }
+
+        private static ImportTeamsProvider CreateImportTeamsProvider(IServiceProvider serviceProvider)
+        {
+            var pluginProvider = serviceProvider.GetRequiredService<PluginsProvider>();
+
+            var plugin = pluginProvider.Create<IImportTeamsPlugin>() ?? new FakeImportTeamsPlugin();
+
+            return new ImportTeamsProvider(plugin, serviceProvider.GetRequiredService<TeamService>());
         }
 
         private static async Task OnAppDomainUnhandledExceptionAsync(UnhandledExceptionEventArgs e) => await ShowExceptionAsync((Exception)e.ExceptionObject).ConfigureAwait(false);

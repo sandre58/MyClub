@@ -232,71 +232,71 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task LaunchImportAsync()
         {
-            var vm = ViewModelLocator.Get<PlayersImportViewModel>();
-            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            //var vm = ViewModelLocator.Get<PlayersImportViewModel>();
+            //var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
-            if (result.IsTrue())
-            {
-                await AppBusyManager.WaitAsync(() =>
-                {
-                    var players = vm.Items.Where(x => x.Import).Select(x => new SquadPlayerDto
-                    {
-                        FirstName = x.FirstName,
-                        LastName = x.LastName,
-                        TeamId = x.Team?.Id,
-                        Category = x.Category,
-                        Photo = x.Photo,
-                        Gender = x.Gender,
-                        Number = x.Number.Value,
-                        FromDate = x.FromDate,
-                        LicenseState = x.LicenseState,
-                        LicenseNumber = x.LicenseNumber,
-                        IsMutation = x.IsMutation,
-                        Description = x.Description,
-                        Address = x.GetAddress(),
-                        Birthdate = x.Birthdate,
-                        Country = x.Country,
-                        Height = x.Height.Value,
-                        Laterality = x.Laterality,
-                        PlaceOfBirth = x.PlaceOfBirth,
-                        ShoesSize = x.ShoesSize.Value,
-                        Size = x.Size,
-                        Weight = x.Weight.Value,
-                        Phones = x.Phones.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new PhoneDto
-                        {
-                            Value = x.Value,
-                            Default = x.Default,
-                            Label = x.Label
-                        }).ToList(),
-                        Emails = x.Emails.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new EmailDto
-                        {
-                            Value = x.Value,
-                            Default = x.Default,
-                            Label = x.Label
-                        }).ToList(),
-                        Positions = x.Positions.Select(x => new RatedPositionDto
-                        {
-                            Id = x.Id,
-                            IsNatural = x.IsNatural,
-                            Position = x.Position,
-                            Rating = x.Rating
-                        }).ToList(),
-                        Injuries = x.ImportInjuries ? x.Injuries.Select(x => new InjuryDto
-                        {
-                            Category = x.Category,
-                            Condition = x.Condition,
-                            Date = x.Period.Start,
-                            Description = x.Description,
-                            EndDate = x.Period.End,
-                            Severity = x.Severity,
-                            Type = x.Type
-                        }).ToList() : null
-                    }).ToList();
-                    Service.Import(players);
+            //if (result.IsTrue())
+            //{
+            //    await AppBusyManager.WaitAsync(() =>
+            //    {
+            //        var players = vm.Items.Where(x => x.Import).Select(x => new SquadPlayerDto
+            //        {
+            //            FirstName = x.FirstName,
+            //            LastName = x.LastName,
+            //            TeamId = x.Team?.Id,
+            //            Category = x.Category,
+            //            Photo = x.Photo,
+            //            Gender = x.Gender,
+            //            Number = x.Number.Value,
+            //            FromDate = x.FromDate,
+            //            LicenseState = x.LicenseState,
+            //            LicenseNumber = x.LicenseNumber,
+            //            IsMutation = x.IsMutation,
+            //            Description = x.Description,
+            //            Address = x.GetAddress(),
+            //            Birthdate = x.Birthdate,
+            //            Country = x.Country,
+            //            Height = x.Height.Value,
+            //            Laterality = x.Laterality,
+            //            PlaceOfBirth = x.PlaceOfBirth,
+            //            ShoesSize = x.ShoesSize.Value,
+            //            Size = x.Size,
+            //            Weight = x.Weight.Value,
+            //            Phones = x.Phones.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new PhoneDto
+            //            {
+            //                Value = x.Value,
+            //                Default = x.Default,
+            //                Label = x.Label
+            //            }).ToList(),
+            //            Emails = x.Emails.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new EmailDto
+            //            {
+            //                Value = x.Value,
+            //                Default = x.Default,
+            //                Label = x.Label
+            //            }).ToList(),
+            //            Positions = x.Positions.Select(x => new RatedPositionDto
+            //            {
+            //                Id = x.Id,
+            //                IsNatural = x.IsNatural,
+            //                Position = x.Position,
+            //                Rating = x.Rating
+            //            }).ToList(),
+            //            Injuries = x.ImportInjuries ? x.Injuries.Select(x => new InjuryDto
+            //            {
+            //                Category = x.Category,
+            //                Condition = x.Condition,
+            //                Date = x.Period.Start,
+            //                Description = x.Description,
+            //                EndDate = x.Period.End,
+            //                Severity = x.Severity,
+            //                Type = x.Type
+            //            }).ToList() : null
+            //        }).ToList();
+            //        Service.Import(players);
 
-                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(players.Count));
-                }).ConfigureAwait(false);
-            }
+            //        ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(players.Count));
+            //    }).ConfigureAwait(false);
+            //}
         }
     }
 }

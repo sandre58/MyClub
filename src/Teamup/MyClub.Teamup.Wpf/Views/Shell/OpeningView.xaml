@@ -13,7 +13,5 @@
         <CheckBox Style="{StaticResource MyNet.Styles.CheckBox.Foreground}" Content="{my:Resource LoadLastFileOnStart}" IsChecked="{Binding OpenLastFile}" />
         <!--  Open Last File  -->
         <CheckBox Style="{StaticResource MyNet.Styles.CheckBox.Foreground}" Content="{my:Resource CheckMailConnection}" IsChecked="{Binding CheckMailConnection}" />
-        <!--  Open Last File  -->
-        <CheckBox Style="{StaticResource MyNet.Styles.CheckBox.Foreground}" Content="{my:Resource CheckDatabaseConnection}" IsChecked="{Binding CheckDatabaseConnection}" />
     </my:SimpleStackPanel>
 </UserControl>

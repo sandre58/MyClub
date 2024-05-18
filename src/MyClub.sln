@@ -148,6 +148,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{A81F
 		tests\Directory.build.props = tests\Directory.build.props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Plugins.Teamup.Import.Database", "Plugins\MyClub.Plugins.Teamup.Import.Database\MyClub.Plugins.Teamup.Import.Database.csproj", "{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Teamup.Plugins.Contracts", "Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj", "{53565A66-C712-4BCE-B978-AB870F241E1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -302,6 +306,14 @@ Global
 		{A3186036-AD3E-4B41-9E9A-2853F6461F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3186036-AD3E-4B41-9E9A-2853F6461F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3186036-AD3E-4B41-9E9A-2853F6461F6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53565A66-C712-4BCE-B978-AB870F241E1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53565A66-C712-4BCE-B978-AB870F241E1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53565A66-C712-4BCE-B978-AB870F241E1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53565A66-C712-4BCE-B978-AB870F241E1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -349,6 +361,8 @@ Global
 		{E70A2D77-E359-4ABE-8A7F-2642922A513F} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
 		{A3186036-AD3E-4B41-9E9A-2853F6461F6A} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
 		{A81FDA06-002F-498B-B3FE-90458B7A75C7} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
+		{44E1FF69-DBAE-4084-9FD8-173D9C2279FA} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
+		{53565A66-C712-4BCE-B978-AB870F241E1B} = {A5C631A1-F5A2-4C22-8A49-AD37E63C8BE0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		RESX_ShowErrorsInErrorList = False

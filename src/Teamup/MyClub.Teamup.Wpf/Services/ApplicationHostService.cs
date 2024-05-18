@@ -16,7 +16,6 @@ using LiveCharts.Configurations;
 using Microsoft.Extensions.Hosting;
 using MyClub.CrossCutting.FileSystem;
 using MyClub.CrossCutting.Localization;
-using MyClub.DatabaseContext.Application.Services;
 using MyClub.Teamup.Application.Services;
 using MyClub.Teamup.Infrastructure.Packaging;
 using MyClub.Teamup.Wpf.Collections;
@@ -76,7 +75,6 @@ internal class ApplicationHostService : IHostedService
     private readonly RecentFilesProvider _recentFilesProvider;
     private readonly ProjectService _projectService;
     private readonly ProjectCommandsService _projectCommandsService;
-    private readonly DatabaseService _databaseService;
     private readonly List<Action> _afterLoadedActions = [];
     private readonly object _lock = new();
 
@@ -109,10 +107,8 @@ internal class ApplicationHostService : IHostedService
         RecentFilesProvider recentFilesProvider,
         RecentFilesService recentFilesService,
         ProjectCommandsService projectCommandsService,
-        DatabaseService databaseService,
         RecentFilesManager recentFilesManager,
         MailConnectionHandler mailConnectionHandler,
-        DatabaseConnectionHandler databaseConnectionHandler,
         FileNotificationHandler fileNotificationHandler,
         TeamsValidationHandler referenceDataValidationHandler)
     {
@@ -126,7 +122,6 @@ internal class ApplicationHostService : IHostedService
         _projectCommandsService = projectCommandsService;
         _tempService = tempService;
         _autoSaveService = autoSaveService;
-        _databaseService = databaseService;
 
         // Initialize managers
         LogManager.Initialize(logger);
@@ -142,7 +137,6 @@ internal class ApplicationHostService : IHostedService
         MyNet.Observable.Threading.Scheduler.Initialize(uiScheduler);
         AppBusyManager.Initialize(busyServiceFactory);
         notificationsManager.AddHandler(mailConnectionHandler)
-                            .AddHandler(databaseConnectionHandler)
                             .AddHandler(fileNotificationHandler)
                             .AddHandler(referenceDataValidationHandler);
 
@@ -309,17 +303,6 @@ internal class ApplicationHostService : IHostedService
                 {
                     LogManager.Warning("Connection to mail server failed");
                     _afterLoadedActions.Add(() => Messenger.Default.Send(new MailConnectionCheckedMessage(false)));
-                }
-        }
-
-        if (AppSettings.Default.CheckDatabaseConnectionOnStart)
-        {
-            var (name, host) = _databaseService.GetConnectionInfo();
-            using (LogManager.MeasureTime($"Checking Database Connection : Host={host}, Name={name}", TraceLevel.Debug))
-                if (!await Task.Run(_databaseService.CanConnect).ConfigureAwait(false))
-                {
-                    LogManager.Warning($"Connection to database failed");
-                    _afterLoadedActions.Add(() => Messenger.Default.Send(new DatabaseConnectionCheckedMessage(name, host, false)));
                 }
         }
     }

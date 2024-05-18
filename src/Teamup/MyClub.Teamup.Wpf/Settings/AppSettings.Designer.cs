@@ -12,7 +12,7 @@ namespace MyClub.Teamup.Wpf.Settings {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.5.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.10.0.0")]
     internal sealed partial class AppSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static AppSettings defaultInstance = ((AppSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new AppSettings())));
@@ -68,18 +68,6 @@ namespace MyClub.Teamup.Wpf.Settings {
             }
             set {
                 this["CheckMailConnectionOnStart"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool CheckDatabaseConnectionOnStart {
-            get {
-                return ((bool)(this["CheckDatabaseConnectionOnStart"]));
-            }
-            set {
-                this["CheckDatabaseConnectionOnStart"] = value;
             }
         }
     }

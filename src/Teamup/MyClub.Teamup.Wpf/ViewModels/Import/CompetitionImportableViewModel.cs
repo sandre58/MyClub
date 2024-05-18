@@ -8,6 +8,7 @@ using MyClub.CrossCutting.Localization;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Domain.Enums;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyClub.Teamup.Application.Dtos;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Import
 {

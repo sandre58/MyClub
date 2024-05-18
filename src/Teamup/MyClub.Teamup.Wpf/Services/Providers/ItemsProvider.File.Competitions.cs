@@ -12,6 +12,7 @@ using MyClub.Teamup.Domain.MatchAggregate;
 using MyClub.Teamup.Wpf.Services.Providers.Base;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyClub.Teamup.Wpf.ViewModels.Import;
+using MyClub.Teamup.Application.Dtos;
 
 namespace MyClub.Teamup.Wpf.Services.Providers
 {

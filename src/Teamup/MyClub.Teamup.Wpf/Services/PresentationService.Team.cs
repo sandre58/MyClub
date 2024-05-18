@@ -6,36 +6,36 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using MyNet.UI.Dialogs;
-using MyNet.UI.Locators;
-using MyNet.UI.Extensions;
-using MyNet.UI.Messages;
-using MyNet.UI.Services;
-using MyNet.UI.Selection;
-using MyNet.Wpf.Extensions;
-using MyNet.Utilities;
-using MyNet.Utilities.Exceptions;
-using MyNet.Utilities.Helpers;
-using MyNet.Utilities.Messaging;
-using MyNet.UI.Resources;
+using MyClub.Domain.Enums;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;
-using MyClub.DatabaseContext.Application.Services;
-using MyClub.Domain.Enums;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Edition;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyClub.Teamup.Wpf.ViewModels.Export;
 using MyClub.Teamup.Wpf.ViewModels.Import;
 using MyClub.Teamup.Wpf.ViewModels.Selection;
+using MyNet.UI.Dialogs;
+using MyNet.UI.Extensions;
+using MyNet.UI.Locators;
+using MyNet.UI.Messages;
+using MyNet.UI.Resources;
+using MyNet.UI.Selection;
+using MyNet.UI.Services;
+using MyNet.Utilities;
+using MyNet.Utilities.Exceptions;
+using MyNet.Utilities.Helpers;
+using MyNet.Utilities.Messaging;
+using MyNet.Utilities.Providers;
+using MyNet.Wpf.Extensions;
 
 namespace MyClub.Teamup.Wpf.Services
 {
-    internal class TeamPresentationService(TeamService teamService, DatabaseService databaseService, IViewModelLocator viewModelLocator)
+    internal class TeamPresentationService(TeamService teamService, ImportTeamsProvider importTeamsProvider, IViewModelLocator viewModelLocator)
     {
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
         private readonly TeamService _teamService = teamService;
-        private readonly DatabaseService _databaseService = databaseService;
+        private readonly ImportTeamsProvider _importTeamsProvider = importTeamsProvider;
 
         public async Task<EditableTeamViewModel?> CreateAsync(IEnumerable<EditableTeamViewModel>? existingTeams = null)
         {
@@ -202,35 +202,37 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task<IEnumerable<EditableTeamViewModel>> LaunchImportAsync()
         {
-            var vm = _viewModelLocator.Get<TeamsImportViewModel>();
-            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            //    var vm = _viewModelLocator.Get<TeamsImportViewModel>();
+            //    var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
-            return result.IsTrue()
-                ? vm.Items.Where(x => x.Import).Select(x => new EditableTeamViewModel
-                {
-                    ClubName = x.ClubName,
-                    Name = x.Name,
-                    ShortName = x.ShortName,
-                    Category = x.Category,
-                    AwayColor = x.AwayColor,
-                    Country = x.Country,
-                    HomeColor = x.HomeColor,
-                    Logo = x.Logo,
-                    Stadium = x.Stadium is not null
-                              ? new EditableStadiumViewModel
-                              {
-                                  Address = x.Stadium.GetAddress(),
-                                  Ground = x.Stadium.Ground,
-                                  Name = x.Stadium.Name,
-                              }
-                              : null
-                }).ToList()
-                : Array.Empty<EditableTeamViewModel>();
+            //    return result.IsTrue()
+            //        ? vm.Items.Where(x => x.Import).Select(x => new EditableTeamViewModel
+            //        {
+            //            ClubName = x.ClubName,
+            //            Name = x.Name,
+            //            ShortName = x.ShortName,
+            //            Category = x.Category,
+            //            AwayColor = x.AwayColor,
+            //            Country = x.Country,
+            //            HomeColor = x.HomeColor,
+            //            Logo = x.Logo,
+            //            Stadium = x.Stadium is not null
+            //                      ? new EditableStadiumViewModel
+            //                      {
+            //                          Address = x.Stadium.GetAddress(),
+            //                          Ground = x.Stadium.Ground,
+            //                          Name = x.Stadium.Name,
+            //                      }
+            //                      : null
+            //        }).ToList()
+            //        : Array.Empty<EditableTeamViewModel>();
+
+            return null;
         }
 
-        public async Task<EditableTeamViewModel?> ImportFromDatabaseAsync(IEnumerable<string> excludeTeamNames)
+        public async Task<EditableTeamViewModel?> ImportAsync(IEnumerable<string> excludeTeamNames)
         {
-            var vm = new TeamsSelectionViewModel(new TeamsDatabaseProvider(_databaseService, _teamService, x => !excludeTeamNames.Contains(x.Name, StringComparer.OrdinalIgnoreCase)), SelectionMode.Single);
+            var vm = new TeamsSelectionViewModel(new PredicateItemsProvider<TeamImportableViewModel>(_importTeamsProvider, x => !excludeTeamNames.Contains(x.Name, StringComparer.OrdinalIgnoreCase)), SelectionMode.Single);
 
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
@@ -263,6 +265,6 @@ namespace MyClub.Teamup.Wpf.Services
             return null;
         }
 
-        public bool CanImportFromDatabase() => _databaseService.CanConnect();
+        public bool CanImport() => _importTeamsProvider.CanImport();
     }
 }

@@ -1583,9 +1583,6 @@ It must be contain headers specified in sample file. Columns order don't matter.
   <data name="ExportTeams" xml:space="preserve">
     <value>Export teams</value>
   </data>
-  <data name="ImportFromDatabase" xml:space="preserve">
-    <value>Import from database</value>
-  </data>
   <data name="XPlayersHasBeenMovedInSuccessPlural" xml:space="preserve">
     <value># players has been moved in following squad :</value>
   </data>
@@ -1613,14 +1610,8 @@ It must be contain headers specified in sample file. Columns order don't matter.
   <data name="XSessionsAddedSuccessPlural" xml:space="preserve">
     <value># training sessions have been added.</value>
   </data>
-  <data name="DatabaseConnectionWarning" xml:space="preserve">
-    <value>Connection to Database 'Host={0}, Name={1}' has failed.</value>
-  </data>
   <data name="CheckMailConnection" xml:space="preserve">
     <value>Check mail connection</value>
-  </data>
-  <data name="CheckDatabaseConnection" xml:space="preserve">
-    <value>Check database connection</value>
   </data>
   <data name="ImportCompetitionsSampleFileTitle" xml:space="preserve">
     <value>Competitions import - Sample</value>

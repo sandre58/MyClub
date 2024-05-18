@@ -81,6 +81,5 @@ namespace MyClub.Teamup.Domain.Factories.Extensions
         }
 
         private static DateTime ComputeMatchdayDate(DateTime start, DayOfWeek[] dayOfWeeks) => dayOfWeeks.Min(x => start.Next(x)).BeginningOfDay();
-
     }
 }
