@@ -13,14 +13,14 @@ namespace MyClub.DatabaseContext.Infrastructure.Data.Repositories
 {
     public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : Entity
     {
-        private readonly MyTeamup _dbContext;
+        private readonly MyClubContext _dbContext;
         private readonly DbSet<TEntity> _dbSet;
 
         /// <summary>
         /// Initializes a new instance of the GenericRepository{TEntity}.
         /// </summary>
         /// <param name="dbContext">The database context.</param>
-        public GenericRepository(MyTeamup dbContext)
+        public GenericRepository(MyClubContext dbContext)
         {
             _dbContext = dbContext;
             _dbSet = _dbContext.Set<TEntity>();

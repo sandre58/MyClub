@@ -122,7 +122,7 @@ namespace MyClub.Teamup.Application.Services
 
         public IList<SquadPlayer> Import(IEnumerable<SquadPlayerDto> items)
         {
-            var isSimilar = new Func<SquadPlayerDto, bool>(x => GetSimilarPlayers(x.LastName.OrEmpty(), x.FirstName.OrEmpty()).Any());
+            var isSimilar = new Func<SquadPlayerDto, bool>(x => GetSimilarPlayers(x.FirstName.OrEmpty(), x.LastName.OrEmpty()).Any());
             var players = items.Where(x => !isSimilar(x)).Select(Save).ToList();
 
             using (CollectionChangedDeferrer.Defer())
@@ -135,6 +135,11 @@ namespace MyClub.Teamup.Application.Services
                     {
                         var dto = y;
                         dto.Id = similarPlayer.Id;
+                        dto.TeamId = similarPlayer.Team?.Id;
+                        dto.LicenseState = similarPlayer.LicenseState;
+                        dto.IsMutation = similarPlayer.IsMutation;
+                        if (!dto.Number.HasValue)
+                            dto.Number = similarPlayer.Number;
                         var newPlayer = Save(dto);
                         players.Add(newPlayer);
                     }

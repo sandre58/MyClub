@@ -18,7 +18,7 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </UserControl.Resources>
 
-    <!--  Shortcuts  -->
+    <!-- Shortcuts -->
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
             <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
@@ -35,7 +35,7 @@
 
     <DockPanel>
 
-        <!--  ToolBar  -->
+        <!-- ToolBar -->
         <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
 
             <my:CommandsBar.LeftCommands>
@@ -48,7 +48,8 @@
                     <Button my:IconAssist.Icon="{my:ToolIcon Kind=Download}"
                             Command="{Binding ImportCommand}"
                             Content="{my:Resource Import}"
-                            ToolTip="Ctrl+Maj+N" />
+                            ToolTip="Ctrl+Maj+N"
+                            Visibility="{Binding HasImportSources, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                     <Button my:IconAssist.Icon="{my:ToolIcon Kind=Upload}"
                             Command="{Binding ExportCommand}"
                             Content="{my:Resource Export}"
@@ -59,7 +60,7 @@
             <my:CommandsBar.RightCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
                     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Teamup.DataTemplates.List.Count.Selectable}" />
-                    <my:ExtendedFiltersView DataContext="{Binding Filters}" DropDownWidth="570" DropDownHeight="450">
+                    <my:ExtendedFiltersView DataContext="{Binding Filters}" DropDownHeight="450" DropDownWidth="570">
                         <my:ExtendedFiltersView.SpeedFilters>
                             <v:PlayersSpeedFiltersView />
                         </my:ExtendedFiltersView.SpeedFilters>
@@ -82,7 +83,7 @@
                                    ToggleContent="{my:Resource Move}">
                     <my:Submenu my:ItemsControlAssist.SortingProperty="Order" ItemsSource="{Binding Source={x:Static collections:TeamsCollection.MyTeams}}">
                         <my:Submenu.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="MenuItem">
+                            <Style TargetType="MenuItem" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                                 <Setter Property="Command" Value="{Binding Data.MoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
                                 <Setter Property="CommandParameter" Value="{Binding}" />
                                 <Setter Property="Visibility" Value="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
@@ -131,10 +132,10 @@
 
         </my:CommandsBar>
 
-        <!--  Content  -->
+        <!-- Content -->
         <my:TransitioningContent>
             <my:TransitioningContent.Style>
-                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeGrid">
                             <Setter Property="Content">

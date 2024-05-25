@@ -12,9 +12,9 @@ using MyClub.DatabaseContext.Infrastructure.Data.Repositories;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data
 {
-    public class UnitOfWork(MyTeamup context) : IUnitOfWork
+    public class UnitOfWork(MyClubContext context) : IUnitOfWork
     {
-        private readonly MyTeamup _context = context;
+        private readonly MyClubContext _context = context;
         private bool _disposed = false;
 
         public IStadiumRepository StadiumRepository { get; private set; } = new StadiumRepository(context);

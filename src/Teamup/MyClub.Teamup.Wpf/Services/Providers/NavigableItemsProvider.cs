@@ -11,7 +11,7 @@ using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
 
 namespace MyClub.Teamup.Wpf.Services.Providers
 {
-    internal class NavigableItemsProvider : SourceProvider<ISearchableItem>
+    internal class NavigableItemsProvider : ObservableSourceProvider<ISearchableItem>
     {
         public NavigableItemsProvider(PlayersProvider playersProvider,
                                       CompetitionsProvider competitionsProvider,

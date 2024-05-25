@@ -7,6 +7,7 @@ using MyClub.Domain.Enums;
 using MyClub.Teamup.Application.Converters;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Domain.Enums;
+using MyClub.Teamup.Wpf.Services.Providers.Base;
 using MyClub.Teamup.Wpf.Settings;
 using MyNet.CsvHelper.Extensions;
 using MyNet.CsvHelper.Extensions.Converters;
@@ -15,7 +16,9 @@ using MyNet.Utilities.Geography;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Export
 {
-    public class PlayerColumnsExportProvider : ColumnsExportProvider<SquadPlayerExportDto>
+
+
+    public class PlayerColumnsExportProvider : ColumnWrappersExportProviderBase<SquadPlayerExportDto>
     {
         public static readonly IEnumerable<ColumnMapping<SquadPlayerExportDto, object?>> DefaultColumns =
         [

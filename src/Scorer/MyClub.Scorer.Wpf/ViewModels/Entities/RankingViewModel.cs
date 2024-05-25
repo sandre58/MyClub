@@ -11,7 +11,6 @@ using System.Reactive.Subjects;
 using System.Text;
 using DynamicData;
 using DynamicData.Binding;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyNet.Observable;

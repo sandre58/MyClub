@@ -145,7 +145,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionPage
         public IEnumerable<DateTime> GetSelectedDates() => SelectedDates is not null ? SelectedDates.OfType<DateTime>() : [];
     }
 
-    internal class MatchdaysCollection(SourceProvider<IMatchdayViewModel> matchdaysSourceProvider) : SelectableCollection<IMatchdayViewModel>(matchdaysSourceProvider.Connect(), scheduler: Scheduler.UI, createWrapper: x => new SelectedMatchdayAppointment(x))
+    internal class MatchdaysCollection(ISourceProvider<IMatchdayViewModel> matchdaysSourceProvider) : SelectableCollection<IMatchdayViewModel>(matchdaysSourceProvider.Connect(), scheduler: Scheduler.UI, createWrapper: x => new SelectedMatchdayAppointment(x))
     {
     }
 

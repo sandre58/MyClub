@@ -7,7 +7,7 @@ using MyClub.DatabaseContext.Domain.PlayerAggregate;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data.Repositories
 {
-    public class PlayerRepository(MyTeamup dbContext) : GenericRepository<Player>(dbContext), IPlayerRepository
+    public class PlayerRepository(MyClubContext dbContext) : GenericRepository<Player>(dbContext), IPlayerRepository
     {
         public override IQueryable<Player> GetAll() => base.GetAll().Include(x => x.Phones).Include(x => x.Emails).Include(x => x.Injuries).Include(x => x.Positions);
     }

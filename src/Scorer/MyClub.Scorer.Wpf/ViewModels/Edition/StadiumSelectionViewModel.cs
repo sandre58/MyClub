@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading.Tasks;
-using MyClub.DatabaseContext.Application.Services;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
@@ -19,19 +18,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class StadiumSelectionViewModel : ListViewModel<StadiumViewModel>
     {
         private readonly StadiumPresentationService? _stadiumPresentationService;
-        private readonly SingleTaskRunner _checkDatabaseConnectionRunner;
+        private readonly SingleTaskRunner _checkImportConnectionRunner;
 
         public StadiumSelectionViewModel(ISourceProvider<StadiumViewModel> stadiumsProvider,
-                                         StadiumPresentationService? stadiumPresentationService = null,
-                                         DatabaseService? databaseService = null)
+                                         StadiumPresentationService? stadiumPresentationService = null)
             : base(source: stadiumsProvider.Connect(), parametersProvider: new ListParametersProvider([$"{nameof(StadiumViewModel.Address)}.{nameof(Address.City)}", $"{nameof(StadiumViewModel.Name)}"]))
         {
             CanAdd = stadiumPresentationService is not null;
             CanEdit = stadiumPresentationService is not null;
             _stadiumPresentationService = stadiumPresentationService;
-            _checkDatabaseConnectionRunner = new SingleTaskRunner(_ => CanImportFromDatabase = databaseService?.CanConnect() ?? false);
+            _checkImportConnectionRunner = new SingleTaskRunner(_ => CanImport = stadiumPresentationService?.CanImport() ?? false);
 
-            ImportFromDatabaseCommand = CommandsManager.Create(async () => await ImportFromDatabaseAsync().ConfigureAwait(false), () => SelectedItem is null && CanImportFromDatabase);
+            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => SelectedItem is null && CanImport);
 
             Reset();
         }
@@ -42,15 +40,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public bool CanImportFromDatabase { get; private set; }
+        public bool CanImport { get; private set; }
 
-        public ICommand ImportFromDatabaseCommand { get; }
+        public ICommand ImportCommand { get; }
 
-        public async Task ImportFromDatabaseAsync()
+        public async Task ImportAsync()
         {
             if (_stadiumPresentationService is null) return;
 
-            var id = await _stadiumPresentationService.ImportFromDatabaseAsync().ConfigureAwait(false);
+            var id = await _stadiumPresentationService.ImportAsync().ConfigureAwait(false);
 
             if (id.HasValue)
                 Select(id);
@@ -77,7 +75,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private void RefreshText() => TextSearch = SelectedItem?.DisplayName;
 
-        protected override void ResetCore() => _checkDatabaseConnectionRunner.Run();
+        protected override void ResetCore() => _checkImportConnectionRunner.Run();
 
         public void Select(Guid? id)
         {

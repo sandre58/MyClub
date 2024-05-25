@@ -25,7 +25,7 @@ Styles\Teamup.Rating.xaml
 Styles\Teamup.Team.xaml
 Styles\Teamup.Training.xaml
 -->
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters" xmlns:cmd="clr-namespace:MyClub.Teamup.Wpf.Commands" xmlns:my="http://mynet.com/xaml/themes" xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls" xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain" xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" xmlns:vm="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Import" xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities" xmlns:sys="clr-namespace:System;assembly=mscorlib" xmlns:models="clr-namespace:MyClub.Teamup.Domain.TrainingAggregate;assembly=MyClub.Teamup.Domain" xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:c="clr-namespace:MyClub.Teamup.Wpf.Converters" xmlns:cmd="clr-namespace:MyClub.Teamup.Wpf.Commands" xmlns:my="http://mynet.com/xaml/themes" xmlns:ctrl="clr-namespace:MyClub.Teamup.Wpf.Controls" xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain" xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" xmlns:vm="clr-namespace:MyNet.UI.ViewModels.Import;assembly=MyNet.UI" xmlns:utils="clr-namespace:MyNet.Utilities;assembly=MyNet.Utilities" xmlns:sys="clr-namespace:System;assembly=mscorlib" xmlns:models="clr-namespace:MyClub.Teamup.Domain.TrainingAggregate;assembly=MyClub.Teamup.Domain" xmlns:entities="clr-namespace:MyClub.Teamup.Wpf.ViewModels.Entities">
   <ResourceDictionary.MergedDictionaries>
     <ResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
   </ResourceDictionary.MergedDictionaries>
@@ -770,15 +770,9 @@ Styles\Teamup.Training.xaml
       </Trigger>
     </Style.Triggers>
   </Style>
-  <Style x:Key="Teamup.Styles.ContentControl.Date" BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type ContentControl}">
-    <Setter Property="VerticalAlignment" Value="Top" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
+  <Style x:Key="Teamup.Styles.ContentControl.Date" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
     <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Accent}" />
     <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent.Dark}" />
-    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
-    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
-    <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.White}" />
-    <Setter Property="FontSize" Value="50" />
     <Setter Property="ContentTemplate">
       <Setter.Value>
         <DataTemplate>
@@ -799,22 +793,23 @@ Styles\Teamup.Training.xaml
         </DataTemplate>
       </Setter.Value>
     </Setter>
+    <Setter Property="FontSize" Value="50" />
+    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.White}" />
+    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
   </Style>
-  <Style x:Key="Teamup.Styles.ContentControl.Date.Foreground" BasedOn="{StaticResource Teamup.Styles.ContentControl.Date}" TargetType="{x:Type ContentControl}">
+  <Style x:Key="Teamup.Styles.ContentControl.Date.Foreground" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource Teamup.Styles.ContentControl.Date}">
     <Setter Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
     <Setter Property="BorderBrush" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
     <Setter Property="Foreground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Contrast=True}" />
-    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
     <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Filled}}" />
+    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
   </Style>
-  <Style x:Key="Teamup.Styles.ContentControl.Time" BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type ContentControl}">
-    <Setter Property="VerticalAlignment" Value="Top" />
+  <Style x:Key="Teamup.Styles.ContentControl.Time" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
     <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Accent}" />
     <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent.Dark}" />
-    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
-    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
-    <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.White}" />
-    <Setter Property="FontSize" Value="18" />
     <Setter Property="ContentTemplate">
       <Setter.Value>
         <DataTemplate>
@@ -831,33 +826,34 @@ Styles\Teamup.Training.xaml
         </DataTemplate>
       </Setter.Value>
     </Setter>
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.White}" />
+    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
   </Style>
-  <Style x:Key="Teamup.Styles.ContentControl.Time.Foreground" BasedOn="{StaticResource Teamup.Styles.ContentControl.Time}" TargetType="{x:Type ContentControl}">
+  <Style x:Key="Teamup.Styles.ContentControl.Time.Foreground" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource Teamup.Styles.ContentControl.Time}">
     <Setter Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
     <Setter Property="BorderBrush" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
     <Setter Property="Foreground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Contrast=True}" />
-    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
     <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Filled}}" />
+    <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
   </Style>
-  <Style x:Key="Teamup.Styles.ListBoxItem.Embedded.Expander" BasedOn="{StaticResource MyNet.Styles.ListBoxItem}" TargetType="{x:Type ListBoxItem}">
-    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
-    <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  <Style x:Key="Teamup.Styles.ListBoxItem.Embedded.Expander" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem}">
     <Setter Property="Height" Value="50" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
     <Setter Property="Padding" Value="0" />
   </Style>
-  <Style x:Key="Teamup.Styles.ListBox.Embedded.Expander" BasedOn="{StaticResource MyNet.Styles.ListBox}" TargetType="{x:Type ListBox}">
-    <Setter Property="SelectionMode" Value="Extended" />
+  <Style x:Key="Teamup.Styles.ListBox.Embedded.Expander" TargetType="{x:Type ListBox}" BasedOn="{StaticResource MyNet.Styles.ListBox}">
     <Setter Property="ItemContainerStyle" Value="{StaticResource Teamup.Styles.ListBoxItem.Embedded.Expander}" />
+    <Setter Property="SelectionMode" Value="Extended" />
   </Style>
-  <Style x:Key="Teamup.Styles.ListBox.Embedded.Popup.OtherItems" BasedOn="{StaticResource MyNet.Styles.ListBox}" TargetType="{x:Type ListBox}">
-    <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="Transparent" />
-    <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding SelfPath=Foreground}" />
-    <Setter Property="Width" Value="270" />
-    <Setter Property="MaxHeight" Value="500" />
+  <Style x:Key="Teamup.Styles.ListBox.Embedded.Popup.OtherItems" TargetType="{x:Type ListBox}" BasedOn="{StaticResource MyNet.Styles.ListBox}">
     <Setter Property="ItemContainerStyle">
       <Setter.Value>
-        <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem}" TargetType="{x:Type ListBoxItem}">
+        <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem}">
           <Setter Property="Visibility">
             <Setter.Value>
               <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfReferencesEqual}">
@@ -871,6 +867,10 @@ Styles\Teamup.Training.xaml
         </Style>
       </Setter.Value>
     </Setter>
+    <Setter Property="MaxHeight" Value="500" />
+    <Setter Property="Width" Value="270" />
+    <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="Transparent" />
+    <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding SelfPath=Foreground}" />
   </Style>
   <DataTemplate x:Key="Teamup.DataTemplates.ListView.SelectAll">
     <CheckBox x:Name="SelectAllCheckBox" Margin="{StaticResource MyNet.Margins.Small.Left}" HorizontalAlignment="Center" IsChecked="{Binding DataContext.AreAllSelected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListView}}}" ToolTip="{my:Resource SelectAll}" />
@@ -880,19 +880,14 @@ Styles\Teamup.Training.xaml
       </Trigger>
     </DataTemplate.Triggers>
   </DataTemplate>
-  <Style x:Key="Teamup.Styles.ListViewItem.Selectable" BasedOn="{StaticResource MyNet.Styles.ListViewItem}" TargetType="ListViewItem">
-    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+  <Style x:Key="Teamup.Styles.ListViewItem.Selectable" TargetType="ListViewItem" BasedOn="{StaticResource MyNet.Styles.ListViewItem}">
     <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
   </Style>
-  <Style x:Key="Teamup.Styles.ListView.Selectable" BasedOn="{StaticResource MyNet.Styles.ListView}" TargetType="{x:Type ListView}">
+  <Style x:Key="Teamup.Styles.ListView.Selectable" TargetType="{x:Type ListView}" BasedOn="{StaticResource MyNet.Styles.ListView}">
     <Setter Property="ItemContainerStyle" Value="{StaticResource Teamup.Styles.ListViewItem.Selectable}" />
   </Style>
-  <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.Import" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}" TargetType="{x:Type CheckBox}">
-    <Setter Property="Width" Value="30" />
-    <Setter Property="Height" Value="30" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="IsHitTestVisible" Value="False" />
-    <Setter Property="Focusable" Value="False" />
+  <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.Import" TargetType="{x:Type CheckBox}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}">
     <Setter Property="ContentTemplate">
       <Setter.Value>
         <DataTemplate>
@@ -900,6 +895,11 @@ Styles\Teamup.Training.xaml
         </DataTemplate>
       </Setter.Value>
     </Setter>
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="IsHitTestVisible" Value="False" />
+    <Setter Property="Width" Value="30" />
     <Style.Triggers>
       <MultiDataTrigger>
         <MultiDataTrigger.Conditions>
@@ -931,11 +931,11 @@ Styles\Teamup.Training.xaml
       </MultiDataTrigger>
     </Style.Triggers>
   </Style>
-  <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.Import.Edition" BasedOn="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Import}" TargetType="{x:Type CheckBox}">
-    <Setter Property="IsHitTestVisible" Value="True" />
+  <Style x:Key="Teamup.Styles.CheckBox.Embedded.DataGrid.Import.Edition" TargetType="{x:Type CheckBox}" BasedOn="{StaticResource Teamup.Styles.CheckBox.Embedded.DataGrid.Import}">
     <Setter Property="Focusable" Value="True" />
+    <Setter Property="IsHitTestVisible" Value="True" />
   </Style>
-  <Style x:Key="Teamup.Styles.ToggleButton.Embedded.ListView.Selection" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}" TargetType="{x:Type ToggleButton}">
+  <Style x:Key="Teamup.Styles.ToggleButton.Embedded.ListView.Selection" TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Style.Triggers>
       <Trigger Property="IsChecked" Value="True">
@@ -943,24 +943,24 @@ Styles\Teamup.Training.xaml
       </Trigger>
     </Style.Triggers>
   </Style>
-  <Style x:Key="Teamup.Styles.NavigationView.Top" BasedOn="{StaticResource MyNet.Styles.NavigationView.Top}" TargetType="{x:Type my:NavigationView}">
-    <Setter Property="ShowAutoSuggestBox" Value="False" />
-    <Setter Property="ShowHeader" Value="False" />
-    <Setter Property="ShowNavigationButtons" Value="False" />
+  <Style x:Key="Teamup.Styles.NavigationView.Top" TargetType="{x:Type my:NavigationView}" BasedOn="{StaticResource MyNet.Styles.NavigationView.Top}">
     <Setter Property="FrameBackground" Value="Transparent" />
     <Setter Property="FrameCornerRadius" Value="0" />
     <Setter Property="FrameMargin" Value="{StaticResource MyNet.Margins.Medium.Top}" />
     <Setter Property="Margin" Value="{StaticResource MyNet.Margins.Medium}" />
+    <Setter Property="ShowAutoSuggestBox" Value="False" />
+    <Setter Property="ShowHeader" Value="False" />
+    <Setter Property="ShowNavigationButtons" Value="False" />
   </Style>
-  <Style x:Key="Teamup.Styles.NavigationView.Top.Secondary" BasedOn="{StaticResource Teamup.Styles.NavigationView.Top}" TargetType="{x:Type my:NavigationView}">
-    <Setter Property="Margin" Value="0" />
+  <Style x:Key="Teamup.Styles.NavigationView.Top.Secondary" TargetType="{x:Type my:NavigationView}" BasedOn="{StaticResource Teamup.Styles.NavigationView.Top}">
     <Setter Property="FrameMargin" Value="{StaticResource MyNet.Margins.Medium}" />
+    <Setter Property="Margin" Value="0" />
     <Style.Resources>
-      <Style BasedOn="{StaticResource MyNet.Styles.NavigationViewItem.Top}" TargetType="{x:Type my:NavigationViewItem}">
-        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+      <Style TargetType="{x:Type my:NavigationViewItem}" BasedOn="{StaticResource MyNet.Styles.NavigationViewItem.Top}">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="my:ThemeAssist.IsMouseOverBackground" Value="Transparent" />
+        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
         <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="Transparent" />
+        <Setter Property="my:ThemeAssist.IsMouseOverBackground" Value="Transparent" />
         <Style.Triggers>
           <Trigger Property="IsMouseOver" Value="True">
             <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
@@ -975,25 +975,25 @@ Styles\Teamup.Training.xaml
   <DataTemplate x:Key="Teamup.DataTemplates.Ghost.NoData.Large">
     <my:SimpleStackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Huge}">
       <my:PackIcon Width="150" Height="150" HorizontalAlignment="Center" Kind="CircleOffOutline" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-      <TextBlock HorizontalAlignment="Center" FontSize="{StaticResource MyNet.Font.Size.Title}" Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Text="{my:Resource NoData}" />
+      <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" HorizontalAlignment="Center" FontSize="{StaticResource MyNet.Font.Size.Title}" Text="{my:Resource NoData}" />
     </my:SimpleStackPanel>
   </DataTemplate>
   <DataTemplate x:Key="Teamup.DataTemplates.Ghost.NoData.Medium">
     <my:SimpleStackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
       <my:PackIcon Width="80" Height="80" HorizontalAlignment="Center" Kind="CircleOffOutline" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-      <TextBlock HorizontalAlignment="Center" Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Text="{Binding}" />
+      <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" HorizontalAlignment="Center" Text="{Binding}" />
     </my:SimpleStackPanel>
   </DataTemplate>
   <DataTemplate x:Key="Teamup.DataTemplates.Ghost.NoSelection.Medium">
     <my:SimpleStackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
       <my:PackIcon Width="80" Height="80" HorizontalAlignment="Center" Kind="SquareOffOutline" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-      <TextBlock HorizontalAlignment="Center" Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Text="{Binding}" />
+      <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" HorizontalAlignment="Center" Text="{Binding}" />
     </my:SimpleStackPanel>
   </DataTemplate>
   <DataTemplate x:Key="Teamup.DataTemplates.List.Count">
     <Border x:Name="border" VerticalAlignment="Center" BorderBrush="{DynamicResource MyNet.Brushes.Control.Border}" BorderThickness="1" CornerRadius="17">
-      <!--  Count  -->
-      <StackPanel Margin="11,5" Orientation="Horizontal" TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
+      <!-- Count -->
+      <StackPanel Margin="11 5" Orientation="Horizontal" TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
         <TextBlock Text="{Binding Wrappers.Count}" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
         <TextBlock Margin="{StaticResource MyNet.Margins.Small.Horizontal}" Text="/" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
         <TextBlock Text="{Binding WrappersSource.Count}" />
@@ -1001,7 +1001,7 @@ Styles\Teamup.Training.xaml
     </Border>
   </DataTemplate>
   <DataTemplate x:Key="Teamup.DataTemplates.List.Count.Selectable">
-    <Button my:IconAssist.Alignment="Right" my:IconAssist.Icon="{my:ToolIcon Kind=CheckAll}" my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Left}" my:ThemeAssist.CornerRadius="17" Command="{Binding SelectAllCommand}" FontSize="{StaticResource MyNet.Font.Size.Caption}" Style="{StaticResource MyNet.Styles.Button.Outlined}" ToolTip="{my:ShortcutResource SelectAll,                                           ShortcutKey='Ctrl+A'}">
+    <Button Style="{StaticResource MyNet.Styles.Button.Outlined}" my:IconAssist.Alignment="Right" my:IconAssist.Icon="{my:ToolIcon Kind=CheckAll}" my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Left}" my:ThemeAssist.CornerRadius="17" Command="{Binding SelectAllCommand}" FontSize="{StaticResource MyNet.Font.Size.Caption}" ToolTip="{my:ShortcutResource SelectAll,                                               ShortcutKey='Ctrl+A'}">
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="{Binding Wrappers.Count}" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
         <TextBlock Margin="{StaticResource MyNet.Margins.Small.Horizontal}" Text="/" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
@@ -1018,7 +1018,7 @@ Styles\Teamup.Training.xaml
           <Binding ElementName="border" Path="CornerRadius" />
         </MultiBinding>
       </Border.Clip>
-      <my:SplitButton my:IconAssist.Alignment="Right" my:IconAssist.Icon="{my:ToolIcon Kind=CheckAll}" my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Left}" BorderThickness="0" Command="{Binding SelectAllCommand}" FontSize="{StaticResource MyNet.Font.Size.Caption}" PopupPadding="0" Style="{StaticResource MyNet.Styles.SplitButton.Outlined}" ToolTip="{my:ShortcutResource SelectAll,                                               ShortcutKey='Ctrl+A'}">
+      <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.Outlined}" my:IconAssist.Alignment="Right" my:IconAssist.Icon="{my:ToolIcon Kind=CheckAll}" my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Left}" BorderThickness="0" Command="{Binding SelectAllCommand}" FontSize="{StaticResource MyNet.Font.Size.Caption}" PopupPadding="0" ToolTip="{my:ShortcutResource SelectAll,                                                           ShortcutKey='Ctrl+A'}">
         <my:DropDownButton.ToggleContent>
           <StackPanel Orientation="Horizontal" TextElement.FontSize="{StaticResource MyNet.Font.Size.Title}">
             <TextBlock Text="{Binding Wrappers.Count}" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
@@ -1028,9 +1028,9 @@ Styles\Teamup.Training.xaml
         </my:DropDownButton.ToggleContent>
         <my:Submenu ItemsSource="{Binding PresetSelections}">
           <my:Submenu.ItemContainerStyle>
-            <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="{x:Type MenuItem}">
-              <Setter Property="Header" Value="{my:Translation Key}" />
+            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
               <Setter Property="Command" Value="{Binding Value}" />
+              <Setter Property="Header" Value="{my:Translation Key}" />
             </Style>
           </my:Submenu.ItemContainerStyle>
         </my:Submenu>

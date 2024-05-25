@@ -16,6 +16,7 @@ using MyNet.UI.Resources;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable.Attributes;
 
 namespace MyClub.Teamup.Wpf.ViewModels.CompetitionsPage.CompetitionsTab
 {
@@ -48,14 +49,19 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionsPage.CompetitionsTab
             _leaguePresentationService = leaguePresentationService;
             _cupPresentationService = cupPresentationService;
             _competitionPresentationService = competitionPresentationService;
+            HasImportSources = _competitionPresentationService.HasImportSources();
 
             DuplicateSelectedItemCommand = CommandsManager.Create(async () => await SelectedItem!.DuplicateAsync().ConfigureAwait(false), () => SelectedItems.Count() == 1);
             AddLeagueCommand = CommandsManager.Create(async () => await AddLeagueAsync().ConfigureAwait(false));
             AddCupCommand = CommandsManager.Create(async () => await AddCupAsync().ConfigureAwait(false));
             AddFriendlyCommand = CommandsManager.Create(async () => await AddFriendlyAsync().ConfigureAwait(false));
             ExportCommand = CommandsManager.Create(async () => await ExportAsync().ConfigureAwait(false), () => Items.Any());
-            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false));
+            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => HasImportSources);
         }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool HasImportSources { get; private set; }
 
         public ICommand AddLeagueCommand { get; }
 

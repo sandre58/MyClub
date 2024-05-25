@@ -9,20 +9,5 @@ namespace MyClub.CrossCutting.Packaging
 
         public const string ContentTypeXml = "application/xml";
         public const string ContentTypePng = "image/png";
-
-        public const string PlayerPhotoUri = "/images/players/{0}.png";
-        public const string ClubLogoUri = "/images/clubs/{0}.png";
-        public const string CompetitionLogoUri = "/images/competitions/{0}.png";
-        public const string PlayersUri = "/players.xml";
-        public const string TrainingSessionsUri = "/trainingSessions.xml";
-        public const string SquadsUri = "/squads.xml";
-        public const string TacticsUri = "/tactics.xml";
-        public const string ClubsUri = "/clubs.xml";
-        public const string CompetitionsUri = "/competitions.xml";
-        public const string StadiumsUri = "/stadiums.xml";
-        public const string SendedMailsUri = "/sendedMails.xml";
-        public const string HolidaysUri = "/holidays.xml";
-        public const string CyclesUri = "/cycles.xml";
-        public const string SeasonsUri = "/seasons.xml";
     }
 }

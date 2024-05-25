@@ -8,7 +8,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using DynamicData;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;

@@ -11,7 +11,7 @@ using MyClub.DatabaseContext.Infrastructure.Data;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data.Migrations
 {
-    [DbContext(typeof(MyTeamup))]
+    [DbContext(typeof(MyClubContext))]
     [Migration("20231012082346_InitializeDatabase")]
     partial class InitializeDatabase
     {

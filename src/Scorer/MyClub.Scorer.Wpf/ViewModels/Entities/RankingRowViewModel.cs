@@ -7,7 +7,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Text;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;

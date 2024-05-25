@@ -19,7 +19,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  Teams  -->
+        <!-- Teams -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" my:HeaderAssist.HorizontalAlignment="Left">
             <GroupBox.Header>
                 <Grid>
@@ -33,10 +33,10 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!--  Select team  -->
+                    <!-- Select team -->
                     <v:EditableTeamSelectionView Width="250" my:CommandsAssist.EnterCommand="{Binding Data.AddSelectedTeamCommand, Source={StaticResource Proxy}}" DataContext="{Binding TeamSelectionViewModel}" />
 
-                    <!--  Add team  -->
+                    <!-- Add team -->
                     <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
                             Grid.Column="2"
                             my:IconAssist.Icon="{my:Icon Kind=PlusCircle}"
@@ -44,15 +44,16 @@
                             Content="{my:Resource Add}"
                             ToolTip="{my:Resource AddTeam}" />
 
-                    <!--  Import teams  -->
+                    <!-- Import teams -->
                     <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                             Grid.Column="4"
                             my:IconAssist.Icon="{my:Icon Kind=Download}"
                             Command="{Binding ImportTeamsCommand}"
                             Content="{my:Resource Import}"
-                            ToolTip="{my:Resource ImportTeams}" />
+                            ToolTip="{my:Resource ImportTeams}"
+                            Visibility="{Binding HasImportSources, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                    <!--  Export teams  -->
+                    <!-- Export teams -->
                     <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                             Grid.Column="6"
                             my:IconAssist.Icon="{my:Icon Kind=Download}"
@@ -93,7 +94,7 @@
                                            RadiusX="2"
                                            RadiusY="2" />
 
-                                <!--  Logo  -->
+                                <!-- Logo -->
                                 <my:PictureControl Style="{StaticResource Teamup.Styles.PictureControl.Team}"
                                                    Grid.Column="2"
                                                    Width="20"
@@ -101,10 +102,10 @@
                                                    Image="{Binding Logo, Converter={x:Static my:BytesToImageConverter.Default}}" />
 
                                 <DockPanel Grid.Column="4">
-                                    <!--  Name  -->
+                                    <!-- Name -->
                                     <TextBlock DockPanel.Dock="Left" Text="{Binding Name}" />
 
-                                    <!--  MyTeam  -->
+                                    <!-- MyTeam -->
                                     <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Left}"
                                                  HorizontalAlignment="Left"
                                                  Foreground="{DynamicResource MyNet.Brushes.Primary}"
@@ -112,7 +113,7 @@
                                                  Visibility="{Binding IsMyTeam, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                                 </DockPanel>
 
-                                <!--  Edit team  -->
+                                <!-- Edit team -->
                                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                         Grid.Column="6"
                                         Command="{Binding Data.EditTeamCommand, Source={StaticResource Proxy}}"
@@ -120,7 +121,7 @@
                                         Content="{my:ToolIcon Kind=Edit}"
                                         ToolTip="{my:Resource EditTeam}" />
 
-                                <!--  Delete team  -->
+                                <!-- Delete team -->
                                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Remove}"
                                         Grid.Column="8"
                                         Command="{Binding Data.RemoveTeamCommand, Source={StaticResource Proxy}}"
@@ -138,7 +139,7 @@
             </ItemsControl>
         </GroupBox>
 
-        <!--  Warning  -->
+        <!-- Warning -->
         <Label Style="{StaticResource MyNet.Styles.Label.Warning.Dialog}"
                Grid.Row="1"
                Margin="{StaticResource MyNet.Margins.Medium.Top}"

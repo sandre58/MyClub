@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using MyClub.DatabaseContext.Application.Services;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Plugins.Contracts;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Export;
@@ -27,9 +27,11 @@ using MyNet.Utilities.Messaging;
 
 namespace MyClub.Scorer.Wpf.Services
 {
-    internal class StadiumPresentationService(StadiumService service, DatabaseService databaseService, IViewModelLocator viewModelLocator) : PresentationServiceBase<StadiumViewModel, StadiumEditionViewModel, StadiumService>(service, viewModelLocator)
+    internal class StadiumPresentationService(StadiumService service,
+                                              PluginsService pluginsService,
+                                              IViewModelLocator viewModelLocator) : PresentationServiceBase<StadiumViewModel, StadiumEditionViewModel, StadiumService>(service, viewModelLocator)
     {
-        private readonly DatabaseService _databaseService = databaseService;
+        private readonly PluginsService _pluginsService = pluginsService;
 
         public async Task OpenAsync(StadiumViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
@@ -48,7 +50,7 @@ namespace MyClub.Scorer.Wpf.Services
                 {
                     await AppBusyManager.BackgroundAsync(async () =>
                     {
-                        var players = list.Select(x => new StadiumExportDto
+                        var items = list.Select(x => new StadiumExportDto
                         {
                             Name = x.Name,
                             Ground = x.Ground,
@@ -59,7 +61,7 @@ namespace MyClub.Scorer.Wpf.Services
                             Longitude = x.Address?.Longitude,
                             Latitude = x.Address?.Latitude
                         }).ToList();
-                        await ExportService.ExportAsCsvOrExcelAsync(players, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
+                        await ExportService.ExportAsCsvOrExcelAsync(items, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item.ColumnMapping).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
 
                         Messenger.Default.Send(new FileExportedMessage(filepath, ProcessHelper.OpenInExcel));
                     });
@@ -71,14 +73,14 @@ namespace MyClub.Scorer.Wpf.Services
             }
         }
 
-        public async Task ImportAsync()
+        public async Task LauchImportAsync()
         {
-            var vm = ViewModelLocator.Get<StadiumsImportViewModel>();
+            var vm = ViewModelLocator.Get<StadiumsImportBySourcesDialogViewModel>();
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
             if (result.IsFalse()) return;
 
-            var itemsToImport = vm.Items.Where(x => x.Import).Select(x => new
+            var itemsToImport = vm.List.ImportItems.Select(x => new
             {
                 x.Mode,
                 Item = new StadiumDto
@@ -86,26 +88,31 @@ namespace MyClub.Scorer.Wpf.Services
                     Name = x.Name,
                     Ground = x.Ground,
                     Address = x.GetAddress()
-
                 }
             }).ToList();
 
             await AppBusyManager.WaitAsync(() => Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList())).ConfigureAwait(false);
+            vm.Reset();
         }
 
-        public async Task<Guid?> ImportFromDatabaseAsync()
+        public async Task<Guid?> ImportAsync()
         {
-            var vm = new StadiumsDatabaseImportViewModel(_databaseService, Service, x => !Service.GetSimilarStadiums(x.Name, x.City).Any());
+            var plugin = _pluginsService.GetPlugin<IImportStadiumsPlugin>();
+
+            if (plugin is null) return null;
+
+            var vm = new StadiumsImportDialogViewModel(plugin, Service, x => !Service.GetSimilarStadiums(x.Name, x.City).Any());
 
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
-            if (result.IsTrue() && vm.SelectedItem is not null)
+            var selectedItem = vm.List.SelectedItem;
+            if (result.IsTrue() && selectedItem is not null)
             {
                 var item = Service.Save(new StadiumDto
                 {
-                    Name = vm.SelectedItem.Name,
-                    Ground = vm.SelectedItem.Ground,
-                    Address = vm.SelectedItem.GetAddress()
+                    Name = selectedItem.Name,
+                    Ground = selectedItem.Ground,
+                    Address = selectedItem.GetAddress()
                 });
 
                 return item.Id;
@@ -113,5 +120,9 @@ namespace MyClub.Scorer.Wpf.Services
 
             return null;
         }
+
+        public bool CanImport() => _pluginsService.GetPlugin<IImportStadiumsPlugin>()?.IsEnabled() ?? false;
+
+        public bool HasImportSources() => _pluginsService.HasPlugin<IImportStadiumsSourcePlugin>();
     }
 }

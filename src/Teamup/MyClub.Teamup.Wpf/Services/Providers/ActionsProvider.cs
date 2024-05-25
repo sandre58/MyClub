@@ -10,7 +10,7 @@ using MyClub.Teamup.Wpf.ViewModels.Entities;
 
 namespace MyClub.Teamup.Wpf.Services.Providers
 {
-    internal class ActionsProvider : SourceProvider<ActionViewModel>
+    internal class ActionsProvider : ItemsSourceProvider<ActionViewModel>
     {
         public ActionsProvider(PlayerPresentationService playerPresentationService,
                                LeaguePresentationService leaguePresentationService,

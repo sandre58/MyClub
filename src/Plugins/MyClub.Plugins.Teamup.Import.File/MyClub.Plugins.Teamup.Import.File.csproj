@@ -1,0 +1,79 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>1.0.0-alpha</Version>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\..\build\Teamup\$(Configuration)\Plugins\$(MSBuildProjectName)</OutputPath>
+    <TargetFrameworks>net8.0-windows7.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Files\import_competitions_sample.xlsx" />
+    <EmbeddedResource Include="Resources\Files\import_players_sample.xlsx" />
+    <EmbeddedResource Include="Resources\Files\import_teams_sample.xlsx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities" Version="3.0.1">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Wpf" Version="3.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.FileSystem\MyClub.CrossCutting.FileSystem.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Packaging\MyClub.CrossCutting.Packaging.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Application.Contracts\MyClub.Teamup.Application.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Infrastructure.Packaging\MyClub.Teamup.Infrastructure.Packaging.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\MyClub.Plugins.Base.File\MyClub.Plugins.Base.File.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\FileResources.Designer.cs">
+      <DependentUpon>FileResources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\FileResources.resx">
+      <LastGenOutput>FileResources.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

@@ -26,8 +26,8 @@ using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.Settings;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyClub.Teamup.Wpf.ViewModels.Export;
+using MyClub.Teamup.Wpf.ViewModels.Import;
 using MyClub.Teamup.Wpf.ViewModels.Shell;
-using MyClub.Teamup.Wpf.Views.Export;
 using MyClub.Teamup.Wpf.Views.Shell;
 using MyClub.UserContext.Infrastructure.Authentication.Registry;
 using MyNet.UI.Busy;
@@ -55,7 +55,10 @@ using MyNet.Utilities.Logging;
 using MyNet.Utilities.Mail;
 using MyNet.Utilities.Messaging;
 using MyNet.Utilities.Progress;
+using MyNet.Wpf.Presentation.Views.Export;
 using MyNet.Wpf.Presentation.Views.FileHistory;
+using MyNet.Wpf.Presentation.Views.Import;
+using MyNet.Wpf.Presentation.Views.List;
 using MyNet.Wpf.Presentation.Views.Shell;
 
 namespace MyClub.Teamup.Wpf.Services;
@@ -171,13 +174,18 @@ internal class ApplicationHostService : IHostedService
         // Resolve common views
         viewResolver.Register<AboutViewModel, AboutView>();
         viewResolver.Register<PreferencesViewModel, PreferencesView>();
-        viewResolver.Register<DisplayViewModel, DisplayView>();
+        viewResolver.Register<DisplayViewModel, MyNet.Wpf.Presentation.Views.Shell.DisplayView>();
         viewResolver.Register<LanguageViewModel, LanguageView>();
         viewResolver.Register<NotificationsViewModel, NotificationsView>();
         viewResolver.Register<RecentFilesViewModel, RecentFilesView>();
-        viewResolver.Register<PlayersExportViewModel, ExportView>();
-        viewResolver.Register<TeamsExportViewModel, ExportView>();
-        viewResolver.Register<CompetitionsExportViewModel, ExportView>();
+        viewResolver.Register<PlayersExportViewModel, FileExportByColumnsView>();
+        viewResolver.Register<TeamsExportViewModel, FileExportByColumnsView>();
+        viewResolver.Register<CompetitionsExportViewModel, FileExportByColumnsView>();
+        viewResolver.Register<StadiumsImportDialogViewModel, SelectionDialogView>();
+        viewResolver.Register<TeamsImportDialogViewModel, SelectionDialogView>();
+        viewResolver.Register<TeamsImportBySourcesDialogViewModel, ImportBySourcesDialogView>();
+        viewResolver.Register<PlayersImportBySourcesDialogViewModel, ImportBySourcesDialogView>();
+        viewResolver.Register<CompetitionsImportBySourcesDialogViewModel, ImportBySourcesDialogView>();
 
         // Translations
         TranslationService.RegisterResources(nameof(CountryResources), CountryResources.ResourceManager);

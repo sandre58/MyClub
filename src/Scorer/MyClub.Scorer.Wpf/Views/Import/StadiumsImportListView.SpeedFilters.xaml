@@ -1,0 +1,48 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Import.StadiumsImportSpeedFiltersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:import="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Import"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             d:DataContext="{d:DesignInstance Type=import:StadiumImportablesSpeedFiltersViewModel}"
+             Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+             mc:Ignorable="d">
+    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.VeryLarge}">
+
+        <!-- Name -->
+        <TextBox Style="{StaticResource MyNet.Styles.TextBox.Filled}"
+                 Width="{StaticResource MyNet.Widths.Control.VeryLarge}"
+                 my:FocusAssist.IsDefault="True"
+                 my:HintAssist.Hint="{my:Resource Name}"
+                 my:HintAssist.IsFloating="True"
+                 my:TextFieldAssist.HasClearButton="True"
+                 Text="{Binding NameFilter.Value, UpdateSourceTrigger=PropertyChanged}" />
+
+        <!-- City -->
+        <TextBox Style="{StaticResource MyNet.Styles.TextBox.Filled}"
+                 Width="{StaticResource MyNet.Widths.Control.VeryLarge}"
+                 my:HintAssist.Hint="{my:Resource City}"
+                 my:HintAssist.IsFloating="True"
+                 my:TextFieldAssist.HasClearButton="True"
+                 Text="{Binding CityFilter.Value, UpdateSourceTrigger=PropertyChanged}" />
+
+        <!-- Ground -->
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                 Margin="{StaticResource MyNet.Margins.Small}"
+                 VerticalAlignment="Stretch"
+                 SelectedValuePath="DataContext"
+                 SelectionMode="Multiple">
+            <i:Interaction.Behaviors>
+                <my:ListBoxSelectionBehavior SelectedValues="{Binding GroundFilter.Values}" />
+            </i:Interaction.Behaviors>
+
+            <ListBoxItem Width="80" Content="{my:Resource GroundGrass}" DataContext="{x:Static enums:Ground.Grass}" />
+            <ListBoxItem Width="80" Content="{my:Resource GroundArtificialGrass}" DataContext="{x:Static enums:Ground.ArtificialGrass}" />
+            <ListBoxItem Width="80" Content="{my:Resource GroundIndoor}" DataContext="{x:Static enums:Ground.Indoor}" />
+            <ListBoxItem Width="80" Content="{my:Resource GroundSand}" DataContext="{x:Static enums:Ground.Sand}" />
+        </ListBox>
+    </my:SimpleStackPanel>
+</UserControl>

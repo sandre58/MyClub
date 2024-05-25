@@ -8,9 +8,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data
 {
-    public class MyTeamupFactory : IDesignTimeDbContextFactory<MyTeamup>
+    public class MyClubContextFactory : IDesignTimeDbContextFactory<MyClubContext>
     {
-        public MyTeamup CreateDbContext(string[] args)
+        public MyClubContext CreateDbContext(string[] args)
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -18,10 +18,10 @@ namespace MyClub.DatabaseContext.Infrastructure.Data
                 .Build();
 
             var connectionString = configuration.GetConnectionString("Default");
-            var optionsBuilder = new DbContextOptionsBuilder<MyTeamup>();
+            var optionsBuilder = new DbContextOptionsBuilder<MyClubContext>();
             optionsBuilder.UseSqlServer(connectionString);
 
-            return new MyTeamup(optionsBuilder.Options);
+            return new MyClubContext(optionsBuilder.Options);
         }
     }
 }

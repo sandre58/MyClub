@@ -129,9 +129,6 @@
   <data name="SizesList" xml:space="preserve">
     <value>XXS;XS;M;L;XL;XXL</value>
   </data>
-  <data name="InjuryTorso" xml:space="preserve">
-    <value>Fractured ribs</value>
-  </data>
   <data name="TrainingStagesList" xml:space="preserve">
     <value>Oppose to progression; Oppose to protect one's goal; Hold / Advance; Unbalance / Finish; Free kicks; Other</value>
   </data>
@@ -155,9 +152,6 @@
   </data>
   <data name="EditProfile" xml:space="preserve">
     <value>Edit profile</value>
-  </data>
-  <data name="AboutWarning" xml:space="preserve">
-    <value>Warning: This computer program is protected by copyright law and international treaties.Unauthorized reproduction or distribution of this program, or any portion of it, may result insevere civil and criminal penalties, and will be prosecuted to the maximum extent possible under thelaw.</value>
   </data>
   <data name="Image" xml:space="preserve">
     <value>Picture</value>
@@ -241,10 +235,6 @@ Please check the information in the "Messenger" tab of the "Settings" window.</v
   <data name="Properties" xml:space="preserve">
     <value>Properties</value>
   </data>
-  <data name="PleaseSelectOneItem" xml:space="preserve">
-    <value>Several items are selected.
-Please select only one item.</value>
-  </data>
   <data name="PleaseSelectItem" xml:space="preserve">
     <value>None item is selected.
 Please select an item.</value>
@@ -255,41 +245,14 @@ Please select an item.</value>
   <data name="Title" xml:space="preserve">
     <value>Title</value>
   </data>
-  <data name="SystemLanguage" xml:space="preserve">
-    <value>System Language</value>
-  </data>
-  <data name="RemoveFileFromList" xml:space="preserve">
-    <value>Supprimer de la liste</value>
-  </data>
-  <data name="RemoveFile" xml:space="preserve">
-    <value>Remove file</value>
-  </data>
   <data name="Project" xml:space="preserve">
     <value>Project</value>
-  </data>
-  <data name="Product" xml:space="preserve">
-    <value>Product</value>
-  </data>
-  <data name="PrimaryColor" xml:space="preserve">
-    <value>Primary color</value>
-  </data>
-  <data name="PinOff" xml:space="preserve">
-    <value>Pin off</value>
-  </data>
-  <data name="Pin" xml:space="preserve">
-    <value>Pin</value>
   </data>
   <data name="OpenNotificationsCenter" xml:space="preserve">
     <value>Open notifications center</value>
   </data>
-  <data name="OpenFolderLocation" xml:space="preserve">
-    <value>Open file location</value>
-  </data>
   <data name="OpenProjectDescription" xml:space="preserve">
     <value>Open file browser and choose an existing file</value>
-  </data>
-  <data name="OpenCopy" xml:space="preserve">
-    <value>Open copy</value>
   </data>
   <data name="OpenRecent" xml:space="preserve">
     <value>Open recent</value>
@@ -318,38 +281,14 @@ Please select an item.</value>
   <data name="FileSize" xml:space="preserve">
     <value>Size</value>
   </data>
-  <data name="AccentColor" xml:space="preserve">
-    <value>Secondary color</value>
-  </data>
   <data name="AddAttachment" xml:space="preserve">
     <value>Add attachment</value>
-  </data>
-  <data name="AscendingSort" xml:space="preserve">
-    <value>Ascending sort</value>
   </data>
   <data name="Attachments" xml:space="preserve">
     <value>Attachment(s)</value>
   </data>
-  <data name="ClearNotifications" xml:space="preserve">
-    <value>Clear notifications</value>
-  </data>
-  <data name="CopyFilePath" xml:space="preserve">
-    <value>Copy file path in clipboard</value>
-  </data>
-  <data name="Copyright" xml:space="preserve">
-    <value>Copyright</value>
-  </data>
-  <data name="DescendingSort" xml:space="preserve">
-    <value>Descending sort</value>
-  </data>
   <data name="Description" xml:space="preserve">
     <value>Description</value>
-  </data>
-  <data name="FileNotFound" xml:space="preserve">
-    <value>File not found</value>
-  </data>
-  <data name="Key" xml:space="preserve">
-    <value>Key</value>
   </data>
   <data name="Labels" xml:space="preserve">
     <value>Labels</value>
@@ -359,9 +298,6 @@ Please select an item.</value>
   </data>
   <data name="CreateProjectDescription" xml:space="preserve">
     <value>Create and parameter a new project</value>
-  </data>
-  <data name="Company" xml:space="preserve">
-    <value>Enterprise</value>
   </data>
   <data name="Players" xml:space="preserve">
     <value>Players</value>
@@ -483,9 +419,6 @@ Please consolidate or change the order of the items.</value>
   </data>
   <data name="Rating" xml:space="preserve">
     <value>Rating</value>
-  </data>
-  <data name="Ratings" xml:space="preserve">
-    <value>Rating(s)</value>
   </data>
   <data name="Roster" xml:space="preserve">
     <value>Roster</value>
@@ -688,9 +621,6 @@ Please consolidate or change the order of the items.</value>
   <data name="RemoveSessions" xml:space="preserve">
     <value>Remove sessions</value>
   </data>
-  <data name="ReplaceAllUnknownAttendances" xml:space="preserve">
-    <value>Replace all unknown attendances</value>
-  </data>
   <data name="ReturnDate" xml:space="preserve">
     <value>Return date</value>
   </data>
@@ -778,79 +708,17 @@ Please consolidate or change the order of the items.</value>
   <data name="ClearSizeColumn" xml:space="preserve">
     <value>Clear size</value>
   </data>
-  <data name="ColumnHeader" xml:space="preserve">
-    <value>Column header</value>
-  </data>
   <data name="Columns" xml:space="preserve">
     <value>Columns</value>
   </data>
   <data name="Destination" xml:space="preserve">
     <value>Destination</value>
   </data>
-  <data name="ExportXItems" xml:space="preserve">
-    <value>Export : # item(s)</value>
-  </data>
   <data name="ImportInjuries" xml:space="preserve">
     <value>Import injuries</value>
   </data>
-  <data name="ImportPlayersSampleFileTitle" xml:space="preserve">
-    <value>Players import - Sample</value>
-  </data>
-  <data name="Traduction" xml:space="preserve">
-    <value>Traduction</value>
-  </data>
-  <data name="ExportNoColumnsError" xml:space="preserve">
-    <value>No column has been selected.</value>
-  </data>
-  <data name="ExportNoItemsError" xml:space="preserve">
-    <value>Players list to exported is empty.</value>
-  </data>
-  <data name="ImportColumn" xml:space="preserve">
-    <value>Column:</value>
-  </data>
-  <data name="ImportColumnsAreMissing" xml:space="preserve">
-    <value>Columns are missing.</value>
-  </data>
-  <data name="ImportDefaultValues" xml:space="preserve">
-    <value>She will be replaced by default values.</value>
-  </data>
-  <data name="ImportDownloadSampleFile" xml:space="preserve">
-    <value>Download sample file</value>
-  </data>
-  <data name="ImportErrorInRowFormat" xml:space="preserve">
-    <value>An error is occured at row #</value>
-  </data>
-  <data name="ImportSampleFileTmprojDescription" xml:space="preserve">
-    <value>The file must be to xlsx, xls, csv or tmproj format.
-
-It must be contain headers specified in sample file. Columns order don't matter.</value>
-  </data>
-  <data name="ImportHasErrors" xml:space="preserve">
-    <value>Errors are occured during your file import</value>
-  </data>
-  <data name="ImportIgnoreErrors" xml:space="preserve">
-    <value>Ignore errors and import valid rows</value>
-  </data>
-  <data name="ImportRow" xml:space="preserve">
-    <value>Row:</value>
-  </data>
-  <data name="ImportRowWillBeIgnored" xml:space="preserve">
-    <value>The row will be ignored</value>
-  </data>
-  <data name="ImportSaveBeforeReload" xml:space="preserve">
-    <value>(don't forget to save your file before reload it)</value>
-  </data>
-  <data name="ImportSetFile" xml:space="preserve">
-    <value>Modify your file</value>
-  </data>
   <data name="FileMustBeExcelOrCsvError" xml:space="preserve">
     <value>The specified file must be a Excel or CSV file.</value>
-  </data>
-  <data name="SelectColumnsToExport" xml:space="preserve">
-    <value>Select columns to export:</value>
-  </data>
-  <data name="SaveConfiguration" xml:space="preserve">
-    <value>Save configuration</value>
   </data>
   <data name="Street" xml:space="preserve">
     <value>Street</value>
@@ -866,12 +734,6 @@ It must be contain headers specified in sample file. Columns order don't matter.
   </data>
   <data name="EmailOptionalPlural" xml:space="preserve">
     <value>Email(s)</value>
-  </data>
-  <data name="ImportValueWillBeIgnored" xml:space="preserve">
-    <value>The value will be ignored</value>
-  </data>
-  <data name="ImportFromFileDescription" xml:space="preserve">
-    <value>Select file containing items to import</value>
   </data>
   <data name="Communication" xml:space="preserve">
     <value>Communication</value>
@@ -1157,9 +1019,6 @@ It must be contain headers specified in sample file. Columns order don't matter.
   </data>
   <data name="Interval" xml:space="preserve">
     <value>Interval</value>
-  </data>
-  <data name="AutoSaved" xml:space="preserve">
-    <value>Automatically saved</value>
   </data>
   <data name="NoPlace" xml:space="preserve">
     <value>No defined place</value>
@@ -1521,9 +1380,6 @@ It must be contain headers specified in sample file. Columns order don't matter.
   <data name="EditResults" xml:space="preserve">
     <value>Edit results</value>
   </data>
-  <data name="DuplicateMatchday" xml:space="preserve">
-    <value>Duplicate matchday</value>
-  </data>
   <data name="AddMatches" xml:space="preserve">
     <value>Add matches</value>
   </data>
@@ -1556,26 +1412,14 @@ It must be contain headers specified in sample file. Columns order don't matter.
     - Check your internet connection
     - You may have exceeded the request quota for the day.</value>
   </data>
-  <data name="Database" xml:space="preserve">
-    <value>Database</value>
-  </data>
   <data name="ImportTeams" xml:space="preserve">
     <value>Import teams</value>
   </data>
   <data name="ImportXItems" xml:space="preserve">
     <value>Import (0)</value>
   </data>
-  <data name="ImportFromDatabaseDescription" xml:space="preserve">
-    <value>Load items from database</value>
-  </data>
-  <data name="SelectFile" xml:space="preserve">
-    <value>Select file</value>
-  </data>
   <data name="State" xml:space="preserve">
     <value>State</value>
-  </data>
-  <data name="ImportTeamsSampleFileTitle" xml:space="preserve">
-    <value>Teams import - Sample</value>
   </data>
   <data name="DoNotImport" xml:space="preserve">
     <value>Do not import</value>
@@ -1612,9 +1456,6 @@ It must be contain headers specified in sample file. Columns order don't matter.
   </data>
   <data name="CheckMailConnection" xml:space="preserve">
     <value>Check mail connection</value>
-  </data>
-  <data name="ImportCompetitionsSampleFileTitle" xml:space="preserve">
-    <value>Competitions import - Sample</value>
   </data>
   <data name="ClearEndDateColumn" xml:space="preserve">
     <value>Clear end date</value>
@@ -1820,9 +1661,6 @@ Click here for his profile.</value>
   <data name="NewCupDescription" xml:space="preserve">
     <value>Create a default new cup and start now</value>
   </data>
-  <data name="NewTeam" xml:space="preserve">
-    <value>New team</value>
-  </data>
   <data name="UseTeamVenues" xml:space="preserve">
     <value>Use team venues</value>
   </data>
@@ -1830,31 +1668,8 @@ Click here for his profile.</value>
     <value>Matches are played by teams playing at home.
 Disable this option if the competition is grouped into a defined stadium set.</value>
   </data>
-  <data name="DuplicatedStadiumNameError" xml:space="preserve">
-    <value>A stadium with same name already exists.</value>
-  </data>
-  <data name="NewStadium" xml:space="preserve">
-    <value>New stadium</value>
-  </data>
-  <data name="ImportStadiums" xml:space="preserve">
-    <value>Import stadiums</value>
-  </data>
-  <data name="ExportStadiums" xml:space="preserve">
-    <value>Export stadiums</value>
-  </data>
-  <data name="AddStadium" xml:space="preserve">
-    <value>Add stadium</value>
-  </data>
   <data name="NoStadium" xml:space="preserve">
     <value>No stadium defined</value>
-  </data>
-  <data name="ImportStadiumsSampleFileTitle" xml:space="preserve">
-    <value>Stadium import - Sample</value>
-  </data>
-  <data name="ImportSampleFileScprojDescription" xml:space="preserve">
-    <value>The file must be to xlsx, xls, csv or scproj format.
-
-It must be contain headers specified in sample file. Columns order don't matter.</value>
   </data>
   <data name="RemoveStadiumOfTeam" xml:space="preserve">
     <value>Also delete the associated stadium</value>
@@ -1868,53 +1683,14 @@ It must be contain headers specified in sample file. Columns order don't matter.
   <data name="AtUnknownDate" xml:space="preserve">
     <value>At unknown date</value>
   </data>
-  <data name="AutomaticGeneration" xml:space="preserve">
-    <value>Automatic generation</value>
-  </data>
-  <data name="MatchdaysNumber" xml:space="preserve">
-    <value>Matchdays number</value>
-  </data>
-  <data name="MatchdaysAlt" xml:space="preserve">
-    <value>Matchday(s)</value>
-  </data>
   <data name="InClubFromDate" xml:space="preserve">
     <value>At club from</value>
-  </data>
-  <data name="ToDate" xml:space="preserve">
-    <value>To date</value>
-  </data>
-  <data name="Patterns" xml:space="preserve">
-    <value>Patterns</value>
-  </data>
-  <data name="AutomaticGenerationPatternDescription" xml:space="preserve">
-    <value># is remplaced by matchday index</value>
-  </data>
-  <data name="AddRule" xml:space="preserve">
-    <value>Add rule</value>
-  </data>
-  <data name="IncrementEvery" xml:space="preserve">
-    <value>Increment every</value>
-  </data>
-  <data name="AnyRulesError" xml:space="preserve">
-    <value>At least one rule must be defined.</value>
-  </data>
-  <data name="DayOfWeekRuleName" xml:space="preserve">
-    <value>Day(s) of week</value>
-  </data>
-  <data name="NoGeneratedMatchdaysWarning" xml:space="preserve">
-    <value>No matchday has been generated. Check parameters consistency.</value>
   </data>
   <data name="XMatchdaysGeneratedSuccess" xml:space="preserve">
     <value>1 matchday has been generated.</value>
   </data>
   <data name="XMatchdaysGeneratedSuccessPlural" xml:space="preserve">
     <value># matchdays has been generated.</value>
-  </data>
-  <data name="AddMatch" xml:space="preserve">
-    <value>Add match</value>
-  </data>
-  <data name="NewMatch" xml:space="preserve">
-    <value>New match</value>
   </data>
   <data name="XSelectedMatchesZero" xml:space="preserve">
     <value>No selected matches</value>
@@ -1927,9 +1703,6 @@ It must be contain headers specified in sample file. Columns order don't matter.
   </data>
   <data name="Bracket" xml:space="preserve">
     <value>Bracket</value>
-  </data>
-  <data name="SelectMatchday" xml:space="preserve">
-    <value>Select matchday</value>
   </data>
   <data name="DuplicationOf" xml:space="preserve">
     <value>Duplication of</value>
@@ -2069,9 +1842,6 @@ Deselect the columns that you will not display to gain performance when calculat
     <value>Select the columns used to calculate the order of teams in the standings.
 The columns in the first position will be evaluated first. The following columns will be evaluated only in case of a tie.</value>
   </data>
-  <data name="RankingRowComparers" xml:space="preserve">
-    <value>Sorting columns</value>
-  </data>
   <data name="TeamsAvailableAtDate" xml:space="preserve">
     <value>Teams are available on this date</value>
   </data>
@@ -2092,9 +1862,6 @@ The columns in the first position will be evaluated first. The following columns
   </data>
   <data name="StadiumPartiallyUnavailableAtDate" xml:space="preserve">
     <value>Rotation time is not respected compared to other matches</value>
-  </data>
-  <data name="AvailableFrom" xml:space="preserve">
-    <value>Available from</value>
   </data>
   <data name="SchedulingAssistant" xml:space="preserve">
     <value>Scheduling assistant</value>

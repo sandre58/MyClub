@@ -22,7 +22,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                                      MatchPresentationService matchPresentationService)
         {
             MatchesPlanningViewModel = new(matchesProvider,
-                                           new SourceProvider<IMatchParent>(matchdaysProvider.Connect().Transform(x => (IMatchParent)x)),
+                                           new ObservableSourceProvider<IMatchParent>(matchdaysProvider.Connect().Transform(x => (IMatchParent)x)),
                                            teamsProvider,
                                            stadiumsProvider,
                                            matchPresentationService);

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using DynamicData.Binding;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;

@@ -24,19 +24,20 @@
     <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.3.24172.9" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0-preview.3.24172.9" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-preview.3.24172.9" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0-preview.3.24172.9" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-preview.3.24172.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.3.24172.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.4.24266.19" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0-preview.4.24266.19" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-preview.4.24266.19" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0-preview.4.24266.19" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-preview.4.24266.19" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.4.24266.19" />
     <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0" />
     <PackageReference Include="MyNet.Utilities.IO.FileHistory.Registry" Version="1.0.1" />
     <PackageReference Include="MyNet.Utilities.Logging.NLog" Version="1.0.1" />
     <PackageReference Include="MyNet.Utilities.Mail.MailKit" Version="1.0.1" />
-    <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="2.0.0" />
-    <PackageReference Include="MyNet.Wpf.LiveCharts" Version="2.0.0" />
-    <PackageReference Include="MyNet.Wpf.Presentation" Version="2.0.0" />
+    <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="3.0.0" />
+    <PackageReference Include="MyNet.Wpf.LiveCharts" Version="3.0.0" />
+    <PackageReference Include="MyNet.Wpf.Presentation" Version="3.0.0" />
+    <PackageReference Include="MyNet.UI" Version="4.0.0" />
     <PackageReference Include="MyNet.Xaml.Merger.MSBuild" Version="2.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -46,14 +47,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\MyClub.CrossCutting.FileSystem\MyClub.CrossCutting.FileSystem.csproj" />
     <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />
-    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Application\MyClub.DatabaseContext.Application.csproj" />
-    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
     <ProjectReference Include="..\..\Common\MyClub.UserContext.Application\MyClub.UserContext.Application.csproj" />
     <ProjectReference Include="..\..\Common\MyClub.UserContext.Infrastructure.Authentication.Registry\MyClub.UserContext.Infrastructure.Authentication.Registry.csproj" />
     <ProjectReference Include="..\MyClub.Scorer.Application\MyClub.Scorer.Application.csproj" />
     <ProjectReference Include="..\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj" />
     <ProjectReference Include="..\MyClub.Scorer.Infrastructure.Packaging\MyClub.Scorer.Infrastructure.Packaging.csproj" />
     <ProjectReference Include="..\MyClub.Scorer.Infrastructure.Repositories\MyClub.Scorer.Infrastructure.Repositories.csproj" />
+    <ProjectReference Include="..\MyClub.Scorer.Plugins.Contracts\MyClub.Scorer.Plugins.Contracts.csproj" />
   </ItemGroup>
 
 
@@ -168,8 +168,4 @@
     <Page Include="Styles\*.xaml" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Files\import_stadiums_sample.xlsx" />
-    <EmbeddedResource Include="Resources\Files\import_teams_sample.xlsx" />
-  </ItemGroup>
 </Project>

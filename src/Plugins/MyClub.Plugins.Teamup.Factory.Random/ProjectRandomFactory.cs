@@ -14,6 +14,7 @@ using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Domain.ProjectAggregate;
 using MyClub.Teamup.Domain.Randomize;
 using MyClub.Teamup.Domain.SeasonAggregate;
+using MyClub.Teamup.Plugins.Contracts;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -24,7 +25,7 @@ using MyNet.Utilities.Progress;
 
 namespace MyClub.Plugins.Teamup.Factory.Random
 {
-    public class ProjectRandomFactory(IProgresser progresser, ILogger logger) : IProjectFactory
+    public class ProjectRandomFactory(IProgresser progresser, ILogger logger) : IProjectFactoryPlugin
     {
         private const int CountClubLogos = 1117;
         private const int CountCompetitionLogos = 90;

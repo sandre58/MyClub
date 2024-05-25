@@ -45,7 +45,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                                         ISourceProvider<StadiumViewModel> stadiumsProvider,
                                         MatchPresentationService matchPresentationService)
             : base(collection: new MatchesCollection(matchesProvider),
-                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source, new SourceProvider<DateTime>(matchesProvider.Connect().AutoRefresh(x => x.Date).DistinctValues(x => x.DateOfDay).ObserveOn(Scheduler.UI)).Source, teamsProvider.Source, stadiumsProvider.Source))
+                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source, new ObservableSourceProvider<DateTime>(matchesProvider.Connect().AutoRefresh(x => x.Date).DistinctValues(x => x.DateOfDay).ObserveOn(Scheduler.UI)).Source, teamsProvider.Source, stadiumsProvider.Source))
         {
             _matchPresentationService = matchPresentationService;
             Mode = ScreenMode.Read;

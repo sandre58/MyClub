@@ -45,6 +45,10 @@
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

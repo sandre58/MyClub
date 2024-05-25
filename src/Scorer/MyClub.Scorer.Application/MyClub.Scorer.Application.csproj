@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <Compile Remove="Services\StadiumsImportService.cs" />
+    <Compile Remove="Services\TeamsImportService.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>

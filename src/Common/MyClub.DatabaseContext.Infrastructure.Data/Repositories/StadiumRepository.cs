@@ -5,7 +5,7 @@ using MyClub.DatabaseContext.Domain.StadiumAggregate;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data.Repositories
 {
-    public class StadiumRepository(MyTeamup dbContext) : GenericRepository<Stadium>(dbContext), IStadiumRepository
+    public class StadiumRepository(MyClubContext dbContext) : GenericRepository<Stadium>(dbContext), IStadiumRepository
     {
     }
 }

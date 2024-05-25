@@ -12,6 +12,7 @@ using MyClub.Teamup.Domain.Enums;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable.Attributes;
 
 namespace MyClub.Teamup.Wpf.ViewModels.RosterPage
 {
@@ -20,6 +21,10 @@ namespace MyClub.Teamup.Wpf.ViewModels.RosterPage
         private readonly PlayerPresentationService _playerPresentationService;
 
         public bool CanMoveSelectedItems => SelectedItems.Any(x => x.TeamId == null || x.OtherTeams.Any());
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool HasImportSources { get; private set; }
 
         public ICommand MoveSelectedItemsCommand { get; private set; }
 
@@ -40,13 +45,14 @@ namespace MyClub.Teamup.Wpf.ViewModels.RosterPage
                    parametersProvider: new PlayersListParametersProvider())
         {
             _playerPresentationService = playerPresentationService;
+            HasImportSources = _playerPresentationService.HasImportSources();
 
             MoveSelectedItemsCommand = CommandsManager.Create<TeamViewModel>(async x => await MoveAsync(SelectedItems, x).ConfigureAwait(false), x => SelectedItems.Any(y => y.TeamId != x?.Id));
             AddAbsenceToSelectedItemsCommand = CommandsManager.Create<AbsenceType>(async x => await AddAbsenceAsync(SelectedItems, x).ConfigureAwait(false), x => SelectedItems.Any());
             OpenMailClientSelectedItemsCommand = CommandsManager.Create(() => MailCommandsService.OpenMailClient(SelectedItems.Select(x => x.Email?.Value).NotNull()), () => SelectedItems.Any(y => y.Email is not null));
             OpenCommunicationCommand = CommandsManager.Create(async () => await NavigationCommandsService.NavigateToCommunicationPageAsync(SelectedItems.Select(x => x.Email?.Value).NotNull(), string.Empty, string.Empty, true).ConfigureAwait(false), () => SelectedItems.Any(y => y.Email is not null));
             ExportCommand = CommandsManager.Create(async () => await ExportAsync().ConfigureAwait(false), () => Items.Any());
-            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false));
+            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => HasImportSources);
         }
 
         protected override async Task<PlayerViewModel?> CreateNewItemAsync()

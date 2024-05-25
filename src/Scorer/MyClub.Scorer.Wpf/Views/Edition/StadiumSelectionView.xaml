@@ -27,10 +27,16 @@
         <my:IconAssist.Icon>
             <StackPanel Opacity="{StaticResource MyNet.Opacity.Secondary}" Orientation="Horizontal">
                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
-                        Command="{Binding ImportFromDatabaseCommand}"
+                        Command="{Binding ImportCommand}"
                         Content="{my:Icon Kind=DatabaseSearch}"
-                        ToolTip="{my:Resource ImportFromDatabase}"
-                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        ToolTip="{my:Resource Import}">
+                    <Button.Visibility>
+                        <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                            <Binding Path="CanImport" />
+                            <Binding Path="SelectedItem" Converter="{x:Static my:NullToBooleanConverter.TrueIfNull}" />
+                        </MultiBinding>
+                    </Button.Visibility>
+                </Button>
                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                         Command="{Binding AddCommand}"
                         Content="{my:Icon Kind=Plus}"

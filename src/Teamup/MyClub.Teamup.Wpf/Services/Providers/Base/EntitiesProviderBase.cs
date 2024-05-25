@@ -11,10 +11,11 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
+using MyClub.Domain;
+using MyClub.Teamup.Domain.ProjectAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
-using MyClub.Teamup.Domain.ProjectAggregate;
-using MyClub.Domain;
+using MyNet.Utilities.Providers;
 
 namespace MyClub.Teamup.Wpf.Services.Providers.Base
 {

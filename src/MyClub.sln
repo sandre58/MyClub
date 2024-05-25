@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{5D1B
 	ProjectSection(SolutionItems) = preProject
 		..\.editorconfig = ..\.editorconfig
 		Directory.build.props = Directory.build.props
+		Directory.build.targets = Directory.build.targets
 		MyClub.ruleset = MyClub.ruleset
 		nuget.config = nuget.config
 		Settings.XamlStyler = Settings.XamlStyler
@@ -40,8 +41,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.CrossCutting.Localization", "Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj", "{0BD41556-4228-40B8-A64F-87174B8B4A61}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.CrossCutting.Packaging", "Common\MyClub.CrossCutting.Packaging\MyClub.CrossCutting.Packaging.csproj", "{0927218D-1BFD-4331-9E24-1C9A753EF445}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.DatabaseContext.Application", "Common\MyClub.DatabaseContext.Application\MyClub.DatabaseContext.Application.csproj", "{4CCC15DA-1054-4889-A53F-878082D3588E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.DatabaseContext.Domain", "Common\MyClub.DatabaseContext.Domain\MyClub.DatabaseContext.Domain.csproj", "{5F14548D-6F1F-48C5-BCD2-0478A5BFDBA3}"
 EndProject
@@ -148,9 +147,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{A81F
 		tests\Directory.build.props = tests\Directory.build.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Plugins.Teamup.Import.Database", "Plugins\MyClub.Plugins.Teamup.Import.Database\MyClub.Plugins.Teamup.Import.Database.csproj", "{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Plugins.Teamup.Import.Database", "Plugins\MyClub.Plugins.Teamup.Import.Database\MyClub.Plugins.Teamup.Import.Database.csproj", "{44E1FF69-DBAE-4084-9FD8-173D9C2279FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Teamup.Plugins.Contracts", "Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj", "{53565A66-C712-4BCE-B978-AB870F241E1B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Teamup.Plugins.Contracts", "Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj", "{53565A66-C712-4BCE-B978-AB870F241E1B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Plugins.Teamup.Import.File", "Plugins\MyClub.Plugins.Teamup.Import.File\MyClub.Plugins.Teamup.Import.File.csproj", "{B1477822-ACB7-4A5D-8F91-8110361988D3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Scorer.Plugins.Contracts", "Scorer\MyClub.Scorer.Plugins.Contracts\MyClub.Scorer.Plugins.Contracts.csproj", "{54D072B5-914B-4999-BA57-40B01694CF8F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Plugins.Scorer.Import.Database", "Plugins\MyClub.Plugins.Scorer.Import.Database\MyClub.Plugins.Scorer.Import.Database.csproj", "{4E735AB3-17BA-465A-A4B1-1F608D430F89}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Plugins.Base.Database", "Plugins\MyClub.Plugins.Base.Database\MyClub.Plugins.Base.Database.csproj", "{0CCA5365-6163-48B6-8836-98A5E00167B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Plugins.Base.File", "Plugins\MyClub.Plugins.Base.File\MyClub.Plugins.Base.File.csproj", "{1A237969-8DC0-4172-88F6-B6A068F2F2A8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Plugins.Scorer.Import.File", "Plugins\MyClub.Plugins.Scorer.Import.File\MyClub.Plugins.Scorer.Import.File.csproj", "{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -174,10 +185,6 @@ Global
 		{0927218D-1BFD-4331-9E24-1C9A753EF445}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0927218D-1BFD-4331-9E24-1C9A753EF445}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0927218D-1BFD-4331-9E24-1C9A753EF445}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4CCC15DA-1054-4889-A53F-878082D3588E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4CCC15DA-1054-4889-A53F-878082D3588E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4CCC15DA-1054-4889-A53F-878082D3588E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4CCC15DA-1054-4889-A53F-878082D3588E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5F14548D-6F1F-48C5-BCD2-0478A5BFDBA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5F14548D-6F1F-48C5-BCD2-0478A5BFDBA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F14548D-6F1F-48C5-BCD2-0478A5BFDBA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -314,6 +321,30 @@ Global
 		{53565A66-C712-4BCE-B978-AB870F241E1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{53565A66-C712-4BCE-B978-AB870F241E1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{53565A66-C712-4BCE-B978-AB870F241E1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1477822-ACB7-4A5D-8F91-8110361988D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1477822-ACB7-4A5D-8F91-8110361988D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1477822-ACB7-4A5D-8F91-8110361988D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1477822-ACB7-4A5D-8F91-8110361988D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54D072B5-914B-4999-BA57-40B01694CF8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54D072B5-914B-4999-BA57-40B01694CF8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54D072B5-914B-4999-BA57-40B01694CF8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54D072B5-914B-4999-BA57-40B01694CF8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E735AB3-17BA-465A-A4B1-1F608D430F89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E735AB3-17BA-465A-A4B1-1F608D430F89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E735AB3-17BA-465A-A4B1-1F608D430F89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E735AB3-17BA-465A-A4B1-1F608D430F89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CCA5365-6163-48B6-8836-98A5E00167B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CCA5365-6163-48B6-8836-98A5E00167B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CCA5365-6163-48B6-8836-98A5E00167B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CCA5365-6163-48B6-8836-98A5E00167B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A237969-8DC0-4172-88F6-B6A068F2F2A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A237969-8DC0-4172-88F6-B6A068F2F2A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A237969-8DC0-4172-88F6-B6A068F2F2A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A237969-8DC0-4172-88F6-B6A068F2F2A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -323,7 +354,6 @@ Global
 		{AE9263A6-5CDA-4691-B7AD-C7DA636357B0} = {F9AF5D17-4ABE-46FC-8AF5-040FF37922F7}
 		{0BD41556-4228-40B8-A64F-87174B8B4A61} = {F9AF5D17-4ABE-46FC-8AF5-040FF37922F7}
 		{0927218D-1BFD-4331-9E24-1C9A753EF445} = {F9AF5D17-4ABE-46FC-8AF5-040FF37922F7}
-		{4CCC15DA-1054-4889-A53F-878082D3588E} = {E21BCC7B-39C0-41D4-85BB-D7361B79AAD8}
 		{5F14548D-6F1F-48C5-BCD2-0478A5BFDBA3} = {E21BCC7B-39C0-41D4-85BB-D7361B79AAD8}
 		{4DCFE2CF-ADAA-4858-9E9A-F9B75509D9A2} = {E21BCC7B-39C0-41D4-85BB-D7361B79AAD8}
 		{F1568D49-AD16-48DC-8F61-39151538EA49} = {26E28C00-5829-4A4A-98C9-6A2DC164207F}
@@ -363,13 +393,19 @@ Global
 		{A81FDA06-002F-498B-B3FE-90458B7A75C7} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
 		{44E1FF69-DBAE-4084-9FD8-173D9C2279FA} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
 		{53565A66-C712-4BCE-B978-AB870F241E1B} = {A5C631A1-F5A2-4C22-8A49-AD37E63C8BE0}
+		{B1477822-ACB7-4A5D-8F91-8110361988D3} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
+		{54D072B5-914B-4999-BA57-40B01694CF8F} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{4E735AB3-17BA-465A-A4B1-1F608D430F89} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
+		{0CCA5365-6163-48B6-8836-98A5E00167B4} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
+		{1A237969-8DC0-4172-88F6-B6A068F2F2A8} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
+		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		RESX_ShowErrorsInErrorList = False
-		RESX_CodeReferences = {"Items":[{"Expression":"\\W($File.$Key)\\W","Extensions":".cs,.xaml,.cshtml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($File.$Key)\\W","Extensions":".vbhtml","IsCaseSensitive":false,"SingleLineComment":null},{"Expression":"ResourceManager.GetString\\(\"($Key)\"\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+\"($Key)\"|\"($Key)\".+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($Key)\\W","Extensions":".vb","IsCaseSensitive":false,"SingleLineComment":"'"},{"Expression":"\\W($File::$Key)\\W","Extensions":".cpp,.c,.hxx,.h","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"&lt;%\\$\\s+Resources:\\s*($File)\\s*,\\s*($Key)\\s*%&gt;","Extensions":".aspx,.ascx,.master","IsCaseSensitive":true,"SingleLineComment":null},{"Expression":"StringResourceKey\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\.($Key)","Extensions":".ts,.html","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+nameof\\(($Key)\\)|nameof\\(($Key)\\).+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Translation .*Format=$Key.*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"Format=($Key)","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:ShortcutResource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"}]}
-		SolutionGuid = {4C2A7472-FBCC-4D2C-B21D-0C83E4ADAA1A}
-		RESX_NeutralResourcesLanguage = fr-FR
-		RESX_AutoCreateNewLanguageFiles = True
 		RESX_ConfirmAddLanguageFile = True
+		RESX_AutoCreateNewLanguageFiles = True
+		RESX_NeutralResourcesLanguage = fr-FR
+		SolutionGuid = {4C2A7472-FBCC-4D2C-B21D-0C83E4ADAA1A}
+		RESX_CodeReferences = {"Items":[{"Expression":"\\W($File.$Key)\\W","Extensions":".cs,.xaml,.cshtml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($File.$Key)\\W","Extensions":".vbhtml","IsCaseSensitive":false,"SingleLineComment":null},{"Expression":"ResourceManager.GetString\\(\"($Key)\"\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+\"($Key)\"|\"($Key)\".+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($Key)\\W","Extensions":".vb","IsCaseSensitive":false,"SingleLineComment":"'"},{"Expression":"\\W($File::$Key)\\W","Extensions":".cpp,.c,.hxx,.h","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"&lt;%\\$\\s+Resources:\\s*($File)\\s*,\\s*($Key)\\s*%&gt;","Extensions":".aspx,.ascx,.master","IsCaseSensitive":true,"SingleLineComment":null},{"Expression":"StringResourceKey\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\.($Key)","Extensions":".ts,.html","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+nameof\\(($Key)\\)|nameof\\(($Key)\\).+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Translation .*Format=$Key.*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"Format=($Key)","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:ShortcutResource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"}]}
+		RESX_ShowErrorsInErrorList = False
 	EndGlobalSection
 EndGlobal

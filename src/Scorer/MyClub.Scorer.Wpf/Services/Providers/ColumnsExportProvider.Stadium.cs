@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Wpf.Services.Providers.Base;
 using MyClub.Scorer.Wpf.Settings;
 using MyNet.CsvHelper.Extensions;
 using MyNet.CsvHelper.Extensions.Converters;
@@ -12,7 +13,7 @@ using MyNet.Utilities.Geography;
 
 namespace MyClub.Scorer.Wpf.Services.Providers
 {
-    public class StadiumColumnsExportProvider : ColumnsExportProvider<StadiumExportDto>
+    public class StadiumColumnsExportProvider : ColumnWrappersExportProviderBase<StadiumExportDto>
     {
         public static readonly IEnumerable<ColumnMapping<StadiumExportDto, object?>> DefaultColumns =
         [

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Plugins.Contracts;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Export;
@@ -29,9 +30,13 @@ using MyNet.Wpf.Extensions;
 
 namespace MyClub.Scorer.Wpf.Services
 {
-    internal class TeamPresentationService(TeamService service, PlayerService playerService, IViewModelLocator viewModelLocator) : PresentationServiceBase<TeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
+    internal class TeamPresentationService(TeamService service,
+                                           PlayerService playerService,
+                                           PluginsService pluginsService,
+                                           IViewModelLocator viewModelLocator) : PresentationServiceBase<TeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
     {
         private readonly PlayerService _playerService = playerService;
+        private readonly PluginsService _pluginsService = pluginsService;
 
         public async Task OpenAsync(TeamViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
@@ -99,9 +104,10 @@ namespace MyClub.Scorer.Wpf.Services
                         var players = list.Select(x => new TeamDto
                         {
                             Name = x.Name,
-                            ShortName = x.Name,
+                            ShortName = x.ShortName,
                             AwayColor = x.AwayColor?.ToHex(),
                             HomeColor = x.HomeColor?.ToHex(),
+                            Country = x.Country,
                             Logo = x.Logo,
                             Stadium = x.Stadium is not null
                                 ? new StadiumDto
@@ -112,7 +118,7 @@ namespace MyClub.Scorer.Wpf.Services
                                 }
                                 : null
                         }).ToList();
-                        await ExportService.ExportAsCsvOrExcelAsync(players, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
+                        await ExportService.ExportAsCsvOrExcelAsync(players, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item.ColumnMapping).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
 
                         Messenger.Default.Send(new FileExportedMessage(filepath, ProcessHelper.OpenInExcel));
                     });
@@ -124,14 +130,14 @@ namespace MyClub.Scorer.Wpf.Services
             }
         }
 
-        public async Task ImportAsync()
+        public async Task LauchImportAsync()
         {
-            var vm = ViewModelLocator.Get<TeamsImportViewModel>();
+            var vm = ViewModelLocator.Get<TeamsImportBySourcesDialogViewModel>();
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
             if (result.IsFalse()) return;
 
-            var itemsToImport = vm.Items.Where(x => x.Import).Select(x => new
+            var itemsToImport = vm.List.ImportItems.Select(x => new
             {
                 x.Mode,
                 Item = new TeamDto
@@ -155,5 +161,7 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() => Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList()));
         }
+
+        public bool HasImportSources() => _pluginsService.HasPlugin<IImportTeamsSourcePlugin>();
     }
 }

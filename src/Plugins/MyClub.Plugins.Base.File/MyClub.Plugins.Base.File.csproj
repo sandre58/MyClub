@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows7.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities" Version="3.0.1">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Wpf" Version="3.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.FileSystem\MyClub.CrossCutting.FileSystem.csproj">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      </ProjectReference>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Packaging\MyClub.CrossCutting.Packaging.csproj">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      </ProjectReference>
+    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\FileResources.Designer.cs">
+      <DependentUpon>FileResources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\FileResources.resx">
+      <LastGenOutput>FileResources.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

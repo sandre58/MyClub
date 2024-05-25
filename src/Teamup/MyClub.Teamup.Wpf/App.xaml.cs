@@ -43,7 +43,6 @@ using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Factories;
 using MyClub.Teamup.Wpf.Services.Handlers;
 using MyClub.Teamup.Wpf.Services.Providers;
-using MyClub.Teamup.Wpf.Services.Providers.Fakes;
 using MyClub.Teamup.Wpf.Settings;
 using MyClub.Teamup.Wpf.ViewModels.CalendarPage;
 using MyClub.Teamup.Wpf.ViewModels.CommunicationPage;
@@ -94,7 +93,6 @@ using MyNet.Utilities.Logging;
 using MyNet.Utilities.Logging.NLog;
 using MyNet.Utilities.Mail;
 using MyNet.Utilities.Mail.Smtp;
-using MyNet.Utilities.Plugins;
 using MyNet.Utilities.Progress;
 using MyNet.Wpf.Busy;
 using MyNet.Wpf.Commands;
@@ -122,215 +120,212 @@ namespace MyClub.Teamup.Wpf
             })
             .ConfigureServices((context, services) => services
 
-            // App Host
-            .AddHostedService<ApplicationHostService>()
+                // Configuration
+                .Configure<TeamupConfiguration>(context.Configuration)
+                .AddScoped<TeamupConfiguration>()
 
-            // UI Services
-            .AddSingleton<MyNet.Utilities.Logging.ILogger, Logger>()
-            .AddSingleton<IViewModelResolver, ViewModelResolver>()
-            .AddSingleton<IViewModelLocator, ViewModelLocator>(x => new ViewModelLocator(x))
-            .AddSingleton<IViewLocator, ViewLocator>()
-            .AddSingleton<IViewResolver, ViewResolver>()
-            .AddSingleton<IThemeService, ThemeService>()
-            .AddSingleton<INavigationService, NavigationCommandsService>()
-            .AddSingleton<IToasterService, ToasterService>()
-            .AddSingleton<IDialogService, OverlayDialogService>()
-            .AddSingleton<IProgresser, Progresser>()
-            .AddScoped<IBusyServiceFactory, BusyServiceFactory>()
-            .AddScoped<IMessageBoxFactory, MessageBoxFactory>()
-            .AddScoped<IScheduler, WpfScheduler>(_ => WpfScheduler.Current)
-            .AddScoped<ICommandFactory, WpfCommandFactory>()
+                // App Host
+                .AddHostedService<ApplicationHostService>()
 
-            // Global Services
-            .AddSingleton(x => new PluginsProvider(Path.GetFullPath(x.GetRequiredService<TeamupConfiguration>().Plugins.Directory)))
-            .AddSingleton<IAutoSaveService, AutoSaveService>(x => new AutoSaveService(x.GetRequiredService<ProjectInfoProvider>(),
-                                                                                      x.GetRequiredService<IWriteService>(),
-                                                                                      x.GetRequiredService<ITempService>(),
-                                                                                      x.GetRequiredService<IRecentFileRepository>(),
-                                                                                      AppSettings.Default.IsAutoSaveEnabled,
-                                                                                      AppSettings.Default.AutoSaveInterval))
-            .AddSingleton<IEncryptionService, AesEncryptionService>(x => new AesEncryptionService(GetOrCreateEncryptionKey()))
-            .AddSingleton(x => new RegistryAuthenticationService(x.GetRequiredService<TeamupConfiguration>().Authentication.Registry))
-            .AddSingleton<IUserAuthenticationService>(x => x.GetRequiredService<RegistryAuthenticationService>())
-            .AddSingleton<INotificationsManager, NotificationsManager>()
-            .AddScoped<UserService>()
-            .AddScoped<IAuditService, AuditService>()
-            .AddScoped<IAppCommandsService, AppCommandsService>()
-            .AddScoped<IMailServiceFactory, MailServiceFactory>()
-            .AddScoped<IEmailFactory, UserEmailFactory>()
-            .AddScoped(x => x.GetRequiredService<IMailServiceFactory>().Create(new SmtpClientOptions
-            {
-                Server = SmtpSettings.Default.Server,
-                Port = SmtpSettings.Default.Port,
-                Password = x.GetRequiredService<IEncryptionService>().Decrypt(SmtpSettings.Default.Password),
-                RequiresAuthentication = SmtpSettings.Default.RequiresAuthentication,
-                User = SmtpSettings.Default.Username,
-                UseSsl = SmtpSettings.Default.UseSsl
-            }))
-            .AddScoped<ILocationService>(x => new GoogleLocationService(TeamupConfiguration.GoogleApiKey, true))
-            .AddScoped<IRegistryService, RegistryService>()
-            .AddScoped<RecentFilesService>()
-            .AddScoped<IRecentFileRepository>(x => new RecentFileRepository(
-                x.GetRequiredService<IRegistryService>(),
-                x.GetRequiredService<TeamupConfiguration>().RecentFiles.Registry,
-                [TmprojFileExtensionInfo.Tmproj.Extensions[0][1..]],
-                x.GetRequiredService<TeamupConfiguration>().RecentFiles.Max))
+                // UI Services
+                .AddSingleton<MyNet.Utilities.Logging.ILogger, Logger>()
+                .AddSingleton<IViewModelResolver, ViewModelResolver>()
+                .AddSingleton<IViewModelLocator, ViewModelLocator>(x => new ViewModelLocator(x))
+                .AddSingleton<IViewLocator, ViewLocator>()
+                .AddSingleton<IViewResolver, ViewResolver>()
+                .AddSingleton<IThemeService, ThemeService>()
+                .AddSingleton<INavigationService, NavigationCommandsService>()
+                .AddSingleton<IToasterService, ToasterService>()
+                .AddSingleton<IDialogService, OverlayDialogService>()
+                .AddSingleton<IProgresser, Progresser>()
+                .AddScoped<IBusyServiceFactory, BusyServiceFactory>()
+                .AddScoped<IMessageBoxFactory, MessageBoxFactory>()
+                .AddScoped<IScheduler, WpfScheduler>(_ => WpfScheduler.Current)
+                .AddScoped<ICommandFactory, WpfCommandFactory>()
 
-            // Domain Services
-            .AddScoped(CreateProjectFactory)
-            .AddScoped<IUserRepository>(x => x.GetRequiredService<RegistryAuthenticationService>())
-            .AddScoped<IProjectRepository, ProjectRepository>()
-            .AddScoped<ISquadPlayerRepository, SquadPlayerRepository>()
-            .AddScoped<IInjuryRepository, InjuryRepository>()
-            .AddScoped<IAbsenceRepository, AbsenceRepository>()
-            .AddScoped<IHolidaysRepository, HolidaysRepository>()
-            .AddScoped<ITacticRepository, TacticRepository>()
-            .AddScoped<ISendedMailRepository, SendedMailRepository>()
-            .AddScoped<ICycleRepository, CycleRepository>()
-            .AddScoped<ITrainingSessionRepository, TrainingSessionRepository>()
-            .AddScoped<IStadiumRepository, StadiumRepository>()
-            .AddScoped<ITeamRepository, TeamRepository>()
-            .AddScoped<ICompetitionSeasonRepository, CompetitionSeasonRepository>()
-            .AddScoped<IMatchRepository, MatchRepository>()
-            .AddScoped<IMatchdayRepository, MatchdayRepository>()
-            .AddScoped<IRoundRepository, RoundRepository>()
-            .AddScoped<IMyTeamDomainService, MyTeamDomainService>()
+                // Global Services
+                .AddSingleton(x => new PluginsService(Path.GetFullPath(x.GetRequiredService<TeamupConfiguration>().Plugins.Directory), x))
+                .AddSingleton<IAutoSaveService, AutoSaveService>(x => new AutoSaveService(x.GetRequiredService<ProjectInfoProvider>(),
+                                                                                          x.GetRequiredService<IWriteService>(),
+                                                                                          x.GetRequiredService<ITempService>(),
+                                                                                          x.GetRequiredService<IRecentFileRepository>(),
+                                                                                          AppSettings.Default.IsAutoSaveEnabled,
+                                                                                          AppSettings.Default.AutoSaveInterval))
+                .AddSingleton<IEncryptionService, AesEncryptionService>(x => new AesEncryptionService(GetOrCreateEncryptionKey()))
+                .AddSingleton(x => new RegistryAuthenticationService(x.GetRequiredService<TeamupConfiguration>().Authentication.Registry))
+                .AddSingleton<IUserAuthenticationService>(x => x.GetRequiredService<RegistryAuthenticationService>())
+                .AddSingleton<INotificationsManager, NotificationsManager>()
+                .AddScoped<UserService>()
+                .AddScoped<IAuditService, AuditService>()
+                .AddScoped<IAppCommandsService, AppCommandsService>()
+                .AddScoped<IMailServiceFactory, MailServiceFactory>()
+                .AddScoped<IEmailFactory, UserEmailFactory>()
+                .AddScoped(x => x.GetRequiredService<IMailServiceFactory>().Create(new SmtpClientOptions
+                {
+                    Server = SmtpSettings.Default.Server,
+                    Port = SmtpSettings.Default.Port,
+                    Password = x.GetRequiredService<IEncryptionService>().Decrypt(SmtpSettings.Default.Password),
+                    RequiresAuthentication = SmtpSettings.Default.RequiresAuthentication,
+                    User = SmtpSettings.Default.Username,
+                    UseSsl = SmtpSettings.Default.UseSsl
+                }))
+                .AddScoped<ILocationService>(x => new GoogleLocationService(TeamupConfiguration.GoogleApiKey, true))
+                .AddScoped<IRegistryService, RegistryService>()
+                .AddScoped<RecentFilesService>()
+                .AddScoped<IRecentFileRepository>(x => new RecentFileRepository(
+                    x.GetRequiredService<IRegistryService>(),
+                    x.GetRequiredService<TeamupConfiguration>().RecentFiles.Registry,
+                    [TmprojFileExtensionInfo.Tmproj.Extensions[0][1..]],
+                    x.GetRequiredService<TeamupConfiguration>().RecentFiles.Max))
 
-            // Application Services
-            .AddSingleton<InjuriesStatisticsRefreshDeferrer>()
-            .AddSingleton<TrainingStatisticsRefreshDeferrer>()
-            .AddScoped<ProjectService>()
-            .AddScoped<PlayerService>()
-            .AddScoped<InjuryService>()
-            .AddScoped<AbsenceService>()
-            .AddScoped<HolidaysService>()
-            .AddScoped<SendedMailService>()
-            .AddScoped<CycleService>()
-            .AddScoped<TrainingSessionService>()
-            .AddScoped<TacticService>()
-            .AddScoped<StadiumService>()
-            .AddScoped<TeamService>()
-            .AddScoped<AddressService>()
-            .AddScoped<TeamService>()
-            .AddScoped<CompetitionService>()
-            .AddScoped<MatchService>()
-            .AddScoped<MatchdayService>()
-            .AddScoped<RoundService>()
-            .AddScoped<PlayersImportService>()
-            .AddScoped<TeamsImportService>()
-            .AddScoped<CompetitionsImportService>()
-            .AddScoped(CreateImportStadiumsProvider)
-            .AddScoped(CreateImportTeamsProvider)
+                // Domain Services
+                .AddScoped(CreateProjectFactory)
+                .AddScoped<IUserRepository>(x => x.GetRequiredService<RegistryAuthenticationService>())
+                .AddScoped<IProjectRepository, ProjectRepository>()
+                .AddScoped<ISquadPlayerRepository, SquadPlayerRepository>()
+                .AddScoped<IInjuryRepository, InjuryRepository>()
+                .AddScoped<IAbsenceRepository, AbsenceRepository>()
+                .AddScoped<IHolidaysRepository, HolidaysRepository>()
+                .AddScoped<ITacticRepository, TacticRepository>()
+                .AddScoped<ISendedMailRepository, SendedMailRepository>()
+                .AddScoped<ICycleRepository, CycleRepository>()
+                .AddScoped<ITrainingSessionRepository, TrainingSessionRepository>()
+                .AddScoped<IStadiumRepository, StadiumRepository>()
+                .AddScoped<ITeamRepository, TeamRepository>()
+                .AddScoped<ICompetitionSeasonRepository, CompetitionSeasonRepository>()
+                .AddScoped<IMatchRepository, MatchRepository>()
+                .AddScoped<IMatchdayRepository, MatchdayRepository>()
+                .AddScoped<IRoundRepository, RoundRepository>()
+                .AddScoped<IMyTeamDomainService, MyTeamDomainService>()
 
-            // Infrastructure Service
-            .AddSingleton<ITempService>(x => new TempService(x.GetRequiredService<TeamupConfiguration>().TempDirectory))
-            .AddScoped<IReadService, ReadService>()
-            .AddScoped<IWriteService, WriteService>()
+                // Application Services
+                .AddSingleton<InjuriesStatisticsRefreshDeferrer>()
+                .AddSingleton<TrainingStatisticsRefreshDeferrer>()
+                .AddScoped<ProjectService>()
+                .AddScoped<PlayerService>()
+                .AddScoped<InjuryService>()
+                .AddScoped<AbsenceService>()
+                .AddScoped<HolidaysService>()
+                .AddScoped<SendedMailService>()
+                .AddScoped<CycleService>()
+                .AddScoped<TrainingSessionService>()
+                .AddScoped<TacticService>()
+                .AddScoped<StadiumService>()
+                .AddScoped<TeamService>()
+                .AddScoped<AddressService>()
+                .AddScoped<TeamService>()
+                .AddScoped<CompetitionService>()
+                .AddScoped<MatchService>()
+                .AddScoped<MatchdayService>()
+                .AddScoped<RoundService>()
 
-            // Presentation services
-            .AddScoped<RecentFilesManager>()
-            .AddScoped<IPersistentPreferencesService, SettingsService>()
-            .AddScoped<LanguageSettingsService>()
-            .AddScoped<ThemeSettingsService>()
-            .AddScoped<AppSettingsService>()
-            .AddScoped<IRecentFileCommandsService, RecentFileCommandsService>()
-            .AddScoped<ProjectCommandsService>()
-            .AddScoped<MailCommandsService>()
-            .AddScoped<PlayerPresentationService>()
-            .AddScoped<SendedMailPresentationService>()
-            .AddScoped<TrainingSessionPresentationService>()
-            .AddScoped<HolidaysPresentationService>()
-            .AddScoped<CyclePresentationService>()
-            .AddScoped<TacticPresentationService>()
-            .AddScoped<FriendlyPresentationService>()
-            .AddScoped<LeaguePresentationService>()
-            .AddScoped<CupPresentationService>()
-            .AddScoped<CompetitionPresentationService>()
-            .AddScoped<MatchPresentationService>()
-            .AddScoped<MatchdayPresentationService>()
-            .AddScoped<RoundPresentationService>()
-            .AddScoped<TeamPresentationService>()
-            .AddScoped<StadiumPresentationService>()
+                // Infrastructure Service
+                .AddSingleton<ITempService>(x => new TempService(x.GetRequiredService<TeamupConfiguration>().TempDirectory))
+                .AddScoped<IReadService, ReadService>()
+                .AddScoped<IWriteService, WriteService>()
 
-            // Presentation source Providers
-            .AddSingleton<RecentFilesProvider>()
-            .AddSingleton<PlayersProvider>()
-            .AddSingleton<MainItemsProvider>()
-            .AddSingleton<TrainingSessionsProvider>()
-            .AddSingleton<CyclesProvider>()
-            .AddSingleton<HolidaysProvider>()
-            .AddSingleton<SendedMailsProvider>()
-            .AddSingleton<InjuriesProvider>()
-            .AddSingleton<TacticsProvider>()
-            .AddSingleton<StadiumsProvider>()
-            .AddSingleton<CompetitionsProvider>()
-            .AddSingleton<TeamsProvider>()
-            .AddSingleton<ProjectInfoProvider>()
-            .AddSingleton<NavigableItemsProvider>()
-            .AddSingleton<ActionsProvider>()
+                // Presentation services
+                .AddScoped<RecentFilesManager>()
+                .AddScoped<IPersistentPreferencesService, SettingsService>()
+                .AddScoped<LanguageSettingsService>()
+                .AddScoped<ThemeSettingsService>()
+                .AddScoped<AppSettingsService>()
+                .AddScoped<IRecentFileCommandsService, RecentFileCommandsService>()
+                .AddScoped<ProjectCommandsService>()
+                .AddScoped<MailCommandsService>()
+                .AddScoped<PlayerPresentationService>()
+                .AddScoped<SendedMailPresentationService>()
+                .AddScoped<TrainingSessionPresentationService>()
+                .AddScoped<HolidaysPresentationService>()
+                .AddScoped<CyclePresentationService>()
+                .AddScoped<TacticPresentationService>()
+                .AddScoped<FriendlyPresentationService>()
+                .AddScoped<LeaguePresentationService>()
+                .AddScoped<CupPresentationService>()
+                .AddScoped<CompetitionPresentationService>()
+                .AddScoped<MatchPresentationService>()
+                .AddScoped<MatchdayPresentationService>()
+                .AddScoped<RoundPresentationService>()
+                .AddScoped<TeamPresentationService>()
+                .AddScoped<StadiumPresentationService>()
 
-            // Notifications handlers
-            .AddSingleton<MailConnectionHandler>()
-            .AddSingleton<FileNotificationHandler>()
-            .AddSingleton<TeamsValidationHandler>()
+                // Presentation source Providers
+                .AddSingleton<RecentFilesProvider>()
+                .AddSingleton<PlayersProvider>()
+                .AddSingleton<MainItemsProvider>()
+                .AddSingleton<TrainingSessionsProvider>()
+                .AddSingleton<CyclesProvider>()
+                .AddSingleton<HolidaysProvider>()
+                .AddSingleton<SendedMailsProvider>()
+                .AddSingleton<InjuriesProvider>()
+                .AddSingleton<TacticsProvider>()
+                .AddSingleton<StadiumsProvider>()
+                .AddSingleton<CompetitionsProvider>()
+                .AddSingleton<TeamsProvider>()
+                .AddSingleton<ProjectInfoProvider>()
+                .AddSingleton<NavigableItemsProvider>()
+                .AddSingleton<ActionsProvider>()
+                .AddSingleton<PlayersImportBySourcesProvider>()
+                .AddSingleton<TeamsImportBySourcesProvider>()
+                .AddSingleton<CompetitionsImportBySourcesProvider>()
 
-            // ViewModels
-            .AddSingleton<MainWindowViewModel>()
-            .AddSingleton<RecentFilesViewModel>()
-            // ViewModels - Pages
-            .AddSingleton<HomePageViewModel>()
-            .AddSingleton<RosterPageViewModel>()
-            .AddSingleton<PlayerPageViewModel>()
-            .AddSingleton<TrainingPageViewModel>()
-            .AddSingleton<TrainingSessionPageViewModel>()
-            .AddSingleton<MedicalCenterPageViewModel>()
-            .AddSingleton<CommunicationPageViewModel>()
-            .AddSingleton<TacticPageViewModel>()
-            .AddSingleton<CompetitionsPageViewModel>()
-            .AddSingleton<LeaguePageViewModel>()
-            .AddSingleton<CupPageViewModel>()
-            .AddSingleton<FriendlyPageViewModel>()
-            .AddSingleton<CalendarPageViewModel>()
-            .AddSingleton<MatchPageViewModel>()
-            // ViewModels - Edition dialogs
-            .AddSingleton<SettingsEditionViewModel>()
-            .AddSingleton<ProjectEditionViewModel>()
-            .AddSingleton<UserEditionViewModel>()
-            .AddSingleton<MyTeamsEditionViewModel>()
-            .AddSingleton<PlayerEditionViewModel>()
-            .AddSingleton<PlayersEditionViewModel>()
-            .AddSingleton<TrainingSessionEditionViewModel>()
-            .AddSingleton<TrainingAttendancesEditionViewModel>()
-            .AddSingleton<TrainingSessionsAddViewModel>()
-            .AddSingleton<TrainingSessionsEditionViewModel>()
-            .AddSingleton<InjuryEditionViewModel>()
-            .AddSingleton<AbsenceEditionViewModel>()
-            .AddSingleton<HolidaysEditionViewModel>()
-            .AddSingleton<CycleEditionViewModel>()
-            .AddSingleton<FriendlyEditionViewModel>()
-            .AddSingleton<LeagueEditionViewModel>()
-            .AddSingleton<CupEditionViewModel>()
-            .AddSingleton<TacticEditionViewModel>()
-            .AddSingleton<StadiumEditionViewModel>()
-            .AddSingleton<TeamEditionViewModel>()
-            .AddSingleton<RankLabelEditionViewModel>()
-            .AddSingleton<MatchdayEditionViewModel>()
-            .AddSingleton<KnockoutEditionViewModel>()
-            .AddSingleton<GroupStageEditionViewModel>()
-            .AddSingleton<MatchesEditionViewModel>()
-            .AddSingleton<MatchEditionViewModel>()
-            // ViewModels - Other dialogs
-            .AddSingleton<PlayersExportViewModel>()
-            //.AddSingleton<PlayersImportViewModel>()
-            //.AddSingleton<TeamsImportViewModel>()
-            .AddSingleton<TeamsExportViewModel>()
-            .AddSingleton<CompetitionsExportViewModel>()
-            //.AddSingleton<CompetitionsImportViewModel>()
+                // Notifications handlers
+                .AddSingleton<MailConnectionHandler>()
+                .AddSingleton<FileNotificationHandler>()
+                .AddSingleton<TeamsValidationHandler>()
 
-            // Configuration
-            .Configure<TeamupConfiguration>(context.Configuration)
-            .AddScoped<TeamupConfiguration>()
-
+                // ViewModels
+                .AddSingleton<MainWindowViewModel>()
+                .AddSingleton<RecentFilesViewModel>()
+                // ViewModels - Pages
+                .AddSingleton<HomePageViewModel>()
+                .AddSingleton<RosterPageViewModel>()
+                .AddSingleton<PlayerPageViewModel>()
+                .AddSingleton<TrainingPageViewModel>()
+                .AddSingleton<TrainingSessionPageViewModel>()
+                .AddSingleton<MedicalCenterPageViewModel>()
+                .AddSingleton<CommunicationPageViewModel>()
+                .AddSingleton<TacticPageViewModel>()
+                .AddSingleton<CompetitionsPageViewModel>()
+                .AddSingleton<LeaguePageViewModel>()
+                .AddSingleton<CupPageViewModel>()
+                .AddSingleton<FriendlyPageViewModel>()
+                .AddSingleton<CalendarPageViewModel>()
+                .AddSingleton<MatchPageViewModel>()
+                // ViewModels - Edition dialogs
+                .AddSingleton<SettingsEditionViewModel>()
+                .AddSingleton<ProjectEditionViewModel>()
+                .AddSingleton<UserEditionViewModel>()
+                .AddSingleton<MyTeamsEditionViewModel>()
+                .AddSingleton<PlayerEditionViewModel>()
+                .AddSingleton<PlayersEditionViewModel>()
+                .AddSingleton<TrainingSessionEditionViewModel>()
+                .AddSingleton<TrainingAttendancesEditionViewModel>()
+                .AddSingleton<TrainingSessionsAddViewModel>()
+                .AddSingleton<TrainingSessionsEditionViewModel>()
+                .AddSingleton<InjuryEditionViewModel>()
+                .AddSingleton<AbsenceEditionViewModel>()
+                .AddSingleton<HolidaysEditionViewModel>()
+                .AddSingleton<CycleEditionViewModel>()
+                .AddSingleton<FriendlyEditionViewModel>()
+                .AddSingleton<LeagueEditionViewModel>()
+                .AddSingleton<CupEditionViewModel>()
+                .AddSingleton<TacticEditionViewModel>()
+                .AddSingleton<StadiumEditionViewModel>()
+                .AddSingleton<TeamEditionViewModel>()
+                .AddSingleton<RankLabelEditionViewModel>()
+                .AddSingleton<MatchdayEditionViewModel>()
+                .AddSingleton<KnockoutEditionViewModel>()
+                .AddSingleton<GroupStageEditionViewModel>()
+                .AddSingleton<MatchesEditionViewModel>()
+                .AddSingleton<MatchEditionViewModel>()
+                // ViewModels - Other dialogs
+                .AddSingleton<PlayersExportViewModel>()
+                .AddSingleton<CompetitionsExportViewModel>()
+                .AddSingleton<TeamsExportViewModel>()
+                .AddSingleton<TeamsImportBySourcesDialogViewModel>()
+                .AddSingleton<PlayersImportBySourcesDialogViewModel>()
+                .AddSingleton<CompetitionsImportBySourcesDialogViewModel>()
             ).Build();
 
         static App() => AppDomain.CurrentDomain.UnhandledException += async (sender, e) => await OnAppDomainUnhandledExceptionAsync(e).ConfigureAwait(false);
@@ -369,31 +364,14 @@ namespace MyClub.Teamup.Wpf
         {
             var configuration = serviceProvider.GetRequiredService<TeamupConfiguration>();
 
-            if (string.IsNullOrEmpty(configuration.Mock.FactoryPluginName)) return new ProjectFactory(serviceProvider.GetRequiredService<IAuditService>());
+            if (string.IsNullOrEmpty(configuration.Mock.FactoryPluginName)) return GetDefaultProjectFactory(serviceProvider);
 
-            var pluginProvider = serviceProvider.GetRequiredService<PluginsProvider>();
+            var pluginsService = serviceProvider.GetRequiredService<PluginsService>();
 
-            return pluginProvider.Create<IProjectFactory>(configuration.Mock.FactoryPluginName, serviceProvider.GetRequiredService<IProgresser>(), serviceProvider.GetRequiredService<MyNet.Utilities.Logging.ILogger>())
-                ?? new ProjectFactory(serviceProvider.GetRequiredService<IAuditService>());
+            return (IProjectFactory?)pluginsService.GetPlugin<IProjectFactoryPlugin>(configuration.Mock.FactoryPluginName) ?? GetDefaultProjectFactory(serviceProvider);
         }
 
-        private static ImportStadiumsProvider CreateImportStadiumsProvider(IServiceProvider serviceProvider)
-        {
-            var pluginProvider = serviceProvider.GetRequiredService<PluginsProvider>();
-
-            var plugin = pluginProvider.Create<IImportStadiumsPlugin>() ?? new FakeImportStadiumsPlugin();
-
-            return new ImportStadiumsProvider(plugin, serviceProvider.GetRequiredService<StadiumService>());
-        }
-
-        private static ImportTeamsProvider CreateImportTeamsProvider(IServiceProvider serviceProvider)
-        {
-            var pluginProvider = serviceProvider.GetRequiredService<PluginsProvider>();
-
-            var plugin = pluginProvider.Create<IImportTeamsPlugin>() ?? new FakeImportTeamsPlugin();
-
-            return new ImportTeamsProvider(plugin, serviceProvider.GetRequiredService<TeamService>());
-        }
+        private static ProjectFactory GetDefaultProjectFactory(IServiceProvider serviceProvider) => new(serviceProvider.GetRequiredService<IAuditService>());
 
         private static async Task OnAppDomainUnhandledExceptionAsync(UnhandledExceptionEventArgs e) => await ShowExceptionAsync((Exception)e.ExceptionObject).ConfigureAwait(false);
 

@@ -17,9 +17,13 @@ on:
         description: Name of plugin
         options: 
         - MyClub.Plugins.Scorer.Factory.Database
+        - MyClub.Plugins.Scorer.Import.Database
+        - MyClub.Plugins.Scorer.Import.File
         - MyClub.Plugins.Teamup.Factory.Database
         - MyClub.Plugins.Teamup.Factory.Random
         - MyClub.Plugins.Teamup.Factory.Web
+        - MyClub.Plugins.Teamup.Import.Database
+        - MyClub.Plugins.Teamup.Import.File
       version: 
         description: New version of plugin. If empty, use version in .csproj.
       pre_release: 

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyNet.Utilities.Sequences;
 

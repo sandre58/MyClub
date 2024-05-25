@@ -19,7 +19,7 @@
     <PackageReference Include="MyNet.Humanizer" Version="1.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Utilities" Version="2.2.0">
+    <PackageReference Include="MyNet.Utilities" Version="3.0.1">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
@@ -46,5 +46,9 @@
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
     <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@
 
 using MyNet.Utilities;
 
-namespace MyClub.Teamup.Domain.CompetitionAggregate
+namespace MyClub.Scorer.Domain.RankingAggregate
 {
     public class RankLabel : ValueObject
     {

@@ -3,6 +3,8 @@
   <PropertyGroup>
     <Version>1.0.0-alpha</Version>
     <OutputPath>$(MSBuildThisFileDirectory)..\..\..\build\Teamup\$(Configuration)\Plugins\$(MSBuildProjectName)</OutputPath>
+    <TargetFrameworks>net8.0-windows7.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,13 +18,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MyNet.Utilities" Version="2.2.0">
+    <PackageReference Include="Fody" Version="6.8.1">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities" Version="3.0.1">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Wpf" Version="3.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\MyClub.Plugins.Base.Database\MyClub.Plugins.Base.Database.csproj" />
     <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>

@@ -9,8 +9,8 @@ namespace MyClub.Teamup.Wpf.Services.Providers.Fakes
 {
     internal class FakeImportStadiumsPlugin : IImportStadiumsPlugin
     {
-        public bool CanImport() => false;
+        public bool IsEnabled() => false;
 
-        public IEnumerable<StadiumDto> ProvideItems() => [];
+        public IEnumerable<StadiumImportDto> ProvideItems() => [];
     }
 }

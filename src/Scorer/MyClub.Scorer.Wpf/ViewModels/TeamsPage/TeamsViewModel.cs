@@ -10,6 +10,7 @@ using MyNet.Utilities;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.Observable.Attributes;
 
 namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
 {
@@ -18,6 +19,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
         private readonly TeamPresentationService _teamPresentationService;
 
         public TeamDetailsViewModel DetailsViewModel { get; private set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool HasImportSources { get; private set; }
 
         public ICommand ExportCommand { get; private set; }
 
@@ -32,9 +37,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
             _teamPresentationService = teamPresentationService;
 
             DetailsViewModel = new(teamPresentationService);
+            HasImportSources = _teamPresentationService.HasImportSources();
 
             ExportCommand = CommandsManager.Create(async () => await ExportAsync().ConfigureAwait(false), () => Items.Any());
-            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false));
+            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => HasImportSources);
         }
 
         protected override async Task<TeamViewModel?> CreateNewItemAsync()
@@ -61,7 +67,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
 
         private async Task ExportAsync() => await _teamPresentationService.ExportAsync(Items).ConfigureAwait(false);
 
-        private async Task ImportAsync() => await _teamPresentationService.ImportAsync().ConfigureAwait(false);
+        private async Task ImportAsync() => await _teamPresentationService.LauchImportAsync().ConfigureAwait(false);
 
         protected override void OnSelectionChanged()
         {

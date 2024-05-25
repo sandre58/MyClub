@@ -15,7 +15,7 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </UserControl.Resources>
 
-    <!--  Shortcuts  -->
+    <!-- Shortcuts -->
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
             <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddLeagueCommand, Source={StaticResource Proxy}}" />
@@ -33,7 +33,7 @@
 
     <DockPanel>
 
-        <!--  ToolBar  -->
+        <!-- ToolBar -->
         <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
 
             <my:CommandsBar.LeftCommands>
@@ -63,7 +63,8 @@
                     <Button my:IconAssist.Icon="{my:ToolIcon Kind=Download}"
                             Command="{Binding ImportCommand}"
                             Content="{my:Resource Import}"
-                            ToolTip="Ctrl+Maj+N" />
+                            ToolTip="Ctrl+Maj+N"
+                            Visibility="{Binding HasImportSources, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                     <Button my:IconAssist.Icon="{my:ToolIcon Kind=Upload}"
                             Command="{Binding ExportCommand}"
                             Content="{my:Resource Export}"
@@ -99,7 +100,7 @@
 
         </my:CommandsBar>
 
-        <!--  Content  -->
+        <!-- Content -->
         <my:GhostControl GhostTemplate="{StaticResource Teamup.DataTemplates.Ghost.NoData.Large}" ShowGhost="{Binding WrappersSource.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
             <v:CompetitionsGridView />
         </my:GhostControl>

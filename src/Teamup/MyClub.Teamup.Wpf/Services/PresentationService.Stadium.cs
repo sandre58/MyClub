@@ -3,30 +3,26 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MyClub.Teamup.Application.Contracts;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;
-using MyClub.Teamup.Wpf.Services.Providers;
+using MyClub.Teamup.Plugins.Contracts;
 using MyClub.Teamup.Wpf.ViewModels.Edition;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyClub.Teamup.Wpf.ViewModels.Import;
-using MyClub.Teamup.Wpf.ViewModels.Selection;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Extensions;
 using MyNet.UI.Locators;
-using MyNet.UI.Selection;
 using MyNet.Utilities;
-using MyNet.Utilities.Providers;
 
 namespace MyClub.Teamup.Wpf.Services
 {
     internal class StadiumPresentationService(StadiumService stadiumService,
-                                              ImportStadiumsProvider importStadiumsProvider,
+                                              PluginsService pluginsService,
                                               IViewModelLocator viewModelLocator)
     {
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
         private readonly StadiumService _stadiumService = stadiumService;
-        private readonly ImportStadiumsProvider _importStadiumsProvider = importStadiumsProvider;
+        private readonly PluginsService _pluginsService = pluginsService;
 
         public async Task<EditableStadiumViewModel?> CreateAsync(string? name = null)
         {
@@ -93,17 +89,22 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task<EditableStadiumViewModel?> ImportAsync(IEnumerable<(string name, string? city)> excludeStadiumNamesAndCity)
         {
-            var vm = new StadiumsSelectionViewModel(new PredicateItemsProvider<StadiumImportableViewModel>(_importStadiumsProvider, x => !excludeStadiumNamesAndCity.Contains((x.Name, x.City))), SelectionMode.Single);
+            var plugin = _pluginsService.GetPlugin<IImportStadiumsPlugin>();
+
+            if (plugin is null) return null;
+
+            var vm = new StadiumsImportDialogViewModel(plugin, _stadiumService, x => !excludeStadiumNamesAndCity.Contains((x.Name, x.City)));
 
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
-            if (result.IsTrue() && vm.SelectedItem is not null)
+            var selectedItem = vm.List.SelectedItem;
+            if (result.IsTrue() && selectedItem is not null)
             {
                 var item = new EditableStadiumViewModel
                 {
-                    Address = vm.SelectedItem.GetAddress(),
-                    Ground = vm.SelectedItem.Ground,
-                    Name = vm.SelectedItem.Name,
+                    Address = selectedItem.GetAddress(),
+                    Ground = selectedItem.Ground,
+                    Name = selectedItem.Name,
                 };
 
                 return item;
@@ -112,6 +113,6 @@ namespace MyClub.Teamup.Wpf.Services
             return null;
         }
 
-        public bool CanImport() => _importStadiumsProvider.CanImport();
+        public bool CanImport() => _pluginsService.GetPlugin<IImportStadiumsPlugin>()?.IsEnabled() ?? false;
     }
 }

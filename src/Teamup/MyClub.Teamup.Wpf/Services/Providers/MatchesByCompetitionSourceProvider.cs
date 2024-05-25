@@ -4,14 +4,14 @@
 using System.Reactive.Subjects;
 using DynamicData;
 using DynamicData.Binding;
-using MyClub.Teamup.Wpf.Services.Providers.Base;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable.Collections.Providers;
 
 namespace MyClub.Teamup.Wpf.Services.Providers
 {
     internal class MatchesByCompetitionSourceProvider<TCompetition> : ItemChangedSourceProvider<MatchViewModel, TCompetition>
         where TCompetition : CompetitionViewModel
     {
-        public MatchesByCompetitionSourceProvider(Subject<TCompetition?> competitionChanged) : base(competitionChanged, x => x.AllMatches.ToObservableChangeSet(x => x.Id)) { }
+        public MatchesByCompetitionSourceProvider(Subject<TCompetition?> competitionChanged) : base(competitionChanged, x => x.AllMatches.ToObservableChangeSet()) { }
     }
 }

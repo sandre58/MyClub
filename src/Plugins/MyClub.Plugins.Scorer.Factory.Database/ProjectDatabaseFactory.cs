@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.CrossCutting.Localization;
 using MyClub.DatabaseContext.Infrastructure.Data;
 using MyClub.Domain.Enums;
@@ -18,8 +17,10 @@ using MyClub.Scorer.Domain.Factories;
 using MyClub.Scorer.Domain.Factories.Extensions;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyClub.Scorer.Plugins.Contracts;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -30,7 +31,7 @@ using MyNet.Utilities.Sequences;
 
 namespace MyClub.Plugins.Scorer.Factory.Database
 {
-    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactory
+    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactoryPlugin
     {
         private readonly IProgresser _progresser = progresser;
         private readonly ILogger _logger = logger;
@@ -86,9 +87,9 @@ namespace MyClub.Plugins.Scorer.Factory.Database
                                 .Build();
 
             var connectionString = configuration.GetConnectionString("Default");
-            var optionsBuilder = new DbContextOptionsBuilder<MyTeamup>();
+            var optionsBuilder = new DbContextOptionsBuilder<MyClubContext>();
             optionsBuilder.UseSqlServer(connectionString);
-            using var unitOfWork = new UnitOfWork(new MyTeamup(optionsBuilder.Options));
+            using var unitOfWork = new UnitOfWork(new MyClubContext(optionsBuilder.Options));
 
             using (_progresser.Start(2, new ProgressMessage(string.Empty)))
             {

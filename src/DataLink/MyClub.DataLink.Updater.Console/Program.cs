@@ -36,9 +36,9 @@ using var webApiService = new WebApiService(headers: new Dictionary<string, stri
 
 // Database
 var connectionString = configuration.GetConnectionString(nameof(MyClub));
-var optionsBuilder = new DbContextOptionsBuilder<MyTeamup>();
+var optionsBuilder = new DbContextOptionsBuilder<MyClubContext>();
 optionsBuilder.UseSqlServer(connectionString);
-using var unitOfWork = new UnitOfWork(new MyTeamup(optionsBuilder.Options));
+using var unitOfWork = new UnitOfWork(new MyClubContext(optionsBuilder.Options));
 
 Console.WriteLine($"From {host}");
 Console.WriteLine($"To {connectionString}");

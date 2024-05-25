@@ -24,7 +24,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionPage
         public MatchesViewModel(IMatchParent parent, MatchPresentationService matchPresentationService, IListParametersProvider? parametersProvider = null)
             : this(parent.AllMatches.ToObservableChangeSet(), matchPresentationService, parametersProvider) => Parent = parent;
 
-        public MatchesViewModel(SourceProvider<MatchViewModel> provider, MatchPresentationService matchPresentationService, IListParametersProvider? parametersProvider = null)
+        public MatchesViewModel(ISourceProvider<MatchViewModel> provider, MatchPresentationService matchPresentationService, IListParametersProvider? parametersProvider = null)
             : this(provider.Connect(), matchPresentationService, parametersProvider) { }
 
         public MatchesViewModel(IObservable<IChangeSet<MatchViewModel>> observable, MatchPresentationService matchPresentationService, IListParametersProvider? parametersProvider = null)

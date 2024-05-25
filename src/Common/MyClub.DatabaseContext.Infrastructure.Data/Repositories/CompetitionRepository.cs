@@ -5,7 +5,7 @@ using MyClub.DatabaseContext.Domain.CompetitionAggregate;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data.Repositories
 {
-    public class CompetitionRepository(MyTeamup dbContext) : GenericRepository<Competition>(dbContext), ICompetitionRepository
+    public class CompetitionRepository(MyClubContext dbContext) : GenericRepository<Competition>(dbContext), ICompetitionRepository
     {
     }
 }

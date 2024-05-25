@@ -10,7 +10,7 @@ using MyClub.DatabaseContext.Infrastructure.Data;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data.Migrations
 {
-    [DbContext(typeof(MyTeamup))]
+    [DbContext(typeof(MyClubContext))]
     partial class DatabaseContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

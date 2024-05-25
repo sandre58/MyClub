@@ -8,7 +8,6 @@ using System.Linq;
 using System.Windows.Media;
 using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
-using MyClub.DatabaseContext.Application.Services;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.TeamAggregate;
@@ -25,9 +24,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     {
         private IEnumerable<string>? _existingTeamNames;
 
-        public TeamEditionViewModel(TeamService service, DatabaseService databaseService, StadiumsProvider stadiumsProvider, StadiumPresentationService stadiumPresentationService) : base(service)
+        public TeamEditionViewModel(TeamService service, StadiumsProvider stadiumsProvider, StadiumPresentationService stadiumPresentationService) : base(service)
         {
-            StadiumSelectionViewModel = new(stadiumsProvider, stadiumPresentationService, databaseService);
+            StadiumSelectionViewModel = new(stadiumsProvider, stadiumPresentationService);
             ValidationRules.AddNotNull<TeamEditionViewModel, string>(x => x.Name, MyClubResources.DuplicatedTeamNameError, x => _existingTeamNames is null || !_existingTeamNames.Contains(x));
 
             Disposables.AddRange(

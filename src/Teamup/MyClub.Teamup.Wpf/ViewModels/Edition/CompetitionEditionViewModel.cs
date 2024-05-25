@@ -45,6 +45,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
             _teamsProvider = teamsProvider;
             _teamService = teamService;
             _teamPresentationService = teamPresentationService;
+            HasImportSources = _teamPresentationService.HasImportSources();
 
             var teamsChanged = new Subject<Func<EditableTeamViewModel, bool>>();
             TeamSelectionViewModel = new(teamPresentationService, teamsChanged);
@@ -56,7 +57,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
             AddSelectedTeamCommand = CommandsManager.Create(ValidateAndAddTeam, () => TeamSelectionViewModel.SelectedItem is not null || !string.IsNullOrEmpty(TeamSelectionViewModel.TextSearch));
             RemoveTeamCommand = CommandsManager.CreateNotNull<EditableTeamViewModel>(x => Teams.Remove(x), x => x is not null);
             EditTeamCommand = CommandsManager.CreateNotNull<EditableTeamViewModel>(async x => await TeamSelectionViewModel.EditAsync(x).ConfigureAwait(false), x => x is not null);
-            ImportTeamsCommand = CommandsManager.Create(async () => await ImportTeamsAsync().ConfigureAwait(false));
+            ImportTeamsCommand = CommandsManager.Create(async () => await ImportTeamsAsync().ConfigureAwait(false), () => HasImportSources);
             ExportTeamsCommand = CommandsManager.Create(async () => await ExportTeamsAsync().ConfigureAwait(false), () => Teams.Any());
 
             Disposables.AddRange(
@@ -111,6 +112,10 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
         public bool ShowRemovingTeamWarning { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool HasImportSources { get; private set; }
 
         public ICommand AddSelectedTeamCommand { get; private set; }
 

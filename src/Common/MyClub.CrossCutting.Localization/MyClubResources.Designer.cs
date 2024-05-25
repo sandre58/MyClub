@@ -61,15 +61,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Avertissement : Ce programme est protégè par la loi relative au droit d&apos;auteur et par les conventions internationales. Toute reproduction ou distribution partielle ou totale du logiciel, par quelque moyen que ce soit, est strictement interdite. Toute personne ne respectant pas ces dispostions se rendra coupable du délit de contrefaçon et sera passible des sanctions pénales prévues par la loi..
-        /// </summary>
-        public static string AboutWarning {
-            get {
-                return ResourceManager.GetString("AboutWarning", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to En vacances.
         /// </summary>
         public static string AbsenceInHolidays {
@@ -129,15 +120,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string AbsentsX {
             get {
                 return ResourceManager.GetString("AbsentsX", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Couleur secondaire.
-        /// </summary>
-        public static string AccentColor {
-            get {
-                return ResourceManager.GetString("AccentColor", resourceCulture);
             }
         }
         
@@ -305,15 +287,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Ajouter un match.
-        /// </summary>
-        public static string AddMatch {
-            get {
-                return ResourceManager.GetString("AddMatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Ajouter des journées.
         /// </summary>
         public static string AddMatchdays {
@@ -387,15 +360,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Ajouter une règle.
-        /// </summary>
-        public static string AddRule {
-            get {
-                return ResourceManager.GetString("AddRule", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Ajouter une séance.
         /// </summary>
         public static string AddSession {
@@ -419,15 +383,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string AddSessions {
             get {
                 return ResourceManager.GetString("AddSessions", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Ajouter un stade.
-        /// </summary>
-        public static string AddStadium {
-            get {
-                return ResourceManager.GetString("AddStadium", resourceCulture);
             }
         }
         
@@ -577,15 +532,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Au moins une règle doit être définie..
-        /// </summary>
-        public static string AnyRulesError {
-            get {
-                return ResourceManager.GetString("AnyRulesError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Au moins un jour doit être sélectionné..
         /// </summary>
         public static string AnySelectedDaysError {
@@ -618,15 +564,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string ApologizedX {
             get {
                 return ResourceManager.GetString("ApologizedX", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Tri ascendant.
-        /// </summary>
-        public static string AscendingSort {
-            get {
-                return ResourceManager.GetString("AscendingSort", resourceCulture);
             }
         }
         
@@ -694,38 +631,11 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Générer automatiquement.
-        /// </summary>
-        public static string AutomaticGeneration {
-            get {
-                return ResourceManager.GetString("AutomaticGeneration", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to # est remplacé par l&apos;index de la journée.
-        /// </summary>
-        public static string AutomaticGenerationPatternDescription {
-            get {
-                return ResourceManager.GetString("AutomaticGenerationPatternDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Sauvegarde automatique.
         /// </summary>
         public static string AutoSave {
             get {
                 return ResourceManager.GetString("AutoSave", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enregistré automatiquement.
-        /// </summary>
-        public static string AutoSaved {
-            get {
-                return ResourceManager.GetString("AutoSaved", resourceCulture);
             }
         }
         
@@ -753,15 +663,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Available {
             get {
                 return ResourceManager.GetString("Available", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Disponible du.
-        /// </summary>
-        public static string AvailableFrom {
-            get {
-                return ResourceManager.GetString("AvailableFrom", resourceCulture);
             }
         }
         
@@ -1045,15 +946,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Effacer les notifications.
-        /// </summary>
-        public static string ClearNotifications {
-            get {
-                return ResourceManager.GetString("ClearNotifications", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Vider le numéro.
         /// </summary>
         public static string ClearNumberColumn {
@@ -1135,15 +1027,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Entête de la colonne.
-        /// </summary>
-        public static string ColumnHeader {
-            get {
-                return ResourceManager.GetString("ColumnHeader", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Colonnes.
         /// </summary>
         public static string Columns {
@@ -1167,15 +1050,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Communication {
             get {
                 return ResourceManager.GetString("Communication", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Entreprise.
-        /// </summary>
-        public static string Company {
-            get {
-                return ResourceManager.GetString("Company", resourceCulture);
             }
         }
         
@@ -1325,24 +1199,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Copier le chemin d&apos;accès du fichier.
-        /// </summary>
-        public static string CopyFilePath {
-            get {
-                return ResourceManager.GetString("CopyFilePath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Copyright.
-        /// </summary>
-        public static string Copyright {
-            get {
-                return ResourceManager.GetString("Copyright", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Pays.
         /// </summary>
         public static string Country {
@@ -1433,29 +1289,11 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Base de données.
-        /// </summary>
-        public static string Database {
-            get {
-                return ResourceManager.GetString("Database", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Date.
         /// </summary>
         public static string Date {
             get {
                 return ResourceManager.GetString("Date", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Jour(s) de la semaine.
-        /// </summary>
-        public static string DayOfWeekRuleName {
-            get {
-                return ResourceManager.GetString("DayOfWeekRuleName", resourceCulture);
             }
         }
         
@@ -1492,15 +1330,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string DefineARange {
             get {
                 return ResourceManager.GetString("DefineARange", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Tri descendant.
-        /// </summary>
-        public static string DescendingSort {
-            get {
-                return ResourceManager.GetString("DescendingSort", resourceCulture);
             }
         }
         
@@ -1577,29 +1406,11 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Un stade avec le même nom existe déjà..
-        /// </summary>
-        public static string DuplicatedStadiumNameError {
-            get {
-                return ResourceManager.GetString("DuplicatedStadiumNameError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Une équipe avec le même nom existe déjà..
         /// </summary>
         public static string DuplicatedTeamNameError {
             get {
                 return ResourceManager.GetString("DuplicatedTeamNameError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Dupliquer une journée.
-        /// </summary>
-        public static string DuplicateMatchday {
-            get {
-                return ResourceManager.GetString("DuplicateMatchday", resourceCulture);
             }
         }
         
@@ -1847,47 +1658,11 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Aucunne colonne n&apos;a été sélectionnée..
-        /// </summary>
-        public static string ExportNoColumnsError {
-            get {
-                return ResourceManager.GetString("ExportNoColumnsError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to La liste des joueurs à exporter est vide..
-        /// </summary>
-        public static string ExportNoItemsError {
-            get {
-                return ResourceManager.GetString("ExportNoItemsError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Exporter les stades.
-        /// </summary>
-        public static string ExportStadiums {
-            get {
-                return ResourceManager.GetString("ExportStadiums", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Exporter les équipes.
         /// </summary>
         public static string ExportTeams {
             get {
                 return ResourceManager.GetString("ExportTeams", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Export : # élément(s).
-        /// </summary>
-        public static string ExportXItems {
-            get {
-                return ResourceManager.GetString("ExportXItems", resourceCulture);
             }
         }
         
@@ -1951,15 +1726,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string FileMustBeExcelOrCsvError {
             get {
                 return ResourceManager.GetString("FileMustBeExcelOrCsvError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Le fichier n&apos;existe pas.
-        /// </summary>
-        public static string FileNotFound {
-            get {
-                return ResourceManager.GetString("FileNotFound", resourceCulture);
             }
         }
         
@@ -2461,96 +2227,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Colonne :.
-        /// </summary>
-        public static string ImportColumn {
-            get {
-                return ResourceManager.GetString("ImportColumn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Des colonnes sont manquantes..
-        /// </summary>
-        public static string ImportColumnsAreMissing {
-            get {
-                return ResourceManager.GetString("ImportColumnsAreMissing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Import de compétitions - Exemple.
-        /// </summary>
-        public static string ImportCompetitionsSampleFileTitle {
-            get {
-                return ResourceManager.GetString("ImportCompetitionsSampleFileTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Elles seront remplacées par des valeurs par défaut..
-        /// </summary>
-        public static string ImportDefaultValues {
-            get {
-                return ResourceManager.GetString("ImportDefaultValues", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Télécharger le fichier d&apos;exemple.
-        /// </summary>
-        public static string ImportDownloadSampleFile {
-            get {
-                return ResourceManager.GetString("ImportDownloadSampleFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Une erreur est survenue à la ligne #.
-        /// </summary>
-        public static string ImportErrorInRowFormat {
-            get {
-                return ResourceManager.GetString("ImportErrorInRowFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Charger les éléments de la base de données.
-        /// </summary>
-        public static string ImportFromDatabaseDescription {
-            get {
-                return ResourceManager.GetString("ImportFromDatabaseDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Sélectionner un fichier contenant des éléments à importer.
-        /// </summary>
-        public static string ImportFromFileDescription {
-            get {
-                return ResourceManager.GetString("ImportFromFileDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Des erreurs sont survenues lors de l&apos;import de votre fichier.
-        /// </summary>
-        public static string ImportHasErrors {
-            get {
-                return ResourceManager.GetString("ImportHasErrors", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Ignorer les erreurs et importer les lignes valides.
-        /// </summary>
-        public static string ImportIgnoreErrors {
-            get {
-                return ResourceManager.GetString("ImportIgnoreErrors", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Importer les blessures.
         /// </summary>
         public static string ImportInjuries {
@@ -2560,114 +2236,11 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Import de joueurs - Exemple.
-        /// </summary>
-        public static string ImportPlayersSampleFileTitle {
-            get {
-                return ResourceManager.GetString("ImportPlayersSampleFileTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Ligne :.
-        /// </summary>
-        public static string ImportRow {
-            get {
-                return ResourceManager.GetString("ImportRow", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to La ligne sera ignorée.
-        /// </summary>
-        public static string ImportRowWillBeIgnored {
-            get {
-                return ResourceManager.GetString("ImportRowWillBeIgnored", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Le document doit être au format xlsx, xls, csv ou scproj.
-        ///
-        ///Il doit contenir les entêtes spécifiées dans le fichier d&apos;exemple. L&apos;ordre des colonnes n&apos;a pas d&apos;importance..
-        /// </summary>
-        public static string ImportSampleFileScprojDescription {
-            get {
-                return ResourceManager.GetString("ImportSampleFileScprojDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Le document doit être au format xlsx, xls, csv ou tmproj.
-        ///
-        ///Il doit contenir les entêtes spécifiées dans le fichier d&apos;exemple. L&apos;ordre des colonnes n&apos;a pas d&apos;importance..
-        /// </summary>
-        public static string ImportSampleFileTmprojDescription {
-            get {
-                return ResourceManager.GetString("ImportSampleFileTmprojDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to (n&apos;oubliez pas de sauvegarder votre fichier avant de le recharger).
-        /// </summary>
-        public static string ImportSaveBeforeReload {
-            get {
-                return ResourceManager.GetString("ImportSaveBeforeReload", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Modifier votre fichier.
-        /// </summary>
-        public static string ImportSetFile {
-            get {
-                return ResourceManager.GetString("ImportSetFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Importer des stades.
-        /// </summary>
-        public static string ImportStadiums {
-            get {
-                return ResourceManager.GetString("ImportStadiums", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Import de stades - Exemple.
-        /// </summary>
-        public static string ImportStadiumsSampleFileTitle {
-            get {
-                return ResourceManager.GetString("ImportStadiumsSampleFileTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Importer des équipes.
         /// </summary>
         public static string ImportTeams {
             get {
                 return ResourceManager.GetString("ImportTeams", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Import d&apos;équipes - Exemple.
-        /// </summary>
-        public static string ImportTeamsSampleFileTitle {
-            get {
-                return ResourceManager.GetString("ImportTeamsSampleFileTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to La valeur sera ignorée.
-        /// </summary>
-        public static string ImportValueWillBeIgnored {
-            get {
-                return ResourceManager.GetString("ImportValueWillBeIgnored", resourceCulture);
             }
         }
         
@@ -2686,15 +2259,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string InClubFromDate {
             get {
                 return ResourceManager.GetString("InClubFromDate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Incrémenter tous les.
-        /// </summary>
-        public static string IncrementEvery {
-            get {
-                return ResourceManager.GetString("IncrementEvery", resourceCulture);
             }
         }
         
@@ -2861,15 +2425,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Côtes fracturées.
-        /// </summary>
-        public static string InjuryTorso {
-            get {
-                return ResourceManager.GetString("InjuryTorso", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to en %.
         /// </summary>
         public static string InPercent {
@@ -3020,15 +2575,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string IsPresent {
             get {
                 return ResourceManager.GetString("IsPresent", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Clé.
-        /// </summary>
-        public static string Key {
-            get {
-                return ResourceManager.GetString("Key", resourceCulture);
             }
         }
         
@@ -3303,24 +2849,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Journée(s).
-        /// </summary>
-        public static string MatchdaysAlt {
-            get {
-                return ResourceManager.GetString("MatchdaysAlt", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Nombre de journées.
-        /// </summary>
-        public static string MatchdaysNumber {
-            get {
-                return ResourceManager.GetString("MatchdaysNumber", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Matchs.
         /// </summary>
         public static string Matches {
@@ -3529,15 +3057,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Nouveau match.
-        /// </summary>
-        public static string NewMatch {
-            get {
-                return ResourceManager.GetString("NewMatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Nouveau projet.
         /// </summary>
         public static string NewProject {
@@ -3552,15 +3071,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string NewProjectDescription {
             get {
                 return ResourceManager.GetString("NewProjectDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Nouveau stade.
-        /// </summary>
-        public static string NewStadium {
-            get {
-                return ResourceManager.GetString("NewStadium", resourceCulture);
             }
         }
         
@@ -3588,15 +3098,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string NewTactic {
             get {
                 return ResourceManager.GetString("NewTactic", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Nouvelle équipe.
-        /// </summary>
-        public static string NewTeam {
-            get {
-                return ResourceManager.GetString("NewTeam", resourceCulture);
             }
         }
         
@@ -3669,15 +3170,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string NoExpectedReturn {
             get {
                 return ResourceManager.GetString("NoExpectedReturn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Aucune journée n&apos;a été générée. Vérifier la cohérence des paramètres de génération..
-        /// </summary>
-        public static string NoGeneratedMatchdaysWarning {
-            get {
-                return ResourceManager.GetString("NoGeneratedMatchdaysWarning", resourceCulture);
             }
         }
         
@@ -3808,24 +3300,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Ouvrir une copie.
-        /// </summary>
-        public static string OpenCopy {
-            get {
-                return ResourceManager.GetString("OpenCopy", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Ouvrir l&apos;emplacement du fichier.
-        /// </summary>
-        public static string OpenFolderLocation {
-            get {
-                return ResourceManager.GetString("OpenFolderLocation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Ouvrir dans Google Maps.
         /// </summary>
         public static string OpenInGoogleMaps {
@@ -3921,15 +3395,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string PastPositions {
             get {
                 return ResourceManager.GetString("PastPositions", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Modèles.
-        /// </summary>
-        public static string Patterns {
-            get {
-                return ResourceManager.GetString("Patterns", resourceCulture);
             }
         }
         
@@ -4051,24 +3516,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Epingler.
-        /// </summary>
-        public static string Pin {
-            get {
-                return ResourceManager.GetString("Pin", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Détacher.
-        /// </summary>
-        public static string PinOff {
-            get {
-                return ResourceManager.GetString("PinOff", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Lieu.
         /// </summary>
         public static string Place {
@@ -4147,16 +3594,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string PleaseSelectItem {
             get {
                 return ResourceManager.GetString("PleaseSelectItem", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Plusieurs éléments sont actuellement sélectionnés.
-        ///Veuillez sélectionner un seul élément..
-        /// </summary>
-        public static string PleaseSelectOneItem {
-            get {
-                return ResourceManager.GetString("PleaseSelectOneItem", resourceCulture);
             }
         }
         
@@ -4283,24 +3720,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string PreviousMatch {
             get {
                 return ResourceManager.GetString("PreviousMatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Couleur principale.
-        /// </summary>
-        public static string PrimaryColor {
-            get {
-                return ResourceManager.GetString("PrimaryColor", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Produit.
-        /// </summary>
-        public static string Product {
-            get {
-                return ResourceManager.GetString("Product", resourceCulture);
             }
         }
         
@@ -4532,15 +3951,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Colonnes de tri.
-        /// </summary>
-        public static string RankingRowComparers {
-            get {
-                return ResourceManager.GetString("RankingRowComparers", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Règles de classement.
         /// </summary>
         public static string RankingRules {
@@ -4564,15 +3974,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Rating {
             get {
                 return ResourceManager.GetString("Rating", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Note(s).
-        /// </summary>
-        public static string Ratings {
-            get {
-                return ResourceManager.GetString("Ratings", resourceCulture);
             }
         }
         
@@ -4631,24 +4032,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Supprimer le fichier.
-        /// </summary>
-        public static string RemoveFile {
-            get {
-                return ResourceManager.GetString("RemoveFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Supprimer de la liste.
-        /// </summary>
-        public static string RemoveFileFromList {
-            get {
-                return ResourceManager.GetString("RemoveFileFromList", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Supprimer les séances.
         /// </summary>
         public static string RemoveSessions {
@@ -4672,15 +4055,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string RemovingTeamWarning {
             get {
                 return ResourceManager.GetString("RemovingTeamWarning", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Remplacer toutes les présences inconnues.
-        /// </summary>
-        public static string ReplaceAllUnknownAttendances {
-            get {
-                return ResourceManager.GetString("ReplaceAllUnknownAttendances", resourceCulture);
             }
         }
         
@@ -4802,15 +4176,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Sauvegarder la configuration.
-        /// </summary>
-        public static string SaveConfiguration {
-            get {
-                return ResourceManager.GetString("SaveConfiguration", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Le mail a bien été sauvegardé en brouillon..
         /// </summary>
         public static string SaveMailAsDraftSuccess {
@@ -4883,38 +4248,11 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Sélectionnez les colonnes à exporter :.
-        /// </summary>
-        public static string SelectColumnsToExport {
-            get {
-                return ResourceManager.GetString("SelectColumnsToExport", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Sélectionner les conflits.
         /// </summary>
         public static string SelectConflicts {
             get {
                 return ResourceManager.GetString("SelectConflicts", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Sélectionner un fichier.
-        /// </summary>
-        public static string SelectFile {
-            get {
-                return ResourceManager.GetString("SelectFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Sélectionner une journée.
-        /// </summary>
-        public static string SelectMatchday {
-            get {
-                return ResourceManager.GetString("SelectMatchday", resourceCulture);
             }
         }
         
@@ -5351,15 +4689,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Langage Système.
-        /// </summary>
-        public static string SystemLanguage {
-            get {
-                return ResourceManager.GetString("SystemLanguage", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Tactique.
         /// </summary>
         public static string Tactic {
@@ -5491,24 +4820,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string TmprojFile {
             get {
                 return ResourceManager.GetString("TmprojFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Jusqu&apos;au.
-        /// </summary>
-        public static string ToDate {
-            get {
-                return ResourceManager.GetString("ToDate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Traduction.
-        /// </summary>
-        public static string Traduction {
-            get {
-                return ResourceManager.GetString("Traduction", resourceCulture);
             }
         }
         

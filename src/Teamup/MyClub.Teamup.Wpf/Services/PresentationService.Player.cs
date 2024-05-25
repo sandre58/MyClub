@@ -6,34 +6,41 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MyClub.CrossCutting.Localization;
+using MyClub.Teamup.Application.Dtos;
+using MyClub.Teamup.Application.Services;
+using MyClub.Teamup.Domain.Enums;
+using MyClub.Teamup.Domain.Factories.Extensions;
+using MyClub.Teamup.Plugins.Contracts;
+using MyClub.Teamup.Wpf.ViewModels.Edition;
+using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyClub.Teamup.Wpf.ViewModels.Export;
+using MyClub.Teamup.Wpf.ViewModels.Import;
+using MyNet.Humanizer;
 using MyNet.UI.Dialogs;
-using MyNet.UI.Locators;
 using MyNet.UI.Extensions;
+using MyNet.UI.Locators;
 using MyNet.UI.Messages;
+using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.UI.Toasting;
 using MyNet.Utilities;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Helpers;
-using MyNet.Humanizer;
 using MyNet.Utilities.Messaging;
-using MyNet.UI.Resources;
-using MyClub.Teamup.Application.Dtos;
-using MyClub.Teamup.Application.Services;
-using MyClub.Teamup.Domain.Enums;
-using MyClub.Teamup.Domain.Factories.Extensions;
-using MyClub.CrossCutting.Localization;
-using MyClub.Teamup.Wpf.ViewModels.Edition;
-using MyClub.Teamup.Wpf.ViewModels.Entities;
-using MyClub.Teamup.Wpf.ViewModels.Export;
-using MyClub.Teamup.Wpf.ViewModels.Import;
 
 namespace MyClub.Teamup.Wpf.Services
 {
-    internal class PlayerPresentationService(PlayerService service, InjuryService injuryService, AbsenceService playerAbsenceService, IViewModelLocator viewModelLocator) : PresentationServiceBase<PlayerViewModel, PlayerEditionViewModel, PlayerService>(service, viewModelLocator)
+    internal class PlayerPresentationService(PlayerService service,
+                                             InjuryService injuryService,
+                                             AbsenceService playerAbsenceService,
+                                             PluginsService pluginsService,
+                                             IViewModelLocator viewModelLocator)
+        : PresentationServiceBase<PlayerViewModel, PlayerEditionViewModel, PlayerService>(service, viewModelLocator)
     {
         private readonly InjuryService _injuryService = injuryService;
         private readonly AbsenceService _playerAbsenceService = playerAbsenceService;
+        private readonly PluginsService _pluginsService = pluginsService;
 
         public async Task<Guid?> AddAsync(Guid? teamId)
             => await AddAsync(x =>
@@ -218,7 +225,7 @@ namespace MyClub.Teamup.Wpf.Services
                                 Value = xPhone.Value
                             }).ToList()
                         }).ToList();
-                        await ExportService.ExportAsCsvOrExcelAsync(players, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
+                        await ExportService.ExportAsCsvOrExcelAsync(players, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item.ColumnMapping).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
 
                         Messenger.Default.Send(new FileExportedMessage(filepath, ProcessHelper.OpenInExcel));
                     });
@@ -232,71 +239,76 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task LaunchImportAsync()
         {
-            //var vm = ViewModelLocator.Get<PlayersImportViewModel>();
-            //var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            var vm = ViewModelLocator.Get<PlayersImportBySourcesDialogViewModel>();
 
-            //if (result.IsTrue())
-            //{
-            //    await AppBusyManager.WaitAsync(() =>
-            //    {
-            //        var players = vm.Items.Where(x => x.Import).Select(x => new SquadPlayerDto
-            //        {
-            //            FirstName = x.FirstName,
-            //            LastName = x.LastName,
-            //            TeamId = x.Team?.Id,
-            //            Category = x.Category,
-            //            Photo = x.Photo,
-            //            Gender = x.Gender,
-            //            Number = x.Number.Value,
-            //            FromDate = x.FromDate,
-            //            LicenseState = x.LicenseState,
-            //            LicenseNumber = x.LicenseNumber,
-            //            IsMutation = x.IsMutation,
-            //            Description = x.Description,
-            //            Address = x.GetAddress(),
-            //            Birthdate = x.Birthdate,
-            //            Country = x.Country,
-            //            Height = x.Height.Value,
-            //            Laterality = x.Laterality,
-            //            PlaceOfBirth = x.PlaceOfBirth,
-            //            ShoesSize = x.ShoesSize.Value,
-            //            Size = x.Size,
-            //            Weight = x.Weight.Value,
-            //            Phones = x.Phones.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new PhoneDto
-            //            {
-            //                Value = x.Value,
-            //                Default = x.Default,
-            //                Label = x.Label
-            //            }).ToList(),
-            //            Emails = x.Emails.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new EmailDto
-            //            {
-            //                Value = x.Value,
-            //                Default = x.Default,
-            //                Label = x.Label
-            //            }).ToList(),
-            //            Positions = x.Positions.Select(x => new RatedPositionDto
-            //            {
-            //                Id = x.Id,
-            //                IsNatural = x.IsNatural,
-            //                Position = x.Position,
-            //                Rating = x.Rating
-            //            }).ToList(),
-            //            Injuries = x.ImportInjuries ? x.Injuries.Select(x => new InjuryDto
-            //            {
-            //                Category = x.Category,
-            //                Condition = x.Condition,
-            //                Date = x.Period.Start,
-            //                Description = x.Description,
-            //                EndDate = x.Period.End,
-            //                Severity = x.Severity,
-            //                Type = x.Type
-            //            }).ToList() : null
-            //        }).ToList();
-            //        Service.Import(players);
+            if (vm.Sources.Count == 0) return;
 
-            //        ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(players.Count));
-            //    }).ConfigureAwait(false);
-            //}
+            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+
+            if (result.IsTrue())
+            {
+                await AppBusyManager.WaitAsync(() =>
+                {
+                    var players = vm.List.ImportItems.Select(x => new SquadPlayerDto
+                    {
+                        FirstName = x.FirstName,
+                        LastName = x.LastName,
+                        TeamId = x.Team?.Id,
+                        Category = x.Category,
+                        Photo = x.Photo,
+                        Gender = x.Gender,
+                        Number = x.Number.Value,
+                        FromDate = x.FromDate,
+                        LicenseState = x.LicenseState,
+                        LicenseNumber = x.LicenseNumber,
+                        IsMutation = x.IsMutation,
+                        Description = x.Description,
+                        Address = x.GetAddress(),
+                        Birthdate = x.Birthdate,
+                        Country = x.Country,
+                        Height = x.Height.Value,
+                        Laterality = x.Laterality,
+                        PlaceOfBirth = x.PlaceOfBirth,
+                        ShoesSize = x.ShoesSize.Value,
+                        Size = x.Size,
+                        Weight = x.Weight.Value,
+                        Phones = x.Phones.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new PhoneDto
+                        {
+                            Value = x.Value,
+                            Default = x.Default,
+                            Label = x.Label
+                        }).ToList(),
+                        Emails = x.Emails.Where(x => !string.IsNullOrEmpty(x.Value)).Select(x => new EmailDto
+                        {
+                            Value = x.Value,
+                            Default = x.Default,
+                            Label = x.Label
+                        }).ToList(),
+                        Positions = x.Positions.Select(x => new RatedPositionDto
+                        {
+                            Id = x.Id,
+                            IsNatural = x.IsNatural,
+                            Position = x.Position,
+                            Rating = x.Rating
+                        }).ToList(),
+                        Injuries = x.ImportInjuries ? x.Injuries.Select(x => new InjuryDto
+                        {
+                            Category = x.Category,
+                            Condition = x.Condition,
+                            Date = x.Period.Start,
+                            Description = x.Description,
+                            EndDate = x.Period.End,
+                            Severity = x.Severity,
+                            Type = x.Type
+                        }).ToList() : null
+                    }).ToList();
+                    Service.Import(players);
+
+                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(players.Count));
+                }).ConfigureAwait(false);
+            }
         }
+
+        public bool HasImportSources() => _pluginsService.HasPlugin<IImportPlayersSourcePlugin>();
     }
 }

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Domain;
 using MyClub.Domain.Enums;
 using MyClub.Domain.Exceptions;

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Enums;

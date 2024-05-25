@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>1.0.0-alpha</Version>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\..\build\Scorer\$(Configuration)\Plugins\$(MSBuildProjectName)</OutputPath>
+    <TargetFrameworks>net8.0-windows7.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Content Include="config\appsettings.json">
+      <TransformOnBuild>true</TransformOnBuild>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fody" Version="6.8.1">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities" Version="3.0.1">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Wpf" Version="3.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\Scorer\MyClub.Scorer.Plugins.Contracts\MyClub.Scorer.Plugins.Contracts.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\MyClub.Plugins.Base.Database\MyClub.Plugins.Base.Database.csproj" />
+    <ProjectReference Include="..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Scorer\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

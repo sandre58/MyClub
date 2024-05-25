@@ -10,7 +10,7 @@ using MyClub.DatabaseContext.Infrastructure.Data.Configuration;
 
 namespace MyClub.DatabaseContext.Infrastructure.Data
 {
-    public class MyTeamup(DbContextOptions<MyTeamup> options) : DbContext(options)
+    public class MyClubContext(DbContextOptions<MyClubContext> options) : DbContext(options)
     {
         public DbSet<Competition> Competitions { get; set; }
 

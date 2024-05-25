@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using MyClub.CrossCutting.Localization;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;
+using MyClub.Teamup.Plugins.Contracts;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyClub.Teamup.Wpf.ViewModels.Export;
 using MyClub.Teamup.Wpf.ViewModels.Import;
@@ -27,10 +28,13 @@ using MyNet.Utilities.Messaging;
 
 namespace MyClub.Teamup.Wpf.Services
 {
-    internal class CompetitionPresentationService(CompetitionService competitionService, IViewModelLocator viewModelLocator)
+    internal class CompetitionPresentationService(CompetitionService competitionService,
+                                                  PluginsService pluginsService,
+                                                  IViewModelLocator viewModelLocator)
     {
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
         private readonly CompetitionService _competitionService = competitionService;
+        private readonly PluginsService _pluginsService = pluginsService;
 
         public async Task ExportAsync(IEnumerable<CompetitionViewModel> items)
         {
@@ -67,7 +71,7 @@ namespace MyClub.Teamup.Wpf.Services
                                 Labels = (x as LeagueViewModel)?.RankingRules.Labels,
                                 RankingSortingColumns = (x as LeagueViewModel)?.RankingRules.SortingColumns
                             }).ToList();
-                            await ExportService.ExportAsCsvOrExcelAsync(competitions, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
+                            await ExportService.ExportAsCsvOrExcelAsync(competitions, vm.Columns.Where(x => x.IsSelected).Select(x => x.Item.ColumnMapping).ToList(), filepath, vm.ShowHeaderColumnTraduction).ConfigureAwait(false);
 
                             Messenger.Default.Send(new FileExportedMessage(filepath, ProcessHelper.OpenInExcel));
                         }
@@ -90,37 +94,42 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task LaunchImportAsync()
         {
-            //var vm = _viewModelLocator.Get<CompetitionsImportViewModel>();
-            //var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            var vm = _viewModelLocator.Get<CompetitionsImportBySourcesDialogViewModel>();
 
-            //if (result.IsTrue())
-            //{
-            //    await AppBusyManager.WaitAsync(() =>
-            //    {
-            //        var defaultValues = _competitionService.NewCup();
-            //        var competitions = vm.Items.Where(x => x.Import).Select(x =>
-            //        {
-            //            CompetitionDto competition = x.Type switch
-            //            {
-            //                CompetitionType.League => new LeagueDto(),
-            //                CompetitionType.Cup => new CupDto(),
-            //                _ => new FriendlyDto(),
-            //            };
-            //            competition.Rules = x.CompetitionRules;
-            //            competition.EndDate = x.EndDate ?? defaultValues.EndDate;
-            //            competition.Logo = x.Logo;
-            //            competition.Name = x.Name;
-            //            competition.Category = x.Category;
-            //            competition.ShortName = x.ShortName;
-            //            competition.StartDate = x.StartDate ?? defaultValues.StartDate;
+            if (vm.Sources.Count == 0) return;
 
-            //            return competition;
-            //        }).ToList();
-            //        _competitionService.Import(competitions);
+            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 
-            //        ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(competitions.Count));
-            //    }).ConfigureAwait(false);
-            //}
+            if (result.IsTrue())
+            {
+                await AppBusyManager.WaitAsync(() =>
+                {
+                    var defaultValues = _competitionService.NewCup();
+                    var competitions = vm.List.ImportItems.Select(x =>
+                    {
+                        CompetitionDto competition = x.Type switch
+                        {
+                            CompetitionType.League => new LeagueDto(),
+                            CompetitionType.Cup => new CupDto(),
+                            _ => new FriendlyDto(),
+                        };
+                        competition.Rules = x.CompetitionRules;
+                        competition.EndDate = x.EndDate ?? defaultValues.EndDate;
+                        competition.Logo = x.Logo;
+                        competition.Name = x.Name;
+                        competition.Category = x.Category;
+                        competition.ShortName = x.ShortName;
+                        competition.StartDate = x.StartDate ?? defaultValues.StartDate;
+
+                        return competition;
+                    }).ToList();
+                    _competitionService.Import(competitions);
+
+                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(competitions.Count));
+                }).ConfigureAwait(false);
+            }
         }
+
+        public bool HasImportSources() => _pluginsService.HasPlugin<IImportCompetitionsSourcePlugin>();
     }
 }

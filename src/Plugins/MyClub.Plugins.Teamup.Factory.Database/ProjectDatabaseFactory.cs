@@ -22,6 +22,7 @@ using MyClub.Teamup.Domain.Randomize;
 using MyClub.Teamup.Domain.SeasonAggregate;
 using MyClub.Teamup.Domain.StadiumAggregate;
 using MyClub.Teamup.Domain.TeamAggregate;
+using MyClub.Teamup.Plugins.Contracts;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -32,7 +33,7 @@ using MyNet.Utilities.Sequences;
 
 namespace MyClub.Plugins.Teamup.Factory.Database
 {
-    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactory
+    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactoryPlugin
     {
         private readonly IProgresser _progresser = progresser;
         private readonly ILogger _logger = logger;
@@ -46,9 +47,9 @@ namespace MyClub.Plugins.Teamup.Factory.Database
                                 .Build();
 
             var connectionString = configuration.GetConnectionString("Default");
-            var optionsBuilder = new DbContextOptionsBuilder<MyTeamup>();
+            var optionsBuilder = new DbContextOptionsBuilder<MyClubContext>();
             optionsBuilder.UseSqlServer(connectionString);
-            using var unitOfWork = new UnitOfWork(new MyTeamup(optionsBuilder.Options));
+            using var unitOfWork = new UnitOfWork(new MyClubContext(optionsBuilder.Options));
 
             using (_progresser.Start(3, new ProgressMessage(string.Empty)))
             {
