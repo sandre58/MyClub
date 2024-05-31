@@ -62,28 +62,18 @@ namespace MyClub.Teamup.Wpf.Services
 
                 if (File.Exists(dllPath))
                 {
-                    var assembly = LoadAssemblyFromDll(dllPath);
+                    var assembly = DllLoadContext.LoadAssemblyFromDll(dllPath);
 
                     if (assembly is not null)
                         _cache.Add(assembly, assembly.GetTypes().Where(x => x.IsAssignableTo(typeof(IPlugin))).ToList());
                 }
             }
         }
-
-        private static Assembly? LoadAssemblyFromDll(string dllPath, string? assemblyName = null)
-        {
-            if (!File.Exists(dllPath)) return null;
-
-            var finalAssemblyName = assemblyName ?? Path.GetFileNameWithoutExtension(dllPath);
-
-            var loadContext = new PluginLoadContext(dllPath);
-            return loadContext.LoadFromAssemblyName(new AssemblyName(finalAssemblyName));
-        }
     }
 
-    internal class PluginLoadContext(string pluginPath) : AssemblyLoadContext
+    internal class DllLoadContext(string dllPath) : AssemblyLoadContext
     {
-        private readonly AssemblyDependencyResolver _resolver = new(pluginPath);
+        private readonly AssemblyDependencyResolver _resolver = new(dllPath);
 
         protected override Assembly? Load(AssemblyName assemblyName)
         {
@@ -95,6 +85,16 @@ namespace MyClub.Teamup.Wpf.Services
         {
             var libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
             return libraryPath != null ? LoadUnmanagedDllFromPath(libraryPath) : nint.Zero;
+        }
+
+        public static Assembly? LoadAssemblyFromDll(string dllPath, string? assemblyName = null)
+        {
+            if (!File.Exists(dllPath)) return null;
+
+            var finalAssemblyName = assemblyName ?? Path.GetFileNameWithoutExtension(dllPath);
+
+            var loadContext = new DllLoadContext(dllPath);
+            return loadContext.LoadFromAssemblyName(new AssemblyName(finalAssemblyName));
         }
     }
 }

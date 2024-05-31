@@ -8,13 +8,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
-using MyClub.Plugins.Teamup.Factory.Random.Resources;
 using MyClub.Teamup.Domain.ClubAggregate;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Domain.ProjectAggregate;
 using MyClub.Teamup.Domain.Randomize;
 using MyClub.Teamup.Domain.SeasonAggregate;
-using MyClub.Teamup.Plugins.Contracts;
+using MyClub.Teamup.Mocks.Factory.Random.Resources;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -23,9 +22,9 @@ using MyNet.Utilities.Helpers;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 
-namespace MyClub.Plugins.Teamup.Factory.Random
+namespace MyClub.Teamup.Mocks.Factory.Random
 {
-    public class ProjectRandomFactory(IProgresser progresser, ILogger logger) : IProjectFactoryPlugin
+    public class ProjectRandomFactory(IProgresser progresser, ILogger logger) : IProjectFactory
     {
         private const int CountClubLogos = 1117;
         private const int CountCompetitionLogos = 90;

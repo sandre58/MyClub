@@ -135,7 +135,7 @@ namespace MyClub.Plugins.Teamup.Import.Database
                         Name = name,
                         ShortName = shortName
                     });
-                }).ToDictionary(x => new AcceptableValueRange<int>(x.min, x.max), x => x.Item3),
+                }).ToDictionary(x => ((int?)x.min, (int?)x.max), x => x.Item3),
             };
 
             return competition;

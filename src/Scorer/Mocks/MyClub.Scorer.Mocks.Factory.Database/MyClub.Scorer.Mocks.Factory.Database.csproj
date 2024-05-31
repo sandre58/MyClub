@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.0.0-alpha</Version>
-    <OutputPath>$(MSBuildThisFileDirectory)..\..\..\build\Scorer\$(Configuration)\Plugins\$(MSBuildProjectName)</OutputPath>
+    <AssemblyName>Factory.Database</AssemblyName>
+    <OutputPath>..\..\..\..\build\Scorer\$(Configuration)\Mocks\$(AssemblyName)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   
   <ItemGroup>
@@ -22,24 +24,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
+    <ProjectReference Include="..\..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
+    <ProjectReference Include="..\..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Scorer\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj">
+    <ProjectReference Include="..\..\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Scorer\MyClub.Scorer.Domain.Factories\MyClub.Scorer.Domain.Factories.csproj">
-      <Private>false</Private>
-      <ExcludeAssets>runtime</ExcludeAssets>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Common\MyClub.DatabaseContext.Infrastructure.Data\MyClub.DatabaseContext.Infrastructure.Data.csproj" />
-    <ProjectReference Include="..\..\Scorer\MyClub.Scorer.Plugins.Contracts\MyClub.Scorer.Plugins.Contracts.csproj">
+    <ProjectReference Include="..\..\MyClub.Scorer.Domain.Factories\MyClub.Scorer.Domain.Factories.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>

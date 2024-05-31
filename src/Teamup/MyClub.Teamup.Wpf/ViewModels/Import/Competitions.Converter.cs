@@ -13,6 +13,7 @@ using MyNet.Humanizer;
 using MyNet.UI.ViewModels.Import;
 using MyNet.Utilities;
 using MyNet.Utilities.Converters;
+using MyNet.Utilities.Sequences;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Import
 {
@@ -34,7 +35,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Import
                                                    dto.ByGamesDrawn.GetValueOrDefault(),
                                                    dto.ByGamesLost.GetValueOrDefault(),
                                                    dto.RankingSortingColumns?.Select(x => x.OrEmpty().DehumanizeTo<RankingSortingColumn>(OnNoMatch.ReturnsDefault)).ToList() ?? RankingRules.DefaultSortingColumns,
-                                                   dto.Labels?.ToDictionary(x => x.Key, x => new RankLabel(x.Value.Color, x.Value.Name.OrEmpty(), x.Value.ShortName.OrEmpty(), x.Value.Description))),
+                                                   dto.Labels?.ToDictionary(x => new AcceptableValueRange<int>(x.Key.min, x.Key.max), x => new RankLabel(x.Value.Color, x.Value.Name.OrEmpty(), x.Value.ShortName.OrEmpty(), x.Value.Description))),
                                   dto.MatchTime)
                 : dto.Type == CompetitionType.Cup.ToString()
                 ? new CupRules(matchFormat, dto.MatchTime.GetValueOrDefault())

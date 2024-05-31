@@ -83,7 +83,7 @@ namespace MyClub.Plugins.Teamup.Import.File.Providers
                     ByGamesWon = (x as League)?.Rules.RankingRules.PointsByGamesWon,
                     ByGamesLost = (x as League)?.Rules.RankingRules.PointsByGamesLost,
                     RankingSortingColumns = (x as League)?.Rules.RankingRules.SortingColumns.Select(y => y.ToString()),
-                    Labels = (x as League)?.Rules.RankingRules.Labels.ToDictionary(y => y.Key, y => new RankLabelImportDto
+                    Labels = (x as League)?.Rules.RankingRules.Labels.ToDictionary(y => (y.Key.Min, y.Key.Max), y => new RankLabelImportDto
                     {
                         Color = y.Value.Color,
                         Description = y.Value.Description,

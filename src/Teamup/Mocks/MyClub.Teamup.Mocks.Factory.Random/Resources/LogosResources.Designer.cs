@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MyClub.Plugins.Teamup.Factory.Random.Resources {
+namespace MyClub.Teamup.Mocks.Factory.Random.Resources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace MyClub.Plugins.Teamup.Factory.Random.Resources {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MyClub.Plugins.Teamup.Factory.Random.Resources.LogosResources", typeof(LogosResources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MyClub.Teamup.Mocks.Factory.Random.Resources.LogosResources", typeof(LogosResources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

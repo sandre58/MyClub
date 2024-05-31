@@ -20,7 +20,6 @@ using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
-using MyClub.Scorer.Plugins.Contracts;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -29,9 +28,9 @@ using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 using MyNet.Utilities.Sequences;
 
-namespace MyClub.Plugins.Scorer.Factory.Database
+namespace MyClub.Scorer.Mocks.Factory.Database
 {
-    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactoryPlugin
+    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactory
     {
         private readonly IProgresser _progresser = progresser;
         private readonly ILogger _logger = logger;

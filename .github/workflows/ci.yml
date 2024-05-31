@@ -65,6 +65,7 @@ jobs:
           path: |
               ./build/Teamup/Release/**
               !./build/Teamup/Release/Plugins/
+              !./build/Teamup/Release/Mocks/
               !./build/Teamup/Release/*.xml
               !./build/Teamup/Release/*.pdb
 
@@ -75,6 +76,7 @@ jobs:
           path: |
               ./build/Scorer/Release/**
               !./build/Scorer/Release/Plugins/
+              !./build/Scorer/Release/Mocks/
               !./build/Scorer/Release/*.xml
               !./build/Scorer/Release/*.pdb
 

@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Text;
@@ -10,6 +11,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml;
+using DynamicData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -363,15 +366,28 @@ namespace MyClub.Teamup.Wpf
         private static IProjectFactory CreateProjectFactory(IServiceProvider serviceProvider)
         {
             var configuration = serviceProvider.GetRequiredService<TeamupConfiguration>();
+            var mockDirectory = Path.GetFullPath(configuration.Mock.Directory);
 
-            if (string.IsNullOrEmpty(configuration.Mock.FactoryPluginName)) return GetDefaultProjectFactory(serviceProvider);
+            if (Directory.Exists(mockDirectory) && !string.IsNullOrEmpty(configuration.Mock.FactoryName))
+            {
+                var factoryDllPath = Path.Combine(mockDirectory, configuration.Mock.FactoryName, $"{configuration.Mock.FactoryName}.dll");
+                var assembly = DllLoadContext.LoadAssemblyFromDll(factoryDllPath);
 
-            var pluginsService = serviceProvider.GetRequiredService<PluginsService>();
+                if (assembly is not null)
+                {
+                    var type = Array.Find(assembly.GetTypes(), x => x.IsAssignableTo(typeof(IProjectFactory)));
 
-            return (IProjectFactory?)pluginsService.GetPlugin<IProjectFactoryPlugin>(configuration.Mock.FactoryPluginName) ?? GetDefaultProjectFactory(serviceProvider);
+                    if (type is not null)
+                    {
+                        var instance = (IProjectFactory?)ActivatorUtilities.CreateInstance(serviceProvider, type);
+
+                        if (instance is not null) return instance;
+                    }
+                }
+            }
+
+            return new ProjectFactory(serviceProvider.GetRequiredService<IAuditService>());
         }
-
-        private static ProjectFactory GetDefaultProjectFactory(IServiceProvider serviceProvider) => new(serviceProvider.GetRequiredService<IAuditService>());
 
         private static async Task OnAppDomainUnhandledExceptionAsync(UnhandledExceptionEventArgs e) => await ShowExceptionAsync((Exception)e.ExceptionObject).ConfigureAwait(false);
 

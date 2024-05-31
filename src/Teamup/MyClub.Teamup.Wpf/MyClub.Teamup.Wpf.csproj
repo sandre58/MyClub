@@ -178,18 +178,4 @@
     <Page Include="Styles\*.xaml" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Services\Providers\ImportProvider.Competitions.Base.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Competitions.Source.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Competitions.Sources.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Players.Base.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Players.Source.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Players.Sources.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Stadiums.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Teams.Base.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Teams.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Teams.Source.cs" />
-    <Compile Remove="Services\Providers\ImportProvider.Teams.Sources.cs" />
-  </ItemGroup>
-
 </Project>

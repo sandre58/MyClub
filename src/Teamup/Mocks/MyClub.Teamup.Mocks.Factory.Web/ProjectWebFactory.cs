@@ -26,7 +26,7 @@ using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 using Newtonsoft.Json.Linq;
 
-namespace MyClub.Plugins.Teamup.Factory.Web
+namespace MyClub.Teamup.Mocks.Factory.Web
 {
     public sealed class ProjectWebFactory(IProgresser progresser, ILogger logger) : IProjectFactory, IDisposable
     {

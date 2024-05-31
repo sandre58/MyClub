@@ -1,5 +1,3 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj" />
-  </ItemGroup>
+
 </Project>

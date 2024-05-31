@@ -23,7 +23,9 @@ namespace MyClub.Teamup.Wpf.Configuration
 
         public class MockConfiguration
         {
-            public string FactoryPluginName { get; set; } = string.Empty;
+            public string Directory { get; set; } = string.Empty;
+
+            public string FactoryName { get; set; } = string.Empty;
 
             public bool RandomizeData { get; set; }
         }
@@ -39,8 +41,9 @@ namespace MyClub.Teamup.Wpf.Configuration
             DisableMail = configuration.Value.DisableMail;
             TempDirectory = configuration.Value.TempDirectory;
             Plugins.Directory = configuration.Value.Plugins.Directory;
+            Mock.Directory = configuration.Value.Mock.Directory;
             Mock.RandomizeData = configuration.Value.Mock.RandomizeData;
-            Mock.FactoryPluginName = configuration.Value.Mock.FactoryPluginName;
+            Mock.FactoryName = configuration.Value.Mock.FactoryName;
             RecentFiles.Registry = configuration.Value.RecentFiles.Registry;
             RecentFiles.Max = configuration.Value.RecentFiles.Max;
             Authentication.Registry = configuration.Value.Authentication.Registry;

@@ -22,7 +22,6 @@ using MyClub.Teamup.Domain.Randomize;
 using MyClub.Teamup.Domain.SeasonAggregate;
 using MyClub.Teamup.Domain.StadiumAggregate;
 using MyClub.Teamup.Domain.TeamAggregate;
-using MyClub.Teamup.Plugins.Contracts;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -31,9 +30,9 @@ using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 using MyNet.Utilities.Sequences;
 
-namespace MyClub.Plugins.Teamup.Factory.Database
+namespace MyClub.Teamup.Mocks.Factory.Database
 {
-    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactoryPlugin
+    public class ProjectDatabaseFactory(IProgresser progresser, ILogger logger) : IProjectFactory
     {
         private readonly IProgresser _progresser = progresser;
         private readonly ILogger _logger = logger;

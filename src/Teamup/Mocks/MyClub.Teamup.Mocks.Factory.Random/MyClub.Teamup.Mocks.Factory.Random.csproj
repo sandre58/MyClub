@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.0.0-alpha</Version>
-    <OutputPath>$(MSBuildThisFileDirectory)..\..\..\build\Teamup\$(Configuration)\Plugins\$(MSBuildProjectName)</OutputPath>
+    <AssemblyName>Factory.Random</AssemblyName>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <OutputPath>..\..\..\..\build\Teamup\$(Configuration)\Mocks\$(AssemblyName)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
   
   <ItemGroup>
@@ -25,27 +27,27 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
+    <ProjectReference Include="..\..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
+    <ProjectReference Include="..\..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj">
+    <ProjectReference Include="..\..\MyClub.Teamup.Domain\MyClub.Teamup.Domain.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Domain.Factories\MyClub.Teamup.Domain.Factories.csproj">
+    <ProjectReference Include="..\..\MyClub.Teamup.Domain.Factories\MyClub.Teamup.Domain.Factories.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Domain.Randomize\MyClub.Teamup.Domain.Randomize.csproj">
+    <ProjectReference Include="..\..\MyClub.Teamup.Domain.Randomize\MyClub.Teamup.Domain.Randomize.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-    <ProjectReference Include="..\..\Teamup\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
+    <ProjectReference Include="..\..\MyClub.Teamup.Plugins.Contracts\MyClub.Teamup.Plugins.Contracts.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using MyNet.Utilities.Sequences;
 
 namespace MyClub.Teamup.Plugins.Contracts.Dtos
 {
@@ -39,6 +38,6 @@ namespace MyClub.Teamup.Plugins.Contracts.Dtos
 
         public IEnumerable<string>? RankingSortingColumns { get; set; }
 
-        public IDictionary<AcceptableValueRange<int>, RankLabelImportDto>? Labels { get; set; }
+        public IDictionary<(int? min, int? max), RankLabelImportDto>? Labels { get; set; }
     }
 }
