@@ -1875,4 +1875,7 @@ Les colonnes en première position seront évaluées en première. Les colonnes 
   <data name="System" xml:space="preserve">
     <value>Système</value>
   </data>
+  <data name="AllowRescheduleWithDragAndDrop" xml:space="preserve">
+    <value>Activer la reprogrammation</value>
+  </data>
 </root>

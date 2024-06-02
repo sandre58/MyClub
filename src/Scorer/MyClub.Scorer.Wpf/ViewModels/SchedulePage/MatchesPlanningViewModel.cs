@@ -98,6 +98,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         [CanBeValidated(false)]
         public bool CanRescheduleSelectedItems => SelectionIsAvailable(x => x.CanReschedule());
 
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool AllowRescheduleWithDragAndDrop { get; set; }
+
         public ICommand SelectAllByParentCommand { get; }
 
         public ICommand UnselectAllByParentCommand { get; }

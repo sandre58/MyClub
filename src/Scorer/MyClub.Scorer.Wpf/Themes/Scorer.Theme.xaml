@@ -9,6 +9,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+        <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Themes/Scorer.Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  MessageBox  -->

@@ -31,7 +31,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <!--  Shortcuts  -->
+    <!-- Shortcuts -->
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
             <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding Data.ValidateResultsCommand, Source={StaticResource Proxy}}" />
@@ -47,19 +47,31 @@
 
     <DockPanel>
 
-        <!--  ToolBar  -->
+        <!-- ToolBar -->
         <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <!--  Read  -->
+                    <!-- Read -->
                     <Button my:IconAssist.Icon="{my:Icon Kind=CircleEditOutline}"
                             Command="{Binding EditResultsCommand}"
                             Content="{my:Resource EditResults}"
                             ToolTip="Ctrl+Maj+E"
                             Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
 
-                    <!--  Edition  -->
+                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
+                                  my:IconAssist.Icon="{my:MediumIcon Kind=LockOpenVariant}"
+                                  Content="{my:Resource AllowRescheduleWithDragAndDrop}"
+                                  IsChecked="{Binding AllowRescheduleWithDragAndDrop}">
+                        <ToggleButton.Visibility>
+                            <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                                <Binding Path="Mode" Converter="{x:Static my:EnumToBooleanConverter.Any}" ConverterParameter="{x:Static contracts:ScreenMode.Read}" />
+                                <Binding Path="Display.Mode.Key" Converter="{x:Static my:EqualityToBooleanConverter.Default}" ConverterParameter="DisplayModeDay" />
+                            </MultiBinding>
+                        </ToggleButton.Visibility>
+                    </ToggleButton>
+
+                    <!-- Edition -->
                     <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation}"
                             my:IconAssist.Icon="{my:Icon Kind=Cancel}"
                             Command="{Binding CancelResultsCommand}"
@@ -132,10 +144,10 @@
 
         </my:CommandsBar>
 
-        <!--  Content  -->
+        <!-- Content -->
         <my:TransitioningContent>
             <my:TransitioningContent.Style>
-                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeList">
                             <Setter Property="Content">

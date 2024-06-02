@@ -496,6 +496,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Activer la reprogrammation.
+        /// </summary>
+        public static string AllowRescheduleWithDragAndDrop {
+            get {
+                return ResourceManager.GetString("AllowRescheduleWithDragAndDrop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tous les tours.
         /// </summary>
         public static string AllRounds {

@@ -1875,4 +1875,7 @@ The columns in the first position will be evaluated first. The following columns
   <data name="System" xml:space="preserve">
     <value>System</value>
   </data>
+  <data name="AllowRescheduleWithDragAndDrop" xml:space="preserve">
+    <value>Allow reschedule</value>
+  </data>
 </root>
