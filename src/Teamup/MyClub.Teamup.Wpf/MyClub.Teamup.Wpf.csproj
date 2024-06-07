@@ -22,7 +22,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MyNet.Observable.Collections" Version="3.0.0" />
-    <PackageReference Include="MyNet.UI" Version="4.0.0" />
+    <PackageReference Include="MyNet.UI" Version="4.1.0" />
     <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

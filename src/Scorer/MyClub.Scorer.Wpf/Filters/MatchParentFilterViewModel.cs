@@ -39,7 +39,7 @@ namespace MyClub.Scorer.Wpf.Filters
 
         private IMatchParent? GetLatestResults() => AvailableValues?.OrderBy(x => x.Date).LastOrDefault(x => x.Date.IsBefore(DateTime.Now));
 
-        public override void Reset() => Value = GetPreviousParent(DateTime.Today) ?? GetNextParent(DateTime.Today);
+        public override void Reset() => Value = GetNextParent(DateTime.Today) ?? GetPreviousParent(DateTime.Today);
 
         protected override FilterViewModel CreateCloneInstance() => new MatchParentFilterViewModel(PropertyName, AvailableValues ?? []);
     }

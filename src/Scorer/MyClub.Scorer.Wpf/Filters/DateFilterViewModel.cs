@@ -40,16 +40,16 @@ namespace MyClub.Scorer.Wpf.Filters
 
         public override void Reset()
         {
-            var previousDate = GetPreviousDate(DateTime.Today);
+            var nextDate = GetNextDate(DateTime.Today);
 
-            if (previousDate != default)
-                Value = previousDate;
+            if (nextDate != default)
+                Value = nextDate;
             else
             {
-                var nextDate = GetNextDate(DateTime.Today);
+                var previousDate = GetPreviousDate(DateTime.Today);
 
-                if (nextDate != default)
-                    Value = nextDate;
+                if (previousDate != default)
+                    Value = previousDate;
             }
         }
 

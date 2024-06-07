@@ -9,6 +9,7 @@ using MyNet.Observable.Collections.Providers;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Application.Services;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
@@ -19,13 +20,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                                      MatchesProvider matchesProvider,
                                      TeamsProvider teamsProvider,
                                      StadiumsProvider stadiumsProvider,
-                                     MatchPresentationService matchPresentationService)
+                                     MatchPresentationService matchPresentationService,
+                                     AvailibilityCheckingService availibilityCheckingService)
         {
             MatchesPlanningViewModel = new(matchesProvider,
                                            new ObservableSourceProvider<IMatchParent>(matchdaysProvider.Connect().Transform(x => (IMatchParent)x)),
                                            teamsProvider,
                                            stadiumsProvider,
-                                           matchPresentationService);
+                                           matchPresentationService,
+                                           availibilityCheckingService);
 
             projectInfoProvider.WhenProjectLoaded(_ => MatchesPlanningViewModel.Reset());
         }

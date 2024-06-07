@@ -12,8 +12,11 @@ using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Wpf.Filters;
 using MyClub.Scorer.Wpf.Services;
+using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
@@ -27,10 +30,10 @@ using MyNet.UI.Selection.Models;
 using MyNet.UI.Toasting;
 using MyNet.UI.Toasting.Settings;
 using MyNet.UI.ViewModels;
+using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
 using MyNet.Utilities.Units;
-using MyNet.Wpf.DragAndDrop;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
@@ -38,22 +41,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
     internal class MatchesPlanningViewModel : SelectionListViewModel<MatchViewModel>
     {
         private readonly MatchPresentationService _matchPresentationService;
+        private readonly AvailibilityCheckingService _availibilityCheckingService;
 
         public MatchesPlanningViewModel(ISourceProvider<MatchViewModel> matchesProvider,
                                         ISourceProvider<IMatchParent> parentsProvider,
                                         ISourceProvider<TeamViewModel> teamsProvider,
                                         ISourceProvider<StadiumViewModel> stadiumsProvider,
-                                        MatchPresentationService matchPresentationService)
+                                        MatchPresentationService matchPresentationService,
+                                        AvailibilityCheckingService availibilityCheckingService)
             : base(collection: new MatchesCollection(matchesProvider),
                   parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source, new ObservableSourceProvider<DateTime>(matchesProvider.Connect().AutoRefresh(x => x.Date).DistinctValues(x => x.DateOfDay).ObserveOn(Scheduler.UI)).Source, teamsProvider.Source, stadiumsProvider.Source))
         {
             _matchPresentationService = matchPresentationService;
+            _availibilityCheckingService = availibilityCheckingService;
+            Stadiums = new WrapperListViewModel<StadiumViewModel, StadiumWrapper>(stadiumsProvider.Connect(), x => new StadiumWrapper(x));
             Mode = ScreenMode.Read;
             CanPage = true;
             CanAdd = false;
             CanRemove = false;
-            DropHandler = new(async (x, y) => await _matchPresentationService.RescheduleAsync(x.OfType<EditableMatch>().Select(z => z.Item), y).ConfigureAwait(false),
-                              x => x.All(y => y is EditableMatch editableMatch && editableMatch.Item.CanBeRescheduled));
 
             SelectAllByParentCommand = CommandsManager.CreateNotNull<IMatchParent>(x => Collection.Select(Items.Where(y => y.Parent == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Parent == x && y.IsSelectable).Any(y => !y.IsSelected));
             UnselectAllByParentCommand = CommandsManager.CreateNotNull<IMatchParent>(x => Collection.Unselect(Items.Where(y => y.Parent == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Parent == x && y.IsSelectable).All(y => y.IsSelected));
@@ -76,7 +81,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             RescheduleXMinutesCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleSelectedItemsAsync(x, TimeUnit.Minute).ConfigureAwait(false), x => SelectionIsAvailable(x => x.CanReschedule()));
             RescheduleXHoursCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleSelectedItemsAsync(x, TimeUnit.Hour).ConfigureAwait(false), x => SelectionIsAvailable(x => x.CanReschedule()));
             SelectConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(x => SelectConflicts(x), x => x.MatchesInConflicts.Count > 0);
-            EditConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(async x => await _matchPresentationService.RescheduleAsync(x.MatchesInConflicts).ConfigureAwait(false), x => x.MatchesInConflicts.Count > 0);
+            RescheduleConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(async x => await RescheduleConflictsAsync(x).ConfigureAwait(false), x => x.MatchesInConflicts.Count > 0);
+            SetStadiumForSelectedItemsCommand = CommandsManager.Create<StadiumViewModel>(async x => await SetStadiumForSelectedItemsAsync(x).ConfigureAwait(false), x => SelectionIsAvailable(x => x.CanReschedule()));
+            OpenSchedulingAssistantCommand = CommandsManager.Create(async () => await OpenSchedulingAssistantAsync().ConfigureAwait(false));
 
             Disposables.AddRange(
             [
@@ -88,8 +95,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             ]);
         }
 
-        public CalendarDropHandler DropHandler { get; }
-
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
         public bool CanDoWithdrawSelectedItems => SelectionIsAvailable(x => x.CanDoWithdraw());
@@ -98,9 +103,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         [CanBeValidated(false)]
         public bool CanRescheduleSelectedItems => SelectionIsAvailable(x => x.CanReschedule());
 
-        [CanSetIsModified(false)]
-        [CanBeValidated(false)]
-        public bool AllowRescheduleWithDragAndDrop { get; set; }
+        [CanBeValidated]
+        [CanSetIsModified]
+        public WrapperListViewModel<StadiumViewModel, StadiumWrapper> Stadiums { get; }
 
         public ICommand SelectAllByParentCommand { get; }
 
@@ -142,25 +147,19 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public ICommand RescheduleCommand { get; }
 
+        public ICommand OpenSchedulingAssistantCommand { get; }
+
         public ICommand SelectConflictsCommand { get; }
 
-        public ICommand EditConflictsCommand { get; }
+        public ICommand RescheduleConflictsCommand { get; }
+
+        public ICommand SetStadiumForSelectedItemsCommand { get; }
 
         protected override async Task<MatchViewModel?> UpdateItemAsync(MatchViewModel oldItem)
         {
             await _matchPresentationService.EditAsync(oldItem).ConfigureAwait(false);
 
             return null;
-        }
-
-        protected override async Task<IEnumerable<MatchViewModel>> UpdateRangeAsync(IEnumerable<MatchViewModel> oldItems)
-        {
-            if (oldItems.Count() == 1)
-                await _matchPresentationService.EditAsync(oldItems.First()).ConfigureAwait(false);
-            else if (oldItems.Count() > 1)
-                await _matchPresentationService.EditMultipleAsync(oldItems).ConfigureAwait(false);
-
-            return [];
         }
 
         protected override void ResetCore() => Filters.Reset();
@@ -231,6 +230,27 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public async Task InvertTeamsSelectedItemsAsync() => await _matchPresentationService.InvertTeamsAsync(SelectedItems).ConfigureAwait(false);
 
+        public async Task SetStadiumForSelectedItemsAsync(StadiumViewModel? stadium) => await _matchPresentationService.SetStadiumAsync(SelectedItems, stadium).ConfigureAwait(false);
+
+        private async Task RescheduleConflictsAsync(MatchViewModel match)
+            => await OpenSchedulingAssistantAsync(match.StartDate).ConfigureAwait(false);
+
+        private async Task OpenSchedulingAssistantAsync()
+        {
+            var filters = (MatchesPlanningFiltersViewModel)Filters;
+            var displayDate = Display.Mode switch
+            {
+                DisplayModeDay displayModeDay => (DateTime?)displayModeDay.DisplayDate,
+                DisplayModeByDate => filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value,
+                DisplayModeByParent => filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().Value?.Date,
+                _ => null,
+            };
+            await OpenSchedulingAssistantAsync(displayDate).ConfigureAwait(false);
+        }
+
+        private async Task OpenSchedulingAssistantAsync(DateTime? displayDate)
+            => await _matchPresentationService.OpenSchedulingAssistantAsync(Source.Where(x => x.CanReschedule()), displayDate).ConfigureAwait(false);
+
         public void SelectItems(IEnumerable<Guid> selectedItems)
         {
             Mode = ScreenMode.Read;
@@ -238,6 +258,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         }
 
         private void SelectConflicts(MatchViewModel match) => SelectItems(match.MatchesInConflicts.Select(x => x.Id).ToList());
+
+        private void ValidateStadiumsAvaibility(IEnumerable<MatchViewModel> matches)
+        {
+            foreach (var item in Stadiums.Wrappers)
+                item.Availability = CheckStadiumAvaibility(item.Item.Id, matches);
+        }
+
+        private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, IEnumerable<MatchViewModel> matches)
+            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, x.Date, x.Format, matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
 
         protected override bool SelectionIsAvailable(Func<MatchViewModel, bool> predicate) => Mode == ScreenMode.Read && base.SelectionIsAvailable(predicate);
 
@@ -247,6 +276,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
             RaisePropertyChanged(nameof(CanDoWithdrawSelectedItems));
             RaisePropertyChanged(nameof(CanRescheduleSelectedItems));
+            ValidateStadiumsAvaibility(SelectedItems);
         }
     }
 

@@ -37,9 +37,10 @@
             <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding Data.ValidateResultsCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Esc" Command="{Binding Data.CancelResultsCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl+Shift" Key="E" Command="{Binding Data.EditResultsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Alt" Key="E" Command="{Binding Data.OpenSchedulingAssistantCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding Data.RandomizeSelectedItemsCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Return" Command="{Binding Data.OpenSelectedItemCommand, Source={StaticResource Proxy}}" />
-            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemsCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding Data.SelectAllCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl+Shift" Key="A" Command="{Binding Data.ClearSelectionCommand, Source={StaticResource Proxy}}" />
         </InputBindingCollection>
@@ -58,18 +59,11 @@
                             Content="{my:Resource EditResults}"
                             ToolTip="Ctrl+Maj+E"
                             Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
-
-                    <ToggleButton Style="{StaticResource MyNet.Styles.CheckBox.Chip}"
-                                  my:IconAssist.Icon="{my:MediumIcon Kind=LockOpenVariant}"
-                                  Content="{my:Resource AllowRescheduleWithDragAndDrop}"
-                                  IsChecked="{Binding AllowRescheduleWithDragAndDrop}">
-                        <ToggleButton.Visibility>
-                            <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
-                                <Binding Path="Mode" Converter="{x:Static my:EnumToBooleanConverter.Any}" ConverterParameter="{x:Static contracts:ScreenMode.Read}" />
-                                <Binding Path="Display.Mode.Key" Converter="{x:Static my:EqualityToBooleanConverter.Default}" ConverterParameter="DisplayModeDay" />
-                            </MultiBinding>
-                        </ToggleButton.Visibility>
-                    </ToggleButton>
+                    <Button my:IconAssist.Icon="{my:Icon Kind=CalendarEdit}"
+                            Command="{Binding OpenSchedulingAssistantCommand}"
+                            Content="{my:Resource SchedulingAssistant}"
+                            ToolTip="Ctrl+Alt+E"
+                            Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
 
                     <!-- Edition -->
                     <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation}"
@@ -88,7 +82,7 @@
             </my:CommandsBar.LeftCommands>
 
             <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
-                <Button Command="{Binding EditSelectedItemsCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
+                <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
                 <my:DropDownButton IsEnabled="{Binding CanRescheduleSelectedItems}"
                                    PopupPadding="0"
                                    ToggleContent="{my:MediumIcon Kind=ClockPlus}"
@@ -105,6 +99,57 @@
                                   my:ThemeAssist.IsMouseOverBackground="Transparent"
                                   Header="{Binding Data.RescheduleCommand, Source={StaticResource Proxy}}"
                                   HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}" />
+                    </my:Submenu>
+                </my:DropDownButton>
+                <my:DropDownButton IsEnabled="{Binding CanRescheduleSelectedItems}"
+                                   PopupPadding="0"
+                                   ToggleContent="{my:MediumIcon Kind=Stadium}"
+                                   ToolTip="{my:Resource RescheduleStadium}">
+                    <my:Submenu my:ItemsControlAssist.SortingProperty="Item.Address.City" ItemsSource="{Binding Stadiums.Wrappers}">
+                        <my:Submenu.ItemContainerStyle>
+                            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
+                                <Setter Property="Command" Value="{Binding Data.SetStadiumForSelectedItemsCommand, Source={StaticResource Proxy}}" />
+                                <Setter Property="CommandParameter" Value="{Binding Item}" />
+                                <Setter Property="Header" Value="{Binding}" />
+                                <Setter Property="HeaderTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <my:SimpleStackPanel Orientation="Horizontal">
+                                                <my:PackIcon Tag="{Binding Availability}">
+                                                    <my:PackIcon.Style>
+                                                        <Style TargetType="{x:Type my:PackIcon}" BasedOn="{StaticResource MyNet.Styles.PackIcon}">
+                                                            <Setter Property="Height" Value="16" />
+                                                            <Setter Property="Width" Value="16" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Unknown">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsAvailable">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                                                    <Setter Property="Kind" Value="CheckCircle" />
+                                                                    <Setter Property="ToolTip" Value="{my:Resource StadiumAvailableAtDate}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsBusy">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                                                    <Setter Property="Kind" Value="CloseCircle" />
+                                                                    <Setter Property="ToolTip" Value="{my:Resource StadiumUnavailableAtDate}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsPartiallyBusy">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                                                                    <Setter Property="Kind" Value="WarningCircle" />
+                                                                    <Setter Property="ToolTip" Value="{my:Resource StadiumPartiallyUnavailableAtDate}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </my:PackIcon.Style>
+                                                </my:PackIcon>
+                                                <TextBlock Text="{Binding Item.DisplayName}" />
+                                            </my:SimpleStackPanel>
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </my:Submenu.ItemContainerStyle>
                     </my:Submenu>
                 </my:DropDownButton>
                 <Button Command="{Binding InvertTeamsSelectedItemsCommand}" Content="{my:MediumIcon Kind=SwapHorizontal}" ToolTip="{my:Resource InvertTeams}" />

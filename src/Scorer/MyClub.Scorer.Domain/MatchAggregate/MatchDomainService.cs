@@ -1,16 +1,13 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyNet.Utilities;
-using MyNet.Utilities.DateTimes;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
-using MyClub.Scorer.Domain.StadiumAggregate;
-using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities;
+using MyNet.Utilities.DateTimes;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {

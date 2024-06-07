@@ -12,7 +12,7 @@
     <PackageReference Include="MyNet.Utilities" Version="3.0.1">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Wpf" Version="3.0.0">
+    <PackageReference Include="MyNet.Wpf" Version="4.0.1">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

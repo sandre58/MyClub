@@ -4,7 +4,6 @@
              xmlns:contracts="clr-namespace:MyNet.UI.ViewModels;assembly=MyNet.UI"
              xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:dd="urn:gong-wpf-dragdrop"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
@@ -124,10 +123,7 @@
                     <Setter Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>
-                                <my:CalendarHoursByDay dd:DragDrop.DropHandler="{Binding DropHandler}"
-                                                       dd:DragDrop.IsDragSource="{Binding AllowRescheduleWithDragAndDrop}"
-                                                       dd:DragDrop.IsDropTarget="{Binding AllowRescheduleWithDragAndDrop}"
-                                                       my:HeaderAssist.Background="Transparent"
+                                <my:CalendarHoursByDay my:HeaderAssist.Background="Transparent"
                                                        my:HeaderAssist.Height="50"
                                                        my:HeaderAssist.Width="35"
                                                        Appointments="{Binding Wrappers}"
@@ -148,17 +144,14 @@
                                             <Setter Property="ContentTemplate">
                                                 <Setter.Value>
                                                     <DataTemplate>
-                                                        <Grid>
-                                                            <Rectangle x:Name="border" RadiusX="{StaticResource MyNet.UniformCornerRadius.Container}" RadiusY="{StaticResource MyNet.UniformCornerRadius.Container}" />
+                                                        <DockPanel>
 
-                                                            <DockPanel Margin="{StaticResource MyNet.Margins.Default}">
+                                                            <!-- Header -->
+                                                            <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top" Orientation="Horizontal">
 
-                                                                <!-- Header -->
-                                                                <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top" Orientation="Horizontal">
-
-                                                                    <!-- Selection -->
-                                                                    <Grid>
-                                                                        <CheckBox x:Name="Selection"
+                                                                <!-- Selection -->
+                                                                <Grid>
+                                                                    <CheckBox x:Name="Selection"
                                                                                   Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
                                                                                   BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
                                                                                                                 Opacity={StaticResource MyNet.Opacity.Secondary}}"
@@ -166,40 +159,40 @@
                                                                                   IsChecked="{Binding IsSelected}"
                                                                                   IsTabStop="False"
                                                                                   Visibility="Hidden" />
-                                                                        <my:PackIcon x:Name="Icon"
+                                                                    <my:PackIcon x:Name="Icon"
                                                                                      Width="18"
                                                                                      Height="18"
                                                                                      HorizontalAlignment="Center"
                                                                                      VerticalAlignment="Center"
                                                                                      Foreground="{DynamicResource MyNet.Brushes.None}"
                                                                                      Kind="ProgressClock" />
-                                                                    </Grid>
+                                                                </Grid>
 
-                                                                    <!-- Teams -->
-                                                                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
-                                                                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                                <!-- Teams -->
+                                                                <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                                                                            Width="19"
                                                                                            Height="19"
                                                                                            DataContext="{Binding Item.HomeTeam}"
                                                                                            ToolTip="{Binding Name}" />
-                                                                        <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
+                                                                    <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
                                                                                    Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                                                                    Text="{my:Resource VersusAbbr}"
                                                                                    Typography.Capitals="AllSmallCaps" />
-                                                                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                                                                            Width="19"
                                                                                            Height="19"
                                                                                            DataContext="{Binding Item.AwayTeam}"
                                                                                            ToolTip="{Binding Name}" />
 
-                                                                    </my:SimpleStackPanel>
                                                                 </my:SimpleStackPanel>
+                                                            </my:SimpleStackPanel>
 
-                                                                <!-- Actions -->
-                                                                <DockPanel Margin="{StaticResource MyNet.Margins.Small.Top}" VerticalAlignment="Bottom" DockPanel.Dock="Bottom">
+                                                            <!-- Actions -->
+                                                            <DockPanel Margin="{StaticResource MyNet.Margins.Small.Top}" VerticalAlignment="Bottom" DockPanel.Dock="Bottom">
 
-                                                                    <!-- Conflicts -->
-                                                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation.Custom}"
+                                                                <!-- Conflicts -->
+                                                                <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation.Custom}"
                                                                                        Padding="{StaticResource MyNet.Margins.Small}"
                                                                                        HorizontalAlignment="Center"
                                                                                        my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Warning}"
@@ -212,142 +205,142 @@
                                                                                        ToggleContent="{my:Icon Kind=Alert}"
                                                                                        ToolTip="{my:Resource HasConflictsWarning}"
                                                                                        Visibility="{Binding Item.Conflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
-                                                                        <my:Submenu>
-                                                                            <MenuItem Command="{Binding Data.EditCommand, Source={StaticResource Proxy}}"
+                                                                    <my:Submenu>
+                                                                        <MenuItem Command="{Binding Data.EditCommand, Source={StaticResource Proxy}}"
                                                                                       CommandParameter="{Binding Item}"
                                                                                       Header="{my:Resource Edit}"
                                                                                       Icon="{my:ToolIcon Kind=Edit}" />
-                                                                            <MenuItem Command="{Binding Data.EditConflictsCommand, Source={StaticResource Proxy}}"
+                                                                        <MenuItem Command="{Binding Data.RescheduleConflictsCommand, Source={StaticResource Proxy}}"
                                                                                       CommandParameter="{Binding Item}"
-                                                                                      Header="{my:Resource EditConflicts}"
-                                                                                      Icon="{my:ToolIcon Kind=LibraryEdit}"
+                                                                                      Header="{my:Resource RescheduleConflicts}"
+                                                                                      Icon="{my:ToolIcon Kind=CalendarEdit}"
                                                                                       Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
-                                                                            <MenuItem Header="{my:Resource EditConflict}"
+                                                                        <MenuItem Header="{my:Resource EditConflict}"
                                                                                       Icon="{my:ToolIcon Kind=EditBox}"
                                                                                       ItemsSource="{Binding Item.MatchesInConflicts}"
                                                                                       Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
-                                                                                <MenuItem.ItemContainerStyle>
-                                                                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
-                                                                                        <Setter Property="Command" Value="{Binding Data.EditCommand, Source={StaticResource Proxy}}" />
-                                                                                        <Setter Property="CommandParameter" Value="{Binding}" />
-                                                                                        <Setter Property="Header" Value="{Binding}" />
-                                                                                        <Setter Property="HeaderTemplate">
-                                                                                            <Setter.Value>
-                                                                                                <DataTemplate>
-                                                                                                    <Grid>
-                                                                                                        <Grid.ColumnDefinitions>
-                                                                                                            <ColumnDefinition Width="60" />
-                                                                                                            <ColumnDefinition Width="5" />
-                                                                                                            <ColumnDefinition Width="Auto" />
-                                                                                                            <ColumnDefinition Width="5" />
-                                                                                                            <ColumnDefinition Width="60" />
-                                                                                                        </Grid.ColumnDefinitions>
-                                                                                                        <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" IsEnabled="False" />
-                                                                                                        <TextBlock Grid.Column="2" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
-                                                                                                        <ContentControl Grid.Column="4"
+                                                                            <MenuItem.ItemContainerStyle>
+                                                                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
+                                                                                    <Setter Property="Command" Value="{Binding Data.EditCommand, Source={StaticResource Proxy}}" />
+                                                                                    <Setter Property="CommandParameter" Value="{Binding}" />
+                                                                                    <Setter Property="Header" Value="{Binding}" />
+                                                                                    <Setter Property="HeaderTemplate">
+                                                                                        <Setter.Value>
+                                                                                            <DataTemplate>
+                                                                                                <Grid>
+                                                                                                    <Grid.ColumnDefinitions>
+                                                                                                        <ColumnDefinition Width="60" />
+                                                                                                        <ColumnDefinition Width="5" />
+                                                                                                        <ColumnDefinition Width="Auto" />
+                                                                                                        <ColumnDefinition Width="5" />
+                                                                                                        <ColumnDefinition Width="60" />
+                                                                                                    </Grid.ColumnDefinitions>
+                                                                                                    <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" IsEnabled="False" />
+                                                                                                    <TextBlock Grid.Column="2" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
+                                                                                                    <ContentControl Grid.Column="4"
                                                                                                                         Content="{Binding AwayTeam}"
                                                                                                                         ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Away}"
                                                                                                                         IsEnabled="False" />
-                                                                                                    </Grid>
-                                                                                                </DataTemplate>
-                                                                                            </Setter.Value>
-                                                                                        </Setter>
-                                                                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                                                                    </Style>
-                                                                                </MenuItem.ItemContainerStyle>
-                                                                            </MenuItem>
-                                                                            <Separator Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
-                                                                            <MenuItem Command="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
+                                                                                                </Grid>
+                                                                                            </DataTemplate>
+                                                                                        </Setter.Value>
+                                                                                    </Setter>
+                                                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                                                </Style>
+                                                                            </MenuItem.ItemContainerStyle>
+                                                                        </MenuItem>
+                                                                        <Separator Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                                                                        <MenuItem Command="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
                                                                                       CommandParameter="{Binding Item}"
                                                                                       Header="{my:Resource SelectConflicts}"
                                                                                       Icon="{my:ToolIcon Kind=CheckAll}"
                                                                                       Visibility="{Binding Item.MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
-                                                                        </my:Submenu>
-                                                                    </my:DropDownButton>
+                                                                    </my:Submenu>
+                                                                </my:DropDownButton>
 
-                                                                    <!-- Item ToolBar -->
-                                                                    <v:MatchToolBar x:Name="ToolBar"
+                                                                <!-- Item ToolBar -->
+                                                                <v:MatchToolBar x:Name="ToolBar"
                                                                                     Padding="0"
                                                                                     HorizontalAlignment="Right"
                                                                                     DataContext="{Binding Item}"
                                                                                     DockPanel.Dock="Right"
                                                                                     Visibility="Hidden" />
-                                                                </DockPanel>
+                                                            </DockPanel>
 
-                                                                <!-- Details -->
-                                                                <my:DynamicScrollViewer Focusable="False">
-                                                                    <Grid>
-                                                                        <Grid.RowDefinitions>
-                                                                            <RowDefinition Height="Auto" />
-                                                                            <RowDefinition Height="2" />
-                                                                            <RowDefinition Height="Auto" />
-                                                                            <RowDefinition Height="2" />
-                                                                            <RowDefinition Height="Auto" />
-                                                                        </Grid.RowDefinitions>
+                                                            <!-- Details -->
+                                                            <my:DynamicScrollViewer Focusable="False">
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="2" />
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="2" />
+                                                                        <RowDefinition Height="Auto" />
+                                                                    </Grid.RowDefinitions>
 
-                                                                        <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                                                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
-                                                                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
-                                                                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation EndDate, Format=ShortTimePattern}" />
-                                                                        </StackPanel>
-                                                                        <WrapPanel Grid.Row="2" Orientation="Horizontal">
-                                                                            <ctrl:TeamButton Item="{Binding Item.HomeTeam}" />
-                                                                            <Grid Margin="{StaticResource MyNet.Margins.Small.Horizontal}">
+                                                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                                                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                                                                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
+                                                                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation EndDate, Format=ShortTimePattern}" />
+                                                                    </StackPanel>
+                                                                    <WrapPanel Grid.Row="2" Orientation="Horizontal">
+                                                                        <ctrl:TeamButton Item="{Binding Item.HomeTeam}" />
+                                                                        <Grid Margin="{StaticResource MyNet.Margins.Small.Horizontal}">
 
-                                                                                <!-- Versus -->
-                                                                                <TextBlock x:Name="versus"
+                                                                            <!-- Versus -->
+                                                                            <TextBlock x:Name="versus"
                                                                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                                                                            Text="{my:Resource VersusAbbr}"
                                                                                            Typography.Capitals="AllSmallCaps" />
 
-                                                                                <!-- Score -->
-                                                                                <Grid x:Name="score" Visibility="Collapsed">
-                                                                                    <Grid.ColumnDefinitions>
-                                                                                        <ColumnDefinition Width="*" />
-                                                                                        <ColumnDefinition Width="6" />
-                                                                                        <ColumnDefinition Width="*" />
-                                                                                    </Grid.ColumnDefinitions>
-                                                                                    <Grid.RowDefinitions>
-                                                                                        <RowDefinition Height="Auto" />
-                                                                                        <RowDefinition Height="5" />
-                                                                                        <RowDefinition Height="Auto" />
-                                                                                        <RowDefinition Height="Auto" />
-                                                                                    </Grid.RowDefinitions>
+                                                                            <!-- Score -->
+                                                                            <Grid x:Name="score" Visibility="Collapsed">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="6" />
+                                                                                    <ColumnDefinition Width="*" />
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <Grid.RowDefinitions>
+                                                                                    <RowDefinition Height="Auto" />
+                                                                                    <RowDefinition Height="5" />
+                                                                                    <RowDefinition Height="Auto" />
+                                                                                    <RowDefinition Height="Auto" />
+                                                                                </Grid.RowDefinitions>
 
-                                                                                    <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Item.HomeScore}" />
-                                                                                    <Label x:Name="awayScore"
+                                                                                <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Item.HomeScore}" />
+                                                                                <Label x:Name="awayScore"
                                                                                            Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                                                                            Grid.Column="2"
                                                                                            Content="{Binding Item.AwayScore}" />
 
-                                                                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                                                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
                                                                                                Grid.Row="2"
                                                                                                Grid.ColumnSpan="3"
                                                                                                HorizontalAlignment="Center"
                                                                                                Text="{my:Resource AfterExtraTimeAbbr}"
                                                                                                ToolTip="{my:Resource AfterExtraTime}"
                                                                                                Visibility="{Binding Item.AfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-                                                                                    <my:SimpleStackPanel Grid.Row="3"
+                                                                                <my:SimpleStackPanel Grid.Row="3"
                                                                                                          Grid.ColumnSpan="3"
                                                                                                          HorizontalAlignment="Center"
                                                                                                          Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                                                                                          Orientation="Horizontal"
                                                                                                          Spacing="{StaticResource MyNet.Margin.Default}"
                                                                                                          Visibility="{Binding Item.AfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
-                                                                                        <Label x:Name="homeShootoutScore"
+                                                                                    <Label x:Name="homeShootoutScore"
                                                                                                Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                                                                                Grid.Row="2"
                                                                                                Content="{Binding Item.HomeShootoutScore}" />
-                                                                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Resource ShootoutsAbbr}" ToolTip="{my:Resource Shootouts}" />
-                                                                                        <Label x:Name="awayShootoutScore"
+                                                                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Resource ShootoutsAbbr}" ToolTip="{my:Resource Shootouts}" />
+                                                                                    <Label x:Name="awayShootoutScore"
                                                                                                Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                                                                                Grid.Row="2"
                                                                                                Grid.Column="2"
                                                                                                Content="{Binding Item.AwayShootoutScore}" />
-                                                                                    </my:SimpleStackPanel>
+                                                                                </my:SimpleStackPanel>
 
-                                                                                    <!-- Home is withdrawn -->
-                                                                                    <TextBlock Grid.Row="3"
+                                                                                <!-- Home is withdrawn -->
+                                                                                <TextBlock Grid.Row="3"
                                                                                                Grid.Column="0"
                                                                                                HorizontalAlignment="Center"
                                                                                                FontSize="{StaticResource MyNet.Font.Size.Caption}"
@@ -357,8 +350,8 @@
                                                                                                ToolTip="{my:Resource Withdraw}"
                                                                                                Visibility="{Binding Item.HomeIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                                                                                    <!-- Away is withdrawn -->
-                                                                                    <TextBlock Grid.Row="3"
+                                                                                <!-- Away is withdrawn -->
+                                                                                <TextBlock Grid.Row="3"
                                                                                                Grid.Column="2"
                                                                                                HorizontalAlignment="Center"
                                                                                                FontSize="{StaticResource MyNet.Font.Size.Caption}"
@@ -367,39 +360,29 @@
                                                                                                                   Casing=AllCaps}"
                                                                                                ToolTip="{my:Resource Withdraw}"
                                                                                                Visibility="{Binding Item.AwayIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-                                                                                </Grid>
                                                                             </Grid>
-                                                                            <ctrl:TeamButton Item="{Binding Item.AwayTeam}" />
-                                                                        </WrapPanel>
-                                                                        <DockPanel Grid.Row="4">
-                                                                            <my:PackIcon Width="12"
+                                                                        </Grid>
+                                                                        <ctrl:TeamButton Item="{Binding Item.AwayTeam}" />
+                                                                    </WrapPanel>
+                                                                    <DockPanel Grid.Row="4">
+                                                                        <my:PackIcon Width="12"
                                                                                          Height="12"
                                                                                          Margin="{StaticResource MyNet.Margins.Default.Right}"
                                                                                          VerticalAlignment="Top"
                                                                                          Kind="Stadium"
                                                                                          Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-                                                                            <TextBlock FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                                        <TextBlock FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                                                                        FontStyle="Italic"
                                                                                        Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                                                                        Text="{Binding Item.Stadium.Name}"
                                                                                        TextWrapping="Wrap" />
-                                                                        </DockPanel>
-                                                                    </Grid>
-                                                                </my:DynamicScrollViewer>
+                                                                    </DockPanel>
+                                                                </Grid>
+                                                            </my:DynamicScrollViewer>
 
-                                                            </DockPanel>
-                                                        </Grid>
+                                                        </DockPanel>
 
                                                         <DataTemplate.Triggers>
-                                                            <DataTrigger Binding="{Binding Data.AllowRescheduleWithDragAndDrop, Source={StaticResource Proxy}}" Value="True">
-                                                                <Setter TargetName="border" Property="Stroke" Value="{DynamicResource MyNet.Brushes.Control.Border}" />
-                                                                <Setter TargetName="border" Property="StrokeDashArray" Value="4 2" />
-                                                                <Setter TargetName="border" Property="StrokeThickness" Value="2" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                <Setter TargetName="border" Property="Stroke" Value="{DynamicResource MyNet.Brushes.Primary}" />
-                                                                <Setter TargetName="border" Property="StrokeThickness" Value="2" />
-                                                            </DataTrigger>
                                                             <DataTrigger Binding="{Binding Item.State}" Value="Played">
                                                                 <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
                                                                 <Setter TargetName="Icon" Property="Kind" Value="ProgressCheck" />
@@ -455,14 +438,7 @@
                                                 </Setter.Value>
                                             </Setter>
                                             <Setter Property="IsSelected" Value="{Binding IsSelected}" />
-                                            <Setter Property="Padding" Value="0" />
                                             <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Data.AllowRescheduleWithDragAndDrop, Source={StaticResource Proxy}}" Value="True">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                    <Setter Property="Cursor" Value="SizeAll" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
                                         </Style>
                                     </my:CalendarHoursByDay.ItemContainerStyle>
                                     <my:CalendarHoursByDay.ColumnHeaderTemplate>

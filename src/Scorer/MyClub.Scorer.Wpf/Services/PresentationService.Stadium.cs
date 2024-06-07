@@ -92,7 +92,7 @@ namespace MyClub.Scorer.Wpf.Services
             }).ToList();
 
             await AppBusyManager.WaitAsync(() => Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList())).ConfigureAwait(false);
-            vm.Reset();
+            await vm.ResetAsync().ConfigureAwait(false);
         }
 
         public async Task<Guid?> ImportAsync()

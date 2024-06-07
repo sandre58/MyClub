@@ -206,6 +206,18 @@ namespace MyClub.Scorer.Application.Services
                 matchIds.ForEach(x => Reschedule(x, date));
         }
 
+        public void Reschedule(MatchDto match) => match.Id.HasValue.IfTrue(() => Update(match.Id!.Value, x =>
+        {
+            x.Reschedule(match.Date.ToUniversalTime());
+            SetStadium(x.Id, match.Stadium?.Id);
+        }));
+
+        public void Reschedule(IEnumerable<MatchDto> items)
+        {
+            using (CollectionChangedDeferrer.Defer())
+                items.ForEach(Reschedule);
+        }
+
         public void Postpone(Guid id, DateTime? postponedDate = null) => Update(id, x => x.Postpone(postponedDate));
 
         public void Postpone(IEnumerable<Guid> matchIds, DateTime? postponedDate = null)
@@ -279,6 +291,19 @@ namespace MyClub.Scorer.Application.Services
             using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(InvertTeams);
+        }
+
+        public void SetStadium(Guid id, Guid? stadiumId, bool? neutralVenue = null) => Update(id, x =>
+        {
+            if (neutralVenue.HasValue)
+                x.NeutralVenue = neutralVenue.Value;
+            UpdateStadium(x, stadiumId.HasValue ? new StadiumDto { Id = stadiumId } : null);
+        });
+
+        public void SetStadium(IEnumerable<Guid> matchIds, Guid? stadiumId, bool? neutralVenue = null)
+        {
+            using (CollectionChangedDeferrer.Defer())
+                matchIds.ForEach(x => SetStadium(x, stadiumId, neutralVenue));
         }
 
         public MatchDto New(Guid parentId, DateTime date)

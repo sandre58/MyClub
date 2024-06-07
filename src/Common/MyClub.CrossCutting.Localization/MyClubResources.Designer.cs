@@ -496,15 +496,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Activer la reprogrammation.
-        /// </summary>
-        public static string AllowRescheduleWithDragAndDrop {
-            get {
-                return ResourceManager.GetString("AllowRescheduleWithDragAndDrop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Tous les tours.
         /// </summary>
         public static string AllRounds {
@@ -1135,6 +1126,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Le temps de repos de {0} n&apos;est pas respecté..
+        /// </summary>
+        public static string ConflictsRestTimeOfTeamXIsNotRespectedWarning {
+            get {
+                return ResourceManager.GetString("ConflictsRestTimeOfTeamXIsNotRespectedWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Le temps de rotation entre les 2 matchs n&apos;est pas respecté..
         /// </summary>
         public static string ConflictsRotationTimeNotRespectedWarning {
@@ -1144,11 +1144,29 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Le temps de rotation entre les 2 matchs se déroulant à {0} n&apos;est pas respecté..
+        /// </summary>
+        public static string ConflictsRotationTimeOfStadiumXIsNotRespectedWarning {
+            get {
+                return ResourceManager.GetString("ConflictsRotationTimeOfStadiumXIsNotRespectedWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Les matchs se déroulent dans le même stade..
         /// </summary>
         public static string ConflictsStadiumOccupancyWarning {
             get {
                 return ResourceManager.GetString("ConflictsStadiumOccupancyWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 2 matchs se déroulent en même temps à {0}..
+        /// </summary>
+        public static string ConflictsStadiumXIsOccupancyWarning {
+            get {
+                return ResourceManager.GetString("ConflictsStadiumXIsOccupancyWarning", resourceCulture);
             }
         }
         
@@ -1167,6 +1185,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string ConflictsTeamBusyWarning {
             get {
                 return ResourceManager.GetString("ConflictsTeamBusyWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} joue 2 matchs qui se déroulent en même temps..
+        /// </summary>
+        public static string ConflictsTeamXIsBusyWarning {
+            get {
+                return ResourceManager.GetString("ConflictsTeamXIsBusyWarning", resourceCulture);
             }
         }
         
@@ -1483,15 +1510,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string EditConflict {
             get {
                 return ResourceManager.GetString("EditConflict", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Modifier les conflits.
-        /// </summary>
-        public static string EditConflicts {
-            get {
-                return ResourceManager.GetString("EditConflicts", resourceCulture);
             }
         }
         
@@ -2169,6 +2187,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string HasConflictsWarning {
             get {
                 return ResourceManager.GetString("HasConflictsWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Attention, des conflits ont été détectés..
+        /// </summary>
+        public static string HasSchedulingConflictsWarning {
+            get {
+                return ResourceManager.GetString("HasSchedulingConflictsWarning", resourceCulture);
             }
         }
         
@@ -3219,6 +3246,24 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ne pas décaler.
+        /// </summary>
+        public static string NoReschedule {
+            get {
+                return ResourceManager.GetString("NoReschedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ne pas modifier le lieu.
+        /// </summary>
+        public static string NoRescheduleStadium {
+            get {
+                return ResourceManager.GetString("NoRescheduleStadium", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Pas de stade défini.
         /// </summary>
         public static string NoStadium {
@@ -4077,11 +4122,29 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Replanifier les conflits.
+        /// </summary>
+        public static string RescheduleConflicts {
+            get {
+                return ResourceManager.GetString("RescheduleConflicts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Décaler de.
         /// </summary>
         public static string RescheduleOf {
             get {
                 return ResourceManager.GetString("RescheduleOf", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modifier le lieu.
+        /// </summary>
+        public static string RescheduleStadium {
+            get {
+                return ResourceManager.GetString("RescheduleStadium", resourceCulture);
             }
         }
         
@@ -4406,6 +4469,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string ShortName {
             get {
                 return ResourceManager.GetString("ShortName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Voir les conflits.
+        /// </summary>
+        public static string ShowConflicts {
+            get {
+                return ResourceManager.GetString("ShowConflicts", resourceCulture);
             }
         }
         

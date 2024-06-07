@@ -5,22 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MyNet.UI.Dialogs;
-using MyNet.UI.Locators;
-using MyNet.UI.Extensions;
-using MyNet.UI.Services;
-using MyNet.Utilities;
-using MyNet.Humanizer;
-using MyNet.UI.Resources;
-using MyNet.Utilities.Units;
-using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant;
-using MyClub.Scorer.Application.Dtos;
-using MyClub.Scorer.Application.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using MyNet.Humanizer;
+using MyNet.UI.Dialogs;
+using MyNet.UI.Extensions;
+using MyNet.UI.Locators;
+using MyNet.UI.Resources;
+using MyNet.UI.Services;
+using MyNet.Utilities;
+using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.Services
 {
@@ -44,17 +42,6 @@ namespace MyClub.Scorer.Wpf.Services
             var vm = _viewModelLocator.Get<MatchEditionViewModel>();
 
             vm.Load(item);
-
-            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
-        }
-
-        public async Task EditMultipleAsync(IEnumerable<MatchViewModel> items)
-        {
-            if (!items.Any()) return;
-
-            var vm = _viewModelLocator.Get<MatchesEditionViewModel>();
-
-            vm.Load(items);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
@@ -91,21 +78,6 @@ namespace MyClub.Scorer.Wpf.Services
             if (idsList.Count == 0) return;
 
             await AppBusyManager.WaitAsync(() => _matchService.Start(idsList)).ConfigureAwait(false);
-        }
-
-        public async Task RescheduleAsync(MatchViewModel item) => await RescheduleAsync([item]).ConfigureAwait(false);
-
-        public async Task RescheduleAsync(IEnumerable<MatchViewModel> items)
-        {
-            var idsList = items.Select(x => x.Id).ToList();
-
-            if (idsList.Count == 0) return;
-
-            var vm = _viewModelLocator.Get<MatchesEditionViewModel>();
-
-            vm.Load(items, EditionDateFormula.Offset);
-
-            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
 
         public async Task RescheduleAsync(MatchViewModel item, int offset, TimeUnit timeUnit) => await RescheduleAsync([item], offset, timeUnit).ConfigureAwait(false);
@@ -211,6 +183,38 @@ namespace MyClub.Scorer.Wpf.Services
             if (idsList.Count == 0) return;
 
             await AppBusyManager.WaitAsync(() => _matchService.InvertTeams(idsList)).ConfigureAwait(false);
+        }
+
+        public async Task SetStadiumAsync(IEnumerable<MatchViewModel> items, StadiumViewModel? stadium)
+        {
+            var idsList = items.Select(x => x.Id).ToList();
+
+            if (idsList.Count == 0) return;
+
+            await AppBusyManager.WaitAsync(() => _matchService.SetStadium(idsList, stadium?.Id)).ConfigureAwait(false);
+        }
+
+        public async Task OpenSchedulingAssistantAsync(IEnumerable<MatchViewModel> matches, DateTime? displayDate = null)
+        {
+            var vm = _viewModelLocator.Get<SchedulingAssistantViewModel>();
+            vm.Load(matches, displayDate);
+
+            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+
+            if (result.IsFalse()) return;
+
+            var dtos = vm.Matches.Wrappers.Where(x => x.IsModified()).Select(x => new MatchDto
+            {
+                Id = x.Item.Id,
+                Date = x.StartDate,
+                Stadium = x.Stadium is not null
+                          ? new StadiumDto
+                          {
+                              Id = x.Stadium.Id
+                          } : null
+            }).ToList();
+
+            await AppBusyManager.WaitAsync(() => _matchService.Reschedule(dtos)).ConfigureAwait(false);
         }
     }
 }

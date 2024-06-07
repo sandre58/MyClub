@@ -358,7 +358,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             if (StadiumSelection.SelectedItem is not null)
                 series.Add(new SchedulingSerie(_matchesProvider.Items.Where(x => x.Stadium is not null && x.Stadium == StadiumSelection.SelectedItem).Where(x => x.Id != ItemId), StadiumSelection.SelectedItem));
 
-            var vm = new SchedulingAssistantViewModel(series, date);
+            var vm = new MatchSchedulingAssistantViewModel(series, date);
 
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
 

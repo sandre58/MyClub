@@ -1732,8 +1732,8 @@ See Notification Center for details.</value>
   <data name="SelectConflicts" xml:space="preserve">
     <value>Select conflicts</value>
   </data>
-  <data name="EditConflicts" xml:space="preserve">
-    <value>Edit conflicts</value>
+  <data name="RescheduleConflicts" xml:space="preserve">
+    <value>Reschedule conflicts</value>
   </data>
   <data name="RescheduleOf" xml:space="preserve">
     <value>Reschedule of</value>
@@ -1875,7 +1875,31 @@ The columns in the first position will be evaluated first. The following columns
   <data name="System" xml:space="preserve">
     <value>System</value>
   </data>
-  <data name="AllowRescheduleWithDragAndDrop" xml:space="preserve">
-    <value>Allow reschedule</value>
+  <data name="RescheduleStadium" xml:space="preserve">
+    <value>Set stadium</value>
+  </data>
+  <data name="ConflictsRestTimeOfTeamXIsNotRespectedWarning" xml:space="preserve">
+    <value>{0}'s rest time is not respected.</value>
+  </data>
+  <data name="ConflictsStadiumXIsOccupancyWarning" xml:space="preserve">
+    <value>2 matches taking place at same time in {0}.</value>
+  </data>
+  <data name="ConflictsTeamXIsBusyWarning" xml:space="preserve">
+    <value>{0} plays 2 matches that taking place at same time.</value>
+  </data>
+  <data name="ConflictsRotationTimeOfStadiumXIsNotRespectedWarning" xml:space="preserve">
+    <value>The rotation time between the 2 matches taking place in {0} is not respected.</value>
+  </data>
+  <data name="HasSchedulingConflictsWarning" xml:space="preserve">
+    <value>Please note, conflicts have been detected.</value>
+  </data>
+  <data name="ShowConflicts" xml:space="preserve">
+    <value>Show conflicts</value>
+  </data>
+  <data name="NoRescheduleStadium" xml:space="preserve">
+    <value>Don't set stadium</value>
+  </data>
+  <data name="NoReschedule" xml:space="preserve">
+    <value>No reschedule</value>
   </data>
 </root>

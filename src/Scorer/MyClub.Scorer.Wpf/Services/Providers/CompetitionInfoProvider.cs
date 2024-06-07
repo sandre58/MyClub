@@ -2,12 +2,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using MyNet.Observable;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.Observable;
 
 namespace MyClub.Scorer.Wpf.Services.Providers
 {

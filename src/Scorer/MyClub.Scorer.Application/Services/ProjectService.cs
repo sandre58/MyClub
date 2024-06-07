@@ -145,6 +145,14 @@ namespace MyClub.Scorer.Application.Services
             return true;
         }
 
+        public ProjectParametersDto GetParameters() => new()
+        {
+            UseTeamVenues = _projectRepository.GetCurrentOrThrow().Parameters.UseTeamVenues,
+            MatchStartTime = _projectRepository.GetCurrentOrThrow().Parameters.MatchStartTime,
+            MinimumRestTime = _projectRepository.GetCurrentOrThrow().Parameters.MinimumRestTime,
+            RotationTime = _projectRepository.GetCurrentOrThrow().Parameters.RotationTime,
+        };
+
         private async Task<IProject> CreateProjectAsync(CompetitionType type, CancellationToken cancellationToken)
             => type switch
             {

@@ -44,6 +44,7 @@ using MyClub.Scorer.Wpf.ViewModels.Import;
 using MyClub.Scorer.Wpf.ViewModels.PastPositionsPage;
 using MyClub.Scorer.Wpf.ViewModels.RankingPage;
 using MyClub.Scorer.Wpf.ViewModels.SchedulePage;
+using MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant;
 using MyClub.Scorer.Wpf.ViewModels.Shell;
 using MyClub.Scorer.Wpf.ViewModels.StadiumsPage;
 using MyClub.Scorer.Wpf.ViewModels.TeamsPage;
@@ -241,7 +242,6 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<PlayerEditionViewModel>()
                 .AddSingleton<MatchdayEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
-                .AddSingleton<MatchesEditionViewModel>()
                 .AddSingleton<RankLabelEditionViewModel>()
                 .AddSingleton<RankingRulesEditionViewModel>()
                 // ViewModels - Other dialogs
@@ -249,6 +249,7 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<TeamsExportViewModel>()
                 .AddSingleton<StadiumsImportBySourcesDialogViewModel>()
                 .AddSingleton<TeamsImportBySourcesDialogViewModel>()
+                .AddSingleton<SchedulingAssistantViewModel>()
 
                 // Configuration
                 .Configure<ScorerConfiguration>(context.Configuration)
