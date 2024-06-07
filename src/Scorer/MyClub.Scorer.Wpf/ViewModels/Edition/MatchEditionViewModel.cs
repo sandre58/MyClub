@@ -7,7 +7,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
@@ -18,14 +17,11 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections;
 using MyNet.Observable.Threading;
 using MyNet.Observable.Translatables;
-using MyNet.UI.Commands;
-using MyNet.UI.Dialogs;
 using MyNet.UI.Resources;
 using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.List;
@@ -36,7 +32,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class MatchEditionViewModel : EntityEditionViewModel<Match, MatchDto, MatchService>
     {
-        private readonly MatchesProvider _matchesProvider;
         private readonly AvailibilityCheckingService _availibilityCheckingService;
         private readonly ReadOnlyObservableCollection<IMatchParent> _parents;
         private readonly ThreadSafeObservableCollection<TeamViewModel> _availableTeams = [];
@@ -44,18 +39,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public MatchEditionViewModel(MatchService matchService,
                                      AvailibilityCheckingService availibilityCheckingService,
                                      StadiumsProvider stadiumsProvider,
-                                     MatchesProvider matchesProvider,
                                      MatchdaysProvider matchdaysProvider) : base(matchService)
         {
-            _matchesProvider = matchesProvider;
             _availibilityCheckingService = availibilityCheckingService;
             StadiumSelection = new WrapperListViewModel<StadiumViewModel, StadiumWrapper>(stadiumsProvider.Connect(), x => new StadiumWrapper(x));
             AvailableTeams = new(_availableTeams);
 
             Mode = ScreenMode.Edition;
-
-            SearchAvailableDateCommand = CommandsManager.Create(async () => await ScheduleDateAsync().ConfigureAwait(false));
-            SearchAvailablePostponedDateCommand = CommandsManager.Create(async () => await SchedulePostponedDateAsync().ConfigureAwait(false));
 
             ValidationRules.Add<MatchEditionViewModel, TeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
 
@@ -241,10 +231,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public bool HasDraw => HomeScore == AwayScore && !HomeIsWithdrawn && !AwayIsWithdrawn;
 
-        public ICommand SearchAvailableDateCommand { get; }
-
-        public ICommand SearchAvailablePostponedDateCommand { get; }
-
         private void ResetScore()
         {
             using (IsModifiedSuspender.Suspend())
@@ -324,46 +310,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, DateTime date)
             => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, date, MatchFormat.Create(), [ItemId ?? Guid.Empty]);
-
-        private async Task ScheduleDateAsync()
-        {
-            var date = await SearchAvailableDateAsync(Date?.AddFluentTimeSpan(Time ?? TimeSpan.Zero)).ConfigureAwait(false);
-
-            if (date.HasValue)
-            {
-                Date = date.Value.Date;
-                Time = date.Value.TimeOfDay;
-            }
-        }
-
-        private async Task SchedulePostponedDateAsync()
-        {
-            var date = await SearchAvailableDateAsync(PostponedDate?.AddFluentTimeSpan(PostponedTime ?? TimeSpan.Zero)).ConfigureAwait(false);
-
-            if (date.HasValue)
-            {
-                PostponedDate = date.Value.Date;
-                PostponedTime = date.Value.TimeOfDay;
-            }
-        }
-
-        private async Task<DateTime?> SearchAvailableDateAsync(DateTime? date)
-        {
-            var series = new List<SchedulingSerie>();
-
-            if (HomeTeam is not null)
-                series.Add(new SchedulingSerie(_matchesProvider.Items.Where(x => x.Participate(HomeTeam)).Where(x => x.Id != ItemId), HomeTeam, HomeTeam.HomeColor.GetValueOrDefault()));
-            if (AwayTeam is not null)
-                series.Add(new SchedulingSerie(_matchesProvider.Items.Where(x => x.Participate(AwayTeam)).Where(x => x.Id != ItemId), AwayTeam, AwayTeam.HomeColor.GetValueOrDefault()));
-            if (StadiumSelection.SelectedItem is not null)
-                series.Add(new SchedulingSerie(_matchesProvider.Items.Where(x => x.Stadium is not null && x.Stadium == StadiumSelection.SelectedItem).Where(x => x.Id != ItemId), StadiumSelection.SelectedItem));
-
-            var vm = new MatchSchedulingAssistantViewModel(series, date);
-
-            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
-
-            return result.IsTrue() && vm.FullDate.HasValue ? vm.FullDate?.ToLocalTime() : null;
-        }
 
         public void Load(MatchViewModel match)
         {

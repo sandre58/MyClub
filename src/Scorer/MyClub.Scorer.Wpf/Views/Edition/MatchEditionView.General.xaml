@@ -12,7 +12,7 @@
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
-        <Style x:Key="Scorer.Styles.PackIcon.Available" BasedOn="{StaticResource MyNet.Styles.PackIcon}" TargetType="{x:Type my:PackIcon}">
+        <Style x:Key="Scorer.Styles.PackIcon.Available" TargetType="{x:Type my:PackIcon}" BasedOn="{StaticResource MyNet.Styles.PackIcon}">
             <Setter Property="Height" Value="16" />
             <Setter Property="Width" Value="16" />
             <Style.Triggers>
@@ -39,11 +39,11 @@
     </UserControl.Resources>
     <my:SimpleStackPanel>
 
-        <!--  Date  -->
+        <!-- Date -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarOutline}">
             <my:SimpleStackPanel Orientation="Horizontal">
                 <my:SimpleStackPanel.Style>
-                    <Style BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}" TargetType="{x:Type my:SimpleStackPanel}">
+                    <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
                                 <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
@@ -60,14 +60,10 @@
                     </my:IconAssist.Icon>
                 </DatePicker>
                 <my:TimePicker Width="60" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
-                        Command="{Binding SearchAvailableDateCommand}"
-                        Content="{my:MediumIcon Kind=CalendarSearch}"
-                        ToolTip="{my:Resource SearchAvailableDate}" />
             </my:SimpleStackPanel>
         </GroupBox>
 
-        <!--  IsPostponed  -->
+        <!-- IsPostponed -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Default.Top}" Header="{my:Resource Postponed}">
             <my:SimpleStackPanel Orientation="Horizontal">
                 <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding PostponedState}" SelectedValuePath="DataContext">
@@ -80,7 +76,7 @@
                     <ListBoxItem Padding="15 7" Content="{my:Resource AtFollowingDate}" DataContext="{x:Static vm:PostponedState.SpecifiedDate}" />
                 </ListBox>
 
-                <!--  Postponed Date  -->
+                <!-- Postponed Date -->
                 <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
                     <DatePicker Width="110"
                                 my:HintAssist.Hint="{my:Resource PostponedDate}"
@@ -98,15 +94,11 @@
                                    SelectedTime="{my:NullableBinding PostponedTime,
                                                                      Converter={x:Static my:TimeSpanToDateTimeConverter.Default},
                                                                      UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
-                            Command="{Binding SearchAvailablePostponedDateCommand}"
-                            Content="{my:MediumIcon Kind=CalendarSearch}"
-                            ToolTip="{my:Resource SearchAvailableDate}" />
                 </my:SimpleStackPanel>
             </my:SimpleStackPanel>
         </GroupBox>
 
-        <!--  Stadium  -->
+        <!-- Stadium -->
         <StackPanel>
             <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Stadium}">
                 <my:SimpleStackPanel Orientation="Horizontal">
@@ -122,7 +114,7 @@
                                 <my:SimpleStackPanel Orientation="Horizontal">
                                     <my:PackIcon Tag="{Binding Availability}">
                                         <my:PackIcon.Style>
-                                            <Style BasedOn="{StaticResource MyNet.Styles.PackIcon}" TargetType="{x:Type my:PackIcon}">
+                                            <Style TargetType="{x:Type my:PackIcon}" BasedOn="{StaticResource MyNet.Styles.PackIcon}">
                                                 <Setter Property="Height" Value="16" />
                                                 <Setter Property="Width" Value="16" />
                                                 <Style.Triggers>
@@ -160,7 +152,7 @@
             </GroupBox>
         </StackPanel>
 
-        <!--  State  -->
+        <!-- State -->
         <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
                  Margin="{StaticResource MyNet.Margins.Large.Top}"
                  HorizontalAlignment="Center"
@@ -237,14 +229,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!--  Team 1  -->
+            <!-- Team 1 -->
             <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                Width="100"
                                Height="100"
                                DataContext="{Binding HomeTeam}"
                                Validation.ErrorTemplate="{x:Null}" />
 
-            <!--  Withdraw  -->
+            <!-- Withdraw -->
             <my:SimpleStackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
                 <my:SimpleStackPanel.IsEnabled>
                     <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
@@ -288,7 +280,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!--  Score  -->
+                <!-- Score -->
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -312,7 +304,7 @@
                                       TextAlignment="Center" />
                 </Grid>
 
-                <!--  ExraTime  -->
+                <!-- ExraTime -->
                 <ToggleButton Grid.Row="1"
                               Margin="{StaticResource MyNet.Margins.Medium.Top}"
                               HorizontalAlignment="Center"
@@ -331,7 +323,7 @@
                     </ToggleButton.IsEnabled>
                 </ToggleButton>
 
-                <!--  Shootout  -->
+                <!-- Shootout -->
                 <Grid Grid.Row="2" Margin="{StaticResource MyNet.Margins.Medium.Top}" Visibility="{Binding MatchFormat.ShootoutsIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                     <Grid.IsEnabled>
                         <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
@@ -365,7 +357,7 @@
                 </Grid>
             </Grid>
 
-            <!--  Team 2  -->
+            <!-- Team 2 -->
             <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                Grid.Column="4"
                                Width="100"
@@ -373,7 +365,7 @@
                                DataContext="{Binding AwayTeam}"
                                Validation.ErrorTemplate="{x:Null}" />
 
-            <!--  Withdraw  -->
+            <!-- Withdraw -->
             <my:SimpleStackPanel Grid.Row="2"
                                  Grid.Column="4"
                                  HorizontalAlignment="Center"
