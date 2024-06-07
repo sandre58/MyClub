@@ -708,12 +708,6 @@ Please consolidate or change the order of the items.</value>
   <data name="ClearSizeColumn" xml:space="preserve">
     <value>Clear size</value>
   </data>
-  <data name="Columns" xml:space="preserve">
-    <value>Columns</value>
-  </data>
-  <data name="Destination" xml:space="preserve">
-    <value>Destination</value>
-  </data>
   <data name="ImportInjuries" xml:space="preserve">
     <value>Import injuries</value>
   </data>
@@ -1851,9 +1845,6 @@ The columns in the first position will be evaluated first. The following columns
   <data name="TeamsPartiallyUnavailableAtDate" xml:space="preserve">
     <value>A team will not respect its minimum rest time</value>
   </data>
-  <data name="SearchAvailableDate" xml:space="preserve">
-    <value>Search an available date</value>
-  </data>
   <data name="StadiumUnavailableAtDate" xml:space="preserve">
     <value>Stadium is not available on this date</value>
   </data>
@@ -1866,17 +1857,14 @@ The columns in the first position will be evaluated first. The following columns
   <data name="SchedulingAssistant" xml:space="preserve">
     <value>Scheduling assistant</value>
   </data>
-  <data name="ScheduleTo" xml:space="preserve">
-    <value>Schedule to</value>
-  </data>
   <data name="HasConflictsWarning" xml:space="preserve">
     <value>This match has scheduling conflicts. See Notification Center for details.</value>
   </data>
   <data name="System" xml:space="preserve">
     <value>System</value>
   </data>
-  <data name="RescheduleStadium" xml:space="preserve">
-    <value>Set stadium</value>
+  <data name="ChangeLocation" xml:space="preserve">
+    <value>Change location</value>
   </data>
   <data name="ConflictsRestTimeOfTeamXIsNotRespectedWarning" xml:space="preserve">
     <value>{0}'s rest time is not respected.</value>
@@ -1896,8 +1884,8 @@ The columns in the first position will be evaluated first. The following columns
   <data name="ShowConflicts" xml:space="preserve">
     <value>Show conflicts</value>
   </data>
-  <data name="NoRescheduleStadium" xml:space="preserve">
-    <value>Don't set stadium</value>
+  <data name="NotChangeLogation" xml:space="preserve">
+    <value>Not change location</value>
   </data>
   <data name="NoReschedule" xml:space="preserve">
     <value>No reschedule</value>

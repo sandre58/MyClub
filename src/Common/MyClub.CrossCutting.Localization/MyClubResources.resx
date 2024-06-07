@@ -708,12 +708,6 @@ Veuillez consolider ou modifier l'ordre des éléments.</value>
   <data name="ClearSizeColumn" xml:space="preserve">
     <value>Vider la taille</value>
   </data>
-  <data name="Columns" xml:space="preserve">
-    <value>Colonnes</value>
-  </data>
-  <data name="Destination" xml:space="preserve">
-    <value>Destination</value>
-  </data>
   <data name="ImportInjuries" xml:space="preserve">
     <value>Importer les blessures</value>
   </data>
@@ -1851,9 +1845,6 @@ Les colonnes en première position seront évaluées en première. Les colonnes 
   <data name="TeamsPartiallyUnavailableAtDate" xml:space="preserve">
     <value>Une équipe ne respectera pas son temps de repos minimum</value>
   </data>
-  <data name="SearchAvailableDate" xml:space="preserve">
-    <value>Rechercher une date disponible</value>
-  </data>
   <data name="StadiumPartiallyUnavailableAtDate" xml:space="preserve">
     <value>Le temps de rotation n'est pas respecté par rapport à d'autres matchs</value>
   </data>
@@ -1866,16 +1857,13 @@ Les colonnes en première position seront évaluées en première. Les colonnes 
   <data name="SchedulingAssistant" xml:space="preserve">
     <value>Assistant de planification</value>
   </data>
-  <data name="ScheduleTo" xml:space="preserve">
-    <value>Planifier le</value>
-  </data>
   <data name="HasConflictsWarning" xml:space="preserve">
     <value>Ce match a des conflits de planification. Voir le centre de notification pour plus de détails.</value>
   </data>
   <data name="System" xml:space="preserve">
     <value>Système</value>
   </data>
-  <data name="RescheduleStadium" xml:space="preserve">
+  <data name="ChangeLocation" xml:space="preserve">
     <value>Modifier le lieu</value>
   </data>
   <data name="ConflictsTeamXIsBusyWarning" xml:space="preserve">
@@ -1896,7 +1884,7 @@ Les colonnes en première position seront évaluées en première. Les colonnes 
   <data name="ShowConflicts" xml:space="preserve">
     <value>Voir les conflits</value>
   </data>
-  <data name="NoRescheduleStadium" xml:space="preserve">
+  <data name="NotChangeLogation" xml:space="preserve">
     <value>Ne pas modifier le lieu</value>
   </data>
   <data name="NoReschedule" xml:space="preserve">

@@ -883,6 +883,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Modifier le lieu.
+        /// </summary>
+        public static string ChangeLocation {
+            get {
+                return ResourceManager.GetString("ChangeLocation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to dd MMM.
         /// </summary>
         public static string ChartDateFormat {
@@ -1023,15 +1032,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Colors {
             get {
                 return ResourceManager.GetString("Colors", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Colonnes.
-        /// </summary>
-        public static string Columns {
-            get {
-                return ResourceManager.GetString("Columns", resourceCulture);
             }
         }
         
@@ -1375,15 +1375,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Description {
             get {
                 return ResourceManager.GetString("Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Destination.
-        /// </summary>
-        public static string Destination {
-            get {
-                return ResourceManager.GetString("Destination", resourceCulture);
             }
         }
         
@@ -3255,20 +3246,20 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Ne pas modifier le lieu.
-        /// </summary>
-        public static string NoRescheduleStadium {
-            get {
-                return ResourceManager.GetString("NoRescheduleStadium", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Pas de stade défini.
         /// </summary>
         public static string NoStadium {
             get {
                 return ResourceManager.GetString("NoStadium", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ne pas modifier le lieu.
+        /// </summary>
+        public static string NotChangeLogation {
+            get {
+                return ResourceManager.GetString("NotChangeLogation", resourceCulture);
             }
         }
         
@@ -4140,15 +4131,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Modifier le lieu.
-        /// </summary>
-        public static string RescheduleStadium {
-            get {
-                return ResourceManager.GetString("RescheduleStadium", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Vous devez redémarrer l&apos;application pour que les paramètres soient pris en compte..
         /// </summary>
         public static string RestartApplicationWarning {
@@ -4275,15 +4257,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Planifier le.
-        /// </summary>
-        public static string ScheduleTo {
-            get {
-                return ResourceManager.GetString("ScheduleTo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Planification.
         /// </summary>
         public static string Scheduling {
@@ -4307,15 +4280,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string ScprojFile {
             get {
                 return ResourceManager.GetString("ScprojFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Rechercher une date disponible.
-        /// </summary>
-        public static string SearchAvailableDate {
-            get {
-                return ResourceManager.GetString("SearchAvailableDate", resourceCulture);
             }
         }
         

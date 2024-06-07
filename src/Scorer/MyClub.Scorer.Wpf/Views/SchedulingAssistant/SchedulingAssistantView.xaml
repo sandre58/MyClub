@@ -329,10 +329,10 @@
                                                   my:HeaderAssist.HorizontalAlignment="Left"
                                                   my:IconAssist.Icon="{my:ToolIcon Kind=Stadium,
                                                                                    Size=18}"
-                                                  Header="{my:Resource RescheduleStadium}">
+                                                  Header="{my:Resource ChangeLocation}">
                                             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
                                                       HorizontalAlignment="Stretch"
-                                                      my:HintAssist.Hint="{my:Resource NoRescheduleStadium}"
+                                                      my:HintAssist.Hint="{my:Resource NotChangeLogation}"
                                                       my:TextFieldAssist.HasClearButton="True"
                                                       DisplayMemberPath="DisplayName"
                                                       ItemsSource="{Binding Stadiums, Mode=OneWay}"

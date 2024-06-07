@@ -579,7 +579,7 @@
                                                                       HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
                                                                       StaysOpenOnClick="True" />
                                                         </MenuItem>
-                                                        <MenuItem my:ItemsControlAssist.SortingProperty="Item.Address.City" Header="{my:Resource RescheduleStadium}" Icon="{my:ToolIcon Kind=Stadium}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}" ItemsSource="{Binding Data.Stadiums.Wrappers, Source={StaticResource Proxy}}">
+                                                        <MenuItem my:ItemsControlAssist.SortingProperty="Item.Address.City" Header="{my:Resource ChangeLocation}" Icon="{my:ToolIcon Kind=Stadium}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}" ItemsSource="{Binding Data.Stadiums.Wrappers, Source={StaticResource Proxy}}">
                                                             <MenuItem.ItemContainerStyle>
                                                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                                                                     <Setter Property="Command" Value="{Binding Data.SetStadiumForSelectedItemsCommand, Source={StaticResource Proxy}}" />
