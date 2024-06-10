@@ -1890,4 +1890,19 @@ The columns in the first position will be evaluated first. The following columns
   <data name="NoReschedule" xml:space="preserve">
     <value>No reschedule</value>
   </data>
+  <data name="AddPenalties" xml:space="preserve">
+    <value>Add penalty points</value>
+  </data>
+  <data name="Expand" xml:space="preserve">
+    <value>Expand</value>
+  </data>
+  <data name="Collapse" xml:space="preserve">
+    <value>Collapse</value>
+  </data>
+  <data name="SortingByGamesWonAfterShootouts" xml:space="preserve">
+    <value>Number of games won af. Sh</value>
+  </data>
+  <data name="SortingByGamesLostAfterShootouts" xml:space="preserve">
+    <value>Number of games lost af. Sh</value>
+  </data>
 </root>

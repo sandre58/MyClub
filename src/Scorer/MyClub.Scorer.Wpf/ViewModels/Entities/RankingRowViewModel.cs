@@ -76,13 +76,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             GoalsDifference = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GoalsDifference.ToString()) ?? 0;
             GamesDrawn = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GamesDrawn.ToString()) ?? 0;
             GamesLost = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GamesLost.ToString()) ?? 0;
+            GamesLostAfterShootouts = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GamesLostAfterShootouts.ToString()) ?? 0;
             GamesWithdrawn = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GamesWithdrawn.ToString()) ?? 0;
             GamesWon = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GamesWon.ToString()) ?? 0;
+            GamesWonAfterShootouts = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GamesWonAfterShootouts.ToString()) ?? 0;
             GoalsAgainst = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GoalsAgainst.ToString()) ?? 0;
             GoalsFor = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GoalsFor.ToString()) ?? 0;
-
-            GamesWonAfterShootouts = (int?)row.Columns?.GetOrDefault(RankingRow.GamesWonAfterShootouts) ?? 0;
-            GamesLostAfterShootouts = (int?)row.Columns?.GetOrDefault(RankingRow.GamesLostAfterShootouts) ?? 0;
 
             _matches.Set(matches.OrderBy(x => x.Date).Select(x => new MatchOppositionViewModel(Team, x)).ToList());
             _lastMatches.Set(_matches.TakeLast(_ranking.FormCount));
@@ -100,7 +99,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             GamesWithdrawn = 0;
             GoalsAgainst = 0;
             GoalsFor = 0;
-
             GamesWonAfterShootouts = 0;
             GamesLostAfterShootouts = 0;
 

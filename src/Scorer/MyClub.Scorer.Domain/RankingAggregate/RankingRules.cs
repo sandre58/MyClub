@@ -16,8 +16,10 @@ namespace MyClub.Scorer.Domain.RankingAggregate
             {
                 DefaultRankingColumn.GamesPlayed => new PlayedColumnComputer(),
                 DefaultRankingColumn.GamesWon => new GamesWonColumnComputer(),
+                DefaultRankingColumn.GamesWonAfterShootouts => new GamesWonAfterShootoutsColumnComputer(),
                 DefaultRankingColumn.GamesDrawn => new GamesDrawnColumnComputer(),
                 DefaultRankingColumn.GamesLost => new GamesLostColumnComputer(),
+                DefaultRankingColumn.GamesLostAfterShootouts => new GamesLostAfterShootoutsColumnComputer(),
                 DefaultRankingColumn.GamesWithdrawn => new GamesWithdrawnColumnComputer(),
                 DefaultRankingColumn.GoalsFor => new GoalsForColumnComputer(),
                 DefaultRankingColumn.GoalsAgainst => new GoalsAgainstColumnComputer(),

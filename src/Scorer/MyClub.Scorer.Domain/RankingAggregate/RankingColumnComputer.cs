@@ -38,6 +38,11 @@ namespace MyClub.Scorer.Domain.RankingAggregate
         public GamesWonColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Won)) { }
     }
 
+    public class GamesWonAfterShootoutsColumnComputer : DefaultRankingColumnComputer<int>
+    {
+        public GamesWonAfterShootoutsColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.WonAfterShootouts)) { }
+    }
+
     public class GamesDrawnColumnComputer : DefaultRankingColumnComputer<int>
     {
         public GamesDrawnColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Drawn)) { }
@@ -46,6 +51,11 @@ namespace MyClub.Scorer.Domain.RankingAggregate
     public class GamesLostColumnComputer : DefaultRankingColumnComputer<int>
     {
         public GamesLostColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Lost)) { }
+    }
+
+    public class GamesLostAfterShootoutsColumnComputer : DefaultRankingColumnComputer<int>
+    {
+        public GamesLostAfterShootoutsColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.LostAfterShootouts)) { }
     }
 
     public class GamesWithdrawnColumnComputer : DefaultRankingColumnComputer<int>

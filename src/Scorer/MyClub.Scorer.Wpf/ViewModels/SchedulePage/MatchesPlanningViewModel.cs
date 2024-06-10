@@ -92,6 +92,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                     RaisePropertyChanged(nameof(CanDoWithdrawSelectedItems));
                     RaisePropertyChanged(nameof(CanRescheduleSelectedItems));
                 }),
+                SelectedWrappers.ToObservableChangeSet().Throttle(1000.Milliseconds()).Subscribe(_ => ValidateStadiumsAvaibility(SelectedItems.ToList()))
             ]);
         }
 
@@ -276,7 +277,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
             RaisePropertyChanged(nameof(CanDoWithdrawSelectedItems));
             RaisePropertyChanged(nameof(CanRescheduleSelectedItems));
-            ValidateStadiumsAvaibility(SelectedItems);
         }
     }
 

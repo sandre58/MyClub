@@ -64,9 +64,19 @@ namespace MyClub.Scorer.Domain.RankingAggregate
         public RankingRowByGamesWonComparer() : base(DefaultRankingColumn.GamesWon) { }
     }
 
+    public class RankingRowByGamesWonAfterShootoutsComparer : RankingRowByColumnComparer
+    {
+        public RankingRowByGamesWonAfterShootoutsComparer() : base(DefaultRankingColumn.GamesWonAfterShootouts) { }
+    }
+
     public class RankingRowByGamesLostComparer : RankingRowByColumnComparer
     {
         public RankingRowByGamesLostComparer() : base(DefaultRankingColumn.GamesLost) { }
+    }
+
+    public class RankingRowByGamesLostAfterShootoutsComparer : RankingRowByColumnComparer
+    {
+        public RankingRowByGamesLostAfterShootoutsComparer() : base(DefaultRankingColumn.GamesLostAfterShootouts) { }
     }
 
     public class RankingRowByGamesWithdrawnComparer : RankingRowByColumnComparer

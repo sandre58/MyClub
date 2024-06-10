@@ -9,9 +9,13 @@ namespace MyClub.Domain.Enums
 
         GamesWon,
 
+        GamesWonAfterShootouts,
+
         GamesDrawn,
 
         GamesLost,
+
+        GamesLostAfterShootouts,
 
         GamesWithdrawn,
 

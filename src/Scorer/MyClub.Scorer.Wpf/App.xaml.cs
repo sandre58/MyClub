@@ -242,7 +242,6 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<PlayerEditionViewModel>()
                 .AddSingleton<MatchdayEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
-                .AddSingleton<RankLabelEditionViewModel>()
                 .AddSingleton<RankingRulesEditionViewModel>()
                 // ViewModels - Other dialogs
                 .AddSingleton<StadiumsExportViewModel>()

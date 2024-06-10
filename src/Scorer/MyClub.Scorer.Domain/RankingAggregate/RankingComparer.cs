@@ -16,7 +16,9 @@ namespace MyClub.Scorer.Domain.RankingAggregate
                 { nameof(RankingRowByGoalsForComparer), new RankingRowByGoalsForComparer() },
                 { nameof(RankingRowByGoalsAgainstComparer), new RankingRowByGoalsAgainstComparer() },
                 { nameof(RankingRowByGamesWonComparer), new RankingRowByGamesWonComparer() },
+                { nameof(RankingRowByGamesWonAfterShootoutsComparer), new RankingRowByGamesWonAfterShootoutsComparer() },
                 { nameof(RankingRowByGamesLostComparer), new RankingRowByGamesLostComparer() },
+                { nameof(RankingRowByGamesLostAfterShootoutsComparer), new RankingRowByGamesLostAfterShootoutsComparer() },
                 { nameof(RankingRowByGamesWithdrawnComparer), new RankingRowByGamesWithdrawnComparer() },
             };
 

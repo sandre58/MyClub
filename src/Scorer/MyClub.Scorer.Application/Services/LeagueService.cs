@@ -45,6 +45,13 @@ namespace MyClub.Scorer.Application.Services
             return league.MatchFormat;
         }
 
+        public int GetRankingRowsCount()
+        {
+            var league = _projectRepository.GetCompetition().CastIn<League>() ?? throw new InvalidOperationException($"Current competition is not league");
+
+            return league.Teams.Count;
+        }
+
         public RankingRulesDto GetRankingRules()
         {
             var league = _projectRepository.GetCompetition().CastIn<League>() ?? throw new InvalidOperationException($"Current competition is not league");

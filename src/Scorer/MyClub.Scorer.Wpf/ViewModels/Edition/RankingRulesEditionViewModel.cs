@@ -6,14 +6,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Threading.Tasks;
 using DynamicData;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.RankingAggregate;
-using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
@@ -23,50 +21,35 @@ using MyNet.UI.Commands;
 using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
-using MyNet.Wpf.Extensions;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class RankingColumnComputerWrapper : DisplayWrapper<IRankingColumnComputer>
-    {
-        public RankingColumnComputerWrapper(IRankingColumnComputer item, string resourceKey) : base(item, resourceKey) => Key = resourceKey;
-
-        public string Key { get; }
-
-        public bool IsEnabled { get; set; } = true;
-
-        public bool IsActive { get; set; }
-    }
-
     internal class RankingRulesEditionViewModel : EditionViewModel
     {
-        private static List<DisplayWrapper<RankingRowComparer>> GetAvailableRankingRowComparers() =>
+        private static List<RankingRowComparerWrapper> GetAvailableRankingRowComparers() =>
             [
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByPointsComparer)], nameof(MyClubResources.SortingByPoints)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByResultsBetweenTeamsComparer)], nameof(MyClubResources.SortingByResultsBetweenTeams)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByGoalsDifferenceComparer)], nameof(MyClubResources.SortingByGoalsDifference)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByGoalsForComparer)], nameof(MyClubResources.SortingByGoalsFor)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByGoalsAgainstComparer)], nameof(MyClubResources.SortingByGoalsAgainst)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesWonComparer)], nameof(MyClubResources.SortingByGamesWon)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesLostComparer)], nameof(MyClubResources.SortingByGamesLost)),
-                new DisplayWrapper<RankingRowComparer>(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesWithdrawnComparer)], nameof(MyClubResources.SortingByGamesWithdrawn)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByPointsComparer)], nameof(MyClubResources.SortingByPoints)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByResultsBetweenTeamsComparer)], nameof(MyClubResources.SortingByResultsBetweenTeams)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGoalsDifferenceComparer)], nameof(MyClubResources.SortingByGoalsDifference)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGoalsForComparer)], nameof(MyClubResources.SortingByGoalsFor)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGoalsAgainstComparer)], nameof(MyClubResources.SortingByGoalsAgainst)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesWonComparer)], nameof(MyClubResources.SortingByGamesWon)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesWonAfterShootoutsComparer)], nameof(MyClubResources.SortingByGamesWonAfterShootouts)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesLostComparer)], nameof(MyClubResources.SortingByGamesLost)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesLostAfterShootoutsComparer)], nameof(MyClubResources.SortingByGamesLostAfterShootouts)),
+                new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesWithdrawnComparer)], nameof(MyClubResources.SortingByGamesWithdrawn)),
             ];
 
-        private readonly LeaguePresentationService _leaguePresentationService;
         private readonly LeagueService _leagueService;
         private readonly ThreadSafeObservableCollection<TeamViewModel> _teams = [];
 
-        public RankingRulesEditionViewModel(LeagueService leagueService, LeaguePresentationService leaguePresentationService, TeamsProvider teamsProvider)
+        public RankingRulesEditionViewModel(LeagueService leagueService, TeamsProvider teamsProvider)
         {
-            _leaguePresentationService = leaguePresentationService;
             _leagueService = leagueService;
             Teams = new(_teams);
 
             AddTeamPenaltyCommand = CommandsManager.CreateNotNull<TeamViewModel>(x => Penalties.Add(new EditableTeamPenaltyViewModel(x)), x => !Penalties.Select(x => x.Team).Contains(x));
             RemoveTeamPenaltyCommand = CommandsManager.CreateNotNull<EditableTeamPenaltyViewModel>(x => Penalties.Remove(x), x => x is not null);
-            RemoveRankLabelCommand = CommandsManager.CreateNotNull<EditableRankLabelViewModel>(x => RankingLabels.Remove(x), x => x is not null);
-            EditRankLabelCommand = CommandsManager.CreateNotNull<EditableRankLabelViewModel>(async x => await EditRankLabelAsync(x).ConfigureAwait(false), x => x is not null);
-            AddRankLabelCommand = CommandsManager.Create(async () => await AddRankLabelAsync().ConfigureAwait(false));
 
             Disposables.AddRange(
             [
@@ -93,23 +76,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public int? PointsByGamesLostAfterShootouts { get; set; }
 
         [HasAnyItems]
-        public ObservableCollection<DisplayWrapper<RankingRowComparer>> RankingRowComparers { get; } = [];
+        public ObservableCollection<RankingRowComparerWrapper> RankingRowComparers { get; } = [];
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ObservableCollection<DisplayWrapper<RankingRowComparer>> UnusedRankingRowComparers { get; } = [];
+        public ObservableCollection<RankingRowComparerWrapper> UnusedRankingRowComparers { get; } = [];
 
         public ObservableCollection<RankingColumnComputerWrapper> RankingColumnComputers { get; } = [
             new RankingColumnComputerWrapper(new PlayedColumnComputer(), nameof(MyClubResources.GamesPlayed)),
             new RankingColumnComputerWrapper(new GamesWonColumnComputer(), nameof(MyClubResources.GamesWon)),
+            new RankingColumnComputerWrapper(new GamesWonAfterShootoutsColumnComputer(), nameof(MyClubResources.GamesWonAfterShootouts)),
             new RankingColumnComputerWrapper(new GamesDrawnColumnComputer(), nameof(MyClubResources.GamesDrawn)),
             new RankingColumnComputerWrapper(new GamesLostColumnComputer(), nameof(MyClubResources.GamesLost)),
+            new RankingColumnComputerWrapper(new GamesLostAfterShootoutsColumnComputer(), nameof(MyClubResources.GamesLostAfterShootouts)),
             new RankingColumnComputerWrapper(new GamesWithdrawnColumnComputer(), nameof(MyClubResources.GamesWithdrawn)),
             new RankingColumnComputerWrapper(new GoalsForColumnComputer(), nameof(MyClubResources.GoalsFor)),
             new RankingColumnComputerWrapper(new GoalsAgainstColumnComputer(), nameof(MyClubResources.GoalsAgainst)),
             new RankingColumnComputerWrapper(new GoalsDifferenceColumnComputer(), nameof(MyClubResources.GoalsDifference)),
-            new RankingColumnComputerWrapper(new DefaultRankingColumnComputer<int>((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.WonAfterShootouts)), nameof(MyClubResources.GamesWonAfterShootouts)),
-            new RankingColumnComputerWrapper(new DefaultRankingColumnComputer<int>((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.LostAfterShootouts)), nameof(MyClubResources.GamesLostAfterShootouts)),
         ];
 
         [HasUniqueItems]
@@ -117,8 +100,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public ThreadSafeObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
 
         [HasUniqueItems]
-        [Display(Name = nameof(RankingLabels), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableRankLabelViewModel> RankingLabels { get; } = [];
+        [Display(Name = nameof(Labels), ResourceType = typeof(MyClubResources))]
+        public RankingLabelsViewModel Labels { get; } = new();
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -131,12 +114,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public ICommand AddTeamPenaltyCommand { get; private set; }
 
         public ICommand RemoveTeamPenaltyCommand { get; private set; }
-
-        public ICommand AddRankLabelCommand { get; private set; }
-
-        public ICommand EditRankLabelCommand { get; private set; }
-
-        public ICommand RemoveRankLabelCommand { get; private set; }
 
         protected override void RefreshCore()
         {
@@ -155,21 +132,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             RankingRowComparers.Set(rankingRules.Rules?.Comparer.Select(x => availableRankingRowComparers.Find(y => y.Item.GetType() == x.GetType())).NotNull());
             UnusedRankingRowComparers.Set(availableRankingRowComparers.Except(RankingRowComparers));
 
+            RankingRowComparers.Union(UnusedRankingRowComparers).ForEach(x => x.IsEnabled = ShowShootouts || x.Key != nameof(MyClubResources.SortingByGamesWonAfterShootouts) && x.Key != nameof(MyClubResources.SortingByGamesLostAfterShootouts));
+
             RankingColumnComputers.ForEach(x =>
             {
                 x.IsActive = rankingRules.Rules?.Computers.ContainsKey(x.Key) ?? false;
                 x.IsEnabled = ShowShootouts || x.Key != nameof(MyClubResources.GamesWonAfterShootouts) && x.Key != nameof(MyClubResources.GamesLostAfterShootouts);
             });
 
-            RankingLabels.Set(rankingRules.Labels?.Select(x => new EditableRankLabelViewModel
-            {
-                Color = x.Value.Color?.ToColor(),
-                Description = x.Value.Description,
-                FromRank = x.Key.Min ?? 1,
-                ToRank = x.Key.Max ?? 1,
-                Name = x.Value.Name,
-                ShortName = x.Value.ShortName,
-            }));
+            Labels.Load(rankingRules.Labels ?? [], _leagueService.GetRankingRowsCount());
 
             Penalties.Set(rankingRules.PenaltyPoints?.Select(x => new EditableTeamPenaltyViewModel(_teams.GetById(x.Key))
             {
@@ -203,20 +174,30 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             {
                 Rules = new RankingRules(pointsByResult, new RankingComparer(RankingRowComparers.Select(x => x.Item)), RankingColumnComputers.Where(x => x.IsEnabled && x.IsActive).ToDictionary(x => x.Key, x => x.Item)),
                 PenaltyPoints = Penalties.ToDictionary(x => x.Team.Id, x => x.Points),
-                Labels = RankingLabels.ToDictionary(x => new AcceptableValueRange<int>(x.FromRank, x.ToRank), x => new RankLabel(x.Color?.ToString(), x.Name, x.ShortName, x.Description)),
+                Labels = Labels.ToDictionary(x => new AcceptableValueRange<int>(x.Range.Start, x.Range.End), x => new RankLabel(x.Color?.ToString(), x.Name, x.ShortName, x.Description)),
             });
         }
 
         private static int? GetPoints(RankingRules rankingRules, MatchResultDetailled result) => rankingRules.PointsNumberByResult.ContainsKey(result) ? rankingRules.GetPoints(result) : null;
+    }
 
-        private async Task AddRankLabelAsync()
-        {
-            var item = await _leaguePresentationService.CreateRankLabelAsync().ConfigureAwait(false);
+    internal class RankingColumnComputerWrapper : DisplayWrapper<IRankingColumnComputer>
+    {
+        public RankingColumnComputerWrapper(IRankingColumnComputer item, string resourceKey) : base(item, resourceKey) => Key = resourceKey;
 
-            if (item is not null)
-                RankingLabels.Add(item);
-        }
+        public string Key { get; }
 
-        private async Task EditRankLabelAsync(EditableRankLabelViewModel oldItem) => await _leaguePresentationService.UpdateRankLabelAsync(oldItem).ConfigureAwait(false);
+        public bool IsEnabled { get; set; } = true;
+
+        public bool IsActive { get; set; }
+    }
+
+    internal class RankingRowComparerWrapper : DisplayWrapper<RankingRowComparer>
+    {
+        public RankingRowComparerWrapper(RankingRowComparer item, string resourceKey) : base(item, resourceKey) => Key = resourceKey;
+
+        public string Key { get; }
+
+        public bool IsEnabled { get; set; } = true;
     }
 }

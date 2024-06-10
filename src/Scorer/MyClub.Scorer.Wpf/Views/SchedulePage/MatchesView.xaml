@@ -563,7 +563,7 @@
                                             <Setter Property="ContextMenu">
                                                 <Setter.Value>
                                                     <ContextMenu>
-                                                        <MenuItem Command="{Binding Data.EditSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                                                        <MenuItem Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
                                                         <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
                                                         <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}">
                                                             <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />

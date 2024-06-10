@@ -323,6 +323,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ajouter des points de pénalités.
+        /// </summary>
+        public static string AddPenalties {
+            get {
+                return ResourceManager.GetString("AddPenalties", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ajouter un joueur.
         /// </summary>
         public static string AddPlayer {
@@ -1018,6 +1027,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Réduire.
+        /// </summary>
+        public static string Collapse {
+            get {
+                return ResourceManager.GetString("Collapse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Couleur.
         /// </summary>
         public static string Color {
@@ -1663,6 +1681,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string Exempt {
             get {
                 return ResourceManager.GetString("Exempt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Etendre.
+        /// </summary>
+        public static string Expand {
+            get {
+                return ResourceManager.GetString("Expand", resourceCulture);
             }
         }
         
@@ -4536,6 +4563,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nombre de défaites ap. TAB.
+        /// </summary>
+        public static string SortingByGamesLostAfterShootouts {
+            get {
+                return ResourceManager.GetString("SortingByGamesLostAfterShootouts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nombre de forfaits.
         /// </summary>
         public static string SortingByGamesWithdrawn {
@@ -4550,6 +4586,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string SortingByGamesWon {
             get {
                 return ResourceManager.GetString("SortingByGamesWon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nombre de victoires ap. TAB.
+        /// </summary>
+        public static string SortingByGamesWonAfterShootouts {
+            get {
+                return ResourceManager.GetString("SortingByGamesWonAfterShootouts", resourceCulture);
             }
         }
         

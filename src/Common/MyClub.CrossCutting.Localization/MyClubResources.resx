@@ -1890,4 +1890,19 @@ Les colonnes en première position seront évaluées en première. Les colonnes 
   <data name="NoReschedule" xml:space="preserve">
     <value>Ne pas décaler</value>
   </data>
+  <data name="AddPenalties" xml:space="preserve">
+    <value>Ajouter des points de pénalités</value>
+  </data>
+  <data name="Expand" xml:space="preserve">
+    <value>Etendre</value>
+  </data>
+  <data name="Collapse" xml:space="preserve">
+    <value>Réduire</value>
+  </data>
+  <data name="SortingByGamesWonAfterShootouts" xml:space="preserve">
+    <value>Nombre de victoires ap. TAB</value>
+  </data>
+  <data name="SortingByGamesLostAfterShootouts" xml:space="preserve">
+    <value>Nombre de défaites ap. TAB</value>
+  </data>
 </root>

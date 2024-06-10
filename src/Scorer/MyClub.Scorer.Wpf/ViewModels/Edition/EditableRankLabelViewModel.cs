@@ -3,17 +3,15 @@
 
 using System.Windows.Media;
 using MyNet.Observable;
-using MyNet.Observable.Attributes;
-using MyNet.UI.Resources;
-using PropertyChanged;
+using MyNet.Utilities.Sequences;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     public class EditableRankLabelViewModel : EditableObject
     {
-        public int FromRank { get; set; }
+        public EditableRankLabelViewModel(Interval<int> range) => Range = range;
 
-        public int ToRank { get; set; }
+        public Interval<int> Range { get; set; }
 
         public Color? Color { get; set; }
 
@@ -22,9 +20,5 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public string ShortName { get; set; } = string.Empty;
 
         public string? Description { get; set; }
-
-        [UpdateOnCultureChanged]
-        [DependsOn(nameof(FromRank), nameof(ToRank))]
-        public string DisplayRanks => FromRank == ToRank ? FromRank.ToString() : string.Join($" {UiResources.To} ", new[] { FromRank, ToRank });
     }
 }
