@@ -7,13 +7,13 @@ using System.Linq;
 using MyClub.Application.Services;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Factories.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
-using MyNet.Utilities.Suspending;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Application.Services
@@ -23,19 +23,18 @@ namespace MyClub.Scorer.Application.Services
         private readonly ITeamRepository _teamRepository;
         private readonly IStadiumRepository _stadiumRepository;
         private readonly IProjectRepository _projectRepository;
-        private readonly AvailibilityCheckingService _matchValidationService;
-        private readonly Suspender _checkConflictsSuspender = new();
+        private readonly IAvailibilityCheckingDomainService _availibilityCheckingDomainService;
 
         public MatchService(IMatchRepository repository,
                                   IProjectRepository projectRepository,
                                   ITeamRepository teamRepository,
                                   IStadiumRepository stadiumRepository,
-                                  AvailibilityCheckingService matchValidationService) : base(repository)
+                                  IAvailibilityCheckingDomainService availibilityCheckingDomainService) : base(repository)
         {
             _teamRepository = teamRepository;
             _stadiumRepository = stadiumRepository;
             _projectRepository = projectRepository;
-            _matchValidationService = matchValidationService;
+            _availibilityCheckingDomainService = availibilityCheckingDomainService;
         }
 
         protected override Match CreateEntity(MatchDto dto)
@@ -95,12 +94,6 @@ namespace MyClub.Scorer.Application.Services
             }
         }
 
-        protected override void OnCollectionChanged()
-        {
-            if (!_checkConflictsSuspender.IsSuspended)
-                _matchValidationService.CheckAllConflicts();
-        }
-
         public IList<Match> Update(IEnumerable<Guid> matchIds, MatchMultipleDto dto)
         {
             using (CollectionChangedDeferrer.Defer())
@@ -130,41 +123,26 @@ namespace MyClub.Scorer.Application.Services
             }
         }
 
-        public void SaveScore(MatchDto dto)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(dto.Id!.Value, x => UpdateScore(x, dto));
-        }
+        public void SaveScore(MatchDto dto) => Update(dto.Id!.Value, x => UpdateScore(x, dto));
 
         public void SaveScores(IEnumerable<MatchDto> matches)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matches.ForEach(SaveScore);
         }
 
-        public void Start(Guid id)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x => x.Start());
-        }
+        public void Start(Guid id) => Update(id, x => x.Start());
 
         public void Start(IEnumerable<Guid> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(Start);
         }
 
-        public void Suspend(Guid id)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x => x.Suspend());
-        }
+        public void Suspend(Guid id) => Update(id, x => x.Suspend());
 
         public void Suspend(IEnumerable<Guid> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(Suspend);
         }
@@ -177,15 +155,10 @@ namespace MyClub.Scorer.Application.Services
                 matchIds.ForEach(Reset);
         }
 
-        public void Finish(Guid id)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x => x.Played());
-        }
+        public void Finish(Guid id) => Update(id, x => x.Played());
 
         public void Finish(IEnumerable<Guid> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(Finish);
         }
@@ -226,69 +199,50 @@ namespace MyClub.Scorer.Application.Services
                 matchIds.ForEach(x => Postpone(x, postponedDate));
         }
 
-        public void Cancel(Guid id)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x => x.Cancel());
-        }
+        public void Cancel(Guid id) => Update(id, x => x.Cancel());
 
         public void Cancel(IEnumerable<Guid> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(Cancel);
         }
 
         public void DoWithdraw(Guid id, Guid teamId)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x =>
-                {
-                    var teamOpponent = x.GetOpponent(teamId);
+        => Update(id, x =>
+            {
+                var teamOpponent = x.GetOpponent(teamId);
 
-                    if (teamOpponent is null) return;
+                if (teamOpponent is null) return;
 
-                    var otherOpponent = x.HomeTeam == teamOpponent.Team ? x.Away : x.Home;
+                var otherOpponent = x.HomeTeam == teamOpponent.Team ? x.Away : x.Home;
 
-                    teamOpponent.DoWithdraw();
-                    teamOpponent.SetScore(0);
+                teamOpponent.DoWithdraw();
+                teamOpponent.SetScore(0);
 
-                    otherOpponent.Reset();
-                    otherOpponent.SetScore(3);
+                otherOpponent.Reset();
+                otherOpponent.SetScore(3);
 
-                    x.Played();
-                });
-        }
+                x.Played();
+            });
 
         public void DoWithdraw(IEnumerable<(Guid id, Guid teamId)> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(x => DoWithdraw(x.id, x.teamId));
         }
 
-        public void Randomize(Guid id)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x => x.RandomizeScore());
-        }
+        public void Randomize(Guid id) => Update(id, x => x.RandomizeScore());
 
         public void Randomize(IEnumerable<Guid> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(Randomize);
         }
 
-        public void InvertTeams(Guid id)
-        {
-            using (_checkConflictsSuspender.Suspend())
-                Update(id, x => x.Invert());
-        }
+        public void InvertTeams(Guid id) => Update(id, x => x.Invert());
 
         public void InvertTeams(IEnumerable<Guid> matchIds)
         {
-            using (_checkConflictsSuspender.Suspend())
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(InvertTeams);
         }
@@ -327,6 +281,9 @@ namespace MyClub.Scorer.Application.Services
                 State = MatchState.None,
             };
         }
+
+        public IEnumerable<(ConflictType, Guid, Guid?)> GetAllConflicts()
+            => _availibilityCheckingDomainService.GetAllConflicts().Select(x => (x.Item1, x.Item2.Id, x.Item3?.Id));
 
         private void UpdateStadium(Match entity, StadiumDto? newStadiumDto)
         {

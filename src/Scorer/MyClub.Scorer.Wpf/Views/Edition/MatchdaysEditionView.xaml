@@ -1,0 +1,194 @@
+﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.Edition.MatchdaysEditionView"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+                  xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  d:DataContext="{d:DesignInstance Type=vm:MatchdaysEditionViewModel}"
+                  BusyService="{Binding BusyService, Mode=OneWay}"
+                  Header="{my:Resource AddMatchdays}"
+                  ShowCloseButton="True"
+                  mc:Ignorable="d">
+    <my:ContentDialog.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Scorer.Styles.CalendarItem" TargetType="{x:Type my:CalendarItem}" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByYear}">
+            <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size.Secondary}" />
+            <Setter Property="IsEnabled">
+                <Setter.Value>
+                    <MultiBinding Converter="{x:Static my:DateComparaisonToBooleanConverter.IsBetween}">
+                        <Binding Path="Date" RelativeSource="{RelativeSource Self}" />
+                        <Binding Path="Data.StartDisplayDate" Source="{StaticResource Proxy}" />
+                        <Binding Path="Data.EndDisplayDate" Source="{StaticResource Proxy}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Small.Horizontal}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type my:CalendarItem}">
+                        <Border Margin="{TemplateBinding Margin}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                ClipToBounds="{TemplateBinding ClipToBounds}">
+                            <Grid x:Name="base">
+                                <Border Background="{TemplateBinding Background}" />
+
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <ContentPresenter x:Name="DayText"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding Content}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                    <ToolBar x:Name="toolbar"
+                                             Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                             Grid.Column="1"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Center"
+                                             Visibility="Hidden">
+                                        <Button Margin="0"
+                                                Command="{Binding Data.RemoveFromDateCommand, Source={StaticResource Proxy}}"
+                                                CommandParameter="{Binding Date, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Content="{my:ToolIcon Kind=Minus}"
+                                                ToolTip="{my:Resource Remove}"
+                                                Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                        <Button Margin="0"
+                                                Command="{Binding Owner.AddCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                CommandParameter="{Binding Date, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Content="{my:ToolIcon Kind=Plus}"
+                                                ToolTip="{my:Resource Add}" />
+                                    </ToolBar>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsNow" Value="True">
+                                <Setter TargetName="DayText" Property="TextElement.FontWeight" Value="Bold" />
+                                <Setter TargetName="DayText" Property="TextElement.Foreground" Value="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource TemplatedParent}}" />
+                            </Trigger>
+                            <Trigger Property="IsInactive" Value="True">
+                                <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="toolbar" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsLastOfWeek, RelativeSource={RelativeSource Self}}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Filled}}" />
+                            </MultiDataTrigger>
+                            <DataTrigger Binding="{Binding Appointments.Count, RelativeSource={RelativeSource Self}, Converter={x:Static my:CountToBooleanConverter.Any}}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                            </DataTrigger>
+                            <DataTrigger Value="True">
+                                <DataTrigger.Binding>
+                                    <MultiBinding Converter="{x:Static my:DateComparaisonToBooleanConverter.IsGreaterThan}">
+                                        <Binding Path="Date" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="Data.EndDisplayDate" Source="{StaticResource Proxy}" />
+                                    </MultiBinding>
+                                </DataTrigger.Binding>
+                                <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                <Setter TargetName="toolbar" Property="Visibility" Value="Hidden" />
+                            </DataTrigger>
+                            <DataTrigger Value="True">
+                                <DataTrigger.Binding>
+                                    <MultiBinding Converter="{x:Static my:DateComparaisonToBooleanConverter.IsLessThan}">
+                                        <Binding Path="Date" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="Data.StartDisplayDate" Source="{StaticResource Proxy}" />
+                                    </MultiBinding>
+                                </DataTrigger.Binding>
+                                <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                <Setter TargetName="toolbar" Property="Visibility" Value="Hidden" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
+
+            <Style.Triggers>
+                <Trigger Property="IsNow" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </my:ContentDialog.Resources>
+
+    <my:InputAssist.InputBindings>
+        <InputBindingCollection>
+            <KeyBinding Key="F5" Command="{Binding Data.ResetCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
+        </InputBindingCollection>
+    </my:InputAssist.InputBindings>
+
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Reset}" HorizontalAlignment="Right" Command="{Binding ResetCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}"
+                    HorizontalAlignment="Right"
+                    Command="{Binding SaveAndCloseAsyncCommand}"
+                    Content="{my:Translation Matchdays.Count,
+                                             Format=ValidateXItems}"
+                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="600" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Types -->
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                 VerticalAlignment="Top"
+                 SelectedValue="{Binding IsAutomatic}"
+                 SelectedValuePath="DataContext">
+            <ListBoxItem Width="130"
+                         my:IconAssist.Icon="{my:ToolIcon Kind=CalendarCursor}"
+                         Content="{my:Resource Manual}"
+                         DataContext="{x:Static my:Booleans.False}" />
+            <ListBoxItem Width="130"
+                         my:IconAssist.Icon="{my:ToolIcon Kind=Magic}"
+                         Content="{my:Resource Automatic}"
+                         DataContext="{x:Static my:Booleans.True}" />
+        </ListBox>
+
+        <v:MatchdaysEditionCalendarView Visibility="{Binding IsAutomatic, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+        <Grid Margin="0 50 0 0" Visibility="{Binding IsAutomatic, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <v:MatchdaysEditionAutomaticView DataContext="{Binding AutomaticViewModel}" />
+            <my:SimpleStackPanel Grid.Row="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Style="{StaticResource MyNet.Styles.Button.Text}"
+                        HorizontalAlignment="Right"
+                        my:IconAssist.Icon="{my:ToolIcon Kind=Flash}"
+                        Command="{Binding GenerateCommand}"
+                        Content="{my:Resource Generate}" />
+                <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+                        HorizontalAlignment="Right"
+                        my:IconAssist.Icon="{my:ToolIcon Kind=FlashAlert}"
+                        Command="{Binding RegenerateCommand}"
+                        Content="{my:Resource Regenerate}" />
+            </my:SimpleStackPanel>
+        </Grid>
+
+        <v:MatchdaysEditionMatchdaysView Grid.Row="2" Grid.Column="2" />
+    </Grid>
+
+</my:ContentDialog>

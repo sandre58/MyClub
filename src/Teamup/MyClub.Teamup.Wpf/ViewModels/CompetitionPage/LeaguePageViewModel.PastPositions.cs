@@ -13,7 +13,6 @@ using DynamicData;
 using DynamicData.Binding;
 using LiveCharts;
 using LiveCharts.Wpf;
-using MyNet.UI.Busy;
 using MyNet.UI.ViewModels.Workspace;
 using MyNet.Utilities;
 using MyNet.Utilities.Helpers;
@@ -55,7 +54,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionPage
 
             if (Item is null) return;
 
-            ItemSubscriptions?.Add(Item.SubscribeOnRankingRefreshed(async () => await RefreshAllAsync().ConfigureAwait(false)));
+            ItemSubscriptions?.Add(Item.WhenRankingChanged(async () => await RefreshAllAsync().ConfigureAwait(false)));
 
             await RefreshAllAsync().ConfigureAwait(false);
         }
@@ -76,7 +75,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionPage
         private void RefreshYLabels() => AxeYLabels = EnumerableHelper.Range(Item?.Teams.Count ?? 1, 1, -1).Select(x => x.Ordinalize().OrEmpty()).ToList();
 
         private void RefreshSeries(IEnumerable<TeamViewModel> teams, IEnumerable<Ranking> rankings)
-            => MyNet.Observable.Threading.Scheduler.UI.Schedule(() => TeamSeries.Set(teams.Select(x => new TeamPositionsSerieWrapper(x, rankings.Select(y => y.Count() - (double)y.GetRank(x.Id)))).ToList()));
+            => MyNet.UI.Threading.Scheduler.UI.Schedule(() => TeamSeries.Set(teams.Select(x => new TeamPositionsSerieWrapper(x, rankings.Select(y => y.Count() - (double)y.GetRank(x.Id)))).ToList()));
 
         protected override void OnCultureChanged()
         {

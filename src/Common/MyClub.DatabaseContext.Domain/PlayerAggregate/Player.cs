@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Xml.Linq;
 
 namespace MyClub.DatabaseContext.Domain.PlayerAggregate
 {

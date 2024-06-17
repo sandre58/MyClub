@@ -4,16 +4,16 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent
 {
     internal class OverviewAbsencesViewModel : ObservableObject
     {
-        private readonly ThreadSafeObservableCollection<AbsenceViewModel> _absences = [];
+        private readonly UiObservableCollection<AbsenceViewModel> _absences = [];
 
         public ReadOnlyObservableCollection<AbsenceViewModel> Absences { get; }
 

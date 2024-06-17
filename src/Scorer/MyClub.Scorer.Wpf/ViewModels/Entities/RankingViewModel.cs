@@ -14,7 +14,7 @@ using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
 using PropertyChanged;
@@ -23,9 +23,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
     internal class RankingViewModel : ObservableObject, IReadOnlyCollection<RankingRowViewModel>, INotifyCollectionChanged
     {
-        private readonly ThreadSafeObservableCollection<RankingRowViewModel> _rows = [];
+        private readonly UiObservableCollection<RankingRowViewModel> _rows = [];
         private readonly IEnumerable<MatchViewModel> _matches;
         private readonly Subject<bool> _sortRowsSubject = new();
+        private readonly object _lock = new();
 
         public RankingViewModel(ReadOnlyObservableCollection<TeamViewModel> teams, IEnumerable<MatchViewModel> matches)
             : base()
@@ -46,23 +47,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public void Update(RankingDto ranking)
         {
-            var matches = _matches.ToList();
-            _rows.ToList().ForEach(x =>
+            lock (_lock)
             {
-                var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
+                var matches = _matches.ToList();
+                _rows.ToList().ForEach(x =>
+                {
+                    var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
 
-                if (rowFound is not null)
-                    x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
-                else
-                    x.Reset();
-            });
+                    if (rowFound is not null)
+                        x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
+                    else
+                        x.Reset();
+                });
 
-            var teams = _rows.Select(x => x.Team).ToList();
-            Rules = ranking.Rules;
-            PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
-            Labels = ranking.Labels?.AsReadOnly();
+                var teams = _rows.Select(x => x.Team).ToList();
+                Rules = ranking.Rules;
+                PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
+                Labels = ranking.Labels?.AsReadOnly();
 
-            _sortRowsSubject.OnNext(true);
+                _sortRowsSubject.OnNext(true);
+            }
         }
 
         public int FormCount { get; set; } = 5;

@@ -12,17 +12,17 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using DynamicData;
 using DynamicData.Binding;
-using MyNet.UI.Commands;
-using MyNet.UI.Services;
-using MyNet.Wpf.Helpers;
-using MyNet.Utilities;
-using MyNet.DynamicData.Extensions;
-using MyNet.Utilities.Logging;
-using MyNet.Observable.Collections;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.DynamicData.Extensions;
+using MyNet.UI.Collections;
+using MyNet.UI.Commands;
+using MyNet.UI.Services;
+using MyNet.Utilities;
+using MyNet.Utilities.Logging;
+using MyNet.Wpf.Helpers;
 using PropertyChanged;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Entities
@@ -31,8 +31,8 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
     {
         private readonly LeaguePresentationService _leaguePresentationService;
         private readonly MatchdayPresentationService _matchdayPresentationService;
-        private readonly ThreadSafeObservableCollection<MatchdayViewModel> _matchdays = [];
-        private readonly Subject<bool> _rankingRefreshedSuject = new();
+        private readonly UiObservableCollection<MatchdayViewModel> _matchdays = [];
+        private readonly Subject<bool> _rankingChangedSubject = new();
         private readonly Subject<bool> _refreshRankingRequestedSubject = new();
 
         public LeagueViewModel(LeagueSeason item,
@@ -110,12 +110,12 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
                 HomeRanking.Update(Item.CastIn<LeagueSeason>().GetHomeRanking(), AllMatches);
                 AwayRanking.Update(Item.CastIn<LeagueSeason>().GetAwayRanking(), AllMatches);
 
-                _rankingRefreshedSuject.OnNext(true);
+                _rankingChangedSubject.OnNext(true);
             }).ConfigureAwait(false);
         }
 
-        public IDisposable SubscribeOnRankingRefreshed(Action action)
-            => !_rankingRefreshedSuject.IsDisposed ? _rankingRefreshedSuject.Subscribe(_ => action()) : Disposable.Empty;
+        public IDisposable WhenRankingChanged(Action action)
+            => !_rankingChangedSubject.IsDisposed ? _rankingChangedSubject.Subscribe(_ => action()) : Disposable.Empty;
 
         protected override void Cleanup()
         {
@@ -123,7 +123,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
             Ranking.Dispose();
             HomeRanking.Dispose();
             AwayRanking.Dispose();
-            _rankingRefreshedSuject.Dispose();
+            _rankingChangedSubject.Dispose();
             _refreshRankingRequestedSubject.Dispose();
         }
 

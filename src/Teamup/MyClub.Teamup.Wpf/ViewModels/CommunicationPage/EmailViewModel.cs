@@ -6,15 +6,15 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using MyClub.CrossCutting.Localization;
+using MyNet.Observable.Attributes;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Dialogs.Settings;
-using MyNet.Wpf.DragAndDrop;
 using MyNet.UI.ViewModels.Workspace;
 using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable.Attributes;
-using MyClub.CrossCutting.Localization;
+using MyNet.Wpf.DragAndDrop;
 
 namespace MyClub.Teamup.Wpf.ViewModels.CommunicationPage
 {
@@ -37,7 +37,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CommunicationPage
 
         public FileDropHandler DropHandler { get; }
 
-        public ObservableCollection<string> Attachments { get; } = new ThreadSafeObservableCollection<string>();
+        public ObservableCollection<string> Attachments { get; } = new UiObservableCollection<string>();
 
         public EmailViewModel()
         {

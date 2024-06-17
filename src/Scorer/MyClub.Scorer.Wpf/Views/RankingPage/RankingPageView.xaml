@@ -16,7 +16,7 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </UserControl.Resources>
 
-    <!--  Shortcuts  -->
+    <!-- Shortcuts -->
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
             <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditRulesCommand, Source={StaticResource Proxy}}" />
@@ -25,7 +25,7 @@
 
     <DockPanel Margin="{StaticResource MyNet.Margins.Medium}">
 
-        <!--  ToolBar  -->
+        <!-- ToolBar -->
         <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
 
             <my:CommandsBar.LeftCommands>
@@ -38,22 +38,27 @@
                 </ToolBar>
             </my:CommandsBar.LeftCommands>
 
-            <!--  Rankings choice  -->
+            <!-- Rankings choice -->
             <ListBox x:Name="tab"
                      Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     Height="28"
                      HorizontalAlignment="Center"
+                     VerticalAlignment="Stretch"
                      SelectedIndex="0">
-                <ListBoxItem my:IconAssist.Icon="{my:Icon Kind=Information}" Content="{my:Resource General}" />
-                <ListBoxItem my:IconAssist.Icon="{my:Icon Kind=Video}" Content="{my:Resource Live}" IsEnabled="{Binding LiveIsEnabled}" />
-                <ListBoxItem my:IconAssist.Icon="{my:Icon Kind=Home}" Content="{my:Resource LocationHome}" />
-                <ListBoxItem my:IconAssist.Icon="{my:Icon Kind=Plane}" Content="{my:Resource LocationAway}" />
+                <ListBoxItem Width="100" my:IconAssist.Icon="{my:Icon Kind=Information}" Content="{my:Resource General}" />
+                <ListBoxItem Width="100"
+                             my:IconAssist.Icon="{my:Icon Kind=Video}"
+                             Content="{my:Resource Live}"
+                             IsEnabled="{Binding LiveIsEnabled}" />
+                <ListBoxItem Width="100" my:IconAssist.Icon="{my:Icon Kind=Home}" Content="{my:Resource LocationHome}" />
+                <ListBoxItem Width="100" my:IconAssist.Icon="{my:Icon Kind=Plane}" Content="{my:Resource LocationAway}" />
             </ListBox>
         </my:CommandsBar>
 
-        <!--  Content  -->
-        <my:TransitioningContent Grid.Row="2" VerticalAlignment="Top">
+        <!-- Content -->
+        <my:TransitioningContent VerticalAlignment="Top" Margin="{StaticResource MyNet.Margins.Medium.Top}">
             <my:TransitioningContent.Style>
-                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
                     <Setter Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>
@@ -61,7 +66,7 @@
 
                                     <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Top}" DockPanel.Dock="Bottom">
 
-                                        <!--  Labels  -->
+                                        <!-- Labels -->
                                         <ItemsControl DockPanel.Dock="Left" ItemsSource="{Binding Labels}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -78,7 +83,7 @@
                                             </ItemsControl.ItemsPanel>
                                         </ItemsControl>
 
-                                        <!--  Penalties  -->
+                                        <!-- Penalties -->
                                         <ItemsControl HorizontalAlignment="Right" DockPanel.Dock="Right" ItemsSource="{Binding PenaltyPoints}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>

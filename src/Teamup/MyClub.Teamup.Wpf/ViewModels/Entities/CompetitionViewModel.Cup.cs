@@ -8,20 +8,20 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using DynamicData;
 using DynamicData.Binding;
-using MyNet.Wpf.Helpers;
-using MyNet.Utilities;
-using MyNet.DynamicData.Extensions;
-using MyNet.Observable.Collections;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
+using MyNet.DynamicData.Extensions;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
+using MyNet.Wpf.Helpers;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Entities
 {
     internal class CupViewModel : CompetitionViewModel
     {
         private readonly CupPresentationService _cupPresentationService;
-        private readonly ThreadSafeObservableCollection<RoundViewModel> _rounds = [];
+        private readonly UiObservableCollection<RoundViewModel> _rounds = [];
 
         public CupViewModel(CupSeason item,
                             CupPresentationService cupPresentationService,

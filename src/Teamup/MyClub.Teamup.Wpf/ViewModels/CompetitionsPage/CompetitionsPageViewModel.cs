@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using MyNet.UI.ViewModels;
 using MyClub.Teamup.Wpf.Extensions;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
+using DynamicData;
 using DynamicData.Binding;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.Enums;
@@ -16,7 +17,7 @@ using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.Utilities.Units;
@@ -27,8 +28,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
     {
         private readonly MatchPresentationService _matchPresentationService;
         private readonly StadiumsProvider _stadiumsProvider;
-        private readonly ThreadSafeObservableCollection<MatchViewModel> _matchesInConflicts = [];
-        private readonly ThreadSafeObservableCollection<MatchConflict> _conflicts = [];
+        private readonly UiObservableCollection<MatchViewModel> _matchesInConflicts = [];
+        private readonly UiObservableCollection<MatchConflict> _conflicts = [];
 
         public MatchViewModel(Match item,
                               MatchPresentationService matchPresentationService,
@@ -66,15 +67,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             var scoreChangedRequestedSubject = new Subject<bool>();
             Disposables.AddRange(
                 [
-                scoreChangedRequestedSubject.Throttle(20.Milliseconds()).Subscribe(_ =>
+                scoreChangedRequestedSubject.Throttle(50.Milliseconds()).Subscribe(_ =>
                 {
                     RaiseScoreProperties();
                     ScoreChanged?.Invoke(this, EventArgs.Empty);
                 }),
                 item.WhenPropertyChanged(x => x.HomeTeam, false).Subscribe(x => HomeTeam = teamsProvider.GetOrThrow(item.HomeTeam.Id)),
                 item.WhenPropertyChanged(x => x.AwayTeam, false).Subscribe(x => AwayTeam = teamsProvider.GetOrThrow(item.AwayTeam.Id)),
-                item.Home.Events.ToObservableChangeSet()
-                                .Merge(item.Away.Events.ToObservableChangeSet())
+                item.Home.Events.ToObservableChangeSet(x => x.Id)
+                                .Merge(item.Away.Events.ToObservableChangeSet(x => x.Id))
+                                .SkipInitial()
                                 .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 item.Home.WhenPropertyChanged(x => x.IsWithdrawn, false)
                          .Merge(item.Away.WhenPropertyChanged(x => x.IsWithdrawn, false))
@@ -82,11 +84,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 this.WhenPropertyChanged(x => x.AfterExtraTime, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.State, false).Subscribe(_ =>
                 {
-                    RaisePropertyChanged(nameof(IsPlayed));
+                    IsPlayed = State is MatchState.Played;
+                    IsPlaying = State is MatchState.InProgress;
+                    HasResult = State is MatchState.Played or MatchState.InProgress or MatchState.Suspended;
                     RaisePropertyChanged(nameof(CanBeWithdraw));
                     RaisePropertyChanged(nameof(CanBeRescheduled));
-                    scoreChangedRequestedSubject.OnNext(true);
                 }),
+                this.WhenPropertyChanged(x => x.HasResult, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
+                this.WhenPropertyChanged(x => x.IsPlayed, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
+                this.WhenPropertyChanged(x => x.IsPlaying, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.Date, false).Subscribe(_ =>
                 {
                     RaisePropertyChanged(nameof(StartDate));
@@ -148,7 +154,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public MatchState State => Item.State;
 
-        public bool IsPlayed => State is MatchState.Played;
+        public bool IsPlayed { get; private set; }
+
+        public bool IsPlaying { get; private set; }
+
+        public bool HasResult { get; private set; }
 
         public bool CanBeWithdraw => CanDoWithdraw();
 

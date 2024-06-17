@@ -24,7 +24,7 @@ using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Humanizer;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyNet.Observable.Translatables;
 using MyNet.UI.Commands;
 using MyNet.Utilities;

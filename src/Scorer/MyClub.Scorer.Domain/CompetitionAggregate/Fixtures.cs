@@ -9,12 +9,13 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class Fixtures : AuditableEntity, IMatchesProvider
     {
-        private readonly ObservableCollection<Match> _matches = [];
+        private readonly ExtendedObservableCollection<Match> _matches = [];
         private readonly Round _parent;
 
         internal Fixtures(Round parent, ITeam team1, ITeam team2, Guid? id = null) : base(id)

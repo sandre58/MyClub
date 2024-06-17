@@ -17,7 +17,7 @@ using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
@@ -75,11 +75,11 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [HasUniqueItems]
         [Display(Name = nameof(Penalties), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
+        public UiObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
 
         [HasUniqueItems]
         [Display(Name = nameof(SortingColumns), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableRankLabelViewModel> RankingLabels { get; } = [];
+        public UiObservableCollection<EditableRankLabelViewModel> RankingLabels { get; } = [];
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]

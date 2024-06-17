@@ -11,13 +11,14 @@ using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class ChampionshipStage : Championship, IStage, IMatchdaysProvider
     {
         private string _name = string.Empty;
-        private readonly ObservableCollection<Matchday> _matchdays = [];
+        private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
         public ChampionshipStage(string name, IStage? parent = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
         {

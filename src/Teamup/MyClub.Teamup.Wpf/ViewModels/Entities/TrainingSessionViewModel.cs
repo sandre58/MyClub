@@ -20,8 +20,8 @@ using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
 using MyNet.Observable.Statistics;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
 using PropertyChanged;
@@ -33,12 +33,12 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
         private readonly TrainingSessionPresentationService _trainingSessionPresentationService;
         private readonly HolidaysProvider _holidaysProvider;
         private readonly CyclesProvider _cyclesProvider;
-        private readonly ThreadSafeObservableCollection<TrainingAttendanceViewModel> _attendances = [];
-        private readonly ThreadSafeObservableCollection<string> _stages = [];
-        private readonly ThreadSafeObservableCollection<string> _technicalGoals = [];
-        private readonly ThreadSafeObservableCollection<string> _tacticalGoals = [];
-        private readonly ThreadSafeObservableCollection<string> _physicalGoals = [];
-        private readonly ThreadSafeObservableCollection<string> _mentalGoals = [];
+        private readonly UiObservableCollection<TrainingAttendanceViewModel> _attendances = [];
+        private readonly UiObservableCollection<string> _stages = [];
+        private readonly UiObservableCollection<string> _technicalGoals = [];
+        private readonly UiObservableCollection<string> _tacticalGoals = [];
+        private readonly UiObservableCollection<string> _physicalGoals = [];
+        private readonly UiObservableCollection<string> _mentalGoals = [];
 
         public TrainingSessionViewModel(TrainingSession item,
                                  TrainingSessionPresentationService trainingSessionPresentationService,

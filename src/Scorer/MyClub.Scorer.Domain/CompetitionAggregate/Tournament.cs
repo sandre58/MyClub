@@ -6,12 +6,13 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class Tournament : AuditableEntity, ICompetition
     {
-        private readonly ObservableCollection<IStage> _stages = [];
+        private readonly ExtendedObservableCollection<IStage> _stages = [];
 
         public Tournament() => Stages = new(_stages);
 

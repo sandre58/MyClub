@@ -53,7 +53,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.StatisticsTab
         public double AverageRating { get; private set; }
 
         public TrainingStatisticsPerformancesViewModel(ProjectInfoProvider projectInfoProvider, ReadOnlyObservableCollection<PlayerTrainingStatisticsViewModel> playerTrainingStatistics, HolidaysProvider holidaysProvider)
-            : base(source: playerTrainingStatistics.ToObservableChangeSet().ObserveOn(MyNet.Observable.Threading.Scheduler.GetUIOrCurrent()).Transform(x => new PerformancesPlayerSerieWrapper(x, new SolidColorBrush(RandomGenerator.Color().ToColor().GetValueOrDefault()))).DisposeMany(),
+            : base(source: playerTrainingStatistics.ToObservableChangeSet().ObserveOn(MyNet.UI.Threading.Scheduler.GetUIOrCurrent()).Transform(x => new PerformancesPlayerSerieWrapper(x, new SolidColorBrush(RandomGenerator.Color().ToColor().GetValueOrDefault()))).DisposeMany(),
                    parametersProvider: new TrainingStatisticsListParametersProvider(projectInfoProvider))
         {
             var mapper = Mappers.Xy<TrainingSessionViewModel>().X((session, index) => index).Y(session => session.Attendances.Any(x => x.Rating.HasValue) ? Math.Round(session.Attendances.Where(x => x.Rating.HasValue).Average(x => x.Rating!.Value), 2) : double.NaN);
@@ -102,7 +102,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.StatisticsTab
             });
 
         private void RefreshHolidays(IEnumerable<DateTime> dates, IEnumerable<HolidaysViewModel> holidays)
-            => MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
+            => MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
                 {
                     var sections = UiHelper.HolidaysToSections(dates, holidays).Select(x =>
                     {

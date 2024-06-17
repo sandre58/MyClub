@@ -6,19 +6,19 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using DynamicData;
 using DynamicData.Binding;
+using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.DynamicData.Extensions;
+using MyNet.UI.Collections;
 using MyNet.UI.ViewModels.Workspace;
 using MyNet.Utilities;
-using MyNet.DynamicData.Extensions;
-using MyNet.Observable.Collections;
-using MyClub.Teamup.Wpf.ViewModels.Entities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.TrainingSessionPage
 {
     internal class TrainingSessionPageOverviewViewModel : SubItemViewModel<TrainingSessionViewModel>
     {
         private readonly int _countItems;
-        private readonly ThreadSafeObservableCollection<TrainingAttendanceViewModel> _bestPerformances = [];
-        private readonly ThreadSafeObservableCollection<TrainingAttendanceViewModel> _worstPerformances = [];
+        private readonly UiObservableCollection<TrainingAttendanceViewModel> _bestPerformances = [];
+        private readonly UiObservableCollection<TrainingAttendanceViewModel> _worstPerformances = [];
 
         public ReadOnlyObservableCollection<TrainingAttendanceViewModel> BestPerformances { get; }
 

@@ -57,10 +57,11 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <!--  Shortcuts  -->
+    <!-- Shortcuts -->
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
             <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding Data.AddMultipleCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Return" Command="{Binding Data.OpenSelectedItemCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
@@ -73,16 +74,24 @@
 
     <DockPanel>
 
-        <!--  ToolBar  -->
+        <!-- ToolBar -->
         <my:CommandsBar Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
-                            my:IconAssist.Icon="{my:Icon Kind=Plus}"
-                            Command="{Binding AddCommand}"
-                            Content="{my:Resource New}"
-                            ToolTip="Ctrl+N" />
+                    <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.ToolBar.Elevation.Primary}"
+                                    my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
+                                    Command="{Binding AddCommand}"
+                                    PopupPadding="0"
+                                    ToggleContent="{my:Resource New}"
+                                    ToolTip="Ctrl+N">
+                        <my:Submenu>
+                            <MenuItem Command="{Binding AddMultipleCommand}"
+                                      Header="{my:Resource AddMatchdays}"
+                                      Icon="{my:ToolIcon Kind=PlusBoxMultiple}"
+                                      InputGestureText="Ctrl+Maj+N" />
+                        </my:Submenu>
+                    </my:SplitButton>
                 </ToolBar>
             </my:CommandsBar.LeftCommands>
 
@@ -109,10 +118,10 @@
 
         </my:CommandsBar>
 
-        <!--  Content  -->
+        <!-- Content -->
         <my:TransitioningContent>
             <my:TransitioningContent.Style>
-                <Style BasedOn="{StaticResource MyNet.Styles.TransitioningContent}" TargetType="{x:Type my:TransitioningContent}">
+                <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeGrid">
                             <Setter Property="Content">

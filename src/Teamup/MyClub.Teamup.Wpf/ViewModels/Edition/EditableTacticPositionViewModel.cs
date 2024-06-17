@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using MyNet.UI.Commands;
 using MyNet.UI.ViewModels.Edition;

@@ -5,20 +5,30 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MyNet.UI.Dialogs;
-using MyNet.UI.Locators;
-using MyNet.UI.Extensions;
-using MyNet.UI.Services;
+using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Application.Services;
+using MyNet.UI.Dialogs;
+using MyNet.UI.Extensions;
+using MyNet.UI.Locators;
+using MyNet.UI.Services;
+using MyNet.Utilities.Messaging;
 
 namespace MyClub.Scorer.Wpf.Services
 {
-    internal class MatchdayPresentationService(MatchdayService service, IViewModelLocator viewModelLocator)
+    internal class MatchdayPresentationService(MatchdayService service,
+                                               IViewModelLocator viewModelLocator)
         : PresentationServiceBase<MatchdayViewModel, MatchdayEditionViewModel, MatchdayService>(service, viewModelLocator)
     {
         public async Task OpenAsync(MatchdayViewModel item) => await EditAsync(item).ConfigureAwait(false);
+
+        public async Task AddMultipleAsync()
+        {
+            var vm = ViewModelLocator.Get<MatchdaysEditionViewModel>();
+
+            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+        }
 
         public async Task AddAsync(Guid? parentId = null, DateTime? date = null)
         {
@@ -61,7 +71,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => Service.Postpone(idsList, postponedDate)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                Service.Postpone(idsList, postponedDate);
+                Messenger.Default.Send(new CheckConflictsRequestMessage());
+            }).ConfigureAwait(false);
         }
     }
 }

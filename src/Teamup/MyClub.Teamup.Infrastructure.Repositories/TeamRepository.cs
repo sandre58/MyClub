@@ -16,6 +16,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Team AddCore(Team item) => throw new InvalidOperationException("Add method is not used in this context");
 
-        protected override bool DeleteCore(Team item) => throw new InvalidOperationException("Delete method is not used in this context");
+        protected override IEnumerable<Team> AddRangeCore(IEnumerable<Team> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Team item) => throw new InvalidOperationException("Delete method is not used in this context");
+
+        protected override int RemoveRangeCore(IEnumerable<Team> items) => items.Count(RemoveCore);
     }
 }

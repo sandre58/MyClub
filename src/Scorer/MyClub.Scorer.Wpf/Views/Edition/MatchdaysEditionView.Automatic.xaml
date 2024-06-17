@@ -1,0 +1,287 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.MatchdaysEditionAutomaticView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:MatchdaysEditionAutomaticViewModel}"
+             Validation.ErrorTemplate="{x:Null}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate DataType="{x:Type vm:DayOfWeeksRuleViewModel}">
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                     BorderThickness="0"
+                     ItemsSource="{Binding AllDays}"
+                     SelectionMode="Multiple">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectionBehavior SelectedItems="{Binding SelectedDays}" />
+                </i:Interaction.Behaviors>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Width="55" Text="{Binding Converter={x:Static my:DayOfWeekStringConverter.ToTitle}}" TextAlignment="Center" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ExcludeDateRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                <TextBlock Text="{my:Resource ExcludeFrom}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" SelectedDate="{Binding Date}" />
+            </my:SimpleStackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ExcludeDatesRangeRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                <TextBlock Text="{my:Resource ExcludeBetween}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" SelectedDate="{Binding StartDate}" />
+                <TextBlock Text="{my:Resource And}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" SelectedDate="{Binding EndDate}" />
+            </my:SimpleStackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:DateIntervalRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                <TextBlock Text="{my:Resource ScheduleDateOf}" />
+                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown}"
+                                  Width="60"
+                                  Minimum="1"
+                                  Value="{my:NullableBinding Value}" />
+                <ComboBox Width="{StaticResource MyNet.Widths.Control.Large}" SelectedValue="{Binding Unit}" SelectedValuePath="DataContext">
+                    <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                    <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
+                    <ComboBoxItem Content="{my:Resource TimeUnitMonth}" DataContext="{x:Static units:TimeUnit.Month}" />
+                </ComboBox>
+            </my:SimpleStackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TimeOfDayRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                          HorizontalContentAlignment="Left"
+                          ItemsSource="{Binding AllDays}"
+                          SelectedIndex="0"
+                          SelectedItem="{Binding Day}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={x:Static my:DayOfWeekStringConverter.ToTitle}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <my:PackIcon Kind="Clock" Margin="{StaticResource MyNet.Margins.Large.Horizontal}" />
+                <my:TimePicker Width="60" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+            </my:SimpleStackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TimeOfDateRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" SelectedDate="{Binding Date}" />
+                <my:PackIcon Kind="Clock" Margin="{StaticResource MyNet.Margins.Large.Horizontal}" />
+                <my:TimePicker Width="60" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+            </my:SimpleStackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TimeOfDateRangeRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <TextBlock Text="{my:Resource Between}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" SelectedDate="{Binding StartDate}" />
+                <TextBlock Text="{my:Resource And}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" SelectedDate="{Binding EndDate}" />
+                <my:PackIcon Kind="Clock" Margin="{StaticResource MyNet.Margins.Large.Horizontal}" />
+                <my:TimePicker Width="60" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+            </my:SimpleStackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Start Date -->
+        <my:SimpleStackPanel Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+            <TextBlock Text="{my:Resource GenerateItemsFromDate}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}"
+                        DisplayDateEnd="{Binding EndDisplayDate, Mode=OneWay}"
+                        DisplayDateStart="{Binding StartDisplayDate, Mode=OneWay}"
+                        SelectedDate="{Binding StartDate}" />
+        </my:SimpleStackPanel>
+
+        <!-- End Date -->
+        <Grid Grid.Row="2" Grid.ColumnSpan="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <RadioButton IsChecked="{Binding UseEndDate}" />
+            <RadioButton Grid.Row="2" IsChecked="{Binding UseEndDate, Converter={x:Static my:NotBooleanConverter.Default}}" />
+
+            <my:SimpleStackPanel Grid.Column="2" IsEnabled="{Binding UseEndDate}" Orientation="Horizontal">
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Disablable}" Text="{my:Resource Until, Casing=LowerCase}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}"
+                            DisplayDateEnd="{Binding EndDisplayDate, Mode=OneWay}"
+                            DisplayDateStart="{Binding StartDisplayDate, Mode=OneWay}"
+                            SelectedDate="{Binding EndDate}" />
+            </my:SimpleStackPanel>
+
+            <my:SimpleStackPanel Grid.Row="2"
+                                 Grid.Column="2"
+                                 IsEnabled="{Binding UseEndDate, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                 Orientation="Horizontal">
+                <my:NumericUpDown Width="70" Minimum="1" Value="{my:NullableBinding CountMatchdays}" />
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Disablable}" Text="{my:Resource Items, Casing=LowerCase}" />
+            </my:SimpleStackPanel>
+        </Grid>
+
+        <!-- Date Rules -->
+        <DockPanel Grid.Row="4">
+            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation}"
+                               Margin="{StaticResource MyNet.Margins.Medium.Bottom}"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Stretch"
+                               my:IconAssist.Icon="{my:Icon Kind=Plus}"
+                               DockPanel.Dock="Top"
+                               PlacementMode="BottomAndAlignRightEdges"
+                               PopupPadding="0"
+                               ToggleContent="{my:Resource AddRule}">
+                <my:Submenu MaxHeight="300" ItemsSource="{Binding AvailableRules}">
+                    <my:Submenu.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
+                            <Setter Property="Command" Value="{Binding Data.AddRuleCommand, Source={StaticResource Proxy}}" />
+                            <Setter Property="CommandParameter" Value="{Binding}" />
+                            <Setter Property="Header" Value="{my:Translation DisplayName.Value}" />
+                        </Style>
+                    </my:Submenu.ItemContainerStyle>
+                </my:Submenu>
+            </my:DropDownButton>
+            <ItemsControl ItemsSource="{Binding Rules}" Validation.ErrorTemplate="{x:Null}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Padding="{StaticResource MyNet.Margins.Default}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <ContentControl Content="{Binding}" />
+
+                                <!-- Delete -->
+                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                        Grid.Column="2"
+                                        Command="{Binding Data.RemoveRuleCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=Trash}"
+                                        ToolTip="{my:Resource Remove}" />
+                            </Grid>
+                        </my:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DockPanel>
+
+        <!-- Time Rules -->
+        <DockPanel Grid.Row="4" Grid.Column="2">
+            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation}"
+                               Margin="{StaticResource MyNet.Margins.Medium.Bottom}"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Stretch"
+                               my:IconAssist.Icon="{my:Icon Kind=Plus}"
+                               DockPanel.Dock="Top"
+                               PlacementMode="BottomAndAlignRightEdges"
+                               PopupPadding="0"
+                               ToggleContent="{my:Resource AddTimeRule}">
+                <my:Submenu MaxHeight="300" ItemsSource="{Binding AvailableTimeRules}">
+                    <my:Submenu.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
+                            <Setter Property="Command" Value="{Binding Data.AddTimeRuleCommand, Source={StaticResource Proxy}}" />
+                            <Setter Property="CommandParameter" Value="{Binding}" />
+                            <Setter Property="Header" Value="{my:Translation DisplayName.Value}" />
+                        </Style>
+                    </my:Submenu.ItemContainerStyle>
+                </my:Submenu>
+            </my:DropDownButton>
+            <my:SimpleStackPanel>
+                <ItemsControl ItemsSource="{Binding TimeRules}" Validation.ErrorTemplate="{x:Null}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Padding="{StaticResource MyNet.Margins.Default}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            Grid.Column="0"
+                                            Command="{Binding Data.MoveUpTimeRuleCommand, Source={StaticResource Proxy}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=ChevronUp}"
+                                            ToolTip="{my:Resource MoveUp}" />
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            Grid.Column="1"
+                                            Command="{Binding Data.MoveDownTimeRuleCommand, Source={StaticResource Proxy}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=ChevronDown}"
+                                            ToolTip="{my:Resource MoveDown}" />
+
+                                    <ContentControl Grid.Column="3" Content="{Binding}" />
+
+                                    <!-- Delete -->
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            Grid.Column="5"
+                                            Command="{Binding Data.RemoveTimeRuleCommand, Source={StaticResource Proxy}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=Trash}"
+                                            ToolTip="{my:Resource Remove}" />
+                                </Grid>
+                            </my:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Text="{my:Resource TakeDefaultTime}" />
+            </my:SimpleStackPanel>
+        </DockPanel>
+    </Grid>
+</UserControl>

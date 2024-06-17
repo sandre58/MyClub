@@ -4,20 +4,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
-using MyNet.Observable.Translatables;
+using MyNet.UI.Collections;
 using MyNet.Utilities;
-using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {
     internal class EditableSchedulingMatchViewModel : EditableWrapper<MatchViewModel>, IAppointment
     {
-        private readonly ThreadSafeObservableCollection<SchedulingConflict> _conflicts = [];
+        private readonly UiObservableCollection<SchedulingConflict> _conflicts = [];
 
         public EditableSchedulingMatchViewModel(MatchViewModel item) : base(item)
         {

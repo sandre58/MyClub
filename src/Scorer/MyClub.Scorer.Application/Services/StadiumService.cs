@@ -13,10 +13,8 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class StadiumService(IStadiumRepository repository, AvailibilityCheckingService matchValidationService) : CrudService<Stadium, StadiumDto, IStadiumRepository>(repository)
+    public class StadiumService(IStadiumRepository repository) : CrudService<Stadium, StadiumDto, IStadiumRepository>(repository)
     {
-        private readonly AvailibilityCheckingService _matchValidationService = matchValidationService;
-
         protected override Stadium CreateEntity(StadiumDto dto) => new(dto.Name.OrEmpty(), dto.Ground) { Address = dto.Address };
 
         protected override void UpdateEntity(Stadium entity, StadiumDto dto)
@@ -51,7 +49,5 @@ namespace MyClub.Scorer.Application.Services
 
             Save(itemsToSave);
         }
-
-        protected override void OnCollectionChanged() => _matchValidationService.CheckAllConflicts();
     }
 }

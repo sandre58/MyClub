@@ -22,7 +22,7 @@ namespace MyClub.Scorer.Wpf.Services
         where TViewModel : IIdentifiable<Guid>
         where TService : ICrudService
     {
-        public TService Service { get; }
+        protected TService Service { get; }
 
         protected IViewModelLocator ViewModelLocator { get; }
 

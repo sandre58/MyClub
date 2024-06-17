@@ -5,17 +5,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.OverviewTab
 {
     internal class OverviewAttendancesViewModel : ObservableObject
     {
-        private readonly ThreadSafeObservableCollection<PlayerTrainingStatisticsViewModel> _mostAttendances = [];
-        private readonly ThreadSafeObservableCollection<PlayerTrainingStatisticsViewModel> _leastAttendances = [];
+        private readonly UiObservableCollection<PlayerTrainingStatisticsViewModel> _mostAttendances = [];
+        private readonly UiObservableCollection<PlayerTrainingStatisticsViewModel> _leastAttendances = [];
 
         public ReadOnlyObservableCollection<PlayerTrainingStatisticsViewModel> MostAttendances { get; }
 

@@ -28,13 +28,12 @@ using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Infrastructure.Packaging;
 using MyClub.Scorer.Infrastructure.Packaging.Services;
 using MyClub.Scorer.Infrastructure.Repositories;
-using MyClub.Scorer.Plugins.Contracts;
 using MyClub.Scorer.Wpf.Configuration;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Factories;
 using MyClub.Scorer.Wpf.Services.Handlers;
+using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
-using MyClub.Scorer.Wpf.Services.Providers.Fakes;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.BracketPage;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
@@ -80,7 +79,6 @@ using MyNet.Utilities.Logging;
 using MyNet.Utilities.Logging.NLog;
 using MyNet.Utilities.Mail;
 using MyNet.Utilities.Mail.Smtp;
-using MyNet.Utilities.Plugins;
 using MyNet.Utilities.Progress;
 using MyNet.Wpf.Busy;
 using MyNet.Wpf.Commands;
@@ -165,14 +163,14 @@ namespace MyClub.Scorer.Wpf
                 // Domain Services
                 .AddScoped(CreateProjectFactory)
                 .AddScoped<IUserRepository>(x => x.GetRequiredService<RegistryAuthenticationService>())
-                .AddScoped<IProjectRepository, ProjectRepository>()
+                .AddSingleton<IProjectRepository, ProjectRepository>()
                 .AddScoped<ITeamRepository, TeamRepository>()
                 .AddScoped<IStadiumRepository, StadiumRepository>()
                 .AddScoped<IPlayerRepository, PlayerRepository>()
                 .AddScoped<IManagerRepository, ManagerRepository>()
                 .AddScoped<IMatchdayRepository, MatchdayRepository>()
                 .AddScoped<IMatchRepository, MatchRepository>()
-                .AddScoped<IMatchDomainService, MatchDomainService>()
+                .AddScoped<IAvailibilityCheckingDomainService, AvailibilityCheckingDomainService>()
 
                 // Application Services
                 .AddScoped<ProjectService>()
@@ -205,6 +203,9 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<MatchdayPresentationService>()
                 .AddScoped<MatchPresentationService>()
                 .AddScoped<LeaguePresentationService>()
+
+                // Managers
+                .AddSingleton<ProjectManager>()
 
                 // Presentation source Providers
                 .AddSingleton<RecentFilesProvider>()
@@ -241,6 +242,7 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<StadiumEditionViewModel>()
                 .AddSingleton<PlayerEditionViewModel>()
                 .AddSingleton<MatchdayEditionViewModel>()
+                .AddSingleton<MatchdaysEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
                 .AddSingleton<RankingRulesEditionViewModel>()
                 // ViewModels - Other dialogs
@@ -328,7 +330,7 @@ namespace MyClub.Scorer.Wpf
                     if (innerException is ResourceReferenceKeyNotFoundException or XamlParseException) return;
 
                     if (await DialogManager.ShowErrorAsync(MessageResources.UnexpectedXError.FormatWith(e.Message), buttons: MessageBoxResultOption.OkCancel).ConfigureAwait(false) == MyNet.UI.Dialogs.MessageBoxResult.Cancel)
-                        MyNet.Observable.Threading.Scheduler.UI.Schedule(() => Current.Shutdown(-1));
+                        MyNet.UI.Threading.Scheduler.UI.Schedule(() => Current.Shutdown(-1));
                     break;
             }
         }

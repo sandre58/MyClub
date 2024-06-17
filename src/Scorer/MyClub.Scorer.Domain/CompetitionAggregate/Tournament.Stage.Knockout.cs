@@ -5,13 +5,14 @@ using System;
 using System.Collections.ObjectModel;
 using MyNet.Utilities.Extensions;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class KnockoutStage : Knockout, IStage
     {
         private string _name = string.Empty;
-        private readonly ObservableCollection<ITeam> _teams = [];
+        private readonly ExtendedObservableCollection<ITeam> _teams = [];
 
         public KnockoutStage(string name, IStage? parent = null, Guid? id = null) : base(id)
         {

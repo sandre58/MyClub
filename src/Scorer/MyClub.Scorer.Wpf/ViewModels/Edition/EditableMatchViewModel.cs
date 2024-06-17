@@ -7,14 +7,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
-using MyNet.Utilities;
-using MyNet.Observable.Collections.Providers;
-using MyNet.Observable;
-using MyNet.Observable.Attributes;
-using MyNet.UI.Resources;
-using MyNet.Observable.Threading;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.Observable.Attributes;
+using MyNet.Observable.Collections.Providers;
+using MyNet.UI.Resources;
+using MyNet.UI.Threading;
+using MyNet.Utilities;
+using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
@@ -40,6 +41,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [IsRequired]
         [Display(Name = nameof(AwayTeam), ResourceType = typeof(MyClubResources))]
+        [AlsoNotifyFor(nameof(HomeTeam))]
         public TeamViewModel? AwayTeam { get; set; }
 
         [CanBeValidated(false)]
@@ -81,7 +83,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public void InvertTeams()
         {
             if (IsReadOnly) return;
-            (HomeTeam, AwayTeam) = (AwayTeam, HomeTeam);
+
+            using (ValidatePropertySuspender.Suspend())
+                (HomeTeam, AwayTeam) = (AwayTeam, HomeTeam);
         }
     }
 }

@@ -80,7 +80,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
 
             if (parent.GetCompetition() is LeagueViewModel league)
             {
-                Disposables.Add(league.SubscribeOnRankingRefreshed(() =>
+                Disposables.Add(league.WhenRankingChanged(() =>
                 {
                     HomeRank = league.Ranking.GetRow(HomeTeam)?.Rank ?? 0;
                     AwayRank = league.Ranking.GetRow(AwayTeam)?.Rank ?? 0;

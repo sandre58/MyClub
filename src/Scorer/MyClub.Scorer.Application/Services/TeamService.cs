@@ -4,19 +4,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyNet.Utilities;
+using MyClub.Application.Services;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
-using MyClub.Application.Services;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class TeamService(ITeamRepository repository, IStadiumRepository stadiumRepository, AvailibilityCheckingService matchValidationService) : CrudService<Team, TeamDto, ITeamRepository>(repository)
+    public class TeamService(ITeamRepository repository, IStadiumRepository stadiumRepository) : CrudService<Team, TeamDto, ITeamRepository>(repository)
     {
         private readonly IStadiumRepository _stadiumRepository = stadiumRepository;
-        private readonly AvailibilityCheckingService _matchValidationService = matchValidationService;
 
         protected override Team CreateEntity(TeamDto dto)
         {
@@ -103,7 +102,5 @@ namespace MyClub.Scorer.Application.Services
 
             Save(itemsToSave);
         }
-
-        protected override void OnCollectionChanged() => _matchValidationService.CheckAllConflicts();
     }
 }

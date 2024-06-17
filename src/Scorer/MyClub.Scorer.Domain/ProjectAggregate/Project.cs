@@ -11,6 +11,7 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.ProjectAggregate
 {
@@ -65,8 +66,8 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
     public abstract class Project : AuditableEntity
     {
         private string _name = string.Empty;
-        private readonly ObservableCollection<Stadium> _stadiums = [];
-        private readonly ObservableCollection<Team> _teams = [];
+        private readonly ExtendedObservableCollection<Stadium> _stadiums = [];
+        private readonly ExtendedObservableCollection<Team> _teams = [];
 
         protected Project(CompetitionType type, string name, DateTime startDate, DateTime endDate, byte[]? image = null, Guid? id = null) : base(id)
         {

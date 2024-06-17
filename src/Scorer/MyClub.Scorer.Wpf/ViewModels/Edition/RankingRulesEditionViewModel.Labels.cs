@@ -39,7 +39,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 ]);
         }
 
-        public RanksViewModel Ranks { get; } = new();
+        public RanksListViewModel Ranks { get; } = new();
 
         public ICommand AddOnRankCommand { get; }
 
@@ -147,7 +147,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private void UpdateRanks() => Ranks.Wrappers.ForEach(x => x.Item.Label = Collection.FirstOrDefault(y => y.Range.Contains(x.Item.Item)));
     }
 
-    internal class RanksViewModel : SelectionListViewModel<EditableRankViewModel>
+    internal class RanksListViewModel : SelectionListViewModel<EditableRankViewModel>
     {
         public void Reload(int count) => Collection.Set(EnumerableHelper.Range(1, count, 1).Select(x => new EditableRankViewModel(x)).ToList());
     }

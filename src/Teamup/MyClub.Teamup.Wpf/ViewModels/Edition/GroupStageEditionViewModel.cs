@@ -19,6 +19,7 @@ using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
@@ -57,7 +58,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ThreadSafeObservableCollection<TeamViewModel> AvailableTeams { get; } = [];
+        public UiObservableCollection<TeamViewModel> AvailableTeams { get; } = [];
 
         [IsRequired]
         [Display(Name = nameof(Name), ResourceType = typeof(MyClubResources))]
@@ -78,7 +79,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
         [Display(Name = nameof(EndDate), ResourceType = typeof(MyClubResources))]
         public DateTime? EndDate { get; set; }
 
-        public ThreadSafeObservableCollection<EditableGroupViewModel> Groups { get; } = [];
+        public UiObservableCollection<EditableGroupViewModel> Groups { get; } = [];
 
         [Display(Name = nameof(PointsByGamesWon), ResourceType = typeof(MyClubResources))]
         [IsRequired]
@@ -102,11 +103,11 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [HasUniqueItems]
         [Display(Name = nameof(Penalties), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
+        public UiObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
 
         [HasUniqueItems]
         [Display(Name = nameof(SortingColumns), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableRankLabelViewModel> RankingLabels { get; } = [];
+        public UiObservableCollection<EditableRankLabelViewModel> RankingLabels { get; } = [];
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]

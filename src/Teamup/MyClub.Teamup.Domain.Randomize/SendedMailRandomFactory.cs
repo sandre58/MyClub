@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
-using MyNet.Utilities.Resources;
 using MyClub.Teamup.Domain.Enums;
 using MyClub.Teamup.Domain.SendedMailAggregate;
 using MyClub.CrossCutting.Localization;

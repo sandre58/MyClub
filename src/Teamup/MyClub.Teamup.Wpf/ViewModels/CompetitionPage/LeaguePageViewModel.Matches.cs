@@ -38,7 +38,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionPage
                     matchdayFilter.Initialize(y.Matchdays);
 
                     if (Filters is FiltersViewModel filtersViewModel)
-                        MyNet.Observable.Threading.Scheduler.UI.Schedule(_ => filtersViewModel.Reset());
+                        MyNet.UI.Threading.Scheduler.UI.Schedule(_ => filtersViewModel.Reset());
                 })),
                 GetMatchdayFilter().WhenPropertyChanged(x => x.Value).Subscribe(_ =>
                 {

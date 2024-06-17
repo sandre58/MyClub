@@ -20,11 +20,12 @@ using MyNet.Utilities.Logging;
 using MyNet.Observable.Collections;
 using MyNet.Observable.Collections.Filters;
 using MyNet.Observable.Collections.Sorting;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
 using PropertyChanged;
+using MyNet.UI.Collections;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Entities
 {
@@ -32,7 +33,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
     {
         private readonly TeamsProvider _teamsProvider;
         private readonly ExtendedCollection<MatchViewModel> _matches;
-        private readonly ThreadSafeObservableCollection<TeamViewModel> _teams = [];
+        private readonly UiObservableCollection<TeamViewModel> _teams = [];
         private readonly Subject<bool> _rankingRefreshedSuject = new();
         private readonly Subject<bool> _refreshRankingRequestedSubject = new();
 

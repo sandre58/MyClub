@@ -40,14 +40,12 @@ namespace MyClub.Scorer.Wpf.Services
     internal class ProjectCommandsService(ProjectService projectService,
                                           ProjectInfoProvider projectInfoProvider,
                                           RecentFilesManager recentFilesManager,
-                                          AvailibilityCheckingService matchValidationService,
                                           IAutoSaveService autoSaveService)
     {
         private readonly IAutoSaveService _autoSaveService = autoSaveService;
         private readonly ProjectService _projectService = projectService;
         private readonly ProjectInfoProvider _projectInfoProvider = projectInfoProvider;
         private readonly RecentFilesManager _recentFilesManager = recentFilesManager;
-        private readonly AvailibilityCheckingService _matchValidationService = matchValidationService;
         private readonly object _lock = new();
 
         public virtual bool IsEnabled() => !AppBusyManager.MainBusyService.IsBusy && !DialogManager.HasOpenedDialogs;
@@ -183,7 +181,7 @@ namespace MyClub.Scorer.Wpf.Services
             var vm = ViewModelManager.Get<ProjectEditionViewModel>();
             vm.Mode = ScreenMode.Creation;
 
-            MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(async _ =>
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(async _ =>
             {
                 if ((await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false)).IsTrue())
                 {
@@ -253,7 +251,7 @@ namespace MyClub.Scorer.Wpf.Services
             if (!string.IsNullOrEmpty(filename))
                 AddCurrentFileInRecentFiles(project.Name, filename);
 
-            _matchValidationService.CheckAllConflicts();
+            Messenger.Default.Send(new CheckConflictsRequestMessage());
         }
 
         public async Task<bool> SaveAsync()
@@ -265,7 +263,7 @@ namespace MyClub.Scorer.Wpf.Services
             {
                 bool? result = null;
                 string? filenameTemp = null;
-                MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(_ =>
+                MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(_ =>
                 {
                     lock (_lock)
                         (result, filenameTemp) = AskSaveFilenameAsync().ConfigureAwait(false).GetAwaiter().GetResult();

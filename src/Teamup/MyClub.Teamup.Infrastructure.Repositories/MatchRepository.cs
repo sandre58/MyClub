@@ -26,6 +26,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Match AddCore(Match item) => item;
 
-        protected override bool DeleteCore(Match item) => CurrentProject.Competitions.Any(x => x.RemoveMatch(item));
+        protected override IEnumerable<Match> AddRangeCore(IEnumerable<Match> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Match item) => CurrentProject.Competitions.Any(x => x.RemoveMatch(item));
+
+        protected override int RemoveRangeCore(IEnumerable<Match> items) => items.Count(RemoveCore);
     }
 }

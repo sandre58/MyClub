@@ -3,10 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using MyClub.Domain;
-using MyClub.Domain.Services;
-using MyClub.Teamup.Domain.ProjectAggregate;
 using MyNet.Utilities;
+using MyClub.Domain;
+using MyClub.Teamup.Domain.ProjectAggregate;
+using MyClub.Domain.Services;
+using System.Linq;
 
 namespace MyClub.Teamup.Infrastructure.Repositories
 {
@@ -38,11 +39,26 @@ namespace MyClub.Teamup.Infrastructure.Repositories
             return added;
         }
 
+        public IEnumerable<T> InsertRange(IEnumerable<T> items)
+        {
+            var added = AddRangeCore(items).ToList();
+
+            added.ForEach(AuditCreatedItem);
+
+            return added;
+        }
+
         protected abstract T AddCore(T item);
 
-        public bool Remove(Guid id) => DeleteCore(GetByIdOrThrow(id));
+        protected abstract IEnumerable<T> AddRangeCore(IEnumerable<T> items);
 
-        protected abstract bool DeleteCore(T item);
+        public bool Remove(Guid id) => RemoveCore(GetByIdOrThrow(id));
+
+        public int RemoveRange(IEnumerable<Guid> ids) => RemoveRangeCore(ids.Select(GetByIdOrThrow).ToList());
+
+        protected abstract bool RemoveCore(T item);
+
+        protected abstract int RemoveRangeCore(IEnumerable<T> items);
 
         public T Update(T item)
         {
@@ -51,6 +67,15 @@ namespace MyClub.Teamup.Infrastructure.Repositories
             AuditUpdatedItem(newItem);
 
             return newItem;
+        }
+
+        public IEnumerable<T> UpdateRange(IEnumerable<T> items)
+        {
+            var newItems = items.Select(x => UpdateCore(GetByIdOrThrow(x.Id), x)).ToList();
+
+            newItems.ForEach(AuditUpdatedItem);
+
+            return newItems;
         }
 
         protected virtual T UpdateCore(T item, T newItem) => item;

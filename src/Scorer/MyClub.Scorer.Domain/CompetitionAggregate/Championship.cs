@@ -11,13 +11,14 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
+using MyNet.Utilities.Collections;
 using MyNet.Utilities.Sequences;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public abstract class Championship : AuditableEntity
     {
-        private readonly ObservableCollection<ITeam> _teams = [];
+        private readonly ExtendedObservableCollection<ITeam> _teams = [];
         private readonly Dictionary<ITeam, int> _penaltyPoints = [];
 
         protected Championship(Guid? id = null) : base(id) => Teams = new(_teams);

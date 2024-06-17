@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MyClub.Domain.Services;
 using MyClub.Teamup.Domain.SendedMailAggregate;
 using MyClub.Teamup.Domain.ProjectAggregate;
+using System.Linq;
 
 namespace MyClub.Teamup.Infrastructure.Repositories
 {
@@ -14,6 +15,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override SendedMail AddCore(SendedMail item) => CurrentProject.AddSendedMail(item);
 
-        protected override bool DeleteCore(SendedMail item) => CurrentProject.RemoveSendedMail(item);
+        protected override IEnumerable<SendedMail> AddRangeCore(IEnumerable<SendedMail> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(SendedMail item) => CurrentProject.RemoveSendedMail(item);
+
+        protected override int RemoveRangeCore(IEnumerable<SendedMail> items) => items.Count(RemoveCore);
     }
 }

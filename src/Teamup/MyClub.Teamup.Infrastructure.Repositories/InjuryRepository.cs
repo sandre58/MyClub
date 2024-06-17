@@ -26,6 +26,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Injury AddCore(Injury item) => item;
 
-        protected override bool DeleteCore(Injury item) => CurrentProject.Players.Any(x => x.Player.RemoveInjury(item.Id));
+        protected override IEnumerable<Injury> AddRangeCore(IEnumerable<Injury> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Injury item) => CurrentProject.Players.Any(x => x.Player.RemoveInjury(item.Id));
+
+        protected override int RemoveRangeCore(IEnumerable<Injury> items) => items.Count(RemoveCore);
     }
 }

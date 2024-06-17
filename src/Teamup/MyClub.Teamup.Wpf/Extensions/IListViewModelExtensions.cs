@@ -18,11 +18,11 @@ namespace MyClub.Teamup.Wpf.Extensions
             if (listViewModel.Filters is ExtendedFiltersViewModel extendedFiltersViewModel)
             {
                 extendedFiltersViewModel.SetDefaultFilters(defaultFilters);
-                MyNet.Observable.Threading.Scheduler.UI.Schedule(extendedFiltersViewModel.Reset);
+                MyNet.UI.Threading.Scheduler.UI.Schedule(extendedFiltersViewModel.Reset);
             }
             else if (listViewModel.Filters is FiltersViewModel filtersViewModel)
             {
-                MyNet.Observable.Threading.Scheduler.UI.Schedule(() => filtersViewModel.Set(defaultFilters));
+                MyNet.UI.Threading.Scheduler.UI.Schedule(() => filtersViewModel.Set(defaultFilters));
             }
         }
     }

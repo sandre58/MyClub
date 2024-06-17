@@ -9,14 +9,14 @@ using System.Text;
 using MyClub.Domain.Enums;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Entities
 {
     internal class RankingRowViewModel : ObservableObject, IIdentifiable<Guid>
     {
-        private readonly ThreadSafeObservableCollection<MatchViewModel> _lastMatches = [];
+        private readonly UiObservableCollection<MatchViewModel> _lastMatches = [];
 
         public RankingRowViewModel(TeamViewModel team)
         {

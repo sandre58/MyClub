@@ -124,7 +124,7 @@ namespace MyClub.Teamup.Wpf.Services
                 }
             }
 
-            MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() => NavigationManager.NavigateTo<CommunicationPageViewModel>(parameters));
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => NavigationManager.NavigateTo<CommunicationPageViewModel>(parameters));
         }
 
         public static bool NavigateToInjuryPage(InjuryViewModel item) => NavigateToItem<PlayerPageViewModel>(item);

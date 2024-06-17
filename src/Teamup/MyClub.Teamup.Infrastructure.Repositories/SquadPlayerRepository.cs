@@ -18,6 +18,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override SquadPlayer AddCore(SquadPlayer item) => CurrentProject.AddPlayer(item);
 
-        protected override bool DeleteCore(SquadPlayer item) => CurrentProject.RemovePlayer(item);
+        protected override IEnumerable<SquadPlayer> AddRangeCore(IEnumerable<SquadPlayer> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(SquadPlayer item) => CurrentProject.RemovePlayer(item);
+
+        protected override int RemoveRangeCore(IEnumerable<SquadPlayer> items) => items.Count(RemoveCore);
     }
 }

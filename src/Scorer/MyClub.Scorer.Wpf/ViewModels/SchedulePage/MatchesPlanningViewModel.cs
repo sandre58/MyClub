@@ -22,11 +22,11 @@ using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
-using MyNet.Observable.Threading;
 using MyNet.Observable.Translatables;
 using MyNet.UI.Commands;
 using MyNet.UI.Selection;
 using MyNet.UI.Selection.Models;
+using MyNet.UI.Threading;
 using MyNet.UI.Toasting;
 using MyNet.UI.Toasting.Settings;
 using MyNet.UI.ViewModels;
@@ -355,7 +355,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public void Reset()
         {
-            if (Item.State is MatchState.InProgress or MatchState.Suspended or MatchState.Played)
+            if (Item.HasResult)
             {
                 HomeScore.Value = Item.HomeScore;
                 AwayScore.Value = Item.AwayScore;

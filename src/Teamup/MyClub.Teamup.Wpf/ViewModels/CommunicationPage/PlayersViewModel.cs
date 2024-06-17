@@ -13,7 +13,7 @@ using MyClub.Domain;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyNet.DynamicData.Extensions;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyNet.UI.Commands;
 using MyNet.UI.Selection;
 using MyNet.UI.Selection.Models;

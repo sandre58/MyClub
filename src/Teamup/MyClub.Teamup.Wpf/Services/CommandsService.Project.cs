@@ -181,7 +181,7 @@ namespace MyClub.Teamup.Wpf.Services
             var vm = ViewModelManager.Get<ProjectEditionViewModel>();
             vm.Mode = ScreenMode.Creation;
 
-            MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(async _ =>
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(async _ =>
             {
                 if ((await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false)).IsTrue())
                 {
@@ -235,7 +235,7 @@ namespace MyClub.Teamup.Wpf.Services
             {
                 bool? result = null;
                 string? filenameTemp = null;
-                MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(_ =>
+                MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(_ =>
                 {
                     lock (_lock)
                         (result, filenameTemp) = AskSaveFilenameAsync().ConfigureAwait(false).GetAwaiter().GetResult();

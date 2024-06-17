@@ -18,7 +18,7 @@ using MyNet.UI.ViewModels.List;
 using MyNet.Wpf.Schedulers;
 using MyNet.Utilities;
 using MyNet.Observable;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;

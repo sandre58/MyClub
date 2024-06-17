@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -11,19 +10,19 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
-using MyNet.UI.Commands;
-using MyNet.Wpf.Extensions;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable.Attributes;
-using MyNet.UI.Resources;
+using MyClub.CrossCutting.Localization;
+using MyClub.Domain.Enums;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;
-using MyClub.CrossCutting.Localization;
 using MyClub.Teamup.Domain.CompetitionAggregate;
-using MyClub.Domain.Enums;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
+using MyNet.Observable.Attributes;
+using MyNet.UI.Collections;
+using MyNet.UI.Commands;
+using MyNet.UI.Resources;
+using MyNet.Utilities;
+using MyNet.Wpf.Extensions;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Edition
 {
@@ -50,7 +49,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
             var teamsChanged = new Subject<Func<EditableTeamViewModel, bool>>();
             TeamSelectionViewModel = new(teamPresentationService, teamsChanged);
 
-            ValidationRules.AddNotNull<CompetitionEditionViewModel<T, TSeason, TDto>, ThreadSafeObservableCollection<EditableTeamViewModel>>(x => x.Teams, MyClubResources.AnySelectedSquadsError, x => x.Any(x => x.IsMyTeam));
+            ValidationRules.AddNotNull<CompetitionEditionViewModel<T, TSeason, TDto>, UiObservableCollection<EditableTeamViewModel>>(x => x.Teams, MyClubResources.AnySelectedSquadsError, x => x.Any(x => x.IsMyTeam));
             ValidationRules.AddNotNull<CompetitionEditionViewModel<T, TSeason, TDto>, DateTime?>(x => x.StartDate, MessageResources.FieldStartDateMustBeLowerOrEqualsThanEndDateError, x => x.HasValue && EndDate.HasValue && x.Value.BeginningOfDay() <= EndDate.Value.EndOfDay());
             ValidationRules.AddNotNull<CompetitionEditionViewModel<T, TSeason, TDto>, DateTime?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => x.HasValue && StartDate.HasValue && StartDate.Value.BeginningOfDay() <= x.Value.EndOfDay());
 
@@ -101,7 +100,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [HasUniqueItems]
         [Display(Name = nameof(Teams), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableTeamViewModel> Teams { get; } = [];
+        public UiObservableCollection<EditableTeamViewModel> Teams { get; } = [];
 
         public EditableMatchFormatViewModel MatchFormat { get; } = new();
 

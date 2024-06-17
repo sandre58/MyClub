@@ -24,6 +24,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override IRound AddCore(IRound item) => item;
 
-        protected override bool DeleteCore(IRound item) => CurrentProject.Competitions.OfType<CupSeason>().Any(x => x.RemoveRound(item.Id));
+        protected override IEnumerable<IRound> AddRangeCore(IEnumerable<IRound> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(IRound item) => CurrentProject.Competitions.OfType<CupSeason>().Any(x => x.RemoveRound(item.Id));
+
+        protected override int RemoveRangeCore(IEnumerable<IRound> items) => items.Count(RemoveCore);
     }
 }

@@ -12,7 +12,6 @@ using MyClub.DatabaseContext.Domain.ClubAggregate;
 using MyClub.DatabaseContext.Domain.CompetitionAggregate;
 using MyClub.DatabaseContext.Infrastructure.Data;
 using MyClub.Teamup.Plugins.Contracts.Dtos;
-using MyNet.Utilities.Sequences;
 
 namespace MyClub.Plugins.Teamup.Import.Database
 {

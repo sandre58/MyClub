@@ -137,7 +137,7 @@ internal class ApplicationHostService : IHostedService
         BusyManager.Initialize(busyServiceFactory);
         ProgressManager.Initialize(progresser);
         CommandsManager.Initialize(commandFactory);
-        MyNet.Observable.Threading.Scheduler.Initialize(uiScheduler);
+        MyNet.UI.Threading.Scheduler.Initialize(uiScheduler);
         AppBusyManager.Initialize(busyServiceFactory);
         notificationsManager.AddHandler(mailConnectionHandler)
                             .AddHandler(fileNotificationHandler)
@@ -237,7 +237,7 @@ internal class ApplicationHostService : IHostedService
 
         NavigationCommandsService.NavigateToHomePage();
 
-        MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
+        MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
         {
             // Close spash screen
             splashScreen.Closed -= OnWindowClosed;
@@ -340,7 +340,7 @@ internal class ApplicationHostService : IHostedService
         e.Cancel = true;
         if (await _projectCommandsService.EnsureProjectIsSavedAsync().ConfigureAwait(false))
         {
-            MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() => Shutdown());
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => Shutdown());
         }
     }
 }

@@ -8,6 +8,7 @@ using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Helpers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Domain.MatchAggregate;
 
 namespace MyClub.Scorer.Wpf.Filters
 {

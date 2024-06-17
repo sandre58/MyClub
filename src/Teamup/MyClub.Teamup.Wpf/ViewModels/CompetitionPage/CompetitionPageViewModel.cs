@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.Reactive.Subjects;
-using DynamicData;
 using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.Wpf.Schedulers;
 using MyNet.Observable.Collections;

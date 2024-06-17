@@ -4,16 +4,16 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.OverviewTab
 {
     internal class OverviewInjuriesViewModel : ObservableObject
     {
-        private readonly ThreadSafeObservableCollection<InjuryViewModel> _injuries = [];
+        private readonly UiObservableCollection<InjuryViewModel> _injuries = [];
 
         public ReadOnlyObservableCollection<InjuryViewModel> Injuries { get; }
 

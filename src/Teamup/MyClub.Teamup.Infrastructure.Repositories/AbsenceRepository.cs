@@ -25,6 +25,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Absence AddCore(Absence item) => item;
 
-        protected override bool DeleteCore(Absence item) => CurrentProject.Players.Any(x => x.Player.RemoveAbsence(item.Id));
+        protected override IEnumerable<Absence> AddRangeCore(IEnumerable<Absence> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Absence item) => CurrentProject.Players.Any(x => x.Player.RemoveAbsence(item.Id));
+
+        protected override int RemoveRangeCore(IEnumerable<Absence> items) => items.Count(RemoveCore);
     }
 }

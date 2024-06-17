@@ -14,18 +14,20 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Collections;
-using MyNet.Observable.Threading;
 using MyNet.Observable.Translatables;
+using MyNet.UI.Collections;
 using MyNet.UI.Resources;
+using MyNet.UI.Threading;
 using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
+using MyNet.Utilities.Messaging;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
@@ -34,7 +36,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
         private readonly ReadOnlyObservableCollection<IMatchParent> _parents;
-        private readonly ThreadSafeObservableCollection<TeamViewModel> _availableTeams = [];
+        private readonly UiObservableCollection<TeamViewModel> _availableTeams = [];
 
         public MatchEditionViewModel(MatchService matchService,
                                      AvailibilityCheckingService availibilityCheckingService,
@@ -306,7 +308,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private AvailabilityCheck CheckTeamsAvaibility(DateTime date)
             => HomeTeam is null && AwayTeam is null
                 ? AvailabilityCheck.Unknown
-                : _availibilityCheckingService.GetTeamsAvaibility(new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), date, MatchFormat.Create(), [ItemId ?? Guid.Empty]);
+                : _availibilityCheckingService.GetTeamsAvaibility(date, new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), MatchFormat.Create(), [ItemId ?? Guid.Empty]);
 
         private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, DateTime date)
             => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, date, MatchFormat.Create(), [ItemId ?? Guid.Empty]);
@@ -409,6 +411,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 PostponedTime = item.OriginDate == item.Date ? null : item.Date.ToLocalTime().TimeOfDay;
                 PostponedState = !PostponedDate.HasValue && item.State != MatchState.Postponed ? PostponedState.None : PostponedDate.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
             }
+        }
+
+        protected override void SaveCore()
+        {
+            base.SaveCore();
+            Messenger.Default.Send(new CheckConflictsRequestMessage());
         }
     }
 

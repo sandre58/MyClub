@@ -15,6 +15,7 @@ using MyClub.Teamup.Application.Services;
 using MyClub.CrossCutting.Localization;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.UI.Collections;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Edition
 {
@@ -75,7 +76,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [HasUniqueItems]
         [Display(Name = nameof(Teams), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<TeamViewModel> Teams { get; } = [];
+        public UiObservableCollection<TeamViewModel> Teams { get; } = [];
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]

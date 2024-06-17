@@ -10,21 +10,21 @@ using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using DynamicData.PLinq;
-using MyNet.UI.Commands;
-using MyNet.Utilities;
-using MyNet.DynamicData.Extensions;
-using MyNet.Observable.Collections;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.DynamicData.Extensions;
+using MyNet.UI.Collections;
+using MyNet.UI.Commands;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Entities
 {
     internal class GroupStageViewModel : RoundViewModel, IMatchdayParent
     {
-        private readonly ThreadSafeObservableCollection<MatchdayViewModel> _matchdays = [];
-        private readonly ThreadSafeObservableCollection<GroupViewModel> _groups = [];
+        private readonly UiObservableCollection<MatchdayViewModel> _matchdays = [];
+        private readonly UiObservableCollection<GroupViewModel> _groups = [];
         private readonly MatchdayPresentationService _matchdayPresentationService;
 
         public GroupStageViewModel(GroupStage item,

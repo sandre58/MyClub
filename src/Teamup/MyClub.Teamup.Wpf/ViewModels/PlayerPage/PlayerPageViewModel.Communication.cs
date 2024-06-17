@@ -8,7 +8,7 @@ using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using MyNet.UI.ViewModels.Workspace;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 

@@ -18,6 +18,7 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Infrastructure.Packaging;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.Services.Handlers;
+using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.Import;
@@ -103,6 +104,7 @@ internal class ApplicationHostService : IHostedService
         RecentFilesService recentFilesService,
         ProjectCommandsService projectCommandsService,
         RecentFilesManager recentFilesManager,
+        ProjectManager _,
         MailConnectionHandler mailConnectionHandler,
         FileNotificationHandler fileNotificationHandler,
         ConflictsValidationHandler conflictsValidationHandler)
@@ -129,7 +131,7 @@ internal class ApplicationHostService : IHostedService
         BusyManager.Initialize(busyServiceFactory);
         ProgressManager.Initialize(progresser);
         CommandsManager.Initialize(commandFactory);
-        MyNet.Observable.Threading.Scheduler.Initialize(uiScheduler);
+        MyNet.UI.Threading.Scheduler.Initialize(uiScheduler);
         AppBusyManager.Initialize(busyServiceFactory);
         notificationsManager.AddHandler(fileNotificationHandler).AddHandler(mailConnectionHandler).AddHandler(conflictsValidationHandler);
 
@@ -215,7 +217,7 @@ internal class ApplicationHostService : IHostedService
 
         NavigationCommandsService.NavigateToHomePage();
 
-        MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
+        MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
         {
             // Close spash screen
             splashScreen.Closed -= OnWindowClosed;
@@ -318,7 +320,7 @@ internal class ApplicationHostService : IHostedService
         e.Cancel = true;
         if (await _projectCommandsService.EnsureProjectIsSavedAsync().ConfigureAwait(false))
         {
-            MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() => Shutdown());
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => Shutdown());
         }
     }
 }

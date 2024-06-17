@@ -17,6 +17,7 @@ using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.UI.Toasting;
 using MyNet.Utilities;
+using MyNet.Utilities.Collections;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Helpers;
 using MyNet.Utilities.IO;

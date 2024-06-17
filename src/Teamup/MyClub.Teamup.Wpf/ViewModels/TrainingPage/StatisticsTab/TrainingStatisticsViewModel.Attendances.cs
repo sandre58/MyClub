@@ -128,7 +128,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.StatisticsTab
         }
 
         private void RefreshHolidays(IEnumerable<DateTime> dates, IEnumerable<HolidaysViewModel> holidays)
-            => MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
+            => MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
             {
                 var sections = UiHelper.HolidaysToSections(dates, holidays).Select(x =>
                 {

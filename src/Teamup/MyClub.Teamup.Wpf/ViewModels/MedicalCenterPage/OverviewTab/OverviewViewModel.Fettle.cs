@@ -4,11 +4,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable;
 using MyClub.Domain.Enums;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.OverviewTab
 {
@@ -24,8 +24,8 @@ namespace MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.OverviewTab
 
         public int Minor { get; private set; }
 
-        private readonly ThreadSafeObservableCollection<PlayerInjuryStatisticsViewModel> _mostUnaivalableOnLast12Months = [];
-        private readonly ThreadSafeObservableCollection<PlayerInjuryStatisticsViewModel> _leastUnaivalableOnLast12Months = [];
+        private readonly UiObservableCollection<PlayerInjuryStatisticsViewModel> _mostUnaivalableOnLast12Months = [];
+        private readonly UiObservableCollection<PlayerInjuryStatisticsViewModel> _leastUnaivalableOnLast12Months = [];
 
         public ReadOnlyObservableCollection<PlayerInjuryStatisticsViewModel> MostUnaivalableOnLast12Months { get; }
         public ReadOnlyObservableCollection<PlayerInjuryStatisticsViewModel> LeastUnaivalableOnLast12Months { get; }

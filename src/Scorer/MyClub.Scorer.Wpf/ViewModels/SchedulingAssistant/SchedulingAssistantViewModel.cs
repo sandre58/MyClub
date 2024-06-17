@@ -2,14 +2,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using DocumentFormat.OpenXml.Spreadsheet;
 using DynamicData;
 using DynamicData.Binding;
-using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.DynamicData.Extensions;
@@ -27,12 +24,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {
     internal class SchedulingAssistantViewModel : EditionViewModel
     {
-        private readonly ProjectService _projectService;
+        private readonly CompetitionInfoProvider _competitionInfoProvider;
         private readonly StadiumsProvider _stadiumsProvider;
 
-        public SchedulingAssistantViewModel(ProjectService projectService, StadiumsProvider stadiumsProvider)
+        public SchedulingAssistantViewModel(CompetitionInfoProvider competitionInfoProvider, StadiumsProvider stadiumsProvider)
         {
-            _projectService = projectService;
+            _competitionInfoProvider = competitionInfoProvider;
             _stadiumsProvider = stadiumsProvider;
             Matches = new SchedulingMatchesListViewModel();
             DropHandler = new((x, y) => x.OfType<EditableSchedulingMatchViewModel>().ForEach(z => z.SetDate(y)),
@@ -185,7 +182,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         private (IEnumerable<SchedulingConflict>, IEnumerable<SchedulingConflict>) GetConflictsBetween(EditableSchedulingMatchViewModel match1, EditableSchedulingMatchViewModel match2)
         {
-            var parameters = _projectService.GetParameters();
             var period1 = new Period(match1.StartDate, match1.EndDate);
             var period2 = new Period(match2.StartDate, match2.EndDate);
 
@@ -207,8 +203,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
                 }
                 else
                 {
-                    var periodWithRestTime1 = new Period(period1.Start, period1.End + parameters.MinimumRestTime);
-                    var periodWithRestTime2 = new Period(period2.Start, period2.End + parameters.MinimumRestTime);
+                    var periodWithRestTime1 = new Period(period1.Start, period1.End + _competitionInfoProvider.MinimumRestTime);
+                    var periodWithRestTime2 = new Period(period2.Start, period2.End + _competitionInfoProvider.MinimumRestTime);
 
                     if (periodWithRestTime1.Intersect(periodWithRestTime2))
                     {
@@ -233,8 +229,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
                 }
                 else
                 {
-                    var periodWithRotationTime1 = new Period(period1.Start, period1.End + parameters.RotationTime);
-                    var periodWithRotationTime2 = new Period(period2.Start, period2.End + parameters.RotationTime);
+                    var periodWithRotationTime1 = new Period(period1.Start, period1.End + _competitionInfoProvider.RotationTime);
+                    var periodWithRotationTime2 = new Period(period2.Start, period2.End + _competitionInfoProvider.RotationTime);
 
                     if (periodWithRotationTime1.Intersect(periodWithRotationTime2))
                     {

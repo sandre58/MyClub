@@ -9,7 +9,6 @@ using DynamicData;
 using DynamicData.Binding;
 using MyNet.Wpf.Controls;
 using MyNet.Observable;
-using MyClub.Teamup.Wpf.Controls;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities.Interfaces;
 

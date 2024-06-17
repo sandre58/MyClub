@@ -1,0 +1,323 @@
+﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using DynamicData;
+using MyClub.CrossCutting.Localization;
+using MyClub.Domain.Enums;
+using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.Humanizer;
+using MyNet.Observable;
+using MyNet.Observable.Attributes;
+using MyNet.UI.Collections;
+using MyNet.UI.Commands;
+using MyNet.UI.Threading;
+using MyNet.UI.Toasting;
+using MyNet.UI.Toasting.Settings;
+using MyNet.UI.ViewModels.Display;
+using MyNet.UI.ViewModels.Edition;
+using MyNet.Utilities;
+using MyNet.Utilities.DateTimes;
+using MyNet.Utilities.Helpers;
+using MyNet.Utilities.Messaging;
+
+namespace MyClub.Scorer.Wpf.ViewModels.Edition
+{
+    internal partial class MatchdaysEditionViewModel : EditionViewModel
+    {
+        private readonly ReadOnlyObservableCollection<MatchdayViewModel> _availableMatchdays;
+        private readonly MatchdaysProvider _matchdaysProvider;
+        private readonly TeamsProvider _teamsProvider;
+        private readonly StadiumsProvider _stadiumsProvider;
+        private readonly CompetitionInfoProvider _competitionInfoProvider;
+        private readonly MatchdayService _matchdayService;
+
+        public MatchdaysEditionViewModel(ProjectInfoProvider projectInfoProvider,
+                                         CompetitionInfoProvider competitionInfoProvider,
+                                         MatchdaysProvider matchdaysProvider,
+                                         TeamsProvider teamsProvider,
+                                         StadiumsProvider stadiumsProvider,
+                                         MatchdayService matchdayService)
+        {
+            _competitionInfoProvider = competitionInfoProvider;
+            _matchdaysProvider = matchdaysProvider;
+            _teamsProvider = teamsProvider;
+            _stadiumsProvider = stadiumsProvider;
+            _matchdayService = matchdayService;
+
+            AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x), x => new Period(StartDisplayDate.GetValueOrDefault(), EndDisplayDate.GetValueOrDefault()).Contains(x));
+            RemoveFromDateCommand = CommandsManager.CreateNotNull<DateTime>(x => Remove(Matchdays.LastOrDefault(y => y.Item.Date == x)), x => Matchdays.Any(y => y.Item.Date == x));
+            RemoveCommand = CommandsManager.CreateNotNull<EditableMatchdayWrapper>(Remove);
+            GenerateCommand = CommandsManager.Create(async () => await GenerateAsync().ConfigureAwait(false));
+            RegenerateCommand = CommandsManager.Create(async () => await GenerateAsync(true).ConfigureAwait(false));
+            ClearCommand = CommandsManager.Create(Clear, () => Matchdays.Count > 0);
+            CollapseAllCommand = CommandsManager.Create(() => Matchdays.ForEach(x => x.IsExpanded = false), () => Matchdays.Any(x => x.IsExpanded));
+            ExpandAllCommand = CommandsManager.Create(() => Matchdays.ForEach(x => x.IsExpanded = true), () => Matchdays.Any(x => !x.IsExpanded));
+            InvertTeamsCommand = CommandsManager.Create(() => Matchdays.ForEach(x => x.Item.InvertTeams()), () => Matchdays.Any(x => x.Item.Matches.Count > 0));
+            AddMatchesCommand = CommandsManager.Create(() => Matchdays.ForEach(x => EnumerableHelper.Iteration(MatchesToAdd!.Value, _ => x.Item.AddMatch())), () => Matchdays.Count > 0 && MatchesToAdd > 0);
+
+            projectInfoProvider.WhenProjectLoaded(_ => Reset());
+
+            Disposables.AddRange(
+            [
+                matchdaysProvider.ConnectById().SortBy(x => x.Date).Bind(out _availableMatchdays).ObserveOn(Scheduler.UI).Subscribe(),
+            ]);
+
+            Reset();
+        }
+
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public ReadOnlyObservableCollection<MatchdayViewModel> AvailableMatchdays => _availableMatchdays;
+
+        public UiObservableCollection<EditableMatchdayWrapper> Matchdays { get; } = [];
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public DateTime? StartDisplayDate { get; private set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public DateTime? EndDisplayDate { get; private set; }
+
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public DisplayModeYear DateSelection { get; } = new();
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public MatchdaysEditionAutomaticViewModel AutomaticViewModel { get; set; } = new();
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public string? NamePattern { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public string? ShortNamePattern { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public TimeSpan? DefaultTime { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public int NextIndex { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool IsAutomatic { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public int? MatchesToAdd { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool InvertTeams { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public bool DuplicationIsEnabled { get; set; }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public MatchdayViewModel? DuplicationStart { get; set; }
+
+        public ICommand AddToDateCommand { get; }
+
+        public ICommand RemoveFromDateCommand { get; }
+
+        public ICommand RemoveCommand { get; }
+
+        public ICommand GenerateCommand { get; }
+
+        public ICommand RegenerateCommand { get; }
+
+        public ICommand ClearCommand { get; }
+
+        public ICommand CollapseAllCommand { get; }
+
+        public ICommand ExpandAllCommand { get; }
+
+        public ICommand AddMatchesCommand { get; }
+
+        public ICommand InvertTeamsCommand { get; }
+
+        protected override bool CanSave() => Matchdays.Count > 0;
+
+        protected override void ResetCore()
+        {
+            var defaultCountMatchdays = Math.Max(1, (_competitionInfoProvider.GetCompetition().GetCountTeams() - 1) * 2 - _competitionInfoProvider.GetCompetition<LeagueViewModel>().Matchdays.Count);
+
+            StartDisplayDate = _competitionInfoProvider.StartDate;
+            EndDisplayDate = _competitionInfoProvider.EndDate;
+            DefaultTime = _competitionInfoProvider.DefaultTime;
+            NamePattern = MyClubResources.MatchdayNamePattern;
+            ShortNamePattern = MyClubResources.MatchdayShortNamePattern;
+            MatchesToAdd = _teamsProvider.Count / 2;
+            AutomaticViewModel.Reset(new Period(_competitionInfoProvider.StartDate, _competitionInfoProvider.EndDate), defaultCountMatchdays);
+            DuplicationIsEnabled = false;
+            DuplicationStart = AvailableMatchdays.FirstOrDefault();
+            InvertTeams = true;
+
+            RefreshCore();
+        }
+
+        protected override void RefreshCore() => Clear();
+
+        private async Task GenerateAsync(bool clear = false)
+            => await ExecuteAsync(() =>
+            {
+                if (AutomaticViewModel.ValidateProperties())
+                {
+                    var dates = AutomaticViewModel.ProvideDates().ToList();
+
+                    if (clear)
+                        Clear();
+
+                    if (dates.Count == 0)
+                        ToasterManager.ShowWarning(MyClubResources.NoDatesGeneratedWarning);
+
+                    dates.ForEach(x => AddToDate(x.Item1, x.Item2));
+                }
+                else
+                {
+                    AutomaticViewModel.GetErrors().ToList().ForEach(x => ToasterManager.ShowError(x, ToastClosingStrategy.AutoClose));
+                }
+            }).ConfigureAwait(false);
+
+        private void Clear()
+        {
+            if (Matchdays.Count > 0)
+            {
+                Matchdays.Clear();
+            }
+            ComputeNextIndex();
+        }
+
+        private void ComputeNextIndex()
+        {
+            var league = _competitionInfoProvider.GetCompetition<LeagueViewModel>();
+            NextIndex = league.Matchdays.Count + 1;
+        }
+
+        private void AddToDate(DateTime date, TimeSpan? time = null)
+        {
+            Matchdays.Add(CreateEditableMatchday(date, time));
+            NextIndex++;
+        }
+
+        private EditableMatchdayWrapper CreateEditableMatchday(DateTime date, TimeSpan? time = null)
+        {
+            var matchday = new EditableMatchdayViewModel(_matchdaysProvider, _stadiumsProvider, _teamsProvider)
+            {
+                Date = date,
+                Time = time ?? DefaultTime,
+                Name = ComputePattern(NamePattern.OrEmpty(), date),
+                ShortName = ComputePattern(ShortNamePattern.OrEmpty(), date),
+            };
+
+            if (DuplicationIsEnabled && DuplicationStart is not null)
+            {
+                matchday.DuplicateMatchday(DuplicationStart, InvertTeams);
+                DuplicationStart = _matchdaysProvider.Next(DuplicationStart);
+            }
+            return new(matchday);
+        }
+
+        private void Remove(EditableMatchdayWrapper? matchday)
+        {
+            if (matchday is not null)
+            {
+                Matchdays.Remove(matchday);
+                NextIndex--;
+            }
+        }
+
+        private string ComputePattern(string pattern, DateTime date)
+        {
+            if (string.IsNullOrEmpty(pattern)) return string.Empty;
+
+            var result = PatternRegex().Replace(pattern, match =>
+            {
+                var value = match.Value.Replace("{", string.Empty).Replace("}", string.Empty);
+                return VariableRegex().Replace(value, match1 =>
+                {
+                    var variable = match1.Groups.ContainsKey(VariableRegexKeyword) ? match1.Groups[VariableRegexKeyword].Value : string.Empty;
+                    var options = match1.Groups.ContainsKey(OptionsRegexKeyword) ? match1.Groups[OptionsRegexKeyword].Value : string.Empty;
+
+                    return variable switch
+                    {
+                        IndexVariableName => options == OrdinalizeOptionName ? NextIndex.Ordinalize().OrEmpty() : NextIndex.ToString(options).OrEmpty(),
+                        DateVariableName => date.ToString(options, CultureInfo.CurrentCulture),
+                        _ => string.Empty,
+                    };
+                });
+            });
+
+            return result;
+        }
+
+        protected override void SaveCore()
+        {
+            _matchdayService.Save(Matchdays.Select(x => new MatchdayDto
+            {
+                Date = x.Item.Date.GetValueOrDefault().ToUtcDateTime(x.Item.Time.GetValueOrDefault()),
+                Name = x.Item.Name,
+                ShortName = x.Item.ShortName,
+                MatchesToAdd = x.Item.Matches.Where(x => !x.Id.HasValue && x.IsValid()).Select(x => new MatchDto
+                {
+                    AwayTeamId = x.AwayTeam!.Id,
+                    HomeTeamId = x.HomeTeam!.Id,
+                    Date = x.Date!.Value.ToUtcDateTime(x.Time!.Value),
+                    Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
+                    {
+                        Id = x.StadiumSelection.SelectedItem.Id,
+                        Name = x.StadiumSelection.SelectedItem.Name,
+                        Ground = x.StadiumSelection.SelectedItem.Ground,
+                        Address = x.StadiumSelection.SelectedItem.Address,
+                    } : null,
+                    State = MatchState.None
+                }).ToList()
+            }).ToList());
+            Messenger.Default.Send(new CheckConflictsRequestMessage());
+            Matchdays.Clear();
+        }
+
+        private const string VariableRegexKeyword = "variable";
+        private const string OptionsRegexKeyword = "options";
+        private const string IndexVariableName = "index";
+        private const string DateVariableName = "date";
+        private const string OrdinalizeOptionName = "R";
+
+        [GeneratedRegex(@"\{[^\{\}]*\}")]
+        private static partial Regex PatternRegex();
+
+        [GeneratedRegex($"(?<{VariableRegexKeyword}>\\w*)(:(?<{OptionsRegexKeyword}>.*))?")]
+        private static partial Regex VariableRegex();
+    }
+
+    internal class EditableMatchdayWrapper : EditableWrapper<EditableMatchdayViewModel>, IAppointment
+    {
+        public EditableMatchdayWrapper(EditableMatchdayViewModel item) : base(item)
+        {
+        }
+
+        public bool IsExpanded { get; set; }
+
+        public DateTime StartDate => Item.Date.GetValueOrDefault().BeginningOfDay();
+
+        public DateTime EndDate => Item.Date.GetValueOrDefault().EndOfDay();
+    }
+}

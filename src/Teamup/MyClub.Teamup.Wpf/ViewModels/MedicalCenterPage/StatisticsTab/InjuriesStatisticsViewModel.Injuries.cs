@@ -10,7 +10,7 @@ using DynamicData.Binding;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
 using MyNet.Observable;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Domain.Enums;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 

@@ -10,6 +10,7 @@ using MyNet.Observable.Attributes;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.UI.Collections;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Edition
 {
@@ -29,7 +30,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ThreadSafeObservableCollection<TeamViewModel> Teams { get; } = [];
+        public UiObservableCollection<TeamViewModel> Teams { get; } = [];
 
         public bool IsSimilar(EditableGroupViewModel? obj) => Name.ToLower().Equals(obj?.Name.ToLower());
 

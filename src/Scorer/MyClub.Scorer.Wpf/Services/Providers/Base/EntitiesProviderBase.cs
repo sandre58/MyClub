@@ -11,19 +11,18 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
+using MyClub.Scorer.Domain.ProjectAggregate;
+using MyNet.Observable.Collections.Providers;
+using MyNet.UI.Collections;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
-using MyNet.Observable.Collections;
-using MyNet.Observable.Collections.Providers;
-using MyClub.Scorer.Domain.ProjectAggregate;
-using MyNet.Utilities.Providers;
 
 namespace MyClub.Scorer.Wpf.Services.Providers.Base
 {
     internal abstract class EntitiesProviderBase<TViewModel> : IDisposable, ISourceProvider<TViewModel>
         where TViewModel : IIdentifiable<Guid>, INotifyPropertyChanged
     {
-        private readonly ThreadSafeObservableCollection<TViewModel> _source = [];
+        private readonly UiObservableCollection<TViewModel> _source = [];
         private readonly IObservable<IChangeSet<TViewModel>> _observable;
         private readonly IObservable<IChangeSet<TViewModel, Guid>> _observableById;
         private bool _disposedValue;
@@ -83,8 +82,6 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
                 })
             );
         }
-
-        public void Reload() { }
 
         protected abstract IObservable<IChangeSet<TViewModel, Guid>> ProvideObservable(IProject project);
 

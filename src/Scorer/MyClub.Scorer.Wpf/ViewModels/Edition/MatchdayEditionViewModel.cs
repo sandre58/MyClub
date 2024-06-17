@@ -7,18 +7,20 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
-using MyNet.UI.Commands;
-using MyNet.Utilities;
-using MyNet.Observable.Collections.Providers;
-using MyNet.Observable.Attributes;
-using MyNet.Observable.Threading;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
-using MyClub.Scorer.Wpf.Services.Providers;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
+using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.Observable.Attributes;
+using MyNet.Observable.Collections.Providers;
+using MyNet.UI.Commands;
+using MyNet.UI.Threading;
+using MyNet.Utilities;
+using MyNet.Utilities.Messaging;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
@@ -236,6 +238,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
                 return result;
             }));
+        }
+
+        protected override void SaveCore()
+        {
+            base.SaveCore();
+            Messenger.Default.Send(new CheckConflictsRequestMessage());
         }
     }
 }

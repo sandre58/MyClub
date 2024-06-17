@@ -6,7 +6,7 @@ using DynamicData;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyNet.Observable.Collections;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 
 namespace MyClub.Teamup.Wpf.Collections
 {

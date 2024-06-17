@@ -9,6 +9,7 @@ using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.UI.Commands;
+using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
@@ -29,6 +30,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                     ranking.WhenPropertyChanged(x => PenaltyPoints).Subscribe(_ => PenaltyPoints = ranking.PenaltyPoints),
                     ranking.WhenPropertyChanged(x => Labels).Subscribe(_ => Labels = ranking.Labels)
                 ]);
+
+            Display.Mode?.CastIn<DisplayModeList>().Reset();
         }
 
         public ICommand NavigateToPastPositionsCommand { get; private set; }

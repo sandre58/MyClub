@@ -12,5 +12,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
         IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches();
 
         IObservable<IChangeSet<IMatchParent, Guid>> ProvideMatchParents();
+
+        int GetCountTeams();
     }
 }

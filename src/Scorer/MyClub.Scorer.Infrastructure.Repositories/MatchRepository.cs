@@ -19,6 +19,12 @@ namespace MyClub.Scorer.Infrastructure.Repositories
 
         public IEnumerable<Match> GetByPeriod(Period period) => GetAll().Where(x => period.Intersect(x.GetPeriod()));
 
+        public IEnumerable<Match> GetMatchesInStadium(Guid stadiumId, Period? period = null)
+            => (period is null ? GetAll() : GetByPeriod(period)).Where(x => x.Stadium is not null && x.Stadium.Id == stadiumId);
+
+        public IEnumerable<Match> GetMatchesOfTeams(IEnumerable<Guid> teamIds, Period? period = null)
+            => (period is null ? GetAll() : GetByPeriod(period)).Where(x => teamIds.Any(y => x.Participate(y)));
+
         public Match Insert(IMatchesProvider parent, DateTime date, ITeam homeTeam, ITeam awayTeam)
         {
             var added = parent.AddMatch(date, homeTeam, awayTeam);
@@ -29,6 +35,10 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         }
         protected override Match AddCore(Match item) => item;
 
-        protected override bool DeleteCore(Match item) => CurrentProject.Competition.GetAllMatchesProviders().Any(x => x.RemoveMatch(item));
+        protected override IEnumerable<Match> AddRangeCore(IEnumerable<Match> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Match item) => CurrentProject.Competition.GetAllMatchesProviders().Any(x => x.RemoveMatch(item));
+
+        protected override int RemoveRangeCore(IEnumerable<Match> items) => items.Count(RemoveCore);
     }
 }

@@ -11,15 +11,16 @@ using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class GroupStage : AuditableEntity, IStage, IMatchdaysProvider
     {
         private string _name = string.Empty;
-        private readonly ObservableCollection<ITeam> _teams = [];
-        private readonly ObservableCollection<Group> _groups = [];
-        private readonly ObservableCollection<Matchday> _matchdays = [];
+        private readonly ExtendedObservableCollection<ITeam> _teams = [];
+        private readonly ExtendedObservableCollection<Group> _groups = [];
+        private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
         public GroupStage(string name, IStage? parent = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
         {

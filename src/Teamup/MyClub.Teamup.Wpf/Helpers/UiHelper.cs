@@ -8,7 +8,6 @@ using System.Windows.Media;
 using MyNet.Wpf.Helpers;
 using MyNet.Utilities;
 using MyClub.Teamup.Domain.Enums;
-using MyClub.Domain.Enums;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 
 namespace MyClub.Teamup.Wpf.Helpers

@@ -3,11 +3,9 @@
 
 using System;
 using System.Threading.Tasks;
-using System.Windows.Media;
 using DynamicData;
 using DynamicData.Binding;
 using MyNet.UI.Commands;
-using MyNet.Wpf.Helpers;
 using MyNet.Utilities;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Wpf.Services;

@@ -25,6 +25,10 @@ namespace MyClub.Scorer.Infrastructure.Repositories
 
         protected override Manager AddCore(Manager item) => item;
 
-        protected override bool DeleteCore(Manager item) => CurrentProject.Teams.Any(x => x.RemoveManager(item));
+        protected override IEnumerable<Manager> AddRangeCore(IEnumerable<Manager> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Manager item) => CurrentProject.Teams.Any(x => x.RemoveManager(item));
+
+        protected override int RemoveRangeCore(IEnumerable<Manager> items) => items.Count(RemoveCore);
     }
 }

@@ -1,21 +1,20 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent
 {
     internal class OverviewTrainingSessionViewModel : ObservableObject
     {
         private readonly int _countItems;
-        private readonly ThreadSafeObservableCollection<TrainingAttendanceViewModel> _bestPerformances = [];
-        private readonly ThreadSafeObservableCollection<TrainingAttendanceViewModel> _worstPerformances = [];
+        private readonly UiObservableCollection<TrainingAttendanceViewModel> _bestPerformances = [];
+        private readonly UiObservableCollection<TrainingAttendanceViewModel> _worstPerformances = [];
 
         public TrainingSessionViewModel? Session { get; private set; }
 

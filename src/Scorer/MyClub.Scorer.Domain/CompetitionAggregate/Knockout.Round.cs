@@ -6,13 +6,14 @@ using System.Collections.ObjectModel;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public abstract class Round : NameEntity, IMatchFormatProvider
     {
-        private readonly ObservableCollection<ITeam> _teams = [];
-        private readonly ObservableCollection<Fixtures> _fixtures = [];
+        private readonly ExtendedObservableCollection<ITeam> _teams = [];
+        private readonly ExtendedObservableCollection<Fixtures> _fixtures = [];
 
         protected Round(string name, string shortName, MatchFormat? matchFormat = null, Guid? id = null) : base(name, shortName, id)
         {

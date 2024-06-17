@@ -10,9 +10,15 @@ namespace MyClub.Domain
     {
         T Insert(T item);
 
+        IEnumerable<T> InsertRange(IEnumerable<T> items);
+
         T Update(T item);
 
+        IEnumerable<T> UpdateRange(IEnumerable<T> items);
+
         bool Remove(Guid id);
+
+        int RemoveRange(IEnumerable<Guid> ids);
 
         T? GetById(Guid id);
 

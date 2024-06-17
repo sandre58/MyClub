@@ -11,7 +11,7 @@ using DynamicData.Binding;
 using MyNet.UI.ViewModels.Workspace;
 using MyNet.Wpf.Extensions;
 using MyNet.Utilities;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Teamup.Domain.Extensions;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;

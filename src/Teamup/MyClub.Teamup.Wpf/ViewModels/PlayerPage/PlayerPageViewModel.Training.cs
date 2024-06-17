@@ -115,7 +115,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.PlayerPage
 
             var dates = Item.TrainingStatistics.PerformedAttendances.Select(x => x.Session.StartDate).OrderBy(x => x);
 
-            MyNet.Observable.Threading.Scheduler.GetUIOrCurrent().Schedule(() => HolidaysSections.Set(UiHelper.HolidaysToSections(dates, _holidaysProvider.Items).Select(x => new AxisSection
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => HolidaysSections.Set(UiHelper.HolidaysToSections(dates, _holidaysProvider.Items).Select(x => new AxisSection
             {
                 SectionOffset = x.start,
                 SectionWidth = x.width,

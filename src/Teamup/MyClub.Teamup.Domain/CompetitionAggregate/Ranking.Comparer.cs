@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using MyClub.Teamup.Domain.Enums;
 using MyClub.Domain.Enums;
 
 namespace MyClub.Teamup.Domain.CompetitionAggregate

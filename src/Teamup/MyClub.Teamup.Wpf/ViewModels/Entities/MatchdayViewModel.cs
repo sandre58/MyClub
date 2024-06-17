@@ -16,7 +16,7 @@ using MyNet.Utilities;
 using MyNet.Observable.Collections;
 using MyNet.Observable.Collections.Filters;
 using MyNet.Observable.Collections.Sorting;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Domain.MatchAggregate;
 using MyClub.Teamup.Wpf.Services;

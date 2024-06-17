@@ -6,17 +6,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
-using MyNet.Utilities;
-using MyNet.Observable.Collections;
-using MyNet.Observable;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.Observable;
+using MyNet.UI.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.OverviewTab
 {
     internal class OverviewTrainingSessionsViewModel : ObservableObject
     {
-        private readonly ThreadSafeObservableCollection<TrainingSessionViewModel> _previousSessions = [];
-        private readonly ThreadSafeObservableCollection<TrainingSessionViewModel> _nextSessions = [];
+        private readonly UiObservableCollection<TrainingSessionViewModel> _previousSessions = [];
+        private readonly UiObservableCollection<TrainingSessionViewModel> _nextSessions = [];
 
         public ReadOnlyObservableCollection<TrainingSessionViewModel> PreviousSessions { get; }
 

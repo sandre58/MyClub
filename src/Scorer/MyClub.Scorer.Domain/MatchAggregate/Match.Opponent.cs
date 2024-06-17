@@ -9,13 +9,14 @@ using MyClub.Domain;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
     public class MatchOpponent : Entity
     {
-        private readonly ObservableCollection<MatchEvent> _events = [];
-        private readonly ObservableCollection<PenaltyShootout> _shootout = [];
+        private readonly ExtendedObservableCollection<MatchEvent> _events = [];
+        private readonly ExtendedObservableCollection<PenaltyShootout> _shootout = [];
 
         public MatchOpponent(ITeam team)
         {

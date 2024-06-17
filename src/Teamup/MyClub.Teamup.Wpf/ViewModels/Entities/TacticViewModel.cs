@@ -9,7 +9,7 @@ using DynamicData;
 using DynamicData.Binding;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyClub.Teamup.Domain.TacticAggregate;
 using MyClub.Teamup.Wpf.Services;
 

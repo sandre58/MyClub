@@ -1,10 +1,7 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using MyNet.UI.Navigation;
 using MyNet.UI.Navigation.Models;
-using MyNet.UI.ViewModels.Display;
-using MyClub.Teamup.Wpf.Enums;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;

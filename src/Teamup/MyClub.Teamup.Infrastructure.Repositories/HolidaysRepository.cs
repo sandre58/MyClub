@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MyClub.Teamup.Domain.HolidaysAggregate;
 using MyClub.Domain.Services;
 using MyClub.Teamup.Domain.ProjectAggregate;
+using System.Linq;
 
 namespace MyClub.Teamup.Infrastructure.Repositories
 {
@@ -14,6 +15,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Holidays AddCore(Holidays item) => CurrentProject.AddHolidays(item);
 
-        protected override bool DeleteCore(Holidays item) => CurrentProject.RemoveHolidays(item);
+        protected override IEnumerable<Holidays> AddRangeCore(IEnumerable<Holidays> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Holidays item) => CurrentProject.RemoveHolidays(item);
+
+        protected override int RemoveRangeCore(IEnumerable<Holidays> items) => items.Count(RemoveCore);
     }
 }

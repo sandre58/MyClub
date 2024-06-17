@@ -19,6 +19,7 @@ using MyClub.Teamup.Domain.Extensions;
 using MyClub.Teamup.Domain.TrainingAggregate;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
+using MyNet.UI.Collections;
 
 namespace MyClub.Teamup.Wpf.ViewModels.Edition
 {
@@ -31,16 +32,16 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
         [CanSetIsModified(false)]
         public TrainingSessionViewModel? Session { get; private set; }
 
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> AvailablePlayers { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> Presences { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> Apologized { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> Absents { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> InSelection { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> InHolidays { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> Resting { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> Unknown { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> Injured { get; private set; } = [];
-        public ThreadSafeObservableCollection<EditableTrainingAttendanceViewModel> AllAttendances { get; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> AvailablePlayers { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> Presences { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> Apologized { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> Absents { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> InSelection { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> InHolidays { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> Resting { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> Unknown { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> Injured { get; private set; } = [];
+        public UiObservableCollection<EditableTrainingAttendanceViewModel> AllAttendances { get; } = [];
 
         public ICommand SyncAbsencesCommand { get; set; }
 

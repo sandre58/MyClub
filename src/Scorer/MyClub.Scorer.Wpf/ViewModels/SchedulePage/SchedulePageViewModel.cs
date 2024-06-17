@@ -10,6 +10,7 @@ using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Domain.MatchAggregate;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {

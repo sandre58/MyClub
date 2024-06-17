@@ -8,7 +8,6 @@ using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 using MyNet.Observable;
-using MyClub.Domain.Enums;
 using MyClub.Teamup.Domain.PersonAggregate;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Domain.Enums;

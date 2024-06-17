@@ -35,7 +35,11 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Matchday AddCore(Matchday item) => item;
 
-        protected override bool DeleteCore(Matchday item)
+        protected override IEnumerable<Matchday> AddRangeCore(IEnumerable<Matchday> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Matchday item)
             => CurrentProject.Competitions.OfType<IHasMatchdays>().Any(x => x.RemoveMatchday(item.Id)) || CurrentProject.Competitions.OfType<CupSeason>().SelectMany(x => x.Rounds.OfType<IHasMatchdays>()).Any(x => x.RemoveMatchday(item.Id));
+
+        protected override int RemoveRangeCore(IEnumerable<Matchday> items) => items.Count(RemoveCore);
     }
 }

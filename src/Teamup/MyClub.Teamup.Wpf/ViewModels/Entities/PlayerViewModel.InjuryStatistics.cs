@@ -9,7 +9,7 @@ using DynamicData.Binding;
 using MyClub.Domain.Enums;
 using MyNet.Observable;
 using MyNet.Observable.Statistics;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyNet.Utilities;
 using MyNet.Utilities.Helpers;
 

@@ -4,15 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MyClub.CrossCutting.Localization;
+using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.UI.Notifications;
 using MyNet.UI.Toasting;
 using MyNet.Utilities;
 using MyNet.Utilities.Messaging;
-using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.Services.Providers;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Application.Messages;
-using MyClub.Scorer.Domain.Enums;
 
 namespace MyClub.Scorer.Wpf.Services.Handlers
 {
@@ -20,18 +20,13 @@ namespace MyClub.Scorer.Wpf.Services.Handlers
     {
         private const string Category = "Conflicts";
 
-        private readonly MatchesProvider _matchesProvider;
         private List<(ConflictType, MatchViewModel, MatchViewModel?)> _currentConflicts = [];
 
-        public ConflictsValidationHandler(MatchesProvider matchesProvider) : base(x => x.Category == Category)
-        {
-            _matchesProvider = matchesProvider;
-            Messenger.Default.Register<MatchConflictsValidationMessage>(this, OnConflictsValidation);
-        }
+        public ConflictsValidationHandler() : base(x => x.Category == Category) => Messenger.Default.Register<MatchConflictsValidationMessage>(this, OnConflictsValidation);
 
         private void OnConflictsValidation(MatchConflictsValidationMessage obj)
         {
-            var newConflicts = obj.Conflicts.Select(x => (x.Item1, _matchesProvider.GetOrThrow(x.Item2), x.Item3.HasValue ? _matchesProvider.Get(x.Item3.Value) : null)).ToList();
+            var newConflicts = obj.Conflicts.ToList();
             var hasNewConflicts = newConflicts.Exists(x => !_currentConflicts.Contains(x));
 
             Unnotify(x => x.Category == Category);

@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using DynamicData.PLinq;
-using MyNet.UI.Commands;
-using MyNet.Utilities;
-using MyNet.Observable.Threading;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyClub.Scorer.Domain.CompetitionAggregate;
+using MyNet.UI.Commands;
+using MyNet.UI.Threading;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {

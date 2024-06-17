@@ -11,7 +11,8 @@ using MyNet.Utilities.DateTimes;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
-    public class MatchDomainService(IProjectRepository projectRepository, IMatchRepository matchRepository) : IMatchDomainService
+    public class AvailibilityCheckingDomainService(IProjectRepository projectRepository,
+                                                   IMatchRepository matchRepository) : IAvailibilityCheckingDomainService
     {
         private readonly IMatchRepository _matchRepository = matchRepository;
         private readonly IProjectRepository _projectRepository = projectRepository;
@@ -28,7 +29,6 @@ namespace MyClub.Scorer.Domain.MatchAggregate
                     var conflicts = GetConflictsBetween(match1, match2);
 
                     result.AddRange(conflicts.Select(x => (x, match1, (Match?)match2)));
-
                 }
 
                 if (associationsGroupped.Key.Date.IsBefore(_projectRepository.GetCurrentOrThrow().StartDate))

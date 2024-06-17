@@ -2,20 +2,20 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Reactive.Linq;
 using System.Linq;
+using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Threading;
+using MyNet.UI.Threading;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
-using System.Collections;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {

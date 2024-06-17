@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using MyClub.Teamup.Domain.CycleAggregate;
 using MyClub.Domain.Services;
 using MyClub.Teamup.Domain.ProjectAggregate;
+using System.Linq;
 
 namespace MyClub.Teamup.Infrastructure.Repositories
 {
@@ -14,6 +15,10 @@ namespace MyClub.Teamup.Infrastructure.Repositories
 
         protected override Cycle AddCore(Cycle item) => CurrentProject.AddCycle(item);
 
-        protected override bool DeleteCore(Cycle item) => CurrentProject.RemoveCycle(item);
+        protected override IEnumerable<Cycle> AddRangeCore(IEnumerable<Cycle> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(Cycle item) => CurrentProject.RemoveCycle(item);
+
+        protected override int RemoveRangeCore(IEnumerable<Cycle> items) => items.Count(RemoveCore);
     }
 }

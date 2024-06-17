@@ -11,15 +11,15 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
     internal class RankingRowViewModel : ObservableObject, IIdentifiable<Guid>
     {
-        private readonly ThreadSafeObservableCollection<MatchOppositionViewModel> _lastMatches = [];
-        private readonly ThreadSafeObservableCollection<MatchOppositionViewModel> _matches = [];
+        private readonly UiObservableCollection<MatchOppositionViewModel> _lastMatches = [];
+        private readonly UiObservableCollection<MatchOppositionViewModel> _matches = [];
         private readonly RankingViewModel _ranking;
 
         public RankingRowViewModel(RankingViewModel ranking, TeamViewModel team)

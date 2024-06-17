@@ -42,7 +42,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!--  Name  -->
+            <!-- Name -->
             <TextBox Grid.Column="0"
                      Width="300"
                      my:FocusAssist.IsDefault="True"
@@ -52,7 +52,7 @@
                      FontSize="{StaticResource MyNet.Font.Size.Title}"
                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-            <!--  Info  -->
+            <!-- Info -->
             <ContentControl Grid.Column="3"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"
@@ -64,16 +64,16 @@
     <DockPanel>
         <my:SimpleStackPanel DockPanel.Dock="Top">
 
-            <!--  Short name  -->
+            <!-- Short name -->
             <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Information}">
                 <TextBox Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource ShortName}" Text="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
             </GroupBox>
 
-            <!--  Date  -->
+            <!-- Date -->
             <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarOutline}">
                 <my:SimpleStackPanel Orientation="Horizontal">
                     <my:SimpleStackPanel.Style>
-                        <Style BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}" TargetType="{x:Type my:SimpleStackPanel}">
+                        <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
                                     <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
@@ -86,7 +86,7 @@
                 </my:SimpleStackPanel>
             </GroupBox>
 
-            <!--  IsPostponed  -->
+            <!-- IsPostponed -->
             <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Default.Top}" Header="{my:Resource Postponed}">
                 <my:SimpleStackPanel Orientation="Horizontal">
                     <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding PostponedState}" SelectedValuePath="DataContext">
@@ -99,7 +99,7 @@
                         <ListBoxItem Padding="15 7" Content="{my:Resource AtFollowingDate}" DataContext="{x:Static vm:PostponedState.SpecifiedDate}" />
                     </ListBox>
 
-                    <!--  Postponed Date  -->
+                    <!-- Postponed Date -->
                     <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
                         <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" my:HintAssist.IsFloating="False" SelectedDate="{my:NullableBinding PostponedDate, UpdateSourceTrigger=PropertyChanged}" />
                         <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" my:HintAssist.IsFloating="False" SelectedTime="{my:NullableBinding PostponedTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
@@ -109,8 +109,8 @@
 
         </my:SimpleStackPanel>
 
-        <!--  Matches  -->
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}" Margin="{StaticResource MyNet.Margins.Medium.Top}">
+        <!-- Matches -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}" Margin="{StaticResource MyNet.Margins.Medium.Top}" Padding="{StaticResource MyNet.Margins.Medium.Vertical}">
             <my:GroupBoxAssist.MoreContent>
                 <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default.Horizontal}" VerticalAlignment="Center" Orientation="Horizontal">
                     <Button Command="{Binding Data.InvertTeamsCommand, Source={StaticResource Proxy}}" Content="{my:MediumIcon Kind=SwapHorizontal}" ToolTip="{my:Resource InvertTeams}" />
@@ -139,7 +139,7 @@
                         </my:DropDownButton.ToggleContent>
                         <my:Submenu MaxHeight="450" ItemsSource="{Binding Matchdays}">
                             <my:Submenu.ItemContainerStyle>
-                                <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="{x:Type MenuItem}">
+                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                                     <Setter Property="Command" Value="{Binding Data.DuplicateMatchdayCommand, Source={StaticResource Proxy}}" />
                                     <Setter Property="CommandParameter" Value="{Binding}" />
                                 </Style>
@@ -155,10 +155,15 @@
                     </my:SimpleStackPanel>
                 </Grid>
             </GroupBox.Header>
-            <ItemsControl AlternationCount="2" ItemsSource="{Binding Matches}">
+            <ItemsControl ItemsSource="{Binding Matches}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border x:Name="border" Padding="2 5">
+                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Padding="{StaticResource MyNet.Margins.Default}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
@@ -189,20 +194,20 @@
                                           HorizontalAlignment="Stretch"
                                           my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                                           my:HintAssist.Hint="{my:Resource HomeTeam}"
+                                          my:ItemsControlAssist.SortingProperty="Name"
                                           IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                                           IsReadOnly="{Binding IsReadOnly}"
                                           ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
                                           ItemsSource="{Binding AvailableTeams}"
-                                          my:ItemsControlAssist.SortingProperty="Name"
                                           SelectedItem="{Binding HomeTeam}" />
                                 <ComboBox x:Name="comboBox"
                                           Grid.Column="6"
                                           HorizontalAlignment="Stretch"
                                           my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                                           my:HintAssist.Hint="{my:Resource AwayTeam}"
+                                          my:ItemsControlAssist.SortingProperty="Name"
                                           IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                                           IsReadOnly="{Binding IsReadOnly}"
-                                          my:ItemsControlAssist.SortingProperty="Name"
                                           ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
                                           ItemsSource="{Binding AvailableTeams}"
                                           SelectedItem="{Binding AwayTeam}" />
@@ -232,12 +237,9 @@
                                         Background="{DynamicResource MyNet.Brushes.Control.Border}"
                                         Visibility="Collapsed" />
                             </Grid>
-                        </Border>
+                        </my:Card>
 
                         <DataTemplate.Triggers>
-                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
-                            </Trigger>
                             <DataTrigger Binding="{Binding IsDeleting}" Value="True">
                                 <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
                                 <Setter TargetName="line" Property="Visibility" Value="Visible" />

@@ -17,6 +17,7 @@ using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections;
 using MyNet.Observable.Translatables;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
@@ -41,7 +42,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             ];
 
         private readonly LeagueService _leagueService;
-        private readonly ThreadSafeObservableCollection<TeamViewModel> _teams = [];
+        private readonly UiObservableCollection<TeamViewModel> _teams = [];
 
         public RankingRulesEditionViewModel(LeagueService leagueService, TeamsProvider teamsProvider)
         {
@@ -97,7 +98,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [HasUniqueItems]
         [Display(Name = nameof(Penalties), ResourceType = typeof(MyClubResources))]
-        public ThreadSafeObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
+        public UiObservableCollection<EditableTeamPenaltyViewModel> Penalties { get; } = [];
 
         [HasUniqueItems]
         [Display(Name = nameof(Labels), ResourceType = typeof(MyClubResources))]

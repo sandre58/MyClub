@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using MyNet.Utilities.DateTimes;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.DateTimes;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
@@ -15,5 +15,9 @@ namespace MyClub.Scorer.Domain.MatchAggregate
         Match Insert(IMatchesProvider parent, DateTime date, ITeam homeTeam, ITeam awayTeam);
 
         IEnumerable<Match> GetByPeriod(Period period);
+
+        IEnumerable<Match> GetMatchesInStadium(Guid stadiumId, Period? period = null);
+
+        IEnumerable<Match> GetMatchesOfTeams(IEnumerable<Guid> teamIds, Period? period = null);
     }
 }

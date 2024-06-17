@@ -35,11 +35,15 @@ namespace MyClub.Teamup.Infrastructure.Repositories
             return CurrentProject.AddCompetition(item);
         }
 
-        protected override bool DeleteCore(ICompetitionSeason item)
+        protected override IEnumerable<ICompetitionSeason> AddRangeCore(IEnumerable<ICompetitionSeason> items) => items.Select(AddCore);
+
+        protected override bool RemoveCore(ICompetitionSeason item)
         {
             item.Competition.RemoveSeason(item);
 
             return CurrentProject.RemoveCompetition(item);
         }
+
+        protected override int RemoveRangeCore(IEnumerable<ICompetitionSeason> items) => items.Count(RemoveCore);
     }
 }

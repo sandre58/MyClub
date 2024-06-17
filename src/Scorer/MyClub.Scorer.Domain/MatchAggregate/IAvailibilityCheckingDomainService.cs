@@ -6,10 +6,10 @@ using MyClub.Scorer.Domain.Enums;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
-    public interface IMatchDomainService
+    public interface IAvailibilityCheckingDomainService
     {
-        IEnumerable<ConflictType> GetConflictsBetween(Match match1, Match match2);
-
         IEnumerable<(ConflictType, Match, Match?)> GetAllConflicts();
+
+        IEnumerable<ConflictType> GetConflictsBetween(Match match1, Match match2);
     }
 }

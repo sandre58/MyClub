@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Text;
@@ -11,8 +10,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
-using DocumentFormat.OpenXml;
-using DynamicData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -40,7 +37,6 @@ using MyClub.Teamup.Domain.TrainingAggregate;
 using MyClub.Teamup.Infrastructure.Packaging;
 using MyClub.Teamup.Infrastructure.Packaging.Services;
 using MyClub.Teamup.Infrastructure.Repositories;
-using MyClub.Teamup.Plugins.Contracts;
 using MyClub.Teamup.Wpf.Configuration;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Factories;
@@ -414,7 +410,7 @@ namespace MyClub.Teamup.Wpf
                     if (innerException is ResourceReferenceKeyNotFoundException or XamlParseException) return;
 
                     if (await DialogManager.ShowErrorAsync(MessageResources.UnexpectedXError.FormatWith(e.Message), buttons: MessageBoxResultOption.OkCancel).ConfigureAwait(false) == MyNet.UI.Dialogs.MessageBoxResult.Cancel)
-                        MyNet.Observable.Threading.Scheduler.UI.Schedule(() => Current.Shutdown(-1));
+                        MyNet.UI.Threading.Scheduler.UI.Schedule(() => Current.Shutdown(-1));
                     break;
             }
         }

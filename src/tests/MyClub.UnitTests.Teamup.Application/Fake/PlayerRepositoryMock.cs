@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using DocumentFormat.OpenXml.Spreadsheet;
 using MyClub.Teamup.Domain.SquadAggregate;
+using MyNet.Utilities;
 
 namespace MyClub.UnitTests.Teamup.Application.Fake
 {
@@ -38,5 +40,11 @@ namespace MyClub.UnitTests.Teamup.Application.Fake
         }
 
         public SquadPlayer GetByPlayerId(Guid playerId) => _players.First(x => x.Player.Id == playerId);
+
+        public IEnumerable<SquadPlayer> InsertRange(IEnumerable<SquadPlayer> items) => items.Select(Insert);
+
+        public IEnumerable<SquadPlayer> UpdateRange(IEnumerable<SquadPlayer> items) => items.Select(Update);
+
+        public int RemoveRange(IEnumerable<Guid> ids) => ids.Count(Remove);
     }
 }

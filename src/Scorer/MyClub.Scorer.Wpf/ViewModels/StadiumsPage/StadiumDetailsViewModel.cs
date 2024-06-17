@@ -7,11 +7,11 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using DynamicData;
 using DynamicData.Binding;
-using MyNet.UI.ViewModels.Workspace;
-using MyNet.Utilities;
-using MyNet.Observable.Threading;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.UI.Threading;
+using MyNet.UI.ViewModels.Workspace;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.StadiumsPage
 {

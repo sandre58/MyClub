@@ -8,6 +8,7 @@ using MyClub.Domain;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities.Collections;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
@@ -15,7 +16,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     public class Matchday : NameEntity, IMatchesProvider
     {
         private DateTime? _postponedDate;
-        private readonly ObservableCollection<Match> _matches = [];
+        private readonly ExtendedObservableCollection<Match> _matches = [];
         private readonly IMatchdaysProvider _parent;
 
         public Matchday(IMatchdaysProvider parent, DateTime date, string name, string? shortName = null, Guid? id = null) : base(name, shortName, id)

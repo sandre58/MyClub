@@ -2,11 +2,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using DocumentFormat.OpenXml.Wordprocessing;
 using MaterialDesignThemes.Wpf;
 using MyNet.Utilities;
 using MyNet.Humanizer;
-using MyNet.Utilities.Localization.Extensions;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Translatables;
 using MyClub.CrossCutting.Localization;

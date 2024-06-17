@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -18,11 +19,13 @@ using MyNet.UI.Locators;
 using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.Utilities;
+using MyNet.Utilities.Messaging;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.Services
 {
-    internal class MatchPresentationService(MatchService matchService, IViewModelLocator viewModelLocator)
+    internal class MatchPresentationService(MatchService matchService,
+                                            IViewModelLocator viewModelLocator)
     {
         private readonly MatchService _matchService = matchService;
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
@@ -56,7 +59,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (!cancel)
             {
-                await AppBusyManager.WaitAsync(() => _matchService.Remove(idsList));
+                await AppBusyManager.WaitAsync(() =>
+                {
+                    _matchService.Remove(idsList);
+                    CheckConflicts();
+                });
             }
         }
 
@@ -88,7 +95,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Reschedule(idsList, offset, timeUnit)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                _matchService.Reschedule(idsList, offset, timeUnit);
+                CheckConflicts();
+            }).ConfigureAwait(false);
         }
 
         public async Task RescheduleAsync(IEnumerable<MatchViewModel> items, DateTime date)
@@ -97,7 +108,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Reschedule(idsList, date)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                _matchService.Reschedule(idsList, date);
+                CheckConflicts();
+            }).ConfigureAwait(false);
         }
 
         public async Task PostponeAsync(MatchViewModel item, DateTime? postponedDate = null) => await PostponeAsync([item], postponedDate).ConfigureAwait(false);
@@ -108,7 +123,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Postpone(idsList, postponedDate)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                _matchService.Postpone(idsList, postponedDate);
+                CheckConflicts();
+            }).ConfigureAwait(false);
         }
 
         public async Task CancelAsync(MatchViewModel item) => await CancelAsync([item]).ConfigureAwait(false);
@@ -119,7 +138,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Cancel(idsList)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                _matchService.Cancel(idsList);
+                CheckConflicts();
+            }).ConfigureAwait(false);
         }
 
         public async Task SuspendAsync(MatchViewModel item) => await SuspendAsync([item]).ConfigureAwait(false);
@@ -191,7 +214,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.SetStadium(idsList, stadium?.Id)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                _matchService.SetStadium(idsList, stadium?.Id);
+                CheckConflicts();
+            }).ConfigureAwait(false);
         }
 
         public async Task OpenSchedulingAssistantAsync(IEnumerable<MatchViewModel> matches, DateTime? displayDate = null)
@@ -214,7 +241,13 @@ namespace MyClub.Scorer.Wpf.Services
                           } : null
             }).ToList();
 
-            await AppBusyManager.WaitAsync(() => _matchService.Reschedule(dtos)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                _matchService.Reschedule(dtos);
+                CheckConflicts();
+            }).ConfigureAwait(false);
         }
+
+        private static void CheckConflicts() => Messenger.Default.Send(new CheckConflictsRequestMessage());
     }
 }

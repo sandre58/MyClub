@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using DynamicData.Binding;
@@ -16,7 +15,6 @@ using MyNet.UI.Resources;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;
 using MyClub.CrossCutting.Localization;
-using MyClub.Domain.Enums;
 using MyClub.Teamup.Domain.PersonAggregate;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyClub.Teamup.Domain.Enums;

@@ -82,7 +82,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent
 
             Disposables.AddRange(
             [
-                teamsProvider.ConnectMyTeams().AutoRefresh(x => x.Order).Transform(x => new TeamWrapper(x, playersProvider, trainingSessionsProvider)).Sort(SortExpressionComparer<TeamWrapper>.Ascending(x => x.Item.Order)).ObserveOn(MyNet.Observable.Threading.Scheduler.UI).Bind(out _teams).DisposeMany().Subscribe()
+                teamsProvider.ConnectMyTeams().AutoRefresh(x => x.Order).Transform(x => new TeamWrapper(x, playersProvider, trainingSessionsProvider)).Sort(SortExpressionComparer<TeamWrapper>.Ascending(x => x.Item.Order)).ObserveOn(MyNet.UI.Threading.Scheduler.UI).Bind(out _teams).DisposeMany().Subscribe()
             ]);
 
             injuriesStatisticsRefreshDeferrer.Subscribe(RefreshPlayers);

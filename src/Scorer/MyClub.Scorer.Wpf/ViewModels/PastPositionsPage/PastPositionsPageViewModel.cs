@@ -21,7 +21,7 @@ using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Humanizer;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
+using MyNet.UI.Collections;
 using MyNet.UI.Extensions;
 using MyNet.UI.Navigation.Models;
 using MyNet.Utilities;
@@ -33,7 +33,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
     {
         private readonly CompetitionInfoProvider _competitionInfoProvider;
         private readonly LeagueService _leagueService;
-        private readonly ThreadSafeObservableCollection<TeamPositionsSerieWrapper> _teamSeries = [];
+        private readonly UiObservableCollection<TeamPositionsSerieWrapper> _teamSeries = [];
         private CompositeDisposable? _leagueSubscriptions;
 
         public PastPositionsPageViewModel(ProjectInfoProvider projectInfoProvider,
@@ -47,7 +47,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
 
             Disposables.AddRange(
                 [
-                    teamsProvider.ConnectById().Transform(x => new TeamPositionsSerieWrapper(x)).AutoRefresh(x => x.Rank).Sort(SortExpressionComparer<TeamPositionsSerieWrapper>.Ascending(x => x.Rank)).Bind(_teamSeries).Subscribe(),
+                    teamsProvider.ConnectById()
+                                 .Transform(x => new TeamPositionsSerieWrapper(x))
+                                 .AutoRefresh(x => x.Rank)
+                                 .Sort(SortExpressionComparer<TeamPositionsSerieWrapper>.Ascending(x => x.Rank))
+                                 .Bind(_teamSeries)
+                                 .Subscribe(),
                     TeamSeries.ToObservableChangeSet()
                               .Transform(x => x.Serie)
                               .OnItemAdded(Series.Add)
@@ -65,7 +70,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
             {
                 if (_competitionInfoProvider.GetCompetition() is LeagueViewModel leagueViewModel)
                 {
-                    _leagueSubscriptions = new(leagueViewModel.SubscribeOnRankingRefreshed(async () => await RefreshAllAsync().ConfigureAwait(false)));
+                    _leagueSubscriptions = new(leagueViewModel.WhenRankingChanged(async () => await RefreshAllAsync().ConfigureAwait(false)));
 
                     await RefreshAllAsync().ConfigureAwait(false);
                 }

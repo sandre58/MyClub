@@ -1905,4 +1905,96 @@ The columns in the first position will be evaluated first. The following columns
   <data name="SortingByGamesLostAfterShootouts" xml:space="preserve">
     <value>Number of games lost af. Sh</value>
   </data>
+  <data name="MatchdayNamePattern" xml:space="preserve">
+    <value>Matchday {index}</value>
+  </data>
+  <data name="MatchdayShortNamePattern" xml:space="preserve">
+    <value>M{index}</value>
+  </data>
+  <data name="ParentPatternInformation" xml:space="preserve">
+    <value>Define the naming patterns to use for the next item to add.
+
+You can use variables in the following way: {&lt;variable&gt;:&lt;option&gt;}
+
+Available variables:
+{index}: is replaced by the next index of the element
+      Options available:
+               A: Displays the number in ordinal form (1st, 2nd, etc.)
+
+{date}: is replaced by the item's date.
+      Options available:
+               &lt;format&gt;: Displays the date in the desired format (ex: dd/MM/YY =&gt; 05/10/24)</value>
+  </data>
+  <data name="Index" xml:space="preserve">
+    <value>Index</value>
+  </data>
+  <data name="ValidateXItems" xml:space="preserve">
+    <value>Validate (#)</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Item(s)</value>
+  </data>
+  <data name="GenerateItemsFromDate" xml:space="preserve">
+    <value>Generate items from</value>
+  </data>
+  <data name="Until" xml:space="preserve">
+    <value>Until</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>Add rule</value>
+  </data>
+  <data name="ExcludeDateDateRule" xml:space="preserve">
+    <value>Exclude date</value>
+  </data>
+  <data name="AllowDaysOfWeekDateRule" xml:space="preserve">
+    <value>Allow days of week</value>
+  </data>
+  <data name="ExcludeFrom" xml:space="preserve">
+    <value>Exclude</value>
+  </data>
+  <data name="ExcludeDatesRangeDateRule" xml:space="preserve">
+    <value>Exclude a period</value>
+  </data>
+  <data name="ExcludeBetween" xml:space="preserve">
+    <value>Exclude between</value>
+  </data>
+  <data name="IntervalDateRule" xml:space="preserve">
+    <value>Provide minimal interval</value>
+  </data>
+  <data name="ScheduleDateOf" xml:space="preserve">
+    <value>Schedule items of</value>
+  </data>
+  <data name="NoDatesGeneratedWarning" xml:space="preserve">
+    <value>No date could be generated with these options.</value>
+  </data>
+  <data name="Regenerate" xml:space="preserve">
+    <value>Regenerate</value>
+  </data>
+  <data name="ClearData" xml:space="preserve">
+    <value>Clear data</value>
+  </data>
+  <data name="AddTimeRule" xml:space="preserve">
+    <value>Provide time</value>
+  </data>
+  <data name="TimeOfDayTimeRule" xml:space="preserve">
+    <value>for a day of week</value>
+  </data>
+  <data name="TakeDefaultTime" xml:space="preserve">
+    <value>Otherwise, take the default time</value>
+  </data>
+  <data name="TimeOfDateTimeRule" xml:space="preserve">
+    <value>For a date</value>
+  </data>
+  <data name="TimeOfDateRangeTimeRule" xml:space="preserve">
+    <value>For a period</value>
+  </data>
+  <data name="Between" xml:space="preserve">
+    <value>Between</value>
+  </data>
+  <data name="MatchesOptionalPlural" xml:space="preserve">
+    <value>Match(es)</value>
+  </data>
+  <data name="StartWith" xml:space="preserve">
+    <value>Start with</value>
+  </data>
 </root>
