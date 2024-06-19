@@ -30,8 +30,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlElement("away")]
         public MatchOpponentPackage? Away { get; set; }
 
-        [XmlAttribute("neutralVenue")]
-        public bool NeutralVenue { get; set; }
+        [XmlAttribute("isNeutralStadium")]
+        public bool IsNeutralStadium { get; set; }
 
         [XmlElement("stadiumId", IsNullable = true)]
         public Guid? StadiumId { get; set; }

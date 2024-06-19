@@ -25,7 +25,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly MatchdayPresentationService _matchdayPresentationService;
         private readonly MatchPresentationService _matchPresentationService;
         private readonly ReadOnlyObservableCollection<MatchViewModel> _matches;
-        private readonly TeamsProvider _teamsProvider;
 
         public MatchdayViewModel(Matchday item,
                                  IMatchdayParent parent,
@@ -36,7 +35,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         {
             _matchdayPresentationService = matchdayPresentationService;
             _matchPresentationService = matchPresentationService;
-            _teamsProvider = teamsProvider;
 
             Parent = parent;
 
@@ -60,12 +58,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                     RaisePropertyChanged(nameof(StartDate));
                     RaisePropertyChanged(nameof(EndDate));
                     RaisePropertyChanged(nameof(MatchTime));
-                    RaisePropertyChanged(nameof(DateTime));
+                    RaisePropertyChanged(nameof(Date));
                 })
             ]);
         }
 
         public IMatchdayParent Parent { get; set; }
+
+        public SchedulingParametersViewModel SchedulingParameters => Parent.SchedulingParameters;
 
         public string Name => Item.Name;
 
@@ -103,7 +103,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool CanBePostponed() => !Item.IsPostponed && Matches.Any(x => !x.IsPlayed);
 
-        public IEnumerable<TeamViewModel> GetAvailableTeams() => _teamsProvider.Items;
+        public IEnumerable<TeamViewModel> GetAvailableTeams() => Parent.GetAvailableTeams();
 
         public async Task OpenAsync() => await _matchdayPresentationService.OpenAsync(this).ConfigureAwait(false);
 

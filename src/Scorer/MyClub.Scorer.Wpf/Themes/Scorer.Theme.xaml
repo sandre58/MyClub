@@ -12,7 +12,7 @@
         <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Themes/Scorer.Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <!--  MessageBox  -->
+    <!-- MessageBox -->
     <DataTemplate DataType="{x:Type vm:RemoveTeamsMessageBoxViewModel}">
         <Grid Width="400" MinHeight="80">
             <Grid.ColumnDefinitions>
@@ -40,24 +40,24 @@
 
         <DataTemplate.Triggers>
             <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Success}">
-                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.CheckCircle}" />
                 <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.CheckCircle}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Error}">
-                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.RemoveCircle}" />
                 <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.RemoveCircle}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Warning}">
-                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.WarningCircle}" />
                 <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.WarningCircle}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Information}">
-                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.InformationCircle}" />
                 <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Information}" />
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.InformationCircle}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Question}">
-                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.QuestionMarkCircle}" />
                 <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Information}" />
+                <Setter TargetName="Icon" Property="Kind" Value="{x:Static md:PackIconKind.QuestionMarkCircle}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding Severity}" Value="{x:Static dial:MessageSeverity.Custom}">
                 <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
@@ -65,12 +65,11 @@
         </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!--  Filters  -->
+    <!-- Filters -->
     <DataTemplate DataType="{x:Type filters:MatchTeamFilterViewModel}">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -90,14 +89,16 @@
 
             <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
                      Grid.Column="2"
+                     Margin="{StaticResource MyNet.Margins.Medium.Left}"
                      VerticalAlignment="Stretch"
                      IsEnabled="{Binding Value, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}"
                      SelectedValue="{Binding VenueFilter.Value}"
                      SelectedValuePath="DataContext"
-                     SelectionMode="Single">
-                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:Venue.Home}" ToolTip="{my:Resource LocationHome}" />
+                     SelectionMode="Single"
+                     Visibility="{Binding ShowVenueFilter, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:VenueContext.Home}" ToolTip="{my:Resource LocationHome}" />
                 <ListBoxItem Content="{my:MediumIcon Kind=NullOff}" DataContext="{x:Null}" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:Venue.Away}" ToolTip="{my:Resource LocationAway}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:VenueContext.Away}" ToolTip="{my:Resource LocationAway}" />
             </ListBox>
         </Grid>
     </DataTemplate>

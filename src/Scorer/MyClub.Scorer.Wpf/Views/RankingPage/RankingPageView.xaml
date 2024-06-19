@@ -50,13 +50,19 @@
                              my:IconAssist.Icon="{my:Icon Kind=Video}"
                              Content="{my:Resource Live}"
                              IsEnabled="{Binding LiveIsEnabled}" />
-                <ListBoxItem Width="100" my:IconAssist.Icon="{my:Icon Kind=Home}" Content="{my:Resource LocationHome}" />
-                <ListBoxItem Width="100" my:IconAssist.Icon="{my:Icon Kind=Plane}" Content="{my:Resource LocationAway}" />
+                <ListBoxItem Width="100"
+                             my:IconAssist.Icon="{my:Icon Kind=Home}"
+                             Content="{my:Resource LocationHome}"
+                             Visibility="{Binding Data.ShowHomeAwayRankings, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <ListBoxItem Width="100"
+                             my:IconAssist.Icon="{my:Icon Kind=Plane}"
+                             Content="{my:Resource LocationAway}"
+                             Visibility="{Binding Data.ShowHomeAwayRankings, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
             </ListBox>
         </my:CommandsBar>
 
         <!-- Content -->
-        <my:TransitioningContent VerticalAlignment="Top" Margin="{StaticResource MyNet.Margins.Medium.Top}">
+        <my:TransitioningContent Margin="{StaticResource MyNet.Margins.Medium.Top}" VerticalAlignment="Top">
             <my:TransitioningContent.Style>
                 <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
                     <Setter Property="ContentTemplate">
@@ -114,12 +120,20 @@
                         <DataTrigger Binding="{Binding SelectedIndex, ElementName=tab}" Value="1">
                             <Setter Property="Content" Value="{Binding LiveRanking}" />
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding SelectedIndex, ElementName=tab}" Value="2">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Data.ShowHomeAwayRankings, Source={StaticResource Proxy}}" Value="True" />
+                                <Condition Binding="{Binding SelectedIndex, ElementName=tab}" Value="2" />
+                            </MultiDataTrigger.Conditions>
                             <Setter Property="Content" Value="{Binding HomeRanking}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding SelectedIndex, ElementName=tab}" Value="3">
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Data.ShowHomeAwayRankings, Source={StaticResource Proxy}}" Value="True" />
+                                <Condition Binding="{Binding SelectedIndex, ElementName=tab}" Value="3" />
+                            </MultiDataTrigger.Conditions>
                             <Setter Property="Content" Value="{Binding AwayRanking}" />
-                        </DataTrigger>
+                        </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
             </my:TransitioningContent.Style>

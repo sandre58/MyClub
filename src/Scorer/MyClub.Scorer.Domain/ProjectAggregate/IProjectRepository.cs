@@ -6,6 +6,7 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 
 namespace MyClub.Scorer.Domain.ProjectAggregate
 {
+
     public interface IProjectRepository
     {
         bool HasCurrent();

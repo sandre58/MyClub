@@ -9,10 +9,6 @@ namespace MyClub.Scorer.Application.Dtos
     {
         public string? Name { get; set; }
 
-        public DateTime StartDate { get; set; }
-
-        public DateTime EndDate { get; set; }
-
         public byte[]? Image { get; set; }
     }
 }

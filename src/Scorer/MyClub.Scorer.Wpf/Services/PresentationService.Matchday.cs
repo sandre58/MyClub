@@ -9,6 +9,7 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Extensions;
 using MyNet.UI.Locators;
@@ -23,17 +24,18 @@ namespace MyClub.Scorer.Wpf.Services
     {
         public async Task OpenAsync(MatchdayViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
-        public async Task AddMultipleAsync()
+        public async Task AddMultipleAsync(IMatchdayParent parent)
         {
             var vm = ViewModelLocator.Get<MatchdaysEditionViewModel>();
+            vm.Load(parent);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
 
-        public async Task AddAsync(Guid? parentId = null, DateTime? date = null)
+        public async Task AddAsync(IMatchdayParent parent, DateTime? date = null)
         {
             var vm = ViewModelLocator.Get<MatchdayEditionViewModel>();
-            vm.New(parentId, () =>
+            vm.New(parent, () =>
             {
                 if (date.HasValue)
                 {

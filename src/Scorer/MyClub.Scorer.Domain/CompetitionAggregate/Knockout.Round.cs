@@ -2,7 +2,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
@@ -28,6 +31,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public ReadOnlyObservableCollection<Fixtures> Fixtures { get; }
 
-        public MatchFormat ProvideFormat() => MatchFormat;
+        MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+        public IEnumerable<Match> GetAllMatches() => Fixtures.SelectMany(x => x.Matches);
     }
 }

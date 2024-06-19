@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DynamicData;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
@@ -16,12 +15,13 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Humanizer;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
+using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
-using MyNet.UI.Threading;
 using MyNet.UI.Toasting;
 using MyNet.UI.Toasting.Settings;
 using MyNet.UI.ViewModels.Display;
@@ -35,25 +35,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal partial class MatchdaysEditionViewModel : EditionViewModel
     {
-        private readonly ReadOnlyObservableCollection<MatchdayViewModel> _availableMatchdays;
-        private readonly MatchdaysProvider _matchdaysProvider;
-        private readonly TeamsProvider _teamsProvider;
+        private readonly UiObservableCollection<MatchdayViewModel> _availableMatchdays = [];
         private readonly StadiumsProvider _stadiumsProvider;
-        private readonly CompetitionInfoProvider _competitionInfoProvider;
         private readonly MatchdayService _matchdayService;
 
         public MatchdaysEditionViewModel(ProjectInfoProvider projectInfoProvider,
-                                         CompetitionInfoProvider competitionInfoProvider,
-                                         MatchdaysProvider matchdaysProvider,
-                                         TeamsProvider teamsProvider,
                                          StadiumsProvider stadiumsProvider,
                                          MatchdayService matchdayService)
         {
-            _competitionInfoProvider = competitionInfoProvider;
-            _matchdaysProvider = matchdaysProvider;
-            _teamsProvider = teamsProvider;
             _stadiumsProvider = stadiumsProvider;
             _matchdayService = matchdayService;
+            AvailableMatchdays = new(_availableMatchdays);
 
             AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x), x => new Period(StartDisplayDate.GetValueOrDefault(), EndDisplayDate.GetValueOrDefault()).Contains(x));
             RemoveFromDateCommand = CommandsManager.CreateNotNull<DateTime>(x => Remove(Matchdays.LastOrDefault(y => y.Item.Date == x)), x => Matchdays.Any(y => y.Item.Date == x));
@@ -67,18 +59,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             AddMatchesCommand = CommandsManager.Create(() => Matchdays.ForEach(x => EnumerableHelper.Iteration(MatchesToAdd!.Value, _ => x.Item.AddMatch())), () => Matchdays.Count > 0 && MatchesToAdd > 0);
 
             projectInfoProvider.WhenProjectLoaded(_ => Reset());
-
-            Disposables.AddRange(
-            [
-                matchdaysProvider.ConnectById().SortBy(x => x.Date).Bind(out _availableMatchdays).ObserveOn(Scheduler.UI).Subscribe(),
-            ]);
-
-            Reset();
         }
+
+        [CanSetIsModified(false)]
+        [CanBeValidated(false)]
+        public IMatchdayParent? Parent { get; private set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<MatchdayViewModel> AvailableMatchdays => _availableMatchdays;
+        public ReadOnlyObservableCollection<MatchdayViewModel> AvailableMatchdays { get; }
 
         public UiObservableCollection<EditableMatchdayWrapper> Matchdays { get; } = [];
 
@@ -154,25 +143,31 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand InvertTeamsCommand { get; }
 
-        protected override bool CanSave() => Matchdays.Count > 0;
-
-        protected override void ResetCore()
+        public void Load(IMatchdayParent parent)
         {
-            var defaultCountMatchdays = Math.Max(1, (_competitionInfoProvider.GetCompetition().GetCountTeams() - 1) * 2 - _competitionInfoProvider.GetCompetition<LeagueViewModel>().Matchdays.Count);
+            if (parent != Parent)
+            {
+                Parent = parent;
+                var countTeams = parent.GetAvailableTeams().Count();
+                var defaultCountMatchdays = Math.Max(1, (countTeams - 1) * 2 - parent.Matchdays.Count);
 
-            StartDisplayDate = _competitionInfoProvider.StartDate;
-            EndDisplayDate = _competitionInfoProvider.EndDate;
-            DefaultTime = _competitionInfoProvider.DefaultTime;
-            NamePattern = MyClubResources.MatchdayNamePattern;
-            ShortNamePattern = MyClubResources.MatchdayShortNamePattern;
-            MatchesToAdd = _teamsProvider.Count / 2;
-            AutomaticViewModel.Reset(new Period(_competitionInfoProvider.StartDate, _competitionInfoProvider.EndDate), defaultCountMatchdays);
-            DuplicationIsEnabled = false;
-            DuplicationStart = AvailableMatchdays.FirstOrDefault();
-            InvertTeams = true;
+                _availableMatchdays.Set(parent.Matchdays.OrderBy(x => x.Date));
+                NamePattern = MyClubResources.MatchdayNamePattern;
+                ShortNamePattern = MyClubResources.MatchdayShortNamePattern;
+                StartDisplayDate = parent.SchedulingParameters.StartDate;
+                EndDisplayDate = parent.SchedulingParameters.EndDate;
+                DefaultTime = parent.SchedulingParameters.StartTime;
+                MatchesToAdd = countTeams / 2;
+                AutomaticViewModel.Reset(new Period(parent.SchedulingParameters.StartDate, parent.SchedulingParameters.EndDate), defaultCountMatchdays);
+                DuplicationIsEnabled = false;
+                DuplicationStart = AvailableMatchdays.FirstOrDefault();
+                InvertTeams = true;
 
-            RefreshCore();
+                RefreshCore();
+            }
         }
+
+        protected override bool CanSave() => Matchdays.Count > 0;
 
         protected override void RefreshCore() => Clear();
 
@@ -206,11 +201,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             ComputeNextIndex();
         }
 
-        private void ComputeNextIndex()
-        {
-            var league = _competitionInfoProvider.GetCompetition<LeagueViewModel>();
-            NextIndex = league.Matchdays.Count + 1;
-        }
+        private void ComputeNextIndex() => NextIndex = (Parent?.Matchdays.Count ?? 0) + 1;
 
         private void AddToDate(DateTime date, TimeSpan? time = null)
         {
@@ -220,7 +211,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private EditableMatchdayWrapper CreateEditableMatchday(DateTime date, TimeSpan? time = null)
         {
-            var matchday = new EditableMatchdayViewModel(_matchdaysProvider, _stadiumsProvider, _teamsProvider)
+            var matchday = new EditableMatchdayViewModel(
+                new ItemsSourceProvider<MatchdayViewModel>(Parent?.Matchdays.ToList() ?? []),
+                _stadiumsProvider,
+                new ItemsSourceProvider<TeamViewModel>(Parent?.GetAvailableTeams().ToList() ?? []),
+                (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
             {
                 Date = date,
                 Time = time ?? DefaultTime,
@@ -231,7 +226,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             if (DuplicationIsEnabled && DuplicationStart is not null)
             {
                 matchday.DuplicateMatchday(DuplicationStart, InvertTeams);
-                DuplicationStart = _matchdaysProvider.Next(DuplicationStart);
+                DuplicationStart = Parent?.Matchdays.OrderBy(x => x.OriginDate).FirstOrDefault(x => x.OriginDate.IsAfter(DuplicationStart.Date));
             }
             return new(matchday);
         }

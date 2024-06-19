@@ -170,7 +170,8 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<IManagerRepository, ManagerRepository>()
                 .AddScoped<IMatchdayRepository, MatchdayRepository>()
                 .AddScoped<IMatchRepository, MatchRepository>()
-                .AddScoped<IAvailibilityCheckingDomainService, AvailibilityCheckingDomainService>()
+                .AddScoped<ISchedulingParametersRepository, SchedulingParametersRepository>()
+                .AddScoped<ISchedulingDomainService, SchedulingDomainService>()
 
                 // Application Services
                 .AddScoped<ProjectService>()

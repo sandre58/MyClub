@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml.Office2013.Word;
 using MyClub.Application.Services;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
@@ -15,9 +16,11 @@ namespace MyClub.Scorer.Application.Services
 {
     public class MatchdayService(IMatchdayRepository repository,
                                  IProjectRepository projectRepository,
+                                 ISchedulingParametersRepository schedulingParametersRepository,
                                  MatchService matchService) : CrudService<Matchday, MatchdayDto, IMatchdayRepository>(repository)
     {
         private readonly IProjectRepository _projectRepository = projectRepository;
+        private readonly ISchedulingParametersRepository _schedulingParametersRepository = schedulingParametersRepository;
         private readonly MatchService _matchService = matchService;
 
         protected override Matchday CreateEntity(MatchdayDto dto)
@@ -67,7 +70,7 @@ namespace MyClub.Scorer.Application.Services
             var parent = _projectRepository.GetCompetition().GetAllMatchdaysProviders().GetByIdOrDefault(parentId ?? _projectRepository.GetCompetition().Id) ?? throw new InvalidOperationException($"Matchday parent '{parentId}' not found");
 
             var name = MyClubResources.Matchday.Increment(parent.Matchdays.Select(x => x.Name), format: " #");
-            var time = _projectRepository.GetCurrentOrThrow().Parameters.MatchStartTime;
+            var time = _schedulingParametersRepository.GetByMatchdaysProvider(parent).StartTime;
             return new()
             {
                 Date = DateTime.Today.ToUtcDateTime(time),
@@ -77,6 +80,13 @@ namespace MyClub.Scorer.Application.Services
                 Name = name,
                 ShortName = name.GetInitials(),
             };
+        }
+
+        public SchedulingParameters GetSchedulingParameters(Guid? parentId = null)
+        {
+            var parent = _projectRepository.GetCompetition().GetAllMatchdaysProviders().GetByIdOrDefault(parentId ?? _projectRepository.GetCompetition().Id) ?? throw new InvalidOperationException($"Matchday parent '{parentId}' not found");
+
+            return _schedulingParametersRepository.GetByMatchdaysProvider(parent);
         }
     }
 }

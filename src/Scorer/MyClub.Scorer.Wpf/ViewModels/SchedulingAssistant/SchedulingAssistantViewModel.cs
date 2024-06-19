@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using DynamicData;
 using DynamicData.Binding;
+using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.DynamicData.Extensions;
@@ -15,7 +17,6 @@ using MyNet.UI.Commands;
 using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
-using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Units;
 using MyNet.Wpf.Controls;
 using MyNet.Wpf.DragAndDrop;
@@ -24,12 +25,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {
     internal class SchedulingAssistantViewModel : EditionViewModel
     {
-        private readonly CompetitionInfoProvider _competitionInfoProvider;
+        private readonly AvailibilityCheckingService _availibilityCheckingService;
         private readonly StadiumsProvider _stadiumsProvider;
 
-        public SchedulingAssistantViewModel(CompetitionInfoProvider competitionInfoProvider, StadiumsProvider stadiumsProvider)
+        public SchedulingAssistantViewModel(StadiumsProvider stadiumsProvider, AvailibilityCheckingService availibilityCheckingService)
         {
-            _competitionInfoProvider = competitionInfoProvider;
+            _availibilityCheckingService = availibilityCheckingService;
             _stadiumsProvider = stadiumsProvider;
             Matches = new SchedulingMatchesListViewModel();
             DropHandler = new((x, y) => x.OfType<EditableSchedulingMatchViewModel>().ForEach(z => z.SetDate(y)),
@@ -182,62 +183,68 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         private (IEnumerable<SchedulingConflict>, IEnumerable<SchedulingConflict>) GetConflictsBetween(EditableSchedulingMatchViewModel match1, EditableSchedulingMatchViewModel match2)
         {
-            var period1 = new Period(match1.StartDate, match1.EndDate);
-            var period2 = new Period(match2.StartDate, match2.EndDate);
-
             var conflicts1 = new List<SchedulingConflict>();
             var conflicts2 = new List<SchedulingConflict>();
-
-            if (match2.Item.Participate(match1.Item.HomeTeam) || match2.Item.Participate(match1.Item.AwayTeam))
+            var matchDto1 = new MatchDto
             {
-                if (period1.Intersect(period2))
-                {
-                    if (match2.Item.Participate(match1.Item.HomeTeam))
-                        conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.HomeTeam));
-                    if (match1.Item.Participate(match2.Item.HomeTeam))
-                        conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.HomeTeam));
-                    if (match2.Item.Participate(match1.Item.AwayTeam))
-                        conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.AwayTeam));
-                    if (match1.Item.Participate(match2.Item.AwayTeam))
-                        conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.AwayTeam));
-                }
-                else
-                {
-                    var periodWithRestTime1 = new Period(period1.Start, period1.End + _competitionInfoProvider.MinimumRestTime);
-                    var periodWithRestTime2 = new Period(period2.Start, period2.End + _competitionInfoProvider.MinimumRestTime);
-
-                    if (periodWithRestTime1.Intersect(periodWithRestTime2))
-                    {
-                        if (match2.Item.Participate(match1.Item.HomeTeam))
-                            conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.HomeTeam));
-                        if (match1.Item.Participate(match2.Item.HomeTeam))
-                            conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.HomeTeam));
-                        if (match2.Item.Participate(match1.Item.AwayTeam))
-                            conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.AwayTeam));
-                        if (match1.Item.Participate(match2.Item.AwayTeam))
-                            conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.AwayTeam));
-                    }
-                }
+                Id = match1.Item.Id,
+                Date = match1.StartDate,
+                Format = match1.Item.Format,
+                HomeTeamId = match1.Item.HomeTeam.Id,
+                AwayTeamId = match1.Item.AwayTeam.Id,
+                Stadium = match1.Stadium is not null
+                          ? new StadiumDto
+                          {
+                              Id = match1.Stadium.Id,
+                          } : null
+            };
+            var matchDto2 = new MatchDto
+            {
+                Id = match2.Item.Id,
+                Date = match2.StartDate,
+                Format = match2.Item.Format,
+                HomeTeamId = match2.Item.HomeTeam.Id,
+                AwayTeamId = match2.Item.AwayTeam.Id,
+                Stadium = match2.Stadium is not null
+                          ? new StadiumDto
+                          {
+                              Id = match2.Stadium.Id,
+                          } : null
+            };
+            if (_availibilityCheckingService.TeamsOfMatchesIsInConflict(matchDto1, matchDto2, false))
+            {
+                if (match2.Item.Participate(match1.Item.HomeTeam))
+                    conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.HomeTeam));
+                if (match1.Item.Participate(match2.Item.HomeTeam))
+                    conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.HomeTeam));
+                if (match2.Item.Participate(match1.Item.AwayTeam))
+                    conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.AwayTeam));
+                if (match1.Item.Participate(match2.Item.AwayTeam))
+                    conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.AwayTeam));
             }
 
-            if (match1.Stadium is not null && match1.Stadium.Equals(match2.Stadium))
+            if (_availibilityCheckingService.TeamsOfMatchesIsInConflict(matchDto1, matchDto2, true))
             {
-                if (period1.Intersect(period2))
-                {
-                    conflicts1.Add(new SchedulingStadiumOccupancyConflict(match1.Stadium));
-                    conflicts2.Add(new SchedulingStadiumOccupancyConflict(match2.Stadium));
-                }
-                else
-                {
-                    var periodWithRotationTime1 = new Period(period1.Start, period1.End + _competitionInfoProvider.RotationTime);
-                    var periodWithRotationTime2 = new Period(period2.Start, period2.End + _competitionInfoProvider.RotationTime);
+                if (match2.Item.Participate(match1.Item.HomeTeam))
+                    conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.HomeTeam));
+                if (match1.Item.Participate(match2.Item.HomeTeam))
+                    conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.HomeTeam));
+                if (match2.Item.Participate(match1.Item.AwayTeam))
+                    conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.AwayTeam));
+                if (match1.Item.Participate(match2.Item.AwayTeam))
+                    conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.AwayTeam));
+            }
 
-                    if (periodWithRotationTime1.Intersect(periodWithRotationTime2))
-                    {
-                        conflicts1.Add(new SchedulingRotationTimeNotRespectedConflict(match1.Stadium));
-                        conflicts2.Add(new SchedulingRotationTimeNotRespectedConflict(match2.Stadium));
-                    }
-                }
+            if (_availibilityCheckingService.StadiumOfMatchesIsInConflict(matchDto1, matchDto2, false))
+            {
+                conflicts1.Add(new SchedulingStadiumOccupancyConflict(match1.Stadium!));
+                conflicts2.Add(new SchedulingStadiumOccupancyConflict(match2.Stadium!));
+            }
+
+            if (_availibilityCheckingService.StadiumOfMatchesIsInConflict(matchDto1, matchDto2, true))
+            {
+                conflicts1.Add(new SchedulingRotationTimeNotRespectedConflict(match1.Stadium!));
+                conflicts2.Add(new SchedulingRotationTimeNotRespectedConflict(match2.Stadium!));
             }
 
             return (conflicts1, conflicts2);

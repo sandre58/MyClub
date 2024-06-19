@@ -30,9 +30,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public MatchesPlanningListParametersProvider(IEnumerable<IMatchParent> parents,
                                                      IEnumerable<DateTime> dates,
                                                      IEnumerable<TeamViewModel> teams,
-                                                     IEnumerable<StadiumViewModel> stadiums)
+                                                     IEnumerable<StadiumViewModel> stadiums,
+                                                     SchedulingParametersViewModel schedulingParameters)
         {
-            _filters = new(teams, stadiums, dates, parents);
+            _filters = new(teams, stadiums, dates, parents, schedulingParameters);
             var displayModeDay = new DisplayModeDay(2, 12.Hours(), 23.Hours());
             _displayViewModel = new DisplayViewModel().AddMode(displayModeDay).AddMode<DisplayModeByParent>(true).AddMode<DisplayModeByDate>().AddMode<DisplayModeList>();
             _disposables.AddRange(

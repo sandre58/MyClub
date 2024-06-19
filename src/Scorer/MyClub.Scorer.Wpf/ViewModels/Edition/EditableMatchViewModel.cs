@@ -56,10 +56,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public bool IsDeleting { get; set; }
 
-        public EditableMatchViewModel(ISourceProvider<TeamViewModel> teamProviders, ISourceProvider<StadiumViewModel> stadiumsProvider)
-            : this(null, teamProviders, stadiumsProvider) { }
+        public EditableMatchViewModel(ISourceProvider<TeamViewModel> teamProviders, ISourceProvider<StadiumViewModel> stadiumsProvider, bool useHomeStadium = false)
+            : this(null, teamProviders, stadiumsProvider, useHomeStadium) { }
 
-        public EditableMatchViewModel(Guid? id, ISourceProvider<TeamViewModel> teamProviders, ISourceProvider<StadiumViewModel> stadiumsProvider)
+        public EditableMatchViewModel(Guid? id, ISourceProvider<TeamViewModel> teamProviders, ISourceProvider<StadiumViewModel> stadiumsProvider, bool useHomeStadium = false)
         {
             Id = id;
             IsReadOnly = id.HasValue;
@@ -67,15 +67,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             ValidationRules.Add<EditableMatchViewModel, TeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
 
-            Disposables.AddRange(
-            [
-                teamProviders.Connect().ObserveOn(Scheduler.UI).Bind(out _availableTeams).Subscribe(),
-                this.WhenPropertyChanged(x => x.HomeTeam, false).Subscribe(_ =>
+            Disposables.Add(teamProviders.Connect().ObserveOn(Scheduler.UI).Bind(out _availableTeams).Subscribe());
+
+            if (useHomeStadium)
+                Disposables.Add(this.WhenPropertyChanged(x => x.HomeTeam, false).Subscribe(_ =>
                 {
-                    if(!IsReadOnly)
+                    if (!IsReadOnly)
                         StadiumSelection.Select(HomeTeam?.Stadium?.Id);
-                })
-            ]);
+                }));
         }
 
         internal bool IsValid() => Date.HasValue && Time.HasValue && HomeTeam is not null && AwayTeam is not null;

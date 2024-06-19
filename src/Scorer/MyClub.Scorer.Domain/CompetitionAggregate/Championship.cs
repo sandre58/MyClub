@@ -27,19 +27,19 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public Dictionary<AcceptableValueRange<int>, RankLabel> Labels { get; } = [];
 
-        public abstract IEnumerable<Match> GetMatches();
+        public abstract IEnumerable<Match> GetAllMatches();
 
         public abstract RankingRules GetRankingRules();
 
         #region Ranking
 
-        public Ranking GetRanking() => new(Teams, GetMatches(), GetRankingRules(), GetPenaltyPoints(), Labels, (x, y) => x.State is MatchState.Played);
+        public Ranking GetRanking() => new(Teams, GetAllMatches(), GetRankingRules(), GetPenaltyPoints(), Labels, (x, y) => x.State is MatchState.Played);
 
-        public Ranking GetHomeRanking() => new(Teams, GetMatches(), GetRankingRules(), null, null, (x, y) => y.Equals(x.HomeTeam) && x.State == MatchState.Played);
+        public Ranking GetHomeRanking() => new(Teams, GetAllMatches(), GetRankingRules(), null, null, (x, y) => y.Equals(x.HomeTeam) && x.State == MatchState.Played);
 
-        public Ranking GetAwayRanking() => new(Teams, GetMatches(), GetRankingRules(), null, null, (x, y) => y.Equals(x.AwayTeam) && x.State == MatchState.Played);
+        public Ranking GetAwayRanking() => new(Teams, GetAllMatches(), GetRankingRules(), null, null, (x, y) => y.Equals(x.AwayTeam) && x.State == MatchState.Played);
 
-        public Ranking GetLiveRanking() => new(Teams, GetMatches(), GetRankingRules(), GetPenaltyPoints(), Labels, (x, y) => x.State is MatchState.Played or MatchState.InProgress);
+        public Ranking GetLiveRanking() => new(Teams, GetAllMatches(), GetRankingRules(), GetPenaltyPoints(), Labels, (x, y) => x.State is MatchState.Played or MatchState.InProgress);
 
         #endregion
 

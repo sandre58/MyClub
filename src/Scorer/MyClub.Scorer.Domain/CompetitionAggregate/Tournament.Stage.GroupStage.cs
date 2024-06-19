@@ -5,13 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyNet.Utilities.Extensions;
 using MyClub.Domain;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities.Collections;
+using MyNet.Utilities.Extensions;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
@@ -51,7 +51,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public IStage? Parent { get; }
 
-        public IEnumerable<Match> GetMatches() => Groups.SelectMany(x => x.GetMatches());
+        public IEnumerable<Match> GetAllMatches() => Groups.SelectMany(x => x.GetAllMatches());
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
 

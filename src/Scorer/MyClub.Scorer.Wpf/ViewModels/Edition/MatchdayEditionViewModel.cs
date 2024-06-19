@@ -15,6 +15,7 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Commands;
@@ -62,7 +63,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public Guid? ParentId { get; private set; }
+        public IMatchdayParent? Parent { get; private set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -121,7 +122,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private void CancelRemoveMatch(EditableMatchViewModel item) => item.IsDeleting = false;
 
-        private void AddMatch() => Matches.Add(new EditableMatchViewModel(_teamsProvider, _stadiumsProvider)
+        private void AddMatch() => Matches.Add(new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
         {
             Date = Date,
             Time = Time,
@@ -134,7 +135,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DuplicatedMatchday = matchday;
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider)
+                var result = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
                 {
                     Date = Date,
                     Time = Time,
@@ -153,29 +154,29 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Matches.Clear();
         }
 
-        public void New(Guid? parentId = null, Action? initialize = null)
+        public void New(IMatchdayParent parent, Action? initialize = null)
         {
             DuplicatedMatchday = null;
-            ParentId = parentId;
+            Parent = parent;
             New(initialize);
         }
 
         public void Duplicate(MatchdayViewModel matchday, Action? initialize = null)
         {
-            New(matchday.Parent.Id, initialize);
+            New(matchday.Parent, initialize);
             DuplicatedMatchday = matchday;
         }
 
         public void Load(MatchdayViewModel matchday)
         {
             DuplicatedMatchday = null;
-            ParentId = matchday.Parent.Id;
+            Parent = matchday.Parent;
             Load(matchday.Id);
         }
 
         protected override void ResetItem()
         {
-            var defaultValues = CrudService.New(ParentId);
+            var defaultValues = CrudService.New(Parent?.Id);
             Date = defaultValues.Date.ToLocalTime().Date;
             Time = defaultValues.Date.ToLocalTime().TimeOfDay;
             ShortName = defaultValues.ShortName.OrEmpty();
@@ -193,7 +194,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             => new()
             {
                 Id = ItemId,
-                ParentId = ParentId,
+                ParentId = Parent?.Id,
                 Name = Name,
                 ShortName = ShortName,
                 Date = Date.GetValueOrDefault().ToUtcDateTime(Time.GetValueOrDefault()),
@@ -227,7 +228,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             PostponedState = !PostponedDate.HasValue && !item.IsPostponed ? PostponedState.None : PostponedDate.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
             Matches.Set(item.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(x.Id, _teamsProvider, _stadiumsProvider)
+                var result = new EditableMatchViewModel(x.Id, _teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
                 {
                     Date = x.Date.ToLocalTime().Date,
                     Time = x.Date.ToLocalTime().TimeOfDay,

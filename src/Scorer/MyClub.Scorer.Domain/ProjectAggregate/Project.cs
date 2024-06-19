@@ -3,64 +3,27 @@
 
 using System;
 using System.Collections.ObjectModel;
-using MyNet.Utilities;
-using MyNet.Utilities.Extensions;
 using MyClub.Domain;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities;
 using MyNet.Utilities.Collections;
+using MyNet.Utilities.Extensions;
 
 namespace MyClub.Scorer.Domain.ProjectAggregate
 {
-    public class TournamentProject : Project<Tournament, TournamentParameters>
-    {
-        public TournamentProject(string name, DateTime startDate, DateTime endDate, byte[]? image = null, Guid? id = null) : base(CompetitionType.Tournament, name, startDate, endDate, image, id)
-        {
-        }
-    }
-
-    public class LeagueProject : Project<League, LeagueParameters>
-    {
-        public LeagueProject(string name, DateTime startDate, DateTime endDate, byte[]? image = null, Guid? id = null) : base(CompetitionType.League, name, startDate, endDate, image, id)
-        {
-        }
-
-        public override Team AddTeam(Team team)
-        {
-            base.AddTeam(team);
-            return Competition.AddTeam(team);
-        }
-
-        public override bool RemoveTeam(Team team, bool removeStadium = false)
-        {
-            base.RemoveTeam(team, removeStadium);
-            return Competition.RemoveTeam(team);
-        }
-    }
-
-    public class CupProject : Project<Cup, CupParameters>
-    {
-        public CupProject(string name, DateTime startDate, DateTime endDate, byte[]? image = null, Guid? id = null) : base(CompetitionType.Cup, name, startDate, endDate, image, id)
-        {
-        }
-    }
-
-    public abstract class Project<TCompetition, TParameters> : Project, IProject
+    public abstract class Project<TCompetition> : Project, IProject
         where TCompetition : ICompetition, new()
-        where TParameters : ProjectParameters, new()
     {
-        protected Project(CompetitionType type, string name, DateTime startDate, DateTime endDate, byte[]? image = null, Guid? id = null) : base(type, name, startDate, endDate, image, id) => Competition = new();
+        protected Project(CompetitionType type, string name, byte[]? image = null, Guid? id = null)
+            : base(type, name, image, id) => Competition = new();
 
         public TCompetition Competition { get; }
 
-        public TParameters Parameters { get; } = new();
-
         ICompetition IProject.Competition => Competition;
-
-        ProjectParameters IProject.Parameters => Parameters;
     }
 
     public abstract class Project : AuditableEntity
@@ -69,13 +32,11 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
         private readonly ExtendedObservableCollection<Stadium> _stadiums = [];
         private readonly ExtendedObservableCollection<Team> _teams = [];
 
-        protected Project(CompetitionType type, string name, DateTime startDate, DateTime endDate, byte[]? image = null, Guid? id = null) : base(id)
+        protected Project(CompetitionType type, string name, byte[]? image = null, Guid? id = null) : base(id)
         {
             Type = type;
             Name = name;
             Image = image;
-            StartDate = startDate;
-            EndDate = endDate;
             Teams = new(_teams);
             Stadiums = new(_stadiums);
         }
@@ -93,10 +54,6 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
         public ReadOnlyObservableCollection<Team> Teams { get; }
 
         public ReadOnlyObservableCollection<Stadium> Stadiums { get; }
-
-        public DateTime StartDate { get; }
-
-        public DateTime EndDate { get; }
 
         public override string ToString() => Name;
 

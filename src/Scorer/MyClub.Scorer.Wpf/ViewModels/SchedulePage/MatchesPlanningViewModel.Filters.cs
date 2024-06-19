@@ -42,9 +42,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public MatchesPlanningFiltersViewModel(IEnumerable<TeamViewModel> teams,
                                                IEnumerable<StadiumViewModel> stadiums,
                                                IEnumerable<DateTime> dates,
-                                               IEnumerable<IMatchParent> parents)
+                                               IEnumerable<IMatchParent> parents,
+                                               SchedulingParametersViewModel schedulingParameters)
         {
-            SpeedFilters = new MatchesPlanningSpeedFiltersViewModel(teams, stadiums);
+            SpeedFilters = new MatchesPlanningSpeedFiltersViewModel(teams, stadiums, schedulingParameters);
             DateFilter = new CompositeFilterViewModel(new DateFilterViewModel(nameof(MatchViewModel.DateOfDay), dates)) { IsEnabled = false };
             DateRangeFilter = new CompositeFilterViewModel(new MyNet.UI.ViewModels.List.Filtering.Filters.DateFilterViewModel(nameof(MatchViewModel.DateOfDay)) { Operator = ComplexComparableOperator.IsBetween }) { IsEnabled = false };
             ParentFilter = new CompositeFilterViewModel(new MatchParentFilterViewModel(nameof(MatchViewModel.Parent), parents)) { IsEnabled = false };

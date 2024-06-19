@@ -76,6 +76,7 @@
                                       HorizontalAlignment="Stretch"
                                       my:HintAssist.Hint="{my:Resource StartWith}"
                                       my:HintAssist.IsFloating="True"
+                                      my:ItemsControlAssist.SortingProperty="Date"
                                       ItemsSource="{Binding AvailableMatchdays}"
                                       SelectedItem="{Binding DuplicationStart}" />
                         </GroupBox>
@@ -178,6 +179,7 @@
                                           Width="140"
                                           my:HintAssist.Hint="{my:Resource Duplicate}"
                                           my:IconAssist.Icon="{my:ToolIcon Kind=ContentDuplicate}"
+                                          my:ItemsControlAssist.SortingProperty="Date"
                                           my:TextFieldAssist.HasClearButton="True"
                                           ItemsSource="{Binding Item.Matchdays}"
                                           SelectedItem="{Binding Item.DuplicatedMatchday}" />
@@ -238,9 +240,9 @@
                                                             <ColumnDefinition Width="10" />
                                                             <ColumnDefinition Width="60" />
                                                             <ColumnDefinition Width="10" />
-                                                            <ColumnDefinition Width="130" />
+                                                            <ColumnDefinition Width="110" />
                                                             <ColumnDefinition Width="10" />
-                                                            <ColumnDefinition Width="130" />
+                                                            <ColumnDefinition Width="110" />
                                                             <ColumnDefinition Width="10" />
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="10" />

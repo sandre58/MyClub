@@ -42,9 +42,9 @@
                      SelectedValue="{Binding TeamFilter.VenueFilter.Value}"
                      SelectedValuePath="DataContext"
                      SelectionMode="Single">
-                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:Venue.Home}" ToolTip="{my:Resource LocationHome}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:VenueContext.Home}" ToolTip="{my:Resource LocationHome}" />
                 <ListBoxItem Content="{my:MediumIcon Kind=NullOff}" DataContext="{x:Null}" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:Venue.Away}" ToolTip="{my:Resource LocationAway}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:VenueContext.Away}" ToolTip="{my:Resource LocationAway}" />
             </ListBox>
         </Grid>
 

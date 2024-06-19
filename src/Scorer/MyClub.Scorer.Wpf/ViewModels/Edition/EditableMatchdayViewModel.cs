@@ -6,41 +6,36 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reactive.Linq;
-using DynamicData;
 using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Commands;
-using MyNet.UI.Threading;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class EditableMatchdayViewModel : EditableObject
     {
-        private readonly ReadOnlyObservableCollection<MatchdayViewModel> _matchdays;
-        private readonly ISourceProvider<TeamViewModel> _teamsProvider;
-        private readonly ISourceProvider<StadiumViewModel> _stadiumsProvider;
+        private readonly bool _useHomeTeamStadium;
+        private readonly ISourceProvider<StadiumViewModel> _stadiums;
+        private readonly ISourceProvider<TeamViewModel> _teams;
 
-        public EditableMatchdayViewModel(MatchdaysProvider matchdaysProvider,
-                                        StadiumsProvider stadiumsProvider,
-                                        TeamsProvider teamsProvider)
+        public EditableMatchdayViewModel(ISourceProvider<MatchdayViewModel> matchdays,
+                                         ISourceProvider<StadiumViewModel> stadiums,
+                                         ISourceProvider<TeamViewModel> teams,
+                                         bool useHomeTeamStadium = false)
         {
-            _stadiumsProvider = stadiumsProvider;
-            _teamsProvider = teamsProvider;
+            _useHomeTeamStadium = useHomeTeamStadium;
+            _stadiums = stadiums;
+            _teams = teams;
+            Matchdays = matchdays.Source;
 
             InvertTeamsCommand = CommandsManager.Create(InvertTeams, () => Matches.Count > 0);
-            AddMatchCommand = CommandsManager.Create(AddMatch, () => teamsProvider.Items.Count > 0);
+            AddMatchCommand = CommandsManager.Create(AddMatch, () => _teams.Source.Count > 0);
             RemoveMatchCommand = CommandsManager.CreateNotNull<EditableMatchViewModel>(RemoveMatch);
             ClearMatchesCommand = CommandsManager.Create(ClearMatches, () => Matches.Count > 0);
-
-            Disposables.AddRange(
-            [
-                matchdaysProvider.ConnectById().SortBy(x => x.Date).Bind(out _matchdays).ObserveOn(Scheduler.UI).Subscribe(),
-            ]);
         }
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -68,7 +63,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<MatchdayViewModel> Matchdays => _matchdays;
+        public ReadOnlyObservableCollection<MatchdayViewModel> Matchdays { get; }
 
         public ObservableCollection<EditableMatchViewModel> Matches { get; } = [];
 
@@ -82,7 +77,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private void RemoveMatch(EditableMatchViewModel item) => Matches.Remove(item);
 
-        public void AddMatch() => Matches.Add(new EditableMatchViewModel(_teamsProvider, _stadiumsProvider)
+        public void AddMatch() => Matches.Add(new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium)
         {
             Date = Date,
             Time = Time,
@@ -96,7 +91,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 DuplicatedMatchday = matchday;
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider)
+                var result = new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium)
                 {
                     Date = Date,
                     Time = Time,

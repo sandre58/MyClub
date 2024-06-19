@@ -18,7 +18,7 @@ namespace MyClub.Scorer.Application.Dtos
 
         public StadiumDto? Stadium { get; set; }
 
-        public bool NeutralVenue { get; set; }
+        public bool IsNeutralStadium { get; set; }
 
         public bool AfterExtraTime { get; set; }
 

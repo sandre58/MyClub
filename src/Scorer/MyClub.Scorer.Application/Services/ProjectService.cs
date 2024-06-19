@@ -50,7 +50,7 @@ namespace MyClub.Scorer.Application.Services
             {
                 using (LogManager.MeasureTime($"Create new project : {properties.Name}", TraceLevel.Debug))
                 {
-                    project = new LeagueProject(properties.Name.OrThrow(), properties.StartDate, properties.EndDate, properties.Image);
+                    project = new LeagueProject(properties.Name.OrThrow(), properties.Image);
 
                     _ = Load(project);
                 }
@@ -67,7 +67,7 @@ namespace MyClub.Scorer.Application.Services
             {
                 using (LogManager.MeasureTime($"Create new project : {properties.Name}", TraceLevel.Debug))
                 {
-                    project = new CupProject(properties.Name.OrThrow(), properties.StartDate, properties.EndDate, properties.Image);
+                    project = new CupProject(properties.Name.OrThrow(), properties.Image);
 
                     _ = Load(project);
                 }
@@ -84,7 +84,7 @@ namespace MyClub.Scorer.Application.Services
             {
                 using (LogManager.MeasureTime($"Create new project : {properties.Name}", TraceLevel.Debug))
                 {
-                    project = new TournamentProject(properties.Name.OrThrow(), properties.StartDate, properties.EndDate, properties.Image);
+                    project = new TournamentProject(properties.Name.OrThrow(), properties.Image);
 
                     _ = Load(project);
                 }
@@ -144,14 +144,6 @@ namespace MyClub.Scorer.Application.Services
 
             return true;
         }
-
-        public ProjectParametersDto GetParameters() => new()
-        {
-            UseTeamVenues = _projectRepository.GetCurrentOrThrow().Parameters.UseTeamVenues,
-            MatchStartTime = _projectRepository.GetCurrentOrThrow().Parameters.MatchStartTime,
-            MinimumRestTime = _projectRepository.GetCurrentOrThrow().Parameters.MinimumRestTime,
-            RotationTime = _projectRepository.GetCurrentOrThrow().Parameters.RotationTime,
-        };
 
         private async Task<IProject> CreateProjectAsync(CompetitionType type, CancellationToken cancellationToken)
             => type switch

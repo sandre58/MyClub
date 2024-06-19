@@ -23,15 +23,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 {
     internal abstract class MatchParentsViewModel<T> : SelectionListViewModel<T> where T : IMatchParent
     {
-        protected MatchParentsViewModel(ISourceProvider<T> matchParentsProvider, ListParametersProvider listParametersProvider)
+        protected MatchParentsViewModel(IMatchdayParent parent, ISourceProvider<T> matchParentsProvider, ListParametersProvider listParametersProvider)
             : base(collection: new MatchParentsCollection<T>(matchParentsProvider), parametersProvider: listParametersProvider)
         {
+            Parent = parent;
             Mode = ScreenMode.Read;
 
             AddToDateCommand = CommandsManager.Create<DateTime>(async x => await AddToDateAsync(x).ConfigureAwait(false));
             DuplicateSelectedItemCommand = CommandsManager.Create(async () => await DuplicateAsync(SelectedItem!).ConfigureAwait(false), () => SelectedWrappers.Count == 1);
             PostponeSelectedItemsCommand = CommandsManager.Create(async () => await PostponeAsync(SelectedItems).ConfigureAwait(false), () => SelectedItems.All(x => x.CanBePostponed()));
         }
+
+        public IMatchdayParent Parent { get; }
 
         public ICommand AddToDateCommand { get; }
 

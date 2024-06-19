@@ -5,98 +5,77 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.StadiumAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class AvailibilityCheckingService(IProjectRepository projectRepository,
-                                             IMatchRepository matchRepository,
-                                             IAvailibilityCheckingDomainService availibilityCheckingDomainService)
+    public class AvailibilityCheckingService(IMatchRepository matchRepository,
+                                             IStadiumRepository stadiumRepository,
+                                             ISchedulingParametersRepository schedulingParametersRepository,
+                                             ISchedulingDomainService schedulingDomainService)
     {
-        private readonly IAvailibilityCheckingDomainService _availibilityCheckingDomainService = availibilityCheckingDomainService;
+        private readonly ISchedulingDomainService _schedulingDomainService = schedulingDomainService;
         private readonly IMatchRepository _matchRepository = matchRepository;
-        private readonly IProjectRepository _projectRepository = projectRepository;
+        private readonly IStadiumRepository _stadiumRepository = stadiumRepository;
+        private readonly ISchedulingParametersRepository _schedulingParametersRepository = schedulingParametersRepository;
 
         public List<(ConflictType, Guid, Guid?)> GetAllConflicts()
-            => _availibilityCheckingDomainService.GetAllConflicts().Select(x => (x.Item1, x.Item2.Id, x.Item3?.Id)).ToList();
+            => _schedulingDomainService.GetAllConflicts().Select(x => (x.Item1, x.Item2.Id, x.Item3?.Id)).ToList();
 
-        public AvailabilityCheck GetTeamsAvaibility(DateTime date,
-                                                    IEnumerable<Guid> teamIds,
-                                                    MatchFormat? matchFormat = null,
-                                                    IEnumerable<Guid>? excludeMatchIds = null)
+        public bool TeamsOfMatchesIsInConflict(MatchDto matchDto1,
+                                               MatchDto matchDto2,
+                                               bool checkWithRestTime = false)
         {
-            var period = GetPeriodOfFullMatch(date, matchFormat);
+            var match1 = _matchRepository.GetById(matchDto1.Id ?? Guid.Empty).OrThrow();
+            var match2 = _matchRepository.GetById(matchDto2.Id ?? Guid.Empty).OrThrow();
+            var period1 = new Period(matchDto1.Date.ToUniversalTime(), matchDto1.Date.ToUniversalTime().AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRestTime ? _schedulingParametersRepository.GetByMatch(match1).RestTime : TimeSpan.Zero)));
+            var period2 = new Period(matchDto2.Date.ToUniversalTime(), matchDto2.Date.ToUniversalTime().AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRestTime ? _schedulingParametersRepository.GetByMatch(match2).RestTime : TimeSpan.Zero)));
 
-            if (!TeamsAreAvailable(teamIds, period, excludeMatchIds))
-                return AvailabilityCheck.IsBusy;
+            return period1.Intersect(period2) && (match2.Participate(match1.HomeTeam) || match2.Participate(match1.AwayTeam));
+        }
 
-            period = GetPeriodOfFullMatch(date, matchFormat, _projectRepository.GetCurrentOrThrow().Parameters.MinimumRestTime);
+        public bool StadiumOfMatchesIsInConflict(MatchDto matchDto1,
+                                                 MatchDto matchDto2,
+                                                 bool checkWithRotationTime = false)
+        {
+            var match1 = _matchRepository.GetById(matchDto1.Id ?? Guid.Empty).OrThrow();
+            var match2 = _matchRepository.GetById(matchDto2.Id ?? Guid.Empty).OrThrow();
+            var stadium1 = matchDto1.Stadium?.Id is not null ? _stadiumRepository.GetById(matchDto1.Stadium.Id.Value) : null;
+            var stadium2 = matchDto2.Stadium?.Id is not null ? _stadiumRepository.GetById(matchDto2.Stadium.Id.Value) : null;
+            var period1 = new Period(matchDto1.Date.ToUniversalTime(), matchDto1.Date.ToUniversalTime().AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRotationTime ? _schedulingParametersRepository.GetByMatch(match1).RotationTime : TimeSpan.Zero)));
+            var period2 = new Period(matchDto2.Date.ToUniversalTime(), matchDto2.Date.ToUniversalTime().AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRotationTime ? _schedulingParametersRepository.GetByMatch(match2).RotationTime : TimeSpan.Zero)));
 
-            return !TeamsAreAvailable(teamIds, period, excludeMatchIds) ? AvailabilityCheck.IsPartiallyBusy : AvailabilityCheck.IsAvailable;
+            return period1.Intersect(period2) && stadium1 is not null && stadium1.Equals(stadium2);
+        }
+
+        public AvailabilityCheck GetTeamsAvaibility(IEnumerable<Guid> teamIds,
+                                                    Period period,
+                                                    IEnumerable<Guid>? ignoredMatchIds = null)
+        {
+            var utcPeriod = new Period(period.Start.ToUniversalTime(), period.End.ToUniversalTime());
+            return !_schedulingDomainService.TeamsAreAvailable(teamIds, utcPeriod, false, ignoredMatchIds)
+                ? AvailabilityCheck.IsBusy
+                : !_schedulingDomainService.TeamsAreAvailable(teamIds, utcPeriod, true, ignoredMatchIds)
+                ? AvailabilityCheck.IsPartiallyBusy
+                : AvailabilityCheck.IsAvailable;
         }
 
         public AvailabilityCheck GetStadiumAvaibility(Guid stadiumId,
-                                                      DateTime dateOfMatch,
-                                                      MatchFormat? matchFormat = null,
-                                                      IEnumerable<Guid>? excludeMatchIds = null)
+                                                      Period period,
+                                                      IEnumerable<Guid>? ignoredMatchIds = null)
         {
-            var period = GetPeriodOfFullMatch(dateOfMatch, matchFormat);
-
-            if (!StadiumIsAvailable(stadiumId, period, excludeMatchIds))
-                return AvailabilityCheck.IsBusy;
-
-            period = GetPeriodOfFullMatch(dateOfMatch, matchFormat, _projectRepository.GetCurrentOrThrow().Parameters.RotationTime);
-
-            return !StadiumIsAvailable(stadiumId, period, excludeMatchIds) ? AvailabilityCheck.IsPartiallyBusy : AvailabilityCheck.IsAvailable;
-        }
-
-        public bool StadiumIsAvailable(Guid stadiumId, Period period, IEnumerable<Guid>? excludeMatchIds = null)
-            => GetMatchesInStadium(stadiumId, period, excludeMatchIds).Count == 0;
-
-        public bool TeamsAreAvailable(IEnumerable<Guid> teamIds, Period period, IEnumerable<Guid>? excludeMatchIds = null)
-            => GetMatchesOfTeams(teamIds, period, excludeMatchIds).Count == 0;
-
-        private Period GetPeriodOfFullMatch(DateTime date, MatchFormat? matchFormat = null, TimeSpan? timeToAdd = null)
-        {
-            var matchFullTime = (matchFormat ?? _projectRepository.GetCurrentOrThrow().Competition.ProvideFormat()).GetFullTime();
-
-            return timeToAdd.HasValue
-                ? new Period(date.ToUniversalTime().SubtractFluentTimeSpan(timeToAdd.Value), date.ToUniversalTime().AddFluentTimeSpan(matchFullTime + timeToAdd.Value))
-                : date.ToUniversalTime().ToPeriod(matchFullTime);
-        }
-
-        private List<Match> GetMatchesInStadium(Guid stadiumId,
-                                               Period period,
-                                               IEnumerable<Guid>? excludedMatchIds = null)
-        {
-            var matches = _matchRepository.GetMatchesInStadium(stadiumId, period).Where(x => x.State != MatchState.Cancelled);
-
-            if (excludedMatchIds is not null)
-            {
-                var excludedMatches = matches.Where(x => excludedMatchIds.Contains(x.Id)).ToList();
-                matches = matches.Except(excludedMatches);
-            }
-
-            return matches.ToList();
-        }
-
-        private List<Match> GetMatchesOfTeams(IEnumerable<Guid> teamIds,
-                                               Period period,
-                                               IEnumerable<Guid>? excludedMatchIds = null)
-        {
-            var matches = _matchRepository.GetMatchesOfTeams(teamIds, period).Where(x => x.State != MatchState.Cancelled);
-
-            if (excludedMatchIds is not null)
-            {
-                var excludedMatches = matches.Where(x => excludedMatchIds.Contains(x.Id)).ToList();
-                matches = matches.Except(excludedMatches);
-            }
-
-            return matches.ToList();
+            var utcPeriod = new Period(period.Start.ToUniversalTime(), period.End.ToUniversalTime());
+            return !_schedulingDomainService.StadiumIsAvailable(stadiumId, utcPeriod, false, ignoredMatchIds)
+                ? AvailabilityCheck.IsBusy
+                : !_schedulingDomainService.StadiumIsAvailable(stadiumId, utcPeriod, true, ignoredMatchIds)
+                ? AvailabilityCheck.IsPartiallyBusy
+                : AvailabilityCheck.IsAvailable;
         }
     }
 }

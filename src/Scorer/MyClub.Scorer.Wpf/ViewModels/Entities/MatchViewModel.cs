@@ -20,6 +20,7 @@ using MyNet.Observable;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
+using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
@@ -112,7 +113,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public TeamViewModel AwayTeam { get; private set; }
 
-        public bool NeutralVenue => Item.NeutralVenue;
+        public bool NeutralVenue => Item.IsNeutralStadium;
 
         public StadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
 
@@ -245,6 +246,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public bool IsWithdrawn(TeamViewModel team) => Item.IsWithdrawn(team.Id);
 
         public TimeSpan GetTotalTime() => Item.Format.RegulationTime.Duration * Item.Format.RegulationTime.Number + 15.Minutes();
+
+        public Period GetPeriod() => new(StartDate, EndDate);
 
         public async Task OpenAsync() => await _matchPresentationService.OpenAsync(this).ConfigureAwait(false);
 

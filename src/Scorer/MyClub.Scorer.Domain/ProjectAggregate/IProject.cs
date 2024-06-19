@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.ObjectModel;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.CompetitionAggregate;
@@ -15,17 +14,11 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
     {
         ICompetition Competition { get; }
 
-        ProjectParameters Parameters { get; }
-
         CompetitionType Type { get; }
 
         string Name { get; set; }
 
         byte[]? Image { get; set; }
-
-        DateTime StartDate { get; }
-
-        DateTime EndDate { get; }
 
         ReadOnlyObservableCollection<Team> Teams { get; }
 

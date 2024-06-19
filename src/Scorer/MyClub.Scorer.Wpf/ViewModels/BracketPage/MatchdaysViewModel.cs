@@ -8,6 +8,7 @@ using MyNet.Observable.Collections.Providers;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.UI.Commands;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 {
@@ -15,9 +16,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
     {
         private readonly MatchdayPresentationService _matchdayPresentationService;
 
-        public MatchdaysViewModel(ISourceProvider<MatchdayViewModel> matchdaysProvider,
+        public MatchdaysViewModel(IMatchdayParent parent,
+                                  ISourceProvider<MatchdayViewModel> matchdaysProvider,
                                   MatchdayPresentationService matchdayPresentationService)
-            : base(matchdaysProvider, new MatchdaysListParametersProvider())
+            : base(parent, matchdaysProvider, new MatchdaysListParametersProvider())
         {
             _matchdayPresentationService = matchdayPresentationService;
 
@@ -26,9 +28,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 
         public ICommand AddMultipleCommand { get; }
 
-        private async Task AddMultipleAsync() => await _matchdayPresentationService.AddMultipleAsync().ConfigureAwait(false);
+        private async Task AddMultipleAsync() => await _matchdayPresentationService.AddMultipleAsync(Parent).ConfigureAwait(false);
 
-        protected override async Task AddToDateAsync(DateTime date) => await _matchdayPresentationService.AddAsync(date: date).ConfigureAwait(false);
+        protected override async Task AddToDateAsync(DateTime date) => await _matchdayPresentationService.AddAsync(Parent, date).ConfigureAwait(false);
 
         protected override async Task AddItemAsync() => await _matchdayPresentationService.AddAsync().ConfigureAwait(false);
 

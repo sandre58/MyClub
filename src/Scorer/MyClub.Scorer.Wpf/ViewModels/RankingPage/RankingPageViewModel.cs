@@ -11,12 +11,15 @@ using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Domain.Enums;
+using System.Reactive.Disposables;
+using DynamicData.Binding;
 
 namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 {
     internal class RankingPageViewModel : PageViewModel
     {
         private readonly RankingListParameterProvider _rankingListParameterProvider = new();
+        private CompositeDisposable? _disposables;
 
         public RankingPageViewModel(ProjectInfoProvider projectInfoProvider, CompetitionInfoProvider competitionInfoProvider, MatchesProvider matchesProvider, LeaguePresentationService leaguePresentationService)
         {
@@ -31,6 +34,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                 LiveRanking = null;
                 HomeRanking = null;
                 AwayRanking = null;
+                _disposables?.Dispose();
             });
 
             projectInfoProvider.WhenProjectLoaded(_ =>
@@ -41,6 +45,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                     LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
                     HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
                     AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
+
+                    _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => ShowHomeAwayRankings = x.Value));
                 }
             });
 
@@ -60,5 +66,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
         public RankingListViewModel? AwayRanking { get; private set; }
 
         public ICommand EditRulesCommand { get; private set; }
+
+        public bool ShowHomeAwayRankings { get; set; }
     }
 }

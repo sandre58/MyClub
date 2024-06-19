@@ -43,14 +43,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         private readonly MatchPresentationService _matchPresentationService;
         private readonly AvailibilityCheckingService _availibilityCheckingService;
 
-        public MatchesPlanningViewModel(ISourceProvider<MatchViewModel> matchesProvider,
+        public MatchesPlanningViewModel(SchedulingParametersViewModel schedulingParameters,
+                                        ISourceProvider<MatchViewModel> matchesProvider,
                                         ISourceProvider<IMatchParent> parentsProvider,
                                         ISourceProvider<TeamViewModel> teamsProvider,
                                         ISourceProvider<StadiumViewModel> stadiumsProvider,
                                         MatchPresentationService matchPresentationService,
                                         AvailibilityCheckingService availibilityCheckingService)
             : base(collection: new MatchesCollection(matchesProvider),
-                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source, new ObservableSourceProvider<DateTime>(matchesProvider.Connect().AutoRefresh(x => x.Date).DistinctValues(x => x.DateOfDay).ObserveOn(Scheduler.UI)).Source, teamsProvider.Source, stadiumsProvider.Source))
+                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source, new ObservableSourceProvider<DateTime>(matchesProvider.Connect().AutoRefresh(x => x.Date).DistinctValues(x => x.DateOfDay).ObserveOn(Scheduler.UI)).Source, teamsProvider.Source, stadiumsProvider.Source, schedulingParameters))
         {
             _matchPresentationService = matchPresentationService;
             _availibilityCheckingService = availibilityCheckingService;
@@ -163,8 +164,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             return null;
         }
 
-        protected override void ResetCore() => Filters.Reset();
-
         private void StartEditResults()
         {
             UnselectAll();
@@ -267,7 +266,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         }
 
         private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, IEnumerable<MatchViewModel> matches)
-            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, x.Date, x.Format, matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
+            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, x.GetPeriod(), matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
 
         protected override bool SelectionIsAvailable(Func<MatchViewModel, bool> predicate) => Mode == ScreenMode.Read && base.SelectionIsAvailable(predicate);
 

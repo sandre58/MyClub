@@ -13,5 +13,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 
         public StadiumsPackage? Stadiums { get; set; }
 
+        public ParametersPackage? Parameters { get; set; }
     }
 }

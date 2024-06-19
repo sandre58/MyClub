@@ -21,14 +21,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlIgnore]
         public byte[]? Image { get; set; }
 
-        [XmlElement("startDate")]
-        public DateTime StartDate { get; set; }
-
-        [XmlElement("endDate")]
-        public DateTime EndDate { get; set; }
-
-        public ProjectParametersPackage? Parameters { get; set; }
-
         [XmlElement("createdAt", IsNullable = true)]
         public DateTime? CreatedAt { get; set; }
 

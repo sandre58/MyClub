@@ -27,17 +27,11 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             var type = (CompetitionType)source.Metadata!.Type;
             IProject project = type switch
             {
-                CompetitionType.League => new LeagueProject(source.Metadata!.Name, source.Metadata!.StartDate, source.Metadata!.EndDate, source.Metadata!.Image, source.Metadata!.Id),
-                CompetitionType.Cup => new CupProject(source.Metadata!.Name, source.Metadata!.StartDate, source.Metadata!.EndDate, source.Metadata!.Image, source.Metadata!.Id),
-                CompetitionType.Tournament => new TournamentProject(source.Metadata!.Name, source.Metadata!.StartDate, source.Metadata!.EndDate, source.Metadata!.Image, source.Metadata!.Id),
+                CompetitionType.League => new LeagueProject(source.Metadata!.Name, source.Metadata!.Image, ((LeagueParametersPackage)source.Parameters!).SchedulingParameters!.CreateSchedulingParameters(), source.Metadata!.Id),
+                CompetitionType.Cup => new CupProject(source.Metadata!.Name, source.Metadata!.Image, ((CupParametersPackage)source.Parameters!).DefaultSchedulingParameters!.CreateSchedulingParameters(), source.Metadata!.Id),
+                CompetitionType.Tournament => new TournamentProject(source.Metadata!.Name, source.Metadata!.Image, ((TournamentParametersPackage)source.Parameters!).DefaultSchedulingParameters!.CreateSchedulingParameters(), source.Metadata!.Id),
                 _ => throw new InvalidOperationException("Project type unknown"),
             };
-
-            // Parameters
-            project.Parameters.UseTeamVenues = source.Metadata!.Parameters!.UseTeamVenues;
-            project.Parameters.MatchStartTime = source.Metadata!.Parameters!.MatchStartTime;
-            project.Parameters.RotationTime = source.Metadata!.Parameters!.RotationTime;
-            project.Parameters.MinimumRestTime = source.Metadata!.Parameters!.MinimumRestTime;
 
             var stadiums = source.Stadiums?.Select(x => x.CreateStadium()).ToArray() ?? [];
             var teams = source.Teams?.Select(x => x.CreateTeam(x.StadiumId.HasValue ? stadiums.GetByIdOrDefault(x.StadiumId.Value) : null)).ToArray() ?? [];
@@ -76,6 +70,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
 
             return project;
         }
+
+        public static SchedulingParameters? CreateSchedulingParameters(this SchedulingParametersPackage schedulingParametersPackage)
+            => new(schedulingParametersPackage.StartDate, schedulingParametersPackage.EndDate, schedulingParametersPackage.StartTime, schedulingParametersPackage.RotationTime, schedulingParametersPackage.RestTime, schedulingParametersPackage.UseTeamVenues);
 
         public static Address CreateAddress(this AddressPackage source) => new(source.Street, source.PostalCode, source.City, source.Country.HasValue ? Country.FromValue(source.Country.Value) : null, source.Latitude, source.Longitude);
 
@@ -152,7 +149,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             var result = new Match(source.OriginDate, teams.GetById(source.Home!.TeamId), teams.GetById(source.Away!.TeamId), matchFormatInMatch == matchFormat ? matchFormat : matchFormatInMatch, source.Id)
             {
                 AfterExtraTime = source.AfterExtraTime,
-                NeutralVenue = source.NeutralVenue,
+                IsNeutralStadium = source.IsNeutralStadium,
                 Stadium = source.StadiumId.HasValue ? stadiums.GetById(source.StadiumId.Value) : null,
             };
 

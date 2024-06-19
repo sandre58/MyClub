@@ -54,7 +54,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public MatchOpponent Away => _opponents.Last().Value;
 
-        public bool NeutralVenue { get; set; }
+        public bool IsNeutralStadium { get; set; }
 
         public Stadium? Stadium { get; set; }
 

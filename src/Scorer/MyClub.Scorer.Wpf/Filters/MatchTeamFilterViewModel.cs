@@ -12,7 +12,7 @@ namespace MyClub.Scorer.Wpf.Filters
 {
     internal class MatchTeamFilterViewModel : SelectedValueFilterViewModel<TeamViewModel, TeamViewModel>
     {
-        public EnumValueFilterViewModel<Venue> VenueFilter { get; }
+        public EnumValueFilterViewModel<VenueContext> VenueFilter { get; }
 
         public bool ShowVenueFilter { get; set; } = true;
 
@@ -50,13 +50,13 @@ namespace MyClub.Scorer.Wpf.Filters
         protected override bool IsMatchProperty(object toCompare)
             => Value is null
                || toCompare is MatchViewModel match
-               && (VenueFilter.Value is null
+               && (VenueFilter.Value is null || !ShowVenueFilter
                     ? match.Participate(Value)
                     : VenueFilter.Value switch
                     {
-                        Venue.Home => match.HomeTeam == Value,
-                        Venue.Neutral => match.Participate(Value) && match.NeutralVenue,
-                        Venue.Away => match.AwayTeam == Value,
+                        VenueContext.Home => match.HomeTeam == Value,
+                        VenueContext.Neutral => match.Participate(Value) && match.NeutralVenue,
+                        VenueContext.Away => match.AwayTeam == Value,
                         _ => throw new InvalidOperationException("Unknown venue")
                     });
 

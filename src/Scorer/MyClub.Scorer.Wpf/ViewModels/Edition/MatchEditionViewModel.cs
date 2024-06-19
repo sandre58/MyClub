@@ -27,6 +27,7 @@ using MyNet.UI.Threading;
 using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
+using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Messaging;
 using PropertyChanged;
 
@@ -308,10 +309,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private AvailabilityCheck CheckTeamsAvaibility(DateTime date)
             => HomeTeam is null && AwayTeam is null
                 ? AvailabilityCheck.Unknown
-                : _availibilityCheckingService.GetTeamsAvaibility(date, new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), MatchFormat.Create(), [ItemId ?? Guid.Empty]);
+                : _availibilityCheckingService.GetTeamsAvaibility(new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), new Period(date, date.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
 
         private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, DateTime date)
-            => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, date, MatchFormat.Create(), [ItemId ?? Guid.Empty]);
+            => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, new Period(date, date.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
 
         public void Load(MatchViewModel match)
         {
@@ -339,13 +340,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             if (Parent is not null)
             {
                 var defaultValues = CrudService.New(Parent.Id, Parent.Date);
-                MatchFormat.Load(defaultValues.Format ?? Scorer.Domain.MatchAggregate.MatchFormat.Default);
+                MatchFormat.Load(defaultValues.Format ?? Domain.MatchAggregate.MatchFormat.Default);
                 Date = defaultValues.Date.Date;
                 Time = defaultValues.Date.TimeOfDay;
                 HomeTeam = null;
                 AwayTeam = null;
                 StadiumSelection.SelectedItem = defaultValues.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(defaultValues.Stadium.Id.Value) : null;
-                NeutralVenue = defaultValues.NeutralVenue;
+                NeutralVenue = defaultValues.IsNeutralStadium;
                 HomeScore.Value = defaultValues.HomeScore;
                 AwayScore.Value = defaultValues.AwayScore;
                 HomeShootoutScore.Value = defaultValues.HomeShootoutScore;
@@ -369,7 +370,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 AwayTeamId = AwayTeam?.Id ?? throw new InvalidOperationException("AwayTeam cannot be null"),
                 Date = Date.GetValueOrDefault().ToUtcDateTime(Time.GetValueOrDefault(Parent.MatchTime)),
                 Format = CanEditFormat && MatchFormat.IsModified() ? MatchFormat.Create() : null,
-                NeutralVenue = NeutralVenue,
+                IsNeutralStadium = NeutralVenue,
                 Stadium = StadiumSelection.SelectedItem is not null ? new StadiumDto
                 {
                     Id = StadiumSelection.SelectedItem.Id,
@@ -398,7 +399,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Date = item.OriginDate.Date;
                 Time = item.OriginDate.ToLocalTime().TimeOfDay;
                 MatchFormat.Load(item.Format);
-                NeutralVenue = item.NeutralVenue;
+                NeutralVenue = item.IsNeutralStadium;
                 HomeScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Home.GetScore() : null;
                 AwayScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Away.GetScore() : null;
                 HomeShootoutScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Home.GetShootoutScore() : null;

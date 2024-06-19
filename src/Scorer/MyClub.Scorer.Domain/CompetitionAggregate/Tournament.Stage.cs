@@ -3,12 +3,13 @@
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface IStage
+    public interface IStage : IEntity
     {
         string Name { get; }
 
@@ -16,6 +17,6 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         ReadOnlyObservableCollection<ITeam> Teams { get; }
 
-        IEnumerable<Match> GetMatches();
+        IEnumerable<Match> GetAllMatches();
     }
 }

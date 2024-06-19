@@ -12,8 +12,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
     {
         public CupViewModel(Cup item) : base(item) { }
 
-        public int GetCountTeams() => throw new NotImplementedException();
-
         public IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches() => throw new NotImplementedException();
 
         public IObservable<IChangeSet<IMatchParent, Guid>> ProvideMatchParents() => throw new NotImplementedException();

@@ -39,7 +39,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public int Order { get; set; }
 
-        public override IEnumerable<Match> GetMatches() => _parent.GetMatches().Where(x => Teams.Contains(x.HomeTeam) && Teams.Contains(x.AwayTeam));
+        public override IEnumerable<Match> GetAllMatches() => _parent.GetAllMatches().Where(x => Teams.Contains(x.HomeTeam) && Teams.Contains(x.AwayTeam));
 
         public override RankingRules GetRankingRules() => _parent.RankingRules;
 

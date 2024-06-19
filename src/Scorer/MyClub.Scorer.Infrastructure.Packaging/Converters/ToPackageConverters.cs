@@ -13,6 +13,7 @@ using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Infrastructure.Packaging.Models;
+using MyNet.Utilities;
 using MyNet.Utilities.Geography;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Converters
@@ -28,20 +29,12 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                     Type = (int)source.Type,
                     Name = source.Name,
                     Image = source.Image,
-                    StartDate = source.StartDate,
-                    EndDate = source.EndDate,
-                    Parameters = new ProjectParametersPackage
-                    {
-                        UseTeamVenues = source.Parameters.UseTeamVenues,
-                        MatchStartTime = source.Parameters.MatchStartTime,
-                        MinimumRestTime = source.Parameters.MinimumRestTime,
-                        RotationTime = source.Parameters.RotationTime,
-                    },
                     CreatedAt = source.CreatedAt,
                     CreatedBy = source.CreatedBy,
                     ModifiedAt = source.ModifiedAt,
                     ModifiedBy = source.ModifiedBy
                 },
+                Parameters = source.ToParametersPackage(),
                 Competition = source.Type switch
                 {
                     CompetitionType.League => new LeaguePackage
@@ -150,7 +143,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 Id = source.Id,
                 AfterExtraTime = source.AfterExtraTime,
                 Format = source.Format.ToPackage(),
-                NeutralVenue = source.NeutralVenue,
+                IsNeutralStadium = source.IsNeutralStadium,
                 State = (int)source.State,
                 OriginDate = source.OriginDate,
                 StadiumId = source.Stadium?.Id,
@@ -220,5 +213,71 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 Comparers = string.Join(";", source.Comparer.Select(x => x.GetType().Name).ToList()),
                 Computers = string.Join(";", source.Computers.Select(x => x.Key).ToList()),
             };
+
+        public static ParametersPackage ToParametersPackage(this IProject source)
+        {
+            ParametersPackage destination = source switch
+            {
+                LeagueProject leagueProject => new LeagueParametersPackage()
+                {
+                    SchedulingParameters = new()
+                    {
+                        StartDate = leagueProject.SchedulingParameters.StartDate,
+                        EndDate = leagueProject.SchedulingParameters.EndDate,
+                        UseTeamVenues = leagueProject.SchedulingParameters.UseTeamVenues,
+                        StartTime = leagueProject.SchedulingParameters.StartTime,
+                        RestTime = leagueProject.SchedulingParameters.RotationTime,
+                        RotationTime = leagueProject.SchedulingParameters.RestTime
+                    }
+                },
+                CupProject cupProject => new CupParametersPackage()
+                {
+                    DefaultSchedulingParameters = new()
+                    {
+                        StartDate = cupProject.DefaultSchedulingParameters.StartDate,
+                        EndDate = cupProject.DefaultSchedulingParameters.EndDate,
+                        UseTeamVenues = cupProject.DefaultSchedulingParameters.UseTeamVenues,
+                        StartTime = cupProject.DefaultSchedulingParameters.StartTime,
+                        RestTime = cupProject.DefaultSchedulingParameters.RotationTime,
+                        RotationTime = cupProject.DefaultSchedulingParameters.RestTime
+                    },
+                    SchedulingParameters = cupProject.Competition.Rounds.Select(x => cupProject.GetSchedulingParameters(x.Id).To(y => new SchedulingParametersByItemPackage()
+                    {
+                        ItemId = x.Id,
+                        StartDate = y.StartDate,
+                        EndDate = y.EndDate,
+                        UseTeamVenues = y.UseTeamVenues,
+                        StartTime = y.StartTime,
+                        RestTime = y.RotationTime,
+                        RotationTime = y.RestTime
+                    })).NotNull().ToList()
+                },
+                TournamentProject tournamentProject => new TournamentParametersPackage()
+                {
+                    DefaultSchedulingParameters = new()
+                    {
+                        StartDate = tournamentProject.DefaultSchedulingParameters.StartDate,
+                        EndDate = tournamentProject.DefaultSchedulingParameters.EndDate,
+                        UseTeamVenues = tournamentProject.DefaultSchedulingParameters.UseTeamVenues,
+                        StartTime = tournamentProject.DefaultSchedulingParameters.StartTime,
+                        RestTime = tournamentProject.DefaultSchedulingParameters.RotationTime,
+                        RotationTime = tournamentProject.DefaultSchedulingParameters.RestTime
+                    },
+                    SchedulingParameters = tournamentProject.Competition.Stages.Select(x => tournamentProject.GetSchedulingParameters(x.Id).To(y => new SchedulingParametersByItemPackage()
+                    {
+                        ItemId = x.Id,
+                        StartDate = y.StartDate,
+                        EndDate = y.EndDate,
+                        UseTeamVenues = y.UseTeamVenues,
+                        StartTime = y.StartTime,
+                        RestTime = y.RotationTime,
+                        RotationTime = y.RestTime
+                    })).NotNull().ToList()
+                },
+                _ => throw new InvalidOperationException("Unknown parameters type")
+            };
+
+            return destination;
+        }
     }
 }

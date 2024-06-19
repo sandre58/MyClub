@@ -3,7 +3,7 @@
 
 namespace MyClub.Domain.Enums
 {
-    public enum Venue
+    public enum VenueContext
     {
         Home,
 

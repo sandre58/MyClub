@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -37,7 +38,7 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
         public async Task<LeagueProject> CreateLeagueAsync(CancellationToken cancellationToken = default)
         {
-            var project = await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.League, (w, x, y, z) => new LeagueProject(w, x, y, z), 8, 20, cancellationToken).ConfigureAwait(false);
+            var project = await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.League, (x, y, z) => new LeagueProject(x, y, z), 8, 20, cancellationToken).ConfigureAwait(false);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -50,16 +51,25 @@ namespace MyClub.Scorer.Mocks.Factory.Database
             project.Competition.Labels.Add(new AcceptableValueRange<int>(project.Teams.Count - RandomGenerator.Int(2, 4), project.Teams.Count), new RankLabel(RandomGenerator.Color(), MyClubResources.Relegation, MyClubResources.RelegationAbbr));
 
             // Matches
-            var builder = new MatchdaysBuilder() { StartDate = project.StartDate, Time = 15.Hours() };
+            var builder = new MatchdaysBuilder() { StartDate = project.SchedulingParameters.StartDate, Time = project.SchedulingParameters.StartTime };
             var matchdays = builder.Build(project.Competition);
             matchdays.ForEach(x =>
             {
+                var stadiums = new Stack<Stadium>(RandomGenerator.ListItems(project.Stadiums, x.Matches.Count));
                 var matchday = project.Competition.AddMatchday(x.Date, x.Name, x.ShortName);
                 x.Matches.ForEach(y =>
                 {
                     var match = matchday.AddMatch(y.HomeTeam, y.AwayTeam);
-                    if (!match.NeutralVenue)
+                    match.IsNeutralStadium = !project.SchedulingParameters.UseTeamVenues;
+
+                    if (project.SchedulingParameters.UseTeamVenues)
                         match.Stadium = (match.HomeTeam as Team)?.Stadium;
+                    else
+                    {
+                        _ = stadiums.TryPop(out var stadium);
+                        match.Stadium = stadium;
+                    }
+
                     if (match.Date.IsInPast())
                         match.RandomizeScore(!match.GetPeriod().Contains(DateTime.UtcNow));
                     match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
@@ -71,12 +81,12 @@ namespace MyClub.Scorer.Mocks.Factory.Database
         }
 
         public async Task<CupProject> CreateCupAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (w, x, y, z) => new CupProject(w, x, y, z), 16, 32, cancellationToken).ConfigureAwait(false);
+            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (x, y, z) => new CupProject(x, y, z), 16, 32, cancellationToken).ConfigureAwait(false);
 
         public async Task<TournamentProject> CreateTournamentAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (w, x, y, z) => new TournamentProject(w, x, y, z), 32, 128, cancellationToken).ConfigureAwait(false);
+            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (x, y, z) => new TournamentProject(x, y, z), 32, 128, cancellationToken).ConfigureAwait(false);
 
-        public Task<T> CreateAsync<T>(string type, Func<string, DateTime, DateTime, byte[]?, T> createInstance, int minTeams, int maxTeams, CancellationToken cancellationToken = default)
+        public Task<T> CreateAsync<T>(string type, Func<string, byte[]?, SchedulingParameters, T> createInstance, int minTeams, int maxTeams, CancellationToken cancellationToken = default)
             where T : IProject
         {
             // Configuration
@@ -98,7 +108,13 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
-                    project = createInstance(selectedCompetition.Name, DateTime.Today.AddMonths(-3), DateTime.Today.AddMonths(5), selectedCompetition.Logo);
+                    project = createInstance(selectedCompetition.Name, selectedCompetition.Logo, new SchedulingParameters(
+                                                                                                                DateTime.Today.AddMonths(-RandomGenerator.Int(4, 6)),
+                                                                                                                DateTime.Today.AddMonths(RandomGenerator.Int(4, 6)),
+                                                                                                                RandomGenerator.Int(8, 22).Hours(),
+                                                                                                                RandomGenerator.Int(1, 5).Days(),
+                                                                                                                RandomGenerator.Int(1, 5).Days(),
+                                                                                                                RandomGenerator.Bool()));
                 }
 
                 if (project is null) throw new InvalidOperationException($"Impossible to create an instance of {typeof(T)}");

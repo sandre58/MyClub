@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Services;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Factories
 {
@@ -16,21 +17,30 @@ namespace MyClub.Scorer.Domain.Factories
 
         public Task<LeagueProject> CreateLeagueAsync(CancellationToken cancellationToken = default)
         {
-            var result = new LeagueProject(MyClubResources.League, DateTime.Today, DateTime.Today.AddMonths(6));
+            var result = new LeagueProject(MyClubResources.League)
+            {
+                SchedulingParameters = new SchedulingParameters(DateTime.Today, DateTime.Today.AddMonths(10), 15.Hours(), 2.Days(), 3.Days(), true)
+            };
             _auditService.New(result);
             return Task.FromResult(result);
         }
 
         public Task<CupProject> CreateCupAsync(CancellationToken cancellationToken = default)
         {
-            var result = new CupProject(MyClubResources.League, DateTime.Today, DateTime.Today.AddMonths(6));
+            var result = new CupProject(MyClubResources.Cup)
+            {
+                DefaultSchedulingParameters = new SchedulingParameters(DateTime.Today, DateTime.Today.AddMonths(10), 15.Hours(), 2.Days(), 3.Days(), true)
+            };
             _auditService.New(result);
             return Task.FromResult(result);
         }
 
         public Task<TournamentProject> CreateTournamentAsync(CancellationToken cancellationToken = default)
         {
-            var result = new TournamentProject(MyClubResources.League, DateTime.Today, DateTime.Today.AddMonths(6));
+            var result = new TournamentProject(MyClubResources.Cup)
+            {
+                DefaultSchedulingParameters = new SchedulingParameters(DateTime.Today, DateTime.Today.AddMonths(10), 15.Hours(), 2.Days(), 3.Days(), true)
+            };
             _auditService.New(result);
             return Task.FromResult(result);
         }

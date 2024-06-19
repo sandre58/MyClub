@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Disposables;
@@ -32,6 +33,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
     internal class LeagueViewModel : EntityViewModelBase<League>, ICompetitionViewModel, IMatchdayParent
     {
         private readonly LeagueService _leagueService;
+        private readonly TeamsProvider _teamsProvider;
         private readonly UiObservableCollection<MatchdayViewModel> _matchdays = [];
         private readonly UiObservableCollection<MatchViewModel> _matches = [];
         private readonly Subject<bool> _rankingChangedSubject = new();
@@ -39,6 +41,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly SingleTaskRunner _refreshRankingsRunner;
 
         public LeagueViewModel(League item,
+                               SchedulingParametersViewModel schedulingParameters,
                                MatchdayPresentationService matchdayPresentationService,
                                MatchPresentationService matchPresentationService,
                                StadiumsProvider stadiumsProvider,
@@ -46,9 +49,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                                LeagueService leagueService) : base(item)
         {
             _leagueService = leagueService;
+            _teamsProvider = teamsProvider;
             _refreshRankingsRunner = new SingleTaskRunner(async x => await RefreshRankingsAsync(x).ConfigureAwait(false));
             _refreshRankingsDeferrer.Subscribe(() => _refreshRankingsRunner.Run(), 80);
             Matchdays = new(_matchdays);
+            SchedulingParameters = schedulingParameters;
 
             Ranking = new RankingViewModel(teamsProvider.Items, _matches);
             LiveRanking = new RankingViewModel(teamsProvider.Items, _matches);
@@ -76,6 +81,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             ]);
         }
 
+        public SchedulingParametersViewModel SchedulingParameters { get; private set; }
+
         public ReadOnlyObservableCollection<MatchdayViewModel> Matchdays { get; }
 
         public MatchFormat MatchFormat => Item.MatchFormat;
@@ -90,7 +97,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public RankingViewModel AwayRanking { get; }
 
-        public int GetCountTeams() => Item.Teams.Count;
+        public IEnumerable<TeamViewModel> GetAvailableTeams() => _teamsProvider.Items;
 
         public IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches() => _matches.ToObservableChangeSet(x => x.Id);
 
@@ -136,6 +143,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             Ranking.Dispose();
             HomeRanking.Dispose();
             AwayRanking.Dispose();
+            SchedulingParameters.Dispose();
             _refreshRankingsDeferrer.Dispose();
             _refreshRankingsRunner.Dispose();
         }

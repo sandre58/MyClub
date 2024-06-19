@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using MyClub.Domain;
+using MyClub.Scorer.Domain.StadiumAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.TeamAggregate
@@ -12,10 +13,12 @@ namespace MyClub.Scorer.Domain.TeamAggregate
 
         string ShortName { get; }
 
-        public byte[]? Logo { get; }
+        byte[]? Logo { get; }
 
-        public string? HomeColor { get; }
+        string? HomeColor { get; }
 
-        public string? AwayColor { get; }
+        string? AwayColor { get; }
+
+        Stadium? Stadium { get; }
     }
 }

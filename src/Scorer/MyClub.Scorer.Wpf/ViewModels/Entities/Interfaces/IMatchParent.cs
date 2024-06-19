@@ -30,5 +30,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
         bool CanEditMatchFormat();
 
         IEnumerable<TeamViewModel> GetAvailableTeams();
+
+        SchedulingParametersViewModel SchedulingParameters { get; }
     }
 }

@@ -18,7 +18,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public ReadOnlyObservableCollection<Round> Rounds { get; }
 
-        public IEnumerable<Match> GetMatches() => Rounds.SelectMany(x => x.Fixtures.SelectMany(x => x.Matches));
+        public IEnumerable<Match> GetAllMatches() => Rounds.SelectMany(x => x.Fixtures.SelectMany(x => x.Matches));
     }
 }
 

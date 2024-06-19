@@ -6,12 +6,14 @@ using MyNet.UI.ViewModels;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 {
     internal class BracketPageViewModel : PageViewModel
     {
         public BracketPageViewModel(ProjectInfoProvider projectInfoProvider,
+                                    CompetitionInfoProvider competitionInfoProvider,
                                     MatchdaysProvider matchdaysProvider,
                                     MatchdayPresentationService matchdayPresentationService)
         {
@@ -23,7 +25,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 
             projectInfoProvider.WhenProjectLoaded(x => MatchParentsViewModel = x.Type switch
             {
-                CompetitionType.League => new MatchdaysViewModel(matchdaysProvider, matchdayPresentationService),
+                CompetitionType.League => new MatchdaysViewModel(competitionInfoProvider.GetCompetition<LeagueViewModel>(), matchdaysProvider, matchdayPresentationService),
                 _ => throw new NotImplementedException(),
             });
         }

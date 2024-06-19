@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyNet.Utilities;
 using MyClub.Domain.Enums;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Utilities;
 using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
@@ -36,7 +36,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public override RankingRules GetRankingRules() => RankingRules;
 
-        public override IEnumerable<Match> GetMatches() => Matchdays.SelectMany(x => x.Matches);
+        public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
 

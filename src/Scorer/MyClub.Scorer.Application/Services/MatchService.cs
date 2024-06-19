@@ -23,17 +23,20 @@ namespace MyClub.Scorer.Application.Services
         private readonly ITeamRepository _teamRepository;
         private readonly IStadiumRepository _stadiumRepository;
         private readonly IProjectRepository _projectRepository;
-        private readonly IAvailibilityCheckingDomainService _availibilityCheckingDomainService;
+        private readonly ISchedulingDomainService _availibilityCheckingDomainService;
+        private readonly ISchedulingParametersRepository _schedulingParametersRepository;
 
         public MatchService(IMatchRepository repository,
-                                  IProjectRepository projectRepository,
-                                  ITeamRepository teamRepository,
-                                  IStadiumRepository stadiumRepository,
-                                  IAvailibilityCheckingDomainService availibilityCheckingDomainService) : base(repository)
+                            IProjectRepository projectRepository,
+                            ITeamRepository teamRepository,
+                            IStadiumRepository stadiumRepository,
+                            ISchedulingParametersRepository schedulingParametersRepository,
+                            ISchedulingDomainService availibilityCheckingDomainService) : base(repository)
         {
             _teamRepository = teamRepository;
             _stadiumRepository = stadiumRepository;
             _projectRepository = projectRepository;
+            _schedulingParametersRepository = schedulingParametersRepository;
             _availibilityCheckingDomainService = availibilityCheckingDomainService;
         }
 
@@ -55,7 +58,7 @@ namespace MyClub.Scorer.Application.Services
             if (dto.Date != default)
                 entity.OriginDate = dto.Date;
             entity.PostponedDate = dto.PostponedDate;
-            entity.NeutralVenue = dto.NeutralVenue;
+            entity.IsNeutralStadium = dto.IsNeutralStadium;
             UpdateStadium(entity, dto.Stadium);
 
             if (dto.Format is not null)
@@ -114,7 +117,7 @@ namespace MyClub.Scorer.Application.Services
 
                     if (dto.UpdateStadium)
                     {
-                        y.NeutralVenue = dto.NeutralVenue;
+                        y.IsNeutralStadium = dto.IsNeutralStadium;
                         UpdateStadium(y, dto.Stadium);
                     }
                 })).ToList();
@@ -239,7 +242,16 @@ namespace MyClub.Scorer.Application.Services
                 matchIds.ForEach(Randomize);
         }
 
-        public void InvertTeams(Guid id) => Update(id, x => x.Invert());
+        public void InvertTeams(Guid id) => Update(id, x =>
+        {
+            x.Invert();
+
+            if (_schedulingParametersRepository.GetByMatch(x).UseTeamVenues)
+            {
+                x.IsNeutralStadium = false;
+                x.Stadium = x.HomeTeam.Stadium;
+            }
+        });
 
         public void InvertTeams(IEnumerable<Guid> matchIds)
         {
@@ -250,7 +262,7 @@ namespace MyClub.Scorer.Application.Services
         public void SetStadium(Guid id, Guid? stadiumId, bool? neutralVenue = null) => Update(id, x =>
         {
             if (neutralVenue.HasValue)
-                x.NeutralVenue = neutralVenue.Value;
+                x.IsNeutralStadium = neutralVenue.Value;
             UpdateStadium(x, stadiumId.HasValue ? new StadiumDto { Id = stadiumId } : null);
         });
 
@@ -275,7 +287,7 @@ namespace MyClub.Scorer.Application.Services
                 HomeIsWithdrawn = false,
                 HomeScore = null,
                 HomeShootoutScore = null,
-                NeutralVenue = false,
+                IsNeutralStadium = false,
                 PostponedDate = null,
                 Stadium = null,
                 State = MatchState.None,

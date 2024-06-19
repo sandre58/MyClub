@@ -22,7 +22,7 @@ namespace MyClub.Scorer.Domain.RankingAggregate
 
         public Ranking(Championship championship, Func<Match, ITeam, bool>? filterMatches = null)
             : this(championship.Teams,
-                   championship.GetMatches(),
+                   championship.GetAllMatches(),
                    championship.GetRankingRules(),
                    championship.GetPenaltyPoints(),
                    championship.Labels,
