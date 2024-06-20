@@ -1997,4 +1997,10 @@ Variables disponibles :
   <data name="StartWith" xml:space="preserve">
     <value>Commencer avec</value>
   </data>
+  <data name="AddMatch" xml:space="preserve">
+    <value>Ajouter un match</value>
+  </data>
+  <data name="Build" xml:space="preserve">
+    <value>Construire</value>
+  </data>
 </root>

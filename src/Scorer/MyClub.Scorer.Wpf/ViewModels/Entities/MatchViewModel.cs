@@ -83,7 +83,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                          .Merge(item.Away.WhenPropertyChanged(x => x.IsWithdrawn, false))
                          .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.AfterExtraTime, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
-                this.WhenPropertyChanged(x => x.State, false).Subscribe(_ =>
+                this.WhenPropertyChanged(x => x.State).Subscribe(_ =>
                 {
                     IsPlayed = State is MatchState.Played;
                     IsPlaying = State is MatchState.InProgress;

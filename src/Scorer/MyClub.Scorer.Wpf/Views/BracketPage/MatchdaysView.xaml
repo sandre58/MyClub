@@ -62,6 +62,7 @@
         <InputBindingCollection>
             <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding Data.AddMultipleCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Modifiers="Ctrl+Alt" Key="N" Command="{Binding Data.AddMatchToSelectedItemCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Return" Command="{Binding Data.OpenSelectedItemCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedItemsCommand, Source={StaticResource Proxy}}" />
@@ -97,6 +98,7 @@
 
             <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
                 <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
+                <Button Command="{Binding AddMatchToSelectedItemCommand}" Content="{my:MediumIcon Kind=PlusCircle}" ToolTip="{my:ShortcutResource AddMatch, ShortcutKey=Ctrl+Alt+N}" />
                 <Button Command="{Binding DuplicateSelectedItemCommand}" Content="{my:MediumIcon Kind=ContentDuplicate}" ToolTip="{my:ShortcutResource Duplicate, ShortcutKey=Ctrl+D}" />
                 <Button Command="{Binding PostponeSelectedItemsCommand}" Content="{my:MediumIcon Kind=ProgressQuestion}" ToolTip="{my:ShortcutResource Postpone, ShortcutKey=Ctrl+P}" />
                 <Button my:ThemeAssist.IsMouseOverBackground="{DynamicResource MyNet.Brushes.Negative}"

@@ -3,16 +3,17 @@
 
 using System;
 using System.Linq;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData;
-using MyNet.UI.Commands;
-using MyNet.Utilities;
+using DynamicData.Binding;
+using MyClub.Domain.Enums;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Domain.Enums;
-using System.Reactive.Disposables;
-using DynamicData.Binding;
+using MyNet.UI.Commands;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 {
@@ -39,15 +40,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 
             projectInfoProvider.WhenProjectLoaded(_ =>
             {
-                if (competitionInfoProvider.GetCompetition() is LeagueViewModel leagueViewModel)
+                MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
                 {
-                    Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
-                    LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
-                    HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
-                    AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
+                    if (competitionInfoProvider.GetCompetition() is LeagueViewModel leagueViewModel)
+                    {
+                        Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
+                        LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
+                        HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
+                        AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
 
-                    _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => ShowHomeAwayRankings = x.Value));
-                }
+                        _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => ShowHomeAwayRankings = x.Value));
+                    }
+                });
             });
 
             EditRulesCommand = CommandsManager.Create(async () => await leaguePresentationService.EditRankingRulesAsync().ConfigureAwait(false));

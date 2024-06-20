@@ -36,6 +36,80 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         private readonly IUserRepository _userRepository;
         private readonly ProjectCommandsService _projectCommandsService;
 
+        public MainWindowViewModel(INavigationService navigationService,
+                                   IDialogService dialogService,
+                                   INotificationsManager notificationManager,
+                                   IUserRepository userRepository,
+                                   IAppCommandsService appCommandsService,
+                                   IPersistentPreferencesService persistentPreferencesService,
+                                   IAutoSaveService autoSaveService,
+                                   ProjectCommandsService projectCommandsService,
+                                   CompetitionCommandsService competitionCommandsService,
+                                   ProjectInfoProvider projectInfoProvider,
+                                   MatchdaysProvider matchdaysProvider,
+                                   MatchesProvider matchesProvider,
+                                   TeamsProvider teamsProvider,
+                                   StadiumsProvider stadiumsProvider,
+                                   RecentFilesViewModel recentFilesViewModel)
+    : base(new FileMenuViewModel(projectInfoProvider, projectCommandsService, appCommandsService, persistentPreferencesService, autoSaveService, recentFilesViewModel),
+           notificationManager,
+           appCommandsService,
+           AppBusyManager.MainBusyService)
+        {
+            _userRepository = userRepository;
+            _projectCommandsService = projectCommandsService;
+            DropHandler = new(async (_, files) => await OnDropFilesAsync(files).ConfigureAwait(false));
+            NavigationService = navigationService;
+            BackgroundBusyService = AppBusyManager.BackgroundBusyService;
+            DialogService = dialogService;
+
+            GoBackCommand = CommandsManager.Create(() => NavigationService.GoBack(), () => NavigationService.CanGoBack() && !DialogManager.HasOpenedDialogs);
+            GoForwardCommand = CommandsManager.Create(() => NavigationService.GoForward(), () => NavigationService.CanGoForward() && !DialogManager.HasOpenedDialogs);
+            ToggleOpenCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(OpenViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
+            ToggleNewCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(NewViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
+            TogglePropertiesCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PropertiesViewModel), VisibilityAction.Toggle)), () => ProjectIsLoaded && !DialogManager.HasOpenedDialogs);
+            ToggleAboutCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(AboutViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
+            TogglePreferencesCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PreferencesViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
+            OpenUserProfileCommand = CommandsManager.Create(async () => await DialogManager.ShowDialogAsync<UserEditionViewModel>(), () => !DialogManager.HasOpenedDialogs);
+            OpenSettingsCommand = CommandsManager.Create(async () => await DialogManager.ShowDialogAsync<SettingsEditionViewModel>().ConfigureAwait(false), () => !DialogManager.HasOpenedDialogs);
+            LoadCommand = CommandsManager.Create(async () => await projectCommandsService.LoadAsync().ConfigureAwait(false), projectCommandsService.IsEnabled);
+            NewLeagueCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.League).ConfigureAwait(false), projectCommandsService.IsEnabled);
+            NewCupCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.Cup).ConfigureAwait(false), projectCommandsService.IsEnabled);
+            CreateCommand = CommandsManager.Create(async () => await projectCommandsService.CreateAsync().ConfigureAwait(false), projectCommandsService.IsEnabled);
+            CloseCommand = CommandsManager.Create(async () => await projectCommandsService.CloseCurrentProjectAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
+            SaveCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
+            SaveAsCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
+            OpenBuildAssistantCommand = CommandsManager.Create(async () => await competitionCommandsService.OpenBuildAssistantAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
+
+            Disposables.AddRange(
+            [
+                FileMenuViewModel.WhenPropertyChanged(x => x.IsVisible).Subscribe(_ => RaisePropertyChanged(nameof(ShowNavigationControls))),
+                projectInfoProvider.WhenPropertyChanged(x => x.Name).Subscribe(x =>
+                {
+                    Name = x.Value;
+                    RefreshTitle();
+                }),
+                projectInfoProvider.WhenPropertyChanged(x => x.Image).Subscribe(x => Image = x.Value),
+                projectInfoProvider.WhenPropertyChanged(x => x.IsDirty).Subscribe(x => IsDirty = x.Value),
+                projectInfoProvider.WhenPropertyChanged(x => x.FilePath).Subscribe(_ => Filename = projectInfoProvider.GetFilename()),
+                projectInfoProvider.WhenPropertyChanged(x => x.IsLoaded).Subscribe(x =>
+                {
+                    ProjectIsLoaded = x.Value;
+
+                    CloseDrawers();
+
+                    Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PropertiesViewModel), VisibilityAction.Hide));
+                    RaisePropertyChanged(nameof(ShowNavigationControls));
+                }),
+                matchesProvider.Connect().Subscribe(_ => CountMatches = matchesProvider.Count),
+                matchdaysProvider.Connect().Subscribe(_ => CountParents = matchdaysProvider.Count),
+                teamsProvider.Connect().Subscribe(_ => CountTeams = teamsProvider.Count),
+                stadiumsProvider.Connect().Subscribe(_ => CountStadiums = stadiumsProvider.Count),
+            ]);
+
+            NavigationService.Navigated += OnNavigatedCallback;
+        }
+
         public int CountParents { get; private set; }
 
         public int CountMatches { get; private set; }
@@ -88,7 +162,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 
         public ICommand SaveAsCommand { get; }
 
-        public ICommand EditProjectCommand { get; }
+        public ICommand OpenBuildAssistantCommand { get; }
 
         public bool IsDirty { get; private set; }
 
@@ -118,81 +192,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         public bool ProjectIsLoaded { get; private set; }
 
         public bool ShowNavigationControls => ProjectIsLoaded && !FileMenuViewModel.IsVisible;
-
-        public MainWindowViewModel(
-            INavigationService navigationService,
-            IDialogService dialogService,
-            INotificationsManager notificationManager,
-            IUserRepository userRepository,
-            IAppCommandsService appCommandsService,
-            IPersistentPreferencesService persistentPreferencesService,
-            IAutoSaveService autoSaveService,
-            ProjectCommandsService projectCommandsService,
-            ProjectInfoProvider projectInfoProvider,
-            MatchdaysProvider matchdaysProvider,
-            MatchesProvider matchesProvider,
-            TeamsProvider teamsProvider,
-            StadiumsProvider stadiumsProvider,
-            RecentFilesViewModel recentFilesViewModel
-            )
-            : base(new FileMenuViewModel(projectInfoProvider, projectCommandsService, appCommandsService, persistentPreferencesService, autoSaveService, recentFilesViewModel),
-                  notificationManager,
-                  appCommandsService,
-                  AppBusyManager.MainBusyService)
-        {
-            _userRepository = userRepository;
-            _projectCommandsService = projectCommandsService;
-            DropHandler = new(async (_, files) => await OnDropFilesAsync(files).ConfigureAwait(false));
-            NavigationService = navigationService;
-            BackgroundBusyService = AppBusyManager.BackgroundBusyService;
-            DialogService = dialogService;
-
-            GoBackCommand = CommandsManager.Create(() => NavigationService.GoBack(), () => NavigationService.CanGoBack() && !DialogManager.HasOpenedDialogs);
-            GoForwardCommand = CommandsManager.Create(() => NavigationService.GoForward(), () => NavigationService.CanGoForward() && !DialogManager.HasOpenedDialogs);
-            ToggleOpenCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(OpenViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
-            ToggleNewCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(NewViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
-            TogglePropertiesCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PropertiesViewModel), VisibilityAction.Toggle)), () => ProjectIsLoaded && !DialogManager.HasOpenedDialogs);
-            ToggleAboutCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(AboutViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
-            TogglePreferencesCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PreferencesViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
-            OpenUserProfileCommand = CommandsManager.Create(async () => await DialogManager.ShowDialogAsync<UserEditionViewModel>(), () => !DialogManager.HasOpenedDialogs);
-            OpenSettingsCommand = CommandsManager.Create(async () => await DialogManager.ShowDialogAsync<SettingsEditionViewModel>().ConfigureAwait(false), () => !DialogManager.HasOpenedDialogs);
-            LoadCommand = CommandsManager.Create(async () => await projectCommandsService.LoadAsync().ConfigureAwait(false), projectCommandsService.IsEnabled);
-            NewLeagueCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.League).ConfigureAwait(false), projectCommandsService.IsEnabled);
-            NewCupCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.Cup).ConfigureAwait(false), projectCommandsService.IsEnabled);
-            CreateCommand = CommandsManager.Create(async () => await projectCommandsService.CreateAsync().ConfigureAwait(false), projectCommandsService.IsEnabled);
-            CloseCommand = CommandsManager.Create(async () => await projectCommandsService.CloseCurrentProjectAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
-            SaveCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
-            SaveAsCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
-            EditProjectCommand = CommandsManager.Create(async () => await projectCommandsService.EditAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
-
-            Disposables.AddRange(
-            [
-                FileMenuViewModel.WhenPropertyChanged(x => x.IsVisible).Subscribe(_ => RaisePropertyChanged(nameof(ShowNavigationControls))),
-                projectInfoProvider.WhenPropertyChanged(x => x.Name).Subscribe(x =>
-                {
-                    Name = x.Value;
-                    RefreshTitle();
-                }),
-                projectInfoProvider.WhenPropertyChanged(x => x.Image).Subscribe(x => Image = x.Value),
-                projectInfoProvider.WhenPropertyChanged(x => x.IsDirty).Subscribe(x => IsDirty = x.Value),
-                projectInfoProvider.WhenPropertyChanged(x => x.FilePath).Subscribe(_ => Filename = projectInfoProvider.GetFilename()),
-                projectInfoProvider.WhenPropertyChanged(x => x.IsLoaded).Subscribe(x =>
-                {
-                    ProjectIsLoaded = x.Value;
-
-                    CloseDrawers();
-
-                    Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PropertiesViewModel), VisibilityAction.Hide));
-                    RaisePropertyChanged(nameof(ShowNavigationControls));
-                }),
-                matchesProvider.Connect().Subscribe(_ => CountMatches = matchesProvider.Count),
-                matchdaysProvider.Connect().Subscribe(_ => CountParents = matchdaysProvider.Count),
-                teamsProvider.Connect().Subscribe(_ => CountTeams = teamsProvider.Count),
-                stadiumsProvider.Connect().Subscribe(_ => CountStadiums = stadiumsProvider.Count),
-            ]);
-
-            NavigationService.Navigated += OnNavigatedCallback;
-        }
 
         private void OnNavigatedCallback(object? sender, NavigationEventArgs _) => RaisePropertyChanged(nameof(CanDropScprojFiles));
 

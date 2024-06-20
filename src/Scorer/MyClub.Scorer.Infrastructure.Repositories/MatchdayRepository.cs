@@ -22,6 +22,16 @@ namespace MyClub.Scorer.Infrastructure.Repositories
 
             return added;
         }
+
+        public Matchday Insert(IMatchdaysProvider parent, Matchday matchday)
+        {
+            var added = parent.AddMatchday(matchday);
+
+            AuditCreatedItem(added);
+
+            return added;
+        }
+
         protected override Matchday AddCore(Matchday item) => item;
 
         protected override IEnumerable<Matchday> AddRangeCore(IEnumerable<Matchday> items) => items.Select(AddCore);
@@ -29,5 +39,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         protected override bool RemoveCore(Matchday item) => CurrentProject.Competition.GetAllMatchdaysProviders().Any(x => x.RemoveMatchday(item));
 
         protected override int RemoveRangeCore(IEnumerable<Matchday> items) => items.Count(RemoveCore);
+
+        public void Clear(IMatchdaysProvider parent) => parent.Clear();
     }
 }

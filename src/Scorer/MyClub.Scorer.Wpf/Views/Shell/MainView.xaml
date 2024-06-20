@@ -18,9 +18,7 @@
              d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
              mc:Ignorable="d">
     <UserControl.Resources>
-        <Style x:Key="Scorer.Styles.HeaderedContentControl.MainMenu" BasedOn="{StaticResource MyNet.Styles.ContentControl}" TargetType="{x:Type HeaderedContentControl}">
-            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Information}" />
-            <Setter Property="my:HeaderAssist.Foreground" Value="{my:BrushBinding SelfPath=(my:HeaderAssist.Background), Contrast=True}" />
+        <Style x:Key="Scorer.Styles.HeaderedContentControl.MainMenu" TargetType="{x:Type HeaderedContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type HeaderedContentControl}">
@@ -42,6 +40,8 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Information}" />
+            <Setter Property="my:HeaderAssist.Foreground" Value="{my:BrushBinding SelfPath=(my:HeaderAssist.Background), Contrast=True}" />
         </Style>
     </UserControl.Resources>
 
@@ -51,17 +51,17 @@
                    LeftDrawerCloseOnClickAway="True"
                    RightDrawerCloseOnClickAway="True">
 
-        <!--  File Menu Panel  -->
+        <!-- File Menu Panel -->
         <my:DrawerHost.LeftDrawerContent>
             <v:FileMenuView DataContext="{Binding FileMenuViewModel}" Foreground="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
         </my:DrawerHost.LeftDrawerContent>
 
-        <!--  Notifications Panel  -->
+        <!-- Notifications Panel -->
         <my:DrawerHost.RightDrawerContent>
             <vS:NotificationsView DataContext="{Binding NotificationsViewModel}" />
         </my:DrawerHost.RightDrawerContent>
 
-        <!--  Drop container  -->
+        <!-- Drop container -->
         <Grid x:Name="Root"
               Margin="0 55 0 0"
               dd:DragDrop.DropHandler="{Binding DropHandler}"
@@ -69,7 +69,7 @@
 
             <Border Grid.ColumnSpan="2" Background="White" Opacity="0.001" />
 
-            <!--  Main Menu  -->
+            <!-- Main Menu -->
             <my:NavigationView Style="{StaticResource MyNet.Styles.NavigationView.Compact}"
                                FrameCornerRadius="15 0 0 0"
                                NavigationService="{Binding NavigationService}"
@@ -95,7 +95,7 @@
                     </my:NullTemplateSelector>
                 </my:NavigationView.ContentTemplateSelector>
 
-                <!--  Home  -->
+                <!-- Home -->
                 <my:NavigationViewItem Header="{my:Resource Home}"
                                        Icon="{my:MediumIcon Kind=Home}"
                                        TargetViewType="{x:Type vH:HomePageView}"
@@ -103,7 +103,7 @@
 
                 <my:NavigationViewItemSeparator Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                <!--  Bracket  -->
+                <!-- Bracket -->
                 <my:NavigationViewItem Header="{my:Resource Bracket}"
                                        TargetViewType="{x:Type vB:BracketPageView}"
                                        ToolTip="{my:Resource Bracket}"
@@ -111,7 +111,7 @@
                     <my:NavigationViewItem.Icon>
                         <HeaderedContentControl Content="{my:MediumIcon Kind=Bracket}" Header="{Binding CountParents}">
                             <HeaderedContentControl.Style>
-                                <Style BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                <Style TargetType="{x:Type HeaderedContentControl}" BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CountParents}" Value="0">
                                             <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
@@ -124,7 +124,7 @@
                     </my:NavigationViewItem.Icon>
                 </my:NavigationViewItem>
 
-                <!--  Schedule  -->
+                <!-- Schedule -->
                 <my:NavigationViewItem Header="{my:Resource Schedule}"
                                        IsEnabled="{Binding CountParents, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                        TargetViewType="{x:Type vSc:SchedulePageView}"
@@ -133,7 +133,7 @@
                     <my:NavigationViewItem.Icon>
                         <HeaderedContentControl Content="{my:MediumIcon Kind=Calendar}" Header="{Binding CountMatches}">
                             <HeaderedContentControl.Style>
-                                <Style BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                <Style TargetType="{x:Type HeaderedContentControl}" BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CountMatches}" Value="0">
                                             <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
@@ -146,7 +146,7 @@
                     </my:NavigationViewItem.Icon>
                 </my:NavigationViewItem>
 
-                <!--  Ranking  -->
+                <!-- Ranking -->
                 <my:NavigationViewItem Header="{my:Resource Ranking}"
                                        Icon="{my:MediumIcon Kind=Podium}"
                                        IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
@@ -154,7 +154,7 @@
                                        ToolTip="{my:Resource Ranking}"
                                        Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                <!--  Past Positions  -->
+                <!-- Past Positions -->
                 <my:NavigationViewItem Header="{my:Resource PastPositions}"
                                        Icon="{my:MediumIcon Kind=ChartLineVariant}"
                                        IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
@@ -163,7 +163,7 @@
                                        Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                 <my:NavigationView.FooterMenuItems>
-                    <!--  Teams  -->
+                    <!-- Teams -->
                     <my:NavigationViewItem Header="{my:Resource Teams}"
                                            TargetViewType="{x:Type vT:TeamsPageView}"
                                            ToolTip="{my:Resource Teams}"
@@ -171,7 +171,7 @@
                         <my:NavigationViewItem.Icon>
                             <HeaderedContentControl Content="{my:MediumIcon Kind=Shield}" Header="{Binding CountTeams}">
                                 <HeaderedContentControl.Style>
-                                    <Style BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Style TargetType="{x:Type HeaderedContentControl}" BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding CountTeams}" Value="0">
                                                 <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
@@ -184,7 +184,7 @@
                         </my:NavigationViewItem.Icon>
                     </my:NavigationViewItem>
 
-                    <!--  Stadiums  -->
+                    <!-- Stadiums -->
                     <my:NavigationViewItem Header="{my:Resource Stadiums}"
                                            TargetViewType="{x:Type vSt:StadiumsPageView}"
                                            ToolTip="{my:Resource Stadiums}"
@@ -192,7 +192,7 @@
                         <my:NavigationViewItem.Icon>
                             <HeaderedContentControl Content="{my:MediumIcon Kind=Stadium}" Header="{Binding CountStadiums}">
                                 <HeaderedContentControl.Style>
-                                    <Style BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}" TargetType="{x:Type HeaderedContentControl}">
+                                    <Style TargetType="{x:Type HeaderedContentControl}" BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding CountStadiums}" Value="0">
                                                 <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
@@ -205,30 +205,16 @@
                         </my:NavigationViewItem.Icon>
                     </my:NavigationViewItem>
 
-                    <!--  Edit project  -->
-                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditProjectCommand}"
-                                           Header="{my:Resource Edit}"
-                                           ToolTip="{my:ShortcutResource EditProject,
-                                                                         ShortcutKey=F8}"
-                                           Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
-                        <my:NavigationViewItem.Icon>
-                            <HeaderedContentControl Style="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
-                                <Grid Width="24" Height="24" VerticalAlignment="Top">
+                    <my:NavigationViewItemSeparator Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                                    <!--  Image  -->
-                                    <my:PackIcon Width="24"
-                                                 Height="24"
-                                                 Kind="ShieldCrown"
-                                                 Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
-                                    <Image HorizontalAlignment="Stretch"
-                                           VerticalAlignment="Stretch"
-                                           Source="{Binding Image, Mode=OneWay, Converter={x:Static my:BytesToImageConverter.Default}}"
-                                           Stretch="Uniform"
-                                           Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
-                                </Grid>
-                            </HeaderedContentControl>
-                        </my:NavigationViewItem.Icon>
-                    </my:NavigationViewItem>
+                    <!-- Build -->
+                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding OpenBuildAssistantCommand}"
+                                           Header="{my:Resource Build}"
+                                           Icon="{my:MediumIcon Kind=DesktopClassic}"
+                                           ToolTip="{my:ShortcutResource Build,
+                                                                         ShortcutKey=Ctrl+B}"
+                                           Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
                 </my:NavigationView.FooterMenuItems>
             </my:NavigationView>
         </Grid>

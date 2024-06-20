@@ -72,6 +72,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public bool RemoveMatchday(Matchday item) => _matchdays.Remove(item);
 
+        public void Clear() => _matchdays.Clear();
+
         #endregion
     }
 }

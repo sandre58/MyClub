@@ -9,5 +9,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     public interface IMatchdayRepository : IRepository<Matchday>
     {
         Matchday Insert(IMatchdaysProvider parent, DateTime date, string name, string? shortName = null);
+
+        Matchday Insert(IMatchdaysProvider parent, Matchday matchday);
+
+        void Clear(IMatchdaysProvider parent);
     }
 }

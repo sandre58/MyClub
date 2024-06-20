@@ -36,6 +36,7 @@ using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.BracketPage;
+using MyClub.Scorer.Wpf.ViewModels.BuildAssistant;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.HomePage;
@@ -198,6 +199,7 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<AppSettingsService>()
                 .AddScoped<IRecentFileCommandsService, RecentFileCommandsService>()
                 .AddScoped<ProjectCommandsService>()
+                .AddScoped<CompetitionCommandsService>()
                 .AddScoped<TeamPresentationService>()
                 .AddScoped<StadiumPresentationService>()
                 .AddScoped<PlayerPresentationService>()
@@ -246,12 +248,13 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<MatchdaysEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
                 .AddSingleton<RankingRulesEditionViewModel>()
+                .AddSingleton<SchedulingAssistantViewModel>()
+                .AddSingleton<LeagueBuildAssistantViewModel>()
                 // ViewModels - Other dialogs
                 .AddSingleton<StadiumsExportViewModel>()
                 .AddSingleton<TeamsExportViewModel>()
                 .AddSingleton<StadiumsImportBySourcesDialogViewModel>()
                 .AddSingleton<TeamsImportBySourcesDialogViewModel>()
-                .AddSingleton<SchedulingAssistantViewModel>()
 
                 // Configuration
                 .Configure<ScorerConfiguration>(context.Configuration)

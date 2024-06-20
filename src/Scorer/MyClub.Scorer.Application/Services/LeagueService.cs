@@ -10,12 +10,14 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Factories;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class LeagueService(IProjectRepository projectRepository)
+    public class LeagueService(IProjectRepository projectRepository, IMatchdayRepository matchdayRepository)
     {
         private readonly IProjectRepository _projectRepository = projectRepository;
+        private readonly IMatchdayRepository _matchdayRepository = matchdayRepository;
 
         public void UpdateRankingRules(RankingRulesDto dto)
         {
@@ -94,6 +96,18 @@ namespace MyClub.Scorer.Application.Services
             var league = _projectRepository.GetCompetition().CastIn<League>() ?? throw new InvalidOperationException($"Current competition is not league");
 
             return ToDto(league.GetAwayRanking());
+        }
+
+        public void Build(BuildParametersDto dto)
+        {
+            var league = _projectRepository.GetCompetition().CastIn<League>() ?? throw new InvalidOperationException($"Current competition is not league");
+
+            _matchdayRepository.Clear(league);
+
+            var builder = new MatchdaysBuilder();
+            var matchdays = builder.Build(league);
+
+            matchdays.ForEach(x => _matchdayRepository.Insert(league, x));
         }
 
         private static RankingDto ToDto(Ranking ranking, Ranking? previousRanking = null) => new()

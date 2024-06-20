@@ -59,7 +59,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public Matchday AddMatchday(DateTime date, string name, string? shortName = null) => AddMatchday(new Matchday(this, date, name, shortName));
 
-        private Matchday AddMatchday(Matchday matchday)
+        public Matchday AddMatchday(Matchday matchday)
         {
             if (Matchdays.Contains(matchday))
                 throw new AlreadyExistsException(nameof(Matchdays), matchday);
@@ -70,6 +70,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         }
 
         public bool RemoveMatchday(Matchday item) => _matchdays.Remove(item);
+
+        public void Clear() => _matchdays.Clear();
 
         #endregion
     }

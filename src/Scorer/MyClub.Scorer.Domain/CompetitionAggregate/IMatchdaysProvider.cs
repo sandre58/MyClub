@@ -16,6 +16,10 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         Matchday AddMatchday(DateTime date, string name, string? shortName = null);
 
+        Matchday AddMatchday(Matchday matchday);
+
         bool RemoveMatchday(Matchday item);
+
+        void Clear();
     }
 }

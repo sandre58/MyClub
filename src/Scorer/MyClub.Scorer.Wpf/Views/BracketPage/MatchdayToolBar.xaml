@@ -23,6 +23,7 @@
                        ShowDropDownButton="False"
                        ToggleContent="{my:ToolIcon Kind=DotsVertical}">
         <my:Submenu>
+            <MenuItem Command="{Binding AddMatchCommand}" Header="{my:Resource AddMatch}" Icon="{my:ToolIcon Kind=PlusCircle}" />
             <MenuItem Command="{Binding DuplicateCommand}" Header="{my:Resource Duplicate}" Icon="{my:ToolIcon Kind=ContentDuplicate}" />
             <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
             <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" IsEnabled="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" />

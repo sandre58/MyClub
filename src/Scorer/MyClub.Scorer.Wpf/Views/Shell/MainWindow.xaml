@@ -141,7 +141,9 @@
         <KeyBinding Modifiers="Ctrl+Shift" Key="Q" Command="{Binding CloseCommand}" />
         <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}" />
         <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding SaveAsCommand}" />
-        <KeyBinding Key="F8" Command="{Binding EditProjectCommand}" />
+
+        <!-- Competition -->
+        <KeyBinding Modifiers="Ctrl" Key="B" Command="{Binding OpenBuildAssistantCommand}" />
 
         <!--  Navigation  -->
         <KeyBinding Key="PageUp" Command="{Binding GoBackCommand}" />

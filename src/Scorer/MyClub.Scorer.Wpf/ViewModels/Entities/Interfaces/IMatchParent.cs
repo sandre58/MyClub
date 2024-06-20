@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
@@ -23,6 +24,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         ReadOnlyObservableCollection<MatchViewModel> Matches { get; }
 
+        SchedulingParametersViewModel SchedulingParameters { get; }
+
         bool CanBePostponed();
 
         bool CanCancelMatch();
@@ -31,6 +34,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         IEnumerable<TeamViewModel> GetAvailableTeams();
 
-        SchedulingParametersViewModel SchedulingParameters { get; }
+        Task AddMatchAsync();
     }
 }

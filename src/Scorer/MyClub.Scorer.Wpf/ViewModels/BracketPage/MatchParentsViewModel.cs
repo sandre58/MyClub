@@ -30,6 +30,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
             Mode = ScreenMode.Read;
 
             AddToDateCommand = CommandsManager.Create<DateTime>(async x => await AddToDateAsync(x).ConfigureAwait(false));
+            AddMatchToSelectedItemCommand = CommandsManager.Create(async () => await SelectedItem!.AddMatchAsync().ConfigureAwait(false), () => SelectedWrappers.Count == 1);
             DuplicateSelectedItemCommand = CommandsManager.Create(async () => await DuplicateAsync(SelectedItem!).ConfigureAwait(false), () => SelectedWrappers.Count == 1);
             PostponeSelectedItemsCommand = CommandsManager.Create(async () => await PostponeAsync(SelectedItems).ConfigureAwait(false), () => SelectedItems.All(x => x.CanBePostponed()));
         }
@@ -37,6 +38,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
         public IMatchdayParent Parent { get; }
 
         public ICommand AddToDateCommand { get; }
+
+        public ICommand AddMatchToSelectedItemCommand { get; }
 
         public ICommand DuplicateSelectedItemCommand { get; }
 

@@ -287,6 +287,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ajouter un match.
+        /// </summary>
+        public static string AddMatch {
+            get {
+                return ResourceManager.GetString("AddMatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ajouter des journées.
         /// </summary>
         public static string AddMatchdays {
@@ -816,6 +825,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string Bracket {
             get {
                 return ResourceManager.GetString("Bracket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Construire.
+        /// </summary>
+        public static string Build {
+            get {
+                return ResourceManager.GetString("Build", resourceCulture);
             }
         }
         
