@@ -18,7 +18,6 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Infrastructure.Packaging;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.Services.Handlers;
-using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.Import;
@@ -104,7 +103,6 @@ internal class ApplicationHostService : IHostedService
         RecentFilesService recentFilesService,
         ProjectCommandsService projectCommandsService,
         RecentFilesManager recentFilesManager,
-        ProjectManager _,
         MailConnectionHandler mailConnectionHandler,
         FileNotificationHandler fileNotificationHandler,
         ConflictsValidationHandler conflictsValidationHandler)

@@ -226,7 +226,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" PlacementMode="BottomAndAlignCentres">
+                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres">
                                             <my:DropDownButton.ToggleContent>
                                                 <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
                                                        Width="15"

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MyClub.Scorer.Application.Services;
-using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -14,14 +14,18 @@ using MyNet.UI.Dialogs;
 using MyNet.UI.Extensions;
 using MyNet.UI.Locators;
 using MyNet.UI.Services;
-using MyNet.Utilities.Messaging;
 
 namespace MyClub.Scorer.Wpf.Services
 {
     internal class MatchdayPresentationService(MatchdayService service,
+                                               ResultsChangedDeferrer resultsChangedDeferrer,
+                                               ScheduleChangedDeferrer scheduleChangedDeferrer,
                                                IViewModelLocator viewModelLocator)
         : PresentationServiceBase<MatchdayViewModel, MatchdayEditionViewModel, MatchdayService>(service, viewModelLocator)
     {
+        private readonly ResultsChangedDeferrer _resultsChangedDeferrer = resultsChangedDeferrer;
+        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer = scheduleChangedDeferrer;
+
         public async Task OpenAsync(MatchdayViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
         public async Task AddMultipleAsync(IMatchdayParent parent)
@@ -57,6 +61,12 @@ namespace MyClub.Scorer.Wpf.Services
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
 
+        protected override void Remove(ICollection<Guid> idsList)
+        {
+            using (_resultsChangedDeferrer.Defer())
+                base.Remove(idsList);
+        }
+
         public async Task DuplicateAsync(MatchdayViewModel matchday)
         {
             var vm = ViewModelLocator.Get<MatchdayEditionViewModel>();
@@ -75,8 +85,8 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                Service.Postpone(idsList, postponedDate);
-                Messenger.Default.Send(new CheckConflictsRequestMessage());
+                using (_scheduleChangedDeferrer.Defer())
+                    Service.Postpone(idsList, postponedDate);
             }).ConfigureAwait(false);
         }
     }

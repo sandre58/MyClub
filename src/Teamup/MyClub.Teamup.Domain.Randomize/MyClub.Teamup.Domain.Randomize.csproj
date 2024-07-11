@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="MyNet.Utilities.Generator.Extensions" Version="1.0.1" />
+    <PackageReference Include="MyNet.Utilities.Generator.Extensions" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />

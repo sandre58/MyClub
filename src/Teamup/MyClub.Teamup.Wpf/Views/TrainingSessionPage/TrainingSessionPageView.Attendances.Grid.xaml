@@ -73,7 +73,7 @@
 
                         <!--  Comment  -->
                         <my:DropDownButton x:Name="ShowComment"
-                                           Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}"
+                                           Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                            Grid.Column="4"
                                            HorizontalAlignment="Right"
                                            PlacementMode="BottomAndAlignCentres"

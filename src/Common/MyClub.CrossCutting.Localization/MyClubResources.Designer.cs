@@ -188,6 +188,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ajouter une exception.
+        /// </summary>
+        public static string AddException {
+            get {
+                return ResourceManager.GetString("AddException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Ajouter des matchs amicaux.
         /// </summary>
         public static string AddFriendly {
@@ -378,15 +387,6 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Ajouter une règle.
-        /// </summary>
-        public static string AddRule {
-            get {
-                return ResourceManager.GetString("AddRule", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Ajouter une séance.
         /// </summary>
         public static string AddSession {
@@ -532,11 +532,20 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Autoriser des jours de la semaine.
+        ///   Looks up a localized string similar to Spécifier les jours de la semaine autorisés.
         /// </summary>
         public static string AllowDaysOfWeekDateRule {
             get {
                 return ResourceManager.GetString("AllowDaysOfWeekDateRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Spécifier les horaires autorisés.
+        /// </summary>
+        public static string AllowTimePeriodsDateRule {
+            get {
+                return ResourceManager.GetString("AllowTimePeriodsDateRule", resourceCulture);
             }
         }
         
@@ -609,6 +618,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string ApologizedX {
             get {
                 return ResourceManager.GetString("ApologizedX", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dès que possible.
+        /// </summary>
+        public static string AsSoonAsPossible {
+            get {
+                return ResourceManager.GetString("AsSoonAsPossible", resourceCulture);
             }
         }
         
@@ -838,6 +856,42 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Construire le championnat.
+        /// </summary>
+        public static string BuildLeague {
+            get {
+                return ResourceManager.GetString("BuildLeague", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Définit les dates et les heures des matchs et des journées en fonction du format des matchs et des paramètres de planification. Les matchs sont calculés dès que les 2 équipes et le terrains sont disponibles sont disponibles..
+        /// </summary>
+        public static string BuildMethodAsSoonAsPossibleDescription {
+            get {
+                return ResourceManager.GetString("BuildMethodAsSoonAsPossibleDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ajoutez des règles permettant de calculer les dates et les heures des journées..
+        /// </summary>
+        public static string BuildMethodAutomaticDescription {
+            get {
+                return ResourceManager.GetString("BuildMethodAutomaticDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sélectionnez individuellement la date de chaque journée..
+        /// </summary>
+        public static string BuildMethodManualDescription {
+            get {
+                return ResourceManager.GetString("BuildMethodManualDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Par match nul.
         /// </summary>
         public static string ByGamesDrawn {
@@ -928,6 +982,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Le Système Suisse n&apos;est pas utilisable pour un nombre d&apos;équipes impair..
+        /// </summary>
+        public static string CannotUseSwissSystem {
+            get {
+                return ResourceManager.GetString("CannotUseSwissSystem", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Catégorie.
         /// </summary>
         public static string Category {
@@ -942,6 +1005,24 @@ namespace MyClub.CrossCutting.Localization {
         public static string CategoryAbbr {
             get {
                 return ResourceManager.GetString("CategoryAbbr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Intégral.
+        /// </summary>
+        public static string ChampionshipAlgorithmRoundRobin {
+            get {
+                return ResourceManager.GetString("ChampionshipAlgorithmRoundRobin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Système suisse.
+        /// </summary>
+        public static string ChampionshipAlgorithmSwissSystem {
+            get {
+                return ResourceManager.GetString("ChampionshipAlgorithmSwissSystem", resourceCulture);
             }
         }
         
@@ -1451,6 +1532,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to La période définie est plus petite que le temps total d&apos;un match..
+        /// </summary>
+        public static string DefinedPeriodIsLowerThanMatchPeriodError {
+            get {
+                return ResourceManager.GetString("DefinedPeriodIsLowerThanMatchPeriodError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Description.
         /// </summary>
         public static string Description {
@@ -1546,6 +1636,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string DurationBetween {
             get {
                 return ResourceManager.GetString("DurationBetween", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Durée d&apos;une période.
+        /// </summary>
+        public static string DurationOfHalf {
+            get {
+                return ResourceManager.GetString("DurationOfHalf", resourceCulture);
             }
         }
         
@@ -1726,6 +1825,24 @@ namespace MyClub.CrossCutting.Localization {
         public static string EndTime {
             get {
                 return ResourceManager.GetString("EndTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tous les.
+        /// </summary>
+        public static string Every {
+            get {
+                return ResourceManager.GetString("Every", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sauf pour le match.
+        /// </summary>
+        public static string ExceptForMatch {
+            get {
+                return ResourceManager.GetString("ExceptForMatch", resourceCulture);
             }
         }
         
@@ -1951,6 +2068,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string FormAbbr {
             get {
                 return ResourceManager.GetString("FormAbbr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pour le match.
+        /// </summary>
+        public static string ForMatch {
+            get {
+                return ResourceManager.GetString("ForMatch", resourceCulture);
             }
         }
         
@@ -2299,6 +2425,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Mi-temps.
+        /// </summary>
+        public static string HalfTime {
+            get {
+                return ResourceManager.GetString("HalfTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A entre.
         /// </summary>
         public static string HasBetween {
@@ -2376,6 +2511,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string Host {
             get {
                 return ResourceManager.GetString("Host", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Comment voulez-vous définir les dates et les heures des journées et des matchs ?.
+        /// </summary>
+        public static string HowDefineDatesAndTimes {
+            get {
+                return ResourceManager.GetString("HowDefineDatesAndTimes", resourceCulture);
             }
         }
         
@@ -3056,6 +3200,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to J#.
+        /// </summary>
+        public static string MatchdayXAbbr {
+            get {
+                return ResourceManager.GetString("MatchdayXAbbr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Matchs.
         /// </summary>
         public static string Matches {
@@ -3083,11 +3236,47 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Numéro de match.
+        /// </summary>
+        public static string MatchNumber {
+            get {
+                return ResourceManager.GetString("MatchNumber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Annulé.
         /// </summary>
         public static string MatchStateCancelled {
             get {
                 return ResourceManager.GetString("MatchStateCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Match #.
+        /// </summary>
+        public static string MatchX {
+            get {
+                return ResourceManager.GetString("MatchX", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to M#.
+        /// </summary>
+        public static string MatchXAbbr {
+            get {
+                return ResourceManager.GetString("MatchXAbbr", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Le nombre de tentatives maximum pour générer les matchs a été dépassé. Les paramètres définis ne permettent de déterminer les dates et heures des matchs..
+        /// </summary>
+        public static string MaxComputingAttemptExceededError {
+            get {
+                return ResourceManager.GetString("MaxComputingAttemptExceededError", resourceCulture);
             }
         }
         
@@ -3133,6 +3322,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string MinUnaivalability {
             get {
                 return ResourceManager.GetString("MinUnaivalability", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Le nombre de dates spécifiées ne correspond pas au nombre de journées prévues..
+        /// </summary>
+        public static string MissingDatesError {
+            get {
+                return ResourceManager.GetString("MissingDatesError", resourceCulture);
             }
         }
         
@@ -3507,6 +3705,33 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nombre de périodes.
+        /// </summary>
+        public static string NumberOfHalves {
+            get {
+                return ResourceManager.GetString("NumberOfHalves", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Combien de rencontre(s) entre les équipes ?.
+        /// </summary>
+        public static string NumberOfMatchesBetweenTeams {
+            get {
+                return ResourceManager.GetString("NumberOfMatchesBetweenTeams", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Combien de match(s) par équipe ?.
+        /// </summary>
+        public static string NumberOfMatchesByTeam {
+            get {
+                return ResourceManager.GetString("NumberOfMatchesByTeam", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nombre.
         /// </summary>
         public static string NumberOfShootouts {
@@ -3633,31 +3858,40 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Défini les modèles de nommage à utiliser pour le prochain élément à ajouter.
-        ///
-        ///Vous pouvez utiliser les variables de la manière suivante : {&lt;variable&gt;:&lt;option&gt;}
-        ///
-        ///Variables disponibles :
-        ///{index}: est remplacé par le prochain index de l&apos;élément
-        ///      Options disponibles:
-        ///               R: Affiche le nombre sous forme ordinale (1er, 2ème, etc..)
-        ///
-        ///{date}: est remplacé par la date de l&apos;élément.
-        ///      Options disponibles:
-        ///               &lt;format&gt;: Affiche la date avec le format désiré (ex: dd/MM/YY =&gt; 05 [rest of string was truncated]&quot;;.
-        /// </summary>
-        public static string ParentPatternInformation {
-            get {
-                return ResourceManager.GetString("ParentPatternInformation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Evolution.
         /// </summary>
         public static string PastPositions {
             get {
                 return ResourceManager.GetString("PastPositions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modèles de nommage.
+        /// </summary>
+        public static string Patterns {
+            get {
+                return ResourceManager.GetString("Patterns", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Défini les modèles de nommage à utiliser pour les éléments qui seront générés.
+        ///
+        ///Vous pouvez utiliser les variables de la manière suivante : {&lt;variable&gt;:&lt;option&gt;}
+        ///
+        ///Variables :
+        ///      - {index}: est remplacé par le prochain index de l&apos;élément
+        ///            - Options:
+        ///               R: Affiche le nombre sous forme ordinale (1er, 2ème, etc..)
+        ///
+        ///      - {date}: est remplacé par la date de l&apos;élément.
+        ///            - Options:
+        ///               &lt;format&gt;: Affiche la date avec le format désiré (ex: dd/MM/YY =&gt; 05/1 [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string PatternsDescription {
+            get {
+                return ResourceManager.GetString("PatternsDescription", resourceCulture);
             }
         }
         
@@ -3847,6 +4081,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string PleaseSelectAPosition {
             get {
                 return ResourceManager.GetString("PleaseSelectAPosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Veuillez sélectionner des dates.
+        /// </summary>
+        public static string PleaseSelectDates {
+            get {
+                return ResourceManager.GetString("PleaseSelectDates", resourceCulture);
             }
         }
         
@@ -4385,6 +4628,24 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Temps de repos.
+        /// </summary>
+        public static string RestTime {
+            get {
+                return ResourceManager.GetString("RestTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Définit le temps de repos minimum que doit observer une équipe entre 2 matchs..
+        /// </summary>
+        public static string RestTimeDescription {
+            get {
+                return ResourceManager.GetString("RestTimeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Date de retour.
         /// </summary>
         public static string ReturnDate {
@@ -4412,11 +4673,38 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Temps de rotation.
+        /// </summary>
+        public static string RotationTime {
+            get {
+                return ResourceManager.GetString("RotationTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Définit le temps minimum qui doit s&apos;écouler entre 2 matchs sur un même terrain..
+        /// </summary>
+        public static string RotationTimeDescription {
+            get {
+                return ResourceManager.GetString("RotationTimeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tour.
         /// </summary>
         public static string Round {
             get {
                 return ResourceManager.GetString("Round", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to L&apos;algorithme Round Robin est un système où chaque équipe rencontre toutes les autres équipes. Si le championnat comprend un nombre impair d&apos;équipes, une équipe reste sans match à chaque journée..
+        /// </summary>
+        public static string RoundRobinDescription {
+            get {
+                return ResourceManager.GetString("RoundRobinDescription", resourceCulture);
             }
         }
         
@@ -4444,15 +4732,6 @@ namespace MyClub.CrossCutting.Localization {
         public static string Rule {
             get {
                 return ResourceManager.GetString("Rule", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Règles.
-        /// </summary>
-        public static string Rules {
-            get {
-                return ResourceManager.GetString("Rules", resourceCulture);
             }
         }
         
@@ -4507,6 +4786,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string SchedulingAssistant {
             get {
                 return ResourceManager.GetString("SchedulingAssistant", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Paramètres de planification.
+        /// </summary>
+        public static string SchedulingParameters {
+            get {
+                return ResourceManager.GetString("SchedulingParameters", resourceCulture);
             }
         }
         
@@ -4925,6 +5213,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Définit l&apos;heure de début par défaut des matchs..
+        /// </summary>
+        public static string StartTimeDescription {
+            get {
+                return ResourceManager.GetString("StartTimeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Commencer avec.
         /// </summary>
         public static string StartWith {
@@ -4975,6 +5272,17 @@ namespace MyClub.CrossCutting.Localization {
         public static string Suspend {
             get {
                 return ResourceManager.GetString("Suspend", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to L&apos;algorithme du système suisse est un système où toutes les équipes jouent le même nombre de matchs contre des adversaires aléatoires.
+        ///Ce système est particulièrement utile pour les tournois où le nombre de participants est trop grand pour permettre un round-robin complet mais où un classement équitable est tout de même nécessaire après un nombre limité de matchs. 
+        ///Il n&apos;est utilisable que pour un nombre d&apos;équipes pair..
+        /// </summary>
+        public static string SwissSystemDescription {
+            get {
+                return ResourceManager.GetString("SwissSystemDescription", resourceCulture);
             }
         }
         
@@ -5146,6 +5454,51 @@ namespace MyClub.CrossCutting.Localization {
         public static string TimeOfDayTimeRule {
             get {
                 return ResourceManager.GetString("TimeOfDayTimeRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pour un numéro de match.
+        /// </summary>
+        public static string TimeOfMatchNumberTimeRule {
+            get {
+                return ResourceManager.GetString("TimeOfMatchNumberTimeRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Utiliser l&apos;heure par défaut.
+        /// </summary>
+        public static string TimeSelectionMethodUseDefaultTime {
+            get {
+                return ResourceManager.GetString("TimeSelectionMethodUseDefaultTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Spécifier l&apos;heure de chaque match.
+        /// </summary>
+        public static string TimeSelectionMethodUseUniqueTimeByMatch {
+            get {
+                return ResourceManager.GetString("TimeSelectionMethodUseUniqueTimeByMatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Spécifier une heure par journée.
+        /// </summary>
+        public static string TimeSelectionMethodUseUniqueTimeByMatchday {
+            get {
+                return ResourceManager.GetString("TimeSelectionMethodUseUniqueTimeByMatchday", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Spécifier l&apos;heure pour les matchs.
+        /// </summary>
+        public static string TimeSelectionMethodUseUniqueTimeByMatches {
+            get {
+                return ResourceManager.GetString("TimeSelectionMethodUseUniqueTimeByMatches", resourceCulture);
             }
         }
         
@@ -5330,6 +5683,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Modifier la date.
+        /// </summary>
+        public static string UpdateDate {
+            get {
+                return ResourceManager.GetString("UpdateDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Utiliser les stades des équipes.
         /// </summary>
         public static string UseTeamVenues {
@@ -5390,6 +5752,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string Weight {
             get {
                 return ResourceManager.GetString("Weight", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Quel algorithme voulez-vous utiliser ?.
+        /// </summary>
+        public static string WhichAlgorithm {
+            get {
+                return ResourceManager.GetString("WhichAlgorithm", resourceCulture);
             }
         }
         
@@ -5466,6 +5837,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 1 journée.
+        /// </summary>
+        public static string XMatchdays {
+            get {
+                return ResourceManager.GetString("XMatchdays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 1 journée a bien été générée..
         /// </summary>
         public static string XMatchdaysGeneratedSuccess {
@@ -5480,6 +5860,24 @@ namespace MyClub.CrossCutting.Localization {
         public static string XMatchdaysGeneratedSuccessPlural {
             get {
                 return ResourceManager.GetString("XMatchdaysGeneratedSuccessPlural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # journées.
+        /// </summary>
+        public static string XMatchdaysPlural {
+            get {
+                return ResourceManager.GetString("XMatchdaysPlural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Aucune journée.
+        /// </summary>
+        public static string XMatchdaysZero {
+            get {
+                return ResourceManager.GetString("XMatchdaysZero", resourceCulture);
             }
         }
         
@@ -5507,6 +5905,33 @@ namespace MyClub.CrossCutting.Localization {
         public static string XMatchesZero {
             get {
                 return ResourceManager.GetString("XMatchesZero", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 date manquante.
+        /// </summary>
+        public static string XMissingDates {
+            get {
+                return ResourceManager.GetString("XMissingDates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # dates manquantes.
+        /// </summary>
+        public static string XMissingDatesPlural {
+            get {
+                return ResourceManager.GetString("XMissingDatesPlural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Aucune date manquante.
+        /// </summary>
+        public static string XMissingDatesZero {
+            get {
+                return ResourceManager.GetString("XMissingDatesZero", resourceCulture);
             }
         }
         

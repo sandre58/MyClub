@@ -83,7 +83,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage
 
             AddSubWorkspaces([OverviewViewModel, PlanningViewModel, SessionsViewModel, StatisticsPlayersViewModel, StatisticsPerformancesViewModel, StatisticsAttendancesViewModel, StatisticsDetailsViewModel]);
 
-            trainingStatisticsRefreshDeferrer.Subscribe(RefreshStatistics);
+            trainingStatisticsRefreshDeferrer.Subscribe(this, RefreshStatistics);
         }
 
         protected override void ResetFromMainTeams(IEnumerable<Guid>? mainTeams)

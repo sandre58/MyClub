@@ -23,7 +23,7 @@ namespace MyClub.Scorer.Wpf.Services
 
         public async Task OpenBuildAssistantAsync()
         {
-            var vm = ViewModelManager.Get<LeagueBuildAssistantViewModel>();
+            var vm = _viewModelLocator.Get<LeagueBuildAssistantViewModel>();
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }

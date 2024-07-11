@@ -9,12 +9,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
+using MyNet.Utilities.Deferring;
 using MyNet.Utilities.Logging;
 
 namespace MyClub.Scorer.Wpf.Services.Providers.Base
@@ -22,19 +24,33 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
     internal abstract class EntitiesProviderBase<TViewModel> : IDisposable, ISourceProvider<TViewModel>
         where TViewModel : IIdentifiable<Guid>, INotifyPropertyChanged
     {
+        private IProject? _currentProject;
         private readonly UiObservableCollection<TViewModel> _source = [];
         private readonly IObservable<IChangeSet<TViewModel>> _observable;
         private readonly IObservable<IChangeSet<TViewModel, Guid>> _observableById;
+        private readonly Subject<bool> _onLoadSubject = new();
+        private readonly Subject<bool> _onUnloadSubject = new();
+        private readonly CompositeDisposable _disposables = [];
         private bool _disposedValue;
+        private readonly Deferrer _reloadDeferrer;
 
         protected EntitiesProviderBase(ProjectInfoProvider projectInfoProvider)
         {
             Items = new(_source);
             _observable = _source.ToObservableChangeSet();
             _observableById = _source.ToObservableChangeSet(x => x.Id);
+            _reloadDeferrer = new(() => _currentProject.IfNotNull(Reload));
 
-            projectInfoProvider.WhenProjectClosing(Clear);
-            projectInfoProvider.WhenProjectLoaded(Reload);
+            projectInfoProvider.WhenProjectClosing(() =>
+            {
+                Clear();
+                _currentProject = null;
+            });
+            projectInfoProvider.WhenProjectLoaded(x =>
+            {
+                _currentProject = x;
+                Reload(x);
+            });
         }
 
         public ReadOnlyObservableCollection<TViewModel> Items { get; }
@@ -59,6 +75,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
         {
             SourceSubscriptions?.Dispose();
             _source.Clear();
+            _onUnloadSubject.OnNext(true);
         }
 
         protected void Reload(IProject project)
@@ -78,14 +95,32 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
                     {
                         stopWatch.Stop();
                         LogManager.Debug($"{GetType().Name} : Load {x.Adds} item(s) in {stopWatch.ElapsedMilliseconds}ms");
+                        _onLoadSubject.OnNext(true);
                     }
                 })
             );
         }
 
+        public virtual void WhenLoaded(Action action) => _disposables.Add(_onLoadSubject.Subscribe(_ => action.Invoke()));
+
+        public virtual void WhenUnloaded(Action action) => _disposables.Add(_onUnloadSubject.Subscribe(_ => action.Invoke()));
+
+        public IDisposable DeferReload()
+        {
+            if (!_reloadDeferrer.IsDeferred)
+                Clear();
+            return _reloadDeferrer.Defer();
+        }
+
         protected abstract IObservable<IChangeSet<TViewModel, Guid>> ProvideObservable(IProject project);
 
-        protected virtual void Cleanup() => SourceSubscriptions?.Dispose();
+        protected virtual void Cleanup()
+        {
+            SourceSubscriptions?.Dispose();
+            _disposables.Dispose();
+            _onLoadSubject.Dispose();
+            _onUnloadSubject.Dispose();
+        }
 
         protected virtual void Dispose(bool disposing)
         {

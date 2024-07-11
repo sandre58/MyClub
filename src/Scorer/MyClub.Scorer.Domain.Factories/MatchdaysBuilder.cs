@@ -6,59 +6,51 @@ using System.Collections.Generic;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.CompetitionAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Factories
 {
     public class MatchdaysBuilder
     {
-        public Func<int, string> ProvideName { get; set; } = new Func<int, string>(x => $"{MyClubResources.Matchday} {x}");
+        public string NamePattern { get; set; } = MyClubResources.MatchdayNamePattern;
 
-        public Func<int, string> ProvideShortName { get; set; } = new Func<int, string>(x => $"{MyClubResources.Matchday.Substring(0, 1)}{x}");
+        public string ShortNamePattern { get; set; } = MyClubResources.MatchdayShortNamePattern;
 
-        public int NumberOfFixturesBetwwenTeams { get; set; } = 2;
+        public IMatchdaysScheduler Scheduler { get; set; }
 
-        public DateTime StartDate { get; set; } = DateTime.Today;
-
-        public TimeSpan Time { get; set; } = new TimeSpan(15, 0, 0);
-
-        public IEnumerable<DayOfWeek> DayOfWeeks { get; set; } = [DayOfWeek.Sunday];
-
-        public IEnumerable<Matchday> Build(IMatchdaysProvider matchdaysProvider)
+        public virtual IEnumerable<Matchday> Build(IMatchdaysProvider matchdaysProvider, IMatchdaysAlgorithm algorithm)
         {
-            var matchdays = new List<Matchday>();
+            var result = new List<Matchday>();
 
-            var rounds = matchdaysProvider.Teams.RoundRobin().ToList();
+            var matchdays = algorithm.Build(matchdaysProvider.Teams)
+                                     .Select((x, y) => new { Index = y, Matches = x })
+                                     .ToDictionary(x => x.Index, x => x.Matches.Select((x, y) => new { Index = y, HomeTeam = x.home, AwayTeam = x.away }))
+                                     .ToList();
 
-            var dateOfCurrentMatchday = StartDate.PreviousDay().BeginningOfDay();
-
-            for (var stageIndex = 0; stageIndex < NumberOfFixturesBetwwenTeams; stageIndex++)
+            // 1 - Create matchdays and matches with default dates and names
+            foreach (var item in matchdays)
             {
-                for (var roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
-                {
-                    var matchdayNumber = stageIndex * rounds.Count + roundIndex + 1;
-                    dateOfCurrentMatchday = ComputeMatchdayDate(dateOfCurrentMatchday, DayOfWeeks.ToArray());
-                    var matchday = new Matchday(matchdaysProvider, dateOfCurrentMatchday.AddFluentTimeSpan(Time).ToUniversalTime(), ProvideName(matchdayNumber), ProvideShortName(matchdayNumber));
+                var matchdayNumber = item.Key + 1;
+                var matchday = new Matchday(matchdaysProvider, DateTime.Today, $"{MyClubResources.Matchday} {matchdayNumber}", matchdayNumber.ToString(MyClubResources.MatchdayXAbbr));
+                item.Value.ForEach(x => matchday.AddMatch(x.HomeTeam, x.AwayTeam));
 
-                    var list = rounds[roundIndex].ToList();
-
-                    for (var matchIndex = 0; matchIndex < list.Count; matchIndex++)
-                    {
-                        var team1 = list[matchIndex].item1;
-                        var team2 = list[matchIndex].item2;
-
-                        var match = matchday.AddMatch(team1, team2);
-
-                        if (roundIndex % 2 != stageIndex % 2) match.Invert();
-                    }
-
-                    matchdays.Add(matchday);
-                }
+                result.Add(matchday);
             }
 
-            return matchdays;
-        }
+            // 2 - Schedule matchdays
+            var schedulingMatchdaysInformations = result.Select((x, y) => new SchedulingMatchdayInformation(x, y)).ToList();
+            Scheduler.Schedule(schedulingMatchdaysInformations);
 
-        private static DateTime ComputeMatchdayDate(DateTime start, DayOfWeek[] dayOfWeeks) => dayOfWeeks.Min(x => start.Next(x)).BeginningOfDay();
+            // 3 - Update names
+            result.OrderBy(x => x.Date).ForEach((x, y) =>
+            {
+                x.Name = StageNamesFactory.ComputePattern(NamePattern, y + 1, x.Date);
+                x.ShortName = StageNamesFactory.ComputePattern(ShortNamePattern, y + 1, x.Date);
+            });
+
+            return result;
+        }
     }
 }
+

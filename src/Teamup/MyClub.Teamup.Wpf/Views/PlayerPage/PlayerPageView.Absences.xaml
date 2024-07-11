@@ -12,7 +12,7 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
         <DataTemplate DataType="{x:Type entities:AbsenceViewModel}">
-            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}"
+            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                Margin="0 3 3 0"
                                HorizontalAlignment="Right"
                                VerticalAlignment="Top">

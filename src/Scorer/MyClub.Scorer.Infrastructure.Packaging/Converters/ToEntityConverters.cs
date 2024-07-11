@@ -11,6 +11,7 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Infrastructure.Packaging.Models;

@@ -11,6 +11,7 @@ using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Factories.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
@@ -113,7 +114,7 @@ namespace MyClub.Scorer.Application.Services
                     if (date.HasValue)
                         y.OriginDate = date.Value;
                     else if (dto.Offset != 0)
-                        y.Reschedule(dto.Offset, dto.OffsetUnit);
+                        y.Schedule(dto.Offset, dto.OffsetUnit);
 
                     if (dto.UpdateStadium)
                     {
@@ -166,7 +167,7 @@ namespace MyClub.Scorer.Application.Services
                 matchIds.ForEach(Finish);
         }
 
-        public void Reschedule(Guid id, int offset, TimeUnit timeUnit) => Update(id, x => x.Reschedule(offset, timeUnit));
+        public void Reschedule(Guid id, int offset, TimeUnit timeUnit) => Update(id, x => x.Schedule(offset, timeUnit));
 
         public void Reschedule(IEnumerable<Guid> matchIds, int offset, TimeUnit timeUnit)
         {
@@ -174,7 +175,7 @@ namespace MyClub.Scorer.Application.Services
                 matchIds.ForEach(x => Reschedule(x, offset, timeUnit));
         }
 
-        public void Reschedule(Guid id, DateTime date) => Update(id, x => x.Reschedule(date));
+        public void Reschedule(Guid id, DateTime date) => Update(id, x => x.Schedule(date));
 
         public void Reschedule(IEnumerable<Guid> matchIds, DateTime date)
         {
@@ -184,7 +185,7 @@ namespace MyClub.Scorer.Application.Services
 
         public void Reschedule(MatchDto match) => match.Id.HasValue.IfTrue(() => Update(match.Id!.Value, x =>
         {
-            x.Reschedule(match.Date.ToUniversalTime());
+            x.Schedule(match.Date.ToUniversalTime());
             SetStadium(x.Id, match.Stadium?.Id);
         }));
 

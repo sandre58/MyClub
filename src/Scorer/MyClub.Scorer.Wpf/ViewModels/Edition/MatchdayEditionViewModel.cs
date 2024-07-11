@@ -12,7 +12,7 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -21,7 +21,6 @@ using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Commands;
 using MyNet.UI.Threading;
 using MyNet.Utilities;
-using MyNet.Utilities.Messaging;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
@@ -39,15 +38,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private readonly ReadOnlyObservableCollection<MatchdayViewModel> _matchdays;
         private readonly ISourceProvider<TeamViewModel> _teamsProvider;
         private readonly ISourceProvider<StadiumViewModel> _stadiumsProvider;
+        private readonly ResultsChangedDeferrer _resultsChangedDeferrer;
+        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
 
         public MatchdayEditionViewModel(MatchdayService matchdayService,
                                         MatchdaysProvider matchdaysProvider,
                                         StadiumsProvider stadiumsProvider,
-                                        TeamsProvider teamsProvider) : base(matchdayService)
+                                        TeamsProvider teamsProvider,
+                                        ResultsChangedDeferrer resultsChangedDeferrer,
+                                        ScheduleChangedDeferrer scheduleChangedDeferrer) : base(matchdayService)
         {
             _stadiumsProvider = stadiumsProvider;
             _teamsProvider = teamsProvider;
-
+            _resultsChangedDeferrer = resultsChangedDeferrer;
+            _scheduleChangedDeferrer = scheduleChangedDeferrer;
             InvertTeamsCommand = CommandsManager.Create(InvertTeams, () => Matches.Any(x => !x.IsReadOnly));
             AddMatchCommand = CommandsManager.Create(AddMatch, () => teamsProvider.Items.Count > 0);
             RemoveMatchCommand = CommandsManager.CreateNotNull<EditableMatchViewModel>(RemoveMatch);
@@ -243,8 +247,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         protected override void SaveCore()
         {
-            base.SaveCore();
-            Messenger.Default.Send(new CheckConflictsRequestMessage());
+            using (_scheduleChangedDeferrer.Defer())
+            using (_resultsChangedDeferrer.Defer())
+                base.SaveCore();
         }
     }
 }

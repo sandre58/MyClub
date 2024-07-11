@@ -22,9 +22,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
         private readonly RankingListParameterProvider _rankingListParameterProvider = new();
         private CompositeDisposable? _disposables;
 
-        public RankingPageViewModel(ProjectInfoProvider projectInfoProvider, CompetitionInfoProvider competitionInfoProvider, MatchesProvider matchesProvider, LeaguePresentationService leaguePresentationService)
+        public RankingPageViewModel(CompetitionInfoProvider competitionInfoProvider, MatchesProvider matchesProvider, LeaguePresentationService leaguePresentationService)
         {
-            projectInfoProvider.WhenProjectClosing(() =>
+            competitionInfoProvider.WhenCompetitionChanged(x => MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
+            {
+                if (x is LeagueViewModel leagueViewModel)
+                {
+                    Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
+                    LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
+                    HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
+                    AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
+
+                    _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => ShowHomeAwayRankings = x.Value));
+                }
+            }), _ =>
             {
                 Ranking?.Dispose();
                 LiveRanking?.Dispose();
@@ -36,22 +47,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                 HomeRanking = null;
                 AwayRanking = null;
                 _disposables?.Dispose();
-            });
-
-            projectInfoProvider.WhenProjectLoaded(_ =>
-            {
-                MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
-                {
-                    if (competitionInfoProvider.GetCompetition() is LeagueViewModel leagueViewModel)
-                    {
-                        Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
-                        LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
-                        HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
-                        AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
-
-                        _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => ShowHomeAwayRankings = x.Value));
-                    }
-                });
             });
 
             EditRulesCommand = CommandsManager.Create(async () => await leaguePresentationService.EditRankingRulesAsync().ConfigureAwait(false));

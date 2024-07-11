@@ -61,7 +61,11 @@
             <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:IconAssist.Icon="{my:MediumIcon Kind=Stadium}">
                 <my:SimpleStackPanel Orientation="Horizontal">
                     <CheckBox Content="{my:Resource UseTeamVenues}" IsChecked="{Binding UseTeamVenues}" />
-                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" PopupContent="{my:Resource UseTeamVenuesDescription}" ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
+
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                                   my:HeaderAssist.Header="{my:Resource UseTeamVenues}"
+                                                   PopupContent="{my:Resource UseTeamVenuesDescription}"
+                                                   ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
                 </my:SimpleStackPanel>
             </GroupBox>
         </GroupBox>

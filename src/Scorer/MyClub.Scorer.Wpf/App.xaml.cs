@@ -23,6 +23,7 @@ using MyClub.Scorer.Domain.Factories;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Infrastructure.Packaging;
@@ -30,9 +31,9 @@ using MyClub.Scorer.Infrastructure.Packaging.Services;
 using MyClub.Scorer.Infrastructure.Repositories;
 using MyClub.Scorer.Wpf.Configuration;
 using MyClub.Scorer.Wpf.Services;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Factories;
 using MyClub.Scorer.Wpf.Services.Handlers;
-using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.BracketPage;
@@ -165,6 +166,7 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped(CreateProjectFactory)
                 .AddScoped<IUserRepository>(x => x.GetRequiredService<RegistryAuthenticationService>())
                 .AddSingleton<IProjectRepository, ProjectRepository>()
+                .AddSingleton<ILeagueRepository, LeagueRepository>()
                 .AddScoped<ITeamRepository, TeamRepository>()
                 .AddScoped<IStadiumRepository, StadiumRepository>()
                 .AddScoped<IPlayerRepository, PlayerRepository>()
@@ -207,8 +209,11 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<MatchPresentationService>()
                 .AddScoped<LeaguePresentationService>()
 
-                // Managers
-                .AddSingleton<ProjectManager>()
+                // Deferrers
+                .AddSingleton<StadiumsChangedDeferrer>()
+                .AddSingleton<ScheduleChangedDeferrer>()
+                .AddSingleton<ResultsChangedDeferrer>()
+                .AddSingleton<TeamsChangedDeferrer>()
 
                 // Presentation source Providers
                 .AddSingleton<RecentFilesProvider>()

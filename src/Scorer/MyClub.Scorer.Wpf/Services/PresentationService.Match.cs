@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
-using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -19,14 +19,17 @@ using MyNet.UI.Locators;
 using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.Utilities;
-using MyNet.Utilities.Messaging;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.Services
 {
     internal class MatchPresentationService(MatchService matchService,
-                                            IViewModelLocator viewModelLocator)
+                                            ResultsChangedDeferrer resultsChangedDeferrer,
+                                            IViewModelLocator viewModelLocator,
+                                            ScheduleChangedDeferrer scheduleChangedDeferrer)
     {
+        private readonly ResultsChangedDeferrer _resultsChangedDeferrer = resultsChangedDeferrer;
+        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer = scheduleChangedDeferrer;
         private readonly MatchService _matchService = matchService;
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
 
@@ -61,8 +64,9 @@ namespace MyClub.Scorer.Wpf.Services
             {
                 await AppBusyManager.WaitAsync(() =>
                 {
-                    _matchService.Remove(idsList);
-                    CheckConflicts();
+                    using (_scheduleChangedDeferrer.Defer())
+                    using (_resultsChangedDeferrer.Defer())
+                        _matchService.Remove(idsList);
                 });
             }
         }
@@ -73,7 +77,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.SaveScores(items)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_resultsChangedDeferrer.Defer())
+                    _matchService.SaveScores(items);
+            }).ConfigureAwait(false);
         }
 
         public async Task StartAsync(MatchViewModel item) => await StartAsync([item]).ConfigureAwait(false);
@@ -84,7 +92,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Start(idsList)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_resultsChangedDeferrer.Defer())
+                    _matchService.Start(idsList);
+            }).ConfigureAwait(false);
         }
 
         public async Task RescheduleAsync(MatchViewModel item, int offset, TimeUnit timeUnit) => await RescheduleAsync([item], offset, timeUnit).ConfigureAwait(false);
@@ -97,8 +109,8 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                _matchService.Reschedule(idsList, offset, timeUnit);
-                CheckConflicts();
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.Reschedule(idsList, offset, timeUnit);
             }).ConfigureAwait(false);
         }
 
@@ -110,8 +122,8 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                _matchService.Reschedule(idsList, date);
-                CheckConflicts();
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.Reschedule(idsList, date);
             }).ConfigureAwait(false);
         }
 
@@ -125,8 +137,8 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                _matchService.Postpone(idsList, postponedDate);
-                CheckConflicts();
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.Postpone(idsList, postponedDate);
             }).ConfigureAwait(false);
         }
 
@@ -140,8 +152,8 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                _matchService.Cancel(idsList);
-                CheckConflicts();
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.Cancel(idsList);
             }).ConfigureAwait(false);
         }
 
@@ -153,7 +165,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Suspend(idsList)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_resultsChangedDeferrer.Defer())
+                    _matchService.Suspend(idsList);
+            }).ConfigureAwait(false);
         }
 
         public async Task ResetAsync(MatchViewModel item) => await ResetAsync([item]).ConfigureAwait(false);
@@ -164,7 +180,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Reset(idsList)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_resultsChangedDeferrer.Defer())
+                    _matchService.Reset(idsList);
+            }).ConfigureAwait(false);
         }
 
         public async Task FinishAsync(MatchViewModel item) => await FinishAsync([item]).ConfigureAwait(false);
@@ -175,16 +195,36 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Finish(idsList)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_resultsChangedDeferrer.Defer())
+                    _matchService.Finish(idsList);
+            }).ConfigureAwait(false);
         }
 
-        public async Task DoWithdrawForHomeTeamAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(item.Id, item.HomeTeam.Id)).ConfigureAwait(false);
+        public async Task DoWithdrawForHomeTeamAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() =>
+        {
+            using (_resultsChangedDeferrer.Defer())
+                _matchService.DoWithdraw(item.Id, item.HomeTeam.Id);
+        }).ConfigureAwait(false);
 
-        public async Task DoWithdrawForHomeTeamAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(items.Select(x => (x.Id, x.HomeTeam.Id)))).ConfigureAwait(false);
+        public async Task DoWithdrawForHomeTeamAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() =>
+        {
+            using (_resultsChangedDeferrer.Defer())
+                _matchService.DoWithdraw(items.Select(x => (x.Id, x.HomeTeam.Id)));
+        }).ConfigureAwait(false);
 
-        public async Task DoWithdrawForAwayTeamAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(item.Id, item.AwayTeam.Id)).ConfigureAwait(false);
+        public async Task DoWithdrawForAwayTeamAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() =>
+        {
+            using (_resultsChangedDeferrer.Defer())
+                _matchService.DoWithdraw(item.Id, item.AwayTeam.Id);
+        }).ConfigureAwait(false);
 
-        public async Task DoWithdrawForAwayTeamAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(items.Select(x => (x.Id, x.AwayTeam.Id)))).ConfigureAwait(false);
+        public async Task DoWithdrawForAwayTeamAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() =>
+        {
+            using (_resultsChangedDeferrer.Defer())
+                _matchService.DoWithdraw(items.Select(x => (x.Id, x.AwayTeam.Id)));
+        }).ConfigureAwait(false);
 
         public async Task RandomizeAsync(MatchViewModel item) => await RandomizeAsync([item]).ConfigureAwait(false);
 
@@ -194,7 +234,11 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            await AppBusyManager.WaitAsync(() => _matchService.Randomize(idsList)).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_resultsChangedDeferrer.Defer())
+                    _matchService.Randomize(idsList);
+            }).ConfigureAwait(false);
         }
 
         public async Task InvertTeamsAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() => _matchService.InvertTeams(item.Id)).ConfigureAwait(false);
@@ -216,8 +260,8 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                _matchService.SetStadium(idsList, stadium?.Id);
-                CheckConflicts();
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.SetStadium(idsList, stadium?.Id);
             }).ConfigureAwait(false);
         }
 
@@ -243,11 +287,9 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() =>
             {
-                _matchService.Reschedule(dtos);
-                CheckConflicts();
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.Reschedule(dtos);
             }).ConfigureAwait(false);
         }
-
-        private static void CheckConflicts() => Messenger.Default.Send(new CheckConflictsRequestMessage());
     }
 }

@@ -14,6 +14,7 @@ using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Infrastructure.Packaging;
 using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyNet.UI;
@@ -250,8 +251,6 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (!string.IsNullOrEmpty(filename))
                 AddCurrentFileInRecentFiles(project.Name, filename);
-
-            Messenger.Default.Send(new CheckConflictsRequestMessage());
         }
 
         public async Task<bool> SaveAsync()

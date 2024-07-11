@@ -26,7 +26,7 @@ namespace MyClub.Teamup.Wpf.Services.Providers
             : base(projectInfoProvider, x => new(x, trainingSessionPresentationService, playersProvider, holidaysProvider, cyclesProvider))
         {
             _playersProvider = playersProvider;
-            trainingStatisticsRefreshDeferrer.Subscribe(() => _playersProvider.Items.ForEach(x => x.TrainingStatistics.Refresh(Items)));
+            trainingStatisticsRefreshDeferrer.Subscribe(this, () => _playersProvider.Items.ForEach(x => x.TrainingStatistics.Refresh(Items)));
         }
 
         protected override IObservable<IChangeSet<TrainingSession, Guid>> ProvideObservable(Project project) => project.TrainingSessions.ToObservableChangeSet(x => x.Id);

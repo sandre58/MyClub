@@ -42,10 +42,7 @@
                                      my:HintAssist.Hint="{my:Resource ShortName}"
                                      my:HintAssist.IsFloating="True"
                                      Text="{Binding ShortNamePattern}" />
-                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}"
-                                               PlacementMode="BottomAndAlignCentres"
-                                               PopupContent="{my:Resource ParentPatternInformation}"
-                                               ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" my:HeaderAssist.Header="{my:Resource Patterns}" PopupContent="{my:Resource PatternsDescription}" ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
                         </my:SimpleStackPanel>
                     </GroupBox>
                     <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Foreground="{DynamicResource MyNet.Brushes.Primary.Foreground}" Header="{my:MediumIcon Kind=Numeric}">

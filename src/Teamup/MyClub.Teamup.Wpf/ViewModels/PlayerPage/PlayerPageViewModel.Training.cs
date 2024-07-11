@@ -72,7 +72,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.PlayerPage
                 .Stroke(x => UiHelper.GetBrushFromAttendance(x.Attendance))
                 );
 
-            trainingStatisticsRefreshDeferrer.Subscribe(RefreshAll);
+            trainingStatisticsRefreshDeferrer.Subscribe(this, RefreshAll);
             Disposables.Add(_holidaysProvider.Connect().SubscribeAll(RefreshHolidays));
         }
 

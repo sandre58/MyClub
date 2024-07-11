@@ -7,13 +7,14 @@ using System.Linq;
 using MyClub.Domain;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities.Collections;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public class Matchday : NameEntity, IMatchesProvider
+    public class Matchday : NameEntity, IMatchesProvider, ISchedulable
     {
         private DateTime? _postponedDate;
         private readonly ExtendedObservableCollection<Match> _matches = [];
@@ -45,18 +46,22 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
                 Matches.Where(x => x.State is MatchState.None or MatchState.Postponed).ToList().ForEach(x => x.Postpone(date));
         }
 
-        public void Schedule(DateTime? date = null, bool propagateToMatches = true)
+        public void Schedule(DateTime date)
         {
             IsPostponed = false;
-            _postponedDate = date;
-            RaisePropertyChanged(nameof(Date));
+            _postponedDate = null;
+            OriginDate = date;
+        }
 
-            if (propagateToMatches)
-                Matches.Where(x => x.State is MatchState.None or MatchState.Postponed).ToList().ForEach(x =>
-                {
-                    x.Reset();
-                    x.PostponedDate = _postponedDate;
-                });
+        public void ScheduleWithMatches(DateTime date)
+        {
+            Schedule(date);
+
+            Matches.Where(x => x.State is MatchState.None or MatchState.Postponed).ToList().ForEach(x =>
+            {
+                x.Reset();
+                x.Schedule(date);
+            });
         }
 
         public Match AddMatch(ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(Date, homeTeam, awayTeam, _parent.ProvideFormat()));
@@ -73,6 +78,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public bool RemoveMatch(Match item) => _matches.Remove(item);
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => _parent.ProvideFormat();
+
+        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => _parent.ProvideSchedulingParameters();
 
         public override int CompareTo(object? obj) => obj is Matchday other ? OriginDate.CompareTo(other.OriginDate) : 1;
 

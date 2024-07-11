@@ -4,15 +4,21 @@
 using System;
 using MyNet.Utilities;
 
-namespace MyClub.Scorer.Domain.ProjectAggregate
+namespace MyClub.Scorer.Domain.Scheduling
 {
     public class SchedulingParameters : ValueObject
     {
         public static readonly SchedulingParameters Default = new();
 
-        public SchedulingParameters() : this(DateTime.Today.BeginningOfYear(), DateTime.Today.EndOfYear(), 15.Hours(), 1.Days(), 2.Days(), true) { }
+        public SchedulingParameters()
+            : this(DateTime.Today.BeginningOfYear(), DateTime.Today.EndOfYear(), 15.Hours(), 1.Days(), 2.Days(), true) { }
 
-        public SchedulingParameters(DateTime startDate, DateTime endDate, TimeSpan matchStartTime, TimeSpan rotationTime, TimeSpan minimumRestTime, bool useTeamVenues)
+        public SchedulingParameters(DateTime startDate,
+                                    DateTime endDate,
+                                    TimeSpan matchStartTime,
+                                    TimeSpan rotationTime,
+                                    TimeSpan minimumRestTime,
+                                    bool useTeamVenues)
         {
             StartDate = startDate;
             EndDate = endDate;

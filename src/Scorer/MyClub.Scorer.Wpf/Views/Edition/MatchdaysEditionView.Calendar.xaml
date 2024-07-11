@@ -56,6 +56,18 @@
                                                 Content="{my:ToolIcon Kind=Plus}"
                                                 ToolTip="{my:Resource Add}" />
                                     </ToolBar>
+                                    <Label x:Name="label"
+                                           Style="{StaticResource MyNet.Styles.Label.Elevation.Foreground}"
+                                           Grid.Column="1"
+                                           Width="15"
+                                           Height="15"
+                                           Margin="0 0 4 0"
+                                           Padding="0"
+                                           HorizontalAlignment="Right"
+                                           my:ThemeAssist.UniformCornerRadius="20"
+                                           Content="{Binding Appointments.Count, RelativeSource={RelativeSource TemplatedParent}}"
+                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                           Visibility="{Binding Appointments.Count, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotMany}}" />
                                 </Grid>
                             </Grid>
                         </Border>
@@ -69,6 +81,7 @@
                                 <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="label" Property="Visibility" Value="Hidden" />
                                 <Setter TargetName="toolbar" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <MultiDataTrigger>

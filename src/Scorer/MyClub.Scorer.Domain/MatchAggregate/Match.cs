@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using MyClub.Domain;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
@@ -17,7 +18,7 @@ using PropertyChanged;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
-    public class Match : AuditableEntity
+    public class Match : AuditableEntity, ISchedulable
     {
         public static readonly AcceptableValueRange<int> AcceptableRangeScore = new(0, int.MaxValue);
 
@@ -69,7 +70,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             RaisePropertyChanged(nameof(Date));
         }
 
-        public void Reschedule(DateTime date)
+        public void Schedule(DateTime date)
         {
             if (State == MatchState.Postponed && PostponedDate.HasValue)
                 PostponedDate = date;
@@ -77,7 +78,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
                 OriginDate = date;
         }
 
-        public void Reschedule(int offset, TimeUnit timeUnit)
+        public void Schedule(int offset, TimeUnit timeUnit)
         {
             if (offset == 0) return;
 

@@ -14,7 +14,7 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -28,7 +28,6 @@ using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
-using MyNet.Utilities.Messaging;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
@@ -36,15 +35,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class MatchEditionViewModel : EntityEditionViewModel<Match, MatchDto, MatchService>
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
+        private readonly ResultsChangedDeferrer _resultsChangedDeferrer;
+        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
         private readonly ReadOnlyObservableCollection<IMatchParent> _parents;
         private readonly UiObservableCollection<TeamViewModel> _availableTeams = [];
 
         public MatchEditionViewModel(MatchService matchService,
                                      AvailibilityCheckingService availibilityCheckingService,
                                      StadiumsProvider stadiumsProvider,
-                                     MatchdaysProvider matchdaysProvider) : base(matchService)
+                                     MatchdaysProvider matchdaysProvider,
+                                     ResultsChangedDeferrer resultsChangedDeferrer,
+                                     ScheduleChangedDeferrer scheduleChangedDeferrer) : base(matchService)
         {
             _availibilityCheckingService = availibilityCheckingService;
+            _resultsChangedDeferrer = resultsChangedDeferrer;
+            _scheduleChangedDeferrer = scheduleChangedDeferrer;
             StadiumSelection = new WrapperListViewModel<StadiumViewModel, StadiumWrapper>(stadiumsProvider.Connect(), x => new StadiumWrapper(x));
             AvailableTeams = new(_availableTeams);
 
@@ -272,7 +277,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             }
             var date = Date.Value;
 
-            date = date.AddFluentTimeSpan(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
+            date = date.ToLocalDateTime(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
             DateAvailability = CheckTeamsAvaibility(date);
         }
 
@@ -287,7 +292,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             }
             var date = PostponedDate.Value;
 
-            date = date.AddFluentTimeSpan(PostponedTime ?? DateTime.Today.EndOfDay().TimeOfDay);
+            date = date.ToLocalDateTime(PostponedTime ?? DateTime.Today.EndOfDay().TimeOfDay);
             PostponedDateAvailability = CheckTeamsAvaibility(date);
         }
 
@@ -298,9 +303,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DateTime? date = null;
 
             if (PostponedState == PostponedState.SpecifiedDate && PostponedDate.HasValue)
-                date = PostponedDate.Value.AddFluentTimeSpan(PostponedTime ?? DateTime.Today.EndOfDay().TimeOfDay);
+                date = PostponedDate.Value.ToLocalDateTime(PostponedTime ?? DateTime.Today.EndOfDay().TimeOfDay);
             else if (Date.HasValue)
-                date = Date.Value.AddFluentTimeSpan(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
+                date = Date.Value.ToLocalDateTime(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
 
             foreach (var item in StadiumSelection.Wrappers)
                 item.Availability = date.HasValue ? CheckStadiumAvaibility(item.Item.Id, date.Value) : AvailabilityCheck.Unknown;
@@ -416,8 +421,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         protected override void SaveCore()
         {
-            base.SaveCore();
-            Messenger.Default.Send(new CheckConflictsRequestMessage());
+            using (_scheduleChangedDeferrer.Defer())
+            using (_resultsChangedDeferrer.Defer())
+                base.SaveCore();
         }
     }
 

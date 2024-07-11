@@ -1173,9 +1173,6 @@ Please consolidate or change the order of the items.</value>
   <data name="Relegation" xml:space="preserve">
     <value>Relegation</value>
   </data>
-  <data name="Rules" xml:space="preserve">
-    <value>Rules</value>
-  </data>
   <data name="Teams" xml:space="preserve">
     <value>Teams</value>
   </data>
@@ -1911,18 +1908,16 @@ The columns in the first position will be evaluated first. The following columns
   <data name="MatchdayShortNamePattern" xml:space="preserve">
     <value>M{index}</value>
   </data>
-  <data name="ParentPatternInformation" xml:space="preserve">
-    <value>Define the naming patterns to use for the next item to add.
+  <data name="PatternsDescription" xml:space="preserve">
+    <value>You can use variables in the following way: {&lt;variable&gt;:&lt;option&gt;}
 
-You can use variables in the following way: {&lt;variable&gt;:&lt;option&gt;}
-
-Available variables:
-{index}: is replaced by the next index of the element
-      Options available:
+Variables:
+      - {index}: is replaced by the next index of the element
+            -Options:
                A: Displays the number in ordinal form (1st, 2nd, etc.)
 
-{date}: is replaced by the item's date.
-      Options available:
+      - {date}: is replaced by the date of the item.
+            -Options:
                &lt;format&gt;: Displays the date in the desired format (ex: dd/MM/YY =&gt; 05/10/24)</value>
   </data>
   <data name="Index" xml:space="preserve">
@@ -1940,14 +1935,11 @@ Available variables:
   <data name="Until" xml:space="preserve">
     <value>Until</value>
   </data>
-  <data name="AddRule" xml:space="preserve">
-    <value>Add rule</value>
-  </data>
   <data name="ExcludeDateDateRule" xml:space="preserve">
     <value>Exclude date</value>
   </data>
   <data name="AllowDaysOfWeekDateRule" xml:space="preserve">
-    <value>Allow days of week</value>
+    <value>Specify allowed days of the week</value>
   </data>
   <data name="ExcludeFrom" xml:space="preserve">
     <value>Exclude</value>
@@ -2002,5 +1994,154 @@ Available variables:
   </data>
   <data name="Build" xml:space="preserve">
     <value>Build</value>
+  </data>
+  <data name="ChampionshipAlgorithmRoundRobin" xml:space="preserve">
+    <value>Round robin</value>
+  </data>
+  <data name="ChampionshipAlgorithmSwissSystem" xml:space="preserve">
+    <value>SwissSystem</value>
+  </data>
+  <data name="BuildLeague" xml:space="preserve">
+    <value>Build league</value>
+  </data>
+  <data name="WhichAlgorithm" xml:space="preserve">
+    <value>Which algorithm do you want to use?</value>
+  </data>
+  <data name="RoundRobinDescription" xml:space="preserve">
+    <value>The Round Robin algorithm is a system where each team meets all the other teams. If the championship includes an odd number of teams, one team remains without a match each day.</value>
+  </data>
+  <data name="SwissSystemDescription" xml:space="preserve">
+    <value>The Swiss system algorithm is a system where all teams play the same number of matches against random opponents.
+This system is particularly useful for tournaments where the number of participants is too large to allow a full round-robin but where fair ranking is still necessary after a limited number of matches. 
+It can only be used for an even number of teams.</value>
+  </data>
+  <data name="CannotUseSwissSystem" xml:space="preserve">
+    <value>The Swiss System cannot be used for an odd number of teams.</value>
+  </data>
+  <data name="NumberOfMatchesByTeam" xml:space="preserve">
+    <value>How many match(s) per team?</value>
+  </data>
+  <data name="NumberOfMatchesBetweenTeams" xml:space="preserve">
+    <value>How many meetings between the teams?</value>
+  </data>
+  <data name="HalfTime" xml:space="preserve">
+    <value>Half time</value>
+  </data>
+  <data name="SchedulingParameters" xml:space="preserve">
+    <value>Scheduling parameters</value>
+  </data>
+  <data name="RotationTime" xml:space="preserve">
+    <value>Rotation time</value>
+  </data>
+  <data name="RestTime" xml:space="preserve">
+    <value>Rest Time</value>
+  </data>
+  <data name="RestTimeDescription" xml:space="preserve">
+    <value>Defines the minimum rest time that a team must observe between 2 matches.</value>
+  </data>
+  <data name="RotationTimeDescription" xml:space="preserve">
+    <value>Defines the minimum time that must elapse between 2 matches on the same field.</value>
+  </data>
+  <data name="StartTimeDescription" xml:space="preserve">
+    <value>Defines the default start time for matches.</value>
+  </data>
+  <data name="AsSoonAsPossible" xml:space="preserve">
+    <value>As soon as possible</value>
+  </data>
+  <data name="XMatchdays" xml:space="preserve">
+    <value>1 matchday</value>
+  </data>
+  <data name="XMatchdaysZero" xml:space="preserve">
+    <value>No matchday</value>
+  </data>
+  <data name="XMatchdaysPlural" xml:space="preserve">
+    <value># matchdays</value>
+  </data>
+  <data name="HowDefineDatesAndTimes" xml:space="preserve">
+    <value>How do you want to define the dates and times of days and matches?</value>
+  </data>
+  <data name="BuildMethodManualDescription" xml:space="preserve">
+    <value>Select the date for each day individually.</value>
+  </data>
+  <data name="BuildMethodAutomaticDescription" xml:space="preserve">
+    <value>Add rules to calculate dates and times of days.</value>
+  </data>
+  <data name="BuildMethodAsSoonAsPossibleDescription" xml:space="preserve">
+    <value>Set dates and times for matches and days based on match format and scheduling settings. Matches are calculated as soon as both teams and pitches are available.</value>
+  </data>
+  <data name="XMissingDates" xml:space="preserve">
+    <value>1 missing date</value>
+  </data>
+  <data name="XMissingDatesZero" xml:space="preserve">
+    <value>No missing date</value>
+  </data>
+  <data name="XMissingDatesPlural" xml:space="preserve">
+    <value># missing dates</value>
+  </data>
+  <data name="MatchXAbbr" xml:space="preserve">
+    <value>M#</value>
+  </data>
+  <data name="MatchX" xml:space="preserve">
+    <value>Match #</value>
+  </data>
+  <data name="NumberOfHalves" xml:space="preserve">
+    <value>Number of halves</value>
+  </data>
+  <data name="DurationOfHalf" xml:space="preserve">
+    <value>Duration of half</value>
+  </data>
+  <data name="TimeSelectionMethodUseDefaultTime" xml:space="preserve">
+    <value>Use default time</value>
+  </data>
+  <data name="TimeSelectionMethodUseUniqueTimeByMatch" xml:space="preserve">
+    <value>Define time for each match</value>
+  </data>
+  <data name="TimeSelectionMethodUseUniqueTimeByMatchday" xml:space="preserve">
+    <value>Define time by matchday</value>
+  </data>
+  <data name="TimeSelectionMethodUseUniqueTimeByMatches" xml:space="preserve">
+    <value>Define time for matches</value>
+  </data>
+  <data name="MissingDatesError" xml:space="preserve">
+    <value>The number of dates specified does not correspond to the number of days planned.</value>
+  </data>
+  <data name="MatchdayXAbbr" xml:space="preserve">
+    <value>M#</value>
+  </data>
+  <data name="UpdateDate" xml:space="preserve">
+    <value>Update date</value>
+  </data>
+  <data name="Every" xml:space="preserve">
+    <value>Every</value>
+  </data>
+  <data name="MatchNumber" xml:space="preserve">
+    <value>Number of match</value>
+  </data>
+  <data name="TimeOfMatchNumberTimeRule" xml:space="preserve">
+    <value>For a number of match</value>
+  </data>
+  <data name="ForMatch" xml:space="preserve">
+    <value>For match</value>
+  </data>
+  <data name="AddException" xml:space="preserve">
+    <value>Add exception</value>
+  </data>
+  <data name="ExceptForMatch" xml:space="preserve">
+    <value>Except for the match</value>
+  </data>
+  <data name="DefinedPeriodIsLowerThanMatchPeriodError" xml:space="preserve">
+    <value>The defined period is smaller than the total time of a match.</value>
+  </data>
+  <data name="MaxComputingAttemptExceededError" xml:space="preserve">
+    <value>The maximum number of attempts to generate matches has been exceeded. The defined parameters do not allow the dates and times of matches to be determined.</value>
+  </data>
+  <data name="AllowTimePeriodsDateRule" xml:space="preserve">
+    <value>Specify allowed times</value>
+  </data>
+  <data name="PleaseSelectDates" xml:space="preserve">
+    <value>Please select dates</value>
+  </data>
+  <data name="Patterns" xml:space="preserve">
+    <value>Patterns</value>
   </data>
 </root>

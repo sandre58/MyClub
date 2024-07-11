@@ -1,0 +1,330 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.BuildAssistant.BuildManualView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
+             d:DataContext="{d:DesignInstance Type=vm:BuildManualViewModel}"
+             Validation.ErrorTemplate="{x:Null}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="ProxyManual" Data="{Binding}" />
+
+        <Style x:Key="Scorer.Styles.CalendarItem" TargetType="{x:Type my:CalendarItem}" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByMonth}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type my:CalendarItem}">
+                        <Border Margin="{TemplateBinding Margin}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                ClipToBounds="{TemplateBinding ClipToBounds}">
+                            <Grid x:Name="base">
+                                <Border Background="{TemplateBinding Background}" />
+
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <ContentPresenter x:Name="DayText"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding Content}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                    <ToolBar x:Name="toolbar"
+                                             Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                             Grid.Column="1"
+                                             Margin="-3"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Top"
+                                             Visibility="Hidden">
+                                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                Margin="0"
+                                                Command="{Binding Data.RemoveFromDateCommand, Source={StaticResource ProxyManual}}"
+                                                CommandParameter="{Binding Date, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Content="{my:ToolIcon Kind=Minus}"
+                                                ToolTip="{my:Resource Remove}"
+                                                Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                Margin="0"
+                                                Command="{Binding Owner.AddCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                CommandParameter="{Binding Date, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Content="{my:ToolIcon Kind=Plus}"
+                                                ToolTip="{my:Resource Add}" />
+                                    </ToolBar>
+                                    <Label x:Name="label"
+                                           Style="{StaticResource MyNet.Styles.Label.Elevation.Primary}"
+                                           Grid.Column="1"
+                                           Width="25"
+                                           Height="25"
+                                           Margin="{StaticResource MyNet.Margins.Default}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Bottom"
+                                           my:ThemeAssist.UniformCornerRadius="20"
+                                           Content="{Binding Appointments.Count, RelativeSource={RelativeSource TemplatedParent}}"
+                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                           Visibility="{Binding Appointments.Count, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsNow" Value="True">
+                                <Setter TargetName="DayText" Property="TextElement.FontWeight" Value="Bold" />
+                                <Setter TargetName="DayText" Property="TextElement.Foreground" Value="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource TemplatedParent}}" />
+                            </Trigger>
+                            <Trigger Property="IsInactive" Value="True">
+                                <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="toolbar" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
+
+            <Style.Triggers>
+                <Trigger Property="IsNow" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel VerticalAlignment="Top">
+
+            <!-- Header -->
+            <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                                 HorizontalAlignment="Right"
+                                 DockPanel.Dock="Top"
+                                 Orientation="Horizontal"
+                                 Spacing="{StaticResource MyNet.Margin.Small}">
+                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" FontWeight="DemiBold" Text="{my:Translation DateSelection.DisplayDate, Casing=AllCaps, Format='MMMM yyyy'}" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                            Command="{Binding DateSelection.MoveToTodayCommand}"
+                            Content="{my:Icon Kind=CalendarToday,
+                                              Size=25}"
+                            ToolTip="{my:Resource Today}" />
+                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToNextDateCommand}" Content="{my:LargeIcon Kind=ChevronRight}" />
+                </StackPanel>
+            </my:SimpleStackPanel>
+
+            <!-- Calendar -->
+            <my:Card Width="400"
+                     Height="400"
+                     Padding="0"
+                     Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+                <my:CalendarDaysByMonth my:HeaderAssist.Background="Transparent"
+                                        my:HeaderAssist.Height="25"
+                                        AddCommand="{Binding AddToDateCommand}"
+                                        Appointments="{Binding Dates}"
+                                        Background="{DynamicResource MyNet.Brushes.Application.Background}"
+                                        BorderThickness="0"
+                                        CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
+                                        DatesSelectionMode="None"
+                                        DisplayDate="{Binding DateSelection.DisplayDate}"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                        ShowHeader="False"
+                                        Validation.ErrorTemplate="{x:Null}">
+                    <my:CalendarDaysByMonth.ColumnHeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" Text="{my:Translation Converter={x:Static my:DayOfWeekStringConverter.ToFirstLetterToUpper}}" />
+                        </DataTemplate>
+                    </my:CalendarDaysByMonth.ColumnHeaderTemplate>
+                    <my:CalendarDaysByMonth.ItemContainerStyle>
+                        <Style TargetType="{x:Type my:CalendarAppointment}" BasedOn="{StaticResource MyNet.Styles.CalendarAppointment.DaysByMonth}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </Style>
+                    </my:CalendarDaysByMonth.ItemContainerStyle>
+                </my:CalendarDaysByMonth>
+            </my:Card>
+        </DockPanel>
+
+        <!-- Dates And times -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Choices -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                         Height="32"
+                         HorizontalAlignment="Stretch"
+                         DisplayMemberPath="Display"
+                         ItemsSource="{my:EnumSource EnumType={x:Type vm:TimeSelectionMethod}}"
+                         SelectedValue="{Binding TimeSelectionMethod}"
+                         SelectedValuePath="Value">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+                <my:Badged Grid.Column="2"
+                           Badge="{Binding Dates.Count}"
+                           BadgeBackground="{DynamicResource MyNet.Brushes.Warning}"
+                           BadgePlacementMode="BottomRight"
+                           Visibility="{Binding CountMissingDates, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                       Padding="{StaticResource MyNet.Margins.Default}"
+                                       Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                       PopupContent="{my:Translation CountMissingDates,
+                                                                     Format=XMissingDates,
+                                                                     Plural=True}"
+                                       ToggleContent="{my:MediumIcon Kind=Warning}" />
+                </my:Badged>
+                <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                   Grid.Column="2"
+                                   Padding="{StaticResource MyNet.Margins.Default}"
+                                   Foreground="{DynamicResource MyNet.Brushes.Positive}"
+                                   PopupContent="{my:Resource XMissingDatesZero}"
+                                   ToggleContent="{my:MediumIcon Kind=Check}"
+                                   Visibility="{Binding CountMissingDates, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfAny}}" />
+
+            </Grid>
+
+            <!-- Dates -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ItemsControl VerticalAlignment="Top" ItemsSource="{Binding Dates}" Validation.ErrorTemplate="{x:Null}">
+                    <my:ItemsControlAssist.EmptyTemplate>
+                        <ControlTemplate>
+                            <ContentControl Margin="0 150 0 0" Content="{my:Resource NoData}" ContentTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Medium}" />
+                        </ControlTemplate>
+                    </my:ItemsControlAssist.EmptyTemplate>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Margin="{StaticResource MyNet.Margins.Small}" Padding="{StaticResource MyNet.Margins.Default}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Top" Margin="0 6 0 0"
+                                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                               Text="{my:Translation Index,
+                                                                     Format=MatchdayXAbbr}" />
+                                    <DatePicker Grid.Column="2"
+                                                Width="80"
+                                                VerticalAlignment="Top"
+                                                my:HintAssist.IsFloating="False"
+                                                my:TextFieldAssist.IsReadOnly="True"
+                                                IsEnabled="False"
+                                                SelectedDate="{Binding Date, Mode=OneWay}" />
+                                    <my:TimePicker Grid.Column="4"
+                                                   Width="60"
+                                                   my:HintAssist.Hint="{my:Resource Time}"
+                                                   my:HintAssist.IsFloating="False"
+                                                   SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}"
+                                                   Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatchday}}" />
+
+                                    <ItemsControl Grid.Column="6" ItemsSource="{Binding Times}" Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatch}}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="{StaticResource MyNet.Margins.Default.Horizontal}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="30" />
+                                                        <ColumnDefinition Width="10" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="20" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="10" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Index, Format=MatchXAbbr}" />
+                                                    <my:TimePicker Grid.Column="2"
+                                                                   Width="60"
+                                                                   my:HintAssist.Hint="{my:Resource Time}"
+                                                                   my:HintAssist.IsFloating="False"
+                                                                   SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon}"
+                                                                  Grid.Column="4"
+                                                                  Content="{my:ToolIcon Kind=CalendarCursor}"
+                                                                  Focusable="False"
+                                                                  IsChecked="{Binding UpdateDate}"
+                                                                  ToolTip="{my:Resource UpdateDate}" />
+                                                    <DatePicker Grid.Column="6"
+                                                                Width="90"
+                                                                my:HintAssist.IsFloating="False"
+                                                                SelectedDate="{Binding Date}"
+                                                                Visibility="{Binding UpdateDate, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            Grid.Column="8"
+                                            Command="{Binding Data.RemoveCommand, Source={StaticResource ProxyManual}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=Trash}"
+                                            ToolTip="{my:Resource Remove}" />
+                                </Grid>
+                            </my:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Times -->
+                <ItemsControl Grid.Column="1"
+                              Width="200"
+                              Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                              ItemsSource="{Binding MatchTimes}"
+                              Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatches}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Margin="{StaticResource MyNet.Margins.Small}" Padding="{StaticResource MyNet.Margins.Default}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Index, Format=MatchXAbbr}" />
+                                    <my:TimePicker Grid.Column="2"
+                                                   Width="60"
+                                                   my:HintAssist.Hint="{my:Resource Time}"
+                                                   my:HintAssist.IsFloating="False"
+                                                   SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                </Grid>
+                            </my:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

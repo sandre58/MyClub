@@ -84,7 +84,7 @@
                                     <TextBlock Text="{Binding Item.ShortName}" />
 
                                     <!--  Matches  -->
-                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" PlacementMode="BottomAndAlignCentres" Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres" Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                         <my:DropDownButton.ToggleContent>
                                             <my:Icon Kind="InfoCircle" />
                                         </my:DropDownButton.ToggleContent>

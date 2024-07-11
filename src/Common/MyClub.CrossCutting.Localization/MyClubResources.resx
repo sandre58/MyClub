@@ -1173,9 +1173,6 @@ Veuillez consolider ou modifier l'ordre des éléments.</value>
   <data name="RelegationAbbr" xml:space="preserve">
     <value>REL</value>
   </data>
-  <data name="Rules" xml:space="preserve">
-    <value>Règles</value>
-  </data>
   <data name="Teams" xml:space="preserve">
     <value>Equipes</value>
   </data>
@@ -1911,18 +1908,18 @@ Les colonnes en première position seront évaluées en première. Les colonnes 
   <data name="MatchdayShortNamePattern" xml:space="preserve">
     <value>J{index}</value>
   </data>
-  <data name="ParentPatternInformation" xml:space="preserve">
-    <value>Défini les modèles de nommage à utiliser pour le prochain élément à ajouter.
+  <data name="PatternsDescription" xml:space="preserve">
+    <value>Défini les modèles de nommage à utiliser pour les éléments qui seront générés.
 
 Vous pouvez utiliser les variables de la manière suivante : {&lt;variable&gt;:&lt;option&gt;}
 
-Variables disponibles :
-{index}: est remplacé par le prochain index de l'élément
-      Options disponibles:
+Variables :
+      - {index}: est remplacé par le prochain index de l'élément
+            - Options:
                R: Affiche le nombre sous forme ordinale (1er, 2ème, etc..)
 
-{date}: est remplacé par la date de l'élément.
-      Options disponibles:
+      - {date}: est remplacé par la date de l'élément.
+            - Options:
                &lt;format&gt;: Affiche la date avec le format désiré (ex: dd/MM/YY =&gt; 05/10/24)</value>
   </data>
   <data name="Index" xml:space="preserve">
@@ -1940,14 +1937,11 @@ Variables disponibles :
   <data name="Until" xml:space="preserve">
     <value>Jusqu'au</value>
   </data>
-  <data name="AddRule" xml:space="preserve">
-    <value>Ajouter une règle</value>
-  </data>
   <data name="ExcludeDateDateRule" xml:space="preserve">
     <value>Exclure une date</value>
   </data>
   <data name="AllowDaysOfWeekDateRule" xml:space="preserve">
-    <value>Autoriser des jours de la semaine</value>
+    <value>Spécifier les jours de la semaine autorisés</value>
   </data>
   <data name="ExcludeFrom" xml:space="preserve">
     <value>Exclure le</value>
@@ -2002,5 +1996,154 @@ Variables disponibles :
   </data>
   <data name="Build" xml:space="preserve">
     <value>Construire</value>
+  </data>
+  <data name="ChampionshipAlgorithmRoundRobin" xml:space="preserve">
+    <value>Intégral</value>
+  </data>
+  <data name="ChampionshipAlgorithmSwissSystem" xml:space="preserve">
+    <value>Système suisse</value>
+  </data>
+  <data name="BuildLeague" xml:space="preserve">
+    <value>Construire le championnat</value>
+  </data>
+  <data name="RoundRobinDescription" xml:space="preserve">
+    <value>L'algorithme Round Robin est un système où chaque équipe rencontre toutes les autres équipes. Si le championnat comprend un nombre impair d'équipes, une équipe reste sans match à chaque journée.</value>
+  </data>
+  <data name="SwissSystemDescription" xml:space="preserve">
+    <value>L'algorithme du système suisse est un système où toutes les équipes jouent le même nombre de matchs contre des adversaires aléatoires.
+Ce système est particulièrement utile pour les tournois où le nombre de participants est trop grand pour permettre un round-robin complet mais où un classement équitable est tout de même nécessaire après un nombre limité de matchs. 
+Il n'est utilisable que pour un nombre d'équipes pair.</value>
+  </data>
+  <data name="WhichAlgorithm" xml:space="preserve">
+    <value>Quel algorithme voulez-vous utiliser ?</value>
+  </data>
+  <data name="CannotUseSwissSystem" xml:space="preserve">
+    <value>Le Système Suisse n'est pas utilisable pour un nombre d'équipes impair.</value>
+  </data>
+  <data name="NumberOfMatchesBetweenTeams" xml:space="preserve">
+    <value>Combien de rencontre(s) entre les équipes ?</value>
+  </data>
+  <data name="NumberOfMatchesByTeam" xml:space="preserve">
+    <value>Combien de match(s) par équipe ?</value>
+  </data>
+  <data name="HalfTime" xml:space="preserve">
+    <value>Mi-temps</value>
+  </data>
+  <data name="SchedulingParameters" xml:space="preserve">
+    <value>Paramètres de planification</value>
+  </data>
+  <data name="RotationTime" xml:space="preserve">
+    <value>Temps de rotation</value>
+  </data>
+  <data name="RestTime" xml:space="preserve">
+    <value>Temps de repos</value>
+  </data>
+  <data name="RotationTimeDescription" xml:space="preserve">
+    <value>Définit le temps minimum qui doit s'écouler entre 2 matchs sur un même terrain.</value>
+  </data>
+  <data name="RestTimeDescription" xml:space="preserve">
+    <value>Définit le temps de repos minimum que doit observer une équipe entre 2 matchs.</value>
+  </data>
+  <data name="StartTimeDescription" xml:space="preserve">
+    <value>Définit l'heure de début par défaut des matchs.</value>
+  </data>
+  <data name="AsSoonAsPossible" xml:space="preserve">
+    <value>Dès que possible</value>
+  </data>
+  <data name="XMatchdays" xml:space="preserve">
+    <value>1 journée</value>
+  </data>
+  <data name="XMatchdaysZero" xml:space="preserve">
+    <value>Aucune journée</value>
+  </data>
+  <data name="XMatchdaysPlural" xml:space="preserve">
+    <value># journées</value>
+  </data>
+  <data name="HowDefineDatesAndTimes" xml:space="preserve">
+    <value>Comment voulez-vous définir les dates et les heures des journées et des matchs ?</value>
+  </data>
+  <data name="BuildMethodManualDescription" xml:space="preserve">
+    <value>Sélectionnez individuellement la date de chaque journée.</value>
+  </data>
+  <data name="BuildMethodAutomaticDescription" xml:space="preserve">
+    <value>Ajoutez des règles permettant de calculer les dates et les heures des journées.</value>
+  </data>
+  <data name="BuildMethodAsSoonAsPossibleDescription" xml:space="preserve">
+    <value>Définit les dates et les heures des matchs et des journées en fonction du format des matchs et des paramètres de planification. Les matchs sont calculés dès que les 2 équipes et le terrains sont disponibles sont disponibles.</value>
+  </data>
+  <data name="XMissingDates" xml:space="preserve">
+    <value>1 date manquante</value>
+  </data>
+  <data name="XMissingDatesPlural" xml:space="preserve">
+    <value># dates manquantes</value>
+  </data>
+  <data name="XMissingDatesZero" xml:space="preserve">
+    <value>Aucune date manquante</value>
+  </data>
+  <data name="MatchX" xml:space="preserve">
+    <value>Match #</value>
+  </data>
+  <data name="MatchXAbbr" xml:space="preserve">
+    <value>M#</value>
+  </data>
+  <data name="NumberOfHalves" xml:space="preserve">
+    <value>Nombre de périodes</value>
+  </data>
+  <data name="DurationOfHalf" xml:space="preserve">
+    <value>Durée d'une période</value>
+  </data>
+  <data name="TimeSelectionMethodUseDefaultTime" xml:space="preserve">
+    <value>Utiliser l'heure par défaut</value>
+  </data>
+  <data name="TimeSelectionMethodUseUniqueTimeByMatch" xml:space="preserve">
+    <value>Spécifier l'heure de chaque match</value>
+  </data>
+  <data name="TimeSelectionMethodUseUniqueTimeByMatches" xml:space="preserve">
+    <value>Spécifier l'heure pour les matchs</value>
+  </data>
+  <data name="TimeSelectionMethodUseUniqueTimeByMatchday" xml:space="preserve">
+    <value>Spécifier une heure par journée</value>
+  </data>
+  <data name="MissingDatesError" xml:space="preserve">
+    <value>Le nombre de dates spécifiées ne correspond pas au nombre de journées prévues.</value>
+  </data>
+  <data name="MatchdayXAbbr" xml:space="preserve">
+    <value>J#</value>
+  </data>
+  <data name="UpdateDate" xml:space="preserve">
+    <value>Modifier la date</value>
+  </data>
+  <data name="Every" xml:space="preserve">
+    <value>Tous les</value>
+  </data>
+  <data name="MatchNumber" xml:space="preserve">
+    <value>Numéro de match</value>
+  </data>
+  <data name="TimeOfMatchNumberTimeRule" xml:space="preserve">
+    <value>Pour un numéro de match</value>
+  </data>
+  <data name="ForMatch" xml:space="preserve">
+    <value>Pour le match</value>
+  </data>
+  <data name="AddException" xml:space="preserve">
+    <value>Ajouter une exception</value>
+  </data>
+  <data name="ExceptForMatch" xml:space="preserve">
+    <value>Sauf pour le match</value>
+  </data>
+  <data name="DefinedPeriodIsLowerThanMatchPeriodError" xml:space="preserve">
+    <value>La période définie est plus petite que le temps total d'un match.</value>
+  </data>
+  <data name="MaxComputingAttemptExceededError" xml:space="preserve">
+    <value>Le nombre de tentatives maximum pour générer les matchs a été dépassé. Les paramètres définis ne permettent de déterminer les dates et heures des matchs.</value>
+  </data>
+  <data name="AllowTimePeriodsDateRule" xml:space="preserve">
+    <value>Spécifier les horaires autorisés</value>
+  </data>
+  <data name="PleaseSelectDates" xml:space="preserve">
+    <value>Veuillez sélectionner des dates</value>
+  </data>
+  <data name="Patterns" xml:space="preserve">
+    <value>Modèles de nommage</value>
   </data>
 </root>

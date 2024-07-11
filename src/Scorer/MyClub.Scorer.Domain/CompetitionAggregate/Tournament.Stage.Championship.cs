@@ -8,6 +8,7 @@ using System.Linq;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.Collections;
@@ -20,9 +21,19 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         private string _name = string.Empty;
         private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
-        public ChampionshipStage(string name, IStage? parent = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
+        public ChampionshipStage(IStage parent, string name, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
         {
             Parent = parent;
+            SchedulingParameters = parent.ProvideSchedulingParameters();
+            Name = name;
+            RankingRules = rankingRules ?? RankingRules.Default;
+            MatchFormat = matchFormat ?? MatchFormat.Default;
+            Matchdays = new(_matchdays);
+        }
+
+        public ChampionshipStage(string name, SchedulingParameters schedulingParameters, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
+        {
+            SchedulingParameters = schedulingParameters;
             Name = name;
             RankingRules = rankingRules ?? RankingRules.Default;
             MatchFormat = matchFormat ?? MatchFormat.Default;
@@ -41,6 +52,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public MatchFormat MatchFormat { get; set; }
 
+        public SchedulingParameters SchedulingParameters { get; set; }
+
         public ReadOnlyObservableCollection<Matchday> Matchdays { get; }
 
         public override RankingRules GetRankingRules() => RankingRules;
@@ -48,6 +61,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+
+        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
         public override bool RemoveTeam(Team team)
         {

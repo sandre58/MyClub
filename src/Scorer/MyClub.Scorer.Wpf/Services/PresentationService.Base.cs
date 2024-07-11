@@ -60,8 +60,10 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (!cancel)
             {
-                await AppBusyManager.WaitAsync(() => _ = Service.Remove(idsList));
+                await AppBusyManager.WaitAsync(() => Remove(idsList));
             }
         }
+
+        protected virtual void Remove(ICollection<Guid> idsList) => Service.Remove(idsList);
     }
 }

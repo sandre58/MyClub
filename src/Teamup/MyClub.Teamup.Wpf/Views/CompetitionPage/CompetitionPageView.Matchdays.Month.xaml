@@ -102,7 +102,7 @@
                                             </ContentControl.ContentTemplateSelector>
                                         </ContentControl>
 
-                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" PlacementMode="BottomAndAlignCentres" Visibility="{Binding Item.AllMatches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres" Visibility="{Binding Item.AllMatches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                             <my:DropDownButton.ToggleContent>
                                                 <my:Icon Kind="InfoCircle" />
                                             </my:DropDownButton.ToggleContent>

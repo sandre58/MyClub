@@ -10,7 +10,7 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 
-namespace MyClub.Scorer.Domain.ProjectAggregate
+namespace MyClub.Scorer.Domain.Scheduling
 {
     public class SchedulingDomainService(IMatchRepository matchRepository, ISchedulingParametersRepository schedulingParametersRepository) : ISchedulingDomainService
     {

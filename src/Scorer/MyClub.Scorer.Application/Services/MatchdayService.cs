@@ -10,6 +10,7 @@ using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Application.Services
@@ -39,9 +40,6 @@ namespace MyClub.Scorer.Application.Services
             entity.Name = dto.Name.OrEmpty();
             entity.ShortName = dto.ShortName.OrEmpty();
 
-            if (dto.Date != default)
-                entity.OriginDate = dto.Date;
-
             if (dto.MatchesToDelete is not null)
                 _matchService.Remove(dto.MatchesToDelete);
 
@@ -51,10 +49,10 @@ namespace MyClub.Scorer.Application.Services
                 _matchService.Save(dto.MatchesToAdd);
             }
 
-            if (dto.IsPostponed)
+            if (dto.IsPostponed || dto.PostponedDate.HasValue)
                 entity.Postpone(dto.PostponedDate, true);
-            else
-                entity.Schedule(dto.PostponedDate, true);
+            else if (dto.Date != default)
+                entity.ScheduleWithMatches(dto.Date);
         }
 
         public void Postpone(Guid id, DateTime? postponedDate = null) => Update(id, x => x.Postpone(postponedDate));

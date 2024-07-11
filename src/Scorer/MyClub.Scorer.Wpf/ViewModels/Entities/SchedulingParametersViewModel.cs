@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Observable;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities

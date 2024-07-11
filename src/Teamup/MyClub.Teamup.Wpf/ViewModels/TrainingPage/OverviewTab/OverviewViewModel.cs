@@ -69,7 +69,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.OverviewTab
                 squadsProvider.ConnectPlayers().AutoRefresh(x => x.IsInjured).Subscribe(_ => MedicalCenterViewModel.Refresh(squadsProvider.Players.Select(x => x.Injury).NotNull()))
             ]);
 
-            trainingStatisticsRefreshDeferrer.Subscribe(RefreshStatistics);
+            trainingStatisticsRefreshDeferrer.Subscribe(this, RefreshStatistics);
 
             Messenger.Default.Register<MainTeamChangedMessage>(this, _ => RefreshStatistics());
         }

@@ -4,11 +4,12 @@
 using System;
 using System.Collections.ObjectModel;
 using MyClub.Domain;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface IMatchdaysProvider : IMatchFormatProvider, IEntity
+    public interface IMatchdaysProvider : IEntity, IMatchFormatProvider, ISchedulingParametersProvider
     {
         ReadOnlyObservableCollection<ITeam> Teams { get; }
 

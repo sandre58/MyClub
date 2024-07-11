@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,6 +18,7 @@ using MyClub.Scorer.Domain.Factories.Extensions;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Humanizer;
@@ -51,23 +51,24 @@ namespace MyClub.Scorer.Mocks.Factory.Database
             project.Competition.Labels.Add(new AcceptableValueRange<int>(project.Teams.Count - RandomGenerator.Int(2, 4), project.Teams.Count), new RankLabel(RandomGenerator.Color(), MyClubResources.Relegation, MyClubResources.RelegationAbbr));
 
             // Matches
-            var builder = new MatchdaysBuilder() { StartDate = project.SchedulingParameters.StartDate, Time = project.SchedulingParameters.StartTime };
-            var matchdays = builder.Build(project.Competition);
+            var scheduler = new MatchdaysByDayOfWeekBuilder()
+            {
+                StartDate = project.SchedulingParameters.StartDate,
+                Time = project.SchedulingParameters.StartTime,
+                UseTeamVenues = project.SchedulingParameters.UseTeamVenues,
+                DayOfWeeks = [RandomGenerator.Enum<DayOfWeek>()]
+            };
+            var matchdays = scheduler.Build(project.Competition, RoundRobinAlgorithm.Default);
             matchdays.ForEach(x =>
             {
                 var stadiums = new Stack<Stadium>(RandomGenerator.ListItems(project.Stadiums, x.Matches.Count));
-                var matchday = project.Competition.AddMatchday(x.Date, x.Name, x.ShortName);
-                x.Matches.ForEach(y =>
+                x.Matches.ForEach(match =>
                 {
-                    var match = matchday.AddMatch(y.HomeTeam, y.AwayTeam);
-                    match.IsNeutralStadium = !project.SchedulingParameters.UseTeamVenues;
-
-                    if (project.SchedulingParameters.UseTeamVenues)
-                        match.Stadium = (match.HomeTeam as Team)?.Stadium;
-                    else
+                    if (match.Stadium is null)
                     {
                         _ = stadiums.TryPop(out var stadium);
                         match.Stadium = stadium;
+                        match.IsNeutralStadium = false;
                     }
 
                     if (match.Date.IsInPast())
@@ -75,6 +76,8 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                     match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
                 });
                 x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+
+                project.Competition.AddMatchday(x);
             });
 
             return project;

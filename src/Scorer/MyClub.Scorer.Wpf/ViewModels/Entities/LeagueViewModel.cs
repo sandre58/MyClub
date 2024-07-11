@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -16,7 +15,9 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.Services;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
@@ -26,7 +27,6 @@ using MyNet.UI.Services;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Threading;
-using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
@@ -34,26 +34,35 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
     {
         private readonly LeagueService _leagueService;
         private readonly TeamsProvider _teamsProvider;
+        private readonly ResultsChangedDeferrer _resultsChangedDeferrer;
+        private readonly TeamsChangedDeferrer _teamsChangedDeferrer;
         private readonly UiObservableCollection<MatchdayViewModel> _matchdays = [];
         private readonly UiObservableCollection<MatchViewModel> _matches = [];
         private readonly Subject<bool> _rankingChangedSubject = new();
-        private readonly RefreshDeferrer _refreshRankingsDeferrer = new();
         private readonly SingleTaskRunner _refreshRankingsRunner;
+        private readonly RefreshDeferrer _refreshRankingsDeferrer = new();
 
         public LeagueViewModel(League item,
-                               SchedulingParametersViewModel schedulingParameters,
+                               IObservable<SchedulingParameters?> observableSchedulingParameters,
                                MatchdayPresentationService matchdayPresentationService,
                                MatchPresentationService matchPresentationService,
                                StadiumsProvider stadiumsProvider,
                                TeamsProvider teamsProvider,
-                               LeagueService leagueService) : base(item)
+                               LeagueService leagueService,
+                               ResultsChangedDeferrer resultsChangedDeferrer,
+                               TeamsChangedDeferrer teamsChangedDeferrer) : base(item)
         {
             _leagueService = leagueService;
             _teamsProvider = teamsProvider;
-            _refreshRankingsRunner = new SingleTaskRunner(async x => await RefreshRankingsAsync(x).ConfigureAwait(false));
-            _refreshRankingsDeferrer.Subscribe(() => _refreshRankingsRunner.Run(), 80);
+            _resultsChangedDeferrer = resultsChangedDeferrer;
+            _teamsChangedDeferrer = teamsChangedDeferrer;
             Matchdays = new(_matchdays);
-            SchedulingParameters = schedulingParameters;
+            SchedulingParameters = new SchedulingParametersViewModel(observableSchedulingParameters);
+            _refreshRankingsRunner = new SingleTaskRunner(async x => await RefreshRankingsAsync(x).ConfigureAwait(false));
+
+            _refreshRankingsDeferrer.Subscribe(this, _refreshRankingsRunner.Run, 80);
+            resultsChangedDeferrer.Subscribe(this, _refreshRankingsDeferrer.AskRefresh);
+            teamsChangedDeferrer.Subscribe(this, _refreshRankingsDeferrer.AskRefresh);
 
             Ranking = new RankingViewModel(teamsProvider.Items, _matches);
             LiveRanking = new RankingViewModel(teamsProvider.Items, _matches);
@@ -62,8 +71,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
             Disposables.AddRange(
             [
-                item.WhenPropertyChanged(x => x.RankingRules).Subscribe(_ => _refreshRankingsDeferrer.AskRefresh()),
-                item.Teams.ToObservableChangeSet().SkipInitial().Subscribe(_ => _refreshRankingsDeferrer.AskRefresh()),
+                item.WhenPropertyChanged(x => x.RankingRules, false).Subscribe(_ => _refreshRankingsDeferrer.AskRefresh()),
                 item.Matchdays.ToObservableChangeSet(x => x.Id)
                               .Transform(x => new MatchdayViewModel(x, this, matchdayPresentationService, matchPresentationService, stadiumsProvider, teamsProvider))
                               .Bind(_matchdays)
@@ -72,12 +80,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 _matchdays.ToObservableChangeSet(x => x.Id)
                           .MergeManyEx(x => x.Matches.ToObservableChangeSet(x => x.Id), x => x.Id)
                           .Bind(_matches)
-                          .Subscribe(),
-                _matches.ToObservableChangeSet(x => x.Id)
-                        .OnItemAdded(x => x.ScoreChanged += OnScoreChanged)
-                        .OnItemRemoved(x => x.ScoreChanged -= OnScoreChanged)
-                        .SkipInitial()
-                        .Subscribe(x => x.Any(y => y.Current.HasResult).IfTrue(_refreshRankingsDeferrer.AskRefresh))
+                          .Subscribe()
             ]);
         }
 
@@ -105,9 +108,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public IDisposable WhenRankingChanged(Action action)
             => !_rankingChangedSubject.IsDisposed ? _rankingChangedSubject.Subscribe(_ => action()) : Disposable.Empty;
-
-        [SuppressPropertyChangedWarnings]
-        private void OnScoreChanged(object? sender, EventArgs _) => _refreshRankingsDeferrer.AskRefresh();
 
         private async Task RefreshRankingsAsync(CancellationToken cancellationToken)
         {
@@ -144,8 +144,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             HomeRanking.Dispose();
             AwayRanking.Dispose();
             SchedulingParameters.Dispose();
-            _refreshRankingsDeferrer.Dispose();
             _refreshRankingsRunner.Dispose();
+            _resultsChangedDeferrer.Unsubscribe(this);
+            _teamsChangedDeferrer.Unsubscribe(this);
         }
     }
 }

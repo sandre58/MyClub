@@ -16,7 +16,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
     internal class SchedulingStadiumOccupancyConflict : SchedulingConflict
     {
-        public SchedulingStadiumOccupancyConflict(StadiumViewModel stadium) : base(() => MyClubResources.ConflictsRotationTimeOfStadiumXIsNotRespectedWarning.FormatWith(stadium.Name)) { }
+        public SchedulingStadiumOccupancyConflict(StadiumViewModel stadium) : base(() => MyClubResources.ConflictsStadiumXIsOccupancyWarning.FormatWith(stadium.Name)) { }
     }
 
     internal class SchedulingTeamBusyConflict : SchedulingConflict
@@ -31,6 +31,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
     internal class SchedulingRotationTimeNotRespectedConflict : SchedulingConflict
     {
-        public SchedulingRotationTimeNotRespectedConflict(StadiumViewModel stadium) : base(() => MyClubResources.ConflictsRestTimeOfTeamXIsNotRespectedWarning.FormatWith(stadium.Name)) { }
+        public SchedulingRotationTimeNotRespectedConflict(StadiumViewModel stadium) : base(() => MyClubResources.ConflictsRotationTimeOfStadiumXIsNotRespectedWarning.FormatWith(stadium.Name)) { }
     }
 }

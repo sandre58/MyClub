@@ -162,13 +162,14 @@ namespace MyClub.Scorer.Wpf.Services.Providers
         {
             base.Cleanup();
 
+            _projectClosingSubject.Dispose();
             _projectLoadedSubject.Dispose();
             ClearProject();
             Messenger.Default.Unregister(this);
         }
 
-        internal void WhenProjectLoaded(Action<IProject> action) => _projectLoadedSubject.Subscribe(action);
+        internal void WhenProjectLoaded(Action<IProject> action) => Disposables.Add(_projectLoadedSubject.Subscribe(action));
 
-        internal void WhenProjectClosing(Action action) => _projectClosingSubject.Subscribe(_ => action());
+        internal void WhenProjectClosing(Action action) => Disposables.Add(_projectClosingSubject.Subscribe(_ => action()));
     }
 }

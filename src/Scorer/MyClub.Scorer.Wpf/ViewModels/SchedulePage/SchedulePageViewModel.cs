@@ -16,8 +16,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
     internal class SchedulePageViewModel : PageViewModel
     {
-        public SchedulePageViewModel(ProjectInfoProvider projectInfoProvider,
-                                     CompetitionInfoProvider competitionInfoProvider,
+        public SchedulePageViewModel(CompetitionInfoProvider competitionInfoProvider,
                                      MatchdaysProvider matchdaysProvider,
                                      MatchesProvider matchesProvider,
                                      TeamsProvider teamsProvider,
@@ -25,18 +24,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                                      MatchPresentationService matchPresentationService,
                                      AvailibilityCheckingService availibilityCheckingService)
         {
-            projectInfoProvider.WhenProjectClosing(() =>
+            competitionInfoProvider.WhenCompetitionChanged(x => MatchesPlanningViewModel = x switch
+            {
+                LeagueViewModel league => new(league.SchedulingParameters,
+                                              matchesProvider,
+                                              new ObservableSourceProvider<IMatchParent>(matchdaysProvider.Connect().Transform(x => (IMatchParent)x)),
+                                              teamsProvider,
+                                              stadiumsProvider,
+                                              matchPresentationService,
+                                              availibilityCheckingService),
+                _ => throw new NotImplementedException()
+            },
+            _ =>
             {
                 MatchesPlanningViewModel?.Dispose();
                 MatchesPlanningViewModel = null;
             });
-            projectInfoProvider.WhenProjectLoaded(_ => MatchesPlanningViewModel = new(competitionInfoProvider.GetCompetition<LeagueViewModel>().SchedulingParameters,
-                                               matchesProvider,
-                                               new ObservableSourceProvider<IMatchParent>(matchdaysProvider.Connect().Transform(x => (IMatchParent)x)),
-                                               teamsProvider,
-                                               stadiumsProvider,
-                                               matchPresentationService,
-                                               availibilityCheckingService));
+
+            matchesProvider.WhenLoaded(() => MatchesPlanningViewModel?.Filters.Reset());
         }
 
         public MatchesPlanningViewModel? MatchesPlanningViewModel { get; private set; }

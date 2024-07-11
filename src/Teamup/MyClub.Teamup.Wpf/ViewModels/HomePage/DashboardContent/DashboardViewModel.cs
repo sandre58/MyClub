@@ -85,8 +85,8 @@ namespace MyClub.Teamup.Wpf.ViewModels.HomePage.DashboardContent
                 teamsProvider.ConnectMyTeams().AutoRefresh(x => x.Order).Transform(x => new TeamWrapper(x, playersProvider, trainingSessionsProvider)).Sort(SortExpressionComparer<TeamWrapper>.Ascending(x => x.Item.Order)).ObserveOn(MyNet.UI.Threading.Scheduler.UI).Bind(out _teams).DisposeMany().Subscribe()
             ]);
 
-            injuriesStatisticsRefreshDeferrer.Subscribe(RefreshPlayers);
-            trainingStatisticsRefreshDeferrer.Subscribe(RefreshTrainings);
+            injuriesStatisticsRefreshDeferrer.Subscribe(this, RefreshPlayers);
+            trainingStatisticsRefreshDeferrer.Subscribe(this, RefreshTrainings);
 
             Messenger.Default.Register<MainTeamChangedMessage>(this, _ =>
             {

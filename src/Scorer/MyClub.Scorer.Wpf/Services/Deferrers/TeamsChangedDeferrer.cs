@@ -1,9 +1,11 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-namespace MyClub.Scorer.Wpf.Messages
+using MyNet.Observable.Deferrers;
+
+namespace MyClub.Scorer.Wpf.Services.Deferrers
 {
-    internal class CheckConflictsRequestMessage
+    public class TeamsChangedDeferrer : RefreshDeferrer
     {
     }
 }

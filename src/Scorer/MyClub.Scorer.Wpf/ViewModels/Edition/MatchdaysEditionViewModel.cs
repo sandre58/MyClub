@@ -3,20 +3,18 @@
 
 using System;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
-using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Domain.Factories;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyNet.Humanizer;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
@@ -29,22 +27,24 @@ using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Helpers;
-using MyNet.Utilities.Messaging;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal partial class MatchdaysEditionViewModel : EditionViewModel
+    internal class MatchdaysEditionViewModel : EditionViewModel
     {
         private readonly UiObservableCollection<MatchdayViewModel> _availableMatchdays = [];
         private readonly StadiumsProvider _stadiumsProvider;
         private readonly MatchdayService _matchdayService;
+        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
 
-        public MatchdaysEditionViewModel(ProjectInfoProvider projectInfoProvider,
+        public MatchdaysEditionViewModel(CompetitionInfoProvider competitionInfoProvider,
                                          StadiumsProvider stadiumsProvider,
-                                         MatchdayService matchdayService)
+                                         MatchdayService matchdayService,
+                                         ScheduleChangedDeferrer scheduleChangedDeferrer)
         {
             _stadiumsProvider = stadiumsProvider;
             _matchdayService = matchdayService;
+            _scheduleChangedDeferrer = scheduleChangedDeferrer;
             AvailableMatchdays = new(_availableMatchdays);
 
             AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x), x => new Period(StartDisplayDate.GetValueOrDefault(), EndDisplayDate.GetValueOrDefault()).Contains(x));
@@ -58,7 +58,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             InvertTeamsCommand = CommandsManager.Create(() => Matchdays.ForEach(x => x.Item.InvertTeams()), () => Matchdays.Any(x => x.Item.Matches.Count > 0));
             AddMatchesCommand = CommandsManager.Create(() => Matchdays.ForEach(x => EnumerableHelper.Iteration(MatchesToAdd!.Value, _ => x.Item.AddMatch())), () => Matchdays.Count > 0 && MatchesToAdd > 0);
 
-            projectInfoProvider.WhenProjectLoaded(_ => Reset());
+            competitionInfoProvider.WhenCompetitionChanged(_ => Reset());
         }
 
         [CanSetIsModified(false)]
@@ -219,8 +219,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             {
                 Date = date,
                 Time = time ?? DefaultTime,
-                Name = ComputePattern(NamePattern.OrEmpty(), date),
-                ShortName = ComputePattern(ShortNamePattern.OrEmpty(), date),
+                Name = StageNamesFactory.ComputePattern(NamePattern.OrEmpty(), NextIndex, date),
+                ShortName = StageNamesFactory.ComputePattern(ShortNamePattern.OrEmpty(), NextIndex, date),
             };
 
             if (DuplicationIsEnabled && DuplicationStart is not null)
@@ -240,67 +240,31 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             }
         }
 
-        private string ComputePattern(string pattern, DateTime date)
-        {
-            if (string.IsNullOrEmpty(pattern)) return string.Empty;
-
-            var result = PatternRegex().Replace(pattern, match =>
-            {
-                var value = match.Value.Replace("{", string.Empty).Replace("}", string.Empty);
-                return VariableRegex().Replace(value, match1 =>
-                {
-                    var variable = match1.Groups.ContainsKey(VariableRegexKeyword) ? match1.Groups[VariableRegexKeyword].Value : string.Empty;
-                    var options = match1.Groups.ContainsKey(OptionsRegexKeyword) ? match1.Groups[OptionsRegexKeyword].Value : string.Empty;
-
-                    return variable switch
-                    {
-                        IndexVariableName => options == OrdinalizeOptionName ? NextIndex.Ordinalize().OrEmpty() : NextIndex.ToString(options).OrEmpty(),
-                        DateVariableName => date.ToString(options, CultureInfo.CurrentCulture),
-                        _ => string.Empty,
-                    };
-                });
-            });
-
-            return result;
-        }
-
         protected override void SaveCore()
         {
-            _matchdayService.Save(Matchdays.Select(x => new MatchdayDto
-            {
-                Date = x.Item.Date.GetValueOrDefault().ToUtcDateTime(x.Item.Time.GetValueOrDefault()),
-                Name = x.Item.Name,
-                ShortName = x.Item.ShortName,
-                MatchesToAdd = x.Item.Matches.Where(x => !x.Id.HasValue && x.IsValid()).Select(x => new MatchDto
+            using (_scheduleChangedDeferrer.Defer())
+                _matchdayService.Save(Matchdays.Select(x => new MatchdayDto
                 {
-                    AwayTeamId = x.AwayTeam!.Id,
-                    HomeTeamId = x.HomeTeam!.Id,
-                    Date = x.Date!.Value.ToUtcDateTime(x.Time!.Value),
-                    Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
+                    Date = x.Item.Date.GetValueOrDefault().ToUtcDateTime(x.Item.Time.GetValueOrDefault()),
+                    Name = x.Item.Name,
+                    ShortName = x.Item.ShortName,
+                    MatchesToAdd = x.Item.Matches.Where(x => !x.Id.HasValue && x.IsValid()).Select(x => new MatchDto
                     {
-                        Id = x.StadiumSelection.SelectedItem.Id,
-                        Name = x.StadiumSelection.SelectedItem.Name,
-                        Ground = x.StadiumSelection.SelectedItem.Ground,
-                        Address = x.StadiumSelection.SelectedItem.Address,
-                    } : null,
-                    State = MatchState.None
-                }).ToList()
-            }).ToList());
-            Messenger.Default.Send(new CheckConflictsRequestMessage());
+                        AwayTeamId = x.AwayTeam!.Id,
+                        HomeTeamId = x.HomeTeam!.Id,
+                        Date = x.Date!.Value.ToUtcDateTime(x.Time!.Value),
+                        Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
+                        {
+                            Id = x.StadiumSelection.SelectedItem.Id,
+                            Name = x.StadiumSelection.SelectedItem.Name,
+                            Ground = x.StadiumSelection.SelectedItem.Ground,
+                            Address = x.StadiumSelection.SelectedItem.Address,
+                        } : null,
+                        State = MatchState.None
+                    }).ToList()
+                }).ToList());
             Matchdays.Clear();
         }
-
-        private const string VariableRegexKeyword = "variable";
-        private const string OptionsRegexKeyword = "options";
-        private const string IndexVariableName = "index";
-        private const string DateVariableName = "date";
-        private const string OrdinalizeOptionName = "R";
-
-        [GeneratedRegex(@"\{[^\{\}]*\}")]
-        private static partial Regex PatternRegex();
-
-        [GeneratedRegex($"(?<{VariableRegexKeyword}>\\w*)(:(?<{OptionsRegexKeyword}>.*))?")]
-        private static partial Regex VariableRegex();
     }
 
     internal class EditableMatchdayWrapper : EditableWrapper<EditableMatchdayViewModel>, IAppointment

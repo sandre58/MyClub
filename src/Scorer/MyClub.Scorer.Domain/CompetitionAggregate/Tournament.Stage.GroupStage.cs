@@ -9,6 +9,7 @@ using MyClub.Domain;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities.Collections;
 using MyNet.Utilities.Extensions;
@@ -22,12 +23,13 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         private readonly ExtendedObservableCollection<Group> _groups = [];
         private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
-        public GroupStage(string name, IStage? parent = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
+        public GroupStage(string name, IStage? parent = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {
             Parent = parent;
             Name = name;
             RankingRules = rankingRules ?? RankingRules.Default;
             MatchFormat = matchFormat ?? MatchFormat.Default;
+            SchedulingParameters = schedulingParameters ?? SchedulingParameters.Default;
             Teams = new(_teams);
             Groups = new(_groups);
             Matchdays = new(_matchdays);
@@ -43,6 +45,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public MatchFormat MatchFormat { get; set; }
 
+        public SchedulingParameters SchedulingParameters { get; set; }
+
         public ReadOnlyObservableCollection<ITeam> Teams { get; }
 
         public ReadOnlyObservableCollection<Group> Groups { get; }
@@ -54,6 +58,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public IEnumerable<Match> GetAllMatches() => Groups.SelectMany(x => x.GetAllMatches());
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+
+        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
         #region Matchdays
 

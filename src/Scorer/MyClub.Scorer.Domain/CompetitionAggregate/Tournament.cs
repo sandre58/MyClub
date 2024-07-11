@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
@@ -14,13 +15,23 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     {
         private readonly ExtendedObservableCollection<IStage> _stages = [];
 
-        public Tournament() => Stages = new(_stages);
+        public Tournament() : this(SchedulingParameters.Default) { }
+
+        public Tournament(SchedulingParameters schedulingParameters)
+        {
+            Stages = new(_stages);
+            SchedulingParameters = schedulingParameters;
+        }
 
         public ReadOnlyObservableCollection<IStage> Stages { get; }
 
         public MatchFormat MatchFormat { get; set; } = MatchFormat.NoDraw;
 
+        public SchedulingParameters SchedulingParameters { get; set; }
+
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+
+        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
         public IEnumerable<IMatchdaysProvider> GetAllMatchdaysProviders() => Stages.OfType<IMatchdaysProvider>();
 

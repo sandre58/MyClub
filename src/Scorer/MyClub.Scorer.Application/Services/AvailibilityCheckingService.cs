@@ -8,7 +8,7 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;

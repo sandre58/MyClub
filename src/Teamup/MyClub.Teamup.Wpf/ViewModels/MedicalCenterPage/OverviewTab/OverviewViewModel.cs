@@ -40,7 +40,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.OverviewTab
             RecentInjuriesViewModel = new OverviewInjuriesViewModel();
             FettleViewModel = new OverviewFettleViewModel(CountPlayerUnaivalables);
 
-            injuriesStatisticsRefreshDeferrer.Subscribe(RefreshStatistics);
+            injuriesStatisticsRefreshDeferrer.Subscribe(this, RefreshStatistics);
             Messenger.Default.Register<MainTeamChangedMessage>(this, _ => RefreshStatistics());
         }
 

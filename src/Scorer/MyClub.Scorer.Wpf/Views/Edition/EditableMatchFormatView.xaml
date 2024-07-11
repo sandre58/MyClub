@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
              d:DataContext="{d:DesignInstance Type=vm:EditableMatchFormatViewModel}"
              d:DesignHeight="450"
@@ -12,50 +13,33 @@
              mc:Ignorable="d">
 
     <my:SimpleStackPanel>
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=TimelineClock}">
-            <my:SimpleStackPanel Orientation="Horizontal">
-                <my:NumericUpDown Width="110"
-                                  my:HintAssist.IsFloating="False"
-                                  my:TextFieldAssist.SuffixText="{my:Resource Periods,
-                                                                              Casing=LowerCase}"
-                                  Minimum="1"
-                                  Value="{my:NullableBinding NumberOfHalves}" />
-                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Of, Casing=LowerCase}" />
-                <my:NumericUpDown Width="80"
-                                  my:HintAssist.IsFloating="False"
-                                  my:TextFieldAssist.SuffixText="{my:Resource TimeUnitMinuteAbbr,
-                                                                              Casing=LowerCase}"
-                                  Minimum="1"
-                                  Value="{my:NullableBinding DurationOfHalf}" />
-            </my:SimpleStackPanel>
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                  my:HeaderAssist.Padding="0 5 0 0"
+                  my:HeaderAssist.Size="100"
+                  my:HeaderAssist.VerticalAlignment="Top"
+                  Header="{my:MediumIcon Kind=TimelineClock}">
+            <v:EditableHalfFormatView DataContext="{Binding RegulationTime}" />
         </GroupBox>
 
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:Resource ExtraTime}">
-            <my:SimpleStackPanel Orientation="Horizontal">
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                  my:HeaderAssist.Padding="0 1 0 0"
+                  my:HeaderAssist.Size="100"
+                  my:HeaderAssist.VerticalAlignment="Top"
+                  Header="{my:Resource ExtraTime}">
+            <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Default}">
                 <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ExtraTimeIsEnabled}" />
-                <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding ExtraTimeIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
-                    <my:NumericUpDown Width="110"
-                                      my:HintAssist.IsFloating="False"
-                                      my:TextFieldAssist.SuffixText="{my:Resource Periods,
-                                                                                  Casing=LowerCase}"
-                                      Minimum="1"
-                                      Value="{my:NullableBinding NumberOfExtraTimeHalves}" />
-                    <TextBlock Text="{my:Resource Of, Casing=LowerCase}" />
-                    <my:NumericUpDown Width="80"
-                                      my:HintAssist.IsFloating="False"
-                                      my:TextFieldAssist.SuffixText="{my:Resource TimeUnitMinuteAbbr,
-                                                                                  Casing=LowerCase}"
-                                      Minimum="1"
-                                      Value="{my:NullableBinding DurationOfExtraTimeHalf}" />
-                </my:SimpleStackPanel>
+                <Grid Visibility="{Binding ExtraTimeIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <v:EditableHalfFormatView DataContext="{Binding ExtraTime}" />
+                </Grid>
             </my:SimpleStackPanel>
         </GroupBox>
 
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:Resource Shootouts}">
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Size="100" Header="{my:Resource Shootouts}">
             <my:SimpleStackPanel Orientation="Horizontal">
                 <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ShootoutsIsEnabled}" />
-                <my:NumericUpDown Width="90"
+                <my:NumericUpDown Width="Auto"
                                   my:HintAssist.Hint="{my:Resource NumberOfShootouts}"
+                                  IsReadOnly="{Binding IsEnabled, Mode=OneWay, RelativeSource={RelativeSource Self}, Converter={x:Static my:NotBooleanConverter.Default}}"
                                   Minimum="1"
                                   Visibility="{Binding ShootoutsIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}"
                                   Value="{my:NullableBinding NumberOfPenaltyShootouts}" />

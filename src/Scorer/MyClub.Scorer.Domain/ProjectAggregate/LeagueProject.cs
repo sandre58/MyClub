@@ -4,6 +4,7 @@
 using System;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.ProjectAggregate

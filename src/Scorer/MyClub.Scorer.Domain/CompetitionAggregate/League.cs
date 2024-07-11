@@ -9,6 +9,7 @@ using MyClub.Domain.Enums;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.Collections;
@@ -19,18 +20,21 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     {
         private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
-        public League() : this(RankingRules.Default, MatchFormat.Default) { }
+        public League() : this(RankingRules.Default, MatchFormat.Default, SchedulingParameters.Default) { }
 
-        public League(RankingRules rankingRules, MatchFormat matchFormat)
+        public League(RankingRules rankingRules, MatchFormat matchFormat, SchedulingParameters schedulingParameters)
         {
             RankingRules = rankingRules;
             MatchFormat = matchFormat;
+            SchedulingParameters = schedulingParameters;
             Matchdays = new(_matchdays);
         }
 
         public RankingRules RankingRules { get; set; }
 
         public MatchFormat MatchFormat { get; set; }
+
+        public SchedulingParameters SchedulingParameters { get; set; }
 
         public ReadOnlyObservableCollection<Matchday> Matchdays { get; }
 
@@ -39,6 +43,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+
+        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
         public IEnumerable<IMatchdaysProvider> GetAllMatchdaysProviders() => new[] { this };
 

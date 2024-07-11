@@ -2,15 +2,14 @@
 // See the LICENSE file in the project root for more information.
 
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Domain.MatchAggregate;
 
-namespace MyClub.Scorer.Domain.ProjectAggregate
+namespace MyClub.Scorer.Domain.Scheduling
 {
 
     public interface ISchedulingParametersRepository
     {
-        SchedulingParameters GetByMatch(Match match);
+        SchedulingParameters Get(ISchedulable schedulable);
 
-        SchedulingParameters GetByMatchdaysProvider(IMatchdaysProvider matchdaysProvider);
+        void Update(IMatchdaysProvider matchdaysProvider, SchedulingParameters schedulingParameters);
     }
 }

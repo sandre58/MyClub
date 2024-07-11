@@ -36,8 +36,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
         private readonly UiObservableCollection<TeamPositionsSerieWrapper> _teamSeries = [];
         private CompositeDisposable? _leagueSubscriptions;
 
-        public PastPositionsPageViewModel(ProjectInfoProvider projectInfoProvider,
-                                          CompetitionInfoProvider competitionInfoProvider,
+        public PastPositionsPageViewModel(CompetitionInfoProvider competitionInfoProvider,
                                           TeamsProvider teamsProvider,
                                           LeagueService leagueService)
         {
@@ -60,20 +59,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
                               .Subscribe(_ => RefreshYLabels())
                 ]);
 
-            projectInfoProvider.WhenProjectClosing(() =>
+            competitionInfoProvider.WhenCompetitionChanged(async x =>
+            {
+                if (x is LeagueViewModel leagueViewModel)
+                {
+                    _leagueSubscriptions = new(leagueViewModel.WhenRankingChanged(async () => await RefreshAllAsync().ConfigureAwait(false)));
+                    await RefreshAllAsync().ConfigureAwait(false);
+                }
+            }, _ =>
             {
                 _leagueSubscriptions?.Dispose();
                 _leagueSubscriptions = null;
-            });
-
-            projectInfoProvider.WhenProjectLoaded(async _ =>
-            {
-                if (_competitionInfoProvider.GetCompetition() is LeagueViewModel leagueViewModel)
-                {
-                    _leagueSubscriptions = new(leagueViewModel.WhenRankingChanged(async () => await RefreshAllAsync().ConfigureAwait(false)));
-
-                    await RefreshAllAsync().ConfigureAwait(false);
-                }
             });
         }
 

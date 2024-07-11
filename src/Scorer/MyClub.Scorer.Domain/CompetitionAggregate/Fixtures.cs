@@ -8,6 +8,7 @@ using MyClub.Domain;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities.Collections;
 
@@ -52,5 +53,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public bool RemoveMatch(Match item) => _matches.Remove(item);
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => _parent.MatchFormat;
+
+        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => _parent.SchedulingParameters;
     }
 }

@@ -7,7 +7,7 @@ using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities.DateTimes;
 
-namespace MyClub.Scorer.Domain.ProjectAggregate
+namespace MyClub.Scorer.Domain.Scheduling
 {
     public interface ISchedulingDomainService
     {

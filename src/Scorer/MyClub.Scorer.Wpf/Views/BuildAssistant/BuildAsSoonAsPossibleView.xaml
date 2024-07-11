@@ -1,0 +1,121 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.BuildAssistant.BuildAsSoonAsPossibleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyNet.Wpf.Presentation.Views.Rules;assembly=MyNet.Wpf.Presentation"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
+             d:DataContext="{d:DesignInstance Type=vm:BuildAsSoonAsPossibleViewModel}"
+             Validation.ErrorTemplate="{x:Null}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="ProxyAsSoonAsPossible" Data="{Binding}" />
+
+        <DataTemplate DataType="{x:Type vm:IncludeTimePeriodsRuleViewModel}">
+            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemsSource="{Binding TimePeriods}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:TimePeriodViewModel}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="18" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From}" />
+                            <my:TimePicker Grid.Column="2"
+                                           Width="60"
+                                           my:HintAssist.IsFloating="False"
+                                           SelectedTime="{Binding StartTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                            <TextBlock Grid.Column="4" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
+                            <my:TimePicker Grid.Column="6"
+                                           Width="60"
+                                           my:HintAssist.IsFloating="False"
+                                           SelectedTime="{Binding EndTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+
+                            <Button x:Name="RemoveButton"
+                                    Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                    Grid.Column="8"
+                                    Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.RemovePeriodCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{my:ToolIcon Kind=MinusCircle}"
+                                    Validation.ErrorTemplate="{x:Null}"
+                                    Visibility="{Binding RelativeSource={RelativeSource Self}, Path=IsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                            <Button x:Name="AddButton"
+                                    Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                    Grid.Column="10"
+                                    Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.AddPeriodCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{my:ToolIcon Kind=AddCircle}"
+                                    ToolTip="{my:Resource Add}"
+                                    Validation.ErrorTemplate="{x:Null}"
+                                    Visibility="{Binding RelativeSource={RelativeSource Self}, Path=IsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:IncludeDaysOfWeekRuleViewModel}">
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Chips}"
+                     BorderThickness="0"
+                     ItemsSource="{Binding AllDays}"
+                     SelectionMode="Multiple">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectionBehavior SelectedItems="{Binding SelectedDays}" />
+                </i:Interaction.Behaviors>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Width="55" Text="{Binding Converter={x:Static my:DayOfWeekStringConverter.ToTitle}}" TextAlignment="Center" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ExcludeDatesRangeRuleViewModel}">
+            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ExcludeBetween}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource And, Casing=LowerCase}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding EndDate}" />
+            </my:SimpleStackPanel>
+        </DataTemplate>
+
+
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Start Date -->
+        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource GenerateItemsFromDate}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
+            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
+            <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{Binding StartTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+        </my:SimpleStackPanel>
+
+        <!-- Rules -->
+        <v:EditableRulesView Grid.Row="2" DataContext="{Binding Rules}" Header="{my:Resource AddRule}" />
+    </Grid>
+</UserControl>

@@ -20,7 +20,7 @@
         <my:BindingProxy x:Key="RankingProxy" Data="{Binding}" />
     </ListView.Resources>
     <ListView.ItemContainerStyle>
-        <Style BasedOn="{StaticResource MyNet.Styles.ListViewItem}" TargetType="{x:Type ListViewItem}">
+        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource MyNet.Styles.ListViewItem}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListViewItem}">
@@ -34,9 +34,9 @@
                                 <Border x:Name="rankBorder" Background="{Binding Label.Color, Converter={x:Static my:BrushConverter.Default}}" Opacity="{StaticResource MyNet.Opacity.Checked}" />
                                 <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
                                     <GridViewRowPresenter.Resources>
-                                        <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
-                                            <Setter Property="TextWrapping" Value="NoWrap" />
+                                        <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource {x:Type TextBlock}}">
                                             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                            <Setter Property="TextWrapping" Value="NoWrap" />
                                         </Style>
                                     </GridViewRowPresenter.Resources>
                                 </GridViewRowPresenter>
@@ -56,7 +56,7 @@
         <GridView>
             <GridView.Columns>
 
-                <!--  Rank  -->
+                <!-- Rank -->
                 <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
                                 my:GridViewColumnAssist.PropertyName="Rank"
                                 my:GridViewColumnAssist.Width="50"
@@ -80,7 +80,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Progression  -->
+                <!-- Progression -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="Progression" my:GridViewColumnAssist.Width="50" Header="{my:Resource Progression}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate />
@@ -105,29 +105,29 @@
                                     <Setter TargetName="grid" Property="Visibility" Value="Collapsed" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=0}" Value="True">
-                                    <Setter TargetName="icon" Property="Kind" Value="Triangle" />
                                     <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                    <Setter TargetName="icon" Property="Kind" Value="Triangle" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter=0}" Value="True">
-                                    <Setter TargetName="icon" Property="Kind" Value="TriangleDown" />
                                     <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                    <Setter TargetName="icon" Property="Kind" Value="TriangleDown" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=1}" Value="True">
+                                    <Setter TargetName="text" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
                                     <Setter TargetName="text" Property="Margin" Value="16 0 0 5" />
                                     <Setter TargetName="text" Property="Visibility" Value="Visible" />
-                                    <Setter TargetName="text" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter=-1}" Value="True">
+                                    <Setter TargetName="text" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
                                     <Setter TargetName="text" Property="Margin" Value="16 5 0 0" />
                                     <Setter TargetName="text" Property="Visibility" Value="Visible" />
-                                    <Setter TargetName="text" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
                                 </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Label  -->
+                <!-- Label -->
                 <GridViewColumn my:GridViewColumnAssist.CanSort="False"
                                 my:GridViewColumnAssist.PropertyName="Label"
                                 my:GridViewColumnAssist.Width="50"
@@ -147,7 +147,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Team  -->
+                <!-- Team -->
                 <GridViewColumn my:GridViewColumnAssist.CanBeHidden="False"
                                 my:GridViewColumnAssist.PropertyName="Team"
                                 my:GridViewColumnAssist.Width="*"
@@ -164,7 +164,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Points  -->
+                <!-- Points -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="Points" my:GridViewColumnAssist.Width="50" Header="{my:Resource Points}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -184,7 +184,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Played  -->
+                <!-- Played -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="Played" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesPlayed}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -201,7 +201,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Won  -->
+                <!-- Won -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesWon" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesWon}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -218,7 +218,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Won  -->
+                <!-- Won -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesWonAfterShootouts" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesWonAfterShootouts}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -235,7 +235,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  GamesDrawn  -->
+                <!-- GamesDrawn -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesDrawn" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesDrawn}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -252,7 +252,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  GamesLost  -->
+                <!-- GamesLost -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesLost" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesLost}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -269,7 +269,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  GamesLost  -->
+                <!-- GamesLost -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesLostAfterShootouts" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesLostAfterShootouts}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -286,7 +286,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Withdraw  -->
+                <!-- Withdraw -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesWithdrawn" my:GridViewColumnAssist.Width="50" Header="{my:Resource GamesWithdrawn}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -303,7 +303,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  GoalsFor  -->
+                <!-- GoalsFor -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GoalsFor" my:GridViewColumnAssist.Width="50" Header="{my:Resource GoalsFor}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -320,7 +320,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  GoalsAgainst  -->
+                <!-- GoalsAgainst -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GoalsAgainst" my:GridViewColumnAssist.Width="50" Header="{my:Resource GoalsAgainst}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -337,7 +337,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  GoalsDifference  -->
+                <!-- GoalsDifference -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="GoalsDifference" my:GridViewColumnAssist.Width="50" Header="{my:Resource GoalsDifference}">
                     <GridViewColumn.HeaderTemplate>
                         <DataTemplate>
@@ -354,7 +354,7 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
-                <!--  Fettle  -->
+                <!-- Fettle -->
                 <GridViewColumn my:GridViewColumnAssist.CanSort="False"
                                 my:GridViewColumnAssist.PropertyName="LastMatches"
                                 my:GridViewColumnAssist.Width="110"
@@ -377,7 +377,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" PlacementMode="BottomAndAlignCentres">
+                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres">
                                             <my:DropDownButton.ToggleContent>
                                                 <Label x:Name="label"
                                                        Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"

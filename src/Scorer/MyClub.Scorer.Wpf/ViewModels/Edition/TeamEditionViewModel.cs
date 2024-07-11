@@ -12,6 +12,7 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Wpf.Services;
+using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyNet.Observable.Attributes;
 using MyNet.Utilities;
@@ -23,9 +24,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class TeamEditionViewModel : EntityEditionViewModel<Team, TeamDto, TeamService>, IEntityEditionViewModel
     {
         private IEnumerable<string>? _existingTeamNames;
+        private readonly TeamsChangedDeferrer _teamsChangedDeferrer;
 
-        public TeamEditionViewModel(TeamService service, StadiumsProvider stadiumsProvider, StadiumPresentationService stadiumPresentationService) : base(service)
+        public TeamEditionViewModel(TeamService service,
+                                    StadiumsProvider stadiumsProvider,
+                                    StadiumPresentationService stadiumPresentationService,
+                                    TeamsChangedDeferrer teamsChangedDeferrer) : base(service)
         {
+            _teamsChangedDeferrer = teamsChangedDeferrer;
+
             StadiumSelectionViewModel = new(stadiumsProvider, stadiumPresentationService);
             ValidationRules.AddNotNull<TeamEditionViewModel, string>(x => x.Name, MyClubResources.DuplicatedTeamNameError, x => _existingTeamNames is null || !_existingTeamNames.Contains(x));
 
@@ -102,6 +109,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             HomeColor = defaultValues.HomeColor?.ToColor();
             Country = defaultValues.Country;
             StadiumSelectionViewModel.Select(defaultValues.Stadium?.Id);
+        }
+
+        protected override void SaveCore()
+        {
+            using (_teamsChangedDeferrer.Defer())
+                base.SaveCore();
         }
     }
 }

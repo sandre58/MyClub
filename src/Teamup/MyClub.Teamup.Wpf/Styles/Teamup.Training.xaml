@@ -68,7 +68,7 @@
         </Style.Triggers>
     </Style>
 
-    <Style x:Key="Teamup.Styles.DropDownButton.TrainingSession.Info" BasedOn="{StaticResource MyNet.Styles.DropDownButton.Icon.MouseOver.Foreground}" TargetType="{x:Type my:DropDownButton}">
+    <Style x:Key="Teamup.Styles.DropDownButton.TrainingSession.Info" BasedOn="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" TargetType="{x:Type my:DropDownButton}">
         <Setter Property="PopupHorizontalOffset" Value="0" />
         <Setter Property="ToggleContentTemplate">
             <Setter.Value>

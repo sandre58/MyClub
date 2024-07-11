@@ -5,11 +5,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface IStage : IEntity
+    public interface IStage : IEntity, ISchedulingParametersProvider
     {
         string Name { get; }
 
