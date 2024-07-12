@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="DynamicData" Version="8.4.1" />
-    <PackageReference Include="System.IO.Packaging" Version="9.0.0-preview.5.24306.7" />
+    <PackageReference Include="System.IO.Packaging" Version="9.0.0-preview.6.24327.7" />
   </ItemGroup>
 
   <ItemGroup>
