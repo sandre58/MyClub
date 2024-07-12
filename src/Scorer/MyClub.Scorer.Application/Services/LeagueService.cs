@@ -15,9 +15,8 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class LeagueService(ILeagueRepository leagueRepository, ISchedulingParametersRepository schedulingParametersRepository, IMatchdayRepository matchdayRepository)
+    public class LeagueService(ILeagueRepository leagueRepository, IMatchdayRepository matchdayRepository)
     {
-        private readonly ISchedulingParametersRepository _schedulingParametersRepository = schedulingParametersRepository;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly IMatchdayRepository _matchdayRepository = matchdayRepository;
 
@@ -81,7 +80,7 @@ namespace MyClub.Scorer.Application.Services
             _matchdayRepository.Clear(league);
 
             if (dto.SchedulingParameters is not null)
-                _schedulingParametersRepository.Update(league, dto.SchedulingParameters);
+                _leagueRepository.UpdateSchedulingParameters(dto.SchedulingParameters);
 
             if (dto.MatchFormat is not null)
                 _leagueRepository.UpdateMatchFormat(dto.MatchFormat);

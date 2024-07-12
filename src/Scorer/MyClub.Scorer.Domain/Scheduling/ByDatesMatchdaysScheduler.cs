@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.Helpers;
 
@@ -39,20 +40,18 @@ namespace MyClub.Scorer.Domain.Scheduling
             return this;
         }
 
-        public void Schedule(IEnumerable<SchedulingMatchdayInformation> matchdays)
-        {
-            foreach (var item in matchdays)
+        public void Schedule(IEnumerable<Matchday> matchdays)
+        => matchdays.ForEach((matchday, matchdayIndex) =>
             {
-                item.Matchday.Schedule(_dates.GetByIndex(item.Index).date.ToUniversalTime());
+                matchday.Schedule(_dates.GetByIndex(matchdayIndex).date.ToUniversalTime());
 
-                item.Matchday.Matches.ForEach((x, y) =>
+                matchday.Matches.ForEach((match, matchIndex) =>
                 {
-                    var date = _dates.GetByIndex(y).datesOfMatches?.ToList().GetByIndex(y, item.Matchday.Date).ToUniversalTime() ?? item.Matchday.Date;
+                    var date = _dates.GetByIndex(matchIndex).datesOfMatches?.ToList().GetByIndex(matchIndex, matchday.Date).ToUniversalTime() ?? matchday.Date;
 
-                    x.Schedule(date);
+                    match.Schedule(date);
                 });
-            }
-        }
+            });
     }
 }
 

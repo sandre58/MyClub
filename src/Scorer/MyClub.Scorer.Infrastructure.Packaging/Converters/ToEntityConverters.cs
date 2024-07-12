@@ -28,9 +28,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             var type = (CompetitionType)source.Metadata!.Type;
             IProject project = type switch
             {
-                CompetitionType.League => new LeagueProject(source.Metadata!.Name, source.Metadata!.Image, ((LeagueParametersPackage)source.Parameters!).SchedulingParameters!.CreateSchedulingParameters(), source.Metadata!.Id),
-                CompetitionType.Cup => new CupProject(source.Metadata!.Name, source.Metadata!.Image, ((CupParametersPackage)source.Parameters!).DefaultSchedulingParameters!.CreateSchedulingParameters(), source.Metadata!.Id),
-                CompetitionType.Tournament => new TournamentProject(source.Metadata!.Name, source.Metadata!.Image, ((TournamentParametersPackage)source.Parameters!).DefaultSchedulingParameters!.CreateSchedulingParameters(), source.Metadata!.Id),
+                CompetitionType.League => new LeagueProject(source.Metadata!.Name, source.Metadata!.Image, source.Metadata!.Id),
+                CompetitionType.Cup => new CupProject(source.Metadata!.Name, source.Metadata!.Image, source.Metadata!.Id),
+                CompetitionType.Tournament => new TournamentProject(source.Metadata!.Name, source.Metadata!.Image, source.Metadata!.Id),
                 _ => throw new InvalidOperationException("Project type unknown"),
             };
 
@@ -47,6 +47,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             {
                 case League league:
                     var leaguePackage = (LeaguePackage)source.Competition!;
+                    league.SchedulingParameters = leaguePackage.SchedulingParameters?.CreateSchedulingParameters() ?? SchedulingParameters.Default;
                     league.Labels.AddRange(leaguePackage.Labels?.ToDictionary(x => new AcceptableValueRange<int>(x.StartRank, x.EndRank), x => new RankLabel(x.Color, x.Name.OrEmpty(), x.ShortName.OrEmpty(), x.Description)));
                     league.RankingRules = leaguePackage.RankingRules?.CreateRankingRules() ?? RankingRules.Default;
                     league.MatchFormat = leaguePackage.MatchFormat?.CreateMatchFormat() ?? MatchFormat.Default;
@@ -144,10 +145,11 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                    new RankingComparer(source.Comparers?.Split(';').Select(x => RankingComparer.AllAvailableComparers.GetOrDefault(x)).NotNull() ?? RankingComparer.Default),
                    source.Computers?.Split(';').ToDictionary(x => x, x => RankingRules.CreateComputer(Enum.Parse<DefaultRankingColumn>(x))) ?? RankingRules.DefaultComputers);
 
-        private static Match CreateMatch(this MatchPackage source, MatchFormat matchFormat, IEnumerable<Team> teams, IEnumerable<Stadium> stadiums, IEnumerable<Player> players)
+        private static Match CreateMatch(this MatchPackage source, IMatchesProvider parent, IEnumerable<Team> teams, IEnumerable<Stadium> stadiums, IEnumerable<Player> players)
         {
             var matchFormatInMatch = source.Format?.CreateMatchFormat() ?? MatchFormat.Default;
-            var result = new Match(source.OriginDate, teams.GetById(source.Home!.TeamId), teams.GetById(source.Away!.TeamId), matchFormatInMatch == matchFormat ? matchFormat : matchFormatInMatch, source.Id)
+            var matchFormatOfParent = parent.ProvideFormat();
+            var result = new Match(parent, source.OriginDate, teams.GetById(source.Home!.TeamId), teams.GetById(source.Away!.TeamId), matchFormatInMatch == matchFormatOfParent ? matchFormatOfParent : matchFormatInMatch, source.Id)
             {
                 AfterExtraTime = source.AfterExtraTime,
                 IsNeutralStadium = source.IsNeutralStadium,
@@ -203,7 +205,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             if (source.IsPostponed)
                 result.Postpone(source.PostponedDate);
 
-            source.Matches?.ForEach(x => result.AddMatch(x.CreateMatch(parent.ProvideFormat(), teams, stadiums, players)));
+            source.Matches?.ForEach(x => result.AddMatch(x.CreateMatch(result, teams, stadiums, players)));
 
             result.MarkedAsCreated(source.CreatedAt, source.CreatedBy);
             result.MarkedAsModified(source.ModifiedAt, source.ModifiedBy);

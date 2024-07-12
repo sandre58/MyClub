@@ -12,7 +12,5 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         public TeamsPackage? Teams { get; set; }
 
         public StadiumsPackage? Stadiums { get; set; }
-
-        public ParametersPackage? Parameters { get; set; }
     }
 }

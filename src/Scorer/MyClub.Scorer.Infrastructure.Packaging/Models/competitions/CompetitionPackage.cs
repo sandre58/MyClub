@@ -11,5 +11,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     [XmlInclude(typeof(TournamentPackage))]
     public class CompetitionPackage : AuditablePackage
     {
+        public SchedulingParametersPackage? SchedulingParameters { get; set; }
     }
 }

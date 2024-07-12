@@ -6,16 +6,16 @@ using System.Collections.Generic;
 using System.Linq;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class SchedulingDomainService(IMatchRepository matchRepository, ISchedulingParametersRepository schedulingParametersRepository) : ISchedulingDomainService
+    public class SchedulingDomainService(IMatchRepository matchRepository) : ISchedulingDomainService
     {
         private readonly IMatchRepository _matchRepository = matchRepository;
-        private readonly ISchedulingParametersRepository _schedulingParametersRepository = schedulingParametersRepository;
 
         public IEnumerable<(ConflictType, Match, Match?)> GetAllConflicts()
         {
@@ -31,7 +31,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                     result.AddRange(conflicts.Select(x => (x, match1, (Match?)match2)));
                 }
 
-                var schedulingParameters = _schedulingParametersRepository.GetByMatch(associationsGrouped.Key);
+                var schedulingParameters = associationsGrouped.Key.GetSchedulingParameters();
                 if (associationsGrouped.Key.Date.IsBefore(schedulingParameters.StartDate))
                     result.Add((ConflictType.StartDatePassed, associationsGrouped.Key, null));
 
@@ -51,16 +51,14 @@ namespace MyClub.Scorer.Domain.Scheduling
 
             var result = new List<ConflictType>();
 
-            var schedulingParameters1 = _schedulingParametersRepository.GetByMatch(match1);
-            var schedulingParameters2 = _schedulingParametersRepository.GetByMatch(match2);
             if (match2.Participate(match1.HomeTeam) || match2.Participate(match1.AwayTeam))
             {
                 if (period1.Intersect(period2))
                     result.Add(ConflictType.TeamBusy);
                 else
                 {
-                    var periodWithRestTime1 = new Period(period1.Start, period1.End + schedulingParameters1.RestTime);
-                    var periodWithRestTime2 = new Period(period2.Start, period2.End + schedulingParameters2.RestTime);
+                    var periodWithRestTime1 = new Period(period1.Start, period1.End + match1.GetRestTime());
+                    var periodWithRestTime2 = new Period(period2.Start, period2.End + match2.GetRestTime());
 
                     if (periodWithRestTime1.Intersect(periodWithRestTime2))
                         result.Add(ConflictType.RestTimeNotRespected);
@@ -73,8 +71,8 @@ namespace MyClub.Scorer.Domain.Scheduling
                     result.Add(ConflictType.StadiumOccupancy);
                 else
                 {
-                    var periodWithRotationTime1 = new Period(period1.Start, period1.End + schedulingParameters1.RotationTime);
-                    var periodWithRotationTime2 = new Period(period2.Start, period2.End + schedulingParameters2.RotationTime);
+                    var periodWithRotationTime1 = new Period(period1.Start, period1.End + match1.GetRotationTime());
+                    var periodWithRotationTime2 = new Period(period2.Start, period2.End + match2.GetRotationTime());
 
                     if (periodWithRotationTime1.Intersect(periodWithRotationTime2))
                         result.Add(ConflictType.RotationTimeNotRespected);
@@ -86,7 +84,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public bool TeamsAreAvailable(IEnumerable<Guid> teamIds, Period period, bool withRestTime = false, IEnumerable<Guid>? ignoredMatchIds = null)
         {
-            var matches = _matchRepository.GetMatchesOfTeams(teamIds).Where(x => x.State != MatchState.Cancelled && period.Intersect(withRestTime ? new Period(x.Date.SubtractFluentTimeSpan(_schedulingParametersRepository.GetByMatch(x).RestTime), x.Date.AddFluentTimeSpan(x.Format.GetFullTime() + _schedulingParametersRepository.GetByMatch(x).RestTime)) : x.GetPeriod()));
+            var matches = _matchRepository.GetMatchesOfTeams(teamIds).Where(x => x.State != MatchState.Cancelled && period.Intersect(withRestTime ? new Period(x.Date.SubtractFluentTimeSpan(x.GetRestTime()), x.Date.AddFluentTimeSpan(x.Format.GetFullTime() + x.GetRestTime())) : x.GetPeriod()));
 
             if (ignoredMatchIds is not null)
             {
@@ -99,7 +97,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public bool StadiumIsAvailable(Guid stadiumId, Period period, bool withRotationTime = false, IEnumerable<Guid>? ignoredMatchIds = null)
         {
-            var matches = _matchRepository.GetMatchesInStadium(stadiumId).Where(x => x.State != MatchState.Cancelled && period.Intersect(withRotationTime ? new Period(x.Date.SubtractFluentTimeSpan(_schedulingParametersRepository.GetByMatch(x).RotationTime), x.Date.AddFluentTimeSpan(x.Format.GetFullTime() + _schedulingParametersRepository.GetByMatch(x).RotationTime)) : x.GetPeriod()));
+            var matches = _matchRepository.GetMatchesInStadium(stadiumId).Where(x => x.State != MatchState.Cancelled && period.Intersect(withRotationTime ? new Period(x.Date.SubtractFluentTimeSpan(x.GetRotationTime()), x.Date.AddFluentTimeSpan(x.Format.GetFullTime() + x.GetRotationTime())) : x.GetPeriod()));
 
             if (ignoredMatchIds is not null)
             {
