@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MyClub.Scorer.Domain.CompetitionAggregate;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
@@ -20,27 +22,36 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public List<IAvailableDateRule> Rules { get; } = [];
 
-        public void Schedule(IEnumerable<SchedulingMatchdayInformation> matchdays)
+        public void Schedule(IEnumerable<Matchday> matchdays)
         {
             var scheduledMatches = new List<Match>();
             matchdays.ForEach(x =>
             {
-                x.Matchday.Matches.ForEach((match, matchIndex) =>
+                x.Matches.ForEach((match, matchIndex) =>
                 {
-                    var lastMatchOfHomeTeam = scheduledMatches.Where(y => y.Participate(match.HomeTeam)).OrderBy(x => x.Date).LastOrDefault()?.GetPeriod().End.AddFluentTimeSpan(x.SchedulingParameters.RestTime);
-                    var lastMatchOfAwayTeam = scheduledMatches.Where(y => y.Participate(match.AwayTeam)).OrderBy(x => x.Date).LastOrDefault()?.GetPeriod().End.AddFluentTimeSpan(x.SchedulingParameters.RestTime);
+                    var endOflastMatchOfHomeTeam = scheduledMatches.Where(y => y.Participate(match.HomeTeam)).OrderBy(x => x.Date).LastOrDefault();
+                    var endOfLastMatchOfAwayTeam = scheduledMatches.Where(y => y.Participate(match.AwayTeam)).OrderBy(x => x.Date).LastOrDefault();
 
-                    var dateOfMatch = lastMatchOfHomeTeam.HasValue || lastMatchOfAwayTeam.HasValue
-                        ? DateTimeHelper.Max(lastMatchOfAwayTeam.GetValueOrDefault(), lastMatchOfHomeTeam.GetValueOrDefault())
+                    var dateOfMatch = endOflastMatchOfHomeTeam is not null || endOfLastMatchOfAwayTeam is not null
+                        ? DateTimeHelper.Max(getMaxEndDate(match, endOflastMatchOfHomeTeam), getMaxEndDate(match, endOfLastMatchOfAwayTeam))
                         : StartDate;
                     dateOfMatch = ApplyRules(dateOfMatch, match.Format.GetFullTime());
 
                     match.Schedule(dateOfMatch);
                 });
 
-                var dateOfMatchday = x.Matchday.Matches.MinOrDefault(x => x.Date, x.Matchday.Date);
-                x.Matchday.Schedule(dateOfMatchday);
+                var dateOfMatchday = x.Matches.MinOrDefault(x => x.Date, x.Date);
+                x.Schedule(dateOfMatchday);
             });
+
+            static DateTime getMaxEndDate(Match currentMatch, Match? previousMatch)
+            {
+                if (previousMatch is null) return DateTime.MinValue;
+
+                var restTime = previousMatch.GetRestTime() > currentMatch.GetRestTime() ? previousMatch.GetRestTime() : currentMatch.GetRestTime();
+
+                return previousMatch.GetPeriod().End.AddFluentTimeSpan(restTime);
+            }
         }
 
         private DateTime ApplyRules(DateTime dateOfMatch, TimeSpan matchDuration)

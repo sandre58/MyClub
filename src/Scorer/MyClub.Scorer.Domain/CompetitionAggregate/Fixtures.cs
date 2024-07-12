@@ -41,7 +41,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         private Ranking GetRanking() => new([Team1, Team2], _matches, RankingRules.Default);
 
-        public Match AddMatch(DateTime date, ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(date, homeTeam, awayTeam, _parent.MatchFormat));
+        public Match AddMatch(DateTime date, ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(this, date, homeTeam, awayTeam, _parent.MatchFormat));
 
         private Match AddMatch(Match match)
         {

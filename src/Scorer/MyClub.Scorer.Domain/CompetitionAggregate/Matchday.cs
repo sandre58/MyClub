@@ -64,9 +64,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             });
         }
 
-        public Match AddMatch(ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(Date, homeTeam, awayTeam, _parent.ProvideFormat()));
+        public Match AddMatch(ITeam homeTeam, ITeam awayTeam) => AddMatch(Date, homeTeam, awayTeam);
 
-        public Match AddMatch(DateTime date, ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(date, homeTeam, awayTeam, _parent.ProvideFormat()));
+        public Match AddMatch(DateTime date, ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(this, date, homeTeam, awayTeam, _parent.ProvideFormat()));
 
         public Match AddMatch(Match match)
         {

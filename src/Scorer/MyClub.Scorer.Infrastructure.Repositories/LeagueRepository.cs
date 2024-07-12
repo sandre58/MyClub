@@ -8,6 +8,7 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
 
@@ -56,6 +57,15 @@ namespace MyClub.Scorer.Infrastructure.Repositories
             var league = GetCurrentOrThrow();
 
             league.MatchFormat = format;
+
+            _auditService.Update(league);
+        }
+
+        public void UpdateSchedulingParameters(SchedulingParameters schedulingParameters)
+        {
+            var league = GetCurrentOrThrow();
+
+            league.SchedulingParameters = schedulingParameters;
 
             _auditService.Update(league);
         }

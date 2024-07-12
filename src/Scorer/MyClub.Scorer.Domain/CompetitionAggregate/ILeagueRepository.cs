@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities.Sequences;
 
 namespace MyClub.Scorer.Domain.ProjectAggregate
@@ -24,5 +25,7 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
         void UpdatePenaltyPoints(Dictionary<Guid, int> penaltyPoints);
 
         void UpdateMatchFormat(MatchFormat format);
+
+        void UpdateSchedulingParameters(SchedulingParameters schedulingParameters);
     }
 }

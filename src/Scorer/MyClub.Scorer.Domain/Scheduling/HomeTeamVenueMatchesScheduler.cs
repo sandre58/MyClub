@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Linq;
+using MyClub.Scorer.Domain.MatchAggregate;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
@@ -10,9 +10,9 @@ namespace MyClub.Scorer.Domain.Scheduling
     {
         public static readonly HomeTeamVenueMatchesScheduler Default = new();
 
-        public void Schedule(IEnumerable<SchedulingMatchInformation> matches)
+        public void Schedule(IEnumerable<Match> matches)
         {
-            foreach (var match in matches.Select(x => x.Match).ToList())
+            foreach (var match in matches)
             {
                 match.Stadium = match.HomeTeam.Stadium;
                 match.IsNeutralStadium = false;

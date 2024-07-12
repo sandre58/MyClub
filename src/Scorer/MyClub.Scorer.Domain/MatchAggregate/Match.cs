@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using MyClub.Domain;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
@@ -24,16 +25,19 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         private readonly Dictionary<ITeam, MatchOpponent> _opponents;
 
-        public Match(DateTime date, ITeam homeTeam, ITeam awayTeam, MatchFormat matchFormat, Guid? id = null) : base(id)
+        public Match(IMatchesProvider parent, DateTime date, ITeam homeTeam, ITeam awayTeam, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
         {
+            Parent = parent;
             _opponents = new Dictionary<ITeam, MatchOpponent>()
             {
                 { homeTeam, new(homeTeam) },
                 { awayTeam, new(awayTeam) }
             };
-            Format = matchFormat;
+            Format = matchFormat ?? parent.ProvideFormat();
             OriginDate = date;
         }
+
+        public IMatchesProvider Parent { get; }
 
         public MatchFormat Format { get; set; }
 
