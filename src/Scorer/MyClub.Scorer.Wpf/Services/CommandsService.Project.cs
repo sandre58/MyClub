@@ -193,7 +193,7 @@ namespace MyClub.Scorer.Wpf.Services
                         using (_autoSaveService.Suspend())
                         using (ProgressManager.New(MyClubResources.ProgressNewProject))
                         {
-                            var project = Create(vm.GeneralViewModel.Type, new ProjectMetadataDto
+                            var project = Create(CompetitionType.League, new ProjectMetadataDto
                             {
                                 Name = vm.Name,
                                 Image = vm.Image

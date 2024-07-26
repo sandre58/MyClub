@@ -5,7 +5,6 @@ using System.Xml.Serialization;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
-    [XmlType("address")]
     public class AddressPackage
     {
         [XmlAttribute("street")]
@@ -26,19 +25,19 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlIgnore]
         public bool CitySpecified => City is not null;
 
-        [XmlElement("country", IsNullable = true)]
+        [XmlElement("Country", IsNullable = true)]
         public int? Country { get; set; }
 
         [XmlIgnore]
         public bool CountrySpecified => Country is not null;
 
-        [XmlElement("latitude", IsNullable = true)]
+        [XmlElement("Latitude", IsNullable = true)]
         public double? Latitude { get; set; }
 
         [XmlIgnore]
         public bool LatitudeSpecified => Latitude is not null;
 
-        [XmlElement("longitude", IsNullable = true)]
+        [XmlElement("Longitude", IsNullable = true)]
         public double? Longitude { get; set; }
 
         [XmlIgnore]

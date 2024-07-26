@@ -15,16 +15,16 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("isWithdrawn")]
         public bool IsWithdrawn { get; set; }
 
-        [XmlArray("goals")]
-        [XmlArrayItem("goal", typeof(GoalPackage))]
+        [XmlArray("Goals")]
+        [XmlArrayItem("Goal", typeof(GoalPackage))]
         public List<GoalPackage>? Goals { get; set; }
 
-        [XmlArray("cards")]
-        [XmlArrayItem("card", typeof(CardPackage))]
+        [XmlArray("Cards")]
+        [XmlArrayItem("Card", typeof(CardPackage))]
         public List<CardPackage>? Cards { get; set; }
 
-        [XmlArray("shootout")]
-        [XmlArrayItem("penaltyShootouts", typeof(PenaltyShootoutPackage))]
+        [XmlArray("Shootout")]
+        [XmlArrayItem("PenaltyShootouts", typeof(PenaltyShootoutPackage))]
         public List<PenaltyShootoutPackage>? Shootout { get; set; }
     }
 }

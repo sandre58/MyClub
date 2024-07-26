@@ -74,6 +74,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers
             projectInfoProvider.WhenProjectLoaded(Reload);
         }
 
+        public bool HasMatches { get; private set; }
+
         public ICompetitionViewModel GetCompetition() => GetCompetition<ICompetitionViewModel>();
 
         public T GetCompetition<T>() where T : ICompetitionViewModel => (T)_currentCompetition! ?? throw new InvalidCastException($"Competition is not of type {typeof(T)}");
@@ -98,7 +100,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers
             {
                 case LeagueProject leagueProject:
                     var league = new LeagueViewModel(leagueProject.Competition,
-                                                     leagueProject.WhenChanged(x => x.SchedulingParameters, (x, y) => y),
+                                                     leagueProject.Competition.WhenChanged(x => x.SchedulingParameters, (x, y) => y),
                                                      _matchdayPresentationService,
                                                      _matchPresentationService,
                                                      _stadiumsProvider,
@@ -145,6 +147,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers
 
                 using (competition.ProvideMatches().Bind(out var matches).Subscribe())
                 {
+                    HasMatches = matches.Count > 0;
+
                     var conflicts = _availibilityCheckingService.GetAllConflicts();
                     var convertedConflicts = conflicts.Select(x => (x.Item1, matches.GetById(x.Item2), x.Item3.HasValue ? matches.GetById(x.Item3.Value) : null)).ToList();
 
@@ -160,7 +164,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => Messenger.Default.Send(new MatchConflictsValidationMessage(convertedConflicts)));
+                    Messenger.Default.Send(new MatchConflictsValidationMessage(convertedConflicts));
                 }
             }).ConfigureAwait(false);
         }

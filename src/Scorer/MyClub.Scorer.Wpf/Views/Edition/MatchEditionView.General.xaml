@@ -104,11 +104,10 @@
                 <my:SimpleStackPanel Orientation="Horizontal">
                     <ComboBox Width="300"
                               my:HintAssist.Hint="{my:Resource Stadium}"
-                              my:ItemsControlAssist.SortingProperty="Item.Address.City"
+                              my:ItemsControlAssist.SortingProperty="Stadium.Address.City"
                               my:TextFieldAssist.HasClearButton="True"
-                              ItemsSource="{Binding StadiumSelection.Wrappers}"
-                              SelectedValue="{Binding StadiumSelection.SelectedItem}"
-                              SelectedValuePath="Item">
+                              ItemsSource="{Binding StadiumSelection.Items}"
+                              SelectedItem="{Binding StadiumSelection.SelectedItem}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <my:SimpleStackPanel Orientation="Horizontal">
@@ -140,7 +139,7 @@
                                             </Style>
                                         </my:PackIcon.Style>
                                     </my:PackIcon>
-                                    <TextBlock Text="{Binding Item.DisplayName}" />
+                                    <TextBlock Text="{Binding Stadium.DisplayName}" />
                                 </my:SimpleStackPanel>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>

@@ -9,7 +9,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
     public class PenaltyShootoutPackage : EntityPackage
     {
-        [XmlElement("takerId", IsNullable = true)]
+        [XmlElement("TakerId", IsNullable = true)]
         public Guid? TakerId { get; set; }
 
         [XmlIgnore]

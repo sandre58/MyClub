@@ -49,8 +49,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
                     teamsProvider.ConnectById()
                                  .Transform(x => new TeamPositionsSerieWrapper(x))
                                  .AutoRefresh(x => x.Rank)
-                                 .Sort(SortExpressionComparer<TeamPositionsSerieWrapper>.Ascending(x => x.Rank))
-                                 .Bind(_teamSeries)
+                                 .SortAndBind(_teamSeries, SortExpressionComparer<TeamPositionsSerieWrapper>.Ascending(x => x.Rank))
                                  .Subscribe(),
                     TeamSeries.ToObservableChangeSet()
                               .Transform(x => x.Serie)

@@ -6,13 +6,13 @@ using MyClub.CrossCutting.Packaging.Models;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
-    [XmlType("stadium")]
+    [XmlType("Stadium")]
     public class StadiumPackage : EntityPackage
     {
         [XmlAttribute("name")]
         public string Name { get; set; } = string.Empty;
 
-        [XmlElement("address", IsNullable = true)]
+        [XmlElement("Address", IsNullable = true)]
         public AddressPackage? Address { get; set; }
 
         [XmlAttribute("ground")]

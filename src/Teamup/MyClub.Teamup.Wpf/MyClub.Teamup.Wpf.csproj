@@ -21,8 +21,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Observable.Collections" Version="4.0.0" />
-    <PackageReference Include="MyNet.UI" Version="4.4.2" />
+    <PackageReference Include="MyNet.Observable.Collections" Version="5.2.0" />
+    <PackageReference Include="MyNet.UI" Version="4.5.2" />
     <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -35,12 +35,12 @@
     <PackageReference Include="MyNet.Utilities.IO.FileHistory.Registry" Version="1.1.0" />
     <PackageReference Include="MyNet.Utilities.Logging.NLog" Version="1.1.0" />
     <PackageReference Include="MyNet.Utilities.Mail.MailKit" Version="1.1.0" />
-    <PackageReference Include="MyNet.Observable.Statistics" Version="3.0.0" />
+    <PackageReference Include="MyNet.Observable.Statistics" Version="5.2.0" />
     <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0" />
-    <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="4.4.0" />
-    <PackageReference Include="MyNet.Wpf.LiveCharts" Version="4.4.0" />
-    <PackageReference Include="MyNet.Wpf.Presentation" Version="4.4.0" />
-    <PackageReference Include="MyNet.Wpf.Web" Version="4.4.0" />
+    <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="4.4.2" />
+    <PackageReference Include="MyNet.Wpf.LiveCharts" Version="4.4.2" />
+    <PackageReference Include="MyNet.Wpf.Presentation" Version="4.4.2" />
+    <PackageReference Include="MyNet.Wpf.Web" Version="4.4.2" />
     <PackageReference Include="MyNet.Xaml.Merger.MSBuild" Version="2.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -34,7 +34,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.StatisticsTab
         {
             var obs = injuries.ToObservableChangeSet(x => x.Id);
             Disposables.AddRange([
-                obs.AutoRefresh(x => x.Type).Filter(x => x.Type == item).Sort(SortExpressionComparer<InjuryViewModel>.Descending(x =>x.Date)).ObserveOn(Scheduler.UI).Bind(out _injuries).Subscribe(),
+                obs.AutoRefresh(x => x.Type).Filter(x => x.Type == item).ObserveOn(Scheduler.UI).SortAndBind(out _injuries, SortExpressionComparer<InjuryViewModel>.Descending(x =>x.Date)).Subscribe(),
                 obs.AutoRefresh(x => x.Severity).Subscribe(_ => Severity = Injuries.Any() ? Injuries.Max(x => x.Severity) : null)
                 ]);
         }

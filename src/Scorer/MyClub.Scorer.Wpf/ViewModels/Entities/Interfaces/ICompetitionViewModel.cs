@@ -3,6 +3,7 @@
 
 using System;
 using DynamicData;
+using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
@@ -12,5 +13,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
         IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches();
 
         IObservable<IChangeSet<IMatchParent, Guid>> ProvideMatchParents();
+
+        MatchFormat MatchFormat { get; }
+
+        public SchedulingParametersViewModel SchedulingParameters { get; }
     }
 }

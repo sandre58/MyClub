@@ -13,7 +13,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("date")]
         public DateTime OriginDate { get; set; }
 
-        [XmlElement("postponedDate", IsNullable = true)]
+        [XmlElement("PostponedDate", IsNullable = true)]
         public DateTime? PostponedDate { get; set; }
 
         [XmlIgnore]
@@ -22,8 +22,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("isPostponed")]
         public bool IsPostponed { get; set; }
 
-        [XmlArray("matches")]
-        [XmlArrayItem("match", typeof(MatchPackage))]
+        [XmlArray("Matches")]
+        [XmlArrayItem("Match", typeof(MatchPackage))]
         public List<MatchPackage>? Matches { get; set; }
     }
 }

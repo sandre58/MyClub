@@ -173,7 +173,6 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<IManagerRepository, ManagerRepository>()
                 .AddScoped<IMatchdayRepository, MatchdayRepository>()
                 .AddScoped<IMatchRepository, MatchRepository>()
-                .AddScoped<ISchedulingParametersRepository, SchedulingParametersRepository>()
                 .AddScoped<ISchedulingDomainService, SchedulingDomainService>()
 
                 // Application Services
@@ -253,6 +252,7 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<MatchdaysEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
                 .AddSingleton<RankingRulesEditionViewModel>()
+                .AddSingleton<SchedulingParametersEditionViewModel>()
                 .AddSingleton<SchedulingAssistantViewModel>()
                 .AddSingleton<LeagueBuildAssistantViewModel>()
                 // ViewModels - Other dialogs

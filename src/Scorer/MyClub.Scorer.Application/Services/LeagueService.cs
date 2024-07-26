@@ -11,14 +11,16 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.Scheduling;
+using MyClub.Scorer.Domain.StadiumAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class LeagueService(ILeagueRepository leagueRepository, IMatchdayRepository matchdayRepository)
+    public class LeagueService(ILeagueRepository leagueRepository, IMatchdayRepository matchdayRepository, IStadiumRepository stadiumRepository)
     {
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly IMatchdayRepository _matchdayRepository = matchdayRepository;
+        private readonly IStadiumRepository _stadiumRepository = stadiumRepository;
 
         public void UpdateRankingRules(RankingRulesDto dto)
         {
@@ -32,7 +34,15 @@ namespace MyClub.Scorer.Application.Services
                 _leagueRepository.UpdatePenaltyPoints(dto.PenaltyPoints);
         }
 
+        public void UpdateMatchFormat(MatchFormat matchFormat) => _leagueRepository.UpdateMatchFormat(matchFormat);
+
+        public void UpdateSchedulingParameters(SchedulingParameters schedulingParameters) => _leagueRepository.UpdateSchedulingParameters(schedulingParameters);
+
         public MatchFormat GetMatchFormat() => _leagueRepository.GetCurrentOrThrow().MatchFormat;
+
+        public SchedulingParameters GetSchedulingParameters() => _leagueRepository.GetCurrentOrThrow().SchedulingParameters;
+
+        public bool HasMatches() => _leagueRepository.GetCurrentOrThrow().GetAllMatches().Any();
 
         public int GetRankingRowsCount() => _leagueRepository.GetCurrentOrThrow().Teams.Count;
 
@@ -73,61 +83,77 @@ namespace MyClub.Scorer.Application.Services
 
         public int GetNumberOfMatchesByMatchday(BuildParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchesByMatchday(_leagueRepository.GetCurrentOrThrow().Teams.Count);
 
-        public void Build(BuildParametersDto dto)
+        public SchedulingParameters Build(BuildParametersDto dto)
         {
-            var league = _leagueRepository.GetCurrentOrThrow();
-
-            _matchdayRepository.Clear(league);
-
-            if (dto.SchedulingParameters is not null)
-                _leagueRepository.UpdateSchedulingParameters(dto.SchedulingParameters);
-
+            // Save MatchFormat
             if (dto.MatchFormat is not null)
                 _leagueRepository.UpdateMatchFormat(dto.MatchFormat);
 
-            var algorithm = GetMatchdaysAlgorithm(dto);
-
-            MatchdaysBuilder? builder = null;
-
-            switch (dto.BuildDatesParameters)
+            // Build Matchdays
+            var league = _leagueRepository.GetCurrentOrThrow();
+            var matchdaysScheduler = dto.BuildDatesParameters switch
             {
-                case BuildManualParametersDto buildManualParametersDto:
-                    builder = new MatchdaysByDatesBuilder().SetDates(buildManualParametersDto.Dates ?? []);
-                    break;
-                case BuildAutomaticParametersDto buildAutomaticParametersDto:
-                    builder = new MatchdaysByDatesBuilder().SetDates(buildAutomaticParametersDto.Dates ?? []);
-                    break;
-                case BuildAsSoonAsPossibleParametersDto buildAsSoonAsPossibleParametersDto:
-                    var builderTemp = new MatchdaysAsSoonAsPossibleBuilder();
+                BuildManualDatesParametersDto buildManualParametersDto => (IScheduler<Matchday>)new ByDatesScheduler<Matchday>().SetDates(buildManualParametersDto.Dates ?? []),
+                BuildAutomaticDatesParametersDto buildAutomaticParametersDto => new DateRulesScheduler<Matchday>()
+                {
+                    DefaultTime = buildAutomaticParametersDto.DefaultTime,
+                    Interval = buildAutomaticParametersDto.IntervalValue.ToTimeSpan(buildAutomaticParametersDto.IntervalUnit),
+                    DateRules = buildAutomaticParametersDto.DateRules ?? [],
+                    TimeRules = buildAutomaticParametersDto.TimeRules ?? [],
+                    StartDate = buildAutomaticParametersDto.StartDate.GetValueOrDefault(DateTime.Today).ToUniversalTime()
+                },
+                BuildAsSoonAsPossibleDatesParametersDto buildAsSoonAsPossibleParametersDto => new AsSoonAsPossibleScheduler<Matchday>()
+                {
+                    Rules = buildAsSoonAsPossibleParametersDto.Rules ?? [],
+                    ScheduleVenues = dto.ScheduleVenues && dto.AsSoonAsPossibleVenues,
+                    AvailableStadiums = _stadiumRepository.GetAll().ToList(),
+                    StartDate = buildAsSoonAsPossibleParametersDto.StartDate.GetValueOrDefault(DateTime.Today).ToUniversalTime()
+                },
+                _ => throw new InvalidOperationException("No scheduler found with these parameters"),
+            };
 
-                    builderTemp.Rules.AddRange(buildAsSoonAsPossibleParametersDto.Rules ?? []);
-
-                    if (dto.SchedulingParameters is not null)
+            IMatchesScheduler? venuesScheduler = null;
+            if (dto.ScheduleVenues)
+            {
+                if (dto.UseHomeVenue)
+                    venuesScheduler = new HomeTeamVenueMatchesScheduler();
+                else if (dto.VenueRules?.Count != 0)
+                    venuesScheduler = new VenueRulesMatchesScheduler(_stadiumRepository.GetAll().ToList())
                     {
-                        builderTemp.StartDate = buildAsSoonAsPossibleParametersDto.StartDate.GetValueOrDefault(dto.SchedulingParameters.StartDate.ToUtcDateTime(dto.SchedulingParameters.StartTime)).ToUniversalTime();
-                        builderTemp.RestTime = dto.SchedulingParameters.RestTime;
-                        builderTemp.RotationTime = dto.SchedulingParameters.RotationTime;
-                    }
-
-                    if (dto.MatchFormat is not null)
-                        builderTemp.MatchFormat = dto.MatchFormat;
-
-                    builder = builderTemp;
-                    break;
-                default:
-                    break;
+                        Rules = [.. dto.VenueRules],
+                    };
             }
 
-            if (builder is not null)
+            var algorithm = GetMatchdaysAlgorithm(dto);
+            var matchdays = new MatchdaysBuilder(matchdaysScheduler, venuesScheduler)
             {
-                builder.NamePattern = dto.NamePattern.OrEmpty();
-                builder.ShortNamePattern = dto.ShortNamePattern.OrEmpty();
-                builder.UseTeamVenues = dto.SchedulingParameters?.UseTeamVenues ?? false;
+                NamePattern = dto.NamePattern.OrEmpty(),
+                ShortNamePattern = dto.ShortNamePattern.OrEmpty(),
+                ScheduleVenuesBeforeDates = dto.ScheduleVenuesBeforeDates
+            }.Build(league, algorithm);
 
-                var matchdays = builder.Build(league, algorithm);
+            // Save SchedulingParameters
+            _leagueRepository.UpdateSchedulingParameters(new SchedulingParameters(
+               !dto.StartDate.HasValue ? matchdays.SelectMany(x => x.Matches).MinOrDefault(x => x.Date.BeginningOfDay()) : dto.StartDate.Value.ToUniversalTime(),
+               !dto.EndDate.HasValue ? matchdays.SelectMany(x => x.Matches).MaxOrDefault(x => x.Date.EndOfDay()) : dto.EndDate.Value.ToUniversalTime(),
+               dto.StartTime,
+               dto.RotationTime,
+               dto.RestTime,
+               dto.UseHomeVenue,
+               dto.AsSoonAsPossible,
+               dto.Interval,
+               true,
+               dto.AsSoonAsPossibleRules ?? [],
+               dto.DateRules ?? [],
+               dto.TimeRules ?? [],
+               dto.VenueRules ?? []
+               ));
 
-                matchdays.ForEach(x => _matchdayRepository.Insert(league, x));
-            }
+            // Save matchdays
+            _matchdayRepository.Clear(league);
+            matchdays.ForEach(x => _matchdayRepository.Insert(league, x));
+
+            return league.SchedulingParameters;
         }
 
         private static IMatchdaysAlgorithm GetMatchdaysAlgorithm(BuildParametersDto buildParameters) => buildParameters.Algorithm switch

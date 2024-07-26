@@ -74,10 +74,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public override void Reset()
         {
-            base.Reset();
-            DateFilter.Reset();
-            ParentFilter.Reset();
-            DateRangeFilter.Reset();
+            using (Defer())
+            {
+                SpeedFilters.Reset();
+                base.Reset();
+                DateFilter.Reset();
+                ParentFilter.Reset();
+                DateRangeFilter.Reset();
+            }
         }
 
         public void FilterBy(FilterMode mode)

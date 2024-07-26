@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
-    [XmlRoot("stadiums", Namespace = XmlConstants.MyClubNamespace)]
+    [XmlRoot("Stadiums", Namespace = XmlConstants.MyClubNamespace)]
     public class StadiumsPackage : List<StadiumPackage>
     {
         public StadiumsPackage() { }

@@ -215,6 +215,31 @@
                                                                          ShortcutKey=Ctrl+B}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
+                    <!-- Edit project -->
+                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditCommand}"
+                                           Header="{my:Resource Edit}"
+                                           ToolTip="{my:ShortcutResource EditProject,
+                                                                         ShortcutKey=Ctrl+Maj+P}"
+                                           Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                        <my:NavigationViewItem.Icon>
+                            <HeaderedContentControl>
+                                <Grid Width="24" Height="24" VerticalAlignment="Top">
+
+                                    <!-- Image -->
+                                    <my:PackIcon Width="24"
+                                                 Height="24"
+                                                 Kind="ShieldCrown"
+                                                 Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                    <Image HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch"
+                                           Source="{Binding Image, Converter={x:Static my:BytesToImageConverter.Default}}"
+                                           Stretch="Uniform"
+                                           Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                </Grid>
+                            </HeaderedContentControl>
+                        </my:NavigationViewItem.Icon>
+                    </my:NavigationViewItem>
+
                 </my:NavigationView.FooterMenuItems>
             </my:NavigationView>
         </Grid>

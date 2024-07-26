@@ -13,7 +13,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("endRank")]
         public int EndRank { get; set; }
 
-        [XmlElement("color", IsNullable = true)]
+        [XmlElement("Color", IsNullable = true)]
         public string? Color { get; set; }
 
         [XmlIgnore]
@@ -25,7 +25,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("name")]
         public string Name { get; set; } = string.Empty;
 
-        [XmlElement("description", IsNullable = true)]
+        [XmlElement("Description", IsNullable = true)]
         public string? Description { get; set; }
 
         [XmlIgnore]

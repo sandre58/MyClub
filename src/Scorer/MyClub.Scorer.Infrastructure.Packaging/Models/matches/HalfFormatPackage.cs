@@ -14,7 +14,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("duration")]
         public TimeSpan Duration { get; set; }
 
-        [XmlElement("halfTimeDuration", IsNullable = true)]
+        [XmlElement("HalfTimeDuration", IsNullable = true)]
         public TimeSpan? HalfTimeDuration { get; set; }
 
         [XmlIgnore]

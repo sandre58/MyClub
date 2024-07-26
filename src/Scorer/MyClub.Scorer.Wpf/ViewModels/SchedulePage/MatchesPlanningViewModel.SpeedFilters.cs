@@ -21,7 +21,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             StadiumFilter = new(nameof(MatchViewModel.Stadium), stadiums);
             AddRange([DateFilter, TeamFilter, StateFilter, StadiumFilter]);
 
-            Disposables.Add(schedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => TeamFilter.ShowVenueFilter = x.Value));
+            Disposables.Add(schedulingParameters.WhenPropertyChanged(x => x.UseHomeVenue).Subscribe(x => TeamFilter.ShowVenueFilter = x.Value));
         }
 
         public MyNet.UI.ViewModels.List.Filtering.Filters.DateFilterViewModel DateFilter { get; } = new(nameof(MatchViewModel.Date), ComplexComparableOperator.IsBetween, null, null);

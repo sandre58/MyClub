@@ -33,7 +33,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                     HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
                     AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
 
-                    _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseTeamVenues).Subscribe(x => ShowHomeAwayRankings = x.Value));
+                    _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseHomeVenue).Subscribe(x => ShowHomeAwayRankings = x.Value));
                 }
             }), _ =>
             {

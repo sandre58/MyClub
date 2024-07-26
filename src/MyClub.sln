@@ -9,7 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{5D1B
 		Directory.build.props = Directory.build.props
 		Directory.build.targets = Directory.build.targets
 		MyClub.ruleset = MyClub.ruleset
-		nuget.config = nuget.config
 		Settings.XamlStyler = Settings.XamlStyler
 	EndProjectSection
 EndProject
@@ -166,6 +165,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mocks", "Mocks", "{989B480C-A477-44DC-A801-08A380AB46CC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mocks", "Mocks", "{5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.UnitTests.Scorer.Infrastructure.Packaging", "tests\MyClub.UnitTests.Scorer.Infrastructure.Packaging\MyClub.UnitTests.Scorer.Infrastructure.Packaging.csproj", "{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -349,6 +350,10 @@ Global
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -405,6 +410,7 @@ Global
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
 		{989B480C-A477-44DC-A801-08A380AB46CC} = {A5C631A1-F5A2-4C22-8A49-AD37E63C8BE0}
 		{5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		RESX_ConfirmAddLanguageFile = True

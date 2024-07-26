@@ -38,7 +38,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 {
                     CompetitionType.League => new LeaguePackage
                     {
-                        SchedulingParameters = source.Competition.ProvideSchedulingParameters().ToSchedulingParametersPackage(),
+                        SchedulingParameters = source.Competition.ProvideSchedulingParameters().ToPackage(),
                         Labels = ((League)source.Competition).Labels.Select(x => new RankLabelPackage
                         {
                             Color = x.Value.Color,
@@ -214,15 +214,65 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 Computers = string.Join(";", source.Computers.Select(x => x.Key).ToList()),
             };
 
-        public static SchedulingParametersPackage ToSchedulingParametersPackage(this SchedulingParameters source)
+        public static SchedulingParametersPackage ToPackage(this SchedulingParameters source)
             => new()
             {
                 StartDate = source.StartDate,
                 EndDate = source.EndDate,
-                UseTeamVenues = source.UseTeamVenues,
                 StartTime = source.StartTime,
                 RestTime = source.RotationTime,
-                RotationTime = source.RestTime
+                RotationTime = source.RestTime,
+                UseHomeVenue = source.UseHomeVenue,
+                AsSoonAsPossible = source.AsSoonAsPossible,
+                Interval = source.Interval,
+                ScheduleByParent = source.ScheduleByParent,
+                AsSoonAsPossibleRules = source.AsSoonAsPossibleRules.Select(x => x.ToPackage()).ToList(),
+                DateRules = source.DateRules.Select(x => x.ToPackage()).ToList(),
+                TimeRules = source.TimeRules.Select(x => x.ToPackage()).ToList(),
+                VenueRules = source.VenueRules.Select(x => x.ToPackage()).ToList()
+            };
+
+        public static AsSoonAsPossibleSchedulingRulePackage ToPackage(this IAvailableDateSchedulingRule source)
+            => source switch
+            {
+                IncludeDaysOfWeekRule includeDaysOfWeekRule => new IncludeDaysOfWeekAsSoonAsPossibleRulePackage { DaysOfWeek = string.Join(";", includeDaysOfWeekRule.DaysOfWeek.Select(x => x.ToString()).ToList()) },
+                ExcludeDatesRangeRule excludePeriodRule => new ExcludeDatesRangeAsSoonAsPossibleRulePackage { StartDate = excludePeriodRule.StartDate, EndDate = excludePeriodRule.EndDate },
+                IncludeTimePeriodsRule includeTimePeriodsRule => new IncludeTimePeriodsRulePackage { TimePeriods = includeTimePeriodsRule.Periods.Select(x => new TimePeriodPackage() { StartTime = x.Start, EndTime = x.End }).ToList() },
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
+
+        public static DateSchedulingRulePackage ToPackage(this IDateSchedulingRule source)
+            => source switch
+            {
+                IncludeDaysOfWeekRule dayOfWeeksRule => new IncludeDaysOfWeekRulePackage { DaysOfWeek = string.Join(";", dayOfWeeksRule.DaysOfWeek.Select(x => x.ToString()).ToList()) },
+                ExcludeDateRule excludeDateRule => new ExcludeDateRulePackage { Date = excludeDateRule.Date },
+                ExcludeDatesRangeRule excludeDatesRangeRule => new ExcludeDatesRangeRulePackage { StartDate = excludeDatesRangeRule.StartDate, EndDate = excludeDatesRangeRule.EndDate },
+                DateIntervalRule dateIntervalRule => new DateIntervalRulePackage { Interval = dateIntervalRule.Interval },
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
+
+        public static TimeSchedulingRulePackage ToPackage(this ITimeSchedulingRule source)
+            => source switch
+            {
+                TimeOfDayRule timeOfDayRule => new TimeOfDayRulePackage { Day = timeOfDayRule.Day, Time = timeOfDayRule.Time, MatchExceptions = timeOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                TimeOfDateRule timeOfDateRule => new TimeOfDateRulePackage { Date = timeOfDateRule.Date, Time = timeOfDateRule.Time, MatchExceptions = timeOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                TimeOfMatchNumberRule timeOfMatchNumberRule => new TimeOfMatchNumberRulePackage { MatchNumber = timeOfMatchNumberRule.MatchNumber, Time = timeOfMatchNumberRule.Time },
+                TimeOfDatesRangeRule timeOfDateRangeRule => new TimeOfDateRangeRulePackage { StartDate = timeOfDateRangeRule.StartDate, EndDate = timeOfDateRangeRule.EndDate, Time = timeOfDateRangeRule.Time, MatchExceptions = timeOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
+
+        public static VenueSchedulingRulePackage ToPackage(this IAvailableVenueSchedulingRule source)
+            => source switch
+            {
+                HomeStadiumRule => new HomeStadiumRulePackage(),
+                AwayStadiumRule => new AwayStadiumRulePackage(),
+                NoStadiumRule => new NoStadiumRulePackage(),
+                FirstAvailableStadiumRule firstAvailableStadiumRule => new FirstAvailableStadiumRulePackage() { UseRotationTime = (int)firstAvailableStadiumRule.UseRotationTime },
+                StadiumOfDayRule stadiumOfDayRule => new StadiumOfDayRulePackage { Day = stadiumOfDayRule.Day, StadiumId = stadiumOfDayRule.StadiumId, MatchExceptions = stadiumOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
+                StadiumOfDateRule stadiumOfDateRule => new StadiumOfDateRulePackage { Date = stadiumOfDateRule.Date, StadiumId = stadiumOfDateRule.StadiumId, MatchExceptions = stadiumOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
+                StadiumOfMatchNumberRule stadiumOfMatchNumberRule => new StadiumOfMatchNumberRulePackage { MatchNumber = stadiumOfMatchNumberRule.MatchNumber, StadiumId = stadiumOfMatchNumberRule.StadiumId },
+                StadiumOfDatesRangeRule stadiumOfDateRangeRule => new StadiumOfDateRangeRulePackage { StartDate = stadiumOfDateRangeRule.StartDate, EndDate = stadiumOfDateRangeRule.EndDate, StadiumId = stadiumOfDateRangeRule.StadiumId, MatchExceptions = stadiumOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
     }
 }

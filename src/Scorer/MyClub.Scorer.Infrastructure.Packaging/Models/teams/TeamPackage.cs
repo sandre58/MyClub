@@ -8,42 +8,42 @@ using MyClub.CrossCutting.Packaging.Models;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
-    [XmlType("team")]
+    [XmlType("Team")]
     public class TeamPackage : NamePackage
     {
         [XmlIgnore]
         public byte[]? Logo { get; set; }
 
-        [XmlElement("awayColor", IsNullable = true)]
+        [XmlElement("AwayColor", IsNullable = true)]
         public string? AwayColor { get; set; }
 
         [XmlIgnore]
         public bool AwayColorSpecified => !string.IsNullOrEmpty(AwayColor);
 
-        [XmlElement("homeColor", IsNullable = true)]
+        [XmlElement("HomeColor", IsNullable = true)]
         public string? HomeColor { get; set; }
 
         [XmlIgnore]
         public bool HomeColorSpecified => !string.IsNullOrEmpty(HomeColor);
 
-        [XmlElement("stadiumId", IsNullable = true)]
+        [XmlElement("StadiumId", IsNullable = true)]
         public Guid? StadiumId { get; set; }
 
         [XmlIgnore]
         public bool StadiumIdSpecified => StadiumId.HasValue;
 
-        [XmlElement("country", IsNullable = true)]
+        [XmlElement("Country", IsNullable = true)]
         public int? Country { get; set; }
 
         [XmlIgnore]
         public bool CountrySpecified => Country is not null;
 
-        [XmlArray("players")]
-        [XmlArrayItem("player", typeof(PlayerPackage))]
+        [XmlArray("Players")]
+        [XmlArrayItem("Player", typeof(PlayerPackage))]
         public List<PlayerPackage>? Players { get; set; }
 
-        [XmlArray("staff")]
-        [XmlArrayItem("manager", typeof(ManagerPackage))]
+        [XmlArray("Staff")]
+        [XmlArrayItem("Manager", typeof(ManagerPackage))]
         public List<ManagerPackage>? Staff { get; set; }
     }
 }

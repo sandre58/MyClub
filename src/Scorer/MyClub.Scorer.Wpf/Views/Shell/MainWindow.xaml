@@ -138,12 +138,14 @@
         <KeyBinding Modifiers="Ctrl+Shift" Key="C" Command="{Binding NewCupCommand}" />
         <KeyBinding Modifiers="Ctrl+Shift" Key="O" Command="{Binding LoadCommand}" />
         <KeyBinding Modifiers="Ctrl+Shift" Key="T" Command="{Binding CreateCommand}" />
+        <KeyBinding Modifiers="Ctrl+Shift" Key="P" Command="{Binding EditCommand}" />
         <KeyBinding Modifiers="Ctrl+Shift" Key="Q" Command="{Binding CloseCommand}" />
         <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}" />
         <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding SaveAsCommand}" />
 
         <!-- Competition -->
         <KeyBinding Modifiers="Ctrl" Key="B" Command="{Binding OpenBuildAssistantCommand}" />
+        <KeyBinding Key="F8" Command="{Binding EditSchedulingParametersCommand}" />
 
         <!--  Navigation  -->
         <KeyBinding Key="PageUp" Command="{Binding GoBackCommand}" />

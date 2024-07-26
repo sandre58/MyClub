@@ -566,6 +566,7 @@
                                                         <MenuItem Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
                                                         <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
                                                         <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}">
+                                                            <MenuItem Command="{Binding Data.RescheduleAutomaticCommand, Source={StaticResource Proxy}}" Header="{my:Resource Automatic}" />
                                                             <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
                                                             <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
                                                             <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />
@@ -579,11 +580,11 @@
                                                                       HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
                                                                       StaysOpenOnClick="True" />
                                                         </MenuItem>
-                                                        <MenuItem my:ItemsControlAssist.SortingProperty="Item.Address.City" Header="{my:Resource ChangeLocation}" Icon="{my:ToolIcon Kind=Stadium}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}" ItemsSource="{Binding Data.Stadiums.Wrappers, Source={StaticResource Proxy}}">
+                                                        <MenuItem my:ItemsControlAssist.SortingProperty="Stadium.Address.City" Header="{my:Resource ChangeLocation}" Icon="{my:ToolIcon Kind=Stadium}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}" ItemsSource="{Binding Data.Stadiums.Items, Source={StaticResource Proxy}}">
                                                             <MenuItem.ItemContainerStyle>
                                                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                                                                     <Setter Property="Command" Value="{Binding Data.SetStadiumForSelectedItemsCommand, Source={StaticResource Proxy}}" />
-                                                                    <Setter Property="CommandParameter" Value="{Binding Item}" />
+                                                                    <Setter Property="CommandParameter" Value="{Binding Stadium}" />
                                                                     <Setter Property="Header" Value="{Binding}" />
                                                                     <Setter Property="HeaderTemplate">
                                                                         <Setter.Value>
@@ -617,7 +618,7 @@
                                                                                             </Style>
                                                                                         </my:PackIcon.Style>
                                                                                     </my:PackIcon>
-                                                                                    <TextBlock Text="{Binding Item.DisplayName}" />
+                                                                                    <TextBlock Text="{Binding Stadium.DisplayName}" />
                                                                                 </my:SimpleStackPanel>
                                                                             </DataTemplate>
                                                                         </Setter.Value>

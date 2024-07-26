@@ -9,7 +9,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
     public class MatchPackage : AuditablePackage
     {
-        [XmlElement("format")]
+        [XmlElement("Format")]
         public MatchFormatPackage? Format { get; set; }
 
         [XmlAttribute("date")]
@@ -18,22 +18,22 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("state")]
         public int State { get; set; }
 
-        [XmlElement("postponedDate", IsNullable = true)]
+        [XmlElement("PostponedDate", IsNullable = true)]
         public DateTime? PostponedDate { get; set; }
 
         [XmlIgnore]
         public bool PostponedDateSpecified => PostponedDate.HasValue;
 
-        [XmlElement("home")]
+        [XmlElement("Home")]
         public MatchOpponentPackage? Home { get; set; }
 
-        [XmlElement("away")]
+        [XmlElement("Away")]
         public MatchOpponentPackage? Away { get; set; }
 
         [XmlAttribute("isNeutralStadium")]
         public bool IsNeutralStadium { get; set; }
 
-        [XmlElement("stadiumId", IsNullable = true)]
+        [XmlElement("StadiumId", IsNullable = true)]
         public Guid? StadiumId { get; set; }
 
         [XmlIgnore]

@@ -7,16 +7,16 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
     public class MatchFormatPackage
     {
-        [XmlElement("regulationTime")]
+        [XmlElement("RegulationTime")]
         public HalfFormatPackage? RegulationTime { get; set; }
 
-        [XmlElement("extraTime", IsNullable = true)]
+        [XmlElement("ExtraTime", IsNullable = true)]
         public HalfFormatPackage? ExtraTime { get; set; }
 
         [XmlIgnore]
         public bool ExtraTimeSpecified => ExtraTime is not null;
 
-        [XmlElement("numberOfPenaltyShootouts", IsNullable = true)]
+        [XmlElement("NumberOfPenaltyShootouts", IsNullable = true)]
         public int? NumberOfPenaltyShootouts { get; set; }
 
         [XmlIgnore]

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
@@ -23,9 +22,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             ValidationRules.Add<MatchdaysEditionAutomaticViewModel, int?>(x => x.CountMatchdays, MessageResources.FieldXIsRequiredError, x => UseEndDate || x.HasValue);
         }
 
-        public EditableDateRulesViewModel DateRules { get; } = new();
+        public EditableAutomaticDateSchedulingRulesViewModel DateRules { get; } = new();
 
-        public EditableTimeRulesViewModel TimeRules { get; } = new();
+        public EditableAutomaticTimeSchedulingRulesViewModel TimeRules { get; } = new();
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
@@ -64,11 +63,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DateTime? previousDate = null;
             while (!isEnd())
             {
-                if (DateRules.Rules.All(x => x.Match(date, previousDate)))
-                {
-                    result.Add((date, ProvideTime(date)));
-                    previousDate = date;
-                }
+                //if (DateRules.Rules.All(x => x.ProvideRule(date, previousDate)))
+                //{
+                //    result.Add((date, ProvideTime(date)));
+                //    previousDate = date;
+                //}
                 date = date.Date.AddDays(1);
             }
 
@@ -77,17 +76,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             bool isEnd() => UseEndDate && date > EndDate || !UseEndDate && result.Count >= CountMatchdays;
         }
 
-        private TimeSpan? ProvideTime(DateTime date)
-        {
-            foreach (var rule in TimeRules.Rules)
-            {
-                var time = rule.ProvideTime(date, 0);
+        //private TimeSpan? ProvideTime(DateTime date)
+        //{
+        //    foreach (var rule in TimeRules.Rules)
+        //    {
+        //        var time = rule.ProvideRule(date, 0);
 
-                if (time is not null)
-                    return time;
-            }
+        //        if (time is not null)
+        //            return time;
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
     }
 }

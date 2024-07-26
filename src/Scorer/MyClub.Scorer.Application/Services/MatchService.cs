@@ -4,11 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml.Vml.Office;
 using MyClub.Application.Services;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.Enums;
-using MyClub.Scorer.Domain.Factories.Extensions;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.Scheduling;
@@ -25,19 +26,16 @@ namespace MyClub.Scorer.Application.Services
         private readonly IStadiumRepository _stadiumRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly ISchedulingDomainService _availibilityCheckingDomainService;
-        private readonly ISchedulingParametersRepository _schedulingParametersRepository;
 
         public MatchService(IMatchRepository repository,
                             IProjectRepository projectRepository,
                             ITeamRepository teamRepository,
                             IStadiumRepository stadiumRepository,
-                            ISchedulingParametersRepository schedulingParametersRepository,
                             ISchedulingDomainService availibilityCheckingDomainService) : base(repository)
         {
             _teamRepository = teamRepository;
             _stadiumRepository = stadiumRepository;
             _projectRepository = projectRepository;
-            _schedulingParametersRepository = schedulingParametersRepository;
             _availibilityCheckingDomainService = availibilityCheckingDomainService;
         }
 
@@ -195,6 +193,32 @@ namespace MyClub.Scorer.Application.Services
                 items.ForEach(Reschedule);
         }
 
+        public void RescheduleAutomatic(Guid id) => RescheduleAutomatic([id]);
+
+        public void RescheduleAutomatic(IEnumerable<Guid> matchIds)
+        {
+            using (CollectionChangedDeferrer.Defer())
+            {
+                var matches = GetAll().ToList();
+                var schedulingMatches = matches.Where(x => matchIds.Contains(x.Id)).OrderBy(x => x.Date).ToList();
+                var scheduledMatches = matches.Except(schedulingMatches).ToList();
+
+                var schedulingMatchesGroupByParameters = schedulingMatches.GroupBy(x => x.GetSchedulingParameters());
+
+                var startDate = scheduledMatches.Where(x => x.Date < schedulingMatches.MinOrDefault(x => x.Date)).MaxOrDefault(x => x.Date);
+                schedulingMatchesGroupByParameters.ForEach(x =>
+                {
+                    x.Key.Schedule(x, startDate != DateTime.MinValue ? startDate : x.Key.StartDate, scheduledMatches);
+
+                    scheduledMatches.AddRange(x);
+                    startDate = x.MaxOrDefault(x => x.Date);
+
+                    // For audit
+                    x.ForEach(x => Update(x.Id, y => { }));
+                });
+            }
+        }
+
         public void Postpone(Guid id, DateTime? postponedDate = null) => Update(id, x => x.Postpone(postponedDate));
 
         public void Postpone(IEnumerable<Guid> matchIds, DateTime? postponedDate = null)
@@ -247,7 +271,7 @@ namespace MyClub.Scorer.Application.Services
         {
             x.Invert();
 
-            if (_schedulingParametersRepository.GetByMatch(x).UseTeamVenues)
+            if (x.UseHomeVenue())
             {
                 x.IsNeutralStadium = false;
                 x.Stadium = x.HomeTeam.Stadium;
@@ -271,6 +295,27 @@ namespace MyClub.Scorer.Application.Services
         {
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(x => SetStadium(x, stadiumId, neutralVenue));
+        }
+
+        public void SetAutomaticStadium(Guid id) => SetAutomaticStadium([id]);
+
+        public void SetAutomaticStadium(IEnumerable<Guid> matchIds)
+        {
+            using (CollectionChangedDeferrer.Defer())
+            {
+                var matches = GetAll().ToList();
+                var schedulingMatches = matches.Where(x => matchIds.Contains(x.Id)).OrderBy(x => x.Date).ToList();
+                var scheduledMatches = matches.Except(schedulingMatches).ToList();
+
+                var stadiums = _stadiumRepository.GetAll();
+                schedulingMatches.ForEach(x =>
+                {
+                    Update(x.Id, y => y.GetSchedulingParameters().ScheduleVenues([y], stadiums, scheduledMatches));
+
+                    scheduledMatches.Add(x);
+                });
+
+            }
         }
 
         public MatchDto New(Guid parentId, DateTime date)

@@ -126,7 +126,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private void CancelRemoveMatch(EditableMatchViewModel item) => item.IsDeleting = false;
 
-        private void AddMatch() => Matches.Add(new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
+        private void AddMatch() => Matches.Add(new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
         {
             Date = Date,
             Time = Time,
@@ -139,7 +139,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DuplicatedMatchday = matchday;
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
+                var result = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
                 {
                     Date = Date,
                     Time = Time,
@@ -232,7 +232,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             PostponedState = !PostponedDate.HasValue && !item.IsPostponed ? PostponedState.None : PostponedDate.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
             Matches.Set(item.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(x.Id, _teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
+                var result = new EditableMatchViewModel(x.Id, _teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
                 {
                     Date = x.Date.ToLocalTime().Date,
                     Time = x.Date.ToLocalTime().TimeOfDay,

@@ -8,7 +8,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
     public abstract class MatchEventPackage : EntityPackage
     {
-        [XmlElement("minute", IsNullable = true)]
+        [XmlElement("Minute", IsNullable = true)]
         public int? Minute { get; set; }
 
         [XmlIgnore]

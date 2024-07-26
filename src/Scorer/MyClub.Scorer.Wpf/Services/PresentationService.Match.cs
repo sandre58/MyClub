@@ -127,6 +127,36 @@ namespace MyClub.Scorer.Wpf.Services
             }).ConfigureAwait(false);
         }
 
+        public async Task RescheduleAutomaticAsync(MatchViewModel item) => await RescheduleAutomaticAsync([item]).ConfigureAwait(false);
+
+        public async Task RescheduleAutomaticAsync(IEnumerable<MatchViewModel> items)
+        {
+            var idsList = items.Select(x => x.Id).ToList();
+
+            if (idsList.Count == 0) return;
+
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.RescheduleAutomatic(idsList);
+            }).ConfigureAwait(false);
+        }
+
+        public async Task RescheduleAutomaticStadiumAsync(MatchViewModel item) => await RescheduleAutomaticStadiumAsync([item]).ConfigureAwait(false);
+
+        public async Task RescheduleAutomaticStadiumAsync(IEnumerable<MatchViewModel> items)
+        {
+            var idsList = items.Select(x => x.Id).ToList();
+
+            if (idsList.Count == 0) return;
+
+            await AppBusyManager.WaitAsync(() =>
+            {
+                using (_scheduleChangedDeferrer.Defer())
+                    _matchService.SetAutomaticStadium(idsList);
+            }).ConfigureAwait(false);
+        }
+
         public async Task PostponeAsync(MatchViewModel item, DateTime? postponedDate = null) => await PostponeAsync([item], postponedDate).ConfigureAwait(false);
 
         public async Task PostponeAsync(IEnumerable<MatchViewModel> items, DateTime? postponedDate = null)

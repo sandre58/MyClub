@@ -54,7 +54,8 @@
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
                     <!-- Read -->
-                    <Button my:IconAssist.Icon="{my:Icon Kind=CircleEditOutline}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                            my:IconAssist.Icon="{my:Icon Kind=CircleEditOutline}"
                             Command="{Binding EditResultsCommand}"
                             Content="{my:Resource EditResults}"
                             ToolTip="Ctrl+Maj+E"
@@ -63,6 +64,11 @@
                             Command="{Binding OpenSchedulingAssistantCommand}"
                             Content="{my:Resource SchedulingAssistant}"
                             ToolTip="Ctrl+Alt+E"
+                            Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+                    <Button my:IconAssist.Icon="{my:Icon Kind=TimerCog}"
+                            Command="{Binding EditSchedulingParametersCommand}"
+                            Content="{my:Resource SchedulingParameters}"
+                            ToolTip="F8"
                             Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
 
                     <!-- Edition -->
@@ -88,6 +94,7 @@
                                    ToggleContent="{my:MediumIcon Kind=ClockPlus}"
                                    ToolTip="{my:Resource Reschedule}">
                     <my:Submenu>
+                        <MenuItem Command="{Binding Data.RescheduleAutomaticCommand, Source={StaticResource Proxy}}" Header="{my:Resource Automatic}" />
                         <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
                         <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
                         <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />
@@ -105,11 +112,11 @@
                                    PopupPadding="0"
                                    ToggleContent="{my:MediumIcon Kind=Stadium}"
                                    ToolTip="{my:Resource ChangeLocation}">
-                    <my:Submenu my:ItemsControlAssist.SortingProperty="Item.Address.City" ItemsSource="{Binding Stadiums.Wrappers}">
+                    <my:Submenu my:ItemsControlAssist.SortingProperty="Stadium.Address.City" ItemsSource="{Binding Stadiums.Items}">
                         <my:Submenu.ItemContainerStyle>
                             <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                                 <Setter Property="Command" Value="{Binding Data.SetStadiumForSelectedItemsCommand, Source={StaticResource Proxy}}" />
-                                <Setter Property="CommandParameter" Value="{Binding Item}" />
+                                <Setter Property="CommandParameter" Value="{Binding Stadium}" />
                                 <Setter Property="Header" Value="{Binding}" />
                                 <Setter Property="HeaderTemplate">
                                     <Setter.Value>
@@ -143,7 +150,7 @@
                                                         </Style>
                                                     </my:PackIcon.Style>
                                                 </my:PackIcon>
-                                                <TextBlock Text="{Binding Item.DisplayName}" />
+                                                <TextBlock Text="{Binding Stadium.DisplayName}" />
                                             </my:SimpleStackPanel>
                                         </DataTemplate>
                                     </Setter.Value>

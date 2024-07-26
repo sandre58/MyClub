@@ -14,13 +14,13 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("infraction")]
         public int Infraction { get; set; }
 
-        [XmlElement("description", IsNullable = true)]
+        [XmlElement("Description", IsNullable = true)]
         public string? Description { get; set; }
 
         [XmlIgnore]
         public bool DescriptionSpecified => !string.IsNullOrEmpty(Description);
 
-        [XmlElement("playerId", IsNullable = true)]
+        [XmlElement("PlayerId", IsNullable = true)]
         public Guid? PlayerId { get; set; }
 
         [XmlIgnore]

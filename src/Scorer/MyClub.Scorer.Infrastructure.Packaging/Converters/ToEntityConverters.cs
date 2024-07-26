@@ -16,6 +16,7 @@ using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Infrastructure.Packaging.Models;
 using MyNet.Utilities;
+using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Geography;
 using MyNet.Utilities.Sequences;
 
@@ -74,7 +75,62 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
         }
 
         public static SchedulingParameters? CreateSchedulingParameters(this SchedulingParametersPackage schedulingParametersPackage)
-            => new(schedulingParametersPackage.StartDate, schedulingParametersPackage.EndDate, schedulingParametersPackage.StartTime, schedulingParametersPackage.RotationTime, schedulingParametersPackage.RestTime, schedulingParametersPackage.UseTeamVenues);
+            => new(schedulingParametersPackage.StartDate,
+                   schedulingParametersPackage.EndDate,
+                   schedulingParametersPackage.StartTime,
+                   schedulingParametersPackage.RotationTime,
+                   schedulingParametersPackage.RestTime,
+                   schedulingParametersPackage.UseHomeVenue,
+                   schedulingParametersPackage.AsSoonAsPossible,
+                   schedulingParametersPackage.Interval,
+                   schedulingParametersPackage.ScheduleByParent,
+                   schedulingParametersPackage.AsSoonAsPossibleRules?.Select(x => x.CreateAsSoonAsPossibleSchedulingRule()).ToList() ?? [],
+                   schedulingParametersPackage.DateRules?.Select(x => x.CreateDateSchedulingRule()).ToList() ?? [],
+                   schedulingParametersPackage.TimeRules?.Select(x => x.CreateTimeSchedulingRule()).ToList() ?? [],
+                   schedulingParametersPackage.VenueRules?.Select(x => x.CreateVenueSchedulingRule()).ToList() ?? []);
+
+        public static IAvailableDateSchedulingRule CreateAsSoonAsPossibleSchedulingRule(this AsSoonAsPossibleSchedulingRulePackage source)
+            => source switch
+            {
+                IncludeDaysOfWeekAsSoonAsPossibleRulePackage includeDaysOfWeekRule => new IncludeDaysOfWeekRule(includeDaysOfWeekRule.DaysOfWeek?.Split(";").Select(Enum.Parse<DayOfWeek>).ToList() ?? []),
+                ExcludeDatesRangeAsSoonAsPossibleRulePackage excludePeriodRule => new ExcludeDatesRangeRule(excludePeriodRule.StartDate, excludePeriodRule.EndDate),
+                IncludeTimePeriodsRulePackage includeTimePeriodsRule => new IncludeTimePeriodsRule(includeTimePeriodsRule.TimePeriods?.Select(x => new TimePeriod(x.StartTime, x.EndTime, DateTimeKind.Local)).ToList() ?? []),
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
+
+        public static IDateSchedulingRule CreateDateSchedulingRule(this DateSchedulingRulePackage source)
+            => source switch
+            {
+                IncludeDaysOfWeekRulePackage dateIntervalRule => new IncludeDaysOfWeekRule(dateIntervalRule.DaysOfWeek?.Split(";").Select(Enum.Parse<DayOfWeek>).ToList() ?? []),
+                ExcludeDateRulePackage excludeDateRule => new ExcludeDateRule(excludeDateRule.Date),
+                ExcludeDatesRangeRulePackage excludeDatesRangeRule => new ExcludeDatesRangeRule(excludeDatesRangeRule.StartDate, excludeDatesRangeRule.EndDate),
+                DateIntervalRulePackage dateIntervalRule => new DateIntervalRule(dateIntervalRule.Interval),
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
+
+        public static ITimeSchedulingRule CreateTimeSchedulingRule(this TimeSchedulingRulePackage source)
+            => source switch
+            {
+                TimeOfDayRulePackage timeOfDayRule => new TimeOfDayRule(timeOfDayRule.Day, timeOfDayRule.Time, timeOfDayRule.MatchExceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfMatchNumberRule>() ?? []),
+                TimeOfDateRulePackage timeOfDateRule => new TimeOfDateRule(timeOfDateRule.Date, timeOfDateRule.Time, timeOfDateRule.MatchExceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfMatchNumberRule>() ?? []),
+                TimeOfMatchNumberRulePackage timeOfMatchNumberRule => new TimeOfMatchNumberRule(timeOfMatchNumberRule.MatchNumber, timeOfMatchNumberRule.Time),
+                TimeOfDateRangeRulePackage timeOfDateRangeRule => new TimeOfDatesRangeRule(timeOfDateRangeRule.StartDate, timeOfDateRangeRule.EndDate, timeOfDateRangeRule.Time, timeOfDateRangeRule.MatchExceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfMatchNumberRule>() ?? []),
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
+
+        public static IAvailableVenueSchedulingRule CreateVenueSchedulingRule(this VenueSchedulingRulePackage source)
+            => source switch
+            {
+                HomeStadiumRulePackage => new HomeStadiumRule(),
+                AwayStadiumRulePackage => new AwayStadiumRule(),
+                NoStadiumRulePackage => new NoStadiumRule(),
+                FirstAvailableStadiumRulePackage firstAvailableStadiumRule => new FirstAvailableStadiumRule((UseRotationTime)firstAvailableStadiumRule.UseRotationTime),
+                StadiumOfDayRulePackage stadiumOfDayRule => new StadiumOfDayRule(stadiumOfDayRule.Day, stadiumOfDayRule.StadiumId, stadiumOfDayRule.MatchExceptions?.Select(x => x.CreateVenueSchedulingRule()).OfType<StadiumOfMatchNumberRule>() ?? []),
+                StadiumOfDateRulePackage stadiumOfDateRule => new StadiumOfDateRule(stadiumOfDateRule.Date, stadiumOfDateRule.StadiumId, stadiumOfDateRule.MatchExceptions?.Select(x => x.CreateVenueSchedulingRule()).OfType<StadiumOfMatchNumberRule>() ?? []),
+                StadiumOfMatchNumberRulePackage stadiumOfMatchNumberRule => new StadiumOfMatchNumberRule(stadiumOfMatchNumberRule.MatchNumber, stadiumOfMatchNumberRule.StadiumId),
+                StadiumOfDateRangeRulePackage stadiumOfDateRangeRule => new StadiumOfDatesRangeRule(stadiumOfDateRangeRule.StartDate, stadiumOfDateRangeRule.EndDate, stadiumOfDateRangeRule.StadiumId, stadiumOfDateRangeRule.MatchExceptions?.Select(x => x.CreateVenueSchedulingRule()).OfType<StadiumOfMatchNumberRule>() ?? []),
+                _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
+            };
 
         public static Address CreateAddress(this AddressPackage source) => new(source.Street, source.PostalCode, source.City, source.Country.HasValue ? Country.FromValue(source.Country.Value) : null, source.Latitude, source.Longitude);
 

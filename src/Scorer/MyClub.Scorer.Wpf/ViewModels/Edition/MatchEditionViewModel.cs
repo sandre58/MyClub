@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
@@ -50,7 +51,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             _availibilityCheckingService = availibilityCheckingService;
             _resultsChangedDeferrer = resultsChangedDeferrer;
             _scheduleChangedDeferrer = scheduleChangedDeferrer;
-            StadiumSelection = new WrapperListViewModel<StadiumViewModel, StadiumWrapper>(stadiumsProvider.Connect(), x => new StadiumWrapper(x));
+            StadiumSelection = new ListViewModel<StadiumWrapper>(stadiumsProvider.Connect().Transform(x => new StadiumWrapper(x)));
             AvailableTeams = new(_availableTeams);
 
             Mode = ScreenMode.Edition;
@@ -125,7 +126,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 this.WhenPropertyChanged(x => x.HomeTeam, false).Subscribe(x =>
                 {
                     if (!IsModifiedSuspender.IsSuspended && Mode == ScreenMode.Creation && !NeutralVenue)
-                        StadiumSelection.SelectedItem = x.Value?.Stadium;
+                        StadiumSelection.SelectedItem = x.Value?.Stadium?.Id is Guid id ? StadiumSelection.GetByIdOrDefault(id) : null;
 
                     ValidateOriginDateAvaibility();
                     ValidatePostponedDateAvaibility();
@@ -214,7 +215,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanBeValidated]
         [CanSetIsModified]
-        public WrapperListViewModel<StadiumViewModel, StadiumWrapper> StadiumSelection { get; }
+        public ListViewModel<StadiumWrapper> StadiumSelection { get; }
 
         [Display(Name = nameof(HomeScore), ResourceType = typeof(MyClubResources))]
         public AcceptableValue<int> HomeScore { get; } = new AcceptableValue<int>(Match.AcceptableRangeScore);
@@ -307,8 +308,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             else if (Date.HasValue)
                 date = Date.Value.ToLocalDateTime(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
 
-            foreach (var item in StadiumSelection.Wrappers)
-                item.Availability = date.HasValue ? CheckStadiumAvaibility(item.Item.Id, date.Value) : AvailabilityCheck.Unknown;
+            foreach (var item in StadiumSelection.Items)
+                item.Availability = date.HasValue ? CheckStadiumAvaibility(item.Stadium.Id, date.Value) : AvailabilityCheck.Unknown;
         }
 
         private AvailabilityCheck CheckTeamsAvaibility(DateTime date)
@@ -379,9 +380,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Stadium = StadiumSelection.SelectedItem is not null ? new StadiumDto
                 {
                     Id = StadiumSelection.SelectedItem.Id,
-                    Name = StadiumSelection.SelectedItem.Name,
-                    Ground = StadiumSelection.SelectedItem.Ground,
-                    Address = StadiumSelection.SelectedItem.Address,
+                    Name = StadiumSelection.SelectedItem.Stadium.Name,
+                    Ground = StadiumSelection.SelectedItem.Stadium.Ground,
+                    Address = StadiumSelection.SelectedItem.Stadium.Address,
                 } : null,
                 HomeScore = HomeScore.Value,
                 AwayScore = AwayScore.Value,
@@ -427,10 +428,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         }
     }
 
-    internal class StadiumWrapper : Wrapper<StadiumViewModel>
+    internal interface IStadiumWrapper
+    {
+
+    }
+
+    internal class StadiumWrapper : ObservableObject, IStadiumWrapper, IIdentifiable<Guid>
     {
         public AvailabilityCheck Availability { get; set; }
 
-        public StadiumWrapper(StadiumViewModel item) : base(item) { }
+        public StadiumViewModel Stadium { get; }
+
+        public Guid Id => Stadium.Id;
+
+        public StadiumWrapper(StadiumViewModel item) => Stadium = item;
     }
+
+    internal class AutomaticStadiumWrapper : EditableObject, IStadiumWrapper { }
+
+    internal class NoStadiumWrapper : EditableObject, IStadiumWrapper { }
 }

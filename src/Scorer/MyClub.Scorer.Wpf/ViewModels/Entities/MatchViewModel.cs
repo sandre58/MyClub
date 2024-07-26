@@ -12,6 +12,7 @@ using DynamicData;
 using DynamicData.Binding;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
@@ -64,6 +65,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             RescheduleXMinutesCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleAsync(x, TimeUnit.Minute).ConfigureAwait(false), x => CanReschedule());
             RescheduleXHoursCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleAsync(x, TimeUnit.Hour).ConfigureAwait(false), x => CanReschedule());
             RescheduleCommand = CommandsManager.CreateNotNull<object[]>(async x => await RescheduleAsync(Convert.ToInt32(x[0]), (TimeUnit)x[1]).ConfigureAwait(false), x => x.Length == 2 && x[0] is double && x[1] is TimeUnit && CanReschedule());
+            RescheduleAutomaticCommand = CommandsManager.Create(async () => await RescheduleAutomaticAsync().ConfigureAwait(false), CanRescheduleAutomatic);
+            RescheduleAutomaticStadiumCommand = CommandsManager.Create(async () => await RescheduleAutomaticStadiumAsync().ConfigureAwait(false), CanRescheduleAutomaticStadium);
 
             var scoreChangedRequestedSubject = new Subject<bool>();
             Disposables.AddRange(
@@ -199,6 +202,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public ICommand RescheduleXHoursCommand { get; }
 
+        public ICommand RescheduleAutomaticCommand { get; }
+
+        public ICommand RescheduleAutomaticStadiumCommand { get; }
+
         public ICommand RescheduleCommand { get; }
 
         public bool CanBe(MatchState state)
@@ -214,6 +221,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             };
 
         public bool CanReschedule() => State is MatchState.None or MatchState.Postponed;
+
+        public bool CanRescheduleAutomatic() => CanReschedule() && Item.CanAutomaticReschedule();
+
+        public bool CanRescheduleAutomaticStadium() => CanReschedule() && Item.CanAutomaticRescheduleVenue();
 
         public bool CanRandomize() => State is MatchState.None or MatchState.InProgress or MatchState.Played or MatchState.Suspended or MatchState.Postponed;
 
@@ -266,6 +277,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public async Task FinishAsync() => await _matchPresentationService.FinishAsync(this).ConfigureAwait(false);
 
         public async Task RescheduleAsync(int offset, TimeUnit timeUnit) => await _matchPresentationService.RescheduleAsync(this, offset, timeUnit).ConfigureAwait(false);
+
+        public async Task RescheduleAutomaticAsync() => await _matchPresentationService.RescheduleAutomaticAsync(this).ConfigureAwait(false);
+
+        public async Task RescheduleAutomaticStadiumAsync() => await _matchPresentationService.RescheduleAutomaticStadiumAsync(this).ConfigureAwait(false);
 
         public async Task DoWithdrawForHomeTeamAsync() => await _matchPresentationService.DoWithdrawForHomeTeamAsync(this).ConfigureAwait(false);
 

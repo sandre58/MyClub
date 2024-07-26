@@ -7,6 +7,7 @@
     <Rule Id="IDE0010" Action="None" />
     <Rule Id="IDE0011" Action="None" />
     <Rule Id="IDE0072" Action="None" />
+    <Rule Id="IDE0130" Action="None" />
     <Rule Id="IDE0290" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeAnalysis.NetAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.NetAnalyzers">

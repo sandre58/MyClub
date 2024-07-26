@@ -4,6 +4,7 @@
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
                   xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
                   Style="{StaticResource MyNet.Styles.ContentDialog}"
                   Width="700"
@@ -43,7 +44,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!--  Name  -->
+            <!-- Name -->
             <TextBox Style="{StaticResource MyNet.Styles.TextBox.Edition}"
                      Grid.Column="1"
                      Width="215"
@@ -54,7 +55,7 @@
                      FontSize="{StaticResource MyNet.Font.Size.Title}"
                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-            <!--  Image  -->
+            <!-- Image -->
             <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
                             Width="80"
                             Height="80"
@@ -66,14 +67,10 @@
         </Grid>
     </my:ContentDialog.Header>
 
-    <my:NavigationView Style="{StaticResource MyNet.Styles.NavigationView.Compact}"
-                       my:HeaderAssist.HorizontalAlignment="Right"
-                       NavigationService="{Binding NavigationService}"
-                       ShowHeader="False"
-                       ShowNavigationButtons="False">
-        <my:NavigationViewItem Header="{my:Resource General}"
-                               Icon="{my:MediumIcon Kind=Information}"
-                               TargetPage="{Binding GeneralViewModel}"
-                               ToolTip="{my:Resource General}" />
-    </my:NavigationView>
+    <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=InformationCircle}" Header="{my:Resource General}" />
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=Settings}" Header="{my:Resource Rules}">
+            <v:ProjectEditionMatchRulesView />
+        </TabItem>
+    </TabControl>
 </my:ContentDialog>

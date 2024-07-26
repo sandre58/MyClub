@@ -6,40 +6,40 @@ using System.Xml.Serialization;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
-    [XmlRoot("metadata", Namespace = CrossCutting.Packaging.XmlConstants.MyClubNamespace)]
+    [XmlRoot("Metadata", Namespace = CrossCutting.Packaging.XmlConstants.MyClubNamespace)]
     public class MetadataPackage
     {
-        [XmlElement("guid")]
+        [XmlElement("Guid")]
         public Guid Id { get; set; }
 
-        [XmlElement("type")]
+        [XmlElement("Type")]
         public int Type { get; set; }
 
-        [XmlElement("name")]
+        [XmlElement("Name")]
         public string Name { get; set; } = string.Empty;
 
         [XmlIgnore]
         public byte[]? Image { get; set; }
 
-        [XmlElement("createdAt", IsNullable = true)]
+        [XmlElement("CreatedAt", IsNullable = true)]
         public DateTime? CreatedAt { get; set; }
 
         [XmlIgnore]
         public bool CreatedAtSpecified => CreatedAt.HasValue;
 
-        [XmlElement("createdBy", IsNullable = true)]
+        [XmlElement("CreatedBy", IsNullable = true)]
         public string? CreatedBy { get; set; }
 
         [XmlIgnore]
         public bool CreatedBySpecified => CreatedBy is not null;
 
-        [XmlElement("modifiedAt", IsNullable = true)]
+        [XmlElement("ModifiedAt", IsNullable = true)]
         public DateTime? ModifiedAt { get; set; }
 
         [XmlIgnore]
         public bool ModifiedAtSpecified => ModifiedAt.HasValue;
 
-        [XmlElement("modifiedBy", IsNullable = true)]
+        [XmlElement("ModifiedBy", IsNullable = true)]
         public string? ModifiedBy { get; set; }
 
         [XmlIgnore]

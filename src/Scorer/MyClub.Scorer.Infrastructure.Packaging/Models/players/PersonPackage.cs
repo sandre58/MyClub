@@ -14,7 +14,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("firstName")]
         public string FirstName { get; set; } = string.Empty;
 
-        [XmlElement("country", IsNullable = true)]
+        [XmlElement("Country", IsNullable = true)]
         public int? Country { get; set; }
 
         [XmlIgnore]

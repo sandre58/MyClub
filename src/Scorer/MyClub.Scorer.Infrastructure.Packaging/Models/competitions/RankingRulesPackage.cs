@@ -8,14 +8,14 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
     public class RankingRulesPackage
     {
-        [XmlArray("points")]
-        [XmlArrayItem("pointsNumber", typeof(PointsNumberByResultPackage))]
+        [XmlArray("Points")]
+        [XmlArrayItem("PointsNumber", typeof(PointsNumberByResultPackage))]
         public List<PointsNumberByResultPackage>? Points { get; set; }
 
-        [XmlElement("comparers")]
+        [XmlElement("Comparers")]
         public string? Comparers { get; set; }
 
-        [XmlElement("commputers")]
+        [XmlElement("Computers")]
         public string? Computers { get; set; }
     }
 }

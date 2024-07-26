@@ -33,6 +33,7 @@
                        ToggleContent="{my:ToolIcon Kind=DotsVertical}">
         <my:Submenu>
             <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding CanBeRescheduled}">
+                <MenuItem Command="{Binding RescheduleAutomaticCommand}" Header="{my:Resource Automatic}" />
                 <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
                 <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
                 <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />

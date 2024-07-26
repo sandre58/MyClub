@@ -76,10 +76,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
             NewLeagueCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.League).ConfigureAwait(false), projectCommandsService.IsEnabled);
             NewCupCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.Cup).ConfigureAwait(false), projectCommandsService.IsEnabled);
             CreateCommand = CommandsManager.Create(async () => await projectCommandsService.CreateAsync().ConfigureAwait(false), projectCommandsService.IsEnabled);
+            EditCommand = CommandsManager.Create(async () => await projectCommandsService.EditAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
             CloseCommand = CommandsManager.Create(async () => await projectCommandsService.CloseCurrentProjectAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
             SaveCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
             SaveAsCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
             OpenBuildAssistantCommand = CommandsManager.Create(async () => await competitionCommandsService.OpenBuildAssistantAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
+            EditSchedulingParametersCommand = CommandsManager.Create(async () => await competitionCommandsService.EditSchedulingParametersAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
 
             Disposables.AddRange(
             [
@@ -155,6 +157,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         public ICommand NewCupCommand { get; }
 
         public ICommand CreateCommand { get; }
+
+        public ICommand EditCommand { get; }
+
+        public ICommand EditSchedulingParametersCommand { get; }
 
         public ICommand CloseCommand { get; }
 

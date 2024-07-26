@@ -11,13 +11,13 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("type")]
         public int Type { get; set; }
 
-        [XmlElement("scorerId", IsNullable = true)]
+        [XmlElement("ScorerId", IsNullable = true)]
         public Guid? ScorerId { get; set; }
 
         [XmlIgnore]
         public bool ScorerIdSpecified => ScorerId.HasValue;
 
-        [XmlElement("assistId", IsNullable = true)]
+        [XmlElement("AssistId", IsNullable = true)]
         public Guid? AssistId { get; set; }
 
         [XmlIgnore]

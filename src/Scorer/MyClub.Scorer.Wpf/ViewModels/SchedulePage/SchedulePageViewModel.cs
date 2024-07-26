@@ -21,6 +21,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                                      MatchesProvider matchesProvider,
                                      TeamsProvider teamsProvider,
                                      StadiumsProvider stadiumsProvider,
+                                     CompetitionCommandsService competitionCommandsService,
                                      MatchPresentationService matchPresentationService,
                                      AvailibilityCheckingService availibilityCheckingService)
         {
@@ -32,6 +33,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                                               teamsProvider,
                                               stadiumsProvider,
                                               matchPresentationService,
+                                              competitionCommandsService,
                                               availibilityCheckingService),
                 _ => throw new NotImplementedException()
             },

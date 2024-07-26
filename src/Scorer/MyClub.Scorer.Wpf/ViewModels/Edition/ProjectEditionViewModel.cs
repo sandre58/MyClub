@@ -1,21 +1,15 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
-using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Wpf.Services.Providers;
-using MyNet.Humanizer;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
 using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.Edition;
-using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
@@ -23,6 +17,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     {
         private readonly ProjectService _projectService;
         private readonly ProjectInfoProvider _projectInfoProvider;
+        private readonly LeagueService _leagueService;
+        private readonly CompetitionInfoProvider _competitionInfoProvider;
+
+        public ProjectEditionViewModel(ProjectInfoProvider projectInfoProvider, CompetitionInfoProvider competitionInfoProvider, StadiumsProvider stadiumsProvider, ProjectService projectService, LeagueService leagueService)
+        {
+            _projectService = projectService;
+            _projectInfoProvider = projectInfoProvider;
+            _competitionInfoProvider = competitionInfoProvider;
+            _leagueService = leagueService;
+            SchedulingParameters = new(stadiumsProvider.Items);
+            Mode = ScreenMode.Edition;
+        }
 
         [IsRequired]
         [Display(Name = nameof(Name), ResourceType = typeof(MyClubResources))]
@@ -30,43 +36,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public byte[]? Image { get; set; }
 
-        public ProjectEditionGeneralViewModel GeneralViewModel { get; } = new();
+        public EditableMatchFormatViewModel MatchFormat { get; } = new();
 
-        public ProjectEditionViewModel(ProjectInfoProvider projectInfoProvider, ProjectService projectService)
-        {
-            _projectService = projectService;
-            _projectInfoProvider = projectInfoProvider;
-            Mode = ScreenMode.Creation;
+        public EditableSchedulingParametersViewModel SchedulingParameters { get; }
 
-            AddSubWorkspaces(
-            [
-                GeneralViewModel,
-            ]);
-
-            Disposables.AddRange(
-            [
-                GeneralViewModel.WhenPropertyChanged(x => x.Type).Subscribe(_ =>
-                {
-                    var dictionary = Enum.GetValues<CompetitionType>().ToDictionary(x => x, x => x.Humanize());
-
-                    if (string.IsNullOrEmpty(Name) || dictionary.ContainsValue(Name))
-                        Name = dictionary.GetValueOrDefault(GeneralViewModel.Type);
-                })
-            ]);
-        }
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public bool CanEditMatchFormat { get; private set; }
 
         protected override void RefreshCore()
         {
-            if (Mode == ScreenMode.Edition)
-            {
-                Name = _projectInfoProvider.Name;
-                Image = _projectInfoProvider.Image;
-            }
-            else
-            {
-                Name = GeneralViewModel.Type.Humanize();
-                Image = null;
-            }
+            Name = _projectInfoProvider.Name;
+            Image = _projectInfoProvider.Image;
+
+            var competition = _competitionInfoProvider.GetCompetition();
+
+            CanEditMatchFormat = !_competitionInfoProvider.HasMatches;
+            MatchFormat.Load(competition.MatchFormat);
+            //SchedulingParameters.Load(competition.SchedulingParameters);
         }
 
         protected override void SaveCore()
@@ -78,11 +65,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Name = Name,
                 Image = Image,
             });
+
+            var competition = _competitionInfoProvider.GetCompetition();
+
+            if (competition is LeagueViewModel)
+            {
+                if (CanEditMatchFormat)
+                    _leagueService.UpdateMatchFormat(MatchFormat.Create());
+                _leagueService.UpdateSchedulingParameters(SchedulingParameters.Create());
+            }
         }
 
         protected override void Cleanup()
         {
-            GeneralViewModel.Dispose();
+            MatchFormat.Dispose();
             base.Cleanup();
         }
     }

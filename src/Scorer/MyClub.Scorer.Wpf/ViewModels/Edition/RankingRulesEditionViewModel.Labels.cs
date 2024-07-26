@@ -11,6 +11,7 @@ using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyNet.Observable;
+using MyNet.Observable.Attributes;
 using MyNet.UI.Commands;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Selection.Models;
@@ -23,6 +24,8 @@ using MyNet.Wpf.Extensions;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
+    [CanBeValidatedForDeclaredClassOnly(true)]
+    [CanSetIsModifiedAttributeForDeclaredClassOnly(true)]
     internal class RankingLabelsViewModel : ListViewModel<EditableRankLabelViewModel>
     {
         public RankingLabelsViewModel() : base()
@@ -50,6 +53,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public ICommand ReduceOnRankCommand { get; }
 
         public ICommand ExpandOnRankCommand { get; }
+
+        public override bool IsModified() => Collection.Any(x => x.IsModified()) || base.IsModified();
 
         public void Load(Dictionary<AcceptableValueRange<int>, RankLabel> rankingLabels, int ranksCount)
         {
@@ -147,12 +152,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private void UpdateRanks() => Ranks.Wrappers.ForEach(x => x.Item.Label = Collection.FirstOrDefault(y => y.Range.Contains(x.Item.Item)));
     }
 
+    [CanBeValidatedForDeclaredClassOnly(true)]
+    [CanSetIsModifiedAttributeForDeclaredClassOnly(true)]
     internal class RanksListViewModel : SelectionListViewModel<EditableRankViewModel>
     {
         public void Reload(int count) => Collection.Set(EnumerableHelper.Range(1, count, 1).Select(x => new EditableRankViewModel(x)).ToList());
+
+        public override bool IsModified() => Collection.Any(x => x.IsModified());
     }
 
-    internal class EditableRankViewModel : Wrapper<int>
+    internal class EditableRankViewModel : EditableWrapper<int>
     {
         public EditableRankViewModel(int item) : base(item)
         {

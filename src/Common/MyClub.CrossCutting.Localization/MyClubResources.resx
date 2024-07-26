@@ -1652,10 +1652,10 @@ Cliquer ici pour accéder à sa fiche.</value>
   <data name="NewLeagueDescription" xml:space="preserve">
     <value>Créez une nouvelle ligue entièrement personnalisable et commencez maintenant</value>
   </data>
-  <data name="UseTeamVenues" xml:space="preserve">
+  <data name="UseHomeVenue" xml:space="preserve">
     <value>Utiliser les stades des équipes</value>
   </data>
-  <data name="UseTeamVenuesDescription" xml:space="preserve">
+  <data name="VenueSchedulingMethodUseHomeVenueDescription" xml:space="preserve">
     <value>Les matchs sont joués chez les équipes évoluant à domicile.
 Désactiver cette option si la compétition est regroupée dans un ensemble de stade défini.</value>
   </data>
@@ -1970,16 +1970,16 @@ Variables :
   <data name="AddTimeRule" xml:space="preserve">
     <value>Spécifier l'heure</value>
   </data>
-  <data name="TimeOfDayTimeRule" xml:space="preserve">
+  <data name="SchedulingForDayRule" xml:space="preserve">
     <value>Pour un jour de la semaine</value>
   </data>
   <data name="TakeDefaultTime" xml:space="preserve">
     <value>Sinon prendre l'heure par défaut</value>
   </data>
-  <data name="TimeOfDateTimeRule" xml:space="preserve">
+  <data name="SchedulingForDateRule" xml:space="preserve">
     <value>Pour une date</value>
   </data>
-  <data name="TimeOfDateRangeTimeRule" xml:space="preserve">
+  <data name="SchedulingForDateRangeRule" xml:space="preserve">
     <value>Pour une période</value>
   </data>
   <data name="Between" xml:space="preserve">
@@ -2045,7 +2045,7 @@ Il n'est utilisable que pour un nombre d'équipes pair.</value>
     <value>Définit le temps de repos minimum que doit observer une équipe entre 2 matchs.</value>
   </data>
   <data name="StartTimeDescription" xml:space="preserve">
-    <value>Définit l'heure de début par défaut des matchs.</value>
+    <value>Définit l'heure de début par défaut des matchs lors de l'ajout de nouveau matchs.</value>
   </data>
   <data name="AsSoonAsPossible" xml:space="preserve">
     <value>Dès que possible</value>
@@ -2062,14 +2062,14 @@ Il n'est utilisable que pour un nombre d'équipes pair.</value>
   <data name="HowDefineDatesAndTimes" xml:space="preserve">
     <value>Comment voulez-vous définir les dates et les heures des journées et des matchs ?</value>
   </data>
-  <data name="BuildMethodManualDescription" xml:space="preserve">
+  <data name="DatesSchedulingMethodManualDescription" xml:space="preserve">
     <value>Sélectionnez individuellement la date de chaque journée.</value>
   </data>
-  <data name="BuildMethodAutomaticDescription" xml:space="preserve">
-    <value>Ajoutez des règles permettant de calculer les dates et les heures des journées.</value>
+  <data name="DatesSchedulingMethodAutomaticDescription" xml:space="preserve">
+    <value>Les dates et les heures des matchs sont définies à intervalle régulier tout en respectant les règles de calcul. Si aucune règle n'est fournie, les dates ne pourront pas être calculées automatiquement.</value>
   </data>
-  <data name="BuildMethodAsSoonAsPossibleDescription" xml:space="preserve">
-    <value>Définit les dates et les heures des matchs et des journées en fonction du format des matchs et des paramètres de planification. Les matchs sont calculés dès que les 2 équipes et le terrains sont disponibles sont disponibles.</value>
+  <data name="DatesSchedulingMethodAsSoonAsPossibleDescription" xml:space="preserve">
+    <value>Les dates et les heures des matchs sont définies dès que les 2 équipes et le terrain sont disponibles en respectant les temps de repos, les temps de rotation et les règles  de calcul.</value>
   </data>
   <data name="XMissingDates" xml:space="preserve">
     <value>1 date manquante</value>
@@ -2119,7 +2119,7 @@ Il n'est utilisable que pour un nombre d'équipes pair.</value>
   <data name="MatchNumber" xml:space="preserve">
     <value>Numéro de match</value>
   </data>
-  <data name="TimeOfMatchNumberTimeRule" xml:space="preserve">
+  <data name="SchedulingForMatchNumberRule" xml:space="preserve">
     <value>Pour un numéro de match</value>
   </data>
   <data name="ForMatch" xml:space="preserve">
@@ -2145,5 +2145,69 @@ Il n'est utilisable que pour un nombre d'équipes pair.</value>
   </data>
   <data name="Patterns" xml:space="preserve">
     <value>Modèles de nommage</value>
+  </data>
+  <data name="VenuesSchedulingMethodNoneDescription" xml:space="preserve">
+    <value>Aucun stade n'est affecté aux matchs.</value>
+  </data>
+  <data name="NoAssignVenue" xml:space="preserve">
+    <value>Ne pas affecter</value>
+  </data>
+  <data name="VenuesSchedulingMethodAutomaticDescription" xml:space="preserve">
+    <value>Les stades sont affectées en fonction des règles spécifiées.
+Les règles ne se cumulent pas. Le stade assigné est le premier stade renvoyé par une règle.</value>
+  </data>
+  <data name="CannotEditMatchFormatWarning" xml:space="preserve">
+    <value>Le format des matches ne peut pas être modifié car des matchs ont été générés pour la compétition en cours.</value>
+  </data>
+  <data name="ComputingDateRulesDescription" xml:space="preserve">
+    <value>Définissez les règles permettant de calculer automatiquement les dates et horaires des matchs.</value>
+  </data>
+  <data name="Rest" xml:space="preserve">
+    <value>Repos</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Rotation</value>
+  </data>
+  <data name="NoSchedulingRules" xml:space="preserve">
+    <value>Aucune règle de planification n'est définie. Les matchs ne pourront pas être planifiés automatiquement.</value>
+  </data>
+  <data name="GenerateDatesEvery" xml:space="preserve">
+    <value>Générer des dates tous les</value>
+  </data>
+  <data name="HomeStadium" xml:space="preserve">
+    <value>Stade de l'équipe à domicile</value>
+  </data>
+  <data name="AwayStadium" xml:space="preserve">
+    <value>Stade de l'équipe à l'extérieur</value>
+  </data>
+  <data name="FirstAvailableStadium" xml:space="preserve">
+    <value>1er stade disponible</value>
+  </data>
+  <data name="AwayStadiumDescription" xml:space="preserve">
+    <value>Affecter le stade de l'équipe évoluant à l'extérieur</value>
+  </data>
+  <data name="HomeStadiumDescription" xml:space="preserve">
+    <value>Affecter le stade de l'équipe évoluant à domicile</value>
+  </data>
+  <data name="NoStadiumDescription" xml:space="preserve">
+    <value>N'affecter aucun stade</value>
+  </data>
+  <data name="FirstAvailableStadiumDescription" xml:space="preserve">
+    <value>Affecter le premier stade disponible</value>
+  </data>
+  <data name="UseRotationTime" xml:space="preserve">
+    <value>Prendre en compte le temps de rotation</value>
+  </data>
+  <data name="Both" xml:space="preserve">
+    <value>Les deux</value>
+  </data>
+  <data name="VenuesSchedulingMethodAsSoonAsPossibleDescription" xml:space="preserve">
+    <value>L'affectation des stades est optimisée pour que les matchs aient lieu le plutôt possible, en fonction de la disponibilité des équipes, des temps de repos et des temps de rotation.</value>
+  </data>
+  <data name="ScheduleVenuesBeforeDates" xml:space="preserve">
+    <value>Planifier les stades avant les dates</value>
+  </data>
+  <data name="ScheduleVenuesBeforeDatesDescription" xml:space="preserve">
+    <value>Si cette option est activée, les stades seront calculés avant les dates. Suivant les règles de calcul des stades, ça permet d'être plus précis sur l'affectation d'un stade ou le calcul d'une date.</value>
   </data>
 </root>

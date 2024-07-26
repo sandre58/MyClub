@@ -8,6 +8,7 @@ using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
@@ -15,8 +16,8 @@ namespace MyClub.Scorer.Wpf.Filters
     {
         public MatchParentFilterViewModel(string propertyName, IEnumerable<IMatchParent> allowedValues) : base(propertyName, allowedValues)
         {
-            PreviousParentCommand = CommandsManager.Create(() => Value = GetPreviousParent(Value?.Date), () => GetPreviousParent(Value?.Date) is not null);
-            NextParentCommand = CommandsManager.Create(() => Value = GetNextParent(Value?.Date), () => GetNextParent(Value?.Date) is not null);
+            PreviousParentCommand = CommandsManager.Create(() => Value = GetPreviousParent(Value), () => GetPreviousParent(Value) is not null);
+            NextParentCommand = CommandsManager.Create(() => Value = GetNextParent(Value), () => GetNextParent(Value) is not null);
             NextFixturesCommand = CommandsManager.Create(() => Value = GetNextFixtures(), () => GetNextFixtures() is IMatchParent matchParent && matchParent != Value);
             LatestResultsCommand = CommandsManager.Create(() => Value = GetLatestResults(), () => GetLatestResults() is IMatchParent matchParent && matchParent != Value);
         }
@@ -29,17 +30,17 @@ namespace MyClub.Scorer.Wpf.Filters
 
         public ICommand LatestResultsCommand { get; private set; }
 
-        private IMatchParent? GetPreviousParent(DateTime? date)
-            => AvailableValues?.OrderBy(x => x.Date).LastOrDefault(x => !date.HasValue || x.Date.IsBefore(date.Value));
+        private IMatchParent? GetPreviousParent(IMatchParent? parent)
+            => AvailableValues?.Except([parent]).OrderBy(x => x!.Date).LastOrDefault(x => parent is null || x!.Date.IsBefore(parent.Date.Add(1.Milliseconds())));
 
-        private IMatchParent? GetNextParent(DateTime? date)
-            => AvailableValues?.OrderBy(x => x.Date).FirstOrDefault(x => !date.HasValue || x.Date.IsAfter(date.Value));
+        private IMatchParent? GetNextParent(IMatchParent? parent)
+            => AvailableValues?.Except([parent]).OrderBy(x => x!.Date).FirstOrDefault(x => parent is null || x!.Date.IsAfter(parent.Date.Subtract(1.Milliseconds())));
 
         private IMatchParent? GetNextFixtures() => AvailableValues?.OrderBy(x => x.Date).FirstOrDefault(x => x.Date.IsAfter(DateTime.Now));
 
         private IMatchParent? GetLatestResults() => AvailableValues?.OrderBy(x => x.Date).LastOrDefault(x => x.Date.IsBefore(DateTime.Now));
 
-        public override void Reset() => Value = GetNextParent(DateTime.Today) ?? GetPreviousParent(DateTime.Today);
+        public override void Reset() => Value = GetNextFixtures() ?? GetLatestResults();
 
         protected override FilterViewModel CreateCloneInstance() => new MatchParentFilterViewModel(PropertyName, AvailableValues ?? []);
     }

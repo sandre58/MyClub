@@ -14,8 +14,8 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.Observable;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Collections;
 using MyNet.Observable.Translatables;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
@@ -133,12 +133,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             RankingRowComparers.Set(rankingRules.Rules?.Comparer.Select(x => availableRankingRowComparers.Find(y => y.Item.GetType() == x.GetType())).NotNull());
             UnusedRankingRowComparers.Set(availableRankingRowComparers.Except(RankingRowComparers));
 
-            RankingRowComparers.Union(UnusedRankingRowComparers).ForEach(x => x.IsEnabled = ShowShootouts || x.Key != nameof(MyClubResources.SortingByGamesWonAfterShootouts) && x.Key != nameof(MyClubResources.SortingByGamesLostAfterShootouts));
+            RankingRowComparers.Union(UnusedRankingRowComparers).ForEach(x => x.IsEnabled = ShowShootouts || x.DisplayName.Key != nameof(MyClubResources.SortingByGamesWonAfterShootouts) && x.DisplayName.Key != nameof(MyClubResources.SortingByGamesLostAfterShootouts));
 
             RankingColumnComputers.ForEach(x =>
             {
-                x.IsActive = rankingRules.Rules?.Computers.ContainsKey(x.Key) ?? false;
-                x.IsEnabled = ShowShootouts || x.Key != nameof(MyClubResources.GamesWonAfterShootouts) && x.Key != nameof(MyClubResources.GamesLostAfterShootouts);
+                x.IsActive = rankingRules.Rules?.Computers.ContainsKey(x.DisplayName.Key) ?? false;
+                x.IsEnabled = ShowShootouts || x.DisplayName.Key != nameof(MyClubResources.GamesWonAfterShootouts) && x.DisplayName.Key != nameof(MyClubResources.GamesLostAfterShootouts);
             });
 
             Labels.Load(rankingRules.Labels ?? [], _leagueService.GetRankingRowsCount());
@@ -173,7 +173,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             _leagueService.UpdateRankingRules(new RankingRulesDto
             {
-                Rules = new RankingRules(pointsByResult, new RankingComparer(RankingRowComparers.Select(x => x.Item)), RankingColumnComputers.Where(x => x.IsEnabled && x.IsActive).ToDictionary(x => x.Key, x => x.Item)),
+                Rules = new RankingRules(pointsByResult, new RankingComparer(RankingRowComparers.Select(x => x.Item)), RankingColumnComputers.Where(x => x.IsEnabled && x.IsActive).ToDictionary(x => x.DisplayName.Key, x => x.Item)),
                 PenaltyPoints = Penalties.ToDictionary(x => x.Team.Id, x => x.Points),
                 Labels = Labels.ToDictionary(x => new AcceptableValueRange<int>(x.Range.Start, x.Range.End), x => new RankLabel(x.Color?.ToString(), x.Name, x.ShortName, x.Description)),
             });
@@ -182,23 +182,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private static int? GetPoints(RankingRules rankingRules, MatchResultDetailled result) => rankingRules.PointsNumberByResult.ContainsKey(result) ? rankingRules.GetPoints(result) : null;
     }
 
-    internal class RankingColumnComputerWrapper : DisplayWrapper<IRankingColumnComputer>
+    internal class RankingColumnComputerWrapper : EditableWrapper<IRankingColumnComputer>
     {
-        public RankingColumnComputerWrapper(IRankingColumnComputer item, string resourceKey) : base(item, resourceKey) => Key = resourceKey;
-
-        public string Key { get; }
+        public RankingColumnComputerWrapper(IRankingColumnComputer item, string resourceKey) : base(item) => DisplayName = new TranslatableString(resourceKey);
 
         public bool IsEnabled { get; set; } = true;
 
         public bool IsActive { get; set; }
+
+        public TranslatableString DisplayName { get; }
     }
 
-    internal class RankingRowComparerWrapper : DisplayWrapper<RankingRowComparer>
+    internal class RankingRowComparerWrapper : EditableWrapper<RankingRowComparer>
     {
-        public RankingRowComparerWrapper(RankingRowComparer item, string resourceKey) : base(item, resourceKey) => Key = resourceKey;
-
-        public string Key { get; }
+        public RankingRowComparerWrapper(RankingRowComparer item, string resourceKey) : base(item) => DisplayName = new TranslatableString(resourceKey);
 
         public bool IsEnabled { get; set; } = true;
+
+        public TranslatableString DisplayName { get; }
     }
 }

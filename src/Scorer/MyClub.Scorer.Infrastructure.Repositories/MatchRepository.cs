@@ -17,7 +17,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
     {
         public override IEnumerable<Match> GetAll() => CurrentProject.Competition.GetAllMatchesProviders().SelectMany(x => x.Matches);
 
-        public IEnumerable<Match> GetByPeriod(Period period) => GetAll().Where(x => period.Intersect(x.GetPeriod()));
+        public IEnumerable<Match> GetByPeriod(Period period) => GetAll().Where(x => period.IntersectWith(x.GetPeriod()));
 
         public IEnumerable<Match> GetMatchesInStadium(Guid stadiumId, Period? period = null)
             => (period is null ? GetAll() : GetByPeriod(period)).Where(x => x.Stadium is not null && x.Stadium.Id == stadiumId);

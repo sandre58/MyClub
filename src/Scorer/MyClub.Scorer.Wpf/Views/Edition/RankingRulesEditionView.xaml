@@ -13,6 +13,7 @@
                   my:ViewModelAssist.AutoWire="True"
                   BusyService="{Binding BusyService, Mode=OneWay}"
                   Header="{my:Resource RankingRules}"
+                  ShowCloseButton="True"
                   mc:Ignorable="d">
     <my:ContentDialog.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />

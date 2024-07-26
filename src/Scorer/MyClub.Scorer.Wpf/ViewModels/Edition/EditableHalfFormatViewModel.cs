@@ -32,7 +32,5 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Duration = (int)halfFormat.Duration.TotalMinutes;
             HalfTimeDuration = (int?)halfFormat.HalfTimeDuration?.TotalMinutes;
         }
-
-        public void Reset() => Load(MatchFormat.Default.RegulationTime);
     }
 }

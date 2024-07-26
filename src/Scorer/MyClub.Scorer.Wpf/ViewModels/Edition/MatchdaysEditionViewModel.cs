@@ -215,7 +215,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 new ItemsSourceProvider<MatchdayViewModel>(Parent?.Matchdays.ToList() ?? []),
                 _stadiumsProvider,
                 new ItemsSourceProvider<TeamViewModel>(Parent?.GetAvailableTeams().ToList() ?? []),
-                (Parent?.SchedulingParameters.UseTeamVenues).IsTrue())
+                (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
             {
                 Date = date,
                 Time = time ?? DefaultTime,

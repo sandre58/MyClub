@@ -3,15 +3,21 @@
 
 using System.Threading.Tasks;
 using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyNet.UI.Dialogs;
+using MyNet.UI.Extensions;
+using MyNet.UI.Locators;
 
 namespace MyClub.Scorer.Wpf.Services
 {
-    internal class CompetitionCommandsService(LeaguePresentationService leaguePresentationService,
+    internal class CompetitionCommandsService(IViewModelLocator viewModelLocator,
+                                              LeaguePresentationService leaguePresentationService,
                                               CompetitionInfoProvider competitionInfoProvider)
     {
         private readonly LeaguePresentationService _leaguePresentationService = leaguePresentationService;
         private readonly CompetitionInfoProvider _competitionInfoProvider = competitionInfoProvider;
+        private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
 
         public async Task OpenBuildAssistantAsync()
         {
@@ -19,6 +25,13 @@ namespace MyClub.Scorer.Wpf.Services
             {
                 await _leaguePresentationService.OpenBuildAssistantAsync().ConfigureAwait(false);
             }
+        }
+
+        public async Task EditSchedulingParametersAsync()
+        {
+            var vm = _viewModelLocator.Get<SchedulingParametersEditionViewModel>();
+
+            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
     }
 }

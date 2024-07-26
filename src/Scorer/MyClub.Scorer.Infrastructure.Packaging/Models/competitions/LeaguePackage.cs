@@ -6,25 +6,24 @@ using System.Xml.Serialization;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {
-    [XmlType("league")]
     public class LeaguePackage : CompetitionPackage
     {
-        [XmlArray("matchdays")]
-        [XmlArrayItem("matchday", typeof(MatchdayPackage))]
+        [XmlArray("Matchdays")]
+        [XmlArrayItem("Matchday", typeof(MatchdayPackage))]
         public List<MatchdayPackage>? Matchdays { get; set; }
 
-        [XmlElement("matchFormat")]
+        [XmlElement("MatchFormat")]
         public MatchFormatPackage? MatchFormat { get; set; }
 
-        [XmlElement("rankingRules")]
+        [XmlElement("RankingRules")]
         public RankingRulesPackage? RankingRules { get; set; }
 
-        [XmlArray("penalties")]
-        [XmlArrayItem("penalty", typeof(PenaltyPackage))]
+        [XmlArray("Penalties")]
+        [XmlArrayItem("Penalty", typeof(PenaltyPackage))]
         public List<PenaltyPackage>? Penalties { get; set; }
 
-        [XmlArray("labels")]
-        [XmlArrayItem("label", typeof(RankLabelPackage))]
+        [XmlArray("Labels")]
+        [XmlArrayItem("Label", typeof(RankLabelPackage))]
         public List<RankLabelPackage>? Labels { get; set; }
     }
 }
