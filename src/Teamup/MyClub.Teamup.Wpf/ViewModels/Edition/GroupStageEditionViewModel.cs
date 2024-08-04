@@ -18,7 +18,6 @@ using MyClub.Teamup.Domain.TeamAggregate;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Collections;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;

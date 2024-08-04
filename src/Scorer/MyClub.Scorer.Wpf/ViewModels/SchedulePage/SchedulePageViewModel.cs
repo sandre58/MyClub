@@ -43,7 +43,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                 MatchesPlanningViewModel = null;
             });
 
-            matchesProvider.WhenLoaded(() => MatchesPlanningViewModel?.Filters.Reset());
+            matchdaysProvider.WhenLoaded(() => MatchesPlanningViewModel?.Filters.Reset());
         }
 
         public MatchesPlanningViewModel? MatchesPlanningViewModel { get; private set; }

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 using System.Text;
 using DynamicData;
@@ -27,6 +28,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly IEnumerable<MatchViewModel> _matches;
         private readonly Subject<bool> _sortRowsSubject = new();
         private readonly object _lock = new();
+        private readonly List<Func<IDisposable>> _subscribers = [];
 
         public RankingViewModel(ReadOnlyObservableCollection<TeamViewModel> teams, IEnumerable<MatchViewModel> matches)
             : base()
@@ -43,29 +45,36 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             _rows.CollectionChanged += new NotifyCollectionChangedEventHandler(HandleCollectionChanged);
         }
 
+        public void SubscribeOnUpdate(Func<IDisposable> onUpdate) => _subscribers.Add(onUpdate);
+
         public RankingRowViewModel? GetRow(TeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
 
         public void Update(RankingDto ranking)
         {
             lock (_lock)
             {
-                var matches = _matches.ToList();
-                _rows.ToList().ForEach(x =>
+                var subscribers = _subscribers.Select(x => x()).ToList();
+
+                using (new CompositeDisposable(subscribers))
                 {
-                    var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
+                    var matches = _matches.ToList();
+                    _rows.ToList().ForEach(x =>
+                    {
+                        var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
 
-                    if (rowFound is not null)
-                        x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
-                    else
-                        x.Reset();
-                });
+                        if (rowFound is not null)
+                            x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
+                        else
+                            x.Reset();
+                    });
 
-                var teams = _rows.Select(x => x.Team).ToList();
-                Rules = ranking.Rules;
-                PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
-                Labels = ranking.Labels?.AsReadOnly();
+                    var teams = _rows.Select(x => x.Team).ToList();
+                    Rules = ranking.Rules;
+                    PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
+                    Labels = ranking.Labels?.AsReadOnly();
 
-                _sortRowsSubject.OnNext(true);
+                    _sortRowsSubject.OnNext(true);
+                }
             }
         }
 

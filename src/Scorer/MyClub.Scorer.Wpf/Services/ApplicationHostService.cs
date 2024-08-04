@@ -18,6 +18,7 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Infrastructure.Packaging;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.Services.Handlers;
+using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.Import;
@@ -102,6 +103,9 @@ internal class ApplicationHostService : IHostedService
         RecentFilesProvider recentFilesProvider,
         RecentFilesService recentFilesService,
         ProjectCommandsService projectCommandsService,
+#pragma warning disable IDE0060 // Remove unused parameter (used by dependency injection to instanciate type)
+        ConflictsManager conflictsManager,
+#pragma warning restore IDE0060 // Remove unused parameter
         RecentFilesManager recentFilesManager,
         MailConnectionHandler mailConnectionHandler,
         FileNotificationHandler fileNotificationHandler,

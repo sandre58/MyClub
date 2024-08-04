@@ -2,13 +2,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using DynamicData;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 {
-    internal interface ICompetitionViewModel : IIdentifiable<Guid>, IDisposable
+    internal interface ICompetitionViewModel : IIdentifiable<Guid>, INotifyPropertyChanged, IDisposable
     {
         IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches();
 
@@ -16,6 +17,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         MatchFormat MatchFormat { get; }
 
-        public SchedulingParametersViewModel SchedulingParameters { get; }
+        SchedulingParametersViewModel SchedulingParameters { get; }
     }
 }

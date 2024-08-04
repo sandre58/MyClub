@@ -3,7 +3,6 @@
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:dd="urn:gong-wpf-dragdrop"
-                  xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
                   xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:my="http://mynet.com/xaml/themes"
@@ -32,64 +31,51 @@
         <sys:Int32 x:Key="OneHundredTwenty">120</sys:Int32>
         <sys:Int32 x:Key="MaxInteger">2147483647</sys:Int32>
 
-        <DataTemplate x:Key="Scorer.DataTemplates.Appointment.Match" DataType="{x:Type vm:EditableSchedulingMatchViewModel}">
-            <my:DynamicScrollViewer Focusable="False">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="2" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="2" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+        <DataTemplate x:Key="Scorer.DataTmeplates.MatchDetails">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Home -->
-                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                           Width="19"
-                                           Height="19"
-                                           DataContext="{Binding Item.HomeTeam}" />
-
-                        <!-- Versus -->
-                        <TextBlock Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
-                                   Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                   Text="{my:Resource VersusAbbr}"
-                                   Typography.Capitals="AllSmallCaps" />
-
-                        <!-- Away -->
-                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                           Width="19"
-                                           Height="19"
-                                           DataContext="{Binding Item.AwayTeam}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="2" Orientation="Horizontal">
-                        <!-- Home -->
-                        <TextBlock Text="{Binding Item.HomeTeam.Name}" />
-
-                        <!-- Versus -->
-                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " Typography.Capitals="AllSmallCaps" />
-
-                        <!-- Away -->
-                        <TextBlock Text="{Binding Item.AwayTeam.Name}" />
-
-                    </StackPanel>
-
-                    <DockPanel Grid.Row="4">
-                        <my:PackIcon Width="12"
-                                     Height="12"
-                                     Margin="{StaticResource MyNet.Margins.Default.Right}"
-                                     VerticalAlignment="Top"
-                                     Kind="Stadium"
-                                     Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-                        <TextBlock FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                   FontStyle="Italic"
-                                   Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                   Text="{Binding Stadium.Name}"
-                                   TextWrapping="Wrap" />
-                    </DockPanel>
-                </Grid>
-            </my:DynamicScrollViewer>
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation EndDate, Format=ShortTimePattern}" />
+                </StackPanel>
+                <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                    <TextBlock Text="{Binding Item.HomeTeam.Name}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " Typography.Capitals="AllSmallCaps" />
+                    <TextBlock Text="{Binding Item.AwayTeam.Name}" />
+                </my:SimpleStackPanel>
+                <DockPanel Grid.Row="4" Visibility="{Binding Stadium, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                    <my:PackIcon Width="12"
+                                 Height="12"
+                                 Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                 VerticalAlignment="Top"
+                                 Kind="Stadium"
+                                 Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                               FontStyle="Italic"
+                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                               Text="{Binding Stadium.Name}"
+                               TextWrapping="Wrap" />
+                </DockPanel>
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.StringsList}"
+                          Grid.Row="6"
+                          my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                          my:HeaderAssist.Padding="0"
+                          Content="{Binding Conflicts}"
+                          FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                          FontStyle="Italic"
+                          Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                          Visibility="{Binding Conflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+            </Grid>
         </DataTemplate>
 
     </my:ContentDialog.Resources>
@@ -138,7 +124,6 @@
 
             <!-- Left Part -->
             <my:DrawerHost.LeftDrawerContent>
-
                 <my:DynamicScrollViewer HorizontalScrollBarVisibility="Disabled">
                     <Grid Width="300">
                         <Grid.RowDefinitions>
@@ -210,12 +195,14 @@
                                         <Setter Property="ContentTemplate">
                                             <Setter.Value>
                                                 <DataTemplate>
-                                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}">
+                                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" MaxPopupWidth="{x:Static sys:Double.NaN}">
                                                         <my:DropDownButton.ToggleContent>
-                                                            <StackPanel x:Name="text" Orientation="Horizontal" TextElement.Foreground="{DynamicResource MyNet.Brushes.Positive}">
-                                                                <my:PackIcon Width="14" Height="14" Kind="Plus" />
-                                                                <TextBlock Margin="-2 0 0 0" FontWeight="Bold" Text="{Binding Count}" />
-                                                            </StackPanel>
+                                                            <Label x:Name="text"
+                                                                   Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                                                   Width="24"
+                                                                   Height="24"
+                                                                   Background="{DynamicResource MyNet.Brushes.Positive}"
+                                                                   Content="{Binding Count}" />
                                                         </my:DropDownButton.ToggleContent>
                                                         <ItemsControl my:ItemsControlAssist.SortingProperty="StartDate" ItemsSource="{Binding Items}">
                                                             <ItemsControl.ItemTemplate>
@@ -258,7 +245,7 @@
                                                     </my:DropDownButton>
                                                     <DataTemplate.Triggers>
                                                         <DataTrigger Binding="{Binding HasConflicts}" Value="True">
-                                                            <Setter TargetName="text" Property="TextElement.Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                                                            <Setter TargetName="text" Property="Background" Value="{DynamicResource MyNet.Brushes.Warning}" />
                                                         </DataTrigger>
                                                     </DataTemplate.Triggers>
                                                 </DataTemplate>
@@ -444,33 +431,17 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Of, Casing=LowerCase}" />
-                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Outlined}"
-                                  Width="80"
-                                  my:ComboBoxAssist.ShowCaret="False"
-                                  my:ComboBoxAssist.ShowUpDownButton="True"
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
+                                  Width="90"
                                   ItemsSource="{my:HourRange Start=0,
                                                              End=22}"
-                                  SelectedItem="{Binding DateTimeSelection.DisplayTimeStart}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                                  SelectedItem="{Binding DateTimeSelection.DisplayTimeStart}" />
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
-                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Outlined}"
-                                  Width="80"
-                                  my:ComboBoxAssist.ShowCaret="False"
-                                  my:ComboBoxAssist.ShowUpDownButton="True"
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
+                                  Width="90"
                                   ItemsSource="{my:HourRange Start=1,
                                                              End=23}"
-                                  SelectedItem="{Binding DateTimeSelection.DisplayTimeEnd}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                                  SelectedItem="{Binding DateTimeSelection.DisplayTimeEnd}" />
                     </my:SimpleStackPanel>
                     <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
                         <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Right}"
@@ -532,33 +503,54 @@
                                                        StrokeDashArray="4 2"
                                                        StrokeThickness="2" />
 
-                                            <Grid Margin="{StaticResource MyNet.Margins.Default}">
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="5" />
-                                                    <RowDefinition Height="*" />
-                                                </Grid.RowDefinitions>
-                                                <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
-                                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
-                                                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation EndDate, Format=ShortTimePattern}" />
-                                                </StackPanel>
-                                                <ContentControl Grid.Row="2" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Appointment.Match}" />
-                                            </Grid>
+                                            <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default}">
 
-                                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                                <!-- Teams -->
+                                                <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                                       Width="19"
+                                                                       Height="19"
+                                                                       DataContext="{Binding Item.HomeTeam}"
+                                                                       ToolTip="{Binding Name}" />
+                                                    <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
+                                                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                                               Text="{my:Resource VersusAbbr}"
+                                                               Typography.Capitals="AllSmallCaps" />
+                                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                                       Width="19"
+                                                                       Height="19"
+                                                                       DataContext="{Binding Item.AwayTeam}"
+                                                                       ToolTip="{Binding Name}" />
+
+                                                </my:SimpleStackPanel>
+
+                                                <!-- Details -->
+                                                <ContentControl x:Name="Details"
+                                                                Content="{Binding}"
+                                                                ContentTemplate="{StaticResource Scorer.DataTmeplates.MatchDetails}"
+                                                                Visibility="Collapsed" />
+                                            </my:SimpleStackPanel>
+
+                                            <!-- Info -->
+                                            <my:DropDownButton x:Name="Tooltip"
+                                                               Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                                Margin="{StaticResource MyNet.Margins.Default}"
                                                                HorizontalAlignment="Right"
-                                                               VerticalAlignment="Top"
-                                                               Foreground="{DynamicResource MyNet.Brushes.Warning}"
-                                                               ToggleContent="{my:ToolIcon Kind=WarningCircle}"
-                                                               Visibility="{Binding Conflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
-                                                <Grid>
-                                                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.StringsList}" my:HeaderAssist.Padding="0" Content="{Binding Conflicts}" />
-                                                </Grid>
-                                            </my:DropDownButton>
+                                                               VerticalAlignment="Bottom"
+                                                               PopupContent="{Binding}"
+                                                               PopupContentTemplate="{StaticResource Scorer.DataTmeplates.MatchDetails}"
+                                                               ToggleContent="{my:ToolIcon Kind=InfoCircle}" />
+
                                         </Grid>
                                         <DataTemplate.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=95}" Value="True" />
+                                                    <Condition Binding="{Binding ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=170}" Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter TargetName="Details" Property="Visibility" Value="Visible" />
+                                                <Setter TargetName="Tooltip" Property="Visibility" Value="Collapsed" />
+                                            </MultiDataTrigger>
                                             <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type my:CalendarAppointment}}}" Value="True">
                                                 <Setter TargetName="border" Property="Stroke" Value="{DynamicResource MyNet.Brushes.Primary}" />
                                                 <Setter TargetName="border" Property="StrokeThickness" Value="2" />

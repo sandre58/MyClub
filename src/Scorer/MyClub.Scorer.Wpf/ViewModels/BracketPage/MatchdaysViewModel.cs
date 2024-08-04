@@ -32,7 +32,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 
         protected override async Task AddToDateAsync(DateTime date) => await _matchdayPresentationService.AddAsync(Parent, date).ConfigureAwait(false);
 
-        protected override async Task AddItemAsync() => await _matchdayPresentationService.AddAsync().ConfigureAwait(false);
+        protected override async Task AddItemAsync() => await _matchdayPresentationService.AddAsync(Parent).ConfigureAwait(false);
 
         protected override async Task EditItemAsync(MatchdayViewModel oldItem) => await _matchdayPresentationService.EditAsync(oldItem).ConfigureAwait(false);
 

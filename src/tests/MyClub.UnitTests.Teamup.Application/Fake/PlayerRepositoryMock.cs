@@ -5,9 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using DocumentFormat.OpenXml.Spreadsheet;
 using MyClub.Teamup.Domain.SquadAggregate;
-using MyNet.Utilities;
 
 namespace MyClub.UnitTests.Teamup.Application.Fake
 {

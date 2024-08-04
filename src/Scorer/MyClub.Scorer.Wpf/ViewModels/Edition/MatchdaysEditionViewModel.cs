@@ -11,7 +11,6 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.Factories;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -35,16 +34,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private readonly UiObservableCollection<MatchdayViewModel> _availableMatchdays = [];
         private readonly StadiumsProvider _stadiumsProvider;
         private readonly MatchdayService _matchdayService;
-        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
 
         public MatchdaysEditionViewModel(CompetitionInfoProvider competitionInfoProvider,
                                          StadiumsProvider stadiumsProvider,
-                                         MatchdayService matchdayService,
-                                         ScheduleChangedDeferrer scheduleChangedDeferrer)
+                                         MatchdayService matchdayService)
         {
             _stadiumsProvider = stadiumsProvider;
             _matchdayService = matchdayService;
-            _scheduleChangedDeferrer = scheduleChangedDeferrer;
             AvailableMatchdays = new(_availableMatchdays);
 
             AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x), x => new Period(StartDisplayDate.GetValueOrDefault(), EndDisplayDate.GetValueOrDefault()).Contains(x));
@@ -242,27 +238,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         protected override void SaveCore()
         {
-            using (_scheduleChangedDeferrer.Defer())
-                _matchdayService.Save(Matchdays.Select(x => new MatchdayDto
+            _matchdayService.Save(Matchdays.Select(x => new MatchdayDto
+            {
+                Date = x.Item.Date.GetValueOrDefault().ToUtcDateTime(x.Item.Time.GetValueOrDefault()),
+                Name = x.Item.Name,
+                ShortName = x.Item.ShortName,
+                MatchesToAdd = x.Item.Matches.Where(x => !x.Id.HasValue && x.IsValid()).Select(x => new MatchDto
                 {
-                    Date = x.Item.Date.GetValueOrDefault().ToUtcDateTime(x.Item.Time.GetValueOrDefault()),
-                    Name = x.Item.Name,
-                    ShortName = x.Item.ShortName,
-                    MatchesToAdd = x.Item.Matches.Where(x => !x.Id.HasValue && x.IsValid()).Select(x => new MatchDto
+                    AwayTeamId = x.AwayTeam!.Id,
+                    HomeTeamId = x.HomeTeam!.Id,
+                    Date = x.Date!.Value.ToUtcDateTime(x.Time!.Value),
+                    Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
                     {
-                        AwayTeamId = x.AwayTeam!.Id,
-                        HomeTeamId = x.HomeTeam!.Id,
-                        Date = x.Date!.Value.ToUtcDateTime(x.Time!.Value),
-                        Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
-                        {
-                            Id = x.StadiumSelection.SelectedItem.Id,
-                            Name = x.StadiumSelection.SelectedItem.Name,
-                            Ground = x.StadiumSelection.SelectedItem.Ground,
-                            Address = x.StadiumSelection.SelectedItem.Address,
-                        } : null,
-                        State = MatchState.None
-                    }).ToList()
-                }).ToList());
+                        Id = x.StadiumSelection.SelectedItem.Id,
+                        Name = x.StadiumSelection.SelectedItem.Name,
+                        Ground = x.StadiumSelection.SelectedItem.Ground,
+                        Address = x.StadiumSelection.SelectedItem.Address,
+                    } : null,
+                    State = MatchState.None
+                }).ToList()
+            }).ToList());
             Matchdays.Clear();
         }
     }

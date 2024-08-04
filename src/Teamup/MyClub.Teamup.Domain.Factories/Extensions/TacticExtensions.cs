@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using MyNet.Utilities;
 using MyClub.CrossCutting.Localization;
 using MyClub.Teamup.Domain.Enums;
 using MyClub.Teamup.Domain.TacticAggregate;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Domain.Factories.Extensions
 {

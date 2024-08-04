@@ -59,10 +59,10 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Name  -->
+        <!-- Name -->
         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" HorizontalAlignment="Center" Text="{Binding Item.Name}" />
 
-        <!--  Logo  -->
+        <!-- Logo -->
         <my:PictureControl x:Name="Picture"
                            Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                            Grid.Row="2"
@@ -70,7 +70,7 @@
                            Height="150"
                            DataContext="{Binding Item}" />
 
-        <!--  Stadium  -->
+        <!-- Stadium -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption.Left}"
                   Grid.Row="4"
                   my:HeaderAssist.HorizontalAlignment="Left"
@@ -82,7 +82,7 @@
             </my:GhostControl>
         </GroupBox>
 
-        <!--  Colors  -->
+        <!-- Colors -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
                   Grid.Row="6"
                   my:HeaderAssist.HorizontalAlignment="Left"
@@ -130,7 +130,7 @@
             </my:SimpleStackPanel>
         </GroupBox>
 
-        <!--  Players  -->
+        <!-- Players -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
                   Grid.Row="8"
                   my:HeaderAssist.HorizontalAlignment="Left"
@@ -152,31 +152,31 @@
                 <Button Command="{Binding AddPlayerCommand}" Content="{my:MediumIcon Kind=Plus}" ToolTip="{my:Resource AddPlayer}" />
             </my:GroupBoxAssist.MoreContent>
             <my:GhostControl ShowGhost="{Binding Item.Players.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
-                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}"
-                         my:ItemsControlAssist.SortingProperty="LastName"
-                         ItemTemplate="{StaticResource Scorer.DataTemplates.Player}"
-                         ItemsSource="{Binding Item.Players, IsAsync=True}">
-                    <ListBox.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
-                            <Setter Property="Margin" Value="0" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Padding" Value="5 5 0 5" />
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <i:Interaction.Behaviors>
-                        <my:ListBoxSelectionBehavior SelectedValues="{Binding SelectedPlayers}" />
-                    </i:Interaction.Behaviors>
+                <Grid my:BusyAssist.AttachService="{Binding Path=(my:ItemsControlAsyncBehavior.BusyService), ElementName=listbox}" my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Dark.Foreground}">
+                    <ListBox x:Name="listbox" Style="{StaticResource MyNet.Styles.ListBox.Cards}" my:ItemsControlAssist.SortingProperty="LastName" ItemTemplate="{StaticResource Scorer.DataTemplates.Player}">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Padding" Value="5 5 0 5" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <i:Interaction.Behaviors>
+                            <my:ListBoxSelectionBehavior SelectedValues="{Binding SelectedPlayers}" />
+                            <my:ItemsControlAsyncBehavior Items="{Binding Item.Players, Mode=OneWay}" />
+                        </i:Interaction.Behaviors>
 
-                    <ListBox.InputBindings>
-                        <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddPlayerCommand, Source={StaticResource Proxy}}" />
-                        <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedPlayersCommand, Source={StaticResource Proxy}}" />
-                    </ListBox.InputBindings>
-                </ListBox>
+                        <ListBox.InputBindings>
+                            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddPlayerCommand, Source={StaticResource Proxy}}" />
+                            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedPlayersCommand, Source={StaticResource Proxy}}" />
+                        </ListBox.InputBindings>
+                    </ListBox>
+                </Grid>
             </my:GhostControl>
         </GroupBox>
     </Grid>

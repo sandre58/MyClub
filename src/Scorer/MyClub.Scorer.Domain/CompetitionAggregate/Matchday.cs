@@ -79,7 +79,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         MatchFormat IMatchFormatProvider.ProvideFormat() => _parent.ProvideFormat();
 
-        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => _parent.ProvideSchedulingParameters();
+        public SchedulingParameters ProvideSchedulingParameters() => _parent.ProvideSchedulingParameters();
 
         public override int CompareTo(object? obj) => obj is Matchday other ? OriginDate.CompareTo(other.OriginDate) : 1;
 

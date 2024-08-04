@@ -17,47 +17,15 @@
                              HorizontalAlignment="Center"
                              DockPanel.Dock="Top"
                              Orientation="Horizontal">
-            <my:Card Padding="1" BorderBrush="{DynamicResource MyNet.Brushes.Control.Border}" BorderThickness="1">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
-                              Grid.Column="0"
-                              Grid.ColumnSpan="3"
-                              Width="250"
-                              VerticalAlignment="Stretch"
-                              HorizontalContentAlignment="Center"
-                              VerticalContentAlignment="Center"
-                              my:ComboBoxAssist.ShowCaret="False"
-                              my:HintAssist.Hint="{Binding Filters.ParentFilter.Item.Value.Name}"
-                              my:HintAssist.HintOpacity="{StaticResource MyNet.Opacity.Default}"
-                              my:HintAssist.IsFloating="False"
-                              my:ItemsControlAssist.SortingProperty="Date"
-                              my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Container}"
-                              BorderThickness="0"
-                              DisplayMemberPath="Name"
-                              ItemsSource="{Binding Filters.ParentFilter.Item.AvailableValues}"
-                              SelectedItem="{Binding Filters.ParentFilter.Item.Value}" />
-                    <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                            Grid.Column="0"
-                            Padding="5 0"
-                            VerticalAlignment="Stretch"
-                            my:ThemeAssist.CornerRadius="0"
-                            Command="{Binding Filters.ParentFilter.Item.PreviousParentCommand}"
-                            Content="{my:MediumIcon Kind=ChevronLeft}" />
-                    <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                            Grid.Column="2"
-                            Padding="5 0"
-                            VerticalAlignment="Stretch"
-                            my:ThemeAssist.CornerRadius="0"
-                            Command="{Binding Filters.ParentFilter.Item.NextParentCommand}"
-                            Content="{my:MediumIcon Kind=ChevronRight}" />
-                </Grid>
-            </my:Card>
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Alternate.Outlined}"
+                      Width="250"
+                      VerticalAlignment="Stretch"
+                      my:HintAssist.Hint="{Binding Filters.ParentFilter.Item.Value.Name}"
+                      my:HintAssist.HintOpacity="{StaticResource MyNet.Opacity.Default}"
+                      my:ItemsControlAssist.SortingProperty="Date"
+                      DisplayMemberPath="Name"
+                      ItemsSource="{Binding Filters.ParentFilter.Item.AvailableValues}"
+                      SelectedItem="{Binding Filters.ParentFilter.Item.Value}" />
 
             <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
                     VerticalAlignment="Stretch"

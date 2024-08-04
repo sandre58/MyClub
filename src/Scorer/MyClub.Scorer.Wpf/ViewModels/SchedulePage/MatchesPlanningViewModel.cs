@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reactive.Linq;
@@ -56,7 +57,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         {
             _matchPresentationService = matchPresentationService;
             _availibilityCheckingService = availibilityCheckingService;
-            Stadiums = new ListViewModel<IStadiumWrapper>(stadiumsProvider.Connect().Transform(x => (IStadiumWrapper)new StadiumWrapper(x)));
+            Stadiums = new ListViewModel<IStadiumWrapper>(stadiumsProvider.Connect().Transform(x => (IStadiumWrapper)new StadiumWrapper(x)).Merge(new ObservableCollection<IStadiumWrapper>() { new AutomaticStadiumWrapper(), new NoStadiumWrapper() }.ToObservableChangeSet()));
             Mode = ScreenMode.Read;
             CanPage = true;
             CanAdd = false;
@@ -85,7 +86,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             RescheduleAutomaticCommand = CommandsManager.Create(async () => await RescheduleAutomaticSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanRescheduleAutomatic()));
             SelectConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(x => SelectConflicts(x), x => x.MatchesInConflicts.Count > 0);
             RescheduleConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(async x => await RescheduleConflictsAsync(x).ConfigureAwait(false), x => x.MatchesInConflicts.Count > 0);
-            SetStadiumForSelectedItemsCommand = CommandsManager.Create<StadiumViewModel>(async x => await SetStadiumForSelectedItemsAsync(x).ConfigureAwait(false), x => SelectionIsAvailable(x => x.CanReschedule()));
+            SetStadiumForSelectedItemsCommand = CommandsManager.CreateNotNull<IStadiumWrapper>(async x => await SetStadiumForSelectedItemsAsync(x).ConfigureAwait(false), x => SelectionIsAvailable(y => y.CanReschedule() && (x is not AutomaticStadiumWrapper || y.CanRescheduleAutomaticStadium())));
             OpenSchedulingAssistantCommand = CommandsManager.Create(async () => await OpenSchedulingAssistantAsync().ConfigureAwait(false));
             EditSchedulingParametersCommand = CommandsManager.Create(async () => await competitionCommandsService.EditSchedulingParametersAsync().ConfigureAwait(false), () => Mode == ScreenMode.Read);
 
@@ -239,7 +240,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public async Task InvertTeamsSelectedItemsAsync() => await _matchPresentationService.InvertTeamsAsync(SelectedItems).ConfigureAwait(false);
 
-        public async Task SetStadiumForSelectedItemsAsync(StadiumViewModel? stadium) => await _matchPresentationService.SetStadiumAsync(SelectedItems, stadium).ConfigureAwait(false);
+        public async Task SetStadiumForSelectedItemsAsync(IStadiumWrapper stadiumWrapper)
+        {
+            if (stadiumWrapper is AutomaticStadiumWrapper)
+                await _matchPresentationService.RescheduleAutomaticStadiumAsync(SelectedItems).ConfigureAwait(false);
+            else
+                await _matchPresentationService.SetStadiumAsync(SelectedItems, (stadiumWrapper as StadiumWrapper)?.Stadium).ConfigureAwait(false);
+        }
 
         private async Task RescheduleConflictsAsync(MatchViewModel match)
             => await OpenSchedulingAssistantAsync(match.StartDate).ConfigureAwait(false);

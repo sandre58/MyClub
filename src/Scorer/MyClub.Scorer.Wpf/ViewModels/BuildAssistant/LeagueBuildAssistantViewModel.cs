@@ -13,9 +13,10 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Wpf.Services.Deferrers;
+using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
@@ -58,8 +59,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         private readonly MatchdaysProvider _matchdaysProvider;
         private readonly MatchesProvider _matchesProvider;
         private readonly TeamsProvider _teamsProvider;
-        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
-        private readonly ResultsChangedDeferrer _resultsChangedDeferrer;
+        private readonly CompetitionInfoProvider _competitionInfoProvider;
+        private readonly ConflictsManager _conflictsManager;
         private readonly Deferrer _updateNumberOfMatchesDeferrer;
         private readonly Dictionary<DatesSchedulingMethod, IDatesSchedulingMethodViewModel> _datesSchedulingMethodViewModels = new()
         {
@@ -74,8 +75,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
                                              MatchesProvider matchesProvider,
                                              StadiumsProvider stadiumsProvider,
                                              TeamsProvider teamsProvider,
-                                             ScheduleChangedDeferrer scheduleChangedDeferrer,
-                                             ResultsChangedDeferrer resultsChangedDeferrer)
+                                             ConflictsManager conflictsManager)
         {
             VenueRules = new(stadiumsProvider.Items);
 
@@ -83,8 +83,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
             _matchdaysProvider = matchdaysProvider;
             _matchesProvider = matchesProvider;
             _teamsProvider = teamsProvider;
-            _scheduleChangedDeferrer = scheduleChangedDeferrer;
-            _resultsChangedDeferrer = resultsChangedDeferrer;
+            _competitionInfoProvider = competitionInfoProvider;
+            _conflictsManager = conflictsManager;
             _updateNumberOfMatchesDeferrer = new(() =>
             {
                 ComputeNumberOfMatches();
@@ -119,7 +119,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
             Reset();
 
-            competitionInfoProvider.WhenCompetitionChanged(_ => Reset());
+            _competitionInfoProvider.WhenCompetitionChanged(_ => Reset());
         }
 
         [IsRequired]
@@ -260,8 +260,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         protected override void SaveCore()
         {
-            using (_scheduleChangedDeferrer.Defer())
-            using (_resultsChangedDeferrer.Defer())
+            using (_conflictsManager.Defer())
+            using (_competitionInfoProvider.GetCompetition<LeagueViewModel>().DeferRefreshRankings())
             using (_matchesProvider.DeferReload())
             using (_matchdaysProvider.DeferReload())
             {

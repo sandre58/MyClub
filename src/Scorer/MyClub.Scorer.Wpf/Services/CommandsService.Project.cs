@@ -14,7 +14,6 @@ using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Infrastructure.Packaging;
 using MyClub.Scorer.Wpf.Messages;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyNet.UI;

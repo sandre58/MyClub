@@ -4,7 +4,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using MyNet.Utilities;
-using MyNet.Observable.Collections;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyClub.CrossCutting.Localization;

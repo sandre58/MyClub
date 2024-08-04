@@ -98,8 +98,8 @@ namespace MyClub.Scorer.Domain.Extensions
 
         public static bool UseHomeVenue(this Match match) => match.GetSchedulingParameters().UseHomeVenue;
 
-        public static bool CanAutomaticReschedule(this Match match) => match.GetSchedulingParameters().AsSoonAsPossible || match.GetSchedulingParameters().DateRules.Count > 0;
+        public static bool CanAutomaticReschedule(this Match match) => match.GetSchedulingParameters().CanAutomaticReschedule();
 
-        public static bool CanAutomaticRescheduleVenue(this Match match) => match.GetSchedulingParameters().UseHomeVenue || match.GetSchedulingParameters().VenueRules.Count > 0;
+        public static bool CanAutomaticRescheduleVenue(this Match match) => match.GetSchedulingParameters().CanAutomaticRescheduleVenue();
     }
 }

@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Plugins.Contracts;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Export;
@@ -34,12 +33,10 @@ namespace MyClub.Scorer.Wpf.Services
     internal class TeamPresentationService(TeamService service,
                                            PlayerService playerService,
                                            PluginsService pluginsService,
-                                           TeamsChangedDeferrer teamsChangedDeferrer,
                                            IViewModelLocator viewModelLocator) : PresentationServiceBase<TeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
     {
         private readonly PlayerService _playerService = playerService;
         private readonly PluginsService _pluginsService = pluginsService;
-        private readonly TeamsChangedDeferrer _teamsChangedDeferrer = teamsChangedDeferrer;
 
         public async Task OpenAsync(TeamViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
@@ -63,13 +60,7 @@ namespace MyClub.Scorer.Wpf.Services
             var cancel = await DialogManager.ShowMessageBoxAsync(messageBox).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
-            {
-                await AppBusyManager.WaitAsync(() =>
-                {
-                    using (_teamsChangedDeferrer.Defer())
-                        Service.Remove(idsList, messageBox.RemoveStadium);
-                });
-            }
+                await AppBusyManager.WaitAsync(() => Service.Remove(idsList, messageBox.RemoveStadium));
         }
 
         public async Task RemovePlayerAsync(PlayerViewModel player)
@@ -166,11 +157,7 @@ namespace MyClub.Scorer.Wpf.Services
                 }
             }).ToList();
 
-            await AppBusyManager.WaitAsync(() =>
-            {
-                using (_teamsChangedDeferrer.Defer())
-                    Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList());
-            });
+            await AppBusyManager.WaitAsync(() => Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList()));
         }
 
         public bool HasImportSources() => _pluginsService.HasPlugin<IImportTeamsSourcePlugin>();

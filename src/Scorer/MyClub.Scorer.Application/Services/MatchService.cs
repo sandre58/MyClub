@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DocumentFormat.OpenXml.Vml.Office;
 using MyClub.Application.Services;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
@@ -54,11 +53,32 @@ namespace MyClub.Scorer.Application.Services
 
         protected override void UpdateEntity(Match entity, MatchDto dto)
         {
-            if (dto.Date != default)
-                entity.OriginDate = dto.Date;
-            entity.PostponedDate = dto.PostponedDate;
-            entity.IsNeutralStadium = dto.IsNeutralStadium;
-            UpdateStadium(entity, dto.Stadium);
+            var schedulingParameters = entity.GetSchedulingParameters();
+            if (dto.ScheduleAutomatic)
+            {
+                var matches = GetAll().ToList();
+                var scheduledMatches = matches.Except([entity]).ToList();
+                var startDate = scheduledMatches.Where(x => x.Date < dto.Date).MaxOrDefault(x => x.Date);
+                schedulingParameters.Schedule([entity], startDate != DateTime.MinValue ? startDate.AddMinutes(1) : schedulingParameters.StartDate, scheduledMatches);
+            }
+            else
+            {
+                if (dto.Date != default)
+                    entity.OriginDate = dto.Date;
+                entity.PostponedDate = dto.PostponedDate;
+            }
+
+            if (dto.ScheduleStadiumAutomatic)
+            {
+                var matches = GetAll().ToList();
+                var scheduledMatches = matches.Except([entity]).ToList();
+                schedulingParameters.ScheduleVenues([entity], _stadiumRepository.GetAll().ToList(), scheduledMatches);
+            }
+            else
+            {
+                entity.IsNeutralStadium = dto.IsNeutralStadium;
+                UpdateStadium(entity, dto.Stadium);
+            }
 
             if (dto.Format is not null)
                 entity.Format = dto.Format;
@@ -314,7 +334,6 @@ namespace MyClub.Scorer.Application.Services
 
                     scheduledMatches.Add(x);
                 });
-
             }
         }
 

@@ -32,6 +32,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         bool CanEditMatchFormat();
 
+        bool CanAutomaticReschedule();
+
+        bool CanAutomaticRescheduleVenue();
+
         IEnumerable<TeamViewModel> GetAvailableTeams();
 
         Task AddMatchAsync();

@@ -8,7 +8,6 @@ using System.Reactive.Subjects;
 using DynamicData.Binding;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
-using MyNet.Observable.Collections;
 using MyNet.Observable.Attributes;
 using MyClub.Teamup.Application.Dtos;
 using MyClub.Teamup.Application.Services;

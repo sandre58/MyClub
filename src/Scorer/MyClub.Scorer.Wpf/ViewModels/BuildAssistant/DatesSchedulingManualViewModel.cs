@@ -70,7 +70,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         public ReadOnlyObservableCollection<EditableDateOfMatchdayWrapper> Dates => _sortedDates;
 
         [CanBeValidated(false)]
-        public ObservableCollection<EditableTimeWrapper> MatchTimes { get; } = [];
+        public UiObservableCollection<EditableTimeWrapper> MatchTimes { get; } = [];
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]

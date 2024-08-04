@@ -15,6 +15,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         SchedulingParametersViewModel SchedulingParameters { get; }
 
+        bool CanAutomaticReschedule();
+
+        bool CanAutomaticRescheduleVenue();
+
         IEnumerable<TeamViewModel> GetAvailableTeams();
     }
 }

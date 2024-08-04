@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:dial="clr-namespace:MyNet.UI.Dialogs;assembly=MyNet.UI"
+                    xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
                     xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
                     xmlns:filters="clr-namespace:MyClub.Scorer.Wpf.Filters"
                     xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -11,6 +12,9 @@
         <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
         <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Themes/Scorer.Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
+    <!-- Default -->
+    <Style TargetType="{x:Type my:BusyControl}" BasedOn="{StaticResource MyNet.Styles.BusyControl.Alternate.Accent}" />
 
     <!-- MessageBox -->
     <DataTemplate DataType="{x:Type vm:RemoveTeamsMessageBoxViewModel}">
@@ -101,6 +105,55 @@
                 <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:VenueContext.Away}" ToolTip="{my:Resource LocationAway}" />
             </ListBox>
         </Grid>
+    </DataTemplate>
+
+    <!-- Misc -->
+    <DataTemplate DataType="{x:Type entities:StadiumWrapper}">
+        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Large}">
+            <my:PackIcon Tag="{Binding Availability}">
+                <my:PackIcon.Style>
+                    <Style TargetType="{x:Type my:PackIcon}" BasedOn="{StaticResource MyNet.Styles.PackIcon}">
+                        <Setter Property="Height" Value="18" />
+                        <Setter Property="Width" Value="18" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Unknown">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsAvailable">
+                                <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                <Setter Property="Kind" Value="CheckCircle" />
+                                <Setter Property="ToolTip" Value="{my:Resource StadiumAvailableAtDate}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsBusy">
+                                <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter Property="Kind" Value="CloseCircle" />
+                                <Setter Property="ToolTip" Value="{my:Resource StadiumUnavailableAtDate}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsPartiallyBusy">
+                                <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                                <Setter Property="Kind" Value="WarningCircle" />
+                                <Setter Property="ToolTip" Value="{my:Resource StadiumPartiallyUnavailableAtDate}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </my:PackIcon.Style>
+            </my:PackIcon>
+            <TextBlock Text="{Binding Stadium.DisplayName}" />
+        </my:SimpleStackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type entities:AutomaticStadiumWrapper}">
+        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Large}">
+            <my:PackIcon Width="18" Height="18" Kind="Magic" />
+            <TextBlock Text="{my:Resource Automatic}" />
+        </my:SimpleStackPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type entities:NoStadiumWrapper}">
+        <my:SimpleStackPanel Opacity="{StaticResource MyNet.Opacity.Secondary}" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Large}">
+            <my:PackIcon Width="18" Height="18" Kind="NullOff" />
+            <TextBlock Text="{my:Resource NoneMale}" />
+        </my:SimpleStackPanel>
     </DataTemplate>
 
 </ResourceDictionary>

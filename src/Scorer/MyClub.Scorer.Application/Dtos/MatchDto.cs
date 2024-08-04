@@ -41,5 +41,9 @@ namespace MyClub.Scorer.Application.Dtos
         public Guid ParentId { get; set; }
 
         public MatchFormat? Format { get; set; }
+
+        public bool ScheduleAutomatic { get; set; }
+
+        public bool ScheduleStadiumAutomatic { get; set; }
     }
 }

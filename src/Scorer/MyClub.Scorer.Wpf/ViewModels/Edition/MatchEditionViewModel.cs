@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
@@ -15,11 +14,9 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Translatables;
 using MyNet.UI.Collections;
@@ -36,21 +33,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class MatchEditionViewModel : EntityEditionViewModel<Match, MatchDto, MatchService>
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
-        private readonly ResultsChangedDeferrer _resultsChangedDeferrer;
-        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
         private readonly ReadOnlyObservableCollection<IMatchParent> _parents;
         private readonly UiObservableCollection<TeamViewModel> _availableTeams = [];
 
         public MatchEditionViewModel(MatchService matchService,
                                      AvailibilityCheckingService availibilityCheckingService,
                                      StadiumsProvider stadiumsProvider,
-                                     MatchdaysProvider matchdaysProvider,
-                                     ResultsChangedDeferrer resultsChangedDeferrer,
-                                     ScheduleChangedDeferrer scheduleChangedDeferrer) : base(matchService)
+                                     MatchdaysProvider matchdaysProvider) : base(matchService)
         {
             _availibilityCheckingService = availibilityCheckingService;
-            _resultsChangedDeferrer = resultsChangedDeferrer;
-            _scheduleChangedDeferrer = scheduleChangedDeferrer;
             StadiumSelection = new ListViewModel<StadiumWrapper>(stadiumsProvider.Connect().Transform(x => new StadiumWrapper(x)));
             AvailableTeams = new(_availableTeams);
 
@@ -117,6 +108,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 this.WhenPropertyChanged(x => x.Parent, false).Subscribe(x =>
                 {
                     CanEditFormat = x.Value?.CanEditMatchFormat() ?? false;
+                    CanScheduleAutomatic = x.Value?.CanAutomaticReschedule() ?? false;
+                    CanScheduleStadiumAutomatic = x.Value?.CanAutomaticRescheduleVenue() ?? false;
                     _availableTeams.Set(x.Value?.GetAvailableTeams() ?? []);
 
                     if(IsModifiedSuspender.IsSuspended) return;
@@ -141,12 +134,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 {
                     ValidateOriginDateAvaibility();
                     ValidateStadiumsAvaibility();
+                    ScheduleAutomatic = false;
                 }),
                 this.WhenAnyPropertyChanged(nameof(PostponedDate), nameof(PostponedTime)).Subscribe(x =>
                 {
                     ValidatePostponedDateAvaibility();
                     ValidateStadiumsAvaibility();
+
+                    ScheduleAutomatic = false;
                 }),
+                StadiumSelection.WhenPropertyChanged(x => x.SelectedItem).Subscribe(_ => ScheduleStadiumAutomatic = false)
             ]);
         }
 
@@ -174,6 +171,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
         public TimeSpan? Time { get; set; }
 
+        public bool ScheduleAutomatic { get; set; }
+
+        public bool ScheduleStadiumAutomatic { get; set; }
+
+        public bool CanScheduleAutomatic { get; set; }
+
+        public bool CanScheduleStadiumAutomatic { get; set; }
 
         [Display(Name = nameof(PostponedDate), ResourceType = typeof(MyClubResources))]
         public DateTime? PostponedDate { get; set; }
@@ -323,12 +327,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public void Load(MatchViewModel match)
         {
             Parent = match.Parent;
+            CanScheduleAutomatic = match.Parent.CanAutomaticReschedule();
+            CanScheduleStadiumAutomatic = match.Parent.CanAutomaticRescheduleVenue();
             Load(match.Id);
         }
 
         public void New(IMatchParent? parent = null, Action? initialize = null)
         {
             Parent = parent ?? _parents.LastOrDefault();
+            CanScheduleAutomatic = Parent?.CanAutomaticReschedule() ?? false;
+            CanScheduleStadiumAutomatic = Parent?.CanAutomaticRescheduleVenue() ?? false;
             New(initialize);
         }
 
@@ -364,6 +372,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 PostponedState = PostponedState.None;
                 PostponedDate = null;
                 PostponedTime = null;
+                ScheduleAutomatic = false;
+                ScheduleStadiumAutomatic = false;
             }
         }
 
@@ -392,7 +402,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 AwayIsWithdrawn = AwayIsWithdrawn,
                 AfterExtraTime = AfterExtraTime,
                 State = State,
-                PostponedDate = PostponedState == PostponedState.SpecifiedDate ? PostponedDate?.Date.ToUtcDateTime(PostponedTime.GetValueOrDefault(Parent.MatchTime)) : null
+                PostponedDate = PostponedState == PostponedState.SpecifiedDate ? PostponedDate?.Date.ToUtcDateTime(PostponedTime.GetValueOrDefault(Parent.MatchTime)) : null,
+                ScheduleStadiumAutomatic = CanScheduleStadiumAutomatic && ScheduleStadiumAutomatic,
+                ScheduleAutomatic = CanScheduleAutomatic && ScheduleAutomatic
             };
 
         protected override void RefreshFrom(Match item)
@@ -417,34 +429,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 PostponedDate = item.OriginDate == item.Date ? null : item.Date.Date;
                 PostponedTime = item.OriginDate == item.Date ? null : item.Date.ToLocalTime().TimeOfDay;
                 PostponedState = !PostponedDate.HasValue && item.State != MatchState.Postponed ? PostponedState.None : PostponedDate.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
+                ScheduleAutomatic = false;
+                ScheduleStadiumAutomatic = false;
             }
         }
-
-        protected override void SaveCore()
-        {
-            using (_scheduleChangedDeferrer.Defer())
-            using (_resultsChangedDeferrer.Defer())
-                base.SaveCore();
-        }
     }
-
-    internal interface IStadiumWrapper
-    {
-
-    }
-
-    internal class StadiumWrapper : ObservableObject, IStadiumWrapper, IIdentifiable<Guid>
-    {
-        public AvailabilityCheck Availability { get; set; }
-
-        public StadiumViewModel Stadium { get; }
-
-        public Guid Id => Stadium.Id;
-
-        public StadiumWrapper(StadiumViewModel item) => Stadium = item;
-    }
-
-    internal class AutomaticStadiumWrapper : EditableObject, IStadiumWrapper { }
-
-    internal class NoStadiumWrapper : EditableObject, IStadiumWrapper { }
 }

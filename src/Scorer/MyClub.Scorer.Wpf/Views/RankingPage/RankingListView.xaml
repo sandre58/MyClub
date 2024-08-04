@@ -6,6 +6,7 @@
           xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
           xmlns:my="http://mynet.com/xaml/themes"
+          xmlns:sys="clr-namespace:System;assembly=mscorlib"
           xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.RankingPage"
           Style="{StaticResource MyNet.Styles.ListView}"
           d:DataContext="{d:DesignInstance Type=vm:RankingListViewModel}"
@@ -377,7 +378,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres">
+                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" MaxPopupWidth="{x:Static sys:Double.NaN}" PlacementMode="BottomAndAlignCentres">
                                             <my:DropDownButton.ToggleContent>
                                                 <Label x:Name="label"
                                                        Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"

@@ -35,7 +35,7 @@
     <PackageReference Include="MyNet.Utilities.IO.FileHistory.Registry" Version="1.1.0" />
     <PackageReference Include="MyNet.Utilities.Logging.NLog" Version="1.1.0" />
     <PackageReference Include="MyNet.Utilities.Mail.MailKit" Version="1.1.0" />
-    <PackageReference Include="MyNet.Wpf" Version="4.5.0" />
+    <PackageReference Include="MyNet.Wpf" Version="5.0.9" />
     <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="4.4.2" />
     <PackageReference Include="MyNet.Wpf.LiveCharts" Version="4.4.2" />
     <PackageReference Include="MyNet.Wpf.Presentation" Version="4.4.2" />

@@ -694,6 +694,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Stades automatiques.
+        /// </summary>
+        public static string AutomaticStadiums {
+            get {
+                return ResourceManager.GetString("AutomaticStadiums", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Sauvegarde automatique.
         /// </summary>
         public static string AutoSave {

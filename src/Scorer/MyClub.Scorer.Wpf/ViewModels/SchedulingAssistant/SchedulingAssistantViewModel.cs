@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;

@@ -2208,4 +2208,7 @@ The rules are not cumulative. The assigned venue is the first venue returned by 
   <data name="ScheduleVenuesBeforeDatesDescription" xml:space="preserve">
     <value>If this option is enabled, venues will be calculated before dates. Following the rules for calculating stadiums, this allows you to be more precise when assigning a stadium or calculating a date.</value>
   </data>
+  <data name="AutomaticStadiums" xml:space="preserve">
+    <value>Automatic stadiums</value>
+  </data>
 </root>

@@ -24,5 +24,9 @@ namespace MyClub.Scorer.Application.Dtos
         public List<Guid>? MatchesToDelete { get; set; }
 
         public List<MatchDto>? MatchesToAdd { get; set; }
+
+        public bool ScheduleAutomatic { get; set; }
+
+        public bool ScheduleStadiumsAutomatic { get; set; }
     }
 }

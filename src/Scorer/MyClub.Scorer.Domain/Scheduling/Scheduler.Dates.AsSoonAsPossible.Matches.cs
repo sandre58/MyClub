@@ -13,7 +13,6 @@ using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Helpers;
-using MyNet.Utilities.Sequences;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {

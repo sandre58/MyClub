@@ -18,7 +18,7 @@
     <PackageReference Include="MyNet.Humanizer" Version="1.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Utilities" Version="4.0.0">
+    <PackageReference Include="MyNet.Utilities" Version="4.0.3">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

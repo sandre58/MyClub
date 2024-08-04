@@ -24,10 +24,10 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!--  Name  -->
+                <!-- Name -->
                 <TextBlock HorizontalAlignment="Center" FontSize="{StaticResource MyNet.Font.Size.Caption}" Text="{Binding Item.Name}" />
 
-                <!--  Matches  -->
+                <!-- Matches -->
                 <ItemsControl Grid.Row="2" AlternationCount="2" ItemsSource="{Binding Item.Matches}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -43,20 +43,20 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <!--  Actions  -->
+                <!-- Actions -->
                 <my:SimpleStackPanel Grid.Row="4"
                                      HorizontalAlignment="Right"
                                      Orientation="Horizontal"
                                      Spacing="{StaticResource MyNet.Margin.Small}">
 
-                    <!--  Item ToolBar  -->
+                    <!-- Item ToolBar -->
                     <v:MatchdayToolBar x:Name="ToolBar"
                                        Padding="0"
                                        DataContext="{Binding Item}"
                                        RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
                                        Visibility="Hidden" />
 
-                    <!--  Selection  -->
+                    <!-- Selection -->
                     <CheckBox x:Name="Selection"
                               Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
                               BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
@@ -87,14 +87,16 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Matchday}" ItemsSource="{Binding Wrappers}">
+    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Matchday}">
         <i:Interaction.Behaviors>
             <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
+            <my:ItemsControlAsyncBehavior Items="{Binding Wrappers, Mode=OneWay}" />
         </i:Interaction.Behaviors>
         <ListBox.ItemContainerStyle>
-            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
-                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
                 <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                <Setter Property="VerticalContentAlignment" Value="Stretch" />
             </Style>
         </ListBox.ItemContainerStyle>
     </ListBox>

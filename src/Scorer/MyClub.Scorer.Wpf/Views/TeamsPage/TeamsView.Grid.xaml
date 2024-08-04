@@ -22,13 +22,13 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!--  Informations  -->
+                <!-- Informations -->
                 <my:SimpleStackPanel>
 
-                    <!--  ID container  -->
+                    <!-- ID container -->
                     <DockPanel>
 
-                        <!--  Photo  -->
+                        <!-- Photo -->
                         <my:PictureControl x:Name="Picture"
                                            Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                            Width="80"
@@ -40,10 +40,10 @@
 
                         <my:SimpleStackPanel VerticalAlignment="Top" Orientation="Vertical" Spacing="{StaticResource MyNet.Margin.Default}">
 
-                            <!--  Name  -->
+                            <!-- Name -->
                             <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" Text="{Binding Item.Name}" />
 
-                            <!--  Country  -->
+                            <!-- Country -->
                             <StackPanel Orientation="Horizontal">
                                 <Image Width="20"
                                        Margin="{StaticResource MyNet.Margins.Default.Right}"
@@ -53,10 +53,10 @@
                                 <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Item.Country, Converter={x:Static my:CountryToStringConverter.ToAlpha3}}" />
                             </StackPanel>
 
-                            <!--  Home / Away  -->
+                            <!-- Home / Away -->
                             <DockPanel>
 
-                                <!--  Players  -->
+                                <!-- Players -->
                                 <Grid DockPanel.Dock="Right" Visibility="{Binding Item.Players.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                     <my:PackIcon Width="35"
                                                  Height="35"
@@ -111,20 +111,20 @@
 
                 </my:SimpleStackPanel>
 
-                <!--  Actions  -->
+                <!-- Actions -->
                 <my:SimpleStackPanel Grid.Row="2"
                                      HorizontalAlignment="Right"
                                      Orientation="Horizontal"
                                      Spacing="{StaticResource MyNet.Margin.Small}">
 
-                    <!--  Item ToolBar  -->
+                    <!-- Item ToolBar -->
                     <v:TeamToolBar x:Name="ToolBar"
                                    Padding="0"
                                    DataContext="{Binding Item}"
                                    RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
                                    Visibility="Hidden" />
 
-                    <!--  Selection  -->
+                    <!-- Selection -->
                     <CheckBox x:Name="Selection"
                               Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
                               BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
@@ -164,14 +164,15 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Team}" ItemsSource="{Binding Wrappers}">
+    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Team}">
         <i:Interaction.Behaviors>
             <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
+            <my:ItemsControlAsyncBehavior Items="{Binding Wrappers, Mode=OneWay}" />
         </i:Interaction.Behaviors>
         <ListBox.ItemContainerStyle>
-            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}" TargetType="{x:Type ListBoxItem}">
-                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
                 <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                <Setter Property="IsSelected" Value="{Binding IsSelected}" />
             </Style>
         </ListBox.ItemContainerStyle>
     </ListBox>

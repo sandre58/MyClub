@@ -31,9 +31,9 @@ using MyClub.Scorer.Infrastructure.Packaging.Services;
 using MyClub.Scorer.Infrastructure.Repositories;
 using MyClub.Scorer.Wpf.Configuration;
 using MyClub.Scorer.Wpf.Services;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Factories;
 using MyClub.Scorer.Wpf.Services.Handlers;
+using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.Settings;
 using MyClub.Scorer.Wpf.ViewModels.BracketPage;
@@ -208,11 +208,8 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<MatchPresentationService>()
                 .AddScoped<LeaguePresentationService>()
 
-                // Deferrers
-                .AddSingleton<StadiumsChangedDeferrer>()
-                .AddSingleton<ScheduleChangedDeferrer>()
-                .AddSingleton<ResultsChangedDeferrer>()
-                .AddSingleton<TeamsChangedDeferrer>()
+                // Managers
+                .AddSingleton<ConflictsManager>()
 
                 // Presentation source Providers
                 .AddSingleton<RecentFilesProvider>()

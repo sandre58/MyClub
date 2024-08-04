@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyNet.Utilities;
 using MyClub.CrossCutting.Localization;
 using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Domain.MatchAggregate;
 using MyClub.Teamup.Domain.TeamAggregate;
+using MyNet.Utilities;
 
 namespace MyClub.Teamup.Domain.Factories
 {

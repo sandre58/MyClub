@@ -8,7 +8,6 @@ using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace MyClub.Scorer.Wpf.Filters
 {

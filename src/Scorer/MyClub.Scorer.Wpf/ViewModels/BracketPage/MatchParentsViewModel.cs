@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
@@ -86,7 +87,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
         public MatchParentWrapper(T item) : base(item)
             => Disposables.AddRange(
             [
-                Item.WhenPropertyChanged(x => x.Date, false).Subscribe(_ =>
+                item.WhenPropertyChanged(x => x.Date, false).Subscribe(_ =>
                 {
                     RaisePropertyChanged(nameof(StartDate));
                     RaisePropertyChanged(nameof(EndDate));

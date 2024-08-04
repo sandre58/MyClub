@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using MyClub.Plugins.Base.File.Resources;
 using MyNet.Observable;
-using MyNet.Observable.Collections;
 using MyNet.UI.Commands;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Dialogs.Settings;

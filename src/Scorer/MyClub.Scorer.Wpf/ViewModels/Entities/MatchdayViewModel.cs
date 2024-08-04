@@ -14,13 +14,14 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.Observable;
 using MyNet.UI.Commands;
 using MyNet.UI.Threading;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class MatchdayViewModel : EntityViewModelBase<Matchday>, IMatchParent
+    internal class MatchdayViewModel : EntityViewModelBase<Matchday>, IMatchParent, IAppointment
     {
         private readonly MatchdayPresentationService _matchdayPresentationService;
         private readonly MatchPresentationService _matchPresentationService;
@@ -96,6 +97,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public ICommand PostponeCommand { get; }
 
         public ICommand AddMatchCommand { get; }
+
+        public bool CanAutomaticReschedule() => Parent.CanAutomaticReschedule();
+
+        public bool CanAutomaticRescheduleVenue() => Parent.CanAutomaticRescheduleVenue();
 
         public bool CanEditMatchFormat() => false;
 

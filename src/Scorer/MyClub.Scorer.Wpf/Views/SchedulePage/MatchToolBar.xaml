@@ -32,19 +32,93 @@
                        StaysOpen="True"
                        ToggleContent="{my:ToolIcon Kind=DotsVertical}">
         <my:Submenu>
+
             <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding CanBeRescheduled}">
-                <MenuItem Command="{Binding RescheduleAutomaticCommand}" Header="{my:Resource Automatic}" />
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" />
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" />
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" />
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}" />
-                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Plural=True}" />
-                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Plural=True}" />
+                <MenuItem Command="{Binding RescheduleAutomaticCommand}" Header="{my:Resource Automatic}" Icon="{my:ToolIcon Kind=Magic}" />
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}">
+                    <MenuItem.Icon>
+                        <Grid>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                   Width="16"
+                                   Height="16"
+                                   Padding="0"
+                                   Content="{StaticResource Five}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   FontWeight="Bold" />
+                        </Grid>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}">
+                    <MenuItem.Icon>
+                        <Grid>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                   Width="16"
+                                   Height="16"
+                                   Padding="0"
+                                   Content="{StaticResource Ten}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   FontWeight="Bold" />
+                        </Grid>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}">
+                    <MenuItem.Icon>
+                        <Grid>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                   Width="16"
+                                   Height="16"
+                                   Padding="0"
+                                   Content="{StaticResource Fifteen}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   FontWeight="Bold" />
+                        </Grid>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}">
+                    <MenuItem.Icon>
+                        <Grid>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                   Width="16"
+                                   Height="16"
+                                   Padding="0"
+                                   Content="{StaticResource Thirty}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   FontWeight="Bold" />
+                        </Grid>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Plural=True}">
+                    <MenuItem.Icon>
+                        <Grid>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                   Width="16"
+                                   Height="16"
+                                   Padding="0"
+                                   Content="{StaticResource One}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   FontWeight="Bold" />
+                        </Grid>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Plural=True}">
+                    <MenuItem.Icon>
+                        <Grid>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                   Width="16"
+                                   Height="16"
+                                   Padding="0"
+                                   Content="{StaticResource Two}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   FontWeight="Bold" />
+                        </Grid>
+                    </MenuItem.Icon>
+                </MenuItem>
                 <MenuItem Height="50"
                           my:RippleAssist.Feedback="Transparent"
                           my:ThemeAssist.IsMouseOverBackground="Transparent"
                           Header="{Binding Data.RescheduleCommand, Source={StaticResource MatchProxy}}"
-                          HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}" />
+                          HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
+                          Icon="{my:ToolIcon Kind=ClockEdit}" />
             </MenuItem>
             <MenuItem Command="{Binding InvertTeamsCommand}" Header="{my:Resource InvertTeams}" Icon="{my:ToolIcon Kind=SwapHorizontal}" />
             <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
@@ -60,6 +134,56 @@
             <MenuItem Header="{my:Resource DoWithdraw}" Icon="{my:ToolIcon Kind=Close}" IsEnabled="{Binding CanBeWithdraw}">
                 <MenuItem Command="{Binding DoWithdrawForHomeTeamCommand}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
                 <MenuItem Command="{Binding DoWithdrawForAwayTeamCommand}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
+            </MenuItem>
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+            <MenuItem Background="{DynamicResource MyNet.Brushes.Warning}"
+                      Foreground="{my:BrushBinding Background,
+                                                   RelativeSource={RelativeSource Self},
+                                                   Contrast=True}"
+                      Header="{my:Resource Conflicts}"
+                      Icon="{my:ToolIcon Kind=Thunder}"
+                      Visibility="{Binding MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                <MenuItem Command="{Binding Data.RescheduleConflictsCommand, Source={StaticResource LocalProxy}}"
+                          CommandParameter="{Binding}"
+                          Header="{my:Resource RescheduleConflicts}"
+                          Icon="{my:ToolIcon Kind=CalendarEdit}"
+                          Visibility="{Binding Data.RescheduleConflictsCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                <MenuItem Header="{my:Resource EditConflict}" Icon="{my:ToolIcon Kind=Edit}" ItemsSource="{Binding MatchesInConflicts}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
+                            <Setter Property="Command" Value="{Binding EditCommand}" />
+                            <Setter Property="Header" Value="{Binding}" />
+                            <Setter Property="HeaderTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60" />
+                                                <ColumnDefinition Width="5" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="5" />
+                                                <ColumnDefinition Width="60" />
+                                            </Grid.ColumnDefinitions>
+                                            <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" IsEnabled="False" />
+                                            <TextBlock Grid.Column="2" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
+                                            <ContentControl Grid.Column="4"
+                                                            Content="{Binding AwayTeam}"
+                                                            ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Away}"
+                                                            IsEnabled="False" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                <Separator Visibility="{Binding Data.SelectConflictsCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                <MenuItem Command="{Binding Data.SelectConflictsCommand, Source={StaticResource LocalProxy}}"
+                          CommandParameter="{Binding}"
+                          Header="{my:Resource SelectConflicts}"
+                          Icon="{my:ToolIcon Kind=CheckAll}"
+                          Visibility="{Binding Data.SelectConflictsCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
             </MenuItem>
         </my:Submenu>
     </my:DropDownButton>

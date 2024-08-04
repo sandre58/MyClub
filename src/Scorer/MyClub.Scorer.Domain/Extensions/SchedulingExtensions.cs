@@ -13,6 +13,10 @@ namespace MyClub.Scorer.Domain.Extensions
 {
     public static class SchedulingExtensions
     {
+        public static bool CanAutomaticReschedule(this SchedulingParameters parameters) => parameters.AsSoonAsPossible || parameters.DateRules.Count > 0;
+
+        public static bool CanAutomaticRescheduleVenue(this SchedulingParameters parameters) => parameters.UseHomeVenue || parameters.VenueRules.Count > 0;
+
         public static void ScheduleVenues(this SchedulingParameters parameters, IEnumerable<Match> matches, IEnumerable<Stadium> stadiums, IEnumerable<Match>? scheduledMatches = null)
             => parameters.GetVenuesScheduler(stadiums, scheduledMatches)?.Schedule(matches.ToList());
 
@@ -36,6 +40,9 @@ namespace MyClub.Scorer.Domain.Extensions
 
         public static void Schedule(this SchedulingParameters parameters, IEnumerable<Match> matches, DateTime? startDate = null, IEnumerable<Match>? scheduledMatches = null)
             => parameters.GetMatchesScheduler(startDate, scheduledMatches)?.Schedule(matches.ToList());
+
+        public static void Schedule(this SchedulingParameters parameters, IEnumerable<Matchday> matchdays, DateTime? startDate = null, IEnumerable<Matchday>? scheduledMatchdays = null)
+            => parameters.GetMatchdaysScheduler(startDate, scheduledMatchdays)?.Schedule(matchdays.ToList());
 
         public static IMatchesScheduler? GetMatchesScheduler(this SchedulingParameters parameters, DateTime? startDate = null, IEnumerable<Match>? scheduledMatches = null)
         {

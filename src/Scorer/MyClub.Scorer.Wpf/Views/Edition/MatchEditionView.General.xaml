@@ -13,8 +13,8 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
         <Style x:Key="Scorer.Styles.PackIcon.Available" TargetType="{x:Type my:PackIcon}" BasedOn="{StaticResource MyNet.Styles.PackIcon}">
-            <Setter Property="Height" Value="16" />
-            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Width" Value="18" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Unknown">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -42,30 +42,45 @@
         <!-- Date -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarOutline}">
             <my:SimpleStackPanel Orientation="Horizontal">
-                <my:SimpleStackPanel.Style>
-                    <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
-                                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </my:SimpleStackPanel.Style>
-                <DatePicker Width="110"
-                            my:HintAssist.Hint="{my:Resource Date}"
-                            my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
-                            SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}">
-                    <my:IconAssist.Icon>
-                        <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding DateAvailability}" />
-                    </my:IconAssist.Icon>
-                </DatePicker>
-                <my:TimePicker Width="60" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
+                    <my:SimpleStackPanel.Style>
+                        <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
+                                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </my:SimpleStackPanel.Style>
+                    <DatePicker Width="115"
+                                my:HintAssist.Hint="{my:Resource Date}"
+                                my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
+                                SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}">
+                        <my:IconAssist.Icon>
+                            <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding DateAvailability}" />
+                        </my:IconAssist.Icon>
+                    </DatePicker>
+                    <my:TimePicker Width="60" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                </my:SimpleStackPanel>
+                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
+                    <TextBlock Text="{my:Resource Automatic}">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ScheduleAutomatic}" Value="False">
+                                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </ToggleButton>
             </my:SimpleStackPanel>
         </GroupBox>
 
         <!-- IsPostponed -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Default.Top}" Header="{my:Resource Postponed}">
-            <my:SimpleStackPanel Orientation="Horizontal">
+            <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
                 <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding PostponedState}" SelectedValuePath="DataContext">
                     <ListBoxItem Padding="15 7"
                                  my:ListBoxItemAssist.IsSelectedBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
@@ -102,50 +117,31 @@
         <StackPanel>
             <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Stadium}">
                 <my:SimpleStackPanel Orientation="Horizontal">
-                    <ComboBox Width="300"
-                              my:HintAssist.Hint="{my:Resource Stadium}"
-                              my:ItemsControlAssist.SortingProperty="Stadium.Address.City"
-                              my:TextFieldAssist.HasClearButton="True"
-                              ItemsSource="{Binding StadiumSelection.Items}"
-                              SelectedItem="{Binding StadiumSelection.SelectedItem}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <my:SimpleStackPanel Orientation="Horizontal">
-                                    <my:PackIcon Tag="{Binding Availability}">
-                                        <my:PackIcon.Style>
-                                            <Style TargetType="{x:Type my:PackIcon}" BasedOn="{StaticResource MyNet.Styles.PackIcon}">
-                                                <Setter Property="Height" Value="16" />
-                                                <Setter Property="Width" Value="16" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Unknown">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsAvailable">
-                                                        <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
-                                                        <Setter Property="Kind" Value="CheckCircle" />
-                                                        <Setter Property="ToolTip" Value="{my:Resource StadiumAvailableAtDate}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsBusy">
-                                                        <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
-                                                        <Setter Property="Kind" Value="CloseCircle" />
-                                                        <Setter Property="ToolTip" Value="{my:Resource StadiumUnavailableAtDate}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="IsPartiallyBusy">
-                                                        <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
-                                                        <Setter Property="Kind" Value="WarningCircle" />
-                                                        <Setter Property="ToolTip" Value="{my:Resource StadiumPartiallyUnavailableAtDate}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </my:PackIcon.Style>
-                                    </my:PackIcon>
-                                    <TextBlock Text="{Binding Stadium.DisplayName}" />
-                                </my:SimpleStackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" my:ToggleButtonAssist.OnContent="{my:Resource NeutralVenue}" IsChecked="{Binding NeutralVenue}">
-                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Disabled}" Text="{my:Resource NeutralVenue}" />
+                    <my:SimpleStackPanel IsEnabled="{Binding ScheduleStadiumAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}">
+                        <ComboBox Width="300"
+                                  my:HintAssist.Hint="{my:Resource Stadium}"
+                                  my:ItemsControlAssist.SortingProperty="Stadium.Address.City"
+                                  my:TextFieldAssist.HasClearButton="True"
+                                  ItemsSource="{Binding StadiumSelection.Items}"
+                                  SelectedItem="{Binding StadiumSelection.SelectedItem}" />
+                        <CheckBox Content="{my:Resource NeutralVenue}" IsChecked="{Binding NeutralVenue}" />
+                    </my:SimpleStackPanel>
+                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}"
+                                  Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                                  VerticalAlignment="Top"
+                                  IsChecked="{Binding ScheduleStadiumAutomatic}"
+                                  IsEnabled="{Binding CanScheduleStadiumAutomatic}">
+                        <TextBlock Text="{my:Resource Automatic}">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ScheduleStadiumAutomatic}" Value="False">
+                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </ToggleButton>
                 </my:SimpleStackPanel>
             </GroupBox>

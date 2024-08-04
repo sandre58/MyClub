@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using MyClub.Scorer.Domain.Scheduling;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Models
 {

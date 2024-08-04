@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using DynamicData.Binding;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.Services;
@@ -23,6 +24,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                    parametersProvider: listParametersProvider ?? new RankingListParameterProvider())
         {
             NavigateToPastPositionsCommand = CommandsManager.CreateNotNull<TeamViewModel>(x => NavigationCommandsService.NavigateToPastPositionsPage([x.Id]));
+
+            ranking.SubscribeOnUpdate(Collection.DeferSort);
 
             Disposables.AddRange(
                 [

@@ -3,8 +3,8 @@
 
 using System;
 using MyClub.CrossCutting.Localization;
-using MyClub.Teamup.Domain.Enums;
 using MyClub.Domain.Enums;
+using MyClub.Teamup.Domain.Enums;
 
 namespace MyClub.Teamup.Domain.Factories.Extensions
 {

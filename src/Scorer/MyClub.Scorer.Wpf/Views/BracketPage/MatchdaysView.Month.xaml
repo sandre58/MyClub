@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.BracketPage"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BracketPage"
              d:DataContext="{d:DesignInstance Type=vm:MatchdaysViewModel}"
@@ -13,21 +14,12 @@
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
-        <Style x:Key="Scorer.Styles.CalendarAppointment.Matchday" BasedOn="{StaticResource MyNet.Styles.CalendarAppointment.Alternate.DaysByMonth}" TargetType="{x:Type my:CalendarAppointment}">
-            <Setter Property="IsSelected" Value="{Binding IsSelected}" />
-            <Setter Property="Height" Value="Auto" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Accent}" />
-            <Setter Property="Foreground" Value="{my:BrushBinding SelfPath=Background, Contrast=True}" />
-            <Setter Property="ContentTemplate">
-                <Setter.Value>
-                    <DataTemplate>
+        <DataTemplate x:Key="Scorer.DataTemplates.Matchday">
 
-                        <Grid>
+            <Grid>
 
-                            <!--  Is Postponed  -->
-                            <Path HorizontalAlignment="Right"
+                <!-- Is Postponed -->
+                <Path HorizontalAlignment="Right"
                                   VerticalAlignment="Top"
                                   Data="M 20 0 V -20 H 0 Z"
                                   Fill="{DynamicResource MyNet.Brushes.Warning}"
@@ -35,10 +27,10 @@
                                   ToolTip="{my:Resource Postponed}"
                                   Visibility="{Binding Item.IsPostponed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                            <DockPanel Margin="{StaticResource MyNet.Margins.Default}">
+                <DockPanel Margin="{StaticResource MyNet.Margins.Default}">
 
-                                <!--  ToolBar  -->
-                                <v:MatchdayToolBar x:Name="ToolBar"
+                    <!-- ToolBar -->
+                    <v:MatchdayToolBar x:Name="ToolBar"
                                                    Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
                                                    HorizontalAlignment="Right"
                                                    DataContext="{Binding Item}"
@@ -46,10 +38,10 @@
                                                    RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
                                                    Visibility="Hidden" />
 
-                                <DockPanel>
+                    <DockPanel>
 
-                                    <Grid Width="25">
-                                        <CheckBox x:Name="Selection"
+                        <Grid Width="25">
+                            <CheckBox x:Name="Selection"
                                                   Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
@@ -57,78 +49,222 @@
                                                                                 Opacity={StaticResource MyNet.Opacity.Secondary}}"
                                                   IsChecked="{Binding IsSelected}"
                                                   Visibility="Hidden" />
-                                        <my:PackIcon x:Name="Icon"
+                            <my:PackIcon x:Name="Icon"
                                                      Width="22"
                                                      Height="22"
                                                      HorizontalAlignment="Center"
                                                      VerticalAlignment="Center"
                                                      Kind="Soccer" />
-                                    </Grid>
+                        </Grid>
 
-                                    <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                        <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Left}"
                                                          VerticalAlignment="Center"
                                                          Orientation="Horizontal"
                                                          Spacing="{StaticResource MyNet.Margin.Default}">
 
-                                        <!--  Name  -->
-                                        <TextBlock Text="{Binding Item.Name}" />
+                            <!-- Name -->
+                            <TextBlock Text="{Binding Item.Name}" />
 
-                                        <!--  Matches  -->
-                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres" Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
-                                            <my:DropDownButton.ToggleContent>
-                                                <my:Icon Kind="InfoCircle" />
-                                            </my:DropDownButton.ToggleContent>
-                                            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}"
+                            <!-- Matches -->
+                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                                           MaxPopupWidth="{x:Static sys:Double.NaN}"
+                                                           PlacementMode="BottomAndAlignCentres"
+                                                           Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                                <my:DropDownButton.ToggleContent>
+                                    <my:Icon Kind="InfoCircle" />
+                                </my:DropDownButton.ToggleContent>
+                                <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}"
                                                           Width="400"
                                                           AlternationCount="2"
                                                           ItemsSource="{Binding Item.Matches}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
-                                                            <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" EnableContextMenu="False" Match="{Binding}" />
-                                                        </Border>
-                                                        <DataTemplate.Triggers>
-                                                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                                                <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
-                                                            </Trigger>
-                                                        </DataTemplate.Triggers>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </my:DropDownButton>
-                                    </my:SimpleStackPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
+                                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" EnableContextMenu="False" Match="{Binding}" />
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                                    <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
+                                                </Trigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </my:DropDownButton>
+                        </my:SimpleStackPanel>
 
-                                </DockPanel>
-                            </DockPanel>
-                        </Grid>
+                    </DockPanel>
+                </DockPanel>
+            </Grid>
 
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding Item.IsPostponed}" Value="True">
-                                <Setter TargetName="Icon" Property="Kind" Value="ProgressQuestion" />
-                                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type my:CalendarAppointment}}}" Value="True">
-                                <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
-                            </DataTrigger>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
-                                    <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </Setter.Value>
-            </Setter>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Item.IsPostponed}" Value="True">
+                    <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                    <Setter TargetName="Icon" Property="Kind" Value="ProgressQuestion" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
+                    <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <Style x:Key="Scorer.Styles.ListBoxItem.Matchday" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+            <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="IsEnabled" Value="True" />
+            <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="my:IconAssist.Alignment" Value="Left" />
+            <Setter Property="my:IconAssist.Margin" Value="{StaticResource MyNet.Margins.Default.Right}" />
+            <Setter Property="my:IconAssist.Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+            <Setter Property="my:ListBoxItemAssist.IsMouseOverBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Hovered}}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Checked}}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Primary}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding SelfPath=Foreground}" />
+            <Setter Property="my:ListBoxItemAssist.ShowSelection" Value="True" />
+            <Setter Property="my:ThemeAssist.CornerRadius" Value="{StaticResource MyNet.CornerRadius.Control}" />
         </Style>
 
-        <Style x:Key="Scorer.Styles.CalendarItem.Matchday" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByMonth}" TargetType="{x:Type my:CalendarItem}">
+        <Style x:Key="Scorer.Styles.CalendarItem" TargetType="{x:Type my:CalendarItem}" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByMonth}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type my:CalendarItem}">
+                        <Border Margin="{TemplateBinding Margin}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                ClipToBounds="{TemplateBinding ClipToBounds}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.3" To="Normal">
+                                            <VisualTransition.GeneratedEasingFunction>
+                                                <CircleEase EasingMode="EaseOut" />
+                                            </VisualTransition.GeneratedEasingFunction>
+                                        </VisualTransition>
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState Name="Normal" />
+                                    <VisualState Name="MouseOver">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="MouseOverBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="{StaticResource MyNet.Opacity.Hovered}"
+                                                             Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Disabled" />
+                                </VisualStateGroup>
+                                <VisualStateGroup Name="SelectionStates">
+                                    <VisualStateGroup.Transitions>
+                                        <VisualTransition GeneratedDuration="0:0:0.3" />
+                                    </VisualStateGroup.Transitions>
+                                    <VisualState Name="Selected">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="{StaticResource MyNet.Opacity.Checked}"
+                                                             Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Unselected" />
+                                    <VisualState Name="SelectedUnfocused">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SelectedBorder"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0.03"
+                                                             Duration="0" />
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid x:Name="base">
+                                <Border Background="{TemplateBinding Background}" />
+                                <Border x:Name="MouseOverBorder" Background="{TemplateBinding Foreground}" Opacity="0" />
+
+                                <Border x:Name="SelectedBorder"
+                                        Background="{TemplateBinding Foreground}"
+                                        Opacity="0"
+                                        RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleX="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <my:Ripple Padding="{TemplateBinding Padding}"
+                                           HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                           VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                           Feedback="{TemplateBinding Foreground}"
+                                           Focusable="False"
+                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+                                    <Grid>
+                                        <ContentPresenter x:Name="DayText"
+                                                          Margin="{StaticResource MyNet.Margins.Default}"
+                                                          HorizontalAlignment="Stretch"
+                                                          VerticalAlignment="Stretch"
+                                                          Content="{TemplateBinding Content}"
+                                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                        <Button x:Name="PART_AddButton"
+                                                Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                Grid.Column="1"
+                                                Margin="{StaticResource MyNet.Margins.Default}"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                Content="{my:ToolIcon Kind=Plus}"
+                                                Visibility="Hidden" />
+                                        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}"
+                                                 Margin="0 25 0 0"
+                                                 ItemContainerStyle="{StaticResource Scorer.Styles.ListBoxItem.Matchday}"
+                                                 ItemTemplate="{StaticResource Scorer.DataTemplates.Matchday}"
+                                                 ItemsSource="{TemplateBinding Appointments}"
+                                                 SelectionMode="Extended">
+
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel IsItemsHost="True" />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                        </ListBox>
+                                    </Grid>
+                                </my:Ripple>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Owner.DatesSelectionMode, RelativeSource={RelativeSource Self}}" Value="None">
+                                <Setter Property="my:RippleAssist.IsDisabled" Value="True" />
+                            </DataTrigger>
+                            <Trigger Property="IsNow" Value="True">
+                                <Setter TargetName="DayText" Property="TextElement.FontWeight" Value="Bold" />
+                                <Setter TargetName="DayText" Property="TextElement.Foreground" Value="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource TemplatedParent}}" />
+                            </Trigger>
+                            <Trigger Property="IsInactive" Value="True">
+                                <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="base" Property="Opacity" Value="0" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="PART_AddButton" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding Owner.AddCommand, RelativeSource={RelativeSource Self}, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" Value="True">
+                                <Setter TargetName="PART_AddButton" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Accent}" />
             <Style.Triggers>
                 <Trigger Property="IsNow" Value="True">
@@ -136,6 +272,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
     </UserControl.Resources>
 
     <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
@@ -143,13 +280,16 @@
                                 AddCommand="{Binding AddToDateCommand}"
                                 Appointments="{Binding Wrappers}"
                                 BorderThickness="0"
-                                CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem.Matchday}"
+                                CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
                                 DatesSelectionMode="None"
                                 DisplayDate="{Binding Display.Mode.DisplayDate}"
                                 FirstDayOfWeek="{Binding Display.Mode.FirstDayOfWeek}"
-                                ItemContainerStyle="{StaticResource Scorer.Styles.CalendarAppointment.Matchday}"
-                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                 SelectionMode="Extended"
-                                ShowHeader="False" />
+                                ShowHeader="False">
+            <my:CalendarDaysByMonth.ItemsPanel>
+                <ItemsPanelTemplate />
+            </my:CalendarDaysByMonth.ItemsPanel>
+        </my:CalendarDaysByMonth>
     </my:Card>
 </UserControl>

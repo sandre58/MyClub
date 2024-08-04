@@ -12,7 +12,6 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
@@ -38,20 +37,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private readonly ReadOnlyObservableCollection<MatchdayViewModel> _matchdays;
         private readonly ISourceProvider<TeamViewModel> _teamsProvider;
         private readonly ISourceProvider<StadiumViewModel> _stadiumsProvider;
-        private readonly ResultsChangedDeferrer _resultsChangedDeferrer;
-        private readonly ScheduleChangedDeferrer _scheduleChangedDeferrer;
 
         public MatchdayEditionViewModel(MatchdayService matchdayService,
                                         MatchdaysProvider matchdaysProvider,
                                         StadiumsProvider stadiumsProvider,
-                                        TeamsProvider teamsProvider,
-                                        ResultsChangedDeferrer resultsChangedDeferrer,
-                                        ScheduleChangedDeferrer scheduleChangedDeferrer) : base(matchdayService)
+                                        TeamsProvider teamsProvider) : base(matchdayService)
         {
             _stadiumsProvider = stadiumsProvider;
             _teamsProvider = teamsProvider;
-            _resultsChangedDeferrer = resultsChangedDeferrer;
-            _scheduleChangedDeferrer = scheduleChangedDeferrer;
             InvertTeamsCommand = CommandsManager.Create(InvertTeams, () => Matches.Any(x => !x.IsReadOnly));
             AddMatchCommand = CommandsManager.Create(AddMatch, () => teamsProvider.Items.Count > 0);
             RemoveMatchCommand = CommandsManager.CreateNotNull<EditableMatchViewModel>(RemoveMatch);
@@ -101,6 +94,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public TimeSpan? PostponedTime { get; set; }
 
         public PostponedState PostponedState { get; set; }
+
+        public bool ScheduleAutomatic { get; set; }
+
+        public bool ScheduleStadiumsAutomatic { get; set; }
+
+        public bool CanScheduleAutomatic { get; set; }
+
+        public bool CanScheduleStadiumsAutomatic { get; set; }
 
         public ObservableCollection<EditableMatchViewModel> Matches { get; } = [];
 
@@ -162,6 +163,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             DuplicatedMatchday = null;
             Parent = parent;
+            CanScheduleAutomatic = Parent?.CanAutomaticReschedule() ?? false;
+            CanScheduleStadiumsAutomatic = Parent?.CanAutomaticRescheduleVenue() ?? false;
             New(initialize);
         }
 
@@ -175,6 +178,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             DuplicatedMatchday = null;
             Parent = matchday.Parent;
+            CanScheduleAutomatic = Parent?.CanAutomaticReschedule() ?? false;
+            CanScheduleStadiumsAutomatic = Parent?.CanAutomaticRescheduleVenue() ?? false;
             Load(matchday.Id);
         }
 
@@ -187,6 +192,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Name = defaultValues.Name.OrEmpty();
             PostponedState = PostponedState.None;
             PostponedDate = null;
+            ScheduleAutomatic = false;
+            ScheduleStadiumsAutomatic = false;
 
             if (DuplicatedMatchday is not null)
                 DuplicateMatchday(DuplicatedMatchday);
@@ -218,7 +225,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                         Address = x.StadiumSelection.SelectedItem.Address,
                     } : null,
                     State = MatchState.None
-                }).ToList()
+                }).ToList(),
+                ScheduleStadiumsAutomatic = CanScheduleStadiumsAutomatic && ScheduleStadiumsAutomatic,
+                ScheduleAutomatic = CanScheduleAutomatic && ScheduleAutomatic
             };
 
         protected override void RefreshFrom(Matchday item)
@@ -243,13 +252,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
                 return result;
             }));
-        }
-
-        protected override void SaveCore()
-        {
-            using (_scheduleChangedDeferrer.Defer())
-            using (_resultsChangedDeferrer.Defer())
-                base.SaveCore();
+            ScheduleAutomatic = false;
+            ScheduleStadiumsAutomatic = false;
         }
     }
 }

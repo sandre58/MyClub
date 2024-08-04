@@ -2210,4 +2210,7 @@ Les règles ne se cumulent pas. Le stade assigné est le premier stade renvoyé 
   <data name="ScheduleVenuesBeforeDatesDescription" xml:space="preserve">
     <value>Si cette option est activée, les stades seront calculés avant les dates. Suivant les règles de calcul des stades, ça permet d'être plus précis sur l'affectation d'un stade ou le calcul d'une date.</value>
   </data>
+  <data name="AutomaticStadiums" xml:space="preserve">
+    <value>Stades automatiques</value>
+  </data>
 </root>

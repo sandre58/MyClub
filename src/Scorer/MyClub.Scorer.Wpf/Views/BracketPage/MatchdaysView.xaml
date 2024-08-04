@@ -15,46 +15,25 @@
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
-        <DataTemplate DataType="{x:Type display:DisplayModeGrid}" />
-        <DataTemplate DataType="{x:Type display:DisplayModeCalendar}">
-            <my:Card Padding="1" BorderBrush="{DynamicResource MyNet.Brushes.Control.Border}" BorderThickness="1">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                            Grid.Column="0"
-                            Padding="5 3"
-                            VerticalAlignment="Stretch"
-                            my:ThemeAssist.CornerRadius="0"
-                            Command="{Binding MoveToPreviousDateCommand}"
-                            Content="{my:MediumIcon Kind=ChevronLeft}" />
-                    <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                            Grid.Column="1"
-                            Width="150"
-                            Padding="5 3"
-                            VerticalAlignment="Stretch"
-                            my:ThemeAssist.CornerRadius="0"
-                            Command="{Binding MoveToTodayCommand}"
-                            Content="{my:Translation DisplayDate,
-                                                     Casing=AllCaps,
-                                                     Format='MMMM yyyy'}"
+        <!--<DataTemplate DataType="{x:Type display:DisplayModeGrid}" />
+        <DataTemplate DataType="{x:Type display:DisplayModeMonth}">
+            <my:SimpleStackPanel Orientation="Horizontal">
+                <my:MonthPicker Style="{StaticResource MyNet.Styles.MonthPicker.Alternate.Outlined}"
+                            Width="210"
                             FontSize="{StaticResource MyNet.Font.Size.Caption}"
-                            FontWeight="DemiBold"
-                            ToolTip="{my:Resource Today}" />
-                    <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                            Grid.Column="2"
-                            Padding="5 3"
-                            VerticalAlignment="Stretch"
-                            my:ThemeAssist.CornerRadius="0"
-                            Command="{Binding MoveToNextDateCommand}"
-                            Content="{my:MediumIcon Kind=ChevronRight}" />
-                </Grid>
-            </my:Card>
+                            FontWeight="SemiBold"
+                            SelectedMonth="{Binding Month, RelativeSource={RelativeSource AncestorType={x:Type v:MatchdaysView}}}"
+                            SelectedMonthFormat="MMMM yyyy" />
+                <TextBlock Text="{Binding Month, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type v:MatchdaysView}}}" />
+            </my:SimpleStackPanel>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type display:DisplayModeYear}">
+            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Alternate.Outlined}"
+                              Width="210"
+                              FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                              FontWeight="SemiBold"
+                              Value="{Binding DisplayDate, Converter={x:Static my:DateToYearConverter.Default}}" />
+        </DataTemplate>-->
     </UserControl.Resources>
 
     <!-- Shortcuts -->
@@ -112,7 +91,42 @@
             <my:CommandsBar.RightCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
                     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.List.Count.Selectable}" />
-                    <ContentControl Margin="10 2" Content="{Binding Display.Mode}" />
+                    <ContentControl Margin="10 2">
+                        <ContentControl.Style>
+                            <Style TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeGrid">
+                                        <Setter Property="Content" Value="{x:Null}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeMonth">
+                                        <Setter Property="Content">
+                                            <Setter.Value>
+                                                <my:MonthPicker Style="{StaticResource MyNet.Styles.MonthPicker.Alternate.Outlined}"
+                                                                Width="210"
+                                                                FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                                                FontWeight="SemiBold"
+                                                                SelectedMonth="{Binding Display.Mode.DisplayDate}"
+                                                                SelectedMonthFormat="MMMM yyyy" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeYear">
+                                        <Setter Property="Content">
+                                            <Setter.Value>
+                                                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Alternate.Outlined}"
+                                                                  Width="210"
+                                                                  my:HintAssist.HelperTextForeground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                                                                  FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                                                  FontWeight="SemiBold"
+                                                                  Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                                                                  Value="{Binding Display.Mode.DisplayDate, Converter={x:Static my:DateToYearConverter.Default}}" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
                     <Separator />
                     <my:DisplayView DataContext="{Binding Display}" />
                 </ToolBar>
@@ -121,35 +135,43 @@
         </my:CommandsBar>
 
         <!-- Content -->
-        <my:TransitioningContent>
+        <my:TransitioningContent Content="{Binding}" TriggerObject="{Binding Display.Mode}">
             <my:TransitioningContent.Style>
                 <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeGrid">
-                            <Setter Property="Content">
+                            <Setter Property="ContentTemplate">
                                 <Setter.Value>
-                                    <v:MatchdaysGridView />
+                                    <DataTemplate>
+                                        <v:MatchdaysGridView />
+                                    </DataTemplate>
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding WrappersSource.Count}" Value="0">
-                            <Setter Property="Content">
+                            <Setter Property="ContentTemplate">
                                 <Setter.Value>
-                                    <ContentControl ContentTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Large}" />
+                                    <DataTemplate>
+                                        <ContentControl ContentTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Large}" />
+                                    </DataTemplate>
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeMonth">
-                            <Setter Property="Content">
+                            <Setter Property="ContentTemplate">
                                 <Setter.Value>
-                                    <v:MatchdaysMonthView />
+                                    <DataTemplate>
+                                        <v:MatchdaysMonthView />
+                                    </DataTemplate>
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeYear">
-                            <Setter Property="Content">
+                            <Setter Property="ContentTemplate">
                                 <Setter.Value>
-                                    <v:MatchdaysYearView />
+                                    <DataTemplate>
+                                        <v:MatchdaysYearView />
+                                    </DataTemplate>
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>

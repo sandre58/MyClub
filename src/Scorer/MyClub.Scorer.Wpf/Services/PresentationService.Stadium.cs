@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Plugins.Contracts;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Export;
@@ -30,17 +29,9 @@ namespace MyClub.Scorer.Wpf.Services
 {
     internal class StadiumPresentationService(StadiumService service,
                                               PluginsService pluginsService,
-                                              IViewModelLocator viewModelLocator,
-                                              StadiumsChangedDeferrer stadiumsChangedDeferrer) : PresentationServiceBase<StadiumViewModel, StadiumEditionViewModel, StadiumService>(service, viewModelLocator)
+                                              IViewModelLocator viewModelLocator) : PresentationServiceBase<StadiumViewModel, StadiumEditionViewModel, StadiumService>(service, viewModelLocator)
     {
         private readonly PluginsService _pluginsService = pluginsService;
-        private readonly StadiumsChangedDeferrer _stadiumsChangedDeferrer = stadiumsChangedDeferrer;
-
-        protected override void Remove(ICollection<Guid> idsList)
-        {
-            using (_stadiumsChangedDeferrer.Defer())
-                base.Remove(idsList);
-        }
 
         public async Task OpenAsync(StadiumViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
@@ -100,11 +91,7 @@ namespace MyClub.Scorer.Wpf.Services
                 }
             }).ToList();
 
-            await AppBusyManager.WaitAsync(() =>
-            {
-                using (_stadiumsChangedDeferrer.Defer())
-                    Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList());
-            }).ConfigureAwait(false);
+            await AppBusyManager.WaitAsync(() => Service.Import(itemsToImport.Where(x => x.Mode == ImportMode.Add).Select(x => x.Item).ToList(), itemsToImport.Where(x => x.Mode == ImportMode.Update).Select(x => x.Item).ToList())).ConfigureAwait(false);
             await vm.ResetAsync().ConfigureAwait(false);
         }
 
@@ -121,17 +108,14 @@ namespace MyClub.Scorer.Wpf.Services
             var selectedItem = vm.List.SelectedItem;
             if (result.IsTrue() && selectedItem is not null)
             {
-                using (_stadiumsChangedDeferrer.Defer())
+                var item = Service.Save(new StadiumDto
                 {
-                    var item = Service.Save(new StadiumDto
-                    {
-                        Name = selectedItem.Name,
-                        Ground = selectedItem.Ground,
-                        Address = selectedItem.GetAddress()
-                    });
+                    Name = selectedItem.Name,
+                    Ground = selectedItem.Ground,
+                    Address = selectedItem.GetAddress()
+                });
 
-                    return item.Id;
-                }
+                return item.Id;
             }
 
             return null;

@@ -7,7 +7,6 @@ using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Wpf.Messages;
-using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.UI.Notifications;
 using MyNet.UI.Toasting;

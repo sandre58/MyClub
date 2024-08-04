@@ -7,7 +7,6 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.StadiumAggregate;
-using MyClub.Scorer.Wpf.Services.Deferrers;
 using MyNet.Observable.Attributes;
 using MyNet.Utilities;
 
@@ -15,14 +14,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class StadiumEditionViewModel : EntityEditionViewModel<Stadium, StadiumDto, StadiumService>, IEntityEditionViewModel
     {
-        private readonly StadiumsChangedDeferrer _stadiumsChangedDeferrer;
-
-        public StadiumEditionViewModel(StadiumService service, AddressService addressService, StadiumsChangedDeferrer stadiumsChangedDeferrer)
-            : base(service)
-        {
-            _stadiumsChangedDeferrer = stadiumsChangedDeferrer;
-            Address = new EditableAddressViewModel(addressService);
-        }
+        public StadiumEditionViewModel(StadiumService service, AddressService addressService)
+            : base(service) => Address = new EditableAddressViewModel(addressService);
 
         public EditableAddressViewModel Address { get; }
 
@@ -56,12 +49,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Name = defaultValues.Name.OrEmpty();
             Ground = defaultValues.Ground;
             Address.Load(defaultValues.Address);
-        }
-
-        protected override void SaveCore()
-        {
-            using (_stadiumsChangedDeferrer.Defer())
-                base.SaveCore();
         }
     }
 }

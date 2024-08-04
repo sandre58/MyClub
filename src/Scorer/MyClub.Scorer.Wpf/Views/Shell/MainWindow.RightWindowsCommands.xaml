@@ -21,7 +21,7 @@
     <Grid Width="30"
           Height="30"
           my:BusyAssist.AttachService="{Binding BackgroundBusyService}"
-          my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Small}" />
+          my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Small.Foreground}" />
 
     <!--  User Button  -->
     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Text}"
