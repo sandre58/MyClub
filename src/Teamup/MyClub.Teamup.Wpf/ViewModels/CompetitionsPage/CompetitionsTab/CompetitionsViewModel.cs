@@ -124,7 +124,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.CompetitionsPage.CompetitionsTab
         {
             if (!oldItems.Any()) return;
 
-            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateWithCountAndOptionalFormat(oldItems.Count())!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
+            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(oldItems.Count())!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
             {

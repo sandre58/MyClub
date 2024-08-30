@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
-        <DataTemplate x:Key="Scorer.DataTmeplates.MatchDetails">
+        <DataTemplate x:Key="Scorer.DataTemplates.MatchDetails">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -24,9 +24,9 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal">
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
                     <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation EndDate, Format=ShortTimePattern}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
                 </StackPanel>
                 <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
                     <ctrl:TeamButton Item="{Binding Item.HomeTeam}" />
@@ -164,8 +164,8 @@
             <!-- Period -->
             <DatePicker Style="{StaticResource MyNet.Styles.DatePicker.Alternate.Outlined}"
                         Width="300"
-                        my:TextFieldAssist.Format="dd MMMM yyyy"
-                        SelectedDate="{Binding Display.Mode.DisplayDate}" />
+                        my:TextFieldAssist.Format="D"
+                        SelectedDate="{my:DateTime Display.Mode.DisplayDate}" />
 
             <!-- Display Options -->
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Display}" />
@@ -176,19 +176,19 @@
                       SelectedItem="{Binding Display.Mode.DisplayDaysCount}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{my:Translation Plural=True, Format=TimeSpanDay}" />
+                        <TextBlock Text="{my:Translation Pluralize=True, Format=TimeSpanDay}" />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Of, Casing=LowerCase}" />
             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
-                      Width="90"
+                      Width="110"
                       ItemsSource="{my:HourRange Start=0,
                                                  End=22}"
                       SelectedItem="{Binding Display.Mode.DisplayTimeStart}" />
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
-                      Width="90"
+                      Width="110"
                       ItemsSource="{my:HourRange Start=1,
                                                  End=23}"
                       SelectedItem="{Binding Display.Mode.DisplayTimeEnd}" />
@@ -204,13 +204,13 @@
                             <DataTemplate>
                                 <my:CalendarHoursByDay my:HeaderAssist.Background="Transparent"
                                                        my:HeaderAssist.Height="50"
-                                                       my:HeaderAssist.Width="35"
+                                                       my:HeaderAssist.Width="50"
                                                        Appointments="{Binding Wrappers}"
                                                        AppointmentsMargin="0"
                                                        AppointmentsSpacing="0"
                                                        BorderThickness="0"
                                                        DatesSelectionMode="None"
-                                                       DisplayDate="{Binding Display.Mode.DisplayDate, Mode=OneWay}"
+                                                       DisplayDate="{my:DateTime Display.Mode.DisplayDate, Mode=OneWay}"
                                                        DisplayDaysCount="{Binding Display.Mode.DisplayDaysCount}"
                                                        DisplayTimeEnd="{Binding Display.Mode.DisplayTimeEnd}"
                                                        DisplayTimeStart="{Binding Display.Mode.DisplayTimeStart}"
@@ -272,7 +272,7 @@
                                                                 <!-- Details -->
                                                                 <ContentControl x:Name="Details"
                                                                                 Content="{Binding}"
-                                                                                ContentTemplate="{StaticResource Scorer.DataTmeplates.MatchDetails}"
+                                                                                ContentTemplate="{StaticResource Scorer.DataTemplates.MatchDetails}"
                                                                                 Visibility="Collapsed" />
                                                             </my:SimpleStackPanel>
 
@@ -289,7 +289,7 @@
                                                                                    Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                                                    Margin="{StaticResource MyNet.Margins.Default.Right}"
                                                                                    PopupContent="{Binding}"
-                                                                                   PopupContentTemplate="{StaticResource Scorer.DataTmeplates.MatchDetails}"
+                                                                                   PopupContentTemplate="{StaticResource Scorer.DataTemplates.MatchDetails}"
                                                                                    ToggleContent="{my:ToolIcon Kind=InfoCircle}" />
 
                                                                 <!-- Item ToolBar -->
@@ -379,7 +379,7 @@
                                             <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
                                                        Margin="0 -6 0 0"
                                                        VerticalAlignment="Top"
-                                                       Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
+                                                       Text="{my:DisplayDateTime Format=t}" />
                                         </DataTemplate>
                                     </my:CalendarHoursByDay.RowHeaderTemplate>
                                     <my:CalendarHoursByDay.CalendarItemStyle>

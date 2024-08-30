@@ -47,7 +47,7 @@
             </GroupBox>
         </my:SimpleStackPanel>
 
-        <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+        <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                         Width="100"
                         Height="100"
                         Margin="{StaticResource MyNet.Margins.Large.Horizontal}"

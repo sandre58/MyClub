@@ -14,6 +14,7 @@ using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
@@ -30,7 +31,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly object _lock = new();
         private readonly List<Func<IDisposable>> _subscribers = [];
 
-        public RankingViewModel(ReadOnlyObservableCollection<TeamViewModel> teams, IEnumerable<MatchViewModel> matches)
+        public RankingViewModel(ReadOnlyObservableCollection<ITeamViewModel> teams, IEnumerable<MatchViewModel> matches)
             : base()
         {
             Disposables.Add(teams.ToObservableChangeSet()
@@ -47,7 +48,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public void SubscribeOnUpdate(Func<IDisposable> onUpdate) => _subscribers.Add(onUpdate);
 
-        public RankingRowViewModel? GetRow(TeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
+        public RankingRowViewModel? GetRow(ITeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
 
         public void Update(RankingDto ranking)
         {
@@ -84,7 +85,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public RankingRules? Rules { get; private set; }
 
-        public ReadOnlyDictionary<TeamViewModel, int>? PenaltyPoints { get; private set; }
+        public ReadOnlyDictionary<ITeamViewModel, int>? PenaltyPoints { get; private set; }
 
         public ReadOnlyDictionary<AcceptableValueRange<int>, RankLabel>? Labels { get; private set; }
 

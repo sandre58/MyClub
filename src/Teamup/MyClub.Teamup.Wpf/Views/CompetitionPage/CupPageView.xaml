@@ -109,7 +109,7 @@
                                                                     <s:CompetitionDataTemplateSelector>
                                                                         <s:CompetitionDataTemplateSelector.FriendlyTemplate>
                                                                             <DataTemplate DataType="{x:Type entities:FriendlyViewModel}">
-                                                                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Matches.Count, Plural=True, Format=XMatches}" />
+                                                                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Matches.Count, Pluralize=True, Format=XMatches}" />
                                                                             </DataTemplate>
                                                                         </s:CompetitionDataTemplateSelector.FriendlyTemplate>
                                                                         <s:CompetitionDataTemplateSelector.CupTemplate>

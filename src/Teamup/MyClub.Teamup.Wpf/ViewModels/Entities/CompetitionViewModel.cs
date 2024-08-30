@@ -159,7 +159,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
 
         public IEnumerable<MatchViewModel> GetAllMatches() => AllMatches;
 
-        public DateTime GetDefaultDateTime() => (StartDate.IsInPast() ? DateTime.Today : StartDate).ToLocalDateTime(Rules.MatchTime);
+        public DateTime GetDefaultDateTime() => (StartDate.IsInPast() ? DateTime.Today : StartDate).ToLocal(Rules.MatchTime);
 
         public IEnumerable<TeamViewModel> GetAvailableTeams() => Teams;
 

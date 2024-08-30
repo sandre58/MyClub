@@ -4,19 +4,20 @@
 using System;
 using System.Collections.Generic;
 using DynamicData.Binding;
-using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.UI.ViewModels.List.Filtering.Filters;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
-    internal class MatchTeamFilterViewModel : SelectedValueFilterViewModel<TeamViewModel, TeamViewModel>
+    internal class MatchTeamFilterViewModel : SelectedValueFilterViewModel<ITeamViewModel, ITeamViewModel>
     {
         public EnumValueFilterViewModel<VenueContext> VenueFilter { get; }
 
         public bool ShowVenueFilter { get; set; } = true;
 
-        public MatchTeamFilterViewModel(IEnumerable<TeamViewModel> teams) : base(string.Empty, teams)
+        public MatchTeamFilterViewModel(IEnumerable<ITeamViewModel> teams) : base(string.Empty, teams)
         {
             VenueFilter = new(string.Empty);
             VenueFilter.WhenPropertyChanged(x => x.Value).Subscribe(_ => RaisePropertyChanged(nameof(VenueFilter)));

@@ -7,7 +7,6 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public interface IDateSchedulingRule
     {
-        bool Match(DateTime date, DateTime? previousDate);
+        bool Match(DateOnly date, DateOnly? previousDate);
     }
 }
-

@@ -60,7 +60,7 @@
                                my:ThemeAssist.UniformCornerRadius="8"
                                Background="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
                                Content="{my:Translation Position,
-                                                        Abbreviation=True}"
+                                                        Abbreviate=True}"
                                FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
                                Foreground="{my:BrushBinding BorderBrush,
                                                             Contrast=True,

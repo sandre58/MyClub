@@ -1,0 +1,74 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.ProjectEditionGeneralView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Scorer.Domain.Enums;assembly=MyClub.Scorer.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:ProjectEditionGeneralViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Type -->
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle.Foreground.Opacity}"
+                 Grid.ColumnSpan="3"
+                 HorizontalAlignment="Center"
+                 Background="Transparent"
+                 IsEnabled="{Binding CanEditType}"
+                 SelectedValue="{Binding Type}"
+                 SelectedValuePath="DataContext">
+            <ListBoxItem Width="130"
+                         Height="130"
+                         Margin="{StaticResource MyNet.Margins.Default}"
+                         Padding="{StaticResource MyNet.Margins.Large}"
+                         my:IconAssist.Alignment="Bottom"
+                         my:IconAssist.Icon="{my:Icon Kind=Podium,
+                                                      Size=60}"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.League}"
+                         my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Container}"
+                         Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                      Opacity={StaticResource MyNet.Opacity.Filled}}"
+                         Content="{my:Resource TournamentTypeLeague}"
+                         DataContext="{x:Static enums:CompetitionType.League}"
+                         FontSize="{StaticResource MyNet.Font.Size.Caption}" />
+            <ListBoxItem Width="130"
+                         Height="130"
+                         Margin="{StaticResource MyNet.Margins.Default}"
+                         Padding="{StaticResource MyNet.Margins.Large}"
+                         my:IconAssist.Alignment="Bottom"
+                         my:IconAssist.Icon="{my:Icon Kind=Bracket,
+                                                      Size=60}"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.Cup}"
+                         my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Container}"
+                         Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                      Opacity={StaticResource MyNet.Opacity.Filled}}"
+                         Content="{my:Resource TournamentTypeCup}"
+                         DataContext="{x:Static enums:CompetitionType.Cup}"
+                         FontSize="{StaticResource MyNet.Font.Size.Caption}" />
+        </ListBox>
+
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                  Grid.Row="2"
+                  my:HeaderAssist.FontSize="{StaticResource MyNet.Font.Size.Title}"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=Settings}"
+                  Header="{my:Resource Preferences}">
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" VerticalAlignment="Top" Header="{my:MediumIcon Kind=AlertRemove}">
+                <ToggleButton Content="{my:Resource TreatNoStadiumAsWarning}" IsChecked="{Binding TreatNoStadiumAsWarning}" />
+            </GroupBox>
+        </GroupBox>
+    </Grid>
+</UserControl>

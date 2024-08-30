@@ -168,6 +168,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mocks", "Mocks", "{5C82BAEF
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.UnitTests.Scorer.Infrastructure.Packaging", "tests\MyClub.UnitTests.Scorer.Infrastructure.Packaging\MyClub.UnitTests.Scorer.Infrastructure.Packaging.csproj", "{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Scorer.Mocks.Factory.Random", "Scorer\Mocks\MyClub.Scorer.Mocks.Factory.Random\MyClub.Scorer.Mocks.Factory.Random.csproj", "{E95CEBE5-E971-431C-BD88-36DFC2CEB336}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.CrossCutting.Images", "Common\MyClub.CrossCutting.Images\MyClub.CrossCutting.Images.csproj", "{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -354,6 +358,14 @@ Global
 		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -411,6 +423,8 @@ Global
 		{989B480C-A477-44DC-A801-08A380AB46CC} = {A5C631A1-F5A2-4C22-8A49-AD37E63C8BE0}
 		{5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
 		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
+		{E95CEBE5-E971-431C-BD88-36DFC2CEB336} = {5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A}
+		{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0} = {F9AF5D17-4ABE-46FC-8AF5-040FF37922F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		RESX_ConfirmAddLanguageFile = True

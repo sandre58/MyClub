@@ -12,7 +12,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.StadiumsPage
 
         public StadiumsPageViewModel(StadiumsProvider stadiumsProvider,
                                      TeamsProvider teamsProvider,
-                                     StadiumPresentationService stadiumPresentationService) => StadiumsViewModel = new StadiumsViewModel(stadiumsProvider, teamsProvider, stadiumPresentationService);
+                                     StadiumPresentationService stadiumPresentationService)
+            => StadiumsViewModel = new StadiumsViewModel(stadiumsProvider, teamsProvider, stadiumPresentationService);
 
         protected override void Cleanup()
         {

@@ -9,6 +9,7 @@ using DynamicData.Binding;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.Commands;
 using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.List;
@@ -23,7 +24,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
             : base(ranking.ToObservableChangeSet<RankingViewModel, RankingRowViewModel>(),
                    parametersProvider: listParametersProvider ?? new RankingListParameterProvider())
         {
-            NavigateToPastPositionsCommand = CommandsManager.CreateNotNull<TeamViewModel>(x => NavigationCommandsService.NavigateToPastPositionsPage([x.Id]));
+            NavigateToPastPositionsCommand = CommandsManager.CreateNotNull<ITeamViewModel>(x => NavigationCommandsService.NavigateToPastPositionsPage([x.Id]));
 
             ranking.SubscribeOnUpdate(Collection.DeferSort);
 
@@ -41,7 +42,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 
         public RankingRules? Rules { get; private set; }
 
-        public ReadOnlyDictionary<TeamViewModel, int>? PenaltyPoints { get; private set; }
+        public ReadOnlyDictionary<ITeamViewModel, int>? PenaltyPoints { get; private set; }
 
         public ReadOnlyDictionary<AcceptableValueRange<int>, RankLabel>? Labels { get; private set; }
     }

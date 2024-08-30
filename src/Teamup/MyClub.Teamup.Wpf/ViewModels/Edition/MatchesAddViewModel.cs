@@ -109,7 +109,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                                              ParentId = Parent.Id,
                                              HomeTeamId = x.HomeTeamSelection.SelectedItem!.Id,
                                              AwayTeamId = x.AwayTeamSelection.SelectedItem!.Id,
-                                             Date = x.Date.GetValueOrDefault().ToUtcDateTime(x.Time),
+                                             Date = x.Date.GetValueOrDefault().ToUtc(x.Time),
                                              Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
                                              {
                                                  Id = x.StadiumSelection.SelectedItem.Id,

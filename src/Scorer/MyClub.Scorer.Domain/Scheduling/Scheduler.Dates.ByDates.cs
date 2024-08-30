@@ -14,21 +14,21 @@ namespace MyClub.Scorer.Domain.Scheduling
     {
         private IList<(DateTime date, IEnumerable<DateTime> datesOfMatches)> _dates = [];
 
-        public ByDatesScheduler<T> SetDates(IEnumerable<DateTime> dates, TimeSpan time)
+        public ByDatesScheduler<T> SetDates(IEnumerable<DateTime> dates, TimeOnly time)
         {
-            _dates = dates.Select(x => (x, EnumerableHelper.Range(1, 100, 1).Select(y => x.ToUtcDateTime(time)))).ToList();
+            _dates = dates.Select(x => (x, EnumerableHelper.Range(1, 100, 1).Select(y => x.At(time)))).ToList();
             return this;
         }
 
-        public ByDatesScheduler<T> SetDates(IEnumerable<DateTime> dates, IEnumerable<TimeSpan> times)
+        public ByDatesScheduler<T> SetDates(IEnumerable<DateTime> dates, IEnumerable<TimeOnly> times)
         {
-            _dates = dates.Select(x => (x, times.Select(y => x.ToUtcDateTime(y)))).ToList();
+            _dates = dates.Select(x => (x, times.Select(y => x.At(y)))).ToList();
             return this;
         }
 
-        public ByDatesScheduler<T> SetDates(IEnumerable<(DateTime date, IEnumerable<TimeSpan> times)> dates)
+        public ByDatesScheduler<T> SetDates(IEnumerable<(DateTime date, IEnumerable<TimeOnly> times)> dates)
         {
-            _dates = dates.Select(x => (x.date, x.times.Select(y => x.date.ToUtcDateTime(y)))).ToList();
+            _dates = dates.Select(x => (x.date, x.times.Select(y => x.date.At(y)))).ToList();
             return this;
         }
 
@@ -41,13 +41,13 @@ namespace MyClub.Scorer.Domain.Scheduling
         public void Schedule(IEnumerable<T> items)
         => items.ForEach((item, index) =>
             {
-                item.Schedule(_dates.GetByIndex(index).date.ToUniversalTime());
+                item.Schedule(_dates.GetByIndex(index).date);
 
                 if (item is IMatchesProvider matchesProvider)
                 {
                     matchesProvider.Matches.OrderBy(x => x.Date).ToList().ForEach((match, matchIndex) =>
                     {
-                        var date = _dates.GetByIndex(index).datesOfMatches?.ToList().GetByIndex(matchIndex, item.Date).ToUniversalTime() ?? item.Date;
+                        var date = _dates.GetByIndex(index).datesOfMatches?.ToList().GetByIndex(matchIndex, item.Date) ?? item.Date;
 
                         match.Schedule(date);
                     });

@@ -80,7 +80,7 @@ namespace MyClub.Scorer.Domain.TeamAggregate
 
         public bool RemoveManager(Manager manager) => _staff.Remove(manager);
 
-        public int RemoveManagers(IEnumerable<Manager> managers) => _staff.Count(RemoveManager);
+        public int RemoveManagers(IEnumerable<Manager> managers) => managers.Count(RemoveManager);
 
         #endregion
     }

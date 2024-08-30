@@ -176,7 +176,7 @@
         <Setter Property="ItemTemplate">
             <Setter.Value>
                 <DataTemplate>
-                    <Label x:Name="label" Style="{StaticResource Teamup.Styles.Label.Embedded.PositionItem}" Content="{my:Translation Position, Abbreviation=True}" />
+                    <Label x:Name="label" Style="{StaticResource Teamup.Styles.Label.Embedded.PositionItem}" Content="{my:Translation Position, Abbreviate=True}" />
                 </DataTemplate>
             </Setter.Value>
         </Setter>
@@ -215,7 +215,7 @@
                                my:ThemeAssist.UniformCornerRadius="8"
                                Background="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
                                Content="{my:Translation Position,
-                                                        Abbreviation=True}"
+                                                        Abbreviate=True}"
                                FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:PositionItem}}}"
                                Foreground="{my:BrushBinding BorderBrush,
                                                             Contrast=True,

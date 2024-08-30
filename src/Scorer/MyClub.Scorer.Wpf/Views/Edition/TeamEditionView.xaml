@@ -56,7 +56,7 @@
                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
             <!--  Image  -->
-            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                             Width="80"
                             Height="80"
                             Margin="{StaticResource MyNet.Margins.Medium}"

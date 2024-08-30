@@ -10,6 +10,7 @@ using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Messages;
 using MyClub.Scorer.Domain.CompetitionAggregate;
+using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Wpf.Messages;
 using MyNet.DynamicData.Extensions;
@@ -29,6 +30,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers
         private readonly Suspender _isDirtySuspender = new();
         private CompositeDisposable? _projectDisposables;
 
+        public CompetitionType Type { get; private set; }
+
         public string? Name { get; private set; }
 
         public byte[]? Image { get; private set; }
@@ -46,6 +49,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers
         public bool IsDirty { get; private set; }
 
         public bool IsLoaded { get; private set; }
+
+        public bool TreatNoStadiumAsWarning { get; private set; }
 
         public ProjectInfoProvider()
         {
@@ -70,9 +75,11 @@ namespace MyClub.Scorer.Wpf.Services.Providers
 
             using (_isDirtySuspender.Suspend())
             {
+                Type = currentProject.Type;
                 _projectDisposables = new(
                     currentProject.WhenPropertyChanged(x => x.Name).Subscribe(x => Name = x.Value),
                     currentProject.WhenPropertyChanged(x => x.Image).Subscribe(x => Image = x.Value),
+                    currentProject.WhenPropertyChanged(x => x.Preferences.TreatNoStadiumAsWarning).Subscribe(x => TreatNoStadiumAsWarning = x.Value),
                     currentProject.Teams.ToObservableChangeSet(x => x.Id).SubscribeMany(x => x.Players.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).SubscribeAll(() => SetIsDirty(true)),
                     currentProject.Teams.ToObservableChangeSet(x => x.Id).SubscribeMany(x => x.Staff.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).Subscribe(),
                     currentProject.Stadiums.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true)),

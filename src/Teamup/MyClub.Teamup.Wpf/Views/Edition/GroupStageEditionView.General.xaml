@@ -26,7 +26,7 @@
 
         <!--  DefaultTime  -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ClockOutline}">
-            <my:TimePicker my:HintAssist.Hint="{my:Resource DefaultTime}" SelectedTime="{Binding MatchTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <my:TimePicker my:HintAssist.Hint="{my:Resource DefaultTime}" SelectedTime="{my:Time MatchTime}" />
         </GroupBox>
 
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}" my:HeaderAssist.HorizontalAlignment="Left" Header="{my:Resource MatchesFormat}">

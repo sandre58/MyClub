@@ -1,0 +1,21 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.ProjectEditionRankingRulesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:EditableRankingRulesViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+              my:HeaderAssist.FontSize="{StaticResource MyNet.Font.Size.Title}"
+              my:IconAssist.Icon="{my:MediumIcon Kind=SortBoolAscendingVariant}"
+              Header="{my:Resource RankingRules}">
+        <v:EditableRankingRulesView Margin="{StaticResource MyNet.Margins.Medium.Top}" />
+    </GroupBox>
+</UserControl>

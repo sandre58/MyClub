@@ -10,7 +10,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 {
     internal interface IDatesSchedulingMethodViewModel : IValidatable
     {
-        BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeSpan defaultTime);
+        BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime);
 
         void Reset(DateTime startDate);
 

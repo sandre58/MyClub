@@ -98,7 +98,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
 
         #region Validate
 
-        protected override void OnSaveSucceeded() => ToasterManager.ShowSuccess(nameof(MyClubResources.XSessionsAddedSuccess).TranslateWithCountAndOptionalFormat(_countCreatedSessions));
+        protected override void OnSaveSucceeded() => ToasterManager.ShowSuccess(nameof(MyClubResources.XSessionsAddedSuccess).TranslateAndFormatWithCount(_countCreatedSessions));
 
         protected override void SaveCore()
         {

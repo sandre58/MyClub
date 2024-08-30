@@ -211,18 +211,18 @@
                     <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding OpenBuildAssistantCommand}"
                                            Header="{my:Resource Build}"
                                            Icon="{my:MediumIcon Kind=DesktopClassic}"
+                                           IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                            ToolTip="{my:ShortcutResource Build,
                                                                          ShortcutKey=Ctrl+B}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                    <!-- Edit project -->
-                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditCommand}"
+                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditProjectCommand}"
                                            Header="{my:Resource Edit}"
                                            ToolTip="{my:ShortcutResource EditProject,
-                                                                         ShortcutKey=Ctrl+Maj+P}"
+                                                                         ShortcutKey=Ctrl+Alt+T}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                         <my:NavigationViewItem.Icon>
-                            <HeaderedContentControl>
+                            <HeaderedContentControl Style="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                 <Grid Width="24" Height="24" VerticalAlignment="Top">
 
                                     <!-- Image -->
@@ -238,6 +238,8 @@
                                 </Grid>
                             </HeaderedContentControl>
                         </my:NavigationViewItem.Icon>
+                        <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditSchedulingParametersCommand}" Header="{my:Resource SchedulingParameters}" Icon="{my:MediumIcon Kind=TimerCog}" />
+                        <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditRankingRulesCommand}" Header="{my:Resource RankingRules}" Icon="{my:MediumIcon Kind=SortBoolAscendingVariant}" />
                     </my:NavigationViewItem>
 
                 </my:NavigationView.FooterMenuItems>

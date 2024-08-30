@@ -44,7 +44,7 @@
                             <TextBlock Text="{Binding Key.Name}" />
                             <TextBlock Text=" : " />
                             <TextBlock Text="-" />
-                            <TextBlock Text="{my:Translation Value, Plural=True, Format=XPoints}" />
+                            <TextBlock Text="{my:Translation Value, Pluralize=True, Format=XPoints}" />
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

@@ -37,16 +37,24 @@
 
     <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
         <TabItem my:IconAssist.Icon="{my:Icon Kind=InformationCircle}" Header="{my:Resource General}">
-            <v:SchedulingParametersEditionGeneralView />
+            <v:EditableSchedulingParametersGeneralView DataContext="{Binding SchedulingParameters}" />
         </TabItem>
         <TabItem my:IconAssist.Icon="{my:Icon Kind=Soccer}" Header="{my:Resource Match}">
-            <v:SchedulingParametersEditionMatchesView />
+            <my:SimpleStackPanel>
+                <Label Style="{StaticResource MyNet.Styles.Label.Warning.Dialog}" Content="{my:Resource CannotEditMatchFormatWarning}" Visibility="{Binding CanEditMatchFormat, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                          my:HeaderAssist.HorizontalAlignment="Left"
+                          Header="{my:Resource MatchesFormat}"
+                          IsEnabled="{Binding CanEditMatchFormat}">
+                    <v:EditableMatchFormatView DataContext="{Binding MatchFormat}" />
+                </GroupBox>
+            </my:SimpleStackPanel>
         </TabItem>
         <TabItem my:IconAssist.Icon="{my:Icon Kind=CalendarTime}" Header="{my:Resource Dates}">
-            <v:SchedulingParametersEditionDatesView />
+            <v:EditableSchedulingParametersDatesView DataContext="{Binding SchedulingParameters}" />
         </TabItem>
         <TabItem my:IconAssist.Icon="{my:Icon Kind=Stadium}" Header="{my:Resource Stadiums}">
-            <v:SchedulingParametersEditionVenuesView />
+            <v:EditableSchedulingParametersVenuesView DataContext="{Binding SchedulingParameters}" />
         </TabItem>
     </TabControl>
 

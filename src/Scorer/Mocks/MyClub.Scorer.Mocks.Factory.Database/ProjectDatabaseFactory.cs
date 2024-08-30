@@ -23,9 +23,11 @@ using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyClub.Scorer.Mocks.Factory.Database.Resources;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
+using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Generator;
 using MyNet.Utilities.Geography;
 using MyNet.Utilities.Logging;
@@ -63,9 +65,10 @@ namespace MyClub.Scorer.Mocks.Factory.Database
             var matchdaysScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
                 ? new AsSoonAsPossibleScheduler<Matchday>()
                 {
-                    StartDate = project.Competition.SchedulingParameters.StartDate,
+                    StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
-                    ScheduleVenues = true
+                    ScheduleVenues = true,
+                    AvailableStadiums = project.Stadiums
                 }
                 : (IScheduler<Matchday>)new DateRulesScheduler<Matchday>()
                 {
@@ -142,6 +145,9 @@ namespace MyClub.Scorer.Mocks.Factory.Database
             using (_progresser.Start(3, new ProgressMessage(string.Empty)))
             {
                 var allDatabaseCompetitions = unitOfWork.CompetitionRepository.GetAll().Where(x => x.Type == type).ToList();
+
+                if (allDatabaseCompetitions.Count == 0) throw new TranslatableException(DatabaseResources.NoCompetitionsFoundError);
+
                 var selectedCompetition = RandomGenerator.ListItem(allDatabaseCompetitions);
                 T? project;
                 var asSoonAsPossible = RandomGenerator.Bool();
@@ -155,6 +161,9 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // Preferences
+                project.Preferences.TreatNoStadiumAsWarning = RandomGenerator.Bool();
+
                 // Teams
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
@@ -162,6 +171,9 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                     var allDatabasePlayers = unitOfWork.PlayerRepository.GetAll().ToList();
                     var availableTeams = allDatabaseClubs.SelectMany(x => x.Teams).ToList();
                     var teams = GetTeams(availableTeams, selectedCompetition.IsNational, GetIdFromDescription(selectedCompetition.Description, "id"), selectedCompetition.Country, RandomGenerator.Int(minTeams, maxTeams)).ToList();
+
+                    if (teams.Count == 0) throw new TranslatableException(DatabaseResources.NoTeamsFoundError);
+
                     teams.ForEach(x =>
                     {
                         var convertedTeam = Convert(x, project.Competition.ProvideSchedulingParameters().UseHomeVenue);
@@ -173,6 +185,22 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                             player.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
                             convertedTeam.AddPlayer(player);
                         });
+
+                        if (allDatabasePlayers.Count > 2)
+                        {
+                            convertedTeam.AddManagers(RandomGenerator.Int(1, 2).Range().Select(y =>
+                            {
+                                var manager = new Manager(convertedTeam, RandomGenerator.ListItem(allDatabasePlayers.Select(x => x.FirstName).ToList()).OrEmpty(), RandomGenerator.ListItem(allDatabasePlayers.Select(x => x.LastName).ToList()).OrEmpty())
+                                {
+                                    Country = RandomGenerator.Country(),
+                                    Gender = GenderType.Male,
+                                    LicenseNumber = string.Join("", RandomGenerator.Digits(10)),
+                                };
+                                manager.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+
+                                return manager;
+                            }).ToList());
+                        }
 
                         convertedTeam.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
                         project.AddTeam(convertedTeam);
@@ -213,19 +241,19 @@ namespace MyClub.Scorer.Mocks.Factory.Database
         private static SchedulingParameters CreateScheduleParameters(bool asSoonAsPossible)
         {
             var useHomeVenue = RandomGenerator.Bool();
-            return new SchedulingParameters(asSoonAsPossible ? DateTime.Today.AddDays(-RandomGenerator.Int(2, 4)) : DateTime.Today.AddMonths(-RandomGenerator.Int(4, 6)),
-                                            asSoonAsPossible ? DateTime.Today.AddDays(RandomGenerator.Int(6, 8)) : DateTime.Today.AddMonths(RandomGenerator.Int(4, 6)),
-                                            RandomGenerator.Int(8, 22).Hours(),
+            return new SchedulingParameters(asSoonAsPossible ? DateTime.UtcNow.AddDays(-RandomGenerator.Int(2, 4)).ToDate() : DateTime.UtcNow.AddMonths(-RandomGenerator.Int(4, 6)).ToDate(),
+                                            asSoonAsPossible ? DateTime.UtcNow.AddDays(RandomGenerator.Int(6, 8)).ToDate() : DateTime.UtcNow.AddMonths(RandomGenerator.Int(4, 6)).ToDate(),
+                                            RandomGenerator.Int(8, 22).Hours().ToTime(),
                                             asSoonAsPossible ? RandomGenerator.Int(2, 5).Minutes() : RandomGenerator.Int(1, 3).Days(),
                                             asSoonAsPossible ? RandomGenerator.Int(5, 30).Minutes() : RandomGenerator.Int(1, 6).Days(),
                                             useHomeVenue,
                                             asSoonAsPossible,
                                             1.Days(),
                                             true,
-                                            asSoonAsPossible ? [new IncludeTimePeriodsRule([new TimePeriod(RandomGenerator.Int(9, 14).Hours(), RandomGenerator.Int(16, 20).Hours(), DateTimeKind.Local)])] : [],
+                                            asSoonAsPossible ? [new IncludeTimePeriodsRule([new TimePeriod(RandomGenerator.Int(9, 14).Hours().ToTime(), RandomGenerator.Int(16, 20).Hours().ToTime())])] : [],
                                             !asSoonAsPossible ? [new IncludeDaysOfWeekRule(RandomGenerator.ListItems(Enum.GetValues<DayOfWeek>(), 1))] : [],
                                             [],
-                                            (!useHomeVenue && !asSoonAsPossible) ? [new FirstAvailableStadiumRule(UseRotationTime.YesOrOtherwiseNo)] : []);
+                                            !useHomeVenue && !asSoonAsPossible ? [new FirstAvailableStadiumRule(UseRotationTime.YesOrOtherwiseNo)] : []);
         }
 
         private static List<DatabaseContext.Domain.ClubAggregate.Team> GetTeams(IEnumerable<DatabaseContext.Domain.ClubAggregate.Team> allTeams,
@@ -284,21 +312,21 @@ namespace MyClub.Scorer.Mocks.Factory.Database
             => new(team.Name, team.ShortName)
             {
                 AwayColor = team.AwayColor ?? RandomGenerator.Color(),
-                Country = team.Club.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault),
+                Country = team.Club.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault),
                 HomeColor = team.HomeColor ?? RandomGenerator.Color(),
                 Logo = team.Club.Logo,
                 Stadium = withStadium && team.Club.Stadium is not null ? Convert(team.Club.Stadium) : null
             };
         private static Stadium Convert(DatabaseContext.Domain.StadiumAggregate.Stadium stadium) => new(stadium.Name, stadium.Ground.DehumanizeTo<Ground>(OnNoMatch.ReturnsDefault))
         {
-            Address = new Address(stadium.Street, stadium.PostalCode, stadium.City, stadium.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault), stadium.Latitude, stadium.Longitude)
+            Address = new Address(stadium.Street, stadium.PostalCode, stadium.City, stadium.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault), stadium.Latitude, stadium.Longitude)
         };
 
         private static Player Convert(DatabaseContext.Domain.PlayerAggregate.Player player, Team team)
             => new(team, player.FirstName.OrEmpty(), player.LastName.OrEmpty())
             {
                 Gender = player.Gender.DehumanizeTo<GenderType>(OnNoMatch.ReturnsDefault),
-                Country = player.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault),
+                Country = player.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault),
                 Photo = player.Photo
             };
 

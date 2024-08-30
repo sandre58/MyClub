@@ -125,7 +125,7 @@ namespace MyClub.Teamup.Wpf.Services
                     }).ToList();
                     _competitionService.Import(competitions);
 
-                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(competitions.Count));
+                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateAndFormatWithCount(competitions.Count));
                 }).ConfigureAwait(false);
             }
         }

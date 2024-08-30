@@ -10,12 +10,12 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
-    internal class DateFilterViewModel : SelectedValueFilterViewModel<DateTime?, DateTime>
+    internal class DateFilterViewModel : SelectedValueFilterViewModel<DateOnly?, DateOnly>
     {
-        public DateFilterViewModel(string propertyName, IEnumerable<DateTime> allowedValues) : base(propertyName, allowedValues)
+        public DateFilterViewModel(string propertyName, IEnumerable<DateOnly> allowedValues) : base(propertyName, allowedValues)
         {
-            PreviousDateCommand = CommandsManager.Create(() => Value = GetPreviousDate(Value?.Date), () => GetPreviousDate(Value?.Date) != default);
-            NextDateCommand = CommandsManager.Create(() => Value = GetNextDate(Value?.Date), () => GetNextDate(Value?.Date) != default);
+            PreviousDateCommand = CommandsManager.Create(() => Value = GetPreviousDate(Value), () => GetPreviousDate(Value) != default);
+            NextDateCommand = CommandsManager.Create(() => Value = GetNextDate(Value), () => GetNextDate(Value) != default);
             NextFixturesCommand = CommandsManager.Create(() => Value = GetNextFixtures(), () => GetNextFixtures() != default && GetNextFixtures() != Value);
             LatestResultsCommand = CommandsManager.Create(() => Value = GetLatestResults(), () => GetLatestResults() != default && GetLatestResults() != Value);
         }
@@ -28,25 +28,25 @@ namespace MyClub.Scorer.Wpf.Filters
 
         public ICommand LatestResultsCommand { get; private set; }
 
-        private DateTime GetPreviousDate(DateTime? date)
+        private DateOnly GetPreviousDate(DateOnly? date)
             => AvailableValues!.OrderBy(x => x).LastOrDefault(x => !date.HasValue || x.IsBefore(date.Value));
 
-        private DateTime GetNextDate(DateTime? date)
+        private DateOnly GetNextDate(DateOnly? date)
             => AvailableValues!.OrderBy(x => x).FirstOrDefault(x => !date.HasValue || x.IsAfter(date.Value));
 
-        private DateTime GetNextFixtures() => AvailableValues!.OrderBy(x => x).FirstOrDefault(x => x.IsAfter(DateTime.Now));
+        private DateOnly GetNextFixtures() => AvailableValues!.OrderBy(x => x).FirstOrDefault(x => x.IsInFuture());
 
-        private DateTime GetLatestResults() => AvailableValues!.OrderBy(x => x).LastOrDefault(x => x.IsBefore(DateTime.Now));
+        private DateOnly GetLatestResults() => AvailableValues!.OrderBy(x => x).LastOrDefault(x => x.IsInPast());
 
         public override void Reset()
         {
-            var nextDate = GetNextDate(DateTime.Today);
+            var nextDate = GetNextDate(DateTime.UtcNow.ToDate());
 
             if (nextDate != default)
                 Value = nextDate;
             else
             {
-                var previousDate = GetPreviousDate(DateTime.Today);
+                var previousDate = GetPreviousDate(DateTime.UtcNow.ToDate());
 
                 if (previousDate != default)
                     Value = previousDate;

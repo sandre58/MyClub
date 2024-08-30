@@ -5,13 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable.Attributes;
 using MyNet.UI.Commands;
@@ -42,7 +42,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
             Disposables.AddRange(
             [
-                DateSelection.WhenPropertyChanged(x => x.DisplayDate, false).Subscribe(_ => DateTimeSelection.DisplayDate = DateSelection.DisplayDate.SetTime(DateTimeSelection.DisplayDate.TimeOfDay)),
+                DateSelection.WhenPropertyChanged(x => x.DisplayDate, false).Subscribe(_ => DateTimeSelection.DisplayDate = DateSelection.DisplayDate.At(DateTimeSelection.DisplayDate.TimeOfDay)),
                 DateTimeSelection.WhenPropertyChanged(x => x.DisplayDate, false).Subscribe(_ => DateSelection.DisplayDate = DateTimeSelection.DisplayDate.BeginningOfDay()),
                 Matches.WrappersSource.ToObservableChangeSet().WhenAnyPropertyChanged().Subscribe(_ => ComputeAllConflicts()),
                 Matches.WrappersSource.ToObservableChangeSet().MergeManyEx(x => x.Conflicts.ToObservableChangeSet()).Subscribe(_ => RaisePropertyChanged(nameof(HasConflicts))),
@@ -73,7 +73,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public StadiumViewModel? SelectedStadium { get; set; }
+        public IStadiumViewModel? SelectedStadium { get; set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -101,7 +101,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<StadiumViewModel> Stadiums => _stadiumsProvider.Items;
+        public ReadOnlyObservableCollection<IStadiumViewModel> Stadiums => _stadiumsProvider.Items;
 
         public ICommand ShowConflictsCommand { get; }
 
@@ -141,7 +141,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
                                 if (SelectedOffsetTime.HasValue)
                                     time = SelectedOffsetTime.Value;
 
-                                match.SetDate(date.ToLocalDateTime(time));
+                                match.SetDate(date.At(time));
                             }
                             else if (SelectedOffsetValue.HasValue)
                                 match.SetDate(match.StartDate.Add(SelectedOffsetValue.Value, SelectedOffsetUnit));
@@ -262,10 +262,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
             }
         }
 
-        public void Load(IEnumerable<MatchViewModel> matches, DateTime? displayDate = null)
+        public void Load(IEnumerable<MatchViewModel> matches, DateOnly? displayDate = null)
         {
             if (displayDate.HasValue)
-                DateTimeSelection.DisplayDate = displayDate.Value;
+                DateTimeSelection.DisplayDate = displayDate.Value.BeginningOfDay();
 
             Matches.Load(matches);
             ComputeAllConflicts();

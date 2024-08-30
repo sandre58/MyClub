@@ -10,6 +10,7 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Plugins.Contracts;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.Import;
 using MyClub.Scorer.Wpf.ViewModels.MessageBox;
@@ -32,11 +33,15 @@ namespace MyClub.Scorer.Wpf.Services
 {
     internal class TeamPresentationService(TeamService service,
                                            PlayerService playerService,
+                                           ManagerService managerService,
                                            PluginsService pluginsService,
-                                           IViewModelLocator viewModelLocator) : PresentationServiceBase<TeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
+                                           IViewModelLocator viewModelLocator) : PresentationServiceBase<ITeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
     {
         private readonly PlayerService _playerService = playerService;
+        private readonly ManagerService _managerService = managerService;
         private readonly PluginsService _pluginsService = pluginsService;
+
+        public async Task AddAsync(string name) => await AppBusyManager.WaitAsync(() => Service.Add(name)).ConfigureAwait(false);
 
         public async Task OpenAsync(TeamViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
@@ -50,13 +55,23 @@ namespace MyClub.Scorer.Wpf.Services
             return result.HasValue && result.Value ? item.Players.FirstOrDefault(x => x.Id == vm.ItemId) : null;
         }
 
-        public override async Task RemoveAsync(IEnumerable<TeamViewModel> oldItems)
+        public async Task<ManagerViewModel?> AddManagerAsync(TeamViewModel item)
+        {
+            var vm = ViewModelLocator.Get<ManagerEditionViewModel>();
+            vm.New(item);
+
+            var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+
+            return result.HasValue && result.Value ? item.Staff.FirstOrDefault(x => x.Id == vm.ItemId) : null;
+        }
+
+        public override async Task RemoveAsync(IEnumerable<ITeamViewModel> oldItems)
         {
             var idsList = oldItems.Select(x => x.Id).ToList();
 
             if (idsList.Count == 0) return;
 
-            var messageBox = new RemoveTeamsMessageBoxViewModel(nameof(MessageResources.XItemsRemovingQuestion).TranslateWithCountAndOptionalFormat(idsList.Count)!, UiResources.Removing, MessageSeverity.Question, MessageBoxResultOption.YesNo, MessageBoxResult.Yes);
+            var messageBox = new RemoveTeamsMessageBoxViewModel(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(idsList.Count)!, UiResources.Removing, MessageSeverity.Question, MessageBoxResultOption.YesNo, MessageBoxResult.Yes);
             var cancel = await DialogManager.ShowMessageBoxAsync(messageBox).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
@@ -65,7 +80,7 @@ namespace MyClub.Scorer.Wpf.Services
 
         public async Task RemovePlayerAsync(PlayerViewModel player)
         {
-            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateWithCountAndOptionalFormat(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
+            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateAndFormatWithCount(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
             {
                 await AppBusyManager.WaitAsync(() => _playerService.Remove(player.Id)).ConfigureAwait(false);
             }
@@ -76,7 +91,7 @@ namespace MyClub.Scorer.Wpf.Services
             var idsList = oldItems.Select(x => x.Id).ToList();
             if (idsList.Count == 0) return;
 
-            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateWithCountAndOptionalFormat(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
+            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
             {
@@ -84,7 +99,28 @@ namespace MyClub.Scorer.Wpf.Services
             }
         }
 
-        public async Task ExportAsync(IEnumerable<TeamViewModel> items)
+        public async Task RemoveManagerAsync(ManagerViewModel player)
+        {
+            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateAndFormatWithCount(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
+            {
+                await AppBusyManager.WaitAsync(() => _managerService.Remove(player.Id)).ConfigureAwait(false);
+            }
+        }
+
+        public async Task RemoveManagersAsync(IEnumerable<ManagerViewModel> oldItems)
+        {
+            var idsList = oldItems.Select(x => x.Id).ToList();
+            if (idsList.Count == 0) return;
+
+            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
+
+            if (!cancel)
+            {
+                await AppBusyManager.WaitAsync(() => _managerService.Remove(idsList));
+            }
+        }
+
+        public async Task ExportAsync(IEnumerable<ITeamViewModel> items)
         {
             var vm = ViewModelLocator.Get<TeamsExportViewModel>();
             var list = items.ToList();
@@ -128,7 +164,7 @@ namespace MyClub.Scorer.Wpf.Services
             }
         }
 
-        public async Task LauchImportAsync()
+        public async Task LaunchImportAsync()
         {
             var vm = ViewModelLocator.Get<TeamsImportBySourcesDialogViewModel>();
             var result = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);

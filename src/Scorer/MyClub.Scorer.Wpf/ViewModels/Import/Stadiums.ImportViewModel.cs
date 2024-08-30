@@ -21,7 +21,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Import
                                              Func<StadiumImportableViewModel, bool> predicate)
             : this(new ItemsSourceProvider<StadiumImportableViewModel>(new PredicateItemsProvider<StadiumImportableViewModel>(
                                                                           provider.ProvideItems()
-                                                                                  .Select(x => new StadiumImportableConverter(stadiumService)
+                                                                                  .Select(x => new StadiumImportableConverter((y, z) => stadiumService.GetSimilarStadiums(y, z).Any())
                                                                                   .Convert(x)),
                                                                           predicate), false))
         { }

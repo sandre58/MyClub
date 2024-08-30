@@ -13,7 +13,7 @@
                   BusyService="{Binding BusyService, Mode=OneWay}"
                   Header="{my:Translation Dates.Count,
                                           Format=XSelectedDates,
-                                          Plural=True}"
+                                          Pluralize=True}"
                   ShowCloseButton="True"
                   mc:Ignorable="d">
     <my:ContentDialog.Resources>
@@ -76,9 +76,9 @@
         <!--  Time  -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Clock}">
             <my:SimpleStackPanel Orientation="Horizontal">
-                <my:TimePicker my:HintAssist.Hint="{my:Resource StartTime}" SelectedTime="{Binding StartTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <my:TimePicker my:HintAssist.Hint="{my:Resource StartTime}" SelectedTime="{my:Time StartTime}" />
                 <TextBlock Text="{my:Resource To}" />
-                <my:TimePicker my:HintAssist.Hint="{my:Resource EndTime}" SelectedTime="{Binding EndTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <my:TimePicker my:HintAssist.Hint="{my:Resource EndTime}" SelectedTime="{my:Time EndTime}" />
             </my:SimpleStackPanel>
         </GroupBox>
 

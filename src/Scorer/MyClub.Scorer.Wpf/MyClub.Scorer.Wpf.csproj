@@ -21,25 +21,25 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Observable" Version="5.2.0" />
+    <PackageReference Include="MyNet.Observable" Version="5.3.0-alpha.5" />
     <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.6.24327.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0-preview.6.24327.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-preview.6.24327.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0-preview.6.24327.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-preview.6.24327.7" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.6.24327.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.7.24405.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0-preview.7.24405.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-preview.7.24405.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0-preview.7.24405.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0-preview.7.24405.7" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0-preview.7.24405.7" />
     <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0" />
-    <PackageReference Include="MyNet.Utilities.IO.FileHistory.Registry" Version="1.1.0" />
-    <PackageReference Include="MyNet.Utilities.Logging.NLog" Version="1.1.0" />
-    <PackageReference Include="MyNet.Utilities.Mail.MailKit" Version="1.1.0" />
-    <PackageReference Include="MyNet.Wpf" Version="5.0.9" />
-    <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="4.4.2" />
-    <PackageReference Include="MyNet.Wpf.LiveCharts" Version="4.4.2" />
-    <PackageReference Include="MyNet.Wpf.Presentation" Version="4.4.2" />
-    <PackageReference Include="MyNet.UI" Version="4.5.2" />
+    <PackageReference Include="MyNet.Utilities.IO.FileHistory.Registry" Version="5.0.0-alpha" />
+    <PackageReference Include="MyNet.Utilities.Logging.NLog" Version="5.0.0-alpha" />
+    <PackageReference Include="MyNet.Utilities.Mail.MailKit" Version="5.0.0-alpha" />
+    <PackageReference Include="MyNet.Wpf" Version="5.2.0-alpha.18" />
+    <PackageReference Include="MyNet.Wpf.DragAndDrop" Version="6.0.0-alpha.6" />
+    <PackageReference Include="MyNet.Wpf.LiveCharts" Version="6.0.0-alpha.6" />
+    <PackageReference Include="MyNet.Wpf.Presentation" Version="6.0.0-alpha.6" />
+    <PackageReference Include="MyNet.UI" Version="4.7.0-alpha.4" />
     <PackageReference Include="MyNet.Xaml.Merger.MSBuild" Version="2.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -101,8 +101,8 @@
       <LastGenOutput>ExportTeamsSettings.Designer.cs</LastGenOutput>
       <Generator>SettingsSingleFileGenerator</Generator>
     </None>
-    <None Update="Settings\LanguageSettings.settings">
-      <LastGenOutput>LanguageSettings.Designer.cs</LastGenOutput>
+    <None Update="Settings\TimeAndLanguageSettings.settings">
+      <LastGenOutput>TimeAndLanguageSettings.Designer.cs</LastGenOutput>
       <Generator>SettingsSingleFileGenerator</Generator>
     </None>
     <None Update="Settings\AppSettings.settings">
@@ -127,9 +127,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>ExportTeamsSettings.settings</DependentUpon>
     </Compile>
-    <Compile Update="Settings\LanguageSettings.Designer.cs">
+    <Compile Update="Settings\TimeAndLanguageSettings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>LanguageSettings.settings</DependentUpon>
+      <DependentUpon>TimeAndLanguageSettings.settings</DependentUpon>
       <AutoGen>True</AutoGen>
     </Compile>
     <Compile Update="Settings\AppSettings.Designer.cs">
@@ -171,7 +171,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="Views\Edition\MatchdaysEditionView.Calendar.xaml">
+    <Page Update="Views\Edition\MatchdaysEditionView.Parameters.Manual.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

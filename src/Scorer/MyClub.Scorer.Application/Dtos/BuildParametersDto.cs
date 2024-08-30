@@ -1,9 +1,8 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
-using MyClub.Scorer.Domain.Enums;
+using System;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities.Units;
@@ -12,37 +11,20 @@ namespace MyClub.Scorer.Application.Dtos
 {
     public class BuildParametersDto
     {
-        public ChampionshipAlgorithm Algorithm { get; set; }
-
-        public int NumberOfMatchesByTeam { get; set; }
-
-        public bool[]? MatchesBetweenTeams { get; set; }
+        public BuildBracketParametersDto? BracketParameters { get; set; }
 
         public MatchFormat? MatchFormat { get; set; }
 
-        public DateTime? StartDate { get; set; }
+        public SchedulingParameters? SchedulingParameters { get; set; }
 
-        public DateTime? EndDate { get; set; }
+        public bool AutomaticStartDate { get; set; }
 
-        public TimeSpan StartTime { get; set; }
+        public bool AutomaticEndDate { get; set; }
+    }
 
-        public TimeSpan RotationTime { get; set; }
-
-        public TimeSpan RestTime { get; set; }
-
-        public bool UseHomeVenue { get; set; }
-
-        public bool AsSoonAsPossible { get; set; }
-
-        public TimeSpan Interval { get; set; }
-
-        public List<IAvailableVenueSchedulingRule>? VenueRules { get; set; }
-
-        public List<IAvailableDateSchedulingRule>? AsSoonAsPossibleRules { get; set; }
-
-        public List<IDateSchedulingRule>? DateRules { get; set; }
-
-        public List<ITimeSchedulingRule>? TimeRules { get; set; }
+    public class BuildBracketParametersDto
+    {
+        public BuildAlgorithmParametersDto? AlgorithmParameters { get; set; }
 
         public BuildDatesParametersDto? BuildDatesParameters { get; set; }
 
@@ -55,6 +37,29 @@ namespace MyClub.Scorer.Application.Dtos
         public bool AsSoonAsPossibleVenues { get; set; }
 
         public bool ScheduleVenuesBeforeDates { get; set; }
+
+        public bool UseHomeVenue { get; set; }
+
+        public List<IAvailableVenueSchedulingRule>? VenueRules { get; set; }
+    }
+
+    public class BuildMatchdaysParametersDto : BuildBracketParametersDto
+    {
+    }
+
+    public abstract class BuildAlgorithmParametersDto
+    {
+        public int NumberOfTeams { get; set; }
+    }
+
+    public class RoundRobinParametersDto : BuildAlgorithmParametersDto
+    {
+        public bool[]? MatchesBetweenTeams { get; set; }
+    }
+
+    public class SwissSystemParametersDto : BuildAlgorithmParametersDto
+    {
+        public int NumberOfMatchesByTeam { get; set; }
     }
 
     public abstract class BuildDatesParametersDto { }
@@ -68,9 +73,9 @@ namespace MyClub.Scorer.Application.Dtos
 
     public class BuildAutomaticDatesParametersDto : BuildDatesParametersDto
     {
-        public DateTime? StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
-        public TimeSpan? DefaultTime { get; set; }
+        public TimeOnly? DefaultTime { get; set; }
 
         public int IntervalValue { get; set; }
 

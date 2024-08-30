@@ -18,7 +18,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var added = team.AddManager(firstName, lastName);
 
-            AuditCreatedItem(added);
+            AuditNewItem(added);
 
             return added;
         }

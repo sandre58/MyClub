@@ -69,6 +69,6 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
 
         public async Task PostponeAsync() => await _roundPresentationService.PostponeAsync(this).ConfigureAwait(false);
 
-        public override DateTime GetDefaultDateTime() => Date.ToLocalDateTime(Parent.GetDefaultDateTime().TimeOfDay);
+        public override DateTime GetDefaultDateTime() => Date.ToLocal(Parent.GetDefaultDateTime().TimeOfDay);
     }
 }

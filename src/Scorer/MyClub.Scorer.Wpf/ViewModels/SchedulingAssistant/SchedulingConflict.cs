@@ -3,7 +3,7 @@
 
 using System;
 using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Translatables;
 using MyNet.Utilities;
 
@@ -16,21 +16,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
     internal class SchedulingStadiumOccupancyConflict : SchedulingConflict
     {
-        public SchedulingStadiumOccupancyConflict(StadiumViewModel stadium) : base(() => MyClubResources.ConflictsStadiumXIsOccupancyWarning.FormatWith(stadium.Name)) { }
+        public SchedulingStadiumOccupancyConflict(IStadiumViewModel stadium) : base(() => MyClubResources.ConflictsStadiumXIsOccupancyWarning.FormatWith(stadium.Name)) { }
     }
 
     internal class SchedulingTeamBusyConflict : SchedulingConflict
     {
-        public SchedulingTeamBusyConflict(TeamViewModel team) : base(() => MyClubResources.ConflictsTeamXIsBusyWarning.FormatWith(team.Name)) { }
+        public SchedulingTeamBusyConflict(ITeamViewModel team) : base(() => MyClubResources.ConflictsTeamXIsBusyWarning.FormatWith(team.Name)) { }
     }
 
     internal class SchedulingTeamRestTimeNotRespectedConflict : SchedulingConflict
     {
-        public SchedulingTeamRestTimeNotRespectedConflict(TeamViewModel team) : base(() => MyClubResources.ConflictsRestTimeOfTeamXIsNotRespectedWarning.FormatWith(team.Name)) { }
+        public SchedulingTeamRestTimeNotRespectedConflict(ITeamViewModel team) : base(() => MyClubResources.ConflictsRestTimeOfTeamXIsNotRespectedWarning.FormatWith(team.Name)) { }
     }
 
     internal class SchedulingRotationTimeNotRespectedConflict : SchedulingConflict
     {
-        public SchedulingRotationTimeNotRespectedConflict(StadiumViewModel stadium) : base(() => MyClubResources.ConflictsRotationTimeOfStadiumXIsNotRespectedWarning.FormatWith(stadium.Name)) { }
+        public SchedulingRotationTimeNotRespectedConflict(IStadiumViewModel stadium) : base(() => MyClubResources.ConflictsRotationTimeOfStadiumXIsNotRespectedWarning.FormatWith(stadium.Name)) { }
     }
 }

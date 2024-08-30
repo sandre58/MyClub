@@ -13,14 +13,14 @@ namespace MyClub.Teamup.Wpf.Services
         public void Reload()
         {
             if (!string.IsNullOrEmpty(LanguageSettings.Default.Language))
-                CultureInfoService.Current.SetCulture(LanguageSettings.Default.Language);
+                GlobalizationService.Current.SetCulture(LanguageSettings.Default.Language);
         }
 
         public void Reset()
         {
             var language = LanguageSettings.Default.Properties[nameof(LanguageSettings.Default.Language)].DefaultValue.ToString();
             if (!string.IsNullOrEmpty(language))
-                CultureInfoService.Current.SetCulture(language);
+                GlobalizationService.Current.SetCulture(language);
         }
 
         public void Save()

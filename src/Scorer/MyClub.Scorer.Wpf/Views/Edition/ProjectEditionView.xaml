@@ -1,14 +1,15 @@
 ﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.Edition.ProjectEditionView"
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:bA="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:sys="clr-namespace:System;assembly=mscorlib"
                   xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
                   xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
-                  Style="{StaticResource MyNet.Styles.ContentDialog}"
-                  Width="700"
-                  Height="600"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
                   d:DataContext="{d:DesignInstance Type=vm:ProjectEditionViewModel}"
                   d:DesignHeight="450"
                   d:DesignWidth="800"
@@ -16,13 +17,61 @@
                   BusyService="{Binding BusyService, Mode=OneWay}"
                   HeaderHeight="100"
                   mc:Ignorable="d">
+    <my:ContentDialog.Style>
+        <Style TargetType="{x:Type my:ContentDialog}" BasedOn="{StaticResource MyNet.Styles.ContentDialog}">
+            <Setter Property="MaxHeight" Value="700" />
+            <Setter Property="MaxWidth" Value="700" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StretchSize}" Value="true">
+                    <Setter Property="MaxHeight" Value="{x:Static sys:Double.PositiveInfinity}" />
+                    <Setter Property="MaxWidth" Value="{x:Static sys:Double.PositiveInfinity}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </my:ContentDialog.Style>
     <my:ContentDialog.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate DataType="{x:Type vm:ProjectEditionGeneralViewModel}">
+            <v:ProjectEditionGeneralView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ProjectEditionTeamsViewModel}">
+            <DockPanel>
+                <ToggleButton HorizontalAlignment="Right"
+                              Content="{my:Resource BuildCompetition}"
+                              DockPanel.Dock="Bottom"
+                              IsChecked="{Binding Data.BuildCompetition, Source={StaticResource Proxy}}"
+                              IsEnabled="{Binding Data.CanBuildCompetition, Source={StaticResource Proxy}}" />
+                <v:ProjectEditionTeamsView />
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ProjectEditionStadiumsViewModel}">
+            <v:ProjectEditionStadiumsView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:EditableRankingRulesViewModel}">
+            <v:ProjectEditionRankingRulesView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:EditableMatchFormatViewModel}">
+            <v:ProjectEditionMatchFormatView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:EditableSchedulingParametersViewModel}">
+            <v:ProjectEditionSchedulingParametersView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type bA:LeagueBuildAssistantParametersViewModel}">
+            <v:ProjectEditionBuildParametersView />
+        </DataTemplate>
+
     </my:ContentDialog.Resources>
 
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
-            <KeyBinding Key="F5" Command="{Binding Data.RefreshCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="F5" Command="{Binding Data.ResetAsyncCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
         </InputBindingCollection>
@@ -30,9 +79,24 @@
 
     <my:ContentDialog.Footer>
         <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-            <Button Style="{StaticResource MyNet.Styles.Button.Refresh}" HorizontalAlignment="Right" Command="{Binding RefreshCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Reset}" HorizontalAlignment="Right" Command="{Binding ResetAsyncCommand}" />
             <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+                    HorizontalAlignment="Right"
+                    my:IconAssist.Icon="{my:Icon Kind=ArrowLeft}"
+                    Command="{Binding GoToPreviousTabCommand}"
+                    Content="{my:Resource Previous}"
+                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+                    HorizontalAlignment="Right"
+                    my:IconAssist.Icon="{my:Icon Kind=ArrowRight}"
+                    Command="{Binding GoToNextTabCommand}"
+                    Content="{my:Resource Next}"
+                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}"
+                    HorizontalAlignment="Right"
+                    Command="{Binding SaveAndCloseAsyncCommand}"
+                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
         </my:SimpleStackPanel>
     </my:ContentDialog.Footer>
 
@@ -56,7 +120,7 @@
                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
             <!-- Image -->
-            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                             Width="80"
                             Height="80"
                             VerticalAlignment="Center"
@@ -67,10 +131,5 @@
         </Grid>
     </my:ContentDialog.Header>
 
-    <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
-        <TabItem my:IconAssist.Icon="{my:Icon Kind=InformationCircle}" Header="{my:Resource General}" />
-        <TabItem my:IconAssist.Icon="{my:Icon Kind=Settings}" Header="{my:Resource Rules}">
-            <v:ProjectEditionMatchRulesView />
-        </TabItem>
-    </TabControl>
+    <my:TransitioningContent Content="{Binding SelectedWorkspace, Mode=OneWay}" />
 </my:ContentDialog>

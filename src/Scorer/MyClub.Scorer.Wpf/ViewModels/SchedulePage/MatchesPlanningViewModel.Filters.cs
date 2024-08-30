@@ -12,6 +12,7 @@ using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.Utilities;
 using MyNet.Utilities.Comparaison;
+using MyNet.Utilities.Localization;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
@@ -39,9 +40,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public CompositeFilterViewModel ParentFilter { get; }
 
-        public MatchesPlanningFiltersViewModel(IEnumerable<TeamViewModel> teams,
-                                               IEnumerable<StadiumViewModel> stadiums,
-                                               IEnumerable<DateTime> dates,
+        public MatchesPlanningFiltersViewModel(IEnumerable<ITeamViewModel> teams,
+                                               IEnumerable<IStadiumViewModel> stadiums,
+                                               IEnumerable<DateOnly> dates,
                                                IEnumerable<IMatchParent> parents,
                                                SchedulingParametersViewModel schedulingParameters)
         {
@@ -53,7 +54,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             Disposables.AddRange(
             [
                 Observable.FromEventPattern<FiltersChangedEventArgs>(x => SpeedFilters.FiltersChanged += x, x => SpeedFilters.FiltersChanged -= x).Subscribe(_ => OnSubFiltersChanged()),
-                DateFilter.WhenAnyPropertyChanged().Merge(ParentFilter.WhenAnyPropertyChanged()).Merge(DateRangeFilter.WhenAnyPropertyChanged().Throttle(10.Milliseconds())).Subscribe(_ => DeferOrExecute())
+                DateFilter.WhenAnyPropertyChanged().Merge(ParentFilter.WhenAnyPropertyChanged()).Merge(DateRangeFilter.WhenAnyPropertyChanged().Throttle(10.Milliseconds())).Subscribe(_ => DeferOrExecute()),
+                Observable.FromEventPattern(x => GlobalizationService.Current.TimeZoneChanged += x, x => GlobalizationService.Current.TimeZoneChanged -= x).Throttle(10.Milliseconds()).Subscribe(_ => DeferOrExecute()),
             ]);
         }
 
@@ -78,9 +80,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             {
                 SpeedFilters.Reset();
                 base.Reset();
-                DateFilter.Reset();
-                ParentFilter.Reset();
-                DateRangeFilter.Reset();
+                ResetDefaultFilters();
+            }
+        }
+
+        public void ResetDefaultFilters()
+        {
+            using (Defer())
+            {
+                if (DateFilter.Item.IsEmpty())
+                    using (Defer())
+                        DateFilter.Reset();
+                if (ParentFilter.Item.IsEmpty())
+                    using (Defer())
+                        ParentFilter.Reset();
+                if (DateRangeFilter.Item.IsEmpty())
+                    using (Defer())
+                        DateRangeFilter.Reset();
             }
         }
 

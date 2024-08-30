@@ -55,12 +55,12 @@
                     <DatePicker Width="115"
                                 my:HintAssist.Hint="{my:Resource Date}"
                                 my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
-                                SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}">
+                                SelectedDate="{my:DateTime DateTime.Date}">
                         <my:IconAssist.Icon>
                             <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding DateAvailability}" />
                         </my:IconAssist.Icon>
                     </DatePicker>
-                    <my:TimePicker Width="60" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                    <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time DateTime.Time}" />
                 </my:SimpleStackPanel>
                 <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
                     <TextBlock Text="{my:Resource Automatic}">
@@ -68,7 +68,7 @@
                             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ScheduleAutomatic}" Value="False">
-                                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -97,18 +97,15 @@
                                 my:HintAssist.Hint="{my:Resource PostponedDate}"
                                 my:HintAssist.IsFloating="False"
                                 my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
-                                SelectedDate="{my:NullableBinding PostponedDate,
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                SelectedDate="{my:DateTime PostponedDateTime.Date}">
                         <my:IconAssist.Icon>
                             <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding PostponedDateAvailability}" />
                         </my:IconAssist.Icon>
                     </DatePicker>
-                    <my:TimePicker Width="60"
+                    <my:TimePicker Width="80"
                                    my:HintAssist.Hint="{my:Resource Time}"
                                    my:HintAssist.IsFloating="False"
-                                   SelectedTime="{my:NullableBinding PostponedTime,
-                                                                     Converter={x:Static my:TimeSpanToDateTimeConverter.Default},
-                                                                     UpdateSourceTrigger=PropertyChanged}" />
+                                   SelectedTime="{my:Time PostponedDateTime.Time}" />
                 </my:SimpleStackPanel>
             </my:SimpleStackPanel>
         </GroupBox>
@@ -136,7 +133,7 @@
                                 <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding ScheduleStadiumAutomatic}" Value="False">
-                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

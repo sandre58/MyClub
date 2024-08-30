@@ -85,6 +85,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 new AvailableRule<IEditableAutomaticDateSchedulingRuleViewModel>(MyClubResources.IntervalDateRule, () => new EditableDateIntervalRuleViewModel(), () =>  !Rules.OfType<EditableDateIntervalRuleViewModel>().Any()),
            ]);
 
+        public EditableAutomaticDateSchedulingRulesViewModel(IEnumerable<AvailableRule<IEditableAutomaticDateSchedulingRuleViewModel>> availableRules) => AvailableRules.AddRange(availableRules);
+
         internal void Load(IEnumerable<IDateSchedulingRule> rules)
             => Rules.Set(rules.Select(x => x switch
             {
@@ -140,18 +142,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class EditableExcludeDatesRangeRuleViewModel : EditableDateSchedulingRuleViewModel, IEditableAsSoonAsPossibleDateSchedulingRuleViewModel, IEditableAutomaticDateSchedulingRuleViewModel
     {
-        public EditableExcludeDatesRangeRuleViewModel() => ValidationRules.Add<EditableExcludeDatesRangeRuleViewModel, DateTime?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
+        public EditableExcludeDatesRangeRuleViewModel() => ValidationRules.Add<EditableExcludeDatesRangeRuleViewModel, DateOnly?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
 
         [IsRequired]
         [ValidateProperty(nameof(EndDate))]
         [Display(Name = nameof(StartDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(EndDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? EndDate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
-        public IAvailableDateSchedulingRule ProvideRule() => new ExcludeDatesRangeRule(StartDate.GetValueOrDefault().BeginningOfDay().ToUniversalTime(), EndDate.GetValueOrDefault().EndOfDay().ToUniversalTime());
+        public IAvailableDateSchedulingRule ProvideRule() => new ExcludeDatesRangeRule(StartDate.GetValueOrDefault(), EndDate.GetValueOrDefault());
 
         IDateSchedulingRule IEditableAutomaticDateSchedulingRuleViewModel.ProvideRule() => new ExcludeDatesRangeRule(StartDate.GetValueOrDefault(), EndDate.GetValueOrDefault());
     }
@@ -183,7 +185,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         private bool CanRemovePeriod(EditableTimePeriodViewModel period) => TimePeriods.Count > 1;
 
         public IAvailableDateSchedulingRule ProvideRule()
-            => new IncludeTimePeriodsRule(TimePeriods.Select(x => new TimePeriod(x.StartTime.GetValueOrDefault(), x.EndTime.GetValueOrDefault(), DateTimeKind.Local)));
+            => new IncludeTimePeriodsRule(TimePeriods.Select(x => new TimePeriod(x.StartTime.GetValueOrDefault(), x.EndTime.GetValueOrDefault())));
     }
 
     internal class EditableTimePeriodViewModel : EditableObject
@@ -191,17 +193,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public EditableTimePeriodViewModel()
         {
 
-            ValidationRules.Add<EditableTimePeriodViewModel, TimeSpan?>(x => x.EndTime, MessageResources.FieldEndTimeMustBeUpperOrEqualsThanStartTimeError, x => !x.HasValue || !StartTime.HasValue || x.Value > StartTime);
-            ValidationRules.Add<EditableTimePeriodViewModel, TimeSpan?>(x => x.StartTime, MessageResources.FieldStartTimeMustBeLowerOrEqualsThanEndTimeError, x => !x.HasValue || !EndTime.HasValue || x.Value < EndTime);
+            ValidationRules.Add<EditableTimePeriodViewModel, TimeOnly?>(x => x.EndTime, MessageResources.FieldEndTimeMustBeUpperOrEqualsThanStartTimeError, x => !x.HasValue || !StartTime.HasValue || x.Value > StartTime);
+            ValidationRules.Add<EditableTimePeriodViewModel, TimeOnly?>(x => x.StartTime, MessageResources.FieldStartTimeMustBeLowerOrEqualsThanEndTimeError, x => !x.HasValue || !EndTime.HasValue || x.Value < EndTime);
         }
 
         [IsRequired]
         [Display(Name = nameof(StartTime), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? StartTime { get; set; }
+        public TimeOnly? StartTime { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(EndTime), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? EndTime { get; set; }
+        public TimeOnly? EndTime { get; set; }
 
         public override bool Equals(object? obj) => ReferenceEquals(this, obj);
 
@@ -212,7 +214,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     {
         [IsRequired]
         [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime? Date { get; set; }
+        public DateOnly? Date { get; set; }
 
         public IDateSchedulingRule ProvideRule() => new ExcludeDateRule(Date.GetValueOrDefault());
     }

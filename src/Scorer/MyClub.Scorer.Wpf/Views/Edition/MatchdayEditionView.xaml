@@ -82,8 +82,8 @@
                                 </Style.Triggers>
                             </Style>
                         </my:SimpleStackPanel.Style>
-                        <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
-                        <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                        <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{my:DateTime DateTime.Date}" />
+                        <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time DateTime.Time}" />
                     </my:SimpleStackPanel>
                     <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
                         <TextBlock Text="{my:Resource Automatic}">
@@ -91,7 +91,7 @@
                                 <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding ScheduleAutomatic}" Value="False">
-                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -116,8 +116,8 @@
 
                     <!-- Postponed Date -->
                     <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
-                        <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" my:HintAssist.IsFloating="False" SelectedDate="{my:NullableBinding PostponedDate, UpdateSourceTrigger=PropertyChanged}" />
-                        <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" my:HintAssist.IsFloating="False" SelectedTime="{my:NullableBinding PostponedTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                        <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime PostponedDateTime.Date}" />
+                        <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" my:HintAssist.IsFloating="False" SelectedTime="{my:Time PostponedDateTime.Time}" />
                     </my:SimpleStackPanel>
                 </my:SimpleStackPanel>
             </GroupBox>
@@ -128,13 +128,16 @@
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}" Margin="{StaticResource MyNet.Margins.Medium.Top}" Padding="{StaticResource MyNet.Margins.Medium.Vertical}">
             <my:GroupBoxAssist.MoreContent>
                 <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Default.Horizontal}" VerticalAlignment="Center" Orientation="Horizontal">
-                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}}" IsEnabled="{Binding Data.CanScheduleStadiumsAutomatic, Source={StaticResource Proxy}}">
+                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}"
+                                  Margin="{StaticResource MyNet.Margins.Large.Right}"
+                                  IsChecked="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}}"
+                                  IsEnabled="{Binding Data.CanScheduleStadiumsAutomatic, Source={StaticResource Proxy}}">
                         <TextBlock Text="{my:Resource AutomaticStadiums}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}}" Value="False">
-                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
+                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -211,13 +214,13 @@
                                             my:HintAssist.Hint="{my:Resource Date}"
                                             my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
                                             IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                            SelectedDate="{Binding Date}" />
+                                            SelectedDate="{my:DateTime DateTime.Date}" />
                                 <my:TimePicker Grid.Column="2"
                                                HorizontalAlignment="Stretch"
                                                my:HintAssist.Hint="{my:Resource Time}"
                                                my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
                                                IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                               SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                               SelectedTime="{my:Time DateTime.Time}" />
                                 <ComboBox Grid.Column="4"
                                           HorizontalAlignment="Stretch"
                                           my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"

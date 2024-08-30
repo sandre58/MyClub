@@ -2,16 +2,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System.ComponentModel.DataAnnotations;
+using MyClub.CrossCutting.Localization;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
-using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class EditableTeamPenaltyViewModel(TeamViewModel team) : EditableObject
+    internal class EditableTeamPenaltyViewModel(ITeamViewModel team) : EditableObject
     {
-        public TeamViewModel Team { get; private set; } = team;
+        public ITeamViewModel Team { get; private set; } = team;
 
         [Display(Name = nameof(Points), ResourceType = typeof(MyClubResources))]
         [IsRequired]

@@ -17,6 +17,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
             RemovePlayerCommand = CommandsManager.CreateNotNull<PlayerViewModel>(async x => await teamPresentationService.RemovePlayerAsync(x));
             RemoveSelectedPlayersCommand = CommandsManager.Create(async () => await teamPresentationService.RemovePlayersAsync(SelectedPlayers?.OfType<PlayerViewModel>() ?? []), () => SelectedPlayers is not null);
             AddPlayerCommand = CommandsManager.Create(async () => await teamPresentationService.AddPlayerAsync(Item!), () => Item is not null);
+            RemoveManagerCommand = CommandsManager.CreateNotNull<ManagerViewModel>(async x => await teamPresentationService.RemoveManagerAsync(x));
+            RemoveSelectedManagersCommand = CommandsManager.Create(async () => await teamPresentationService.RemoveManagersAsync(SelectedManagers?.OfType<ManagerViewModel>() ?? []), () => SelectedManagers is not null);
+            AddManagerCommand = CommandsManager.Create(async () => await teamPresentationService.AddManagerAsync(Item!), () => Item is not null);
         }
 
         public ICommand RemovePlayerCommand { get; private set; }
@@ -26,5 +29,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
         public ICommand AddPlayerCommand { get; private set; }
 
         public IEnumerable? SelectedPlayers { get; set; }
+
+        public ICommand RemoveManagerCommand { get; private set; }
+
+        public ICommand RemoveSelectedManagersCommand { get; private set; }
+
+        public ICommand AddManagerCommand { get; private set; }
+
+        public IEnumerable? SelectedManagers { get; set; }
     }
 }

@@ -14,7 +14,7 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Default -->
-    <Style TargetType="{x:Type my:BusyControl}" BasedOn="{StaticResource MyNet.Styles.BusyControl.Alternate.Accent}" />
+    <Style TargetType="{x:Type my:BusyControl}" BasedOn="{StaticResource MyNet.Styles.BusyControl.Accent}" />
 
     <!-- MessageBox -->
     <DataTemplate DataType="{x:Type vm:RemoveTeamsMessageBoxViewModel}">

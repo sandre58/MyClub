@@ -17,61 +17,6 @@
                   mc:Ignorable="d">
     <my:ContentDialog.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
-
-        <Style x:Key="Scorer.Styles.ListBox.Columns" TargetType="{x:Type ListBox}" BasedOn="{StaticResource MyNet.Styles.ListBox.Cards}">
-            <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Control.Border}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="ItemContainerStyle">
-                <Setter.Value>
-                    <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
-                        <Setter Property="Background" Value="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
-                        <Setter Property="Foreground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
-                        <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
-                    </Style>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="ItemTemplate">
-                <Setter.Value>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding DisplayName.Value}" />
-                    </DataTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="ItemsPanel">
-                <Setter.Value>
-                    <ItemsPanelTemplate>
-                        <StackPanel IsItemsHost="True" Orientation="Vertical" />
-                    </ItemsPanelTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Small}" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListBox}">
-                        <Grid>
-                            <Rectangle Fill="{TemplateBinding Background}"
-                                       RadiusX="{StaticResource MyNet.UniformCornerRadius.Container}"
-                                       RadiusY="{StaticResource MyNet.UniformCornerRadius.Container}"
-                                       SnapsToDevicePixels="true"
-                                       Stroke="{TemplateBinding BorderBrush}"
-                                       StrokeDashArray="4 2"
-                                       StrokeThickness="{Binding BorderThickness.Left, RelativeSource={RelativeSource TemplatedParent}}" />
-                            <my:DynamicScrollViewer Padding="{TemplateBinding Padding}"
-                                                    my:ScrollViewerAssist.BubbleVerticalScroll="{TemplateBinding my:ScrollViewerAssist.BubbleVerticalScroll}"
-                                                    my:ScrollViewerAssist.IsAutoHideEnabled="{Binding Path=(my:ScrollViewerAssist.IsAutoHideEnabled), RelativeSource={RelativeSource Mode=TemplatedParent}}"
-                                                    CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
-                                                    Focusable="false"
-                                                    HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
-                                                    VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
-                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                            </my:DynamicScrollViewer>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
-            <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
-        </Style>
     </my:ContentDialog.Resources>
 
     <my:InputAssist.InputBindings>
@@ -90,17 +35,7 @@
         </my:SimpleStackPanel>
     </my:ContentDialog.Footer>
 
-    <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
-        <TabItem my:IconAssist.Icon="{my:Icon Kind=InformationCircle}" Header="{my:Resource Rules}">
-            <v:RankingRulesEditionRulesView />
-        </TabItem>
-        <TabItem my:IconAssist.Icon="{my:Icon Kind=Label}" Header="{my:Resource Labels}">
-            <v:RankingRulesEditionLabelsView DataContext="{Binding Labels}" />
-        </TabItem>
-        <TabItem my:IconAssist.Icon="{my:Icon Kind=ShieldAlert}" Header="{my:Resource Penalties}">
-            <v:RankingRulesEditionPenaltiesView />
-        </TabItem>
-    </TabControl>
+    <v:EditableRankingRulesView DataContext="{Binding RankingRules}" />
 
 </my:ContentDialog>
 

@@ -74,9 +74,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool IsPostponed => Item.IsPostponed;
 
-        public DateTime Date => Item.Date.ToLocalTime();
+        public DateTime Date => Item.Date.ToCurrentTime();
 
-        public TimeSpan MatchTime => Date.TimeOfDay;
+        public TimeOnly MatchTime => Date.ToTime();
 
         public DateTime OriginDate => Item.OriginDate;
 
@@ -108,7 +108,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool CanBePostponed() => !Item.IsPostponed && Matches.Any(x => !x.IsPlayed);
 
-        public IEnumerable<TeamViewModel> GetAvailableTeams() => Parent.GetAvailableTeams();
+        public IEnumerable<ITeamViewModel> GetAvailableTeams() => Parent.GetAvailableTeams();
 
         public async Task OpenAsync() => await _matchdayPresentationService.OpenAsync(this).ConfigureAwait(false);
 

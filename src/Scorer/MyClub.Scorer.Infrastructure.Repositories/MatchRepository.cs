@@ -29,7 +29,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var added = parent.AddMatch(date, homeTeam, awayTeam);
 
-            AuditCreatedItem(added);
+            AuditNewItem(added);
 
             return added;
         }

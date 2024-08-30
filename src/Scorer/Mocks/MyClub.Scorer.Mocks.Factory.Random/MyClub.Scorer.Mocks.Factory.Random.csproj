@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Factory.Random</AssemblyName>
+    <OutputPath>..\..\..\..\build\Scorer\$(Configuration)\Mocks\$(AssemblyName)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyNet.Humanizer" Version="1.1.0-alpha.10">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities" Version="4.1.0-alpha.31">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities.Generator.Extensions" Version="5.0.0-alpha" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\MyClub.CrossCutting.Images\MyClub.CrossCutting.Images.csproj" />
+    <ProjectReference Include="..\..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Common\MyClub.Domain\MyClub.Domain.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\MyClub.Scorer.Domain.Factories\MyClub.Scorer.Domain.Factories.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>

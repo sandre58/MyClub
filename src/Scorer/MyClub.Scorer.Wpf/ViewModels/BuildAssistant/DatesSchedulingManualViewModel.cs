@@ -38,14 +38,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
     {
         private int _countMatchdays;
         private int _countMatches;
-        private TimeSpan? _defaultTime;
+        private TimeOnly? _defaultTime;
         private readonly UiObservableCollection<EditableDateOfMatchdayWrapper> _dates = [];
         private readonly ReadOnlyObservableCollection<EditableDateOfMatchdayWrapper> _sortedDates;
 
         public DatesSchedulingManualViewModel()
         {
-            AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x), x => Dates.Count < _countMatchdays);
-            RemoveFromDateCommand = CommandsManager.CreateNotNull<DateTime>(x => Remove(Dates.LastOrDefault(y => y.Date == x)), x => Dates.Any(y => y.Date == x));
+            AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x.ToDate()), x => Dates.Count < _countMatchdays);
+            RemoveFromDateCommand = CommandsManager.CreateNotNull<DateOnly>(x => Remove(Dates.LastOrDefault(y => y.Date == x)), x => Dates.Any(y => y.Date == x));
             RemoveCommand = CommandsManager.CreateNotNull<EditableDateOfMatchdayWrapper>(Remove);
 
             Disposables.AddRange(
@@ -84,7 +84,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         private static void UpdateIndexes(IEnumerable<EditableTimeWrapper> items) => items.ForEach(x => x.Index = items.IndexOf(x) + 1);
 
-        public void Update(int countMatchdays, int countMatches, TimeSpan? defaultTime)
+        public void Update(int countMatchdays, int countMatches, TimeOnly? defaultTime)
         {
             _defaultTime = defaultTime;
             _countMatchdays = countMatchdays;
@@ -123,37 +123,37 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         public void Reset(DateTime startDate)
         {
             DateSelection.DisplayDate = startDate.Date;
-            MatchTimes.ForEach(x => x.Time = startDate.TimeOfDay);
+            MatchTimes.ForEach(x => x.Time = startDate.ToTime());
             TimeSelectionMethod = TimeSelectionMethod.UseDefaultTime;
             _dates.Clear();
         }
 
         public void Load(SchedulingParameters schedulingParameters)
         {
-            DateSelection.DisplayDate = schedulingParameters.StartDate.Date;
-            Reset(schedulingParameters.StartDate.ToLocalDateTime(schedulingParameters.StartTime));
+            DateSelection.DisplayDate = schedulingParameters.StartDate.BeginningOfDay();
+            Reset(schedulingParameters.StartDate.At(schedulingParameters.StartTime));
         }
 
-        public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeSpan defaultTime) => new BuildManualDatesParametersDto
+        public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime) => new BuildManualDatesParametersDto
         {
             Dates = ProvideDates(countMatchdays, countMatchesByMatchday, defaultTime)
         };
-        private List<(DateTime, IEnumerable<DateTime>)> ProvideDates(int countMatchdays, int countMatchesByMatchday, TimeSpan defaultTime)
+        private List<(DateTime, IEnumerable<DateTime>)> ProvideDates(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime)
             => Dates.Take(countMatchdays).Select(x => (x.To(x => TimeSelectionMethod switch
             {
-                TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.ToLocalDateTime(x.Time.GetValueOrDefault()),
-                TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.ToLocalDateTime(MatchTimes.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime),
-                TimeSelectionMethod.UseUniqueTimeByMatch => x.Date.ToLocalDateTime(x.Times.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime),
-                _ => x.Date.ToLocalDateTime(defaultTime),
+                TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.At(x.Time.GetValueOrDefault()),
+                TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.At(MatchTimes.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime),
+                TimeSelectionMethod.UseUniqueTimeByMatch => x.Date.At(x.Times.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime),
+                _ => x.Date.At(defaultTime),
             }), EnumerableHelper.Range(0, countMatchesByMatchday - 1, 1).Select(y => TimeSelectionMethod switch
                 {
-                    TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.ToLocalDateTime(x.Time.GetValueOrDefault()),
-                    TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.ToLocalDateTime(MatchTimes.GetByIndex(y)?.Time ?? defaultTime),
-                    TimeSelectionMethod.UseUniqueTimeByMatch => (x.Times.GetByIndex(y) is EditableDateTimeWrapper wrapper && wrapper.UpdateDate ? wrapper.Date.Date : x.Date.Date).ToLocalDateTime(x.Times.GetByIndex(y)?.Time ?? defaultTime),
-                    _ => x.Date.ToLocalDateTime(defaultTime),
+                    TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.At(x.Time.GetValueOrDefault()),
+                    TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.At(MatchTimes.GetByIndex(y)?.Time ?? defaultTime),
+                    TimeSelectionMethod.UseUniqueTimeByMatch => (x.Times.GetByIndex(y) is EditableDateTimeWrapper wrapper && wrapper.UpdateDate ? wrapper.Date : x.Date).At(x.Times.GetByIndex(y)?.Time ?? defaultTime),
+                    _ => x.Date.At(defaultTime),
                 }))).ToList();
 
-        private void AddToDate(DateTime date, TimeSpan? time = null) => _dates.Add(new EditableDateOfMatchdayWrapper(date, time ?? _defaultTime, _countMatches));
+        private void AddToDate(DateOnly date, TimeOnly? time = null) => _dates.Add(new EditableDateOfMatchdayWrapper(date, time ?? _defaultTime, _countMatches));
 
         private void Remove(EditableDateOfMatchdayWrapper? date)
         {
@@ -164,11 +164,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
     internal class EditableTimeWrapper : EditableObject
     {
-        public EditableTimeWrapper(TimeSpan? time) => Time = time;
+        public EditableTimeWrapper(TimeOnly? time) => Time = time;
 
         [IsRequired]
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public TimeOnly? Time { get; set; }
 
         public int Index { get; internal set; }
 
@@ -179,7 +179,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
     internal class EditableDateTimeWrapper : EditableTimeWrapper
     {
-        public EditableDateTimeWrapper(DateTime date, TimeSpan? time) : base(time)
+        public EditableDateTimeWrapper(DateOnly date, TimeOnly? time) : base(time)
         {
             Date = date;
             Time = time;
@@ -187,14 +187,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         [IsRequired]
         [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
 
         public bool UpdateDate { get; set; }
     }
 
     internal class EditableDateOfMatchdayWrapper : EditableTimeWrapper, IAppointment
     {
-        public EditableDateOfMatchdayWrapper(DateTime date, TimeSpan? time, int countMatches) : base(time)
+        public EditableDateOfMatchdayWrapper(DateOnly date, TimeOnly? time, int countMatches) : base(time)
         {
             Date = date;
             Times = new(EnumerableHelper.Range(1, countMatches, 1).Select(x => new EditableDateTimeWrapper(date, time)
@@ -205,7 +205,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         [IsRequired]
         [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime Date { get; }
+        public DateOnly Date { get; }
 
         public DateTime StartDate => Date.BeginningOfDay();
 

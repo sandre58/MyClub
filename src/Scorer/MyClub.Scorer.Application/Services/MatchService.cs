@@ -59,7 +59,7 @@ namespace MyClub.Scorer.Application.Services
                 var matches = GetAll().ToList();
                 var scheduledMatches = matches.Except([entity]).ToList();
                 var startDate = scheduledMatches.Where(x => x.Date < dto.Date).MaxOrDefault(x => x.Date);
-                schedulingParameters.Schedule([entity], startDate != DateTime.MinValue ? startDate.AddMinutes(1) : schedulingParameters.StartDate, scheduledMatches);
+                schedulingParameters.Schedule([entity], startDate != DateTime.MinValue ? startDate.AddMinutes(1) : schedulingParameters.Start(), scheduledMatches);
             }
             else
             {
@@ -113,35 +113,6 @@ namespace MyClub.Scorer.Application.Services
                 case MatchState.Cancelled:
                     entity.Cancel();
                     break;
-            }
-        }
-
-        public IList<Match> Update(IEnumerable<Guid> matchIds, MatchMultipleDto dto)
-        {
-            using (CollectionChangedDeferrer.Defer())
-            {
-                var result = matchIds.Select(x => Update(x, y =>
-                {
-                    DateTime? date = null;
-                    if (dto.UpdateDate && dto.Date != default)
-                        date = dto.Date.ToUtcDateTime(y.OriginDate.TimeOfDay);
-
-                    if (dto.UpdateTime && dto.Time != default)
-                        date = (date ?? y.OriginDate).ToUtcDateTime(dto.Time);
-
-                    if (date.HasValue)
-                        y.OriginDate = date.Value;
-                    else if (dto.Offset != 0)
-                        y.Schedule(dto.Offset, dto.OffsetUnit);
-
-                    if (dto.UpdateStadium)
-                    {
-                        y.IsNeutralStadium = dto.IsNeutralStadium;
-                        UpdateStadium(y, dto.Stadium);
-                    }
-                })).ToList();
-
-                return result;
             }
         }
 
@@ -203,7 +174,7 @@ namespace MyClub.Scorer.Application.Services
 
         public void Reschedule(MatchDto match) => match.Id.HasValue.IfTrue(() => Update(match.Id!.Value, x =>
         {
-            x.Schedule(match.Date.ToUniversalTime());
+            x.Schedule(match.Date);
             SetStadium(x.Id, match.Stadium?.Id);
         }));
 
@@ -228,7 +199,7 @@ namespace MyClub.Scorer.Application.Services
                 var startDate = scheduledMatches.Where(x => x.Date < schedulingMatches.MinOrDefault(x => x.Date)).MaxOrDefault(x => x.Date);
                 schedulingMatchesGroupByParameters.ForEach(x =>
                 {
-                    x.Key.Schedule(x, startDate != DateTime.MinValue ? startDate : x.Key.StartDate, scheduledMatches);
+                    x.Key.Schedule(x, startDate != DateTime.MinValue ? startDate : x.Key.Start(), scheduledMatches);
 
                     scheduledMatches.AddRange(x);
                     startDate = x.MaxOrDefault(x => x.Date);

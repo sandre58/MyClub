@@ -61,7 +61,7 @@ namespace MyClub.Teamup.Wpf.Services
             {
                 Service.Cancel(idsList);
 
-                ToasterManager.ShowSuccess(nameof(MyClubResources.XTrainingsHasBeenCancelledSuccess).TranslateWithCountAndOptionalFormat(idsList.Count));
+                ToasterManager.ShowSuccess(nameof(MyClubResources.XTrainingsHasBeenCancelledSuccess).TranslateAndFormatWithCount(idsList.Count));
             }).ConfigureAwait(false);
         }
 
@@ -115,7 +115,7 @@ namespace MyClub.Teamup.Wpf.Services
             var count = oldItems.Count();
             if (count == 0) return;
 
-            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateWithCountAndOptionalFormat(count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
+            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
             {

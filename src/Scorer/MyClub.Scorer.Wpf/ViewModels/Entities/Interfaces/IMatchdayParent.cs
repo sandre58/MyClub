@@ -19,6 +19,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         bool CanAutomaticRescheduleVenue();
 
-        IEnumerable<TeamViewModel> GetAvailableTeams();
+        IEnumerable<ITeamViewModel> GetAvailableTeams();
     }
 }

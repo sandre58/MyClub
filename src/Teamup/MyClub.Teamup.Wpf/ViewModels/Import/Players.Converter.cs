@@ -27,11 +27,11 @@ namespace MyClub.Teamup.Wpf.ViewModels.Import
             {
                 Photo = dto.Photo,
                 Gender = dto.Gender.OrEmpty().DehumanizeTo<GenderType>(OnNoMatch.ReturnsDefault),
-                Category = dto.Category.OrEmpty().DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault),
+                Category = dto.Category.OrEmpty().DehumanizeTo<Category>(OnNoMatch.ReturnsDefault),
                 FromDate = dto.FromDate,
                 Birthdate = dto.Birthdate,
                 PlaceOfBirth = dto.PlaceOfBirth,
-                Country = dto.Country.OrEmpty().DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault),
+                Country = dto.Country.OrEmpty().DehumanizeTo<Country>(OnNoMatch.ReturnsDefault),
                 LicenseNumber = dto.LicenseNumber,
                 Description = dto.Description,
                 Laterality = dto.Laterality.OrEmpty().DehumanizeTo<Laterality>(OnNoMatch.ReturnsDefault),

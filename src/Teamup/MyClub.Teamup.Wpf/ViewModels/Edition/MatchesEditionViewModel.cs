@@ -55,7 +55,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
             {
                 Id = x.ItemId,
                 ParentId = x.Parent?.Id,
-                Date = x.Date.GetValueOrDefault().ToUtcDateTime(x.Time),
+                Date = x.Date.GetValueOrDefault().ToUtc(x.Time),
                 NeutralVenue = x.NeutralVenue,
                 Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
                 {
@@ -74,7 +74,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                 HomePenaltyPoints = x.HomePenaltyPoints,
                 AwayPenaltyPoints = x.AwayPenaltyPoints,
                 State = x.State,
-                PostponedDate = x.ShowPostponedDate ? x.PostponedDate?.ToUtcDateTime(x.PostponedTime ?? (x.Parent?.GetDefaultDateTime().TimeOfDay).GetValueOrDefault()) : null,
+                PostponedDate = x.ShowPostponedDate ? x.PostponedDate?.ToUtc(x.PostponedTime ?? (x.Parent?.GetDefaultDateTime().TimeOfDay).GetValueOrDefault()) : null,
             }).ToList(), false);
 
         #endregion

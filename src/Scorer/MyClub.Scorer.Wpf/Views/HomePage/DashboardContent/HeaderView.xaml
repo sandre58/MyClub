@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.HomePage.DashboardContent"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent"
              d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
              d:DesignHeight="450"
@@ -14,7 +15,7 @@
     </UserControl.Resources>
     <Grid>
 
-        <!--  Background  -->
+        <!-- Background -->
         <Border ClipToBounds="True">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -46,14 +47,14 @@
             </Grid>
         </Border>
 
-        <!--  Content  -->
+        <!-- Content -->
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition Height="130" />
             </Grid.RowDefinitions>
 
-            <!--  Current Project  -->
+            <!-- Current Project -->
             <Grid Panel.ZIndex="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="30" />
@@ -62,31 +63,54 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
-                                Grid.RowSpan="2"
-                                Grid.Column="1"
-                                Width="170"
-                                Height="170"
-                                Margin="0 0 0 -25"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Bottom"
-                                my:IconAssist.Icon="{my:Icon Kind=ShieldCrown,
-                                                             Size=150}"
-                                my:ThemeAssist.IsMouseOverBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
-                                                                                       Opacity={StaticResource MyNet.Opacity.Hovered}}"
-                                Background="Transparent"
-                                Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
-                                SelectedImage="{Binding Image, Mode=OneWay, Converter={x:Static my:BytesToImageConverter.Default}}" />
+                <my:PictureControl Style="{StaticResource MyNet.Styles.PictureControl}"
+                                   Grid.RowSpan="2"
+                                   Grid.Column="1"
+                                   Width="170"
+                                   Height="170"
+                                   Margin="0 0 0 -25"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Bottom"
+                                   my:IconAssist.Icon="{my:Icon Kind=ShieldCrown,
+                                                                Size=150}"
+                                   my:ThemeAssist.IsMouseOverBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                                                          Opacity={StaticResource MyNet.Opacity.Hovered}}"
+                                   Background="Transparent"
+                                   Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
+                                   Image="{Binding Image, Mode=OneWay, Converter={x:Static my:BytesToImageConverter.Default}}" />
 
-                <!--  Name  -->
-                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" Margin="{StaticResource MyNet.Margins.VeryLarge}"
-                           Grid.Column="3"
-                           VerticalAlignment="Top"
-                           FontSize="50"
-                           Text="{Binding Name}" />
+                <my:SimpleStackPanel Grid.Column="3" Margin="{StaticResource MyNet.Margins.VeryLarge}" VerticalAlignment="Top">
+
+                    <!-- Name -->
+                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" FontSize="50" Text="{Binding Name}" />
+
+                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.VeryLarge}">
+
+                        <!-- Count Teams -->
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Foreground}"
+                                  Width="60"
+                                  Height="60"
+                                  Content="{Binding CountTeams}"
+                                  Header="{my:Resource TeamsOptionalPlural}" />
+
+                        <!-- Count Stadiums -->
+                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Foreground}"
+                                  Width="60"
+                                  Height="60"
+                                  Content="{Binding CountStadiums}"
+                                  Header="{my:Resource StadiumsOptionalPlural}" />
+
+                    </my:SimpleStackPanel>
+                </my:SimpleStackPanel>
 
             </Grid>
 
+            <!-- Calendar -->
+            <v:HeaderCalendarView Grid.Row="1"
+                                  Background="{my:BrushBinding SelfPath=Tag,
+                                                               Converter={x:Static my:BrushConverter.Darken}}"
+                                  DataContext="{Binding CalendarViewModel}"
+                                  Tag="{DynamicResource MyNet.Brushes.Accent}" />
         </Grid>
     </Grid>
 </UserControl>

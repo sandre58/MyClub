@@ -175,7 +175,7 @@ internal class ApplicationHostService : IHostedService
         viewResolver.Register<AboutViewModel, AboutView>();
         viewResolver.Register<PreferencesViewModel, PreferencesView>();
         viewResolver.Register<DisplayViewModel, MyNet.Wpf.Presentation.Views.Shell.DisplayView>();
-        viewResolver.Register<LanguageViewModel, LanguageView>();
+        viewResolver.Register<TimeAndLanguageViewModel, LanguageView>();
         viewResolver.Register<NotificationsViewModel, NotificationsView>();
         viewResolver.Register<RecentFilesViewModel, RecentFilesView>();
         viewResolver.Register<PlayersExportViewModel, FileExportByColumnsView>();

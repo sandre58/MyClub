@@ -2,78 +2,63 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using MyNet.UI.Commands;
-using MyNet.UI.ViewModels.List;
-using MyNet.Utilities;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyNet.Observable.Attributes;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
 {
-    internal class TeamsViewModel : SelectionListViewModel<TeamViewModel>
+    internal class TeamsViewModel : TeamsViewModelBase<ITeamViewModel>
     {
         private readonly TeamPresentationService _teamPresentationService;
 
         public TeamDetailsViewModel DetailsViewModel { get; private set; }
 
-        [CanSetIsModified(false)]
-        [CanBeValidated(false)]
-        public bool HasImportSources { get; private set; }
-
-        public ICommand ExportCommand { get; private set; }
-
-        public ICommand ImportCommand { get; private set; }
-
-        public TeamsViewModel(
-            TeamsProvider teamsProvider,
-            TeamPresentationService teamPresentationService)
-            : base(source: teamsProvider.Connect(),
-                   parametersProvider: new TeamsListParametersProvider())
+        public TeamsViewModel(TeamsProvider teamsProvider,
+                              TeamPresentationService teamPresentationService)
+            : base(teamsProvider, teamPresentationService.HasImportSources(), new TeamsListParametersProvider())
         {
             _teamPresentationService = teamPresentationService;
 
             DetailsViewModel = new(teamPresentationService);
-            HasImportSources = _teamPresentationService.HasImportSources();
-
-            ExportCommand = CommandsManager.Create(async () => await ExportAsync().ConfigureAwait(false), () => Items.Any());
-            ImportCommand = CommandsManager.Create(async () => await ImportAsync().ConfigureAwait(false), () => HasImportSources);
         }
 
-        protected override async Task<TeamViewModel?> CreateNewItemAsync()
+        protected override async Task AddItemAsync(string name) => await _teamPresentationService.AddAsync(name).ConfigureAwait(false);
+
+        protected override async Task<ITeamViewModel?> CreateNewItemAsync()
         {
             var id = await _teamPresentationService.AddAsync().ConfigureAwait(false);
 
             return Source.GetByIdOrDefault(id.GetValueOrDefault());
         }
 
-        protected override void OnAddCompleted(TeamViewModel item)
-        {
-            if (Items.Contains(item))
-                Collection.SetSelection([item]);
-        }
-
-        protected override async Task<TeamViewModel?> UpdateItemAsync(TeamViewModel oldItem)
+        protected override async Task<ITeamViewModel?> UpdateItemAsync(ITeamViewModel oldItem)
         {
             await _teamPresentationService.EditAsync(oldItem).ConfigureAwait(false);
 
             return null;
         }
 
-        public override async Task RemoveRangeAsync(IEnumerable<TeamViewModel> oldItems) => await _teamPresentationService.RemoveAsync(oldItems).ConfigureAwait(false);
+        public override async Task RemoveRangeAsync(IEnumerable<ITeamViewModel> oldItems) => await _teamPresentationService.RemoveAsync(oldItems).ConfigureAwait(false);
 
-        private async Task ExportAsync() => await _teamPresentationService.ExportAsync(Items).ConfigureAwait(false);
+        protected override void OnAddCompleted(ITeamViewModel item)
+        {
+            if (Items.Contains(item))
+                Collection.SetSelection([item]);
+        }
 
-        private async Task ImportAsync() => await _teamPresentationService.LauchImportAsync().ConfigureAwait(false);
+        protected override async Task ExportAsync() => await _teamPresentationService.ExportAsync(Items).ConfigureAwait(false);
+
+        protected override async Task ImportAsync() => await _teamPresentationService.LaunchImportAsync().ConfigureAwait(false);
 
         protected override void OnSelectionChanged()
         {
             base.OnSelectionChanged();
 
-            DetailsViewModel.SetItem(SelectedItem);
+            DetailsViewModel.SetItem((TeamViewModel?)SelectedItem);
         }
     }
 }

@@ -12,7 +12,7 @@ using MyClub.Domain;
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
     [DebuggerDisplay("{Id} | {DebuggerDisplayValue}")]
-    internal class EntityViewModelBase<T> : ObservableObject, IIdentifiable<Guid>, IComparable
+    internal class EntityViewModelBase<T> : LocalizableObject, IIdentifiable<Guid>, IComparable
         where T : IEntity
     {
         protected T Item { get; }

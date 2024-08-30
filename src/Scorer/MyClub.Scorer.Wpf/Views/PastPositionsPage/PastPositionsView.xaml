@@ -15,64 +15,66 @@
     </UserControl.Resources>
 
     <Grid my:BusyAssist.AttachService="{Binding BusyService}">
-        <Grid Margin="{StaticResource MyNet.Margins.Medium}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <my:GhostControl GhostTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Large}" ShowGhost="{Binding HasData, Converter={x:Static my:NotBooleanConverter.Default}}">
+            <Grid Margin="{StaticResource MyNet.Margins.Medium}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <my:Card Padding="0">
-                <my:ContentExpander x:Name="Expander" Style="{StaticResource MyNet.Styles.ContentExpander.Horizontal.Alternate}">
-                    <ListBox ItemsSource="{Binding TeamSeries}" SelectionMode="Multiple">
-                        <ListBox.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource MyNet.Styles.ListBoxItem}" TargetType="{x:Type ListBoxItem}">
-                                <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{Binding Serie.Stroke}" />
-                                <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding Serie.Stroke, Contrast=True}" />
-                                <Setter Property="IsSelected" Value="{Binding IsVisible}" />
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                <Setter Property="Height" Value="50" />
-                                <Setter Property="Padding" Value="0" />
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <ContentControl Margin="12 0 5 0" Content="{Binding Item}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Away}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </my:ContentExpander>
-            </my:Card>
+                <my:Card Padding="0">
+                    <my:ContentExpander x:Name="Expander" Style="{StaticResource MyNet.Styles.ContentExpander.Horizontal.Alternate}">
+                        <ListBox ItemsSource="{Binding TeamSeries}" SelectionMode="Multiple">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem}">
+                                    <Setter Property="Height" Value="50" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="IsSelected" Value="{Binding IsVisible}" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{Binding Serie.Stroke}" />
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding Serie.Stroke, Contrast=True}" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <ContentControl Margin="12 0 5 0" Content="{Binding Item}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Away}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </my:ContentExpander>
+                </my:Card>
 
-            <my:CartesianChart Grid.Column="2"
-                               Hoverable="False"
-                               LegendLocation="None"
-                               Series="{Binding Series, UpdateSourceTrigger=PropertyChanged}"
-                               Zoom="None">
-                <my:CartesianChart.AxisX>
-                    <my:Axis Labels="{Binding AxeXLabels}"
-                             MaxValue="{Binding AxeXLabels.Count, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:MathConverter.Subtract}, ConverterParameter=1}"
-                             MinValue="0"
-                             ShowLabels="True">
-                        <my:Axis.Separator>
-                            <my:Separator IsEnabled="True" Step="1" />
-                        </my:Axis.Separator>
-                    </my:Axis>
-                </my:CartesianChart.AxisX>
-                <my:CartesianChart.AxisY>
-                    <my:Axis Labels="{Binding AxeYLabels}"
-                             MaxValue="{Binding AxeYLabels.Count, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:MathConverter.Subtract}, ConverterParameter=1}"
-                             MinValue="0"
-                             ShowLabels="True">
-                        <my:Axis.Separator>
-                            <my:Separator Step="1" />
-                        </my:Axis.Separator>
-                    </my:Axis>
-                </my:CartesianChart.AxisY>
-                <my:CartesianChart.DataTooltip>
-                    <v:PastPositionsToolTipView SelectionMode="OnlySender" />
-                </my:CartesianChart.DataTooltip>
-            </my:CartesianChart>
-        </Grid>
+                <my:CartesianChart Grid.Column="2"
+                                   Hoverable="False"
+                                   LegendLocation="None"
+                                   Series="{Binding Series, UpdateSourceTrigger=PropertyChanged}"
+                                   Zoom="None">
+                    <my:CartesianChart.AxisX>
+                        <my:Axis Labels="{Binding AxeXLabels}"
+                                 MaxValue="{Binding AxeXLabels.Count, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:MathConverter.Subtract}, ConverterParameter=1}"
+                                 MinValue="0"
+                                 ShowLabels="True">
+                            <my:Axis.Separator>
+                                <my:Separator IsEnabled="True" Step="1" />
+                            </my:Axis.Separator>
+                        </my:Axis>
+                    </my:CartesianChart.AxisX>
+                    <my:CartesianChart.AxisY>
+                        <my:Axis Labels="{Binding AxeYLabels}"
+                                 MaxValue="{Binding AxeYLabels.Count, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:MathConverter.Subtract}, ConverterParameter=1}"
+                                 MinValue="0"
+                                 ShowLabels="True">
+                            <my:Axis.Separator>
+                                <my:Separator Step="1" />
+                            </my:Axis.Separator>
+                        </my:Axis>
+                    </my:CartesianChart.AxisY>
+                    <my:CartesianChart.DataTooltip>
+                        <v:PastPositionsToolTipView SelectionMode="OnlySender" />
+                    </my:CartesianChart.DataTooltip>
+                </my:CartesianChart>
+            </Grid>
+        </my:GhostControl>
     </Grid>
 </UserControl>

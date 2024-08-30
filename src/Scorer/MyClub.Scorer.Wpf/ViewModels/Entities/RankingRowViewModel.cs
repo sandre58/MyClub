@@ -10,6 +10,7 @@ using System.Text;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
@@ -22,7 +23,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly UiObservableCollection<MatchOppositionViewModel> _matches = [];
         private readonly RankingViewModel _ranking;
 
-        public RankingRowViewModel(RankingViewModel ranking, TeamViewModel team)
+        public RankingRowViewModel(RankingViewModel ranking, ITeamViewModel team)
         {
             Team = team;
             _ranking = ranking;
@@ -32,7 +33,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public Guid Id => Team.Id;
 
-        public TeamViewModel Team { get; }
+        public ITeamViewModel Team { get; }
 
         public RankLabel? Label { get; private set; }
 
@@ -125,9 +126,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
     internal class MatchOppositionViewModel : ObservableObject
     {
-        public TeamViewModel Team { get; }
+        public ITeamViewModel Team { get; }
 
-        public TeamViewModel? Opponent { get; }
+        public ITeamViewModel? Opponent { get; }
 
         public int GoalsFor { get; }
 
@@ -139,7 +140,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public MatchViewModel Match { get; }
 
-        public MatchOppositionViewModel(TeamViewModel team, MatchViewModel match)
+        public MatchOppositionViewModel(ITeamViewModel team, MatchViewModel match)
         {
             Match = match;
             Team = team;

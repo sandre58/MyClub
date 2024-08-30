@@ -63,6 +63,8 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
 
         public byte[]? Image { get; set; }
 
+        public ProjectPreferences Preferences { get; } = new();
+
         public ReadOnlyObservableCollection<Team> Teams { get; }
 
         public ReadOnlyObservableCollection<Stadium> Stadiums { get; }

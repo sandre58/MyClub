@@ -7,6 +7,7 @@ using System.Linq;
 using MyClub.Domain.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Infrastructure.Repositories
 {
@@ -18,7 +19,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var added = parent.AddMatchday(date, name, shortName);
 
-            AuditCreatedItem(added);
+            AuditNewItem(added);
 
             return added;
         }
@@ -27,7 +28,9 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var added = parent.AddMatchday(matchday);
 
-            AuditCreatedItem(added);
+            added.Matches.ForEach(AuditNewItem);
+
+            AuditNewItem(added);
 
             return added;
         }

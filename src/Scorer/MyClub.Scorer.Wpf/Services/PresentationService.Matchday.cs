@@ -33,16 +33,7 @@ namespace MyClub.Scorer.Wpf.Services
         public async Task AddAsync(IMatchdayParent parent, DateTime? date = null)
         {
             var vm = ViewModelLocator.Get<MatchdayEditionViewModel>();
-            vm.New(parent, () =>
-            {
-                if (date.HasValue)
-                {
-                    vm.Date = date.Value.Date;
-
-                    if (date.Value.TimeOfDay != TimeSpan.Zero)
-                        vm.Time = date.Value.TimeOfDay;
-                }
-            });
+            vm.New(parent, date);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }

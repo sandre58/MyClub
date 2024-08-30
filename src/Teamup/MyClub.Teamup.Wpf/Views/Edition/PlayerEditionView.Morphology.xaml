@@ -38,11 +38,11 @@
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=TshirtCrew}">
             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.AutoCompletion}"
                       Width="{StaticResource MyNet.Widths.Control.Medium}"
-                      my:ComboBoxAssist.DownCommand="{Binding DownSizeCommand}"
+                      my:TextFieldAssist.PreviousCommand="{Binding DownSizeCommand}"
                       my:ComboBoxAssist.ShowCaret="False"
                       my:ComboBoxAssist.ShowDropDownPopup="True"
                       my:ComboBoxAssist.ShowUpDownButton="True"
-                      my:ComboBoxAssist.UpCommand="{Binding UpSizeCommand}"
+                      my:TextFieldAssist.NextCommand="{Binding UpSizeCommand}"
                       my:HintAssist.Hint="{my:Resource Size}"
                       my:HintAssist.IsFloating="True"
                       ItemsSource="{Binding Sizes}"

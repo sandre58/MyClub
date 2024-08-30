@@ -17,6 +17,7 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Translatables;
 using MyNet.UI.Collections;
@@ -34,7 +35,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
         private readonly ReadOnlyObservableCollection<IMatchParent> _parents;
-        private readonly UiObservableCollection<TeamViewModel> _availableTeams = [];
+        private readonly UiObservableCollection<ITeamViewModel> _availableTeams = [];
 
         public MatchEditionViewModel(MatchService matchService,
                                      AvailibilityCheckingService availibilityCheckingService,
@@ -47,7 +48,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             Mode = ScreenMode.Edition;
 
-            ValidationRules.Add<MatchEditionViewModel, TeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
+            ValidationRules.Add<MatchEditionViewModel, ITeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
 
             Disposables.AddRange(
             [
@@ -130,13 +131,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                     ValidatePostponedDateAvaibility();
                 }),
                 StadiumSelection.WhenPropertyChanged(x => x.SelectedItem, false).Subscribe(_ => ValidateStadiumsAvaibility()),
-                this.WhenAnyPropertyChanged(nameof(Date), nameof(Time)).Subscribe(x =>
+                DateTime.WhenPropertyChanged(x => x.DateTime).Subscribe(x =>
                 {
                     ValidateOriginDateAvaibility();
                     ValidateStadiumsAvaibility();
                     ScheduleAutomatic = false;
                 }),
-                this.WhenAnyPropertyChanged(nameof(PostponedDate), nameof(PostponedTime)).Subscribe(x =>
+                PostponedDateTime.WhenPropertyChanged(x => x.DateTime).Subscribe(x =>
                 {
                     ValidatePostponedDateAvaibility();
                     ValidateStadiumsAvaibility();
@@ -163,13 +164,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [DoNotCheckEquality]
         public IMatchParent? Parent { get; set; }
 
-        [IsRequired]
-        [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime? Date { get; set; }
+        public EditableDateTime DateTime { get; set; } = new();
 
-        [IsRequired]
-        [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public EditableDateTime PostponedDateTime { get; set; } = new(false);
 
         public bool ScheduleAutomatic { get; set; }
 
@@ -178,12 +175,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public bool CanScheduleAutomatic { get; set; }
 
         public bool CanScheduleStadiumAutomatic { get; set; }
-
-        [Display(Name = nameof(PostponedDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? PostponedDate { get; set; }
-
-        [Display(Name = nameof(PostponedTime), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? PostponedTime { get; set; }
 
         public PostponedState PostponedState { get; set; }
 
@@ -207,15 +198,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [IsRequired]
         [Display(Name = nameof(HomeTeam), ResourceType = typeof(MyClubResources))]
-        public TeamViewModel? HomeTeam { get; set; }
+        public ITeamViewModel? HomeTeam { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(AwayTeam), ResourceType = typeof(MyClubResources))]
-        public TeamViewModel? AwayTeam { get; set; }
+        public ITeamViewModel? AwayTeam { get; set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<TeamViewModel> AvailableTeams { get; }
+        public ReadOnlyObservableCollection<ITeamViewModel> AvailableTeams { get; }
 
         [CanBeValidated]
         [CanSetIsModified]
@@ -275,30 +266,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             if (IsModifiedSuspender.IsSuspended) return;
 
-            if (!Date.HasValue)
+            if (!DateTime.HasValue)
             {
                 DateAvailability = AvailabilityCheck.Unknown;
                 return;
             }
-            var date = Date.Value;
 
-            date = date.ToLocalDateTime(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
-            DateAvailability = CheckTeamsAvaibility(date);
+            DateAvailability = CheckTeamsAvaibility(DateTime.ToUtcOrDefault());
         }
 
         private void ValidatePostponedDateAvaibility()
         {
             if (IsModifiedSuspender.IsSuspended) return;
 
-            if (!PostponedDate.HasValue)
+            if (!PostponedDateTime.HasValue)
             {
                 PostponedDateAvailability = AvailabilityCheck.Unknown;
                 return;
             }
-            var date = PostponedDate.Value;
 
-            date = date.ToLocalDateTime(PostponedTime ?? DateTime.Today.EndOfDay().TimeOfDay);
-            PostponedDateAvailability = CheckTeamsAvaibility(date);
+            PostponedDateAvailability = CheckTeamsAvaibility(PostponedDateTime.ToUtcOrDefault());
         }
 
         private void ValidateStadiumsAvaibility()
@@ -307,22 +294,22 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             DateTime? date = null;
 
-            if (PostponedState == PostponedState.SpecifiedDate && PostponedDate.HasValue)
-                date = PostponedDate.Value.ToLocalDateTime(PostponedTime ?? DateTime.Today.EndOfDay().TimeOfDay);
-            else if (Date.HasValue)
-                date = Date.Value.ToLocalDateTime(Time ?? DateTime.Today.EndOfDay().TimeOfDay);
+            if (PostponedState == PostponedState.SpecifiedDate && PostponedDateTime.HasValue)
+                date = PostponedDateTime.ToUtcOrDefault();
+            else if (DateTime.HasValue)
+                date = DateTime.ToUtcOrDefault();
 
             foreach (var item in StadiumSelection.Items)
                 item.Availability = date.HasValue ? CheckStadiumAvaibility(item.Stadium.Id, date.Value) : AvailabilityCheck.Unknown;
         }
 
-        private AvailabilityCheck CheckTeamsAvaibility(DateTime date)
+        private AvailabilityCheck CheckTeamsAvaibility(DateTime utcDate)
             => HomeTeam is null && AwayTeam is null
                 ? AvailabilityCheck.Unknown
-                : _availibilityCheckingService.GetTeamsAvaibility(new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), new Period(date, date.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
+                : _availibilityCheckingService.GetTeamsAvaibility(new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), new Period(utcDate, utcDate.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
 
-        private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, DateTime date)
-            => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, new Period(date, date.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
+        private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, DateTime utcDate)
+            => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, new Period(utcDate, utcDate.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
 
         public void Load(MatchViewModel match)
         {
@@ -355,8 +342,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             {
                 var defaultValues = CrudService.New(Parent.Id, Parent.Date);
                 MatchFormat.Load(defaultValues.Format ?? Domain.MatchAggregate.MatchFormat.Default);
-                Date = defaultValues.Date.Date;
-                Time = defaultValues.Date.TimeOfDay;
+                DateTime.Load(defaultValues.Date);
                 HomeTeam = null;
                 AwayTeam = null;
                 StadiumSelection.SelectedItem = defaultValues.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(defaultValues.Stadium.Id.Value) : null;
@@ -370,8 +356,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 AfterExtraTime = defaultValues.AfterExtraTime;
                 State = defaultValues.State;
                 PostponedState = PostponedState.None;
-                PostponedDate = null;
-                PostponedTime = null;
+                PostponedDateTime.Clear();
                 ScheduleAutomatic = false;
                 ScheduleStadiumAutomatic = false;
             }
@@ -384,7 +369,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 ParentId = Parent?.Id ?? throw new InvalidOperationException("Parent cannot be null"),
                 HomeTeamId = HomeTeam?.Id ?? throw new InvalidOperationException("HomeTeam cannot be null"),
                 AwayTeamId = AwayTeam?.Id ?? throw new InvalidOperationException("AwayTeam cannot be null"),
-                Date = Date.GetValueOrDefault().ToUtcDateTime(Time.GetValueOrDefault(Parent.MatchTime)),
+                Date = DateTime.ToUtcOrDefault(),
                 Format = CanEditFormat && MatchFormat.IsModified() ? MatchFormat.Create() : null,
                 IsNeutralStadium = NeutralVenue,
                 Stadium = StadiumSelection.SelectedItem is not null ? new StadiumDto
@@ -402,7 +387,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 AwayIsWithdrawn = AwayIsWithdrawn,
                 AfterExtraTime = AfterExtraTime,
                 State = State,
-                PostponedDate = PostponedState == PostponedState.SpecifiedDate ? PostponedDate?.Date.ToUtcDateTime(PostponedTime.GetValueOrDefault(Parent.MatchTime)) : null,
+                PostponedDate = PostponedState == PostponedState.SpecifiedDate ? PostponedDateTime.ToUtc() : null,
                 ScheduleStadiumAutomatic = CanScheduleStadiumAutomatic && ScheduleStadiumAutomatic,
                 ScheduleAutomatic = CanScheduleAutomatic && ScheduleAutomatic
             };
@@ -414,8 +399,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 HomeTeam = Parent.GetAvailableTeams().GetById(item.HomeTeam.Id);
                 AwayTeam = Parent.GetAvailableTeams().GetById(item.AwayTeam.Id);
                 StadiumSelection.SelectedItem = item.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(item.Stadium.Id) : null;
-                Date = item.OriginDate.Date;
-                Time = item.OriginDate.ToLocalTime().TimeOfDay;
+                DateTime.Load(item.OriginDate);
                 MatchFormat.Load(item.Format);
                 NeutralVenue = item.IsNeutralStadium;
                 HomeScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Home.GetScore() : null;
@@ -426,9 +410,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 AwayIsWithdrawn = item.Away.IsWithdrawn;
                 AfterExtraTime = item.AfterExtraTime;
                 State = item.State;
-                PostponedDate = item.OriginDate == item.Date ? null : item.Date.Date;
-                PostponedTime = item.OriginDate == item.Date ? null : item.Date.ToLocalTime().TimeOfDay;
-                PostponedState = !PostponedDate.HasValue && item.State != MatchState.Postponed ? PostponedState.None : PostponedDate.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
+                if (item.OriginDate == item.Date)
+                    PostponedDateTime.Clear();
+                else
+                    PostponedDateTime.Load(item.Date);
+                PostponedState = !PostponedDateTime.HasValue && item.State != MatchState.Postponed ? PostponedState.None : PostponedDateTime.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
                 ScheduleAutomatic = false;
                 ScheduleStadiumAutomatic = false;
             }

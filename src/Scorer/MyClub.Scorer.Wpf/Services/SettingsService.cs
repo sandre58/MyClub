@@ -6,7 +6,7 @@ using MyNet.UI.Services;
 namespace MyClub.Scorer.Wpf.Services
 {
     internal class SettingsService(
-        LanguageSettingsService languageSettingsService,
+        TimeAndLanguageSettingsService languageSettingsService,
         ThemeSettingsService themeSettingsService,
         AppSettingsService appSettingsService) : PreferencesService(new IPersistentSettingsService[] { languageSettingsService, themeSettingsService, appSettingsService })
     {

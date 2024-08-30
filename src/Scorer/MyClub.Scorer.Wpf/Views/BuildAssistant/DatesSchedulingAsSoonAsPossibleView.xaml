@@ -25,7 +25,7 @@
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource GenerateItemsFromDate}" />
             <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
-            <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{Binding StartTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+            <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time StartTime}" />
         </my:SimpleStackPanel>
 
         <!-- Rules -->

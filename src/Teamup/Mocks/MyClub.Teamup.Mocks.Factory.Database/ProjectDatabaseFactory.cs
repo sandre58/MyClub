@@ -56,7 +56,7 @@ namespace MyClub.Teamup.Mocks.Factory.Database
                 var allDatabaseClubs = unitOfWork.ClubRepository.GetAll().Where(x => x.Teams.Count > 0).ToList();
                 var selectedClub = RandomGenerator.ListItem(allDatabaseClubs);
                 var selectedTeam = selectedClub.Teams.First();
-                var selectedCategory = selectedTeam.Category?.DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault) ?? RandomGenerator.ListItem(Enumeration.GetAll<Category>());
+                var selectedCategory = selectedTeam.Category?.DehumanizeTo<Category>(OnNoMatch.ReturnsDefault) ?? RandomGenerator.ListItem(Enumeration.GetAll<Category>());
                 var selectedStadium = selectedClub.Stadium ?? selectedTeam.Stadium;
                 Club club;
                 Project project;
@@ -71,10 +71,10 @@ namespace MyClub.Teamup.Mocks.Factory.Database
                         Stadium = selectedStadium is not null
                                   ? new Stadium(selectedStadium.Name, selectedStadium.Ground.DehumanizeTo<Ground>(OnNoMatch.ReturnsDefault))
                                   {
-                                      Address = new Address(selectedStadium.Street, selectedStadium.PostalCode, selectedStadium.City, selectedStadium.Country?.DehumanizeToNullable<Country>(), selectedStadium.Latitude, selectedStadium.Longitude),
+                                      Address = new Address(selectedStadium.Street, selectedStadium.PostalCode, selectedStadium.City, selectedStadium.Country?.DehumanizeTo<Country>(), selectedStadium.Latitude, selectedStadium.Longitude),
                                   }
                                   : null,
-                        Country = selectedClub.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault)
+                        Country = selectedClub.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault)
                     };
 
                     // Manager teams
@@ -232,10 +232,10 @@ namespace MyClub.Teamup.Mocks.Factory.Database
                 randomPlayer.FirstName = x.FirstName.OrEmpty();
                 randomPlayer.Birthdate = x.Birthdate;
                 randomPlayer.Address = null;
-                randomPlayer.Country = x.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault);
-                randomPlayer.Category = x.Category?.DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault);
+                randomPlayer.Country = x.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault);
+                randomPlayer.Category = x.Category?.DehumanizeTo<Category>(OnNoMatch.ReturnsDefault);
                 randomPlayer.Gender = x.Gender.DehumanizeTo<GenderType>(OnNoMatch.ReturnsDefault);
-                randomPlayer.Category = x.Category?.DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault);
+                randomPlayer.Category = x.Category?.DehumanizeTo<Category>(OnNoMatch.ReturnsDefault);
                 randomPlayer.Height = x.Height;
                 randomPlayer.Weight = x.Weight;
                 randomPlayer.PlaceOfBirth = x.PlaceOfBirth;
@@ -270,7 +270,7 @@ namespace MyClub.Teamup.Mocks.Factory.Database
 
                 var randomSquadPlayer = PlayerRandomFactory.RandomSquadPlayer(randomPlayer, RandomGenerator.ListItem(Enumeration.GetAll<Category>()), team);
                 randomSquadPlayer.Size = x.Size;
-                randomSquadPlayer.Category = x.Category?.DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault);
+                randomSquadPlayer.Category = x.Category?.DehumanizeTo<Category>(OnNoMatch.ReturnsDefault);
 
                 project.AddPlayer(randomSquadPlayer);
             });
@@ -353,13 +353,13 @@ namespace MyClub.Teamup.Mocks.Factory.Database
             var club = new Club(databaseTeam.Club.Name)
             {
                 AwayColor = databaseTeam.Club.AwayColor ?? RandomGenerator.Color(),
-                Country = databaseTeam.Club.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault),
+                Country = databaseTeam.Club.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault),
                 HomeColor = databaseTeam.Club.HomeColor ?? RandomGenerator.Color(),
                 Logo = databaseTeam.Club.Logo,
                 Stadium = databaseTeam.Club.Stadium is not null
                   ? new Stadium(databaseTeam.Club.Stadium.Name, databaseTeam.Club.Stadium.Ground.DehumanizeTo<Ground>(OnNoMatch.ReturnsDefault))
                   {
-                      Address = new Address(databaseTeam.Club.Stadium.Street, databaseTeam.Club.Stadium.PostalCode, databaseTeam.Club.Stadium.City, databaseTeam.Club.Stadium.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault), databaseTeam.Club.Stadium.Latitude, databaseTeam.Club.Stadium.Longitude)
+                      Address = new Address(databaseTeam.Club.Stadium.Street, databaseTeam.Club.Stadium.PostalCode, databaseTeam.Club.Stadium.City, databaseTeam.Club.Stadium.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault), databaseTeam.Club.Stadium.Latitude, databaseTeam.Club.Stadium.Longitude)
                   }
                   : null
             };
@@ -382,7 +382,7 @@ namespace MyClub.Teamup.Mocks.Factory.Database
             if (team.Stadium is not null && team.Stadium.Name != club.Stadium?.Name)
                 entity.Stadium.Override(new Stadium(team.Stadium.Name, team.Stadium.Ground.DehumanizeTo<Ground>(OnNoMatch.ReturnsDefault))
                 {
-                    Address = new Address(team.Stadium.Street, team.Stadium.PostalCode, team.Stadium.City, team.Stadium.Country?.DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault), team.Stadium.Latitude, team.Stadium.Longitude)
+                    Address = new Address(team.Stadium.Street, team.Stadium.PostalCode, team.Stadium.City, team.Stadium.Country?.DehumanizeTo<Country>(OnNoMatch.ReturnsDefault), team.Stadium.Latitude, team.Stadium.Longitude)
                 });
 
             return entity;

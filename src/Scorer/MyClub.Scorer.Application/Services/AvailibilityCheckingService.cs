@@ -33,8 +33,8 @@ namespace MyClub.Scorer.Application.Services
         {
             var match1 = _matchRepository.GetById(matchDto1.Id ?? Guid.Empty).OrThrow();
             var match2 = _matchRepository.GetById(matchDto2.Id ?? Guid.Empty).OrThrow();
-            var period1 = new Period(matchDto1.Date.ToUniversalTime(), matchDto1.Date.ToUniversalTime().AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRestTime ? match1.GetRestTime() : TimeSpan.Zero)));
-            var period2 = new Period(matchDto2.Date.ToUniversalTime(), matchDto2.Date.ToUniversalTime().AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRestTime ? match2.GetRestTime() : TimeSpan.Zero)));
+            var period1 = new Period(matchDto1.Date, matchDto1.Date.AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRestTime ? match1.GetRestTime() : TimeSpan.Zero)));
+            var period2 = new Period(matchDto2.Date, matchDto2.Date.AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRestTime ? match2.GetRestTime() : TimeSpan.Zero)));
 
             return period1.IntersectWith(period2) && (match2.Participate(match1.HomeTeam) || match2.Participate(match1.AwayTeam));
         }
@@ -47,8 +47,8 @@ namespace MyClub.Scorer.Application.Services
             var match2 = _matchRepository.GetById(matchDto2.Id ?? Guid.Empty).OrThrow();
             var stadium1 = matchDto1.Stadium?.Id is not null ? _stadiumRepository.GetById(matchDto1.Stadium.Id.Value) : null;
             var stadium2 = matchDto2.Stadium?.Id is not null ? _stadiumRepository.GetById(matchDto2.Stadium.Id.Value) : null;
-            var period1 = new Period(matchDto1.Date.ToUniversalTime(), matchDto1.Date.ToUniversalTime().AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRotationTime ? match1.GetRestTime() : TimeSpan.Zero)));
-            var period2 = new Period(matchDto2.Date.ToUniversalTime(), matchDto2.Date.ToUniversalTime().AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRotationTime ? match2.GetRestTime() : TimeSpan.Zero)));
+            var period1 = new Period(matchDto1.Date, matchDto1.Date.AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRotationTime ? match1.GetRestTime() : TimeSpan.Zero)));
+            var period2 = new Period(matchDto2.Date, matchDto2.Date.AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRotationTime ? match2.GetRestTime() : TimeSpan.Zero)));
 
             return period1.IntersectWith(period2) && stadium1 is not null && stadium1.Equals(stadium2);
         }
@@ -57,7 +57,7 @@ namespace MyClub.Scorer.Application.Services
                                                     Period period,
                                                     IEnumerable<Guid>? ignoredMatchIds = null)
         {
-            var utcPeriod = new Period(period.Start.ToUniversalTime(), period.End.ToUniversalTime());
+            var utcPeriod = new Period(period.Start, period.End);
             return !_schedulingDomainService.TeamsAreAvailable(teamIds, utcPeriod, false, ignoredMatchIds)
                 ? AvailabilityCheck.IsBusy
                 : !_schedulingDomainService.TeamsAreAvailable(teamIds, utcPeriod, true, ignoredMatchIds)
@@ -69,7 +69,7 @@ namespace MyClub.Scorer.Application.Services
                                                       Period period,
                                                       IEnumerable<Guid>? ignoredMatchIds = null)
         {
-            var utcPeriod = new Period(period.Start.ToUniversalTime(), period.End.ToUniversalTime());
+            var utcPeriod = new Period(period.Start, period.End);
             return !_schedulingDomainService.StadiumIsAvailable(stadiumId, utcPeriod, false, ignoredMatchIds)
                 ? AvailabilityCheck.IsBusy
                 : !_schedulingDomainService.StadiumIsAvailable(stadiumId, utcPeriod, true, ignoredMatchIds)

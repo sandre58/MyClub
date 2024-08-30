@@ -103,7 +103,7 @@
                     <my:DataGridTemplateColumn Header="{my:Resource Logo}">
                         <my:DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+                                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                             Width="32"
                             Height="32"
                             VerticalAlignment="Center"
@@ -135,10 +135,10 @@
                             </DataTemplate>
                         </my:DataGridDateColumn.CellTemplate>
                     </my:DataGridDateColumn>
-                    <my:DataGridTimeColumn Width="100" Binding="{Binding Item.CompetitionRules.MatchTime, StringFormat=HH:mm, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" Header="{my:Resource DefaultTime}">
+                    <my:DataGridTimeColumn Width="100" Binding="{my:Time Item.CompetitionRules.MatchTime}" Header="{my:Resource DefaultTime}">
                         <my:DataGridTimeColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{my:Translation Format=ShortTimeFormat}" />
+                                <TextBlock Text="{my:Translation Format=t}" />
                             </DataTemplate>
                         </my:DataGridTimeColumn.CellTemplate>
                     </my:DataGridTimeColumn>

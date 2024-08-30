@@ -23,10 +23,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.HomePage
 
         public HomePageViewModel(ProjectCommandsService projectCommandsService,
                                  ProjectInfoProvider projectInfoProvider,
+                                 MatchesProvider matchesProvider,
+                                 TeamsProvider teamsProvider,
+                                 StadiumsProvider stadiumsProvider,
                                  RecentFilesViewModel recentFilesViewModel)
         {
             OpenAssistant = new(recentFilesViewModel, projectCommandsService);
-            Dashboard = new(projectInfoProvider);
+            Dashboard = new(projectInfoProvider, matchesProvider, teamsProvider, stadiumsProvider);
             Disposables.Add(projectInfoProvider.WhenPropertyChanged(x => x.IsLoaded).Subscribe(x => ProjectIsLoaded = x.Value));
         }
 

@@ -7,6 +7,6 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public interface ITimeSchedulingRule
     {
-        TimeSpan? ProvideTime(DateTime date, int index);
+        TimeOnly? ProvideTime(DateOnly date, int index);
     }
 }

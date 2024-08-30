@@ -21,13 +21,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class EditableAutomaticTimeSchedulingRulesViewModel : EditableRulesViewModel<EditableTimeSchedulingRuleViewModel>
     {
-        public EditableAutomaticTimeSchedulingRulesViewModel()
-            => AvailableRules.AddRange([
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public static EditableAutomaticTimeSchedulingRulesViewModel Default
+            => new([
                 new AvailableRule<EditableTimeSchedulingRuleViewModel>(MyClubResources.SchedulingForDayRule, () => new EditableTimeOfDayRuleViewModel()),
                 new AvailableRule<EditableTimeSchedulingRuleViewModel>(MyClubResources.SchedulingForDateRule, () => new EditableTimeOfDateRuleViewModel()),
                 new AvailableRule<EditableTimeSchedulingRuleViewModel>(MyClubResources.SchedulingForDateRangeRule, () => new EditableTimeOfDateRangeRuleViewModel()),
                 new AvailableRule<EditableTimeSchedulingRuleViewModel>(MyClubResources.SchedulingForMatchNumberRule, () => new EditableTimeOfMatchNumberRuleViewModel())
            ]);
+
+        public EditableAutomaticTimeSchedulingRulesViewModel(IEnumerable<AvailableRule<EditableTimeSchedulingRuleViewModel>> availableRules) => AvailableRules.AddRange(availableRules);
 
         internal void Load(IEnumerable<ITimeSchedulingRule> rules)
             => Rules.Set(rules.Select(x =>
@@ -98,13 +102,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class EditableTimeOfDayRuleViewModel : EditableTimeSchedulingRuleViewModel
     {
-        public EditableTimeOfDayRuleViewModel()
+        public EditableTimeOfDayRuleViewModel(bool allowExceptions = true)
         {
             var firstDayOfWeek = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
             AllDays = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().Rotate((int)firstDayOfWeek).ToList().AsReadOnly();
+            AllowExceptions = allowExceptions;
 
-            AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableTimeOfMatchNumberRuleViewModel()));
-            RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableTimeOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x));
+            AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableTimeOfMatchNumberRuleViewModel()), () => AllowExceptions);
+            RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableTimeOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x), _ => AllowExceptions);
         }
 
         public ObservableCollection<EditableTimeOfMatchNumberRuleViewModel> MatchExceptions { get; } = [];
@@ -112,36 +117,43 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [CanSetIsModified(false)]
         public ReadOnlyCollection<DayOfWeek> AllDays { get; private set; }
 
+        [CanSetIsModified(false)]
+        public bool AllowExceptions { get; private set; }
+
         [IsRequired]
         [Display(Name = nameof(Day), ResourceType = typeof(MyClubResources))]
         public DayOfWeek? Day { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public TimeOnly? Time { get; set; }
 
         public ICommand AddExceptionCommand { get; }
 
         public ICommand RemoveExceptionCommand { get; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfDayRule(Day.GetValueOrDefault(), Time.GetValueOrDefault(), MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>());
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfDayRule(Day.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>() : []);
     }
 
     internal class EditableTimeOfDateRuleViewModel : EditableTimeSchedulingRuleViewModel
     {
-        public EditableTimeOfDateRuleViewModel()
+        public EditableTimeOfDateRuleViewModel(bool allowExceptions = true)
         {
-            AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableTimeOfMatchNumberRuleViewModel()));
-            RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableTimeOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x));
+            AllowExceptions = allowExceptions;
+            AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableTimeOfMatchNumberRuleViewModel()), () => AllowExceptions);
+            RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableTimeOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x), _ => AllowExceptions);
         }
 
         [IsRequired]
         [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime? Date { get; set; }
+        public DateOnly? Date { get; set; }
+
+        [CanSetIsModified(false)]
+        public bool AllowExceptions { get; private set; }
 
         [IsRequired]
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public TimeOnly? Time { get; set; }
 
         public ObservableCollection<EditableTimeOfMatchNumberRuleViewModel> MatchExceptions { get; } = [];
 
@@ -149,7 +161,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand RemoveExceptionCommand { get; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfDateRule(Date.GetValueOrDefault(), Time.GetValueOrDefault(), MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>());
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfDateRule(Date.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>() : []);
     }
 
     internal class EditableTimeOfMatchNumberRuleViewModel : EditableTimeSchedulingRuleViewModel
@@ -160,33 +172,37 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [IsRequired]
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public TimeOnly? Time { get; set; }
 
         public override ITimeSchedulingRule ProvideRule() => new TimeOfMatchNumberRule(MatchNumber.GetValueOrDefault(), Time.GetValueOrDefault());
     }
 
     internal class EditableTimeOfDateRangeRuleViewModel : EditableTimeSchedulingRuleViewModel
     {
-        public EditableTimeOfDateRangeRuleViewModel()
+        public EditableTimeOfDateRangeRuleViewModel(bool allowExceptions = true)
         {
-            AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableTimeOfMatchNumberRuleViewModel()));
-            RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableTimeOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x));
+            AllowExceptions = allowExceptions;
+            AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableTimeOfMatchNumberRuleViewModel()), () => AllowExceptions);
+            RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableTimeOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x), _ => AllowExceptions);
 
-            ValidationRules.Add<EditableTimeOfDateRangeRuleViewModel, DateTime?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
+            ValidationRules.Add<EditableTimeOfDateRangeRuleViewModel, DateOnly?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
         }
+
+        [CanSetIsModified(false)]
+        public bool AllowExceptions { get; private set; }
 
         [IsRequired]
         [ValidateProperty(nameof(EndDate))]
         [Display(Name = nameof(StartDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(EndDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? EndDate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public TimeOnly? Time { get; set; }
 
         public ObservableCollection<EditableTimeOfMatchNumberRuleViewModel> MatchExceptions { get; } = [];
 
@@ -194,6 +210,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand RemoveExceptionCommand { get; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfDatesRangeRule(StartDate.GetValueOrDefault(), EndDate.GetValueOrDefault(), Time.GetValueOrDefault(), MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>());
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfDatesRangeRule(StartDate.GetValueOrDefault(), EndDate.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>() : []);
     }
 }

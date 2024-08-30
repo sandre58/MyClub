@@ -2,10 +2,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Factories;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
@@ -44,8 +44,6 @@ namespace MyClub.Scorer.Application.Services
 
         public bool HasMatches() => _leagueRepository.GetCurrentOrThrow().GetAllMatches().Any();
 
-        public int GetRankingRowsCount() => _leagueRepository.GetCurrentOrThrow().Teams.Count;
-
         public RankingRulesDto GetRankingRules()
         {
             var league = _leagueRepository.GetCurrentOrThrow();
@@ -79,18 +77,51 @@ namespace MyClub.Scorer.Application.Services
 
         public RankingDto GetAwayRanking() => ToDto(_leagueRepository.GetCurrentOrThrow().GetAwayRanking());
 
-        public int GetNumberOfMatchays(BuildParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchdays(_leagueRepository.GetCurrentOrThrow().Teams.Count);
-
-        public int GetNumberOfMatchesByMatchday(BuildParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchesByMatchday(_leagueRepository.GetCurrentOrThrow().Teams.Count);
-
-        public SchedulingParameters Build(BuildParametersDto dto)
+        public IList<Matchday> Build(BuildParametersDto dto)
         {
+            if (dto.BracketParameters is not BuildMatchdaysParametersDto matchdaysParametersDto) throw new InvalidOperationException("No matchdays parameters provided");
+
             // Save MatchFormat
             if (dto.MatchFormat is not null)
                 _leagueRepository.UpdateMatchFormat(dto.MatchFormat);
 
-            // Build Matchdays
             var league = _leagueRepository.GetCurrentOrThrow();
+            var matchdays = ComputeMatchdays(league, matchdaysParametersDto, _stadiumRepository.GetAll().ToList());
+
+            // Save SchedulingParameters
+            if (dto.SchedulingParameters is not null)
+                _leagueRepository.UpdateSchedulingParameters(new SchedulingParameters(
+                   !dto.AutomaticStartDate ? matchdays.SelectMany(x => x.Matches).MinOrDefault(x => x.Date.ToDate(), matchdays.MinOrDefault(x => x.Date.ToDate())) : dto.SchedulingParameters.StartDate,
+                   !dto.AutomaticEndDate ? matchdays.SelectMany(x => x.Matches).MaxOrDefault(x => x.Date.ToDate(), matchdays.MaxOrDefault(x => x.Date.ToDate())) : dto.SchedulingParameters.EndDate,
+                   dto.SchedulingParameters.StartTime,
+                   dto.SchedulingParameters.RotationTime,
+                   dto.SchedulingParameters.RestTime,
+                   dto.SchedulingParameters.UseHomeVenue,
+                   dto.SchedulingParameters.AsSoonAsPossible,
+                   dto.SchedulingParameters.Interval,
+                   dto.SchedulingParameters.ScheduleByParent,
+                   dto.SchedulingParameters.AsSoonAsPossibleRules ?? [],
+                   dto.SchedulingParameters.DateRules ?? [],
+                   dto.SchedulingParameters.TimeRules ?? [],
+                   dto.SchedulingParameters.VenueRules ?? []
+                   ));
+
+            // Save matchdays
+            _matchdayRepository.Clear(league);
+            matchdays.ForEach(x => _matchdayRepository.Insert(league, x));
+
+            return matchdays;
+        }
+
+        public static int GetNumberOfMatchays(BuildAlgorithmParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchdays(dto.NumberOfTeams);
+
+        public static int GetNumberOfMatchesByMatchday(BuildAlgorithmParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchesByMatchday(dto.NumberOfTeams);
+
+        public static IList<Matchday> ComputeMatchdays(League league, BuildMatchdaysParametersDto dto, ICollection<Stadium> availableStadiums)
+        {
+            if (dto.AlgorithmParameters is null) throw new InvalidOperationException("No algorithm parameters provided");
+
+            // Build Matchdays
             var matchdaysScheduler = dto.BuildDatesParameters switch
             {
                 BuildManualDatesParametersDto buildManualParametersDto => (IScheduler<Matchday>)new ByDatesScheduler<Matchday>().SetDates(buildManualParametersDto.Dates ?? []),
@@ -100,14 +131,14 @@ namespace MyClub.Scorer.Application.Services
                     Interval = buildAutomaticParametersDto.IntervalValue.ToTimeSpan(buildAutomaticParametersDto.IntervalUnit),
                     DateRules = buildAutomaticParametersDto.DateRules ?? [],
                     TimeRules = buildAutomaticParametersDto.TimeRules ?? [],
-                    StartDate = buildAutomaticParametersDto.StartDate.GetValueOrDefault(DateTime.Today).ToUniversalTime()
+                    StartDate = buildAutomaticParametersDto.StartDate.GetValueOrDefault()
                 },
                 BuildAsSoonAsPossibleDatesParametersDto buildAsSoonAsPossibleParametersDto => new AsSoonAsPossibleScheduler<Matchday>()
                 {
                     Rules = buildAsSoonAsPossibleParametersDto.Rules ?? [],
                     ScheduleVenues = dto.ScheduleVenues && dto.AsSoonAsPossibleVenues,
-                    AvailableStadiums = _stadiumRepository.GetAll().ToList(),
-                    StartDate = buildAsSoonAsPossibleParametersDto.StartDate.GetValueOrDefault(DateTime.Today).ToUniversalTime()
+                    AvailableStadiums = availableStadiums,
+                    StartDate = buildAsSoonAsPossibleParametersDto.StartDate.GetValueOrDefault(DateTime.Today)
                 },
                 _ => throw new InvalidOperationException("No scheduler found with these parameters"),
             };
@@ -118,54 +149,33 @@ namespace MyClub.Scorer.Application.Services
                 if (dto.UseHomeVenue)
                     venuesScheduler = new HomeTeamVenueMatchesScheduler();
                 else if (dto.VenueRules?.Count != 0)
-                    venuesScheduler = new VenueRulesMatchesScheduler(_stadiumRepository.GetAll().ToList())
+                    venuesScheduler = new VenueRulesMatchesScheduler(availableStadiums)
                     {
                         Rules = [.. dto.VenueRules],
                     };
             }
 
-            var algorithm = GetMatchdaysAlgorithm(dto);
+            var algorithm = GetMatchdaysAlgorithm(dto.AlgorithmParameters);
             var matchdays = new MatchdaysBuilder(matchdaysScheduler, venuesScheduler)
             {
                 NamePattern = dto.NamePattern.OrEmpty(),
                 ShortNamePattern = dto.ShortNamePattern.OrEmpty(),
                 ScheduleVenuesBeforeDates = dto.ScheduleVenuesBeforeDates
-            }.Build(league, algorithm);
+            }.Build(league, algorithm).ToList();
 
-            // Save SchedulingParameters
-            _leagueRepository.UpdateSchedulingParameters(new SchedulingParameters(
-               !dto.StartDate.HasValue ? matchdays.SelectMany(x => x.Matches).MinOrDefault(x => x.Date.BeginningOfDay()) : dto.StartDate.Value.ToUniversalTime(),
-               !dto.EndDate.HasValue ? matchdays.SelectMany(x => x.Matches).MaxOrDefault(x => x.Date.EndOfDay()) : dto.EndDate.Value.ToUniversalTime(),
-               dto.StartTime,
-               dto.RotationTime,
-               dto.RestTime,
-               dto.UseHomeVenue,
-               dto.AsSoonAsPossible,
-               dto.Interval,
-               true,
-               dto.AsSoonAsPossibleRules ?? [],
-               dto.DateRules ?? [],
-               dto.TimeRules ?? [],
-               dto.VenueRules ?? []
-               ));
-
-            // Save matchdays
-            _matchdayRepository.Clear(league);
-            matchdays.ForEach(x => _matchdayRepository.Insert(league, x));
-
-            return league.SchedulingParameters;
+            return matchdays;
         }
 
-        private static IMatchdaysAlgorithm GetMatchdaysAlgorithm(BuildParametersDto buildParameters) => buildParameters.Algorithm switch
+        private static IMatchdaysAlgorithm GetMatchdaysAlgorithm(BuildAlgorithmParametersDto dto) => dto switch
         {
-            ChampionshipAlgorithm.RoundRobin => new RoundRobinAlgorithm()
+            RoundRobinParametersDto roundRobinParametersDto => new RoundRobinAlgorithm()
             {
-                NumberOfMatchesBetweenTeams = buildParameters.MatchesBetweenTeams?.Length ?? 2,
-                InvertTeamsByStage = buildParameters.MatchesBetweenTeams ?? []
+                NumberOfMatchesBetweenTeams = roundRobinParametersDto.MatchesBetweenTeams?.Length ?? 2,
+                InvertTeamsByStage = roundRobinParametersDto.MatchesBetweenTeams ?? []
             },
-            ChampionshipAlgorithm.SwissSystem => new SwissSystemAlgorithm()
+            SwissSystemParametersDto swissSystemParametersDto => new SwissSystemAlgorithm()
             {
-                NumberOfMatchesByTeams = buildParameters.NumberOfMatchesByTeam,
+                NumberOfMatchesByTeams = swissSystemParametersDto.NumberOfMatchesByTeam,
             },
             _ => throw new InvalidOperationException("Algorithm is unknown")
         };

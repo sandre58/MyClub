@@ -11,6 +11,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Import
         public TeamsImportBySourcesDialogViewModel(ProjectInfoProvider projectInfoProvider, TeamsImportBySourcesProvider provider)
             : base(provider, new TeamsImportListViewModel(provider))
             => projectInfoProvider.WhenProjectClosing(Reset);
+
+        public TeamsImportBySourcesDialogViewModel(TeamsImportBySourcesProvider provider) : base(provider, new TeamsImportListViewModel(provider)) { }
     }
 
     internal class TeamsImportListViewModel : ImportListViewModel<TeamImportableViewModel>

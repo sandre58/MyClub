@@ -17,7 +17,6 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Filters;
 using MyClub.Scorer.Wpf.Services;
-using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
@@ -34,6 +33,7 @@ using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
+using MyNet.Utilities.Localization;
 using MyNet.Utilities.Units;
 using PropertyChanged;
 
@@ -47,13 +47,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public MatchesPlanningViewModel(SchedulingParametersViewModel schedulingParameters,
                                         ISourceProvider<MatchViewModel> matchesProvider,
                                         ISourceProvider<IMatchParent> parentsProvider,
-                                        ISourceProvider<TeamViewModel> teamsProvider,
-                                        ISourceProvider<StadiumViewModel> stadiumsProvider,
+                                        ISourceProvider<ITeamViewModel> teamsProvider,
+                                        ISourceProvider<IStadiumViewModel> stadiumsProvider,
                                         MatchPresentationService matchPresentationService,
                                         CompetitionCommandsService competitionCommandsService,
                                         AvailibilityCheckingService availibilityCheckingService)
             : base(collection: new MatchesCollection(matchesProvider),
-                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source, new ObservableSourceProvider<DateTime>(matchesProvider.Connect().AutoRefresh(x => x.Date).DistinctValues(x => x.DateOfDay).ObserveOn(Scheduler.UI)).Source, teamsProvider.Source, stadiumsProvider.Source, schedulingParameters))
+                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source,
+                                                                                new ObservableSourceProvider<DateOnly>(matchesProvider.Connect()
+                                                                                                                                      .AutoRefreshOnObservable(x => Observable.FromEventPattern(x => GlobalizationService.Current.TimeZoneChanged += x, x => GlobalizationService.Current.TimeZoneChanged -= x))
+                                                                                                                                      .AutoRefreshOnObservable(x => x.WhenPropertyChanged(y => y.DateOfDay))
+                                                                                                                                      .DistinctValues(x => x.DateOfDay)
+                                                                                                                                      .ObserveOn(Scheduler.UI)).Source,
+                                                                                teamsProvider.Source,
+                                                                                stadiumsProvider.Source,
+                                                                                schedulingParameters))
         {
             _matchPresentationService = matchPresentationService;
             _availibilityCheckingService = availibilityCheckingService;
@@ -65,8 +73,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
             SelectAllByParentCommand = CommandsManager.CreateNotNull<IMatchParent>(x => Collection.Select(Items.Where(y => y.Parent == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Parent == x && y.IsSelectable).Any(y => !y.IsSelected));
             UnselectAllByParentCommand = CommandsManager.CreateNotNull<IMatchParent>(x => Collection.Unselect(Items.Where(y => y.Parent == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Parent == x && y.IsSelectable).All(y => y.IsSelected));
-            SelectAllByDateCommand = CommandsManager.CreateNotNull<DateTime>(x => Collection.Select(Items.Where(y => y.DateOfDay == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.DateOfDay == x && y.IsSelectable).Any(y => !y.IsSelected));
-            UnselectAllByDateCommand = CommandsManager.CreateNotNull<DateTime>(x => Collection.Unselect(Items.Where(y => y.DateOfDay == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.DateOfDay == x && y.IsSelectable).All(y => y.IsSelected));
+            SelectAllByDateCommand = CommandsManager.CreateNotNull<DateOnly>(x => Collection.Select(Items.Where(y => y.DateOfDay == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.DateOfDay == x && y.IsSelectable).Any(y => !y.IsSelected));
+            UnselectAllByDateCommand = CommandsManager.CreateNotNull<DateOnly>(x => Collection.Unselect(Items.Where(y => y.DateOfDay == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.DateOfDay == x && y.IsSelectable).All(y => y.IsSelected));
             EditResultsCommand = CommandsManager.Create(StartEditResults, () => Mode == ScreenMode.Read && Items.Count > 0);
             ValidateResultsCommand = CommandsManager.Create(async () => await ValidateResultsAsync().ConfigureAwait(false), () => Mode == ScreenMode.Edition);
             CancelResultsCommand = CommandsManager.Create(CancelResults, () => Mode == ScreenMode.Edition);
@@ -249,22 +257,22 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         }
 
         private async Task RescheduleConflictsAsync(MatchViewModel match)
-            => await OpenSchedulingAssistantAsync(match.StartDate).ConfigureAwait(false);
+            => await OpenSchedulingAssistantAsync(match.DateOfDay).ConfigureAwait(false);
 
         private async Task OpenSchedulingAssistantAsync()
         {
             var filters = (MatchesPlanningFiltersViewModel)Filters;
             var displayDate = Display.Mode switch
             {
-                DisplayModeDay displayModeDay => (DateTime?)displayModeDay.DisplayDate,
+                DisplayModeDay displayModeDay => (DateOnly?)displayModeDay.DisplayDate.ToDate(),
                 DisplayModeByDate => filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value,
-                DisplayModeByParent => filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().Value?.Date,
+                DisplayModeByParent => filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().Value?.Date.ToDate(),
                 _ => null,
             };
             await OpenSchedulingAssistantAsync(displayDate).ConfigureAwait(false);
         }
 
-        private async Task OpenSchedulingAssistantAsync(DateTime? displayDate)
+        private async Task OpenSchedulingAssistantAsync(DateOnly? displayDate)
             => await _matchPresentationService.OpenSchedulingAssistantAsync(Source.Where(x => x.CanReschedule()), displayDate).ConfigureAwait(false);
 
         public void SelectItems(IEnumerable<Guid> selectedItems)
@@ -318,7 +326,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             ]);
         }
 
-        public DateTime StartDate => Item.StartDate;
+        public DateTime StartDate => Item.Date;
 
         public DateTime EndDate => Item.EndDate;
 

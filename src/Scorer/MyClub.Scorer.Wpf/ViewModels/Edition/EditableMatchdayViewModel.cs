@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
@@ -19,12 +20,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class EditableMatchdayViewModel : EditableObject
     {
         private readonly bool _useHomeTeamStadium;
-        private readonly ISourceProvider<StadiumViewModel> _stadiums;
-        private readonly ISourceProvider<TeamViewModel> _teams;
+        private readonly ISourceProvider<IStadiumViewModel> _stadiums;
+        private readonly ISourceProvider<ITeamViewModel> _teams;
 
         public EditableMatchdayViewModel(ISourceProvider<MatchdayViewModel> matchdays,
-                                         ISourceProvider<StadiumViewModel> stadiums,
-                                         ISourceProvider<TeamViewModel> teams,
+                                         ISourceProvider<IStadiumViewModel> stadiums,
+                                         ISourceProvider<ITeamViewModel> teams,
                                          bool useHomeTeamStadium = false)
         {
             _useHomeTeamStadium = useHomeTeamStadium;
@@ -36,18 +37,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             AddMatchCommand = CommandsManager.Create(AddMatch, () => _teams.Source.Count > 0);
             RemoveMatchCommand = CommandsManager.CreateNotNull<EditableMatchViewModel>(RemoveMatch);
             ClearMatchesCommand = CommandsManager.Create(ClearMatches, () => Matches.Count > 0);
+            ClearDuplicatedMatchdayCommand = CommandsManager.Create(ClearDuplicatedMatchday);
+            DuplicateMatchdayCommand = CommandsManager.CreateNotNull<MatchdayViewModel>(DuplicateMatchday);
         }
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
         public Guid? Id { get; }
 
-        [IsRequired]
-        [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime? Date { get; set; }
-
-        [IsRequired]
-        [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public EditableDateTime DateTime { get; set; } = new();
 
         [IsRequired]
         [Display(Name = nameof(Name), ResourceType = typeof(MyClubResources))]
@@ -75,46 +72,45 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand ClearMatchesCommand { get; }
 
+        public ICommand DuplicateMatchdayCommand { get; }
+
+        public ICommand ClearDuplicatedMatchdayCommand { get; }
+
         private void RemoveMatch(EditableMatchViewModel item) => Matches.Remove(item);
 
-        public void AddMatch() => Matches.Add(new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium)
+        public void AddMatch()
         {
-            Date = Date,
-            Time = Time,
-        });
+            var item = new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium);
+
+            if (item.DateTime.HasValue)
+                item.DateTime.Load(DateTime.DateTime.GetValueOrDefault());
+            Matches.Add(item);
+        }
 
         public void InvertTeams() => Matches.ForEach(x => x.InvertTeams());
 
-        public void DuplicateMatchday(MatchdayViewModel matchday, bool invertTeams)
+        private void DuplicateMatchday(MatchdayViewModel matchday)
         {
-            using (PropertyChangedSuspender.Suspend())
-                DuplicatedMatchday = matchday;
+            DuplicatedMatchday = matchday;
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium)
-                {
-                    Date = Date,
-                    Time = Time,
-                };
+                var result = new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium);
+                if (result.DateTime.HasValue)
+                    result.DateTime.Load(DateTime.DateTime.GetValueOrDefault());
                 result.HomeTeam = result.AvailableTeams.GetById(x.HomeTeam.Id);
                 result.AwayTeam = result.AvailableTeams.GetById(x.AwayTeam.Id);
                 result.StadiumSelection.Select(x.Stadium?.Id);
-
-                if (invertTeams)
-                    result.InvertTeams();
 
                 return result;
             }));
         }
 
-        private void ClearMatches() => Matches.Clear();
-
-        protected void OnDuplicatedMatchdayChanged()
+        private void ClearDuplicatedMatchday()
         {
-            if (DuplicatedMatchday is null)
-                ClearMatches();
-            else
-                DuplicateMatchday(DuplicatedMatchday, false);
+            DuplicatedMatchday = null;
+            Matches.Clear();
         }
+
+        private void ClearMatches() => Matches.Clear();
     }
 }

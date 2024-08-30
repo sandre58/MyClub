@@ -27,7 +27,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Import
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
                 PostalCode = dto.PostalCode,
-                Country = dto.Country.OrEmpty().DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault)
+                Country = dto.Country.OrEmpty().DehumanizeTo<Country>(OnNoMatch.ReturnsDefault)
             };
 
         public StadiumImportDto ConvertBack(StadiumImportableViewModel item) => throw new NotImplementedException();

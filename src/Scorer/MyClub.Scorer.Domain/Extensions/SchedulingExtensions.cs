@@ -8,6 +8,7 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Extensions
 {
@@ -15,7 +16,7 @@ namespace MyClub.Scorer.Domain.Extensions
     {
         public static bool CanAutomaticReschedule(this SchedulingParameters parameters) => parameters.AsSoonAsPossible || parameters.DateRules.Count > 0;
 
-        public static bool CanAutomaticRescheduleVenue(this SchedulingParameters parameters) => parameters.UseHomeVenue || parameters.VenueRules.Count > 0;
+        public static bool CanAutomaticRescheduleVenue(this SchedulingParameters parameters) => parameters.UseHomeVenue || parameters.VenueRules.Count > 0 || parameters.AsSoonAsPossible;
 
         public static void ScheduleVenues(this SchedulingParameters parameters, IEnumerable<Match> matches, IEnumerable<Stadium> stadiums, IEnumerable<Match>? scheduledMatches = null)
             => parameters.GetVenuesScheduler(stadiums, scheduledMatches)?.Schedule(matches.ToList());
@@ -49,7 +50,7 @@ namespace MyClub.Scorer.Domain.Extensions
             if (parameters.AsSoonAsPossible)
                 return new AsSoonAsPossibleMatchesScheduler(scheduledMatches)
                 {
-                    StartDate = startDate ?? parameters.StartDate,
+                    StartDate = startDate ?? parameters.Start(),
                     Rules = [.. parameters.AsSoonAsPossibleRules],
                     ScheduleVenues = false
                 };
@@ -62,7 +63,7 @@ namespace MyClub.Scorer.Domain.Extensions
                     DateRules = [.. parameters.DateRules],
                     TimeRules = [.. parameters.TimeRules],
                     DefaultTime = parameters.StartTime,
-                    StartDate = (startDate ?? parameters.StartDate).Add(parameters.Interval),
+                    StartDate = (startDate?.ToDate() ?? parameters.StartDate).BeginningOfDay().Add(parameters.Interval).ToDate(),
                 };
             }
 
@@ -74,7 +75,7 @@ namespace MyClub.Scorer.Domain.Extensions
             if (parameters.AsSoonAsPossible)
                 return new AsSoonAsPossibleScheduler<Matchday>(scheduledMatchdays)
                 {
-                    StartDate = startDate ?? parameters.StartDate,
+                    StartDate = startDate ?? parameters.Start(),
                     Rules = [.. parameters.AsSoonAsPossibleRules],
                     ScheduleVenues = false
                 };
@@ -85,7 +86,7 @@ namespace MyClub.Scorer.Domain.Extensions
                     DateRules = [.. parameters.DateRules],
                     TimeRules = [.. parameters.TimeRules],
                     DefaultTime = parameters.StartTime,
-                    StartDate = startDate ?? parameters.StartDate,
+                    StartDate = startDate?.ToDate() ?? parameters.StartDate,
                 };
 
             return null;

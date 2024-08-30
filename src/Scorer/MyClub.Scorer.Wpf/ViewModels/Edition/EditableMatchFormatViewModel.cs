@@ -4,12 +4,14 @@
 using System.ComponentModel.DataAnnotations;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.MatchAggregate;
-using MyNet.Observable;
+using MyNet.UI.ViewModels.Workspace;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class EditableMatchFormatViewModel : EditableObject
+    internal class EditableMatchFormatViewModel : NavigableWorkspaceViewModel
     {
+        public EditableMatchFormatViewModel() => Reset();
+
         public EditableHalfFormatViewModel RegulationTime { get; set; } = new();
 
         public EditableHalfFormatViewModel ExtraTime { get; set; } = new()
@@ -46,6 +48,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 NumberOfPenaltyShootouts = matchFormat.NumberOfPenaltyShootouts;
         }
 
-        public void Reset() => Load(MatchFormat.Default);
+        protected override void ResetCore() => Load(MatchFormat.Default);
     }
 }

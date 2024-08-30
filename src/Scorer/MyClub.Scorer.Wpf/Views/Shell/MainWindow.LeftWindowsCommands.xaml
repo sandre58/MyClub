@@ -15,7 +15,7 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </mah:WindowCommands.Resources>
 
-    <!--  File Menu Button  -->
+    <!-- File Menu Button -->
     <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Text}"
                   Width="45"
                   Margin="-1 0 0 0"
@@ -29,19 +29,34 @@
                   ToolTip="{my:ShortcutResource File,
                                                 ShortcutKey='Alt+F'}" />
 
-    <!--  Navigation Buttons  -->
-    <StackPanel Margin="20 0 0 0" Orientation="Horizontal" Visibility="{Binding ShowNavigationControls, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
-        <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                Command="{Binding GoBackCommand}"
-                Content="{my:MediumIcon Kind=ArrowLeft}"
-                ToolTip="{my:ShortcutResource PreviousPage,
-                                              ShortcutKey=PageUp}" />
-        <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                Command="{Binding GoForwardCommand}"
-                Content="{my:MediumIcon Kind=ArrowRight}"
-                ToolTip="{my:ShortcutResource NextPage,
-                                              ShortcutKey=PageDown}" />
-    </StackPanel>
+    <my:SimpleStackPanel Width="240"
+                         Margin="25 0 20 0"
+                         VerticalAlignment="Center"
+                         Orientation="Horizontal"
+                         Visibility="{Binding ShowNavigationControls, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
 
-    <StackPanel Width="230" Visibility="Hidden" />
+        <!-- Navigation Buttons -->
+        <StackPanel Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Text}"
+                    Command="{Binding GoBackCommand}"
+                    Content="{my:MediumIcon Kind=ArrowLeft}"
+                    ToolTip="{my:ShortcutResource PreviousPage,
+                                                  ShortcutKey=PageUp}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Text}"
+                    Command="{Binding GoForwardCommand}"
+                    Content="{my:MediumIcon Kind=ArrowRight}"
+                    ToolTip="{my:ShortcutResource NextPage,
+                                                  ShortcutKey=PageDown}" />
+        </StackPanel>
+
+        <!-- Time -->
+        <Label Style="{StaticResource MyNet.Styles.Label.Elevation}"
+               Width="90"
+               Content="{my:LiveDateTime Kind=Current,
+                                         Format=T}"
+               FontFamily="{StaticResource MyNet.Font.Family.Digital}"
+               FontSize="{StaticResource MyNet.Font.Size.Caption}"
+               FontWeight="DemiBold" />
+
+    </my:SimpleStackPanel>
 </mah:WindowCommands>

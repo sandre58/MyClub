@@ -11,23 +11,23 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public class ByDayOfWeekScheduler<T> : IScheduler<T> where T : ISchedulable
     {
-        public DateTime StartDate { get; set; } = DateTime.Today;
+        public DateOnly StartDate { get; set; } = DateTime.UtcNow.ToDate();
 
-        public TimeSpan Time { get; set; } = new TimeSpan(15, 0, 0);
+        public TimeOnly Time { get; set; } = new(15, 0, 0);
 
         public IEnumerable<DayOfWeek> DayOfWeeks { get; set; } = [DayOfWeek.Sunday];
 
         public void Schedule(IEnumerable<T> items)
         {
-            var previousDate = StartDate.PreviousDay().BeginningOfDay();
+            var previousDate = StartDate.PreviousDay();
             items.ForEach(x =>
             {
-                x.Schedule(DayOfWeeks.Min(x => previousDate.Next(x)).BeginningOfDay().ToUtcDateTime(Time));
+                x.Schedule(DayOfWeeks.Min(x => previousDate.Next(x)).At(Time));
 
                 if (x is IMatchesProvider matchesProvider)
                     matchesProvider.Matches.ForEach(y => y.Schedule(x.Date));
 
-                previousDate = x.Date;
+                previousDate = x.Date.ToDate();
             });
         }
     }

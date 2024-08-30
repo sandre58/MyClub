@@ -81,14 +81,14 @@
                                    my:HintAssist.Hint="{my:Resource StartTime}"
                                    my:HintAssist.IsFloating="True"
                                    FontSize="{StaticResource MyNet.Font.Size.Title}"
-                                   SelectedTime="{Binding StartTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                   SelectedTime="{my:Time StartTime}" />
                     <TextBlock Margin="0 10 0 0" Text="{my:Resource To}" />
                     <my:TimePicker Width="120"
                                    my:HintAssist.FloatingScale="0.4"
                                    my:HintAssist.Hint="{my:Resource EndTime}"
                                    my:HintAssist.IsFloating="True"
                                    FontSize="{StaticResource MyNet.Font.Size.Title}"
-                                   SelectedTime="{Binding EndTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                   SelectedTime="{my:Time EndTime}" />
                 </my:SimpleStackPanel>
 
             </my:SimpleStackPanel>

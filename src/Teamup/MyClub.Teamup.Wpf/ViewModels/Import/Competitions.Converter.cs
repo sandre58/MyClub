@@ -42,9 +42,9 @@ namespace MyClub.Teamup.Wpf.ViewModels.Import
                 : dto.Type == CompetitionType.Friendly.ToString()
                 ? new FriendlyRules(matchFormat, dto.MatchTime.GetValueOrDefault())
                 : new CompetitionRules(matchFormat, dto.MatchTime.GetValueOrDefault()),
-                _competitionService.GetSimilarCompetition(dto.Category.OrEmpty().DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault), dto.Name.OrEmpty()).Any() ? ImportMode.Update : ImportMode.Add)
+                _competitionService.GetSimilarCompetition(dto.Category.OrEmpty().DehumanizeTo<Category>(OnNoMatch.ReturnsDefault), dto.Name.OrEmpty()).Any() ? ImportMode.Update : ImportMode.Add)
             {
-                Category = dto.Category.OrEmpty().DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault),
+                Category = dto.Category.OrEmpty().DehumanizeTo<Category>(OnNoMatch.ReturnsDefault),
                 Logo = dto.Logo,
                 ShortName = dto.ShortName.OrEmpty()
             };

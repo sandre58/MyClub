@@ -35,7 +35,7 @@
 
             <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding CanBeRescheduled}">
                 <MenuItem Command="{Binding RescheduleAutomaticCommand}" Header="{my:Resource Automatic}" Icon="{my:ToolIcon Kind=Magic}" />
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}">
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Pluralize=True}">
                     <MenuItem.Icon>
                         <Grid>
                             <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
@@ -48,7 +48,7 @@
                         </Grid>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}">
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Pluralize=True}">
                     <MenuItem.Icon>
                         <Grid>
                             <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
@@ -61,7 +61,7 @@
                         </Grid>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}">
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Pluralize=True}">
                     <MenuItem.Icon>
                         <Grid>
                             <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
@@ -74,7 +74,7 @@
                         </Grid>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}">
+                <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Pluralize=True}">
                     <MenuItem.Icon>
                         <Grid>
                             <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
@@ -87,7 +87,7 @@
                         </Grid>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Plural=True}">
+                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Pluralize=True}">
                     <MenuItem.Icon>
                         <Grid>
                             <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
@@ -100,7 +100,7 @@
                         </Grid>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Plural=True}">
+                <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Pluralize=True}">
                     <MenuItem.Icon>
                         <Grid>
                             <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"

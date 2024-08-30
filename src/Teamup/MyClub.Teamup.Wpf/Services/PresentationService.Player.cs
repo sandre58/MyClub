@@ -71,9 +71,9 @@ namespace MyClub.Teamup.Wpf.Services
                 Service.Move(idsList, team?.Id);
 
                 if (team is not null)
-                    ToasterManager.ShowSuccess($"{nameof(MyClubResources.XPlayersHasBeenMovedInSuccess).TranslateWithCountAndOptionalFormat(idsList.Count)} {team.Name}");
+                    ToasterManager.ShowSuccess($"{nameof(MyClubResources.XPlayersHasBeenMovedInSuccess).TranslateAndFormatWithCount(idsList.Count)} {team.Name}");
                 else
-                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenMovedOutSuccess).TranslateWithCountAndOptionalFormat(idsList.Count));
+                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenMovedOutSuccess).TranslateAndFormatWithCount(idsList.Count));
 
             }).ConfigureAwait(false);
         }
@@ -98,7 +98,7 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task RemoveInjuryAsync(InjuryViewModel injury)
         {
-            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateWithCountAndOptionalFormat(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
+            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateAndFormatWithCount(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
             {
                 await AppBusyManager.WaitAsync(() => _injuryService.Remove(injury.Id)).ConfigureAwait(false);
             }
@@ -109,7 +109,7 @@ namespace MyClub.Teamup.Wpf.Services
             var idsList = oldItems.Select(x => x.Id).ToList();
             if (idsList.Count == 0) return;
 
-            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateWithCountAndOptionalFormat(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
+            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
             {
@@ -156,7 +156,7 @@ namespace MyClub.Teamup.Wpf.Services
 
         public async Task RemoveAbsenceAsync(AbsenceViewModel absence)
         {
-            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateWithCountAndOptionalFormat(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
+            if (await DialogManager.ShowQuestionAsync(MessageResources.XItemsRemovingQuestion.TranslateAndFormatWithCount(1).OrEmpty(), UiResources.Removing).ConfigureAwait(false) == MessageBoxResult.Yes)
             {
                 await AppBusyManager.WaitAsync(() => _playerAbsenceService.Remove(absence.Id)).ConfigureAwait(false);
             }
@@ -304,7 +304,7 @@ namespace MyClub.Teamup.Wpf.Services
                     }).ToList();
                     Service.Import(players);
 
-                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateWithCountAndOptionalFormat(players.Count));
+                    ToasterManager.ShowSuccess(nameof(MyClubResources.XPlayersHasBeenImportedSuccess).TranslateAndFormatWithCount(players.Count));
                 }).ConfigureAwait(false);
             }
         }

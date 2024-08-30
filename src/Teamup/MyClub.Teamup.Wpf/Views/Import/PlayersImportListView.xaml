@@ -179,7 +179,7 @@
                     <my:DataGridTemplateColumn Header="{my:Resource Photo}">
                         <my:DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+                                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                                                 Width="32"
                                                 Height="32"
                                                 VerticalAlignment="Center"

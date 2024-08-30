@@ -11,7 +11,6 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Date -->
-
     <DataTemplate DataType="{x:Type vm:EditableIncludeTimePeriodsRuleViewModel}">
         <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemsSource="{Binding TimePeriods}">
             <ItemsControl.ItemTemplate>
@@ -35,12 +34,12 @@
                         <my:TimePicker Grid.Column="2"
                                        Width="60"
                                        my:HintAssist.IsFloating="False"
-                                       SelectedTime="{Binding StartTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                       SelectedTime="{my:Time StartTime}" />
                         <TextBlock Grid.Column="4" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
                         <my:TimePicker Grid.Column="6"
                                        Width="60"
                                        my:HintAssist.IsFloating="False"
-                                       SelectedTime="{Binding EndTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                       SelectedTime="{my:Time EndTime}" />
 
                         <Button x:Name="RemoveButton"
                                 Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
@@ -124,7 +123,6 @@
     </DataTemplate>
 
     <!-- Time -->
-
     <DataTemplate x:Key="Scorer.DataTemplates.TimeOfMatchNumberRuleViewModel.Embedded" DataType="{x:Type vm:EditableTimeOfMatchNumberRuleViewModel}">
         <Grid Margin="{StaticResource MyNet.Margins.Small.Vertical}">
             <Grid.ColumnDefinitions>
@@ -151,7 +149,7 @@
             <my:TimePicker Grid.Column="6"
                            Width="60"
                            my:HintAssist.IsFloating="False"
-                           SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                           SelectedTime="{my:Time Time}" />
             <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
                     Grid.Column="8"
                     Command="{Binding DataContext.RemoveExceptionCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
@@ -193,19 +191,26 @@
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
                 <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
                         Command="{Binding AddExceptionCommand}"
-                        Content="{my:Resource AddException}" />
+                        Content="{my:Resource AddException}"
+                        Visibility="{Binding AllowExceptions, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
             </my:SimpleStackPanel>
             <ItemsControl Grid.Row="1"
                           Grid.Column="4"
                           Grid.ColumnSpan="3"
                           Margin="{StaticResource MyNet.Margins.Default.Top}"
                           ItemTemplate="{StaticResource Scorer.DataTemplates.TimeOfMatchNumberRuleViewModel.Embedded}"
-                          ItemsSource="{Binding MatchExceptions}"
-                          Visibility="{Binding MatchExceptions.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                          ItemsSource="{Binding MatchExceptions}">
+                <ItemsControl.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                        <Binding Path="AllowExceptions" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.Any}" Path="MatchExceptions.Count" />
+                    </MultiBinding>
+                </ItemsControl.Visibility>
+            </ItemsControl>
         </Grid>
     </DataTemplate>
 
@@ -229,19 +234,26 @@
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
                 <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
                         Command="{Binding AddExceptionCommand}"
-                        Content="{my:Resource AddException}" />
+                        Content="{my:Resource AddException}"
+                        Visibility="{Binding AllowExceptions, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
             </my:SimpleStackPanel>
             <ItemsControl Grid.Row="1"
                           Grid.Column="4"
                           Grid.ColumnSpan="3"
                           Margin="{StaticResource MyNet.Margins.Default.Top}"
                           ItemTemplate="{StaticResource Scorer.DataTemplates.TimeOfMatchNumberRuleViewModel.Embedded}"
-                          ItemsSource="{Binding MatchExceptions}"
-                          Visibility="{Binding MatchExceptions.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                          ItemsSource="{Binding MatchExceptions}">
+                <ItemsControl.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                        <Binding Path="AllowExceptions" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.Any}" Path="MatchExceptions.Count" />
+                    </MultiBinding>
+                </ItemsControl.Visibility>
+            </ItemsControl>
         </Grid>
     </DataTemplate>
 
@@ -273,19 +285,26 @@
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
                 <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
                         Command="{Binding AddExceptionCommand}"
-                        Content="{my:Resource AddException}" />
+                        Content="{my:Resource AddException}"
+                        Visibility="{Binding AllowExceptions, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
             </my:SimpleStackPanel>
             <ItemsControl Grid.Row="1"
                           Grid.Column="4"
                           Grid.ColumnSpan="3"
                           Margin="{StaticResource MyNet.Margins.Default.Top}"
                           ItemTemplate="{StaticResource Scorer.DataTemplates.TimeOfMatchNumberRuleViewModel.Embedded}"
-                          ItemsSource="{Binding MatchExceptions}"
-                          Visibility="{Binding MatchExceptions.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                          ItemsSource="{Binding MatchExceptions}">
+                <ItemsControl.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                        <Binding Path="AllowExceptions" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.Any}" Path="MatchExceptions.Count" />
+                    </MultiBinding>
+                </ItemsControl.Visibility>
+            </ItemsControl>
         </Grid>
     </DataTemplate>
 
@@ -313,12 +332,11 @@
             <my:TimePicker Grid.Column="6"
                            Width="60"
                            my:HintAssist.IsFloating="False"
-                           SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                           SelectedTime="{my:Time Time}" />
         </Grid>
     </DataTemplate>
 
     <!-- Venue -->
-
     <DataTemplate x:Key="Scorer.DataTemplates.StadiumOfMatchNumberRuleViewModel.Embedded" DataType="{x:Type vm:EditableStadiumOfMatchNumberRuleViewModel}">
         <Grid Margin="{StaticResource MyNet.Margins.Small.Vertical}">
             <Grid.ColumnDefinitions>

@@ -65,7 +65,7 @@
                 <MenuItem Icon="{my:Icon Kind=ClockEdit}">
                     <MenuItem.Header>
                         <my:SimpleStackPanel Orientation="Horizontal">
-                            <my:TimePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding EditTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                            <my:TimePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time EditTime}" />
                             <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding Data.EditTimeSelectedItemsCommand, Source={StaticResource Proxy}}" Content="{my:Resource Apply}" />
                         </my:SimpleStackPanel>
                     </MenuItem.Header>
@@ -89,7 +89,7 @@
             </my:DataGridDateColumn>
 
             <!--  Time  -->
-            <my:DataGridTimeColumn Width="100" Binding="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Time}">
+            <my:DataGridTimeColumn Width="100" Binding="{my:Time Time}" Header="{my:Resource Time}">
                 <my:DataGridTimeColumn.CellTemplate>
                     <DataTemplate>
                         <TextBlock Text="{my:Translation Format=ShortTimePattern}" />

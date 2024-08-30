@@ -22,7 +22,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public AsSoonAsPossibleMatchesScheduler(IEnumerable<Match>? scheduledMatches = null) => _scheduledMatches = scheduledMatches ?? [];
 
-        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateTime StartDate { get; set; } = DateTime.UtcNow;
 
         public List<IAvailableDateSchedulingRule> Rules { get; set; } = [];
 

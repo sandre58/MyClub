@@ -34,7 +34,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var added = AddCore(item);
 
-            AuditCreatedItem(added);
+            AuditNewItem(added);
 
             return added;
         }
@@ -43,7 +43,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var added = AddRangeCore(items).ToList();
 
-            added.ForEach(AuditCreatedItem);
+            added.ForEach(x => AuditNewItem(x));
 
             return added;
         }
@@ -64,7 +64,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var newItem = UpdateCore(GetByIdOrThrow(item.Id), item);
 
-            AuditUpdatedItem(newItem);
+            AuditExistingItem(newItem);
 
             return newItem;
         }
@@ -73,7 +73,7 @@ namespace MyClub.Scorer.Infrastructure.Repositories
         {
             var newItems = items.Select(x => UpdateCore(GetByIdOrThrow(x.Id), x)).ToList();
 
-            newItems.ForEach(AuditUpdatedItem);
+            newItems.ForEach(x => AuditExistingItem(x));
 
             return newItems;
         }
@@ -82,8 +82,8 @@ namespace MyClub.Scorer.Infrastructure.Repositories
 
         public void Save() => throw new InvalidOperationException("Save method is not used in this use case.");
 
-        protected void AuditCreatedItem(T item) => _auditService.New(item);
+        protected void AuditNewItem(IAuditable item) => _auditService.New(item);
 
-        protected void AuditUpdatedItem(T item) => _auditService.Update(item);
+        protected void AuditExistingItem(IAuditable item) => _auditService.Update(item);
     }
 }

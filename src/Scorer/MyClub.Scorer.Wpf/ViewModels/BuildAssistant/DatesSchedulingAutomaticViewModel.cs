@@ -19,11 +19,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
     {
         public EditableAutomaticDateSchedulingRulesViewModel DateRules { get; } = new();
 
-        public EditableAutomaticTimeSchedulingRulesViewModel TimeRules { get; } = new();
+        public EditableAutomaticTimeSchedulingRulesViewModel TimeRules { get; } = EditableAutomaticTimeSchedulingRulesViewModel.Default;
 
         [IsRequired]
         [Display(Name = nameof(StartDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         [IsRequired]
         [Display(Name = "Interval", ResourceType = typeof(MyClubResources))]
@@ -35,7 +35,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         public void Reset(DateTime startDate)
         {
-            StartDate = startDate.Date;
+            StartDate = startDate.ToDate();
             IntervalValue = 1;
             IntervalUnit = TimeUnit.Day;
             DateRules.Rules.Clear();
@@ -44,13 +44,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         public void Load(SchedulingParameters schedulingParameters)
         {
-            StartDate = schedulingParameters.StartDate.Date;
+            StartDate = schedulingParameters.StartDate;
             (IntervalValue, IntervalUnit) = schedulingParameters.Interval.Simplify();
             DateRules.Load(schedulingParameters.DateRules);
             TimeRules.Load(schedulingParameters.TimeRules);
         }
 
-        public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeSpan defaultTime) => new BuildAutomaticDatesParametersDto
+        public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime) => new BuildAutomaticDatesParametersDto
         {
             StartDate = StartDate,
             IntervalValue = IntervalValue.GetValueOrDefault(),

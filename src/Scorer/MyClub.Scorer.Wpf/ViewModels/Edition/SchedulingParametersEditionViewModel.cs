@@ -15,7 +15,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public SchedulingParametersEditionViewModel(LeagueService leagueService, StadiumsProvider stadiumsProvider)
         {
             _leagueService = leagueService;
-            SchedulingParameters = new(stadiumsProvider.Items);
+            SchedulingParameters = new(stadiumsProvider);
         }
 
         public EditableSchedulingParametersViewModel SchedulingParameters { get; }

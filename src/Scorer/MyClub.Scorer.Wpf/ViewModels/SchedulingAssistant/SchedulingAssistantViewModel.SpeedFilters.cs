@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using MyClub.Scorer.Wpf.Filters;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.UI.ViewModels.List.Filtering.Filters;
 
@@ -11,7 +12,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {
     internal class SchedulingAssistantSpeedFiltersViewModel : SpeedFiltersViewModel
     {
-        public SchedulingAssistantSpeedFiltersViewModel(IEnumerable<TeamViewModel> teams, IEnumerable<StadiumViewModel> stadiums)
+        public SchedulingAssistantSpeedFiltersViewModel(IEnumerable<ITeamViewModel> teams, IEnumerable<IStadiumViewModel> stadiums)
         {
             TeamFilter = new MatchTeamFilterViewModel(teams);
             StadiumFilter = new(nameof(MatchViewModel.Stadium), stadiums);
@@ -20,6 +21,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         public MatchTeamFilterViewModel TeamFilter { get; }
 
-        public SelectedValuesFilterViewModel<StadiumViewModel> StadiumFilter { get; }
+        public SelectedValuesFilterViewModel<IStadiumViewModel> StadiumFilter { get; }
     }
 }

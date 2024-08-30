@@ -1,0 +1,114 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.MatchdaysEditionParametersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:MatchdaysEditionParametersViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <Grid Margin="{StaticResource MyNet.Margins.Large.Bottom}" DockPanel.Dock="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Options -->
+            <my:SimpleStackPanel>
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Clock}">
+                    <my:TimePicker Width="70"
+                                   my:HintAssist.Hint="{my:Resource DefaultTime}"
+                                   my:HintAssist.IsFloating="True"
+                                   SelectedTime="{my:Time DefaultTime}" />
+                </GroupBox>
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=FormatText}">
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <TextBox my:HintAssist.Hint="{my:Resource Name}" my:HintAssist.IsFloating="True" Text="{Binding NamePattern}" />
+                        <TextBox Width="70"
+                                 my:HintAssist.Hint="{my:Resource ShortName}"
+                                 my:HintAssist.IsFloating="True"
+                                 Text="{Binding ShortNamePattern}" />
+                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                           my:HeaderAssist.Header="{my:Resource Patterns}"
+                                           PopupContent="{my:Resource PatternsDescription}"
+                                           ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                    </my:SimpleStackPanel>
+                </GroupBox>
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Numeric}">
+                    <my:NumericUpDown my:HintAssist.Hint="{my:Resource Index}"
+                                      my:HintAssist.IsFloating="True"
+                                      Minimum="0"
+                                      Value="{my:NullableBinding Index}" />
+                </GroupBox>
+            </my:SimpleStackPanel>
+
+            <!-- Duplicate -->
+            <my:SimpleStackPanel Grid.Column="2">
+                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" Content="{my:Resource DuplicateMatchdays}" IsChecked="{Binding DuplicationIsEnabled}" />
+                <my:SimpleStackPanel Visibility="{Binding DuplicationIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ContentDuplicate}">
+                        <ComboBox Width="200"
+                                  my:HintAssist.Hint="{my:Resource StartWith}"
+                                  my:HintAssist.IsFloating="True"
+                                  my:ItemsControlAssist.SortingProperty="Date"
+                                  ItemsSource="{Binding AvailableMatchdays}"
+                                  SelectedItem="{Binding DuplicationStart}" />
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=SwapHorizontal}">
+                        <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" Content="{my:Resource InvertTeams}" IsChecked="{Binding InvertTeams}" />
+                    </GroupBox>
+                </my:SimpleStackPanel>
+            </my:SimpleStackPanel>
+        </Grid>
+
+        <!-- Dates -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                  my:HeaderAssist.Alignment="Top"
+                  my:HeaderAssist.HorizontalAlignment="Left"
+                  my:HeaderAssist.Size="40"
+                  Header="{my:Resource HowDefineDatesAndTimes}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Method -->
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding DatesSchedulingMethod}" SelectedValuePath="DataContext">
+                    <ListBoxItem Width="160" my:IconAssist.Icon="{my:MediumIcon Kind=CalendarCursor}" DataContext="{x:Static vm:DatesSchedulingMethod.Manual}">
+                        <my:SimpleStackPanel Orientation="Horizontal">
+                            <TextBlock Text="{my:Resource Manual}" />
+                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                               my:HeaderAssist.Header="{my:Resource Manual}"
+                                               PopupContent="{my:Resource DatesSchedulingMethodManualDescription}"
+                                               ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                        </my:SimpleStackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Width="160" my:IconAssist.Icon="{my:MediumIcon Kind=Magic}" DataContext="{x:Static vm:DatesSchedulingMethod.Automatic}">
+                        <my:SimpleStackPanel Orientation="Horizontal">
+                            <TextBlock Text="{my:Resource Automatic}" />
+                            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                               my:HeaderAssist.Header="{my:Resource Automatic}"
+                                               PopupContent="{my:Resource DatesSchedulingMethodAutomaticDescription}"
+                                               ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                        </my:SimpleStackPanel>
+                    </ListBoxItem>
+                </ListBox>
+
+                <!-- Method parameters -->
+                <v:MatchdaysEditionParametersManualView Grid.Row="2" DataContext="{Binding ManualDatesSchedulingViewModel}" Visibility="{Binding Data.DatesSchedulingMethod, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:DatesSchedulingMethod.Manual}}" />
+                <v:MatchdaysEditionParametersAutomaticView Grid.Row="2" DataContext="{Binding AutomaticDatesSchedulingViewModel}" Visibility="{Binding Data.DatesSchedulingMethod, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:DatesSchedulingMethod.Automatic}}" />
+            </Grid>
+        </GroupBox>
+
+    </DockPanel>
+
+</UserControl>

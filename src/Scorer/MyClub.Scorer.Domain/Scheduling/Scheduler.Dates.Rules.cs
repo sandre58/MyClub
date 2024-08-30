@@ -11,9 +11,9 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public class DateRulesScheduler<T> : IScheduler<T> where T : ISchedulable
     {
-        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateOnly StartDate { get; set; } = DateTime.UtcNow.ToDate();
 
-        public TimeSpan? DefaultTime { get; set; }
+        public TimeOnly? DefaultTime { get; set; }
 
         public TimeSpan Interval { get; set; } = 1.Days();
 
@@ -24,33 +24,35 @@ namespace MyClub.Scorer.Domain.Scheduling
         public virtual void Schedule(IEnumerable<T> items)
         {
             var date = StartDate;
-            DateTime? previousDate = null;
-            var maxDate = DateTime.MaxValue.Date.Subtract(Interval);
+            DateOnly? previousDate = null;
+            var maxDate = DateTime.MaxValue.Date.Subtract(Interval).ToDate();
             items.ForEach(item =>
             {
                 while (!DateRules.All(x => x.Match(date, previousDate)) && date < maxDate)
-                    date = date.Date.Add(Interval);
+                    date = date.BeginningOfDay().Add(Interval).ToDate();
 
                 if (date >= maxDate)
                     date = StartDate;
 
-                var itemDate = date.ToUtcDateTime(DefaultTime ?? item.Date.ToLocalTime().TimeOfDay);
-                if (item is IMatchesProvider matchesProvider)
+                TimeOnly time;
+                if (item is IMatchesProvider matchesProvider && matchesProvider.Matches.Count > 0)
                 {
                     matchesProvider.Matches.OrderBy(x => x.Date).ToList().ForEach((match, matchIndex) =>
                     {
-                        var time = TimeRules.Select(x => x.ProvideTime(date, matchIndex)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToLocalTime().TimeOfDay;
+                        var time = TimeRules.Select(x => x.ProvideTime(date, matchIndex)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
 
-                        match.Schedule(date.ToUtcDateTime(time));
+                        match.Schedule(date.At(time));
                     });
 
-                    itemDate = date.ToUtcDateTime(matchesProvider.Matches.MinOrDefault(x => x.Date.ToLocalTime().TimeOfDay));
+                    time = matchesProvider.Matches.MinOrDefault(x => x.Date.ToTime(), DefaultTime.GetValueOrDefault());
                 }
+                else
+                    time = TimeRules.Select(x => x.ProvideTime(date, 0)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
 
-                item.Schedule(itemDate);
+                item.Schedule(date.At(time));
 
-                previousDate = date.Date;
-                date = date.Date.Add(Interval);
+                previousDate = date;
+                date = date.BeginningOfDay().Add(Interval).ToDate();
             });
         }
     }

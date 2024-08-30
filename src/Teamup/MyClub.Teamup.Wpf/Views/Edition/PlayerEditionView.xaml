@@ -48,7 +48,7 @@
             </Grid.ColumnDefinitions>
 
             <!--  Image  -->
-            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                             Width="60"
                             Height="60"
                             VerticalContentAlignment="Bottom"

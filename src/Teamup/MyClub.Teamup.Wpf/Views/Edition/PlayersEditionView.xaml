@@ -46,7 +46,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="{my:Translation Players.Count, Format=EditionOfXItems, Plural=True}" />
+                <TextBlock Text="{my:Translation Players.Count, Format=EditionOfXItems, Pluralize=True}" />
                 <ItemsControl Grid.Row="2" Focusable="True" ItemsSource="{Binding Players}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -167,11 +167,11 @@
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Large.Bottom}" Header="{my:MediumIcon Kind=TshirtCrew}">
             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.AutoCompletion}"
                       Width="140"
-                      my:ComboBoxAssist.DownCommand="{Binding DownSizeCommand}"
+                      my:TextFieldAssist.PreviousCommand="{Binding DownSizeCommand}"
                       my:ComboBoxAssist.ShowCaret="False"
                       my:ComboBoxAssist.ShowDropDownPopup="True"
                       my:ComboBoxAssist.ShowUpDownButton="True"
-                      my:ComboBoxAssist.UpCommand="{Binding UpSizeCommand}"
+                      my:TextFieldAssist.NextCommand="{Binding UpSizeCommand}"
                       my:EditionAssist.MultipleEditableValue="{Binding Size, Mode=OneWay}"
                       my:HintAssist.HelperTextMargin="28 -30 0 0"
                       my:HintAssist.Hint="{my:Resource Size}"

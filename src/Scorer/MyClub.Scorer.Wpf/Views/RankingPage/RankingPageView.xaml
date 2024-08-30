@@ -16,13 +16,6 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </UserControl.Resources>
 
-    <!-- Shortcuts -->
-    <my:InputAssist.InputBindings>
-        <InputBindingCollection>
-            <KeyBinding Modifiers="Ctrl" Key="E" Command="{Binding Data.EditRulesCommand, Source={StaticResource Proxy}}" />
-        </InputBindingCollection>
-    </my:InputAssist.InputBindings>
-
     <DockPanel Margin="{StaticResource MyNet.Margins.Medium}">
 
         <!-- ToolBar -->
@@ -34,7 +27,7 @@
                             my:IconAssist.Icon="{my:Icon Kind=SortBoolAscendingVariant}"
                             Command="{Binding EditRulesCommand}"
                             Content="{my:Resource EditRules}"
-                            ToolTip="Ctrl+E" />
+                            ToolTip="F9" />
                 </ToolBar>
             </my:CommandsBar.LeftCommands>
 
@@ -100,7 +93,7 @@
                                                         <TextBlock Text="{Binding Key.Name}" />
                                                         <TextBlock Text=" : " />
                                                         <TextBlock Text="-" />
-                                                        <TextBlock Text="{my:Translation Value, Plural=True, Format=XPoints}" />
+                                                        <TextBlock Text="{my:Translation Value, Pluralize=True, Format=XPoints}" />
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

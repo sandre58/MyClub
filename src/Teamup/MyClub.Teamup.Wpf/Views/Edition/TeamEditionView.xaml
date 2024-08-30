@@ -76,7 +76,7 @@
             </my:SimpleStackPanel>
 
             <!--  Image  -->
-            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                             Width="90"
                             Height="90"
                             Margin="{StaticResource MyNet.Margins.Large.Horizontal}"

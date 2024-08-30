@@ -98,7 +98,7 @@
             </my:SimpleStackPanel>
 
             <!--  Image  -->
-            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+            <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                             Width="80"
                             Height="80"
                             VerticalAlignment="Center"
@@ -143,7 +143,7 @@
                     </my:SimpleStackPanel>
 
                     <!--  Logo  -->
-                    <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+                    <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                                     Grid.Column="1"
                                     Width="80"
                                     Height="80"
@@ -198,12 +198,12 @@
                     <my:SimpleStackPanel>
                         <!--  Training start time  -->
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Clock}">
-                            <my:TimePicker my:HintAssist.Hint="{my:Resource StartTime}" my:ValidationAssist.UsePopup="True" SelectedTime="{Binding TrainingStartTime, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                            <my:TimePicker my:HintAssist.Hint="{my:Resource StartTime}" my:ValidationAssist.UsePopup="True" SelectedTime="{my:Time TrainingStartTime}" />
                         </GroupBox>
 
                         <!--  Training duration  -->
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ClockStart}">
-                            <my:TimePicker my:HintAssist.Hint="{my:Resource Duration}" my:ValidationAssist.UsePopup="True" SelectedTime="{Binding TrainingDuration, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                            <my:TimePicker my:HintAssist.Hint="{my:Resource Duration}" my:ValidationAssist.UsePopup="True" SelectedTime="{my:Time TrainingDuration}" />
                         </GroupBox>
                     </my:SimpleStackPanel>
                 </GroupBox>

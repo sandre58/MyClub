@@ -32,7 +32,7 @@
                             </Style>
                         </my:SimpleStackPanel.Style>
                         <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
-                        <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                        <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time Time}" />
                     </my:SimpleStackPanel>
 
                     <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon}"
@@ -44,7 +44,7 @@
                     <!--  Postponed Date  -->
                     <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding ShowPostponedDate, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                         <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" SelectedDate="{my:NullableBinding PostponedDate, UpdateSourceTrigger=PropertyChanged}" />
-                        <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:NullableBinding PostponedTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" />
+                        <my:TimePicker my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time PostponedTime}" />
                     </my:SimpleStackPanel>
                 </my:SimpleStackPanel>
             </GroupBox>

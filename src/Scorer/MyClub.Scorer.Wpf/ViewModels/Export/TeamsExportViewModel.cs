@@ -10,7 +10,7 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.Services.Providers.Base;
 using MyClub.Scorer.Wpf.Settings;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Humanizer;
 using MyNet.UI.ViewModels.Export;
 using MyNet.Utilities.IO.FileExtensions;
@@ -18,7 +18,7 @@ using MyNet.Utilities.IO.FileExtensions;
 namespace MyClub.Scorer.Wpf.ViewModels.Export
 {
     internal class TeamsExportViewModel(ProjectInfoProvider projectInfoProvider)
-        : FileExportByColumnsViewModelBase<TeamViewModel, ColumnMappingWrapper<TeamDto, object?>>(FileExtensionInfoProvider.Excel.Concat(FileExtensionInfoProvider.Csv),
+        : FileExportByColumnsViewModelBase<ITeamViewModel, ColumnMappingWrapper<TeamDto, object?>>(FileExtensionInfoProvider.Excel.Concat(FileExtensionInfoProvider.Csv),
                () => projectInfoProvider.ProvideExportName(MyClubResources.Teams),
                new TeamColumnsExportProvider().ProvideWrappers(),
                defaultFolder: ExportTeamsSettings.Default.Folder)
@@ -32,6 +32,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Export
             ExportTeamsSettings.Default.Save();
         }
 
-        protected override Task<bool> ExportItemsAsync(IEnumerable<TeamViewModel> items) => Task.FromResult(true);
+        protected override Task<bool> ExportItemsAsync(IEnumerable<ITeamViewModel> items) => Task.FromResult(true);
     }
 }

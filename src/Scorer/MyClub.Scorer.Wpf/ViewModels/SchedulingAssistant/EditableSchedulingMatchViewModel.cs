@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
@@ -25,7 +26,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         public DateTime EndDate { get; private set; }
 
-        public StadiumViewModel? Stadium { get; set; }
+        public IStadiumViewModel? Stadium { get; set; }
 
         public ReadOnlyObservableCollection<SchedulingConflict> Conflicts { get; }
 
@@ -40,7 +41,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         public void Reset()
         {
-            SetDate(Item.StartDate);
+            SetDate(Item.Date);
             Stadium = Item.Stadium;
             ResetIsModified();
         }

@@ -188,7 +188,7 @@
                                        Foreground="{DynamicResource MyNet.Brushes.Negative}"
                                        PopupContent="{my:Translation CountMissingDates,
                                                                      Format=XMissingDates,
-                                                                     Plural=True}"
+                                                                     Pluralize=True}"
                                        ToggleContent="{my:MediumIcon Kind=Warning}" />
                 </my:Badged>
                 <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
@@ -246,7 +246,7 @@
                                                    Width="60"
                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                    my:HintAssist.IsFloating="False"
-                                                   SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}"
+                                                   SelectedTime="{my:Time Time}"
                                                    Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatchday}}" />
 
                                     <ItemsControl Grid.Column="6" ItemsSource="{Binding Times}" Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatch}}">
@@ -268,7 +268,7 @@
                                                                    Width="60"
                                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                                    my:HintAssist.IsFloating="False"
-                                                                   SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                                                   SelectedTime="{my:Time Time}" />
                                                     <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon}"
                                                                   Grid.Column="4"
                                                                   Content="{my:ToolIcon Kind=CalendarCursor}"
@@ -318,7 +318,7 @@
                                                    Width="60"
                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                    my:HintAssist.IsFloating="False"
-                                                   SelectedTime="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                                   SelectedTime="{my:Time Time}" />
                                 </Grid>
                             </my:Card>
                         </DataTemplate>

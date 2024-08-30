@@ -325,7 +325,7 @@
                                                    Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
                                                    FontFamily="{StaticResource MyNet.Font.Family.Digital}"
                                                    Text="{my:Translation Date,
-                                                                         Format=ShortTimeFormat,
+                                                                         Format=t,
                                                                          Casing=Title}"
                                                    Visibility="Visible" />
 

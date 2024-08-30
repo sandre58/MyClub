@@ -24,11 +24,14 @@ namespace MyClub.Scorer.Application.Services
             entity.Address = dto.Address;
         }
 
+        public Stadium Add(string name) => Save(new StadiumDto { Name = name });
+
         public static StadiumDto NewStadium() => new()
         {
             Name = MyClubResources.NewStadiumName,
             Ground = Ground.Grass
         };
+
         public IEnumerable<Stadium> GetSimilarStadiums(string name, string? city)
             => Repository.GetAll().Where(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) && (x.Address?.City).OrEmpty().Equals(city.OrEmpty(), StringComparison.InvariantCultureIgnoreCase)).ToList();
 

@@ -1,0 +1,184 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.EditableSchedulingParametersDatesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:EditableSchedulingParametersViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <my:SimpleStackPanel>
+
+            <!-- Rest time -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=BedClock}">
+                <my:SimpleStackPanel Orientation="Horizontal">
+                    <my:NumericUpDown my:HintAssist.Hint="{my:Resource Rest}" Minimum="0" Value="{my:NullableBinding RestTimeValue}" />
+                    <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                              SelectedIndex="0"
+                              SelectedValue="{Binding RestTimeUnit}"
+                              SelectedValuePath="DataContext">
+                        <ComboBoxItem Content="{my:Resource TimeUnitSecond}" DataContext="{x:Static units:TimeUnit.Second}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitMonth}" DataContext="{x:Static units:TimeUnit.Month}" />
+                    </ComboBox>
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                       my:HeaderAssist.Header="{my:Resource RestTime}"
+                                       PopupContent="{my:Resource RestTimeDescription}"
+                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                </my:SimpleStackPanel>
+            </GroupBox>
+
+            <!-- Rotation time -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ClockEnd}">
+                <my:SimpleStackPanel Orientation="Horizontal">
+                    <my:NumericUpDown my:HintAssist.Hint="{my:Resource Rotation}" Minimum="0" Value="{my:NullableBinding RotationTimeValue}" />
+                    <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                              SelectedIndex="0"
+                              SelectedValue="{Binding RotationTimeUnit}"
+                              SelectedValuePath="DataContext">
+                        <ComboBoxItem Content="{my:Resource TimeUnitSecond}" DataContext="{x:Static units:TimeUnit.Second}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitMonth}" DataContext="{x:Static units:TimeUnit.Month}" />
+                    </ComboBox>
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                       my:HeaderAssist.Header="{my:Resource RotationTime}"
+                                       PopupContent="{my:Resource RotationTimeDescription}"
+                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                </my:SimpleStackPanel>
+            </GroupBox>
+        </my:SimpleStackPanel>
+
+        <!-- AsSoonAsPossible -->
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                 Grid.Row="2"
+                 HorizontalAlignment="Stretch"
+                 SelectedValue="{Binding AsSoonAsPossible}"
+                 SelectedValuePath="DataContext">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=CalendarClock}" Content="{my:Resource AsSoonAsPossible}" DataContext="{x:Static my:Booleans.True}" />
+            <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=Magic}" Content="{my:Resource Automatic}" DataContext="{x:Static my:Booleans.False}" />
+        </ListBox>
+
+        <!-- Descriptions -->
+        <Grid Grid.Row="4" Opacity="{StaticResource MyNet.Opacity.Secondary}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <my:PackIcon Width="18"
+                         Height="18"
+                         VerticalAlignment="Top"
+                         Kind="InformationCircle" />
+            <TextBlock Grid.Column="2"
+                       Text="{my:Resource DatesSchedulingMethodAsSoonAsPossibleDescription}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding AsSoonAsPossible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+            <TextBlock Grid.Column="2"
+                       Text="{my:Resource DatesSchedulingMethodAutomaticDescription}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding AsSoonAsPossible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+        </Grid>
+
+        <!-- AsSoonAsPossible rules -->
+        <DockPanel Grid.Row="6" Visibility="{Binding AsSoonAsPossible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+            <v:EditableAsSoonAsPossibleDateSchedulingRulesView DataContext="{Binding AsSoonAsPossibleRules}" />
+        </DockPanel>
+
+        <!-- Automatic rules -->
+        <DockPanel Grid.Row="6" Visibility="{Binding AsSoonAsPossible, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}">
+
+            <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
+
+                <ListBox x:Name="toggle"
+                         Style="{StaticResource MyNet.Styles.ListBox.Icon}"
+                         DockPanel.Dock="Right"
+                         SelectedIndex="0">
+                    <ListBoxItem>
+                        <Grid>
+                            <my:PackIcon Width="24" Height="24" Kind="Calendar" />
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                   Width="15"
+                                   Height="15"
+                                   Margin="0 0 -3 -3"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Bottom"
+                                   Background="{DynamicResource MyNet.Brushes.Information}"
+                                   Content="{Binding DateRules.Rules.Count}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   Visibility="{Binding DateRules.Rules.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                        </Grid>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <Grid>
+                            <my:PackIcon Width="24" Height="24" Kind="Clock" />
+                            <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
+                                   Width="15"
+                                   Height="15"
+                                   Margin="0 0 -3 -3"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Bottom"
+                                   Background="{DynamicResource MyNet.Brushes.Information}"
+                                   Content="{Binding TimeRules.Rules.Count}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                   Visibility="{Binding TimeRules.Rules.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+                        </Grid>
+                    </ListBoxItem>
+                </ListBox>
+
+                <!-- Interval -->
+                <my:SimpleStackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource GenerateDatesEvery}" />
+                    <my:NumericUpDown Width="60" Minimum="1" Value="{my:NullableBinding IntervalValue}" />
+                    <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                              SelectedIndex="0"
+                              SelectedValue="{Binding IntervalUnit}"
+                              SelectedValuePath="DataContext">
+                        <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
+                    </ComboBox>
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource By, Casing=LowerCase}" />
+                    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding ScheduleByParent}" SelectedValuePath="DataContext">
+                        <ListBoxItem Width="80" Content="{my:Resource Parent}" DataContext="{x:Static my:Booleans.True}" />
+                        <ListBoxItem Width="80" Content="{my:Resource Match}" DataContext="{x:Static my:Booleans.False}" />
+                    </ListBox>
+                </my:SimpleStackPanel>
+            </DockPanel>
+
+            <Grid>
+                <v:EditableAutomaticDateSchedulingRulesView DataContext="{Binding DateRules}" Visibility="{Binding SelectedIndex, ElementName=toggle, Converter={x:Static my:EqualityToVisibilityConverter.CollapsedIfNotEqual}, ConverterParameter=0}" />
+                <v:EditableAutomaticTimeSchedulingRulesView VerticalAlignment="Top" DataContext="{Binding TimeRules}" Visibility="{Binding SelectedIndex, ElementName=toggle, Converter={x:Static my:EqualityToVisibilityConverter.CollapsedIfNotEqual}, ConverterParameter=1}" />
+            </Grid>
+        </DockPanel>
+    </Grid>
+
+</UserControl>

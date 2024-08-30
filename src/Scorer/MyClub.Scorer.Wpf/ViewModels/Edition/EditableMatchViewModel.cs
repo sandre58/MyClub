@@ -8,7 +8,7 @@ using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
@@ -21,32 +21,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class EditableMatchViewModel : EditableObject
     {
-        private readonly ReadOnlyObservableCollection<TeamViewModel> _availableTeams;
+        private readonly ReadOnlyObservableCollection<ITeamViewModel> _availableTeams;
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
         public Guid? Id { get; }
 
-        [IsRequired]
-        [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime? Date { get; set; }
-
-        [IsRequired]
-        [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? Time { get; set; }
+        public EditableDateTime DateTime { get; set; } = new();
 
         [IsRequired]
         [Display(Name = nameof(HomeTeam), ResourceType = typeof(MyClubResources))]
-        public TeamViewModel? HomeTeam { get; set; }
+        public ITeamViewModel? HomeTeam { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(AwayTeam), ResourceType = typeof(MyClubResources))]
         [AlsoNotifyFor(nameof(HomeTeam))]
-        public TeamViewModel? AwayTeam { get; set; }
+        public ITeamViewModel? AwayTeam { get; set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<TeamViewModel> AvailableTeams => _availableTeams;
+        public ReadOnlyObservableCollection<ITeamViewModel> AvailableTeams => _availableTeams;
 
         public StadiumSelectionViewModel StadiumSelection { get; }
 
@@ -56,16 +50,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public bool IsDeleting { get; set; }
 
-        public EditableMatchViewModel(ISourceProvider<TeamViewModel> teamProviders, ISourceProvider<StadiumViewModel> stadiumsProvider, bool useHomeStadium = false)
+        public EditableMatchViewModel(ISourceProvider<ITeamViewModel> teamProviders, ISourceProvider<IStadiumViewModel> stadiumsProvider, bool useHomeStadium = false)
             : this(null, teamProviders, stadiumsProvider, useHomeStadium) { }
 
-        public EditableMatchViewModel(Guid? id, ISourceProvider<TeamViewModel> teamProviders, ISourceProvider<StadiumViewModel> stadiumsProvider, bool useHomeStadium = false)
+        public EditableMatchViewModel(Guid? id, ISourceProvider<ITeamViewModel> teamProviders, ISourceProvider<IStadiumViewModel> stadiumsProvider, bool useHomeStadium = false)
         {
             Id = id;
             IsReadOnly = id.HasValue;
             StadiumSelection = new StadiumSelectionViewModel(stadiumsProvider);
 
-            ValidationRules.Add<EditableMatchViewModel, TeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
+            ValidationRules.Add<EditableMatchViewModel, ITeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
 
             Disposables.Add(teamProviders.Connect().ObserveOn(Scheduler.UI).Bind(out _availableTeams).Subscribe());
 
@@ -77,7 +71,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 }));
         }
 
-        internal bool IsValid() => Date.HasValue && Time.HasValue && HomeTeam is not null && AwayTeam is not null;
+        internal bool IsValid() => DateTime.HasValue && HomeTeam is not null && AwayTeam is not null;
 
         public void InvertTeams()
         {

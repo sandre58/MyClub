@@ -10,12 +10,13 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Wpf.Filters;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using DynamicData.Binding;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
     internal class MatchesPlanningSpeedFiltersViewModel : SpeedFiltersViewModel
     {
-        public MatchesPlanningSpeedFiltersViewModel(IEnumerable<TeamViewModel> teams, IEnumerable<StadiumViewModel> stadiums, SchedulingParametersViewModel schedulingParameters)
+        public MatchesPlanningSpeedFiltersViewModel(IEnumerable<ITeamViewModel> teams, IEnumerable<IStadiumViewModel> stadiums, SchedulingParametersViewModel schedulingParameters)
         {
             TeamFilter = new MatchTeamFilterViewModel(teams);
             StadiumFilter = new(nameof(MatchViewModel.Stadium), stadiums);
@@ -30,6 +31,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public EnumValuesFilterViewModel<MatchState> StateFilter { get; } = new(nameof(MatchViewModel.State));
 
-        public SelectedValuesFilterViewModel<StadiumViewModel> StadiumFilter { get; }
+        public SelectedValuesFilterViewModel<IStadiumViewModel> StadiumFilter { get; }
     }
 }

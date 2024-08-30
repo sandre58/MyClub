@@ -36,10 +36,10 @@ namespace MyClub.Scorer.Domain.Scheduling
                 }
 
                 var schedulingParameters = associationsGrouped.Key.GetSchedulingParameters();
-                if (associationsGrouped.Key.Date.IsBefore(schedulingParameters.StartDate))
+                if (associationsGrouped.Key.Date.IsBefore(schedulingParameters.StartDate.BeginningOfDay()))
                     result.Add((ConflictType.StartDatePassed, associationsGrouped.Key, null));
 
-                if (associationsGrouped.Key.GetPeriod().End.IsAfter(schedulingParameters.EndDate))
+                if (associationsGrouped.Key.GetPeriod().End.IsAfter(schedulingParameters.EndDate.EndOfDay()))
                     result.Add((ConflictType.EndDatePassed, associationsGrouped.Key, null));
             }
 

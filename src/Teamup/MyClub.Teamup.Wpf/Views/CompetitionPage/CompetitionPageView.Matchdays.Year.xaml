@@ -16,7 +16,6 @@
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
         <Style x:Key="Teamup.Styles.CalendarAppointment" TargetType="{x:Type my:CalendarAppointment}">
-            <Setter Property="my:AppointmentsPanel.IsStretch" Value="True" />
             <Setter Property="Background" Value="{my:BrushBinding Item.Color, Mode=OneWay, Opacity={StaticResource MyNet.Opacity.Default}}" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />

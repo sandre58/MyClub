@@ -292,7 +292,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                 ParentId = Parent?.Id,
                 HomeTeamId = HomeTeam?.Id,
                 AwayTeamId = AwayTeam?.Id,
-                Date = Date.GetValueOrDefault().ToUtcDateTime(Time),
+                Date = Date.GetValueOrDefault().ToUtc(Time),
                 Format = CanEditFormat && MatchFormat.IsModified() ? MatchFormat.Create() : null,
                 NeutralVenue = NeutralVenue,
                 Stadium = StadiumSelection.SelectedItem is not null || !string.IsNullOrEmpty(StadiumSelection.TextSearch) ? new StadiumDto
@@ -312,7 +312,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                 HomePenaltyPoints = HomePenaltyPoints,
                 AwayPenaltyPoints = AwayPenaltyPoints,
                 State = State,
-                PostponedDate = ShowPostponedDate ? PostponedDate?.ToUtcDateTime(PostponedTime ?? Parent?.GetDefaultDateTime().TimeOfDay ?? DateTime.Now.TimeOfDay) : null,
+                PostponedDate = ShowPostponedDate ? PostponedDate?.ToUtc(PostponedTime ?? Parent?.GetDefaultDateTime().TimeOfDay ?? DateTime.Now.TimeOfDay) : null,
             };
 
         protected override void RefreshFrom(Match item)

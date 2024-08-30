@@ -53,7 +53,7 @@ namespace MyClub.Scorer.Wpf.Services
 
             if (idsList.Count == 0) return;
 
-            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateWithCountAndOptionalFormat(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
+            var cancel = await DialogManager.ShowQuestionAsync(nameof(MessageResources.XItemsRemovingQuestion).TranslateAndFormatWithCount(idsList.Count)!, UiResources.Removing).ConfigureAwait(false) != MessageBoxResult.Yes;
 
             if (!cancel)
             {
@@ -208,7 +208,7 @@ namespace MyClub.Scorer.Wpf.Services
             await AppBusyManager.WaitAsync(() => _matchService.InvertTeams(idsList)).ConfigureAwait(false);
         }
 
-        public async Task SetStadiumAsync(IEnumerable<MatchViewModel> items, StadiumViewModel? stadium)
+        public async Task SetStadiumAsync(IEnumerable<MatchViewModel> items, IStadiumViewModel? stadium)
         {
             var idsList = items.Select(x => x.Id).ToList();
 
@@ -217,7 +217,7 @@ namespace MyClub.Scorer.Wpf.Services
             await AppBusyManager.WaitAsync(() => _matchService.SetStadium(idsList, stadium?.Id)).ConfigureAwait(false);
         }
 
-        public async Task OpenSchedulingAssistantAsync(IEnumerable<MatchViewModel> matches, DateTime? displayDate = null)
+        public async Task OpenSchedulingAssistantAsync(IEnumerable<MatchViewModel> matches, DateOnly? displayDate = null)
         {
             var vm = _viewModelLocator.Get<SchedulingAssistantViewModel>();
             vm.Load(matches, displayDate);

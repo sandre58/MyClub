@@ -21,6 +21,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlIgnore]
         public byte[]? Image { get; set; }
 
+        public ProjectPreferencesPackage? Preferences { get; set; }
+
         [XmlElement("CreatedAt", IsNullable = true)]
         public DateTime? CreatedAt { get; set; }
 

@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using MyClub.Plugins.Base.File.Resources;
 using MyNet.Observable;
+using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Dialogs.Settings;
@@ -16,7 +17,6 @@ using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.UI.Toasting;
 using MyNet.Utilities;
-using MyNet.Utilities.Collections;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Helpers;
 using MyNet.Utilities.IO;
@@ -75,7 +75,7 @@ namespace MyClub.Plugins.Base.File.ViewModels
 
         public string? CurrentFilename => _sourceProvider.Filename;
 
-        public ThreadSafeObservableCollection<Exception> Exceptions { get; } = [];
+        public UiObservableCollection<Exception> Exceptions { get; } = [];
 
         public bool HasSampleFile => _sampleFile != null;
 

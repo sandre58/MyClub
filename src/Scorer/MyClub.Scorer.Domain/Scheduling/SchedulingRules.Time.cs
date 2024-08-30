@@ -11,7 +11,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public class TimeOfDayRule : ValueObject, ITimeSchedulingRule
     {
-        public TimeOfDayRule(DayOfWeek day, TimeSpan time, IEnumerable<TimeOfMatchNumberRule>? matchExceptions = null)
+        public TimeOfDayRule(DayOfWeek day, TimeOnly time, IEnumerable<TimeOfMatchNumberRule>? matchExceptions = null)
         {
             Day = day;
             Time = time;
@@ -20,40 +20,40 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public DayOfWeek Day { get; }
 
-        public TimeSpan Time { get; }
+        public TimeOnly Time { get; }
 
         public IReadOnlyCollection<TimeOfMatchNumberRule> MatchExceptions { get; }
 
-        public TimeSpan? ProvideTime(DateTime date, int index)
+        public TimeOnly? ProvideTime(DateOnly date, int index)
             => date.DayOfWeek == Day
-                ? MatchExceptions.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) is TimeSpan time ? time : Time
+                ? MatchExceptions.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) is TimeOnly time ? time : Time
                 : null;
     }
 
     public class TimeOfDateRule : ValueObject, ITimeSchedulingRule
     {
-        public TimeOfDateRule(DateTime date, TimeSpan time, IEnumerable<TimeOfMatchNumberRule>? matchExceptions = null)
+        public TimeOfDateRule(DateOnly date, TimeOnly time, IEnumerable<TimeOfMatchNumberRule>? matchExceptions = null)
         {
             Date = date;
             Time = time;
             MatchExceptions = new List<TimeOfMatchNumberRule>(matchExceptions ?? []).AsReadOnly();
         }
 
-        public DateTime Date { get; }
+        public DateOnly Date { get; }
 
-        public TimeSpan Time { get; }
+        public TimeOnly Time { get; }
 
         public IReadOnlyCollection<TimeOfMatchNumberRule> MatchExceptions { get; }
 
-        public TimeSpan? ProvideTime(DateTime date, int index)
+        public TimeOnly? ProvideTime(DateOnly date, int index)
             => date == Date
-                ? MatchExceptions.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) is TimeSpan time ? time : Time
+                ? MatchExceptions.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) is TimeOnly time ? time : Time
                 : null;
     }
 
     public class TimeOfMatchNumberRule : ValueObject, ITimeSchedulingRule
     {
-        public TimeOfMatchNumberRule(int matchNumber, TimeSpan time)
+        public TimeOfMatchNumberRule(int matchNumber, TimeOnly time)
         {
             MatchNumber = matchNumber;
             Time = time;
@@ -61,14 +61,14 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public int MatchNumber { get; }
 
-        public TimeSpan Time { get; }
+        public TimeOnly Time { get; }
 
-        public TimeSpan? ProvideTime(DateTime date, int index) => MatchNumber == index + 1 ? Time : null;
+        public TimeOnly? ProvideTime(DateOnly date, int index) => MatchNumber == index + 1 ? Time : null;
     }
 
     public class TimeOfDatesRangeRule : ITimeSchedulingRule
     {
-        public TimeOfDatesRangeRule(DateTime startDate, DateTime endDate, TimeSpan time, IEnumerable<TimeOfMatchNumberRule>? matchExceptions = null)
+        public TimeOfDatesRangeRule(DateOnly startDate, DateOnly endDate, TimeOnly time, IEnumerable<TimeOfMatchNumberRule>? matchExceptions = null)
         {
             StartDate = startDate;
             EndDate = endDate;
@@ -76,17 +76,17 @@ namespace MyClub.Scorer.Domain.Scheduling
             MatchExceptions = new List<TimeOfMatchNumberRule>(matchExceptions ?? []).AsReadOnly();
         }
 
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
-        public TimeSpan Time { get; set; }
+        public TimeOnly Time { get; set; }
 
         public IReadOnlyCollection<TimeOfMatchNumberRule> MatchExceptions { get; } = [];
 
-        public TimeSpan? ProvideTime(DateTime date, int index)
-            => new Period(StartDate, EndDate).Contains(date)
-                ? MatchExceptions.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) is TimeSpan time ? time : Time
+        public TimeOnly? ProvideTime(DateOnly date, int index)
+            => new DatePeriod(StartDate, EndDate).Contains(date)
+                ? MatchExceptions.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) is TimeOnly time ? time : Time
                 : null;
     }
 }

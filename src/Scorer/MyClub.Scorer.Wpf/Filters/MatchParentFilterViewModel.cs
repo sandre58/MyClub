@@ -8,6 +8,8 @@ using MyNet.UI.Commands;
 using MyNet.Utilities;
 using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using System.Collections.ObjectModel;
+using DynamicData.Binding;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
@@ -19,6 +21,15 @@ namespace MyClub.Scorer.Wpf.Filters
             NextParentCommand = CommandsManager.Create(() => Value = GetNextParent(Value), () => GetNextParent(Value) is not null);
             NextFixturesCommand = CommandsManager.Create(() => Value = GetNextFixtures(), () => GetNextFixtures() is IMatchParent matchParent && matchParent != Value);
             LatestResultsCommand = CommandsManager.Create(() => Value = GetLatestResults(), () => GetLatestResults() is IMatchParent matchParent && matchParent != Value);
+
+            if (allowedValues is ReadOnlyObservableCollection<IMatchParent> collection)
+            {
+                collection.ToObservableChangeSet().Subscribe(x =>
+                {
+                    if (Value is null || !AvailableValues!.Contains(Value))
+                        Reset();
+                });
+            }
         }
 
         public ICommand PreviousParentCommand { get; private set; }

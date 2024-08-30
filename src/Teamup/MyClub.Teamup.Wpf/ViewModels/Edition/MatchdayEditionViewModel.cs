@@ -96,9 +96,9 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                 ParentId = Parent?.Id,
                 Name = Name,
                 ShortName = ShortName,
-                Date = Date.GetValueOrDefault().ToUtcDateTime(Time),
+                Date = Date.GetValueOrDefault().ToUtc(Time),
                 IsPostponed = IsPostponed,
-                PostponedDate = ShowPostponedDate ? PostponedDate?.Date.ToUtcDateTime(PostponedTime ?? Parent?.GetDefaultDateTime().TimeOfDay ?? DateTime.Now.TimeOfDay) : null,
+                PostponedDate = ShowPostponedDate ? PostponedDate?.Date.ToUtc(PostponedTime ?? Parent?.GetDefaultDateTime().TimeOfDay ?? DateTime.Now.TimeOfDay) : null,
             };
 
         protected override void RefreshFrom(Matchday item)

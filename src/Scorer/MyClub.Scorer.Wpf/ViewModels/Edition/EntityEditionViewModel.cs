@@ -58,9 +58,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             if (ItemId is not null && CrudService.GetById(ItemId.Value) is T item)
             {
-                CreatedAt = item.CreatedAt?.ToLocalTime();
+                CreatedAt = item.CreatedAt;
                 CreatedBy = item.CreatedBy;
-                ModifiedAt = item.ModifiedAt?.ToLocalTime();
+                ModifiedAt = item.ModifiedAt;
                 ModifiedBy = item.ModifiedBy;
 
                 RefreshFrom(item);

@@ -29,7 +29,7 @@
             <ctrl:PositionsSelector.ItemTemplate>
                 <DataTemplate>
                     <Grid>
-                        <Label x:Name="label" Style="{StaticResource Teamup.Styles.Label.Embedded.PositionItem}" Content="{my:Translation Position, Abbreviation=True}" />
+                        <Label x:Name="label" Style="{StaticResource Teamup.Styles.Label.Embedded.PositionItem}" Content="{my:Translation Position, Abbreviate=True}" />
                         <my:PopupEx x:Name="Popup"
                                     HorizontalOffset="0"
                                     Placement="Right"

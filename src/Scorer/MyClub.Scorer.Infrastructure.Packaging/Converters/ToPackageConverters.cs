@@ -29,6 +29,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                     Type = (int)source.Type,
                     Name = source.Name,
                     Image = source.Image,
+                    Preferences = source.Preferences.ToPackage(),
                     CreatedAt = source.CreatedAt,
                     CreatedBy = source.CreatedBy,
                     ModifiedAt = source.ModifiedAt,
@@ -65,14 +66,19 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 Teams = new TeamsPackage(source.Teams.Select(x => x.ToPackage())),
             };
 
-        public static AddressPackage ToPackage(this Address address) => new()
+        public static ProjectPreferencesPackage ToPackage(this ProjectPreferences source) => new()
         {
-            City = address.City,
-            Country = address.Country is not null ? (int)address.Country : null,
-            Latitude = address.Latitude,
-            Longitude = address.Longitude,
-            PostalCode = address.PostalCode,
-            Street = address.Street
+            TreatNoStadiumAsWarning = source.TreatNoStadiumAsWarning
+        };
+
+        public static AddressPackage ToPackage(this Address source) => new()
+        {
+            City = source.City,
+            Country = source.Country is not null ? (int)source.Country : null,
+            Latitude = source.Latitude,
+            Longitude = source.Longitude,
+            PostalCode = source.PostalCode,
+            Street = source.Street
         };
 
         public static StadiumPackage ToPackage(this Stadium source)

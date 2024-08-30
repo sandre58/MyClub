@@ -97,12 +97,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 this.WhenPropertyChanged(x => x.HasResult, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.IsPlayed, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.IsPlaying, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
-                this.WhenPropertyChanged(x => x.Date, false).Subscribe(_ =>
-                {
-                    RaisePropertyChanged(nameof(StartDate));
-                    RaisePropertyChanged(nameof(EndDate));
-                    RaisePropertyChanged(nameof(DateOfDay));
-                })
+                this.WhenPropertyChanged(x => x.Date, false).Subscribe(_ => RaiseDateProperties())
             ]);
         }
 
@@ -112,13 +107,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public MatchFormat Format => Item.Format;
 
-        public TeamViewModel HomeTeam { get; private set; }
+        public ITeamViewModel HomeTeam { get; private set; }
 
-        public TeamViewModel AwayTeam { get; private set; }
+        public ITeamViewModel AwayTeam { get; private set; }
 
         public bool NeutralVenue => Item.IsNeutralStadium;
 
-        public StadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
+        public IStadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
 
         public int HomeScore => Item.Home.GetScore();
 
@@ -148,13 +143,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool AwayHasWonAfterShootouts => AfterShootouts && Item.IsWonBy(Item.AwayTeam);
 
-        public DateTime DateOfDay => Item.Date.ToLocalTime().Date;
+        public DateOnly DateOfDay => Date.ToDate();
 
-        public DateTime Date => Item.Date.ToLocalTime();
+        public DateTime Date => Item.Date.ToCurrentTime();
 
-        public DateTime StartDate => Item.Date.ToLocalTime();
+        public DateTime StartDate => Date;
 
-        public DateTime EndDate => Item.Date.AddFluentTimeSpan(GetTotalTime()).ToLocalTime();
+        public DateTime EndDate => Date.AddFluentTimeSpan(GetTotalTime());
 
         public MatchState State => Item.State;
 
@@ -232,33 +227,33 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool CanDoWithdraw() => State is MatchState.None or MatchState.InProgress or MatchState.Suspended;
 
-        public bool Participate(TeamViewModel team) => Item.Participate(team.Id);
+        public bool Participate(ITeamViewModel team) => Item.Participate(team.Id);
 
         public bool Participate(Guid teamId) => Item.Participate(teamId);
 
-        public TeamViewModel? GetOpponentOf(TeamViewModel team) => HomeTeam == team ? AwayTeam : AwayTeam == team ? HomeTeam : null;
+        public ITeamViewModel? GetOpponentOf(ITeamViewModel team) => HomeTeam == team ? AwayTeam : AwayTeam == team ? HomeTeam : null;
 
-        public MatchResult GetResultOf(TeamViewModel team) => Item.GetResultOf(team.Id);
+        public MatchResult GetResultOf(ITeamViewModel team) => Item.GetResultOf(team.Id);
 
-        public MatchResultDetailled GetDetailledResultOf(TeamViewModel team) => Item.GetDetailledResultOf(team.Id);
+        public MatchResultDetailled GetDetailledResultOf(ITeamViewModel team) => Item.GetDetailledResultOf(team.Id);
 
-        public TeamViewModel? GetWinner() => GetResultOf(HomeTeam) == MatchResult.Won ? HomeTeam : GetResultOf(AwayTeam) == MatchResult.Won ? AwayTeam : null;
+        public ITeamViewModel? GetWinner() => GetResultOf(HomeTeam) == MatchResult.Won ? HomeTeam : GetResultOf(AwayTeam) == MatchResult.Won ? AwayTeam : null;
 
-        public TeamViewModel? GetLooser() => GetResultOf(HomeTeam) == MatchResult.Lost ? HomeTeam : GetResultOf(AwayTeam) == MatchResult.Lost ? AwayTeam : null;
+        public ITeamViewModel? GetLooser() => GetResultOf(HomeTeam) == MatchResult.Lost ? HomeTeam : GetResultOf(AwayTeam) == MatchResult.Lost ? AwayTeam : null;
 
-        public bool IsWonBy(TeamViewModel team) => Item.IsWonBy(team.Id);
+        public bool IsWonBy(ITeamViewModel team) => Item.IsWonBy(team.Id);
 
-        public bool IsLostBy(TeamViewModel team) => Item.IsLostBy(team.Id);
+        public bool IsLostBy(ITeamViewModel team) => Item.IsLostBy(team.Id);
 
-        public int GoalsFor(TeamViewModel team) => Item.GoalsFor(team.Id);
+        public int GoalsFor(ITeamViewModel team) => Item.GoalsFor(team.Id);
 
-        public int GoalsAgainst(TeamViewModel team) => Item.GoalsAgainst(team.Id);
+        public int GoalsAgainst(ITeamViewModel team) => Item.GoalsAgainst(team.Id);
 
-        public bool IsWithdrawn(TeamViewModel team) => Item.IsWithdrawn(team.Id);
+        public bool IsWithdrawn(ITeamViewModel team) => Item.IsWithdrawn(team.Id);
 
         public TimeSpan GetTotalTime() => Item.Format.RegulationTime.Duration * Item.Format.RegulationTime.Number + 15.Minutes();
 
-        public Period GetPeriod() => new(StartDate, EndDate);
+        public Period GetPeriod() => new(Date, EndDate);
 
         public async Task OpenAsync() => await _matchPresentationService.OpenAsync(this).ConfigureAwait(false);
 
@@ -317,6 +312,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             RaisePropertyChanged(nameof(AwayHasWonAfterShootouts));
 
             RaisePropertyChanged(nameof(CanDoWithdraw));
+        }
+
+        private void RaiseDateProperties()
+        {
+            RaisePropertyChanged(nameof(IAppointment.StartDate));
+            RaisePropertyChanged(nameof(EndDate));
+            RaisePropertyChanged(nameof(DateOfDay));
         }
     }
 

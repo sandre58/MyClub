@@ -98,7 +98,7 @@ internal class ApplicationHostService : IHostedService
         IProgresser progresser,
         ITempService tempService,
         IAutoSaveService autoSaveService,
-        LanguageSettingsService languageSettingsService,
+        TimeAndLanguageSettingsService languageSettingsService,
         ThemeSettingsService themeSettingsService,
         RecentFilesProvider recentFilesProvider,
         RecentFilesService recentFilesService,
@@ -109,7 +109,8 @@ internal class ApplicationHostService : IHostedService
         RecentFilesManager recentFilesManager,
         MailConnectionHandler mailConnectionHandler,
         FileNotificationHandler fileNotificationHandler,
-        ConflictsValidationHandler conflictsValidationHandler)
+        ConflictsValidationHandler conflictsValidationHandler,
+        NoneVenueValidationHandler noneVenueValidationHandler)
     {
         _preferencesService = persistentPreferencesService;
         _userAuthenticationService = userAuthenticationService;
@@ -135,7 +136,10 @@ internal class ApplicationHostService : IHostedService
         CommandsManager.Initialize(commandFactory);
         MyNet.UI.Threading.Scheduler.Initialize(uiScheduler);
         AppBusyManager.Initialize(busyServiceFactory);
-        notificationsManager.AddHandler(fileNotificationHandler).AddHandler(mailConnectionHandler).AddHandler(conflictsValidationHandler);
+        notificationsManager.AddHandler(fileNotificationHandler)
+                            .AddHandler(mailConnectionHandler)
+                            .AddHandler(conflictsValidationHandler)
+                            .AddHandler(noneVenueValidationHandler);
 
         progresser.Subscribe(new Progress<(double value, IEnumerable<ProgressMessage> messages, Action? cancelAction, bool canCancel)>(y =>
         {
@@ -163,7 +167,7 @@ internal class ApplicationHostService : IHostedService
         viewResolver.Register<AboutViewModel, AboutView>();
         viewResolver.Register<PreferencesViewModel, PreferencesView>();
         viewResolver.Register<DisplayViewModel, MyNet.Wpf.Presentation.Views.Shell.DisplayView>();
-        viewResolver.Register<LanguageViewModel, LanguageView>();
+        viewResolver.Register<ViewModels.Shell.TimeAndLanguageViewModel, TimeAndLanguageView>();
         viewResolver.Register<NotificationsViewModel, NotificationsView>();
         viewResolver.Register<RecentFilesViewModel, RecentFilesView>();
         viewResolver.Register<TeamsExportViewModel, FileExportByColumnsView>();
@@ -314,7 +318,7 @@ internal class ApplicationHostService : IHostedService
         var assembly = Assembly.GetEntryAssembly();
 
         LogManager.Info($"**************** Start Application {assembly?.GetName().Name} - Version {assembly?.GetName().Version?.ToString()} ****************");
-        LogManager.Info($"Language : {CultureInfo.CurrentCulture}");
+        LogManager.Info($"Language : {GlobalizationService.Current.Culture.DisplayName} | Time zone : {GlobalizationService.Current.TimeZone.DisplayName}");
     }
 
     private async void OnMainWindowClosingAsync(object? sender, CancelEventArgs e)

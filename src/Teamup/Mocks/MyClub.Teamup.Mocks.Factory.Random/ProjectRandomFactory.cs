@@ -2,10 +2,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MyClub.CrossCutting.Images;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Teamup.Domain.ClubAggregate;
@@ -13,7 +13,6 @@ using MyClub.Teamup.Domain.CompetitionAggregate;
 using MyClub.Teamup.Domain.ProjectAggregate;
 using MyClub.Teamup.Domain.Randomize;
 using MyClub.Teamup.Domain.SeasonAggregate;
-using MyClub.Teamup.Mocks.Factory.Random.Resources;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Generator;
@@ -26,11 +25,6 @@ namespace MyClub.Teamup.Mocks.Factory.Random
 {
     public class ProjectRandomFactory(IProgresser progresser, ILogger logger) : IProjectFactory
     {
-        private const int CountClubLogos = 1117;
-        private const int CountCompetitionLogos = 90;
-        private const int CountFemalesFaces = 45;
-        private const int CountMalesFaces = 150;
-
         private readonly IProgresser _progresser = progresser;
         private readonly ILogger _logger = logger;
 
@@ -45,9 +39,7 @@ namespace MyClub.Teamup.Mocks.Factory.Random
 
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
-                    var numLogo = RandomGenerator.Int(1, CountClubLogos);
-
-                    var logo = (byte[]?)LogosResources.ResourceManager.GetObject($"club_{numLogo:0000}");
+                    var logo = RandomProvider.GetTeamLogo();
                     var name = AddressGenerator.City().ToTitle();
                     club = ClubRandomFactory.Random(name, category, countTeams: RandomGenerator.Int(1, 3));
                     club.Logo = logo;
@@ -68,8 +60,7 @@ namespace MyClub.Teamup.Mocks.Factory.Random
                     club.Teams.ForEach(x => PlayerRandomFactory.RandomSquadPlayers(RandomGenerator.ListItem(Enumeration.GetAll<Category>()), x).ForEach(y =>
                     {
                         var player = project.AddPlayer(y);
-                        var numFace = RandomGenerator.Int(1, player.Player.Gender == GenderType.Male ? CountMalesFaces : CountFemalesFaces);
-                        player.Player.Photo = (byte[]?)FacesResources.ResourceManager.GetObject($"{player.Player.Gender.ToString().ToLowerInvariant()}_{numFace:000}", CultureInfo.InvariantCulture);
+                        player.Player.Photo = RandomProvider.GetPhoto(player.Player.Gender);
                     }));
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -80,8 +71,7 @@ namespace MyClub.Teamup.Mocks.Factory.Random
                     var teams = EnumerableHelper.Range(1, 30 * club.Teams.Count, 1).Select(_ => AddressGenerator.City()).Distinct().Select(x =>
                     {
                         var club = ClubRandomFactory.Random(x, project.Category);
-                        var numTeamLogo = RandomGenerator.Int(1, CountClubLogos);
-                        club.Logo = (byte[]?)LogosResources.ResourceManager.GetObject($"club_{numTeamLogo:0000}");
+                        club.Logo = RandomProvider.GetTeamLogo();
 
                         return club.Teams[0];
                     }).ToList();
@@ -91,8 +81,7 @@ namespace MyClub.Teamup.Mocks.Factory.Random
                     // Friendlies
                     var teamsForFriendly = RandomGenerator.ListItems(teams, club.Teams.Count * 5).Concat(club.Teams).ToList();
                     var friendly = CompetitionRandomFactory.CreateFriendly(season, project.Category, teamsForFriendly, season.Period.Start.AddMonths(4), season.Period.Start.AddMonths(8), RandomGenerator.Int(8, 16));
-                    var numCompetitionLogo = RandomGenerator.Int(1, CountCompetitionLogos);
-                    friendly.Logo = (byte[]?)LogosResources.ResourceManager.GetObject($"competition_{numCompetitionLogo:000}");
+                    friendly.Logo = RandomProvider.GetCompetitionLogo();
                     var seasonCompetitition = friendly.Seasons[0];
                     seasonCompetitition.GetAllMatches().Where(x => !club.Teams.Any(y => x.Participate(y))).ToList().ForEach(x => seasonCompetitition.RemoveMatch(x));
                     project.AddCompetition(seasonCompetitition);
@@ -104,8 +93,7 @@ namespace MyClub.Teamup.Mocks.Factory.Random
                     {
                         var teamsForLeague = RandomGenerator.ListItems(teams.Except(project.Competitions.OfType<LeagueSeason>().SelectMany(x => x.Teams)).ToList(), RandomGenerator.Int(9, 19)).Concat(new[] { x }).ToList();
                         var league = CompetitionRandomFactory.CreateLeague(season, project.Category, teamsForLeague, null, season.Period.Start, season.Period.End);
-                        var numCompetitionLogo = RandomGenerator.Int(1, CountCompetitionLogos);
-                        league.Logo = (byte[]?)LogosResources.ResourceManager.GetObject($"competition_{numCompetitionLogo:000}");
+                        league.Logo = RandomProvider.GetCompetitionLogo();
                         project.AddCompetition(league.Seasons[0]);
                     });
 
@@ -116,8 +104,7 @@ namespace MyClub.Teamup.Mocks.Factory.Random
                     {
                         var teamsForCup = RandomGenerator.ListItems(teams, RandomGenerator.Int(5, 15)).Concat(new[] { x }).ToList();
                         var cup = CompetitionRandomFactory.CreateCup(season, project.Category, teamsForCup, null, season.Period.Start, season.Period.End);
-                        var numCompetitionLogo = RandomGenerator.Int(1, CountCompetitionLogos);
-                        cup.Logo = (byte[]?)LogosResources.ResourceManager.GetObject($"competition_{numCompetitionLogo:000}");
+                        cup.Logo = RandomProvider.GetCompetitionLogo();
                         project.AddCompetition(cup.Seasons[0]);
                     }));
                 }

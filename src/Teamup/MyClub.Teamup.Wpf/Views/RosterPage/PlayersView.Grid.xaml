@@ -79,7 +79,7 @@
                                                VerticalAlignment="Center"
                                                FontWeight="Bold"
                                                Text="{my:Translation Item.Category,
-                                                                     Abbreviation=True,
+                                                                     Abbreviate=True,
                                                                      Casing=AllCaps}" />
                                 </Grid>
 

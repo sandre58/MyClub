@@ -27,7 +27,6 @@ using MyNet.UI.Services;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Threading;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
@@ -73,7 +72,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                               .Transform(x => new MatchdayViewModel(x, this, matchdayPresentationService, matchPresentationService, stadiumsProvider, teamsProvider))
                               .Bind(_matchdays)
                               .DisposeMany()
-                              .Subscribe(),
+                              .Subscribe(_ => _refreshRankingsDeferrer.AskRefresh()),
                 _matchdays.ToObservableChangeSet(x => x.Id)
                           .MergeManyEx(x => x.Matches.ToObservableChangeSet(x => x.Id), x => x.Id)
                           .Bind(_matches)
@@ -102,7 +101,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool CanAutomaticRescheduleVenue() => Item.SchedulingParameters.CanAutomaticRescheduleVenue();
 
-        public IEnumerable<TeamViewModel> GetAvailableTeams() => _teamsProvider.Items;
+        public IEnumerable<ITeamViewModel> GetAvailableTeams() => _teamsProvider.Items;
 
         public IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches() => _matches.ToObservableChangeSet(x => x.Id);
 

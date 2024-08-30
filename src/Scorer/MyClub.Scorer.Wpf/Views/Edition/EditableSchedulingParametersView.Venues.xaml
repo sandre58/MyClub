@@ -1,0 +1,67 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.EditableSchedulingParametersVenuesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:EditableSchedulingParametersViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- UseHomeVenue -->
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                 HorizontalAlignment="Stretch"
+                 SelectedValue="{Binding UseHomeVenue}"
+                 SelectedValuePath="DataContext">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=HomeSwap}" Content="{my:Resource UseHomeVenue}" DataContext="{x:Static my:Booleans.True}" />
+            <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=Magic}" Content="{my:Resource Automatic}" DataContext="{x:Static my:Booleans.False}" />
+        </ListBox>
+
+        <!-- Descriptions -->
+        <Grid Grid.Row="2" Opacity="{StaticResource MyNet.Opacity.Secondary}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <my:PackIcon Width="18"
+                         Height="18"
+                         VerticalAlignment="Top"
+                         Kind="InformationCircle" />
+            <TextBlock Grid.Column="2"
+                       Text="{my:Resource VenueSchedulingMethodUseHomeVenueDescription}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding UseHomeVenue, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+            <TextBlock Grid.Column="2"
+                       Text="{my:Resource VenuesSchedulingMethodAutomaticDescription}"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding UseHomeVenue, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+        </Grid>
+
+        <!-- Rules -->
+        <DockPanel Grid.Row="4" Visibility="{Binding UseHomeVenue, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}">
+            <v:EditableAvailableVenueSchedulingRulesView DataContext="{Binding VenueRules}" />
+        </DockPanel>
+    </Grid>
+
+</UserControl>

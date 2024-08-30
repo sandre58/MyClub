@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Text;
@@ -195,7 +196,7 @@ namespace MyClub.Scorer.Wpf
                 // Presentation services
                 .AddScoped<RecentFilesManager>()
                 .AddScoped<IPersistentPreferencesService, SettingsService>()
-                .AddScoped<LanguageSettingsService>()
+                .AddScoped<TimeAndLanguageSettingsService>()
                 .AddScoped<ThemeSettingsService>()
                 .AddScoped<AppSettingsService>()
                 .AddScoped<IRecentFileCommandsService, RecentFileCommandsService>()
@@ -203,7 +204,7 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<CompetitionCommandsService>()
                 .AddScoped<TeamPresentationService>()
                 .AddScoped<StadiumPresentationService>()
-                .AddScoped<PlayerPresentationService>()
+                .AddScoped<PersonPresentationService>()
                 .AddScoped<MatchdayPresentationService>()
                 .AddScoped<MatchPresentationService>()
                 .AddScoped<LeaguePresentationService>()
@@ -219,13 +220,12 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<StadiumsProvider>()
                 .AddSingleton<MatchdaysProvider>()
                 .AddSingleton<MatchesProvider>()
-                .AddSingleton<StadiumsImportBySourcesProvider>()
-                .AddSingleton<TeamsImportBySourcesProvider>()
 
                 // Notifications handlers
                 .AddSingleton<FileNotificationHandler>()
                 .AddSingleton<MailConnectionHandler>()
                 .AddSingleton<ConflictsValidationHandler>()
+                .AddSingleton<NoneVenueValidationHandler>()
 
                 // ViewModels
                 .AddSingleton<MainWindowViewModel>()
@@ -245,6 +245,7 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<TeamEditionViewModel>()
                 .AddSingleton<StadiumEditionViewModel>()
                 .AddSingleton<PlayerEditionViewModel>()
+                .AddSingleton<ManagerEditionViewModel>()
                 .AddSingleton<MatchdayEditionViewModel>()
                 .AddSingleton<MatchdaysEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
@@ -255,8 +256,8 @@ namespace MyClub.Scorer.Wpf
                 // ViewModels - Other dialogs
                 .AddSingleton<StadiumsExportViewModel>()
                 .AddSingleton<TeamsExportViewModel>()
-                .AddSingleton<StadiumsImportBySourcesDialogViewModel>()
-                .AddSingleton<TeamsImportBySourcesDialogViewModel>()
+                .AddSingleton(x => new StadiumsImportBySourcesDialogViewModel(x.GetRequiredService<ProjectInfoProvider>(), new StadiumsImportBySourcesProvider(x.GetRequiredService<PluginsService>(), (y, z) => x.GetRequiredService<StadiumService>().GetSimilarStadiums(y, z).Any())))
+                .AddSingleton(x => new TeamsImportBySourcesDialogViewModel(x.GetRequiredService<ProjectInfoProvider>(), new TeamsImportBySourcesProvider(x.GetRequiredService<PluginsService>(), y => x.GetRequiredService<TeamService>().GetSimilarTeams(y).Any())))
 
                 // Configuration
                 .Configure<ScorerConfiguration>(context.Configuration)

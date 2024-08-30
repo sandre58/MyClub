@@ -25,7 +25,6 @@ using MyNet.UI.Messages;
 using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.UI.Toasting;
-using MyNet.UI.ViewModels;
 using MyNet.Utilities;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Extensions;
@@ -55,9 +54,9 @@ namespace MyClub.Scorer.Wpf.Services
             if (!EnsureProjectIsLoaded()) return;
 
             var vm = ViewModelManager.Get<ProjectEditionViewModel>();
-            vm.Mode = ScreenMode.Edition;
+            vm.Edit();
 
-            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
 
         public async Task LoadAsync()
@@ -179,63 +178,55 @@ namespace MyClub.Scorer.Wpf.Services
             if (!await EnsureProjectIsSavedAsync().ConfigureAwait(false)) return;
 
             var vm = ViewModelManager.Get<ProjectEditionViewModel>();
-            vm.Mode = ScreenMode.Creation;
+            vm.New();
 
             MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(async _ =>
             {
                 if ((await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false)).IsTrue())
                 {
-                    await AppBusyManager.ProgressAsync(() =>
+                    AppBusyManager.Progress();
+
+                    try
                     {
                         OnProjectLoading();
 
+
+                        // Force to new thread
+                        await Task.Delay(10).ConfigureAwait(false);
+
+                        using var cancellationTokenSource = new CancellationTokenSource();
                         using (_autoSaveService.Suspend())
-                        using (ProgressManager.New(MyClubResources.ProgressNewProject))
+                        using (ProgressManager.NewCancellable(cancellationTokenSource.Cancel, MyClubResources.ProgressNewProject))
                         {
-                            var project = Create(CompetitionType.League, new ProjectMetadataDto
+                            var project = vm.ToMetadata() switch
                             {
-                                Name = vm.Name,
-                                Image = vm.Image
-                            });
+                                LeagueMetadataDto leagueMetadataDto => (IProject)await _projectService.CreateLeagueAsync(leagueMetadataDto).ConfigureAwait(false),
+                                CupMetadataDto cupMetadataDto => await _projectService.CreateCupAsync(cupMetadataDto).ConfigureAwait(false),
+                                TournamentMetadataDto tournamentMetadataDto => await _projectService.CreateTournamentAsync(tournamentMetadataDto).ConfigureAwait(false),
+                                _ => throw new InvalidOperationException(),
+                            };
 
                             if (project is not null)
                                 OnProjectLoaded(project);
                         }
-                    }).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException e)
+                    {
+                        LogManager.Warning(e.Message);
+                        ToasterManager.ShowWarning(MyClubResources.LoadingNewProjectCancelledWarning);
+                    }
+                    catch (Exception e)
+                    {
+                        LogManager.Error(e);
+                        e.ShowInToaster(true, false);
+                    }
+                    finally
+                    {
+                        AppBusyManager.Resume();
+                    }
                 }
             });
         }
-
-        public async Task CreateAsync(CompetitionType type, ProjectMetadataDto metadata)
-        {
-            if (!await EnsureProjectIsSavedAsync().ConfigureAwait(false)) return;
-
-            // Force to new thread
-            await Task.Delay(10).ConfigureAwait(false);
-
-            await AppBusyManager.ProgressAsync(() =>
-            {
-                OnProjectLoading();
-
-                using (_autoSaveService.Suspend())
-                using (ProgressManager.New(MyClubResources.ProgressNewProject))
-                {
-                    var project = Create(type, metadata);
-
-                    if (project is not null)
-                        OnProjectLoaded(project);
-                }
-            }).ConfigureAwait(false);
-        }
-
-        private IProject Create(CompetitionType type, ProjectMetadataDto metadata)
-            => type switch
-            {
-                CompetitionType.League => _projectService.NewLeague(metadata),
-                CompetitionType.Cup => _projectService.NewCup(metadata),
-                CompetitionType.Tournament => _projectService.NewTournament(metadata),
-                _ => throw new InvalidOperationException(),
-            };
 
         private void OnProjectLoading()
         {

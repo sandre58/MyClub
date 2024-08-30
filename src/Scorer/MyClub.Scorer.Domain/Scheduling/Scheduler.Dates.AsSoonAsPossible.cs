@@ -17,7 +17,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public AsSoonAsPossibleScheduler(IEnumerable<T>? scheduledItems = null) => _scheduledItems = scheduledItems ?? [];
 
-        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateTime StartDate { get; set; } = DateTime.UtcNow;
 
         public bool ScheduleVenues { get; set; } = true;
 

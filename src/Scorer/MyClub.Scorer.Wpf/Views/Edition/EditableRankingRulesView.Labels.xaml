@@ -1,0 +1,102 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.EditableRankingLabelsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:EditableRankingLabelsViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" Grid.Column="0" ItemsSource="{Binding Ranks.Wrappers}">
+            <i:Interaction.Behaviors>
+                <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
+            </i:Interaction.Behaviors>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+                    <Setter Property="Height" Value="30" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Border x:Name="rankBorder" Background="{Binding Item.Label.Color, Converter={x:Static my:BrushConverter.Default}}" Opacity="{StaticResource MyNet.Opacity.Checked}" />
+
+                        <Grid Margin="{StaticResource MyNet.Margins.Default}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Width="18"
+                                   Height="18"
+                                   HorizontalAlignment="Center"
+                                   Content="{Binding Item.Item}"
+                                   FontSize="{StaticResource MyNet.Font.Size.Secondary}">
+                                <Label.Style>
+                                    <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyNet.Styles.Label.Rounded.Elevation}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Item.Label, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" Value="True">
+                                                <Setter Property="Background" Value="{Binding Item.Label.Color, Converter={x:Static my:BrushConverter.Default}}" />
+                                                <Setter Property="Foreground" Value="{my:BrushBinding SelfPath=Background, Contrast=True}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Label.Style>
+                            </Label>
+                            <TextBlock Grid.Column="1" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Item.Label.Name}" />
+
+                            <ToolBar x:Name="ToolBar"
+                                     Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                     Grid.Column="2"
+                                     Padding="0">
+                                <Button Command="{Binding Data.AddOnRankCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=Add}"
+                                        ToolTip="{my:Resource Add}"
+                                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                <Button Command="{Binding Data.ExpandOnRankCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=ArrowExpandVertical}"
+                                        ToolTip="{my:Resource Expand}"
+                                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                <Button Command="{Binding Data.ReduceOnRankCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=ArrowVerticalCollapse}"
+                                        ToolTip="{my:Resource Collapse}"
+                                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                <Button Command="{Binding Data.EditOnRankCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=Edit}"
+                                        ToolTip="{my:Resource Edit}"
+                                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                <Button Command="{Binding Data.RemoveOnRankCommand, Source={StaticResource Proxy}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=Trash}"
+                                        ToolTip="{my:Resource Remove}"
+                                        Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            </ToolBar>
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+
+</UserControl>
+

@@ -12,11 +12,11 @@ namespace MyClub.Scorer.Domain.Scheduling
         public static readonly SchedulingParameters Default = new();
 
         public SchedulingParameters()
-            : this(DateTime.Today.BeginningOfYear(), DateTime.Today.EndOfYear(), 15.Hours(), 1.Days(), 2.Days(), true, false, 1.Days(), true, [], [], [], []) { }
+            : this(DateTime.UtcNow.ToDate(), DateTime.UtcNow.AddYears(1).ToDate(), 15.Hours().ToTime(), 1.Days(), 2.Days(), true, false, 1.Days(), true, [], [new IncludeDaysOfWeekRule([DayOfWeek.Saturday])], [], []) { }
 
-        public SchedulingParameters(DateTime startDate,
-                                    DateTime endDate,
-                                    TimeSpan matchStartTime,
+        public SchedulingParameters(DateOnly startDate,
+                                    DateOnly endDate,
+                                    TimeOnly matchStartTime,
                                     TimeSpan rotationTime,
                                     TimeSpan minimumRestTime,
                                     bool useHomeVenue,
@@ -43,11 +43,11 @@ namespace MyClub.Scorer.Domain.Scheduling
             TimeRules = new List<ITimeSchedulingRule>(timeRules).AsReadOnly();
         }
 
-        public DateTime StartDate { get; }
+        public DateOnly StartDate { get; }
 
-        public DateTime EndDate { get; }
+        public DateOnly EndDate { get; }
 
-        public TimeSpan StartTime { get; }
+        public TimeOnly StartTime { get; }
 
         public TimeSpan RotationTime { get; }
 
@@ -68,5 +68,7 @@ namespace MyClub.Scorer.Domain.Scheduling
         public IReadOnlyCollection<IDateSchedulingRule> DateRules { get; }
 
         public IReadOnlyCollection<ITimeSchedulingRule> TimeRules { get; }
+
+        public DateTime Start() => StartDate.At(StartTime);
     }
 }

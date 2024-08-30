@@ -45,7 +45,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="{my:Translation Trainings.Count, Format=EditionOfXItems, Plural=True}" />
+                <TextBlock Text="{my:Translation Trainings.Count, Format=EditionOfXItems, Pluralize=True}" />
                 <ItemsControl Grid.Row="2" Focusable="True" ItemsSource="{Binding Trainings}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -102,13 +102,13 @@
                                my:EditionAssist.MultipleEditableValue="{Binding StartTime, Mode=OneWay}"
                                my:HintAssist.HelperTextMargin="28 -45 0 0"
                                my:HintAssist.Hint="{my:Resource StartTime}"
-                               SelectedTime="{Binding StartTime.Value, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                               SelectedTime="{my:Time StartTime.Value}" />
                 <TextBlock Text="{my:Resource To}" />
                 <my:TimePicker Width="130"
                                my:EditionAssist.MultipleEditableValue="{Binding EndTime, Mode=OneWay}"
                                my:HintAssist.HelperTextMargin="28 -45 0 0"
                                my:HintAssist.Hint="{my:Resource EndTime}"
-                               SelectedTime="{Binding EndTime.Value, UpdateSourceTrigger=PropertyChanged, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                               SelectedTime="{my:Time EndTime.Value}" />
             </my:SimpleStackPanel>
         </GroupBox>
 

@@ -12,7 +12,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         public PreferencesViewModel(IPersistentPreferencesService preferencesService, IAutoSaveService autoSaveService)
             : base(preferencesService,
             [
-                new LanguageViewModel(),
+                new TimeAndLanguageViewModel(),
                 new OpeningViewModel(),
                 new AutoSaveViewModel(autoSaveService),
                 new DisplayViewModel()

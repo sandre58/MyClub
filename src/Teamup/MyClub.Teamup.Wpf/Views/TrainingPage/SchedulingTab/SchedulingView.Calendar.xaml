@@ -91,7 +91,6 @@
         </DataTemplate>
 
         <Style x:Key="Teamup.Styles.CalendarAppointment" TargetType="{x:Type my:CalendarAppointment}">
-            <Setter Property="my:AppointmentsPanel.IsStretch" Value="True" />
             <Setter Property="Foreground" Value="{my:BrushBinding Color, Opacity={StaticResource MyNet.Opacity.Default}}" />
             <Setter Property="Background" Value="{my:BrushBinding Color, Opacity={StaticResource MyNet.Opacity.Checked}}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />

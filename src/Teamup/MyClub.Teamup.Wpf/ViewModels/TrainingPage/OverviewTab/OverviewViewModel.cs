@@ -5,18 +5,18 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using DynamicData;
-using MyNet.UI.Commands;
-using MyNet.UI.ViewModels.Workspace;
-using MyNet.Utilities;
-using MyNet.Utilities.Logging;
-using MyNet.Utilities.Messaging;
-using MyClub.Teamup.Application.Deferrers;
 using MyClub.CrossCutting.Localization;
+using MyClub.Teamup.Application.Deferrers;
 using MyClub.Teamup.Wpf.Enums;
 using MyClub.Teamup.Wpf.Messages;
 using MyClub.Teamup.Wpf.Services;
 using MyClub.Teamup.Wpf.Services.Providers;
 using MyClub.Teamup.Wpf.ViewModels.MedicalCenterPage.OverviewTab;
+using MyNet.UI.Commands;
+using MyNet.UI.ViewModels.Workspace;
+using MyNet.Utilities;
+using MyNet.Utilities.Logging;
+using MyNet.Utilities.Messaging;
 
 namespace MyClub.Teamup.Wpf.ViewModels.TrainingPage.OverviewTab
 {

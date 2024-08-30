@@ -38,7 +38,7 @@ namespace MyClub.Application.Services
             return newItem;
         }
 
-        public IList<T> Save(IEnumerable<TDto> dtos, bool replaceOldItems = false)
+        public virtual IList<T> Save(IEnumerable<TDto> dtos, bool replaceOldItems = false)
         {
             using (CollectionChangedDeferrer.Defer())
             {

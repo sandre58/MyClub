@@ -252,9 +252,6 @@
                             <Trigger Property="IsInactive" Value="True">
                                 <Setter TargetName="base" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                             </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="base" Property="Opacity" Value="0" />
-                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="PART_AddButton" Property="Visibility" Value="Visible" />
                             </Trigger>

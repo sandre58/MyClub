@@ -106,7 +106,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                 LicenseState = LicenseState.GetActiveValue(),
             });
 
-            ToasterManager.ShowSuccess(nameof(MessageResources.XItemsHasBeenModifiedSuccess).TranslateWithCountAndOptionalFormat(result.Count));
+            ToasterManager.ShowSuccess(nameof(MessageResources.XItemsHasBeenModifiedSuccess).TranslateAndFormatWithCount(result.Count));
         }
 
         #endregion

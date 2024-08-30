@@ -694,7 +694,16 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Stades automatiques.
+        ///   Looks up a localized string similar to Replanifier les dates automatiquement.
+        /// </summary>
+        public static string AutomaticDateTimes {
+            get {
+                return ResourceManager.GetString("AutomaticDateTimes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Replanifier les stades automatiquement.
         /// </summary>
         public static string AutomaticStadiums {
             get {
@@ -888,6 +897,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string Build {
             get {
                 return ResourceManager.GetString("Build", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Construire la compétition.
+        /// </summary>
+        public static string BuildCompetition {
+            get {
+                return ResourceManager.GetString("BuildCompetition", resourceCulture);
             }
         }
         
@@ -1663,6 +1681,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string DuplicatedTeamNameError {
             get {
                 return ResourceManager.GetString("DuplicatedTeamNameError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dupliquer les journées.
+        /// </summary>
+        public static string DuplicateMatchdays {
+            get {
+                return ResourceManager.GetString("DuplicateMatchdays", resourceCulture);
             }
         }
         
@@ -2641,6 +2668,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Importer des stades.
+        /// </summary>
+        public static string ImportStadiums {
+            get {
+                return ResourceManager.GetString("ImportStadiums", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Importer des équipes.
         /// </summary>
         public static string ImportTeams {
@@ -3588,6 +3624,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nouveau stade.
+        /// </summary>
+        public static string NewStadium {
+            get {
+                return ResourceManager.GetString("NewStadium", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Stade municipal.
         /// </summary>
         public static string NewStadiumName {
@@ -3611,6 +3656,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string NewTactic {
             get {
                 return ResourceManager.GetString("NewTactic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nouvelle équipe.
+        /// </summary>
+        public static string NewTeam {
+            get {
+                return ResourceManager.GetString("NewTeam", resourceCulture);
             }
         }
         
@@ -3678,7 +3732,7 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Aucun date n&apos;a pu être générée avec ces options..
+        ///   Looks up a localized string similar to Aucune date n&apos;a pu être générée avec ces options..
         /// </summary>
         public static string NoDatesGeneratedWarning {
             get {
@@ -3773,6 +3827,26 @@ namespace MyClub.CrossCutting.Localization {
         public static string NoStadiumDescription {
             get {
                 return ResourceManager.GetString("NoStadiumDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Le match {0} n&apos;a pas de stade défini.
+        ///
+        ///Cliquer sur cette notification pour éditer le match..
+        /// </summary>
+        public static string NoStadiumWarning {
+            get {
+                return ResourceManager.GetString("NoStadiumWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stade manquant.
+        /// </summary>
+        public static string NoStadiumWarningTitle {
+            get {
+                return ResourceManager.GetString("NoStadiumWarningTitle", resourceCulture);
             }
         }
         
@@ -5186,6 +5260,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Afficher les résultats précédents.
+        /// </summary>
+        public static string ShowPreviousResults {
+            get {
+                return ResourceManager.GetString("ShowPreviousResults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Mensuration.
         /// </summary>
         public static string Size {
@@ -5375,11 +5458,29 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Stade(s).
+        /// </summary>
+        public static string StadiumsOptionalPlural {
+            get {
+                return ResourceManager.GetString("StadiumsOptionalPlural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Le stade n&apos;est pas disponible à cette date.
         /// </summary>
         public static string StadiumUnavailableAtDate {
             get {
                 return ResourceManager.GetString("StadiumUnavailableAtDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dirigeant(s).
+        /// </summary>
+        public static string Staff {
+            get {
+                return ResourceManager.GetString("Staff", resourceCulture);
             }
         }
         
@@ -5575,6 +5676,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Équipe(s).
+        /// </summary>
+        public static string TeamsOptionalPlural {
+            get {
+                return ResourceManager.GetString("TeamsOptionalPlural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Une équipe ne respectera pas son temps de repos minimum.
         /// </summary>
         public static string TeamsPartiallyUnavailableAtDate {
@@ -5737,6 +5847,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Traiter les matchs où le stade n&apos;est pas défini comme des erreurs.
+        /// </summary>
+        public static string TreatNoStadiumAsWarning {
+            get {
+                return ResourceManager.GetString("TreatNoStadiumAsWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type.
         /// </summary>
         public static string Type {
@@ -5850,6 +5969,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string UpdateDate {
             get {
                 return ResourceManager.GetString("UpdateDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modifier les paramètres.
+        /// </summary>
+        public static string UpdateParameters {
+            get {
+                return ResourceManager.GetString("UpdateParameters", resourceCulture);
             }
         }
         

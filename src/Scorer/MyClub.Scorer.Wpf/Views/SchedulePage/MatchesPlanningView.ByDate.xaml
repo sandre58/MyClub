@@ -20,16 +20,16 @@
             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Alternate.Outlined}"
                       Width="250"
                       VerticalAlignment="Stretch"
-                      my:HintAssist.Hint="{my:Translation Filters.DateFilter.Item.Value,
-                                                                  Format=LongDatePattern,
-                                                                  Casing=Title}"
+                      my:HintAssist.Hint="{my:DisplayDateTime Filters.DateFilter.Item.Value,
+                                                              Format=D,
+                                                              Casing=Title}"
                       my:HintAssist.HintOpacity="{StaticResource MyNet.Opacity.Default}"
-                      my:ItemsControlAssist.SortingProperty="Date"
-                              ItemsSource="{Binding Filters.DateFilter.Item.AvailableValues}"
-                              SelectedValue="{Binding Filters.DateFilter.Item.Value, UpdateSourceTrigger=PropertyChanged}">
+                      my:ItemsControlAssist.SortingProperty="DayNumber"
+                      ItemsSource="{Binding Filters.DateFilter.Item.AvailableValues}"
+                      SelectedValue="{Binding Filters.DateFilter.Item.Value}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{my:Translation Format=LongDatePattern, Casing=Title}" />
+                        <TextBlock Text="{my:DisplayDateTime Format=D, Casing=Title}" />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>

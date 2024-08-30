@@ -35,6 +35,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 _ => throw new InvalidOperationException("Project type unknown"),
             };
 
+            // Preferences
+            project.Preferences.TreatNoStadiumAsWarning = source.Metadata!.Preferences!.TreatNoStadiumAsWarning;
+
             var stadiums = source.Stadiums?.Select(x => x.CreateStadium()).ToArray() ?? [];
             var teams = source.Teams?.Select(x => x.CreateTeam(x.StadiumId.HasValue ? stadiums.GetByIdOrDefault(x.StadiumId.Value) : null)).ToArray() ?? [];
 
@@ -94,7 +97,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             {
                 IncludeDaysOfWeekAsSoonAsPossibleRulePackage includeDaysOfWeekRule => new IncludeDaysOfWeekRule(includeDaysOfWeekRule.DaysOfWeek?.Split(";").Select(Enum.Parse<DayOfWeek>).ToList() ?? []),
                 ExcludeDatesRangeAsSoonAsPossibleRulePackage excludePeriodRule => new ExcludeDatesRangeRule(excludePeriodRule.StartDate, excludePeriodRule.EndDate),
-                IncludeTimePeriodsRulePackage includeTimePeriodsRule => new IncludeTimePeriodsRule(includeTimePeriodsRule.TimePeriods?.Select(x => new TimePeriod(x.StartTime, x.EndTime, DateTimeKind.Local)).ToList() ?? []),
+                IncludeTimePeriodsRulePackage includeTimePeriodsRule => new IncludeTimePeriodsRule(includeTimePeriodsRule.TimePeriods?.Select(x => new TimePeriod(x.StartTime, x.EndTime)).ToList() ?? []),
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
 

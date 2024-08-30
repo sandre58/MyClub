@@ -28,9 +28,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         private readonly CompositeDisposable _disposables = [];
 
         public MatchesPlanningListParametersProvider(IEnumerable<IMatchParent> parents,
-                                                     IEnumerable<DateTime> dates,
-                                                     IEnumerable<TeamViewModel> teams,
-                                                     IEnumerable<StadiumViewModel> stadiums,
+                                                     IEnumerable<DateOnly> dates,
+                                                     IEnumerable<ITeamViewModel> teams,
+                                                     IEnumerable<IStadiumViewModel> stadiums,
                                                      SchedulingParametersViewModel schedulingParameters)
         {
             _filters = new(teams, stadiums, dates, parents, schedulingParameters);
@@ -68,16 +68,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public override IGroupingViewModel ProvideGrouping()
             => new ExtendedGroupingViewModel(
             [
-                new GroupingPropertyViewModel(nameof(MyClubResources.Matchday), (nameof(MatchViewModel.Parent))),
-                new GroupingPropertyViewModel(nameof(MyClubResources.Date), (nameof(MatchViewModel.DateOfDay)))
+                new GroupingPropertyViewModel(nameof(MyClubResources.Matchday), nameof(MatchViewModel.Parent)),
+                new GroupingPropertyViewModel(nameof(MyClubResources.Date), nameof(MatchViewModel.DateOfDay))
             ]);
 
         public override ISortingViewModel ProvideSorting()
             => new ExtendedSortingViewModel(new Dictionary<string, string>
             {
                 { nameof(MyClubResources.Matchday), nameof(MatchViewModel.Parent) },
-                { nameof(MyClubResources.Date), nameof(MatchViewModel.StartDate) },
-            }, new[] { nameof(MatchViewModel.StartDate) });
+                { nameof(MyClubResources.Date), nameof(MatchViewModel.Date) },
+            }, new[] { nameof(MatchViewModel.Date) });
 
         public override IDisplayViewModel ProvideDisplay() => _displayViewModel;
 

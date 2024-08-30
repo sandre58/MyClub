@@ -10,7 +10,7 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Plugins.Contracts;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.Import;
 using MyNet.UI.Dialogs;
@@ -29,13 +29,16 @@ namespace MyClub.Scorer.Wpf.Services
 {
     internal class StadiumPresentationService(StadiumService service,
                                               PluginsService pluginsService,
-                                              IViewModelLocator viewModelLocator) : PresentationServiceBase<StadiumViewModel, StadiumEditionViewModel, StadiumService>(service, viewModelLocator)
+                                              IViewModelLocator viewModelLocator) : PresentationServiceBase<IStadiumViewModel, StadiumEditionViewModel, StadiumService>(service, viewModelLocator)
     {
         private readonly PluginsService _pluginsService = pluginsService;
 
-        public async Task OpenAsync(StadiumViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
-        public async Task ExportAsync(IEnumerable<StadiumViewModel> items)
+        public async Task AddAsync(string name) => await AppBusyManager.WaitAsync(() => Service.Add(name)).ConfigureAwait(false);
+
+        public async Task OpenAsync(IStadiumViewModel item) => await EditAsync(item).ConfigureAwait(false);
+
+        public async Task ExportAsync(IEnumerable<IStadiumViewModel> items)
         {
             var vm = ViewModelLocator.Get<StadiumsExportViewModel>();
             var list = items.ToList();

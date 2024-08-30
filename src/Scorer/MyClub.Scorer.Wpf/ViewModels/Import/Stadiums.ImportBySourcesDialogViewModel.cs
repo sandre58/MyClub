@@ -11,6 +11,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Import
         public StadiumsImportBySourcesDialogViewModel(ProjectInfoProvider projectInfoProvider, StadiumsImportBySourcesProvider provider)
             : base(provider, new StadiumsImportListViewModel(provider))
             => projectInfoProvider.WhenProjectClosing(Reset);
+
+        public StadiumsImportBySourcesDialogViewModel(StadiumsImportBySourcesProvider provider) : base(provider, new StadiumsImportListViewModel(provider)) { }
     }
 
     internal class StadiumsImportListViewModel : ImportListViewModel<StadiumImportableViewModel>

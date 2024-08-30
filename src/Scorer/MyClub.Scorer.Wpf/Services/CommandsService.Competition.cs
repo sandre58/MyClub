@@ -33,5 +33,13 @@ namespace MyClub.Scorer.Wpf.Services
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
+
+        public async Task EditRankingRulesAsync()
+        {
+            if (_competitionInfoProvider.GetCompetition() is LeagueViewModel)
+            {
+                await _leaguePresentationService.EditRankingRulesAsync().ConfigureAwait(false);
+            }
+        }
     }
 }

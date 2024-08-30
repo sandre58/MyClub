@@ -299,7 +299,7 @@
                                       my:HeaderAssist.HorizontalAlignment="Left"
                                       Header="{my:Translation SelectedItems.Count,
                                                               ElementName=CalendarHoursByDay,
-                                                              Plural=True,
+                                                              Pluralize=True,
                                                               Format=XSelectedItems}"
                                       Visibility="{Binding SelectedItems.Count, ElementName=CalendarHoursByDay, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                 <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Top}">
@@ -342,14 +342,14 @@
                                                           DockPanel.Dock="Top"
                                                           SelectedValue="{Binding SelectedDefaultOffsetValue}"
                                                           SelectedValuePath="DataContext">
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource Five}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource Ten}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource Fifteen}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource Thirty}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource FourtyFive}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource FourtyFive}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Sixty}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource Sixty}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Ninety}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource Ninety}" />
-                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource OneHundredTwenty}, Format=TimeSpanMinute, Plural=True}" DataContext="{StaticResource OneHundredTwenty}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource Five}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource Ten}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource Fifteen}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource Thirty}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource FourtyFive}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource FourtyFive}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Sixty}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource Sixty}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource Ninety}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource Ninety}" />
+                                                    <ComboBoxItem Content="{my:Translation Source={StaticResource OneHundredTwenty}, Format=TimeSpanMinute, Pluralize=True}" DataContext="{StaticResource OneHundredTwenty}" />
                                                     <ComboBoxItem Content="{my:Resource Personalize}" DataContext="{StaticResource MaxInteger}" />
                                                 </ComboBox>
                                                 <Grid Visibility="{Binding SelectedDefaultOffsetValue, Converter={x:Static my:EqualityToVisibilityConverter.CollapsedIfNotEqual}, ConverterParameter={StaticResource MaxInteger}}">
@@ -400,7 +400,7 @@
                                                                        HorizontalAlignment="Stretch"
                                                                        my:HintAssist.Hint="{my:Resource Time}"
                                                                        my:TextFieldAssist.HasClearButton="True"
-                                                                       SelectedTime="{Binding SelectedOffsetTime, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}}" />
+                                                                       SelectedTime="{my:Time SelectedOffsetTime}" />
                                                     </Grid>
                                                 </Grid>
                                             </DockPanel>
@@ -426,19 +426,19 @@
                                   SelectedItem="{Binding DateTimeSelection.DisplayDaysCount}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{my:Translation Plural=True, Format=TimeSpanDay}" />
+                                    <TextBlock Text="{my:Translation Pluralize=True, Format=TimeSpanDay}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Of, Casing=LowerCase}" />
                         <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
-                                  Width="90"
+                                  Width="110"
                                   ItemsSource="{my:HourRange Start=0,
                                                              End=22}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayTimeStart}" />
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
                         <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
-                                  Width="90"
+                                  Width="110"
                                   ItemsSource="{my:HourRange Start=1,
                                                              End=23}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayTimeEnd}" />
@@ -588,7 +588,7 @@
                             <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
                                        Margin="0 -6 0 0"
                                        VerticalAlignment="Top"
-                                       Text="{Binding Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, StringFormat='HH:mm'}" />
+                                       Text="{my:DisplayDateTime Format=t}" />
                         </DataTemplate>
                     </my:CalendarHoursByDay.RowHeaderTemplate>
                     <my:CalendarHoursByDay.CalendarItemStyle>

@@ -45,9 +45,44 @@
                 </MultiDataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Manager">
+            <DockPanel>
+                <ToolBar x:Name="ToolBar"
+                 Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                 Padding="0"
+                 DockPanel.Dock="Right"
+                 Visibility="Hidden">
+                    <Button Command="{Binding EditCommand}" Content="{my:ToolIcon Kind=Edit}" ToolTip="{my:Resource Edit}" />
+                    <Button Command="{Binding Data.RemoveManagerCommand, Source={StaticResource Proxy}}"
+                    CommandParameter="{Binding}"
+                    Content="{my:ToolIcon Kind=Trash}"
+                    ToolTip="{my:Resource Remove}" />
+                </ToolBar>
+                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}" Margin="{StaticResource MyNet.Margins.Medium.Right}" DockPanel.Dock="Left" />
+                <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
+                    <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Default}">
+                        <TextBlock FontSize="{StaticResource MyNet.Font.Size.Menu}" FontWeight="Bold" Text="{my:Translation LastName, Casing=AllCaps}" />
+                        <TextBlock FontSize="{StaticResource MyNet.Font.Size.Menu}" Text="{my:Translation FirstName, Casing=Title}" />
+                    </my:SimpleStackPanel>
+                </my:SimpleStackPanel>
+            </DockPanel>
+
+            <DataTemplate.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True" />
+                        <Condition Binding="{Binding Data.SelectedManagers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToBooleanConverter.NotMany}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="20" />
             <RowDefinition Height="Auto" />
@@ -130,9 +165,62 @@
             </my:SimpleStackPanel>
         </GroupBox>
 
-        <!-- Players -->
+        <!-- Staff -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
                   Grid.Row="8"
+                  my:HeaderAssist.HorizontalAlignment="Left"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=UserTie}">
+            <GroupBox.Header>
+                <my:SimpleStackPanel VerticalAlignment="Center" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="{my:Resource Staff}" Typography.Capitals="AllSmallCaps" />
+                    <my:SimpleStackPanel VerticalAlignment="Center"
+                                         Orientation="Horizontal"
+                                         Spacing="0"
+                                         Visibility="{Binding Item.Staff.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="(" Typography.Capitals="AllSmallCaps" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text="{Binding Item.Staff.Count}" Typography.Capitals="AllSmallCaps" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}" Text=")" Typography.Capitals="AllSmallCaps" />
+                    </my:SimpleStackPanel>
+                </my:SimpleStackPanel>
+            </GroupBox.Header>
+            <my:GroupBoxAssist.MoreContent>
+                <Button Command="{Binding AddManagerCommand}" Content="{my:MediumIcon Kind=Plus}" ToolTip="{my:Resource AddPlayer}" />
+            </my:GroupBoxAssist.MoreContent>
+            <my:GhostControl ShowGhost="{Binding Item.Staff.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                <Grid my:BusyAssist.AttachService="{Binding Path=(my:ItemsControlAsyncBehavior.BusyService), ElementName=listbox}" my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Dark.Foreground}">
+                    <ListBox x:Name="listbox"
+                             Style="{StaticResource MyNet.Styles.ListBox.Cards}"
+                             my:ItemsControlAssist.SortingProperty="LastName"
+                             ItemTemplate="{StaticResource Scorer.DataTemplates.Manager}">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Padding" Value="5 5 0 5" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <i:Interaction.Behaviors>
+                            <my:ListBoxSelectionBehavior SelectedValues="{Binding SelectedManagers}" />
+                            <my:ItemsControlAsyncBehavior Items="{Binding Item.Staff, Mode=OneWay}" />
+                        </i:Interaction.Behaviors>
+
+                        <ListBox.InputBindings>
+                            <KeyBinding Modifiers="Ctrl" Key="N" Command="{Binding Data.AddManagerCommand, Source={StaticResource Proxy}}" />
+                            <KeyBinding Key="Delete" Command="{Binding Data.RemoveSelectedManagersCommand, Source={StaticResource Proxy}}" />
+                        </ListBox.InputBindings>
+                    </ListBox>
+                </Grid>
+            </my:GhostControl>
+        </GroupBox>
+
+        <!-- Players -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                  Grid.Row="10"
                   my:HeaderAssist.HorizontalAlignment="Left"
                   my:IconAssist.Icon="{my:MediumIcon Kind=UsersGroup}">
             <GroupBox.Header>
@@ -152,8 +240,11 @@
                 <Button Command="{Binding AddPlayerCommand}" Content="{my:MediumIcon Kind=Plus}" ToolTip="{my:Resource AddPlayer}" />
             </my:GroupBoxAssist.MoreContent>
             <my:GhostControl ShowGhost="{Binding Item.Players.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
-                <Grid my:BusyAssist.AttachService="{Binding Path=(my:ItemsControlAsyncBehavior.BusyService), ElementName=listbox}" my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Dark.Foreground}">
-                    <ListBox x:Name="listbox" Style="{StaticResource MyNet.Styles.ListBox.Cards}" my:ItemsControlAssist.SortingProperty="LastName" ItemTemplate="{StaticResource Scorer.DataTemplates.Player}">
+                <Grid my:BusyAssist.AttachService="{Binding Path=(my:ItemsControlAsyncBehavior.BusyService), ElementName=listbox2}" my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Dark.Foreground}">
+                    <ListBox x:Name="listbox2"
+                             Style="{StaticResource MyNet.Styles.ListBox.Cards}"
+                             my:ItemsControlAssist.SortingProperty="LastName"
+                             ItemTemplate="{StaticResource Scorer.DataTemplates.Player}">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />

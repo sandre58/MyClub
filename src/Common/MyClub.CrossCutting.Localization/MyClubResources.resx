@@ -1959,7 +1959,7 @@ Variables :
     <value>Espacer les éléments de</value>
   </data>
   <data name="NoDatesGeneratedWarning" xml:space="preserve">
-    <value>Aucun date n'a pu être générée avec ces options.</value>
+    <value>Aucune date n'a pu être générée avec ces options.</value>
   </data>
   <data name="Regenerate" xml:space="preserve">
     <value>Regénérer</value>
@@ -2211,6 +2211,50 @@ Les règles ne se cumulent pas. Le stade assigné est le premier stade renvoyé 
     <value>Si cette option est activée, les stades seront calculés avant les dates. Suivant les règles de calcul des stades, ça permet d'être plus précis sur l'affectation d'un stade ou le calcul d'une date.</value>
   </data>
   <data name="AutomaticStadiums" xml:space="preserve">
-    <value>Stades automatiques</value>
+    <value>Replanifier les stades automatiquement</value>
+  </data>
+  <data name="AutomaticDateTimes" xml:space="preserve">
+    <value>Replanifier les dates automatiquement</value>
+  </data>
+  <data name="UpdateParameters" xml:space="preserve">
+    <value>Modifier les paramètres</value>
+  </data>
+  <data name="ShowPreviousResults" xml:space="preserve">
+    <value>Afficher les résultats précédents</value>
+  </data>
+  <data name="DuplicateMatchdays" xml:space="preserve">
+    <value>Dupliquer les journées</value>
+  </data>
+  <data name="NewTeam" xml:space="preserve">
+    <value>Nouvelle équipe</value>
+  </data>
+  <data name="TeamsOptionalPlural" xml:space="preserve">
+    <value>Équipe(s)</value>
+  </data>
+  <data name="StadiumsOptionalPlural" xml:space="preserve">
+    <value>Stade(s)</value>
+  </data>
+  <data name="ImportStadiums" xml:space="preserve">
+    <value>Importer des stades</value>
+  </data>
+  <data name="NewStadium" xml:space="preserve">
+    <value>Nouveau stade</value>
+  </data>
+  <data name="BuildCompetition" xml:space="preserve">
+    <value>Construire la compétition</value>
+  </data>
+  <data name="NoStadiumWarning" xml:space="preserve">
+    <value>Le match {0} n'a pas de stade défini.
+
+Cliquer sur cette notification pour éditer le match.</value>
+  </data>
+  <data name="NoStadiumWarningTitle" xml:space="preserve">
+    <value>Stade manquant</value>
+  </data>
+  <data name="TreatNoStadiumAsWarning" xml:space="preserve">
+    <value>Traiter les matchs où le stade n'est pas défini comme des erreurs</value>
+  </data>
+  <data name="Staff" xml:space="preserve">
+    <value>Dirigeant(s)</value>
   </data>
 </root>

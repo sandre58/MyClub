@@ -6,27 +6,18 @@
     <OutputPath>..\..\..\..\build\Teamup\$(Configuration)\Mocks\$(AssemblyName)</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <Compile Update="Resources\FacesResources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>FacesResources.resx</DependentUpon>
-    </Compile>
-    <Compile Update="Resources\LogosResources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>LogosResources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MyNet.Humanizer" Version="1.0.0">
+    <PackageReference Include="MyNet.Humanizer" Version="1.1.0-alpha.10">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MyNet.Utilities" Version="4.1.0-alpha.31">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\MyClub.CrossCutting.Images\MyClub.CrossCutting.Images.csproj" />
     <ProjectReference Include="..\..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
@@ -51,17 +42,6 @@
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\FacesResources.resx">
-      <LastGenOutput>FacesResources.Designer.cs</LastGenOutput>
-      <Generator>ResXFileCodeGenerator</Generator>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Resources\LogosResources.resx">
-      <LastGenOutput>LogosResources.Designer.cs</LastGenOutput>
-      <Generator>ResXFileCodeGenerator</Generator>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

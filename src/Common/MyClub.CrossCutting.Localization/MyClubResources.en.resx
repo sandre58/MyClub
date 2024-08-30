@@ -2209,6 +2209,50 @@ The rules are not cumulative. The assigned venue is the first venue returned by 
     <value>If this option is enabled, venues will be calculated before dates. Following the rules for calculating stadiums, this allows you to be more precise when assigning a stadium or calculating a date.</value>
   </data>
   <data name="AutomaticStadiums" xml:space="preserve">
-    <value>Automatic stadiums</value>
+    <value>Reschedule stadiums automatically</value>
+  </data>
+  <data name="AutomaticDateTimes" xml:space="preserve">
+    <value>Reschedule dates automatically</value>
+  </data>
+  <data name="UpdateParameters" xml:space="preserve">
+    <value>Update parameters</value>
+  </data>
+  <data name="ShowPreviousResults" xml:space="preserve">
+    <value>Show previous results</value>
+  </data>
+  <data name="DuplicateMatchdays" xml:space="preserve">
+    <value>Duplicate matchdays</value>
+  </data>
+  <data name="NewTeam" xml:space="preserve">
+    <value>New team</value>
+  </data>
+  <data name="TeamsOptionalPlural" xml:space="preserve">
+    <value>Team(s)</value>
+  </data>
+  <data name="StadiumsOptionalPlural" xml:space="preserve">
+    <value>Stadium(s)</value>
+  </data>
+  <data name="ImportStadiums" xml:space="preserve">
+    <value>Import stadiums</value>
+  </data>
+  <data name="NewStadium" xml:space="preserve">
+    <value>New stadium</value>
+  </data>
+  <data name="BuildCompetition" xml:space="preserve">
+    <value>Build competition</value>
+  </data>
+  <data name="NoStadiumWarning" xml:space="preserve">
+    <value>Match {0} has no venue defined.
+
+Click on this notification to edit the match.</value>
+  </data>
+  <data name="NoStadiumWarningTitle" xml:space="preserve">
+    <value>Missing venue</value>
+  </data>
+  <data name="TreatNoStadiumAsWarning" xml:space="preserve">
+    <value>Treat matches where venue is not defined as warnings</value>
+  </data>
+  <data name="Staff" xml:space="preserve">
+    <value>Staff</value>
   </data>
 </root>

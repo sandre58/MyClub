@@ -24,18 +24,18 @@ namespace MyClub.Teamup.Wpf.ViewModels.Import
             {
                 AwayColor = dto.AwayColor?.ToColor(),
                 HomeColor = dto.HomeColor?.ToColor(),
-                Country = dto.Country.OrEmpty().DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault),
+                Country = dto.Country.OrEmpty().DehumanizeTo<Country>(OnNoMatch.ReturnsDefault),
                 Logo = dto.Logo,
                 ShortName = dto.ShortName.OrEmpty(),
                 Name = dto.Name.OrEmpty(),
-                Category = dto.Category.OrEmpty().DehumanizeToNullable<Category>(OnNoMatch.ReturnsDefault),
+                Category = dto.Category.OrEmpty().DehumanizeTo<Category>(OnNoMatch.ReturnsDefault),
                 Stadium = dto.Stadium is StadiumImportDto stadium
                           ? new StadiumImportableViewModel(stadium.Name.OrEmpty())
                           {
                               Ground = stadium.Ground.OrEmpty().DehumanizeTo<Ground>(OnNoMatch.ReturnsDefault),
                               Address = stadium.Street,
                               City = stadium.City,
-                              Country = stadium.Country.OrEmpty().DehumanizeToNullable<Country>(OnNoMatch.ReturnsDefault),
+                              Country = stadium.Country.OrEmpty().DehumanizeTo<Country>(OnNoMatch.ReturnsDefault),
                               Latitude = stadium.Latitude,
                               Longitude = stadium.Longitude,
                               PostalCode = stadium.PostalCode

@@ -3,31 +3,33 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyNet.Observable;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Attributes;
+using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Resources;
+using MyNet.UI.ViewModels.Workspace;
 using MyNet.Utilities;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class EditableSchedulingParametersViewModel : EditableObject
+    internal class EditableSchedulingParametersViewModel : NavigableWorkspaceViewModel
     {
-        public EditableSchedulingParametersViewModel(ReadOnlyObservableCollection<StadiumViewModel> stadiums)
+        public EditableSchedulingParametersViewModel(ISourceProvider<IStadiumViewModel> stadiums)
         {
-            VenueRules = new(stadiums);
-            ValidationRules.Add<EditableSchedulingParametersViewModel, DateTime?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
+            VenueRules = new(stadiums.Source);
+            ValidationRules.Add<EditableSchedulingParametersViewModel, DateOnly?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
+
+            Reset();
         }
 
         public SchedulingParameters Create()
-            => new(StartDate.GetValueOrDefault().ToUniversalTime(),
-                   EndDate.GetValueOrDefault().ToUniversalTime(),
+            => new(StartDate.GetValueOrDefault(),
+                   EndDate.GetValueOrDefault(),
                    StartTime.GetValueOrDefault(),
                    RotationTimeValue.GetValueOrDefault().ToTimeSpan(RotationTimeUnit),
                    RestTimeValue.GetValueOrDefault().ToTimeSpan(RestTimeUnit),
@@ -43,15 +45,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [IsRequired]
         [ValidateProperty(nameof(EndDate))]
         [Display(Name = nameof(StartDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(EndDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? EndDate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(StartTime), ResourceType = typeof(MyClubResources))]
-        public TimeSpan? StartTime { get; set; }
+        public TimeOnly? StartTime { get; set; }
 
         [IsRequired]
         [Display(Name = "RotationTime", ResourceType = typeof(MyClubResources))]
@@ -96,7 +98,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public EditableAutomaticDateSchedulingRulesViewModel DateRules { get; } = new();
 
         [CanBeValidated(false)]
-        public EditableAutomaticTimeSchedulingRulesViewModel TimeRules { get; } = new();
+        public EditableAutomaticTimeSchedulingRulesViewModel TimeRules { get; } = EditableAutomaticTimeSchedulingRulesViewModel.Default;
 
         [CanBeValidated(false)]
         public EditableVenueSchedulingRulesViewModel VenueRules { get; }
@@ -120,10 +122,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             return result;
         }
+
+        protected override void ResetCore() => Load(SchedulingParameters.Default);
+
         public void Load(SchedulingParameters schedulingParameters)
         {
-            StartDate = schedulingParameters.StartDate.ToLocalTime();
-            EndDate = schedulingParameters.EndDate.ToLocalTime();
+            StartDate = schedulingParameters.StartDate;
+            EndDate = schedulingParameters.EndDate;
             StartTime = schedulingParameters.StartTime;
             (RotationTimeValue, RotationTimeUnit) = schedulingParameters.RotationTime.Simplify();
             (RestTimeValue, RestTimeUnit) = schedulingParameters.RestTime.Simplify();

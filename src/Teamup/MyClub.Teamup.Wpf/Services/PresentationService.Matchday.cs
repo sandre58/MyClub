@@ -59,7 +59,7 @@ namespace MyClub.Teamup.Wpf.Services
                     DuplicatedMatchdayId = x.DuplicatedMatchday?.Id,
                     InvertTeams = x.InvertTeams,
                     Name = x.Name,
-                    Date = (x.Date ?? DateTime.Today).ToUtcDateTime(x.Time),
+                    Date = (x.Date ?? DateTime.Today).ToUtc(x.Time),
                     ShortName = x.ShortName
                 }).ToList(), false).Select(x => x.Id)
                 : null;

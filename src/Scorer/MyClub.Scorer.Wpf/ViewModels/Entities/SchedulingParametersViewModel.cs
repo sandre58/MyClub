@@ -21,11 +21,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 AsSoonAsPossible = x is not null ? x.AsSoonAsPossible : SchedulingParameters.Default.AsSoonAsPossible;
             }));
 
-        public DateTime StartDate { get; private set; }
+        public DateOnly StartDate { get; private set; }
 
-        public DateTime EndDate { get; private set; }
+        public DateOnly EndDate { get; private set; }
 
-        public TimeSpan StartTime { get; private set; }
+        public TimeOnly StartTime { get; private set; }
 
         public TimeSpan RotationTime { get; private set; }
 

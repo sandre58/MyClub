@@ -136,9 +136,9 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
                 ShortName = ShortName,
                 Rules = new CupRules(MatchFormat.Create(), MatchTime),
                 TeamIds = Teams.Select(x => x.Id).ToList(),
-                Date = Date.GetValueOrDefault().ToUtcDateTime(Time),
+                Date = Date.GetValueOrDefault().ToUtc(Time),
                 IsPostponed = IsPostponed,
-                PostponedDate = ShowPostponedDate ? PostponedDate?.Date.ToUtcDateTime(PostponedTime ?? Parent?.GetDefaultDateTime().TimeOfDay ?? DateTime.Now.TimeOfDay) : null,
+                PostponedDate = ShowPostponedDate ? PostponedDate?.Date.ToUtc(PostponedTime ?? Parent?.GetDefaultDateTime().TimeOfDay ?? DateTime.Now.TimeOfDay) : null,
             };
 
         protected override void RefreshFrom(IRound item)

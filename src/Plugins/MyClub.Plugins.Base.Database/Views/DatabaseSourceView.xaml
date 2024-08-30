@@ -83,7 +83,7 @@
                                                     <ProgressBar Style="{StaticResource MyNet.Styles.ProgressBar.Circular}"
                                                                  Width="28"
                                                                  Height="28"
-                                                                 my:ProgressBarAssist.StrokeThickness="3"
+                                                                 my:ProgressBarAssist.BorderThickness="3"
                                                                  IsIndeterminate="True" />
                                                 </DataTemplate>
                                             </Setter.Value>

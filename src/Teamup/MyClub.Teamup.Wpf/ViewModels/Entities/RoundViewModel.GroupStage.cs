@@ -100,7 +100,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
 
         public IEnumerable<IMatchdayViewModel> GetAllMatchdays() => Matchdays;
 
-        public override DateTime GetDefaultDateTime() => (StartDate.IsInPast() ? DateTime.Today : StartDate).ToLocalDateTime(Parent.GetDefaultDateTime().TimeOfDay);
+        public override DateTime GetDefaultDateTime() => (StartDate.IsInPast() ? DateTime.Today : StartDate).ToLocal(Parent.GetDefaultDateTime().TimeOfDay);
 
     }
 }

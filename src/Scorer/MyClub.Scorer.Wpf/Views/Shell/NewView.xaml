@@ -16,84 +16,39 @@
                    Margin="{StaticResource MyNet.Margins.Huge.Vertical}"
                    DockPanel.Dock="Top"
                    Text="{Binding Title}" />
+        <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium}">
 
-        <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Large.Bottom}"
-                             HorizontalAlignment="Right"
-                             DockPanel.Dock="Top"
-                             Orientation="Horizontal">
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Foreground}"
-                    my:IconAssist.Icon="{my:ToolIcon Kind=PlusBold}"
-                    Command="{Binding CreateCommand}"
-                    Content="{my:Resource Create}" />
+            <!-- New League -->
+            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Custom}"
+                    Height="Auto"
+                    MinHeight="80"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Background="{DynamicResource Scorer.Brushes.League}"
+                    Command="{Binding NewLeagueCommand}">
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=Podium, Size=50}">
+                    <my:SimpleStackPanel Height="50" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource NewLeague, Casing=AllCaps}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource NewLeagueDescription}" TextWrapping="Wrap" />
+                    </my:SimpleStackPanel>
+                </GroupBox>
+            </Button>
+
+            <!-- New cup -->
+            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Custom}"
+                    Height="Auto"
+                    MinHeight="80"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Background="{DynamicResource Scorer.Brushes.Cup}"
+                    Command="{Binding NewCupCommand}">
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" Header="{my:Icon Kind=Bracket, Size=50}">
+                    <my:SimpleStackPanel Height="50" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <TextBlock FontWeight="{StaticResource MyNet.Font.Weight.Header}" Text="{my:Resource NewCup, Casing=AllCaps}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource NewCupDescription}" TextWrapping="Wrap" />
+                    </my:SimpleStackPanel>
+                </GroupBox>
+            </Button>
         </my:SimpleStackPanel>
-
-        <Grid VerticalAlignment="Top">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle.Foreground.Opacity}"
-                     Grid.ColumnSpan="3"
-                     HorizontalAlignment="Center"
-                     Background="Transparent"
-                     SelectedValue="{Binding Type}"
-                     SelectedValuePath="DataContext">
-                <ListBoxItem Width="130"
-                             Height="130"
-                             Margin="{StaticResource MyNet.Margins.Default}"
-                             Padding="{StaticResource MyNet.Margins.Large}"
-                             my:IconAssist.Alignment="Bottom"
-                             my:IconAssist.Icon="{my:Icon Kind=Podium,
-                                                          Size=60}"
-                             my:IconAssist.Margin="{StaticResource MyNet.Margins.Medium.Top}"
-                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.League}"
-                             my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Container}"
-                             Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
-                                                          Opacity={StaticResource MyNet.Opacity.Filled}}"
-                             Content="{my:Resource TournamentTypeLeague}"
-                             DataContext="{x:Static enums:CompetitionType.League}"
-                             FontSize="{StaticResource MyNet.Font.Size.Caption}" />
-                <ListBoxItem Width="130"
-                             Height="130"
-                             Margin="{StaticResource MyNet.Margins.Default}"
-                             Padding="{StaticResource MyNet.Margins.Large}"
-                             my:IconAssist.Alignment="Bottom"
-                             my:IconAssist.Icon="{my:Icon Kind=Bracket,
-                                                          Size=60}"
-                             my:IconAssist.Margin="{StaticResource MyNet.Margins.Medium.Top}"
-                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.Cup}"
-                             my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Container}"
-                             Background="{my:BrushBinding InheritPath=(TextElement.Foreground),
-                                                          Opacity={StaticResource MyNet.Opacity.Filled}}"
-                             Content="{my:Resource TournamentTypeCup}"
-                             DataContext="{x:Static enums:CompetitionType.Cup}"
-                             FontSize="{StaticResource MyNet.Font.Size.Caption}" />
-            </ListBox>
-
-            <my:SimpleStackPanel Grid.Row="2">
-                <!--  Name  -->
-                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Information}">
-                    <TextBox Style="{StaticResource MyNet.Styles.TextBox.Foreground}"
-                             HorizontalAlignment="Stretch"
-                             my:FocusAssist.IsDefault="True"
-                             my:HintAssist.Hint="{my:Resource Name}"
-                             my:HintAssist.IsFloating="True"
-                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                </GroupBox>
-
-                <!--  Image  -->
-                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=ShieldCrown}">
-                    <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Foreground}"
-                                    Grid.Row="2"
-                                    HorizontalAlignment="Stretch"
-                                    my:HintAssist.Hint="{my:Resource Image}"
-                                    my:HintAssist.IsFloating="True"
-                                    SelectedImage="{Binding Image, Converter={x:Static my:BytesToImageConverter.Default}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-                </GroupBox>
-            </my:SimpleStackPanel>
-        </Grid>
     </DockPanel>
 </UserControl>

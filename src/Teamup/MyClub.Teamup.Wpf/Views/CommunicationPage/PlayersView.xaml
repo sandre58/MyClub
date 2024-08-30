@@ -43,7 +43,7 @@
                                            Padding="0"
                                            Text="/"
                                            Visibility="{Binding SelectedEmails.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
-                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Padding="0" Text="{my:Translation Emails.Count, Format=XMails, Plural=True}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Padding="0" Text="{my:Translation Emails.Count, Format=XMails, Pluralize=True}" />
                             </StackPanel>
                         </my:SimpleStackPanel>
 

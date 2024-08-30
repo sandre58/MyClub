@@ -14,7 +14,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
     {
         DateTime Date { get; }
 
-        TimeSpan MatchTime { get; }
+        TimeOnly MatchTime { get; }
 
         string Name { get; }
 
@@ -36,7 +36,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 
         bool CanAutomaticRescheduleVenue();
 
-        IEnumerable<TeamViewModel> GetAvailableTeams();
+        IEnumerable<ITeamViewModel> GetAvailableTeams();
 
         Task AddMatchAsync();
     }

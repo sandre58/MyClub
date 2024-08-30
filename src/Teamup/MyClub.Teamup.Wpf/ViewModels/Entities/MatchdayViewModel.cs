@@ -142,7 +142,7 @@ namespace MyClub.Teamup.Wpf.ViewModels.Entities
 
         public IEnumerable<MatchViewModel> GetAllMatches() => AllMatches;
 
-        public DateTime GetDefaultDateTime() => Item.Date.ToLocalDateTime(Parent.GetDefaultDateTime().TimeOfDay);
+        public DateTime GetDefaultDateTime() => Item.Date.ToLocal(Parent.GetDefaultDateTime().TimeOfDay);
 
         public IEnumerable<TeamViewModel> GetAvailableTeams() => Parent.GetAvailableTeams();
 

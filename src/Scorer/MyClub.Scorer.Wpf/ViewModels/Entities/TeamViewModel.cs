@@ -11,6 +11,7 @@ using DynamicData.Binding;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.Commands;
 using MyNet.UI.Threading;
 using MyNet.Utilities;
@@ -19,25 +20,28 @@ using MyNet.Wpf.Extensions;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class TeamViewModel : EntityViewModelBase<Team>
+    internal class TeamViewModel : EntityViewModelBase<Team>, ITeamViewModel
     {
         private readonly TeamPresentationService _teamPresentationService;
         private readonly StadiumsProvider _stadiumsProvider;
         private readonly ObservableCollectionExtended<PlayerViewModel> _players = [];
+        private readonly ObservableCollectionExtended<ManagerViewModel> _staff = [];
 
-        public TeamViewModel(Team item, TeamPresentationService teamPresentationService, PlayerPresentationService playerPresentationService, StadiumsProvider stadiumsProvider) : base(item)
+        public TeamViewModel(Team item, TeamPresentationService teamPresentationService, PersonPresentationService personPresentationService, StadiumsProvider stadiumsProvider) : base(item)
         {
             _stadiumsProvider = stadiumsProvider;
             _teamPresentationService = teamPresentationService;
 
             Players = new(_players);
+            Staff = new(_staff);
 
             OpenCommand = CommandsManager.Create(async () => await OpenAsync().ConfigureAwait(false));
             EditCommand = CommandsManager.Create(async () => await EditAsync().ConfigureAwait(false));
 
             Disposables.AddRange(
             [
-                Item.Players.ToObservableChangeSet(x => x.Id).Transform(x => new PlayerViewModel(x, this, playerPresentationService)).ObserveOn(Scheduler.UI).Bind(_players).DisposeMany().Subscribe(),
+                Item.Players.ToObservableChangeSet(x => x.Id).Transform(x => new PlayerViewModel(x, this, personPresentationService)).ObserveOn(Scheduler.UI).Bind(_players).DisposeMany().Subscribe(),
+                Item.Staff.ToObservableChangeSet(x => x.Id).Transform(x => new ManagerViewModel(x, this, personPresentationService)).ObserveOn(Scheduler.UI).Bind(_staff).DisposeMany().Subscribe(),
             ]);
         }
 
@@ -53,9 +57,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public Country? Country => Item.Country;
 
-        public StadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
+        public IStadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
 
         public ReadOnlyObservableCollection<PlayerViewModel> Players { get; }
+
+        public ReadOnlyObservableCollection<ManagerViewModel> Staff { get; }
 
         public ICommand EditCommand { get; }
 

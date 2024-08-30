@@ -2,24 +2,29 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Contracts;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyClub.Scorer.Domain.Scheduling;
+using MyClub.Scorer.Domain.StadiumAggregate;
+using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public sealed class ProjectService(
-        IProjectRepository projectRepository,
-        IReadService readService,
-        IWriteService writeService,
-        IProjectFactory projectFactory)
+    public sealed class ProjectService(IProjectRepository projectRepository,
+                                       IReadService readService,
+                                       IWriteService writeService,
+                                       IProjectFactory projectFactory)
     {
         private readonly IProjectRepository _projectRepository = projectRepository;
         private readonly IProjectFactory _projectFactory = projectFactory;
@@ -34,7 +39,7 @@ namespace MyClub.Scorer.Application.Services
 
                 using (LogManager.MeasureTime($"Create default project", TraceLevel.Debug))
                 using (ProgressManager.Start(MyClubResources.ProgressGeneratingProject))
-                    project = await CreateProjectAsync(type, cancellationToken).ConfigureAwait(false);
+                    project = await NewProjectAsync(type, cancellationToken).ConfigureAwait(false);
 
                 _ = Load(project);
 
@@ -42,54 +47,123 @@ namespace MyClub.Scorer.Application.Services
             }
         }
 
-        public LeagueProject NewLeague(ProjectMetadataDto properties)
-        {
-            LeagueProject project;
-
-            using (ProgressManager.Start([1]))
+        private async Task<IProject> NewProjectAsync(CompetitionType type, CancellationToken cancellationToken)
+            => type switch
             {
-                using (LogManager.MeasureTime($"Create new project : {properties.Name}", TraceLevel.Debug))
+                CompetitionType.League => await _projectFactory.CreateLeagueAsync(cancellationToken).ConfigureAwait(false),
+                CompetitionType.Cup => await _projectFactory.CreateCupAsync(cancellationToken).ConfigureAwait(false),
+                CompetitionType.Tournament => await _projectFactory.CreateTournamentAsync(cancellationToken).ConfigureAwait(false),
+                _ => throw new InvalidOperationException(),
+            };
+
+        public async Task<LeagueProject> CreateLeagueAsync(LeagueMetadataDto dto)
+            => await CreateAsync<LeagueProject, League>(dto, () => new LeagueProject(dto.Name.OrEmpty(), dto.Image), x =>
+            {
+                if (dto.RankingRules?.Rules is not null)
+                    x.RankingRules = dto.RankingRules.Rules;
+
+                if (dto.RankingRules?.PenaltyPoints is not null)
+                    dto.RankingRules.PenaltyPoints.ForEach(z => x.AddPenalty(z.Key, z.Value));
+
+                if (dto.RankingRules?.Labels is not null)
+                    x.Labels.AddRange(dto.RankingRules.Labels);
+            }, (x, y, z) =>
+            {
+                if (z is BuildMatchdaysParametersDto matchdaysParametersDto)
                 {
-                    project = new LeagueProject(properties.Name.OrThrow(), properties.Image);
+                    var matchdays = LeagueService.ComputeMatchdays(x, matchdaysParametersDto, y);
+                    matchdays.ForEach(z => x.AddMatchday(z));
+                }
+            }).ConfigureAwait(false);
+
+        public async Task<CupProject> CreateCupAsync(CupMetadataDto dto)
+            => await CreateAsync<CupProject, Cup>(dto, () => new CupProject(dto.Name.OrEmpty(), dto.Image), x =>
+            {
+            }, (x, y, z) => { }).ConfigureAwait(false);
+
+        public async Task<TournamentProject> CreateTournamentAsync(TournamentMetadataDto dto)
+            => await CreateAsync<TournamentProject, Tournament>(dto, () => new TournamentProject(dto.Name.OrEmpty(), dto.Image), x =>
+            {
+            }, (x, y, z) => { }).ConfigureAwait(false);
+
+        private Task<T> CreateAsync<T, TCompetition>(ProjectMetadataDto dto, Func<T> createProject, Action<TCompetition> updateCompetition, Action<TCompetition, IList<Stadium>, BuildBracketParametersDto> buildCompetition)
+            where T : Project<TCompetition>
+            where TCompetition : ICompetition, new()
+        {
+            T project;
+
+            using (ProgressManager.Start([0.2, 0.2, 0.01, 0.3, 0.09, 0.05, 0.15]))
+            {
+                using (LogManager.MeasureTime($"Create new project : {dto.Name}", TraceLevel.Debug))
+                {
+                    project = createProject();
+                    project.Preferences.TreatNoStadiumAsWarning = dto.TreatNoStadiumAsWarning;
+
+                    // Create stadiums
+                    using (ProgressManager.Start())
+                    {
+                        dto.Stadiums?.ForEach(x => project.AddStadium(new Stadium(x.Name.OrEmpty(), x.Ground, x.Id) { Address = x.Address }));
+                    }
+
+                    // Create teams
+                    using (ProgressManager.Start())
+                    {
+                        dto.Teams?.ForEach(x => project.AddTeam(new Team(x.Name.OrEmpty(), x.ShortName.OrEmpty(), x.Id)
+                        {
+                            AwayColor = x.AwayColor,
+                            Country = x.Country,
+                            HomeColor = x.HomeColor,
+                            Logo = x.Logo,
+                            Stadium = x.Stadium?.Id is not null ? project.Stadiums.GetById(x.Stadium.Id.Value) : null
+                        }));
+                    }
+
+
+                    using (ProgressManager.Start())
+                    {
+                        if (dto.BuildParameters?.MatchFormat is not null)
+                            project.Competition.MatchFormat = dto.BuildParameters.MatchFormat;
+                    }
+
+                    using (ProgressManager.Start())
+                    {
+                        if (dto.BuildParameters?.BracketParameters is BuildMatchdaysParametersDto buildMatchdaysParametersDto)
+                            buildCompetition(project.Competition, project.Stadiums, dto.BuildParameters.BracketParameters);
+                    }
+
+                    using (ProgressManager.Start())
+                    {
+                        if (dto.BuildParameters?.SchedulingParameters is not null)
+                        {
+                            var allMatches = project.Competition.GetAllMatchesProviders().SelectMany(x => x.Matches).ToList();
+                            var allMatchdays = project.Competition.GetAllMatchdaysProviders().SelectMany(x => x.Matchdays).ToList();
+                            project.Competition.SchedulingParameters = new SchedulingParameters(
+                               !dto.BuildParameters.AutomaticStartDate ? allMatches.MinOrDefault(x => x.Date.ToDate(), allMatchdays.MinOrDefault(x => x.Date.ToDate())) : dto.BuildParameters.SchedulingParameters.StartDate,
+                               !dto.BuildParameters.AutomaticEndDate ? allMatches.MaxOrDefault(x => x.Date.ToDate(), allMatchdays.MaxOrDefault(x => x.Date.ToDate())) : dto.BuildParameters.SchedulingParameters.EndDate,
+                               dto.BuildParameters.SchedulingParameters.StartTime,
+                               dto.BuildParameters.SchedulingParameters.RotationTime,
+                               dto.BuildParameters.SchedulingParameters.RestTime,
+                               dto.BuildParameters.SchedulingParameters.UseHomeVenue,
+                               dto.BuildParameters.SchedulingParameters.AsSoonAsPossible,
+                               dto.BuildParameters.SchedulingParameters.Interval,
+                               dto.BuildParameters.SchedulingParameters.ScheduleByParent,
+                               dto.BuildParameters.SchedulingParameters.AsSoonAsPossibleRules,
+                               dto.BuildParameters.SchedulingParameters.DateRules,
+                               dto.BuildParameters.SchedulingParameters.TimeRules,
+                               dto.BuildParameters.SchedulingParameters.VenueRules
+                               );
+                        }
+                    }
+
+                    using (ProgressManager.Start())
+                    {
+                        updateCompetition(project.Competition);
+                    }
 
                     _ = Load(project);
                 }
 
-                return project;
-            }
-        }
-
-        public CupProject NewCup(ProjectMetadataDto properties)
-        {
-            CupProject project;
-
-            using (ProgressManager.Start([1]))
-            {
-                using (LogManager.MeasureTime($"Create new project : {properties.Name}", TraceLevel.Debug))
-                {
-                    project = new CupProject(properties.Name.OrThrow(), properties.Image);
-
-                    _ = Load(project);
-                }
-
-                return project;
-            }
-        }
-
-        public TournamentProject NewTournament(ProjectMetadataDto properties)
-        {
-            TournamentProject project;
-
-            using (ProgressManager.Start([1]))
-            {
-                using (LogManager.MeasureTime($"Create new project : {properties.Name}", TraceLevel.Debug))
-                {
-                    project = new TournamentProject(properties.Name.OrThrow(), properties.Image);
-
-                    _ = Load(project);
-                }
-
-                return project;
+                return Task.FromResult(project);
             }
         }
 
@@ -98,6 +172,7 @@ namespace MyClub.Scorer.Application.Services
             {
                 x.Name = properties.Name.OrThrow();
                 x.Image = properties.Image;
+                x.Preferences.TreatNoStadiumAsWarning = properties.TreatNoStadiumAsWarning;
             });
 
         public IProject Load(IProject project)
@@ -144,14 +219,5 @@ namespace MyClub.Scorer.Application.Services
 
             return true;
         }
-
-        private async Task<IProject> CreateProjectAsync(CompetitionType type, CancellationToken cancellationToken)
-            => type switch
-            {
-                CompetitionType.League => await _projectFactory.CreateLeagueAsync(cancellationToken).ConfigureAwait(false),
-                CompetitionType.Cup => await _projectFactory.CreateCupAsync(cancellationToken).ConfigureAwait(false),
-                CompetitionType.Tournament => await _projectFactory.CreateTournamentAsync(cancellationToken).ConfigureAwait(false),
-                _ => throw new InvalidOperationException(),
-            };
     }
 }

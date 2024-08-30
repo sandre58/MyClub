@@ -4,12 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyNet.UI.ViewModels.Workspace;
-using MyNet.Utilities.Messaging;
 using MyClub.Teamup.Domain.Extensions;
 using MyClub.Teamup.Domain.ProjectAggregate;
 using MyClub.Teamup.Wpf.Messages;
 using MyClub.Teamup.Wpf.Services.Providers;
+using MyNet.UI.ViewModels.Workspace;
+using MyNet.Utilities.Messaging;
 using PropertyChanged;
 
 namespace MyClub.Teamup.Wpf.ViewModels

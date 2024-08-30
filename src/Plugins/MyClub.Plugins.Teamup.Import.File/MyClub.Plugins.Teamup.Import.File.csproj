@@ -18,10 +18,10 @@
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Utilities" Version="4.0.3">
+    <PackageReference Include="MyNet.Utilities" Version="4.1.0-alpha.31">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Wpf" Version="5.0.9">
+    <PackageReference Include="MyNet.Wpf" Version="5.2.0-alpha.18">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

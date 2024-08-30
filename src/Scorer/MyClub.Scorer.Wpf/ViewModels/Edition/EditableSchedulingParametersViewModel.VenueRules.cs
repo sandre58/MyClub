@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.UI.Commands;
@@ -21,9 +21,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class EditableVenueSchedulingRulesViewModel : EditableRulesViewModel<EditableVenueSchedulingRuleViewModel>
     {
-        private readonly ReadOnlyObservableCollection<StadiumViewModel> _stadiums;
+        private readonly ReadOnlyObservableCollection<IStadiumViewModel> _stadiums;
 
-        public EditableVenueSchedulingRulesViewModel(ReadOnlyObservableCollection<StadiumViewModel> stadiums)
+        public EditableVenueSchedulingRulesViewModel(ReadOnlyObservableCollection<IStadiumViewModel> stadiums)
         {
             _stadiums = stadiums;
             AvailableRules.AddRange([
@@ -122,7 +122,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class EditableStadiumOfDayRuleViewModel : EditableVenueSchedulingRuleViewModel
     {
-        public EditableStadiumOfDayRuleViewModel(ReadOnlyObservableCollection<StadiumViewModel> stadiums)
+        public EditableStadiumOfDayRuleViewModel(ReadOnlyObservableCollection<IStadiumViewModel> stadiums)
         {
             AllStadiums = stadiums;
             var firstDayOfWeek = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
@@ -143,7 +143,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public Guid? StadiumId { get; set; }
 
-        public ReadOnlyObservableCollection<StadiumViewModel> AllStadiums { get; }
+        public ReadOnlyObservableCollection<IStadiumViewModel> AllStadiums { get; }
 
         public ICommand AddExceptionCommand { get; }
 
@@ -154,7 +154,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class EditableStadiumOfDateRuleViewModel : EditableVenueSchedulingRuleViewModel
     {
-        public EditableStadiumOfDateRuleViewModel(ReadOnlyObservableCollection<StadiumViewModel> stadiums)
+        public EditableStadiumOfDateRuleViewModel(ReadOnlyObservableCollection<IStadiumViewModel> stadiums)
         {
             AllStadiums = stadiums;
             AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableStadiumOfMatchNumberRuleViewModel(AllStadiums)));
@@ -163,11 +163,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [IsRequired]
         [Display(Name = nameof(Date), ResourceType = typeof(MyClubResources))]
-        public DateTime? Date { get; set; }
+        public DateOnly? Date { get; set; }
 
         public Guid? StadiumId { get; set; }
 
-        public ReadOnlyObservableCollection<StadiumViewModel> AllStadiums { get; }
+        public ReadOnlyObservableCollection<IStadiumViewModel> AllStadiums { get; }
 
         public ObservableCollection<EditableStadiumOfMatchNumberRuleViewModel> MatchExceptions { get; } = [];
 
@@ -180,7 +180,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class EditableStadiumOfMatchNumberRuleViewModel : EditableVenueSchedulingRuleViewModel
     {
-        public EditableStadiumOfMatchNumberRuleViewModel(ReadOnlyObservableCollection<StadiumViewModel> stadiums) => AllStadiums = stadiums;
+        public EditableStadiumOfMatchNumberRuleViewModel(ReadOnlyObservableCollection<IStadiumViewModel> stadiums) => AllStadiums = stadiums;
 
         [IsRequired]
         [Display(Name = nameof(MatchNumber), ResourceType = typeof(MyClubResources))]
@@ -188,34 +188,34 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public Guid? StadiumId { get; set; }
 
-        public ReadOnlyObservableCollection<StadiumViewModel> AllStadiums { get; }
+        public ReadOnlyObservableCollection<IStadiumViewModel> AllStadiums { get; }
 
         public override IAvailableVenueSchedulingRule ProvideRule() => new StadiumOfMatchNumberRule(MatchNumber.GetValueOrDefault(), StadiumId);
     }
 
     internal class EditableStadiumOfDateRangeRuleViewModel : EditableVenueSchedulingRuleViewModel
     {
-        public EditableStadiumOfDateRangeRuleViewModel(ReadOnlyObservableCollection<StadiumViewModel> stadiums)
+        public EditableStadiumOfDateRangeRuleViewModel(ReadOnlyObservableCollection<IStadiumViewModel> stadiums)
         {
             AllStadiums = stadiums;
             AddExceptionCommand = CommandsManager.Create(() => MatchExceptions.Add(new EditableStadiumOfMatchNumberRuleViewModel(AllStadiums)));
             RemoveExceptionCommand = CommandsManager.CreateNotNull<EditableStadiumOfMatchNumberRuleViewModel>(x => MatchExceptions.Remove(x));
 
-            ValidationRules.Add<EditableStadiumOfDateRangeRuleViewModel, DateTime?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
+            ValidationRules.Add<EditableStadiumOfDateRangeRuleViewModel, DateOnly?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
         }
 
         [IsRequired]
         [ValidateProperty(nameof(EndDate))]
         [Display(Name = nameof(StartDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         [IsRequired]
         [Display(Name = nameof(EndDate), ResourceType = typeof(MyClubResources))]
-        public DateTime? EndDate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
         public Guid? StadiumId { get; set; }
 
-        public ReadOnlyObservableCollection<StadiumViewModel> AllStadiums { get; }
+        public ReadOnlyObservableCollection<IStadiumViewModel> AllStadiums { get; }
 
         public ObservableCollection<EditableStadiumOfMatchNumberRuleViewModel> MatchExceptions { get; } = [];
 

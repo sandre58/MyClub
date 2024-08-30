@@ -10,13 +10,13 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     public class SchedulingParametersPackage
     {
         [XmlAttribute("startDate")]
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
         [XmlAttribute("endDate")]
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
         [XmlAttribute("startTime")]
-        public TimeSpan StartTime { get; set; }
+        public TimeOnly StartTime { get; set; }
 
         [XmlAttribute("rotationTime")]
         public TimeSpan RotationTime { get; set; }
@@ -114,10 +114,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     public class TimePeriodPackage
     {
         [XmlAttribute("startTime")]
-        public TimeSpan StartTime { get; set; }
+        public TimeOnly StartTime { get; set; }
 
         [XmlAttribute("endTime")]
-        public TimeSpan EndTime { get; set; }
+        public TimeOnly EndTime { get; set; }
     }
 
     public class IncludeDaysOfWeekAsSoonAsPossibleRulePackage : AsSoonAsPossibleSchedulingRulePackage
@@ -135,27 +135,27 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     public class ExcludeDatesRangeAsSoonAsPossibleRulePackage : AsSoonAsPossibleSchedulingRulePackage
     {
         [XmlAttribute("startDate")]
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
         [XmlAttribute("endDate")]
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
     }
 
     public class ExcludeDatesRangeRulePackage : DateSchedulingRulePackage
     {
         [XmlAttribute("startDate")]
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
         [XmlAttribute("endDate")]
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
     }
 
     public class ExcludeDateRulePackage : DateSchedulingRulePackage
     {
         [XmlAttribute("date")]
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
     }
 
     public class DateIntervalRulePackage : DateSchedulingRulePackage
@@ -170,7 +170,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         public DayOfWeek Day { get; set; }
 
         [XmlAttribute("time")]
-        public TimeSpan Time { get; set; }
+        public TimeOnly Time { get; set; }
 
         [XmlArray("MatchExceptions")]
         [XmlArrayItem("MatchException", typeof(TimeOfMatchNumberRulePackage))]
@@ -180,10 +180,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     public class TimeOfDateRulePackage : TimeSchedulingRulePackage
     {
         [XmlAttribute("date")]
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
 
         [XmlAttribute("time")]
-        public TimeSpan Time { get; set; }
+        public TimeOnly Time { get; set; }
 
         [XmlArray("MatchExceptions")]
         [XmlArrayItem("MatchException", typeof(TimeOfMatchNumberRulePackage))]
@@ -196,19 +196,19 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         public int MatchNumber { get; set; }
 
         [XmlAttribute("time")]
-        public TimeSpan Time { get; set; }
+        public TimeOnly Time { get; set; }
     }
 
     public class TimeOfDateRangeRulePackage : TimeSchedulingRulePackage
     {
         [XmlAttribute("startDate")]
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
         [XmlAttribute("endDate")]
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
         [XmlAttribute("time")]
-        public TimeSpan Time { get; set; }
+        public TimeOnly Time { get; set; }
 
         [XmlArray("MatchExceptions")]
         [XmlArrayItem("MatchException", typeof(TimeOfMatchNumberRulePackage))]
@@ -234,7 +234,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     public class StadiumOfDateRulePackage : VenueSchedulingRulePackage
     {
         [XmlAttribute("date")]
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
 
         [XmlElement("StadiumId", IsNullable = true)]
         public Guid? StadiumId { get; set; }
@@ -263,10 +263,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     public class StadiumOfDateRangeRulePackage : VenueSchedulingRulePackage
     {
         [XmlAttribute("startDate")]
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
         [XmlAttribute("endDate")]
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
         [XmlElement("StadiumId", IsNullable = true)]
         public Guid? StadiumId { get; set; }

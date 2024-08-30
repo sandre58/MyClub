@@ -1,0 +1,263 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.EditableRankingRulesRulesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dd="urn:gong-wpf-dragdrop"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:EditableRankingRulesViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <Style x:Key="Scorer.Styles.ListBox.Columns" TargetType="{x:Type ListBox}" BasedOn="{StaticResource MyNet.Styles.ListBox.Cards}">
+            <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Control.Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+                        <Setter Property="Background" Value="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                        <Setter Property="Foreground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                        <Setter Property="Visibility" Value="{Binding IsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName.Value}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <StackPanel IsItemsHost="True" Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Small}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBox}">
+                        <Grid>
+                            <Rectangle Fill="{TemplateBinding Background}"
+                                       RadiusX="{StaticResource MyNet.UniformCornerRadius.Container}"
+                                       RadiusY="{StaticResource MyNet.UniformCornerRadius.Container}"
+                                       SnapsToDevicePixels="true"
+                                       Stroke="{TemplateBinding BorderBrush}"
+                                       StrokeDashArray="4 2"
+                                       StrokeThickness="{Binding BorderThickness.Left, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <my:DynamicScrollViewer Padding="{TemplateBinding Padding}"
+                                                    my:ScrollViewerAssist.BubbleVerticalScroll="{TemplateBinding my:ScrollViewerAssist.BubbleVerticalScroll}"
+                                                    my:ScrollViewerAssist.IsAutoHideEnabled="{Binding Path=(my:ScrollViewerAssist.IsAutoHideEnabled), RelativeSource={RelativeSource Mode=TemplatedParent}}"
+                                                    CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
+                                                    Focusable="false"
+                                                    HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                                    VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            </my:DynamicScrollViewer>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+            <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Points -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                  my:HeaderAssist.HorizontalAlignment="Left"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=Numbers}"
+                  Header="{my:Resource Points}">
+
+            <my:SimpleStackPanel>
+
+                <!-- Won -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Positive}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Positive}"
+                                     Kind="CheckCircle" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesWon}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesWon}" />
+                </GroupBox>
+
+                <!-- Won after shootouts -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Positive}" Visibility="{Binding ShowShootouts, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Positive}"
+                                     Kind="CheckCircleOutline" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesWonAfterShootouts}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesWonAfterShootouts}" />
+                </GroupBox>
+
+                <!-- Drawn -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Warning}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                                     Kind="Circle" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesDrawn}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesDrawn}" />
+                </GroupBox>
+
+                <!-- Lost -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                     Kind="CloseCircle" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesLost}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesLost}" />
+                </GroupBox>
+
+                <!-- Lost after shootouts -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}" Visibility="{Binding ShowShootouts, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                     Kind="CloseCircleOutline" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesLostAfterShootouts}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesLostAfterShootouts}" />
+                </GroupBox>
+
+                <!-- Withdrawn -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                     Kind="CircleOffOutline" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesWithdrawn}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesWithdrawn}" />
+                </GroupBox>
+
+            </my:SimpleStackPanel>
+        </GroupBox>
+
+        <!-- Computers -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                  Grid.Row="0"
+                  Grid.Column="2"
+                  VerticalContentAlignment="Top"
+                  my:HeaderAssist.HorizontalAlignment="Left"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=HeadIdea}">
+            <GroupBox.Header>
+                <my:SimpleStackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                               Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                            Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                               Text="{my:Resource Compute}"
+                               Typography.Capitals="AllSmallCaps" />
+                    <my:PackIcon Kind="HelpCircle" Opacity="{StaticResource MyNet.Opacity.Secondary}" ToolTip="{my:Resource RankingComputersDescription}" />
+                </my:SimpleStackPanel>
+            </GroupBox.Header>
+            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemsSource="{Binding RankingColumnComputers}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ToggleButton Content="{Binding DisplayName.Value}" IsChecked="{Binding IsActive}" Visibility="{Binding IsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </GroupBox>
+
+        <!-- Comparers -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="3"
+                  my:HeaderAssist.HorizontalAlignment="Left"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=Sort}">
+            <GroupBox.Header>
+                <my:SimpleStackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                               Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                            Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                               Text="{my:Resource Sort}"
+                               Typography.Capitals="AllSmallCaps" />
+                    <my:PackIcon Kind="HelpCircle" Opacity="{StaticResource MyNet.Opacity.Secondary}" ToolTip="{my:Resource RankingComparersDescription}" />
+                </my:SimpleStackPanel>
+            </GroupBox.Header>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="5" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ListBox Style="{StaticResource Scorer.Styles.ListBox.Columns}"
+                         dd:DragDrop.IsDragSource="True"
+                         dd:DragDrop.IsDropTarget="True"
+                         dd:DragDrop.UseDefaultDragAdorner="True"
+                         ItemsSource="{Binding UnusedRankingRowComparers}"
+                         Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                <my:PackIcon Grid.Column="2"
+                             Width="24"
+                             Height="24"
+                             Kind="ChevronDoubleRight" />
+                <ListBox Style="{StaticResource Scorer.Styles.ListBox.Columns}"
+                         Grid.Column="4"
+                         dd:DragDrop.IsDragSource="True"
+                         dd:DragDrop.IsDropTarget="True"
+                         dd:DragDrop.UseDefaultDragAdorner="True"
+                         my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Accent}"
+                         my:ThemeAssist.IsCheckedForeground="{DynamicResource MyNet.Brushes.White}"
+                         ItemsSource="{Binding RankingRowComparers}" />
+            </Grid>
+        </GroupBox>
+
+    </Grid>
+</UserControl>
+

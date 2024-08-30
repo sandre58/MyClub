@@ -116,14 +116,14 @@ namespace MyClub.Teamup.Wpf.ViewModels.Edition
             {
                 UpdatePlace = Place.IsActive,
                 UpdateTheme = Theme.IsActive,
-                EndDate = EndTime.GetActiveValue().HasValue ? DateTime.Today.ToUtcDateTime(EndTime.GetActiveValue()!.Value) : default,
-                StartDate = StartTime.GetActiveValue().HasValue ? DateTime.Today.ToUtcDateTime(StartTime.GetActiveValue()!.Value) : default,
+                EndDate = EndTime.GetActiveValue().HasValue ? DateTime.Today.ToUtc(EndTime.GetActiveValue()!.Value) : default,
+                StartDate = StartTime.GetActiveValue().HasValue ? DateTime.Today.ToUtc(StartTime.GetActiveValue()!.Value) : default,
                 Theme = Theme.GetActiveValue(),
                 Place = Place.GetActiveValue(),
                 TeamIds = SelectedTeamIds.GetActiveValue() is not null && SelectedTeamIds.GetActiveValue()!.OfType<Guid>().Any() ? SelectedTeamIds.GetActiveValue()!.OfType<Guid>().ToList() : null
             });
 
-            ToasterManager.ShowSuccess(nameof(MessageResources.XItemsHasBeenModifiedSuccess).TranslateWithCountAndOptionalFormat(result.Count));
+            ToasterManager.ShowSuccess(nameof(MessageResources.XItemsHasBeenModifiedSuccess).TranslateAndFormatWithCount(result.Count));
         }
 
         #endregion

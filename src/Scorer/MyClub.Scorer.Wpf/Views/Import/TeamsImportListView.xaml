@@ -115,7 +115,7 @@
                     <my:DataGridTemplateColumn Width="50" Header="{my:Resource Logo}">
                         <my:DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Alternate}"
+                                <my:ImagePicker Style="{StaticResource MyNet.Styles.ImagePicker.Secondary}"
                                                 Width="32"
                                                 Height="32"
                                                 VerticalAlignment="Center"
@@ -142,7 +142,7 @@
                                                IsEditable="True"
                                                ItemsSource="{my:EnumerationSource EnumType={x:Type loc:Country},
                                                                                   OrderByDisplay=True}"
-                                               SelectedValueBinding="{Binding Item.Country}"
+                                               SelectedValueBinding="{Binding Item.Country, UpdateSourceTrigger=PropertyChanged}"
                                                SelectedValuePath="Value" />
 
                     <!-- HomeColor -->

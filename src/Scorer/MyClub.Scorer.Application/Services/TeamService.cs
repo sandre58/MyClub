@@ -43,6 +43,8 @@ namespace MyClub.Scorer.Application.Services
                     });
         }
 
+        public Team Add(string name) => Save(new TeamDto { Name = name });
+
         public TeamDto NewTeam()
         {
             var existingTeamNames = GetAll().Select(x => x.Name).ToList();

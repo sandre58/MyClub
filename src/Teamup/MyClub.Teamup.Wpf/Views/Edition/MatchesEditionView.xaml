@@ -10,7 +10,7 @@
                   MaxHeight="800"
                   d:DataContext="{d:DesignInstance Type=vm:MatchesEditionViewModel}"
                   BusyService="{Binding BusyService, Mode=OneWay}"
-                  Header="{my:Translation Matches.Count, Format=XMatches, Plural=True}"
+                  Header="{my:Translation Matches.Count, Format=XMatches, Pluralize=True}"
                   mc:Ignorable="d">
     <my:ContentDialog.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
@@ -210,7 +210,7 @@
             </my:DataGridDateColumn>
 
             <!--  Time  -->
-            <my:DataGridTimeColumn Width="70" Binding="{Binding Time, Converter={x:Static my:TimeSpanToDateTimeConverter.Default}, UpdateSourceTrigger=PropertyChanged}" Header="{my:Resource Time}">
+            <my:DataGridTimeColumn Width="70" Binding="{my:Time Time}" Header="{my:Resource Time}">
                 <my:DataGridTimeColumn.CellTemplate>
                     <DataTemplate>
                         <TextBlock Text="{my:Translation Format=ShortTimePattern}" />
