@@ -273,7 +273,33 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         }
 
         private async Task OpenSchedulingAssistantAsync(DateOnly? displayDate)
-            => await _matchPresentationService.OpenSchedulingAssistantAsync(Source.Where(x => x.CanReschedule()), displayDate).ConfigureAwait(false);
+            => await _matchPresentationService.OpenSchedulingAssistantAsync(Source, displayDate).ConfigureAwait(false);
+
+        public void Load(string displayMode, object? filterValue = null)
+        {
+            Display.SetMode(displayMode);
+
+            var filters = (MatchesPlanningFiltersViewModel)Filters;
+            if (filterValue is Guid id)
+            {
+                var parent = filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().AvailableValues?.GetByIdOrDefault(id);
+                if (parent is not null)
+                    filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().Value = parent;
+            }
+            else if (filterValue is DateOnly date)
+            {
+                if (displayMode == nameof(DisplayModeByDate))
+                {
+                    var found = filters.DateFilter.Item.CastIn<DateFilterViewModel>().AvailableValues?.Any(x => x == date);
+                    if (found.IsTrue())
+                        filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value = date;
+                }
+                else
+                {
+                    Display.AllowedModes.OfType<DisplayModeDay>().First().DisplayDate = date.BeginningOfDay();
+                }
+            }
+        }
 
         public void SelectItems(IEnumerable<Guid> selectedItems)
         {

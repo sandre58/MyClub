@@ -82,8 +82,8 @@
                                 </Style.Triggers>
                             </Style>
                         </my:SimpleStackPanel.Style>
-                        <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{my:DateTime DateTime.Date}" />
-                        <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time DateTime.Time}" />
+                        <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{my:DateTime CurrentDate.Date}" />
+                        <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time CurrentDate.Time}" />
                     </my:SimpleStackPanel>
                     <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
                         <TextBlock Text="{my:Resource Automatic}">
@@ -117,7 +117,10 @@
                     <!-- Postponed Date -->
                     <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
                         <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime PostponedDateTime.Date}" />
-                        <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" my:HintAssist.IsFloating="False" SelectedTime="{my:Time PostponedDateTime.Time}" />
+                        <my:TimePicker Width="80"
+                                       my:HintAssist.Hint="{my:Resource Time}"
+                                       my:HintAssist.IsFloating="False"
+                                       SelectedTime="{my:Time PostponedDateTime.Time}" />
                     </my:SimpleStackPanel>
                 </my:SimpleStackPanel>
             </GroupBox>
@@ -199,7 +202,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="10" />
-                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="80" />
                                     <ColumnDefinition Width="10" />
                                     <ColumnDefinition Width="130" />
                                     <ColumnDefinition Width="10" />
@@ -214,13 +217,13 @@
                                             my:HintAssist.Hint="{my:Resource Date}"
                                             my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
                                             IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                            SelectedDate="{my:DateTime DateTime.Date}" />
+                                            SelectedDate="{my:DateTime CurrentDate.Date}" />
                                 <my:TimePicker Grid.Column="2"
                                                HorizontalAlignment="Stretch"
                                                my:HintAssist.Hint="{my:Resource Time}"
                                                my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
                                                IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                               SelectedTime="{my:Time DateTime.Time}" />
+                                               SelectedTime="{my:Time CurrentDate.Time}" />
                                 <ComboBox Grid.Column="4"
                                           HorizontalAlignment="Stretch"
                                           my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"

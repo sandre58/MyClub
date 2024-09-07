@@ -141,7 +141,7 @@
                         <!-- Start date -->
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarStart}">
                             <my:SimpleStackPanel Orientation="Horizontal">
-                                <DatePicker my:HintAssist.Hint="{my:Resource StartDate}" IsEnabled="{Binding AutomaticStartDate, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{Binding StartDate}" />
+                                <DatePicker my:HintAssist.Hint="{my:Resource StartDate}" IsEnabled="{Binding AutomaticStartDate, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{my:DateTime StartDate}" />
                                 <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding AutomaticStartDate}">
                                     <TextBlock Text="{my:Resource Automatic}">
                                         <TextBlock.Style>
@@ -161,7 +161,7 @@
                         <!-- End date -->
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarEnd}">
                             <my:SimpleStackPanel Orientation="Horizontal">
-                                <DatePicker my:HintAssist.Hint="{my:Resource EndDate}" IsEnabled="{Binding AutomaticEndDate, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{Binding EndDate}" />
+                                <DatePicker my:HintAssist.Hint="{my:Resource EndDate}" IsEnabled="{Binding AutomaticEndDate, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{my:DateTime EndDate}" />
                                 <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding AutomaticEndDate}">
                                     <TextBlock Text="{my:Resource Automatic}">
                                         <TextBlock.Style>

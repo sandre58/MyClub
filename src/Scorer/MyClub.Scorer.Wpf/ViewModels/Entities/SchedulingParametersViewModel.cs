@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Observable;
 
@@ -12,9 +13,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public SchedulingParametersViewModel(IObservable<SchedulingParameters?> observable)
         => Disposables.Add(observable.Subscribe(x =>
             {
-                StartDate = x is not null ? x.StartDate : SchedulingParameters.Default.StartDate;
-                EndDate = x is not null ? x.EndDate : SchedulingParameters.Default.EndDate;
-                StartTime = x is not null ? x.StartTime : SchedulingParameters.Default.StartTime;
+                StartDate = x is not null ? x.GetCurrentStartDate() : SchedulingParameters.Default.GetCurrentStartDate();
+                EndDate = x is not null ? x.GetCurrentEndDate() : SchedulingParameters.Default.GetCurrentEndDate();
+                StartTime = x is not null ? x.GetCurrentStartTime() : SchedulingParameters.Default.GetCurrentStartTime();
                 RotationTime = x is not null ? x.RotationTime : SchedulingParameters.Default.RotationTime;
                 UseHomeVenue = x is not null ? x.UseHomeVenue : SchedulingParameters.Default.UseHomeVenue;
                 RestTime = x is not null ? x.RestTime : SchedulingParameters.Default.RestTime;

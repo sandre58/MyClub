@@ -67,18 +67,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             ScheduleAutomatic = ScheduleAutomatic,
             ScheduleStadiumsAutomatic = ScheduleStadiumsAutomatic,
-            StartDate = Matchdays.MinOrDefault(x => x.Item.DateTime.ToUtcOrDefault()),
+            StartDate = Matchdays.MinOrDefault(x => x.Item.CurrentDate.ToUtcOrDefault()),
             Matchdays = Matchdays.Select(x => new MatchdayDto
             {
                 ParentId = parentId,
-                Date = x.Item.DateTime.ToUtcOrDefault(),
+                Date = x.Item.CurrentDate.ToUtcOrDefault(),
                 Name = x.Item.Name,
                 ShortName = x.Item.ShortName,
                 MatchesToAdd = x.Item.Matches.Where(x => !x.Id.HasValue && x.IsValid()).Select(x => new MatchDto
                 {
                     AwayTeamId = x.AwayTeam!.Id,
                     HomeTeamId = x.HomeTeam!.Id,
-                    Date = x.DateTime.ToUtcOrDefault(),
+                    Date = x.CurrentDate.ToUtcOrDefault(),
                     Stadium = x.StadiumSelection.SelectedItem is not null ? new StadiumDto
                     {
                         Id = x.StadiumSelection.SelectedItem.Id,

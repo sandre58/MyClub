@@ -84,7 +84,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Name = matchdayDto.Name,
                 ShortName = matchdayDto.ShortName
             };
-            matchday.DateTime.Load(matchdayDto.Date);
+            matchday.CurrentDate.Load(matchdayDto.Date);
             matchday.Matches.AddRange(matchdayDto.MatchesToAdd?.Select(x =>
             {
                 var match = new EditableMatchViewModel(teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
@@ -92,7 +92,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                     HomeTeam = teamsProvider.Source.GetById(x.HomeTeamId),
                     AwayTeam = teamsProvider.Source.GetById(x.AwayTeamId),
                 };
-                matchday.DateTime.Load(x.Date);
+                matchday.CurrentDate.Load(x.Date);
                 match.StadiumSelection.Select(x.Stadium?.Id);
 
                 return match;

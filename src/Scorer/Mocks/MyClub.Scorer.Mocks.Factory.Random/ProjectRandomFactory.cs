@@ -143,6 +143,8 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
                 // Preferences
                 project.Preferences.TreatNoStadiumAsWarning = RandomGenerator.Bool();
+                project.Preferences.PeriodForPreviousMatches = asSoonAsPossible ? RandomGenerator.Int(1, 2).Hours() : RandomGenerator.Int(5, 8).Days();
+                project.Preferences.PeriodForNextMatches = asSoonAsPossible ? RandomGenerator.Int(1, 2).Hours() : RandomGenerator.Int(5, 8).Days();
 
                 cancellationToken.ThrowIfCancellationRequested();
 

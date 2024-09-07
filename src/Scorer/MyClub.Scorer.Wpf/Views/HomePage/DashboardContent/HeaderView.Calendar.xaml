@@ -41,7 +41,7 @@
 
                                 <!-- Home -->
                                 <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" ToolTip="{Binding HomeTeam.Name}" />
-                                
+
                                 <!-- Score -->
                                 <Grid x:Name="score" Grid.Column="2" Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                                     <Grid.ColumnDefinitions>
@@ -98,9 +98,10 @@
                         <Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
                                 VerticalAlignment="Top"
                                 Command="{Binding Data.NavigateToCalendarCommand, Source={StaticResource ProxyCalendar}}"
+                                CommandParameter="{Binding}"
                                 FontSize="{StaticResource MyNet.Font.Size.Caption}">
                             <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
-                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Format=ddd}" Typography.Capitals="AllSmallCaps" />
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime Format=ddd}" Typography.Capitals="AllSmallCaps" />
                                 <TextBlock Text="{Binding Converter={x:Static my:DayNumberToStringConverter.ToTitle}}" />
                             </my:SimpleStackPanel>
                         </Button>
@@ -194,9 +195,11 @@
 
     <my:CalendarDaysRange Style="{StaticResource Scorer.Styles.Calendar.Events}"
                           Appointments="{Binding Items}"
+                          AppointmentsDisplayMode="Cell"
                           Background="{my:BrushBinding Path=Background,
                                                        RelativeSource={RelativeSource AncestorType={x:Type v:HeaderCalendarView}}}"
                           DatesSelectionMode="None"
-                          DisplayDate="{my:DateTime DisplayDate, Conversion=UtcToCurrent, Mode=OneWay}"
+                          DisplayDate="{my:DateTime DisplayDate,
+                                                    Mode=OneWay}"
                           DisplayDaysCount="9" />
 </UserControl>

@@ -2255,4 +2255,25 @@ Click on this notification to edit the match.</value>
   <data name="Staff" xml:space="preserve">
     <value>Staff</value>
   </data>
+  <data name="ShowPlayedMatches" xml:space="preserve">
+    <value>Show played matches</value>
+  </data>
+  <data name="PreviousMatches" xml:space="preserve">
+    <value>Last match(es)</value>
+  </data>
+  <data name="NextMatches" xml:space="preserve">
+    <value>Next match(es)</value>
+  </data>
+  <data name="PeriodForPreviousMatchesDescription" xml:space="preserve">
+    <value>Specify the time interval before today's date during which matches will be considered in the dashboard on the home page.</value>
+  </data>
+  <data name="PeriodForNextMatchesDescription" xml:space="preserve">
+    <value>Specify the time interval after today's date during which matches will be considered in the dashboard on the home page.</value>
+  </data>
+  <data name="PeriodForPreviousMatches" xml:space="preserve">
+    <value>Last match(es)</value>
+  </data>
+  <data name="PeriodForNextMatches" xml:space="preserve">
+    <value>Next match(es)</value>
+  </data>
 </root>

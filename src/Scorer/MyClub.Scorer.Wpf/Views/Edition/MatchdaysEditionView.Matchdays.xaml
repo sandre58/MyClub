@@ -118,7 +118,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="90" />
                                         <ColumnDefinition Width="10" />
-                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="10" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="10" />
@@ -128,9 +128,9 @@
                                         <ColumnDefinition Width="10" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <DatePicker my:HintAssist.Hint="{my:Resource Date}" IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{Binding Item.Date}" />
+                                    <DatePicker my:HintAssist.Hint="{my:Resource Date}" IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{my:DateTime Item.Date}" />
                                     <my:TimePicker Grid.Column="2"
-                                                   Width="60"
+                                                   Width="80"
                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                    IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}"
                                                    SelectedTime="{my:Time Item.Time}" />
@@ -227,7 +227,7 @@
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="90" />
                                                             <ColumnDefinition Width="10" />
-                                                            <ColumnDefinition Width="60" />
+                                                            <ColumnDefinition Width="80" />
                                                             <ColumnDefinition Width="10" />
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="10" />
@@ -241,7 +241,7 @@
                                                         <DatePicker HorizontalAlignment="Stretch"
                                                                     my:HintAssist.Hint="{my:Resource Date}"
                                                                     IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                                                    SelectedDate="{Binding Date}" />
+                                                                    SelectedDate="{my:DateTime Date}" />
                                                         <my:TimePicker Grid.Column="2"
                                                                        HorizontalAlignment="Stretch"
                                                                        my:HintAssist.Hint="{my:Resource Time}"

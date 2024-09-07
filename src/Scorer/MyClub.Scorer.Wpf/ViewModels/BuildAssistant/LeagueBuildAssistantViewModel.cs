@@ -3,6 +3,7 @@
 
 using System.Threading.Tasks;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
@@ -63,10 +64,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
                 var schedulingParameters = _leagueService.GetSchedulingParameters();
                 if (BuildParameters.AutomaticStartDate)
-                    BuildParameters.StartDate = schedulingParameters.StartDate;
+                    BuildParameters.StartDate = schedulingParameters.GetCurrentStartDate();
 
                 if (BuildParameters.AutomaticEndDate)
-                    BuildParameters.EndDate = schedulingParameters.EndDate;
+                    BuildParameters.EndDate = schedulingParameters.GetCurrentEndDate();
             }
         }
 

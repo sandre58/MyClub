@@ -9,6 +9,7 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.SchedulePage;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Extensions;
 using MyNet.UI.Locators;
@@ -20,7 +21,12 @@ namespace MyClub.Scorer.Wpf.Services
                                                IViewModelLocator viewModelLocator)
         : PresentationServiceBase<MatchdayViewModel, MatchdayEditionViewModel, MatchdayService>(service, viewModelLocator)
     {
-        public async Task OpenAsync(MatchdayViewModel item) => await EditAsync(item).ConfigureAwait(false);
+        public Task OpenAsync(MatchdayViewModel item)
+        {
+            NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeByParent), item.Id);
+
+            return Task.CompletedTask;
+        }
 
         public async Task AddMultipleAsync(IMatchdayParent parent)
         {

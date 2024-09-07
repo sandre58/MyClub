@@ -44,7 +44,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [CanSetIsModified(false)]
         public Guid? Id { get; }
 
-        public EditableDateTime DateTime { get; set; } = new();
+        public EditableDateTime CurrentDate { get; set; } = new();
 
         [IsRequired]
         [Display(Name = nameof(Name), ResourceType = typeof(MyClubResources))]
@@ -82,8 +82,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             var item = new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium);
 
-            if (item.DateTime.HasValue)
-                item.DateTime.Load(DateTime.DateTime.GetValueOrDefault());
+            item.CurrentDate.Date = CurrentDate.Date;
+            item.CurrentDate.Time = CurrentDate.Time;
+
             Matches.Add(item);
         }
 
@@ -95,8 +96,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
                 var result = new EditableMatchViewModel(_teams, _stadiums, _useHomeTeamStadium);
-                if (result.DateTime.HasValue)
-                    result.DateTime.Load(DateTime.DateTime.GetValueOrDefault());
+
+                result.CurrentDate.Date = CurrentDate.Date;
+                result.CurrentDate.Time = CurrentDate.Time;
+
+                if (result.CurrentDate.HasValue)
+                    result.CurrentDate.Load(CurrentDate.DateTime.GetValueOrDefault());
                 result.HomeTeam = result.AvailableTeams.GetById(x.HomeTeam.Id);
                 result.AwayTeam = result.AvailableTeams.GetById(x.AwayTeam.Id);
                 result.StadiumSelection.Select(x.Stadium?.Id);

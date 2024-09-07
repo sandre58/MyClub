@@ -46,7 +46,7 @@
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarAccount}">
             <my:SimpleStackPanel Orientation="Horizontal">
                 <DatePicker VerticalAlignment="Bottom" my:HintAssist.Hint="{my:Resource Birthdate}" SelectedDate="{Binding Birthdate, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}" VerticalAlignment="Bottom" Text="{my:Resource To}" />
+                <TextBlock Margin="{StaticResource MyNet.Margins.Default.Bottom}" VerticalAlignment="Bottom" Text="{my:Resource To, Casing=LowerCase}" />
                 <TextBox Width="180" my:HintAssist.Hint="{my:Resource PlaceOfBirth}" Text="{Binding PlaceOfBirth, UpdateSourceTrigger=PropertyChanged}" />
             </my:SimpleStackPanel>
         </GroupBox>

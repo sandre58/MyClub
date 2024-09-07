@@ -14,26 +14,6 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
-
-        <!--<DataTemplate DataType="{x:Type display:DisplayModeGrid}" />
-        <DataTemplate DataType="{x:Type display:DisplayModeMonth}">
-            <my:SimpleStackPanel Orientation="Horizontal">
-                <my:MonthPicker Style="{StaticResource MyNet.Styles.MonthPicker.Alternate.Outlined}"
-                            Width="210"
-                            FontSize="{StaticResource MyNet.Font.Size.Caption}"
-                            FontWeight="SemiBold"
-                            SelectedMonth="{Binding Month, RelativeSource={RelativeSource AncestorType={x:Type v:MatchdaysView}}}"
-                            SelectedMonthFormat="MMMM yyyy" />
-                <TextBlock Text="{Binding Month, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type v:MatchdaysView}}}" />
-            </my:SimpleStackPanel>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type display:DisplayModeYear}">
-            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Alternate.Outlined}"
-                              Width="210"
-                              FontSize="{StaticResource MyNet.Font.Size.Caption}"
-                              FontWeight="SemiBold"
-                              Value="{Binding DisplayDate, Converter={x:Static my:DateToYearConverter.Default}}" />
-        </DataTemplate>-->
     </UserControl.Resources>
 
     <!-- Shortcuts -->
@@ -105,8 +85,8 @@
                                                                 Width="210"
                                                                 FontSize="{StaticResource MyNet.Font.Size.Caption}"
                                                                 FontWeight="SemiBold"
-                                                                SelectedMonth="{Binding Display.Mode.DisplayDate}"
-                                                                SelectedMonthFormat="MMMM yyyy" />
+                                                                SelectedMonth="{my:DateTime Display.Mode.DisplayDate}"
+                                                                SelectedMonthFormat="Y" />
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>
@@ -119,7 +99,7 @@
                                                                   FontSize="{StaticResource MyNet.Font.Size.Caption}"
                                                                   FontWeight="SemiBold"
                                                                   Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
-                                                                  Value="{Binding Display.Mode.DisplayDate, Converter={x:Static my:DateToYearConverter.Default}}" />
+                                                                  Value="{my:DateTime Display.Mode.DisplayDate, Converter={x:Static my:DateToYearConverter.Default}}" />
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>

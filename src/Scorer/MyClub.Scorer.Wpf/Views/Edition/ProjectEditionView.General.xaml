@@ -5,6 +5,7 @@
              xmlns:enums="clr-namespace:MyClub.Scorer.Domain.Enums;assembly=MyClub.Scorer.Domain"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
              d:DataContext="{d:DesignInstance Type=vm:ProjectEditionGeneralViewModel}"
@@ -60,15 +61,67 @@
                          FontSize="{StaticResource MyNet.Font.Size.Caption}" />
         </ListBox>
 
-
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
                   Grid.Row="2"
                   my:HeaderAssist.FontSize="{StaticResource MyNet.Font.Size.Title}"
                   my:IconAssist.Icon="{my:MediumIcon Kind=Settings}"
                   Header="{my:Resource Preferences}">
-            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" VerticalAlignment="Top" Header="{my:MediumIcon Kind=AlertRemove}">
-                <ToggleButton Content="{my:Resource TreatNoStadiumAsWarning}" IsChecked="{Binding TreatNoStadiumAsWarning}" />
-            </GroupBox>
+            <my:SimpleStackPanel>
+
+                <!-- TreatNoStadiumAsWarning -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                          VerticalAlignment="Top"
+                          my:HeaderAssist.Size="150"
+                          Header="{my:MediumIcon Kind=AlertRemove}">
+                    <ToggleButton Content="{my:Resource TreatNoStadiumAsWarning}" IsChecked="{Binding TreatNoStadiumAsWarning}" />
+                </GroupBox>
+
+                <!-- PeriodForPreviousMatches -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Size="150" Header="{my:Resource PeriodForPreviousMatches}">
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <my:NumericUpDown Width="100"
+                                          my:HintAssist.Hint="{my:Resource Interval}"
+                                          Minimum="0"
+                                          Value="{my:NullableBinding PeriodForPreviousMatchesValue}" />
+                        <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                                  SelectedIndex="0"
+                                  SelectedValue="{Binding PeriodForPreviousMatchesUnit}"
+                                  SelectedValuePath="DataContext">
+                            <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                            <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                            <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                            <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
+                        </ComboBox>
+                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                           my:HeaderAssist.Header="{my:Resource PeriodForPreviousMatches}"
+                                           PopupContent="{my:Resource PeriodForPreviousMatchesDescription}"
+                                           ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                    </my:SimpleStackPanel>
+                </GroupBox>
+
+                <!-- PeriodForNextMatches -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Size="150" Header="{my:Resource PeriodForNextMatches}">
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <my:NumericUpDown Width="100"
+                                          my:HintAssist.Hint="{my:Resource Interval}"
+                                          Minimum="0"
+                                          Value="{my:NullableBinding PeriodForNextMatchesValue}" />
+                        <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                                  SelectedIndex="0"
+                                  SelectedValue="{Binding PeriodForNextMatchesUnit}"
+                                  SelectedValuePath="DataContext">
+                            <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                            <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                            <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                            <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
+                        </ComboBox>
+                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                           my:HeaderAssist.Header="{my:Resource PeriodForNextMatches}"
+                                           PopupContent="{my:Resource PeriodForNextMatchesDescription}"
+                                           ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                    </my:SimpleStackPanel>
+                </GroupBox>
+            </my:SimpleStackPanel>
         </GroupBox>
     </Grid>
 </UserControl>

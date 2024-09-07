@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="MyNet.Utilities.Authentication.Windows" Version="5.0.0-alpha" />
-    <PackageReference Include="MyNet.Utilities.IO.Registry" Version="5.0.0-alpha" />
+    <PackageReference Include="MyNet.Utilities.Authentication.Windows" Version="5.0.0" />
+    <PackageReference Include="MyNet.Utilities.IO.Registry" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />

@@ -69,7 +69,10 @@
                                     <TextBlock Text="{Binding Item.ShortName}" />
 
                                     <!-- Matches -->
-                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" PlacementMode="BottomAndAlignCentres" Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                                       MaxPopupWidth="{x:Static sys:Double.NaN}"
+                                                       PlacementMode="BottomAndAlignCentres"
+                                                       Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                         <my:DropDownButton.ToggleContent>
                                             <my:Icon Kind="InfoCircle" />
                                         </my:DropDownButton.ToggleContent>
@@ -530,6 +533,7 @@
             <my:CalendarDaysByYear my:HeaderAssist.Background="{DynamicResource MyNet.Brushes.Control.Background}"
                                    AddCommand="{Binding AddToDateCommand}"
                                    Appointments="{Binding Wrappers}"
+                                   AppointmentsDisplayMode="Cell"
                                    AppointmentsMargin="0"
                                    BorderThickness="0"
                                    CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
@@ -538,11 +542,7 @@
                                    LastDayOfWeekIsHighlighted="True"
                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
                                    SelectionMode="Extended"
-                                   ShowHeader="False">
-                <my:CalendarDaysByYear.ItemsPanel>
-                    <ItemsPanelTemplate />
-                </my:CalendarDaysByYear.ItemsPanel>
-            </my:CalendarDaysByYear>
+                                   ShowHeader="False" />
         </my:DynamicScrollViewer>
     </my:Card>
 </UserControl>

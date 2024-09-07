@@ -155,7 +155,7 @@
                                                                                     Format=LongDatePattern}">
                                                         <StackPanel HorizontalAlignment="Center">
                                                             <TextBlock HorizontalAlignment="Center" Text="{my:Translation StartDate, Format=DateDayNumberFormat}" />
-                                                            <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=DateShortMonthFormat}" />
+                                                            <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DateTime StartDate, Format=dd}" />
                                                         </StackPanel>
                                                     </Label>
                                                     <my:SimpleStackPanel Grid.Column="1" Spacing="{StaticResource MyNet.Margin.Small}">

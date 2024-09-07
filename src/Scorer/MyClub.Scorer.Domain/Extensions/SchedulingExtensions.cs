@@ -14,6 +14,12 @@ namespace MyClub.Scorer.Domain.Extensions
 {
     public static class SchedulingExtensions
     {
+        public static DateOnly GetCurrentStartDate(this SchedulingParameters parameters) => parameters.Start().ToCurrentTime().ToDate();
+
+        public static DateOnly GetCurrentEndDate(this SchedulingParameters parameters) => parameters.EndDate.At(parameters.StartTime).ToCurrentTime().ToDate();
+
+        public static TimeOnly GetCurrentStartTime(this SchedulingParameters parameters) => parameters.Start().ToCurrentTime().ToTime();
+
         public static bool CanAutomaticReschedule(this SchedulingParameters parameters) => parameters.AsSoonAsPossible || parameters.DateRules.Count > 0;
 
         public static bool CanAutomaticRescheduleVenue(this SchedulingParameters parameters) => parameters.UseHomeVenue || parameters.VenueRules.Count > 0 || parameters.AsSoonAsPossible;

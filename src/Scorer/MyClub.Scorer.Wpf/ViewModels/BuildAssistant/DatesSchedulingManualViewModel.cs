@@ -20,6 +20,7 @@ using MyNet.UI.Toasting;
 using MyNet.UI.ViewModels.Display;
 using MyNet.Utilities;
 using MyNet.Utilities.Helpers;
+using MyClub.Scorer.Domain.Extensions;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 {
@@ -130,8 +131,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         public void Load(SchedulingParameters schedulingParameters)
         {
-            DateSelection.DisplayDate = schedulingParameters.StartDate.BeginningOfDay();
-            Reset(schedulingParameters.StartDate.At(schedulingParameters.StartTime));
+            DateSelection.DisplayDate = schedulingParameters.GetCurrentStartDate().BeginningOfDay();
+            Reset(schedulingParameters.Start().ToCurrentTime());
         }
 
         public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime) => new BuildManualDatesParametersDto
@@ -141,16 +142,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         private List<(DateTime, IEnumerable<DateTime>)> ProvideDates(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime)
             => Dates.Take(countMatchdays).Select(x => (x.To(x => TimeSelectionMethod switch
             {
-                TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.At(x.Time.GetValueOrDefault()),
-                TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.At(MatchTimes.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime),
-                TimeSelectionMethod.UseUniqueTimeByMatch => x.Date.At(x.Times.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime),
-                _ => x.Date.At(defaultTime),
+                TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.At(x.Time.GetValueOrDefault()).ToUniversalTime(),
+                TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.At(MatchTimes.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime).ToUniversalTime(),
+                TimeSelectionMethod.UseUniqueTimeByMatch => x.Date.At(x.Times.OrderBy(x => x.Time).FirstOrDefault()?.Time ?? defaultTime).ToUniversalTime(),
+                _ => x.Date.At(defaultTime).ToUniversalTime(),
             }), EnumerableHelper.Range(0, countMatchesByMatchday - 1, 1).Select(y => TimeSelectionMethod switch
                 {
-                    TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.At(x.Time.GetValueOrDefault()),
-                    TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.At(MatchTimes.GetByIndex(y)?.Time ?? defaultTime),
-                    TimeSelectionMethod.UseUniqueTimeByMatch => (x.Times.GetByIndex(y) is EditableDateTimeWrapper wrapper && wrapper.UpdateDate ? wrapper.Date : x.Date).At(x.Times.GetByIndex(y)?.Time ?? defaultTime),
-                    _ => x.Date.At(defaultTime),
+                    TimeSelectionMethod.UseUniqueTimeByMatchday => x.Date.At(x.Time.GetValueOrDefault()).ToUniversalTime(),
+                    TimeSelectionMethod.UseUniqueTimeByMatches => x.Date.At(MatchTimes.GetByIndex(y)?.Time ?? defaultTime).ToUniversalTime(),
+                    TimeSelectionMethod.UseUniqueTimeByMatch => (x.Times.GetByIndex(y) is EditableDateTimeWrapper wrapper && wrapper.UpdateDate ? wrapper.Date : x.Date).At(x.Times.GetByIndex(y)?.Time ?? defaultTime).ToUniversalTime(),
+                    _ => x.Date.At(defaultTime).ToUniversalTime(),
                 }))).ToList();
 
         private void AddToDate(DateOnly date, TimeOnly? time = null) => _dates.Add(new EditableDateOfMatchdayWrapper(date, time ?? _defaultTime, _countMatches));

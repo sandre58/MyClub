@@ -11,8 +11,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 {
     internal sealed class RankingListParameterProvider : ListParametersProvider
     {
-        private readonly DisplayViewModel _display = new DisplayViewModel().AddMode(new DisplayModeList(
-            [
+        private readonly DisplayViewModel _display;
+
+        public static RankingListParameterProvider Full => new([
                 nameof(RankingRowViewModel.Rank),
                 nameof(RankingRowViewModel.Progression),
                 nameof(RankingRowViewModel.Label),
@@ -27,7 +28,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                 nameof(RankingRowViewModel.GoalsAgainst),
                 nameof(RankingRowViewModel.GoalsDifference),
                 nameof(RankingRowViewModel.LastMatches)
-            ]), true);
+            ]);
+
+        public static RankingListParameterProvider Compact => new([
+                nameof(RankingRowViewModel.Rank),
+                nameof(RankingRowViewModel.Team),
+                nameof(RankingRowViewModel.Points),
+                nameof(RankingRowViewModel.Played),
+                nameof(RankingRowViewModel.GoalsDifference)
+    ]);
+
+        private RankingListParameterProvider(string[] defaultColumns) => _display = new DisplayViewModel().AddMode(new DisplayModeList(defaultColumns), true);
 
         private readonly SortingViewModel _sort = new(nameof(RankingRowViewModel.Rank));
 

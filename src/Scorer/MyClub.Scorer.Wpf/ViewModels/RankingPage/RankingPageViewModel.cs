@@ -19,7 +19,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 {
     internal class RankingPageViewModel : PageViewModel
     {
-        private readonly RankingListParameterProvider _rankingListParameterProvider = new();
+        private readonly RankingListParameterProvider _rankingListParameterProvider = RankingListParameterProvider.Full;
         private CompositeDisposable? _disposables;
 
         public RankingPageViewModel(CompetitionInfoProvider competitionInfoProvider, MatchesProvider matchesProvider, LeaguePresentationService leaguePresentationService)

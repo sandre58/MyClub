@@ -53,6 +53,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
             });
         }
 
+        public bool IsLoading { get; set; }
+
         public ReadOnlyObservableCollection<TViewModel> Items { get; }
 
         ReadOnlyObservableCollection<TViewModel> ISourceProvider<TViewModel>.Source => Items;
@@ -84,6 +86,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
 
             var stopWatch = new Stopwatch();
             stopWatch.Start();
+            IsLoading = true;
 
             SourceSubscriptions = new(
                 source
@@ -93,6 +96,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
                 {
                     if (stopWatch.IsRunning)
                     {
+                        IsLoading = false;
                         stopWatch.Stop();
                         LogManager.Debug($"{GetType().Name} : Load {x.Adds} item(s) in {stopWatch.ElapsedMilliseconds}ms");
                         _onLoadSubject.OnNext(true);

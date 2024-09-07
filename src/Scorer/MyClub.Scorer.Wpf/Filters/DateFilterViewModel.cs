@@ -3,7 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using DynamicData;
+using DynamicData.Binding;
 using MyNet.UI.Commands;
 using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyNet.Utilities;
@@ -18,6 +21,13 @@ namespace MyClub.Scorer.Wpf.Filters
             NextDateCommand = CommandsManager.Create(() => Value = GetNextDate(Value), () => GetNextDate(Value) != default);
             NextFixturesCommand = CommandsManager.Create(() => Value = GetNextFixtures(), () => GetNextFixtures() != default && GetNextFixtures() != Value);
             LatestResultsCommand = CommandsManager.Create(() => Value = GetLatestResults(), () => GetLatestResults() != default && GetLatestResults() != Value);
+
+            if (allowedValues is ReadOnlyObservableCollection<DateOnly> collection)
+            {
+                collection.ToObservableChangeSet().OnItemAdded(x => Value.IfNull(Reset))
+                                                  .OnItemRemoved(x => (Value == x).IfTrue(Reset))
+                                                  .Subscribe();
+            }
         }
 
         public ICommand PreviousDateCommand { get; private set; }
@@ -48,8 +58,7 @@ namespace MyClub.Scorer.Wpf.Filters
             {
                 var previousDate = GetPreviousDate(DateTime.UtcNow.ToDate());
 
-                if (previousDate != default)
-                    Value = previousDate;
+                Value = previousDate != default ? previousDate : null;
             }
         }
 

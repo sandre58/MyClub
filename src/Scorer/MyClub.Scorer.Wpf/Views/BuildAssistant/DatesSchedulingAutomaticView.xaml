@@ -24,7 +24,7 @@
         <!-- Start Date -->
         <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource GenerateItemsFromDate}" />
-            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime StartDate}" />
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Every, Casing=LowerCase}" />
             <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown}"
                               Width="60"

@@ -16,6 +16,7 @@
         <my:BindingProxy x:Key="LocalProxy" Data="{Binding ElementName=local}" />
     </ToolBar.Resources>
 
+    <Button Command="{Binding OpenCommand}" Content="{my:ToolIcon Kind=Eye}" ToolTip="{my:Resource SeeItem}" />
     <Button Command="{Binding EditCommand}" Content="{my:ToolIcon Kind=Edit}" ToolTip="{my:Resource Edit}" />
     <my:DropDownButton x:Name="DropDownButton"
                        Padding="0"

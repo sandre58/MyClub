@@ -30,14 +30,7 @@
                                         BorderThickness="{TemplateBinding BorderThickness}"
                                         ClipToBounds="{TemplateBinding ClipToBounds}">
                                     <Grid>
-                                        <!--<Border x:Name="rankBorder" Opacity="{StaticResource MyNet.Opacity.Checked}">
-                                            <Border.Background>
-                                                <MultiBinding Converter="{x:Static c:RankingRankToLabelConverter.Background}">
-                                                    <Binding Path="Rank" />
-                                                    <Binding Path="DataContext.RankingRules" RelativeSource="{RelativeSource AncestorType={x:Type ListView}}" />
-                                                </MultiBinding>
-                                            </Border.Background>
-                                        </Border>-->
+                                        <Border x:Name="rankBorder" Background="{Binding Label.Color, Converter={x:Static my:BrushConverter.Default}}" Opacity="{StaticResource MyNet.Opacity.Checked}" />
                                         <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
                                             <GridViewRowPresenter.Resources>
                                                 <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
@@ -61,4 +54,8 @@
         </Setter>
     </Style>
 
+    <Style x:Key="Scorer.Styles.ListView.Ranking.Small" BasedOn="{StaticResource Scorer.Styles.ListView.Ranking}" TargetType="{x:Type ListView}">
+        <Setter Property="my:ListViewAssist.HeaderHeight" Value="25" />
+        <Setter Property="my:ListViewAssist.ItemMinHeight" Value="22" />
+    </Style>
 </ResourceDictionary>

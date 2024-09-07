@@ -33,8 +33,7 @@
                     <MenuItem Command="{Binding OpenCommand}" Header="{Binding Name}" />
                     <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
                     <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
-                    <MenuItem Command="{Binding EditResultsCommand}" Header="{my:Resource EditResults}" Icon="{my:ToolIcon Kind=LibraryEdit}" />
-                    <MenuItem Command="{Binding AddMatchesCommand}" Header="{my:Resource AddMatches}" Icon="{my:ToolIcon Kind=LibraryAdd}" />
+                    <MenuItem Command="{Binding AddMatchCommand}" Header="{my:Resource AddMatch}" Icon="{my:ToolIcon Kind=LibraryAdd}" />
                     <MenuItem Command="{Binding DuplicateCommand}" Header="{my:Resource Duplicate}" Icon="{my:ToolIcon Kind=ContentDuplicate}" />
                     <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
                     <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />

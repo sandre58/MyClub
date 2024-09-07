@@ -7,6 +7,7 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyNet.Observable;
+using MyNet.Utilities.Localization;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 {
@@ -25,7 +26,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         public void Load(SchedulingParameters schedulingParameters)
         {
             Start.Load(schedulingParameters.Start());
-            Rules.Load(schedulingParameters.AsSoonAsPossibleRules);
+            Rules.Load(schedulingParameters.AsSoonAsPossibleRules.SelectMany(x => x.ConvertToTimeZone(TimeZoneInfo.Utc, GlobalizationService.Current.TimeZone)));
         }
 
         public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime) => new BuildAsSoonAsPossibleDatesParametersDto

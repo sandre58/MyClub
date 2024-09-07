@@ -1,0 +1,158 @@
+﻿<ListView x:Class="MyClub.Scorer.Wpf.Views.RankingPage.RankingListSmallView"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:my="http://mynet.com/xaml/themes"
+          xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.RankingPage"
+          Style="{StaticResource Scorer.Styles.ListView.Ranking.Small}"
+          d:DataContext="{d:DesignInstance Type=vm:RankingListViewModel}"
+          x:Shared="False"
+          mc:Ignorable="d">
+    <ListView.Resources>
+        <my:BindingProxy x:Key="RankingProxy" Data="{Binding}" />
+    </ListView.Resources>
+    <ListView.View>
+        <GridView>
+            <GridView.Columns>
+
+                <!-- Rank -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Rank" my:GridViewColumnAssist.Width="30" Header="{my:Resource Rank}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource RankAbbr}"
+                                       ToolTip="{my:Resource Rank}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
+                                    HorizontalAlignment="Center"
+                                    Command="{Binding Data.NavigateToPastPositionsCommand, Source={StaticResource RankingProxy}}"
+                                    CommandParameter="{Binding Team}"
+                                    Content="{Binding Rank}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- Team -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Team" my:GridViewColumnAssist.Width="*" Header="{my:Resource Team}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{my:Resource Team}" Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <ContentControl Content="{Binding Team}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Small.Away}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- Played -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Played" my:GridViewColumnAssist.Width="30" Header="{my:Resource GamesPlayed}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource GamesPlayedAbbr}"
+                                       ToolTip="{my:Resource GamesPlayed}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" Text="{Binding Played}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- Won -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesWon" my:GridViewColumnAssist.Width="30" Header="{my:Resource GamesWon}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource GamesWonAbbr}"
+                                       ToolTip="{my:Resource GamesWon}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" Text="{Binding GamesWon}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- GamesDrawn -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesDrawn" my:GridViewColumnAssist.Width="30" Header="{my:Resource GamesDrawn}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource GamesDrawnAbbr}"
+                                       ToolTip="{my:Resource GamesDrawn}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" Text="{Binding GamesDrawn}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- GamesLost -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="GamesLost" my:GridViewColumnAssist.Width="30" Header="{my:Resource GamesLost}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource GamesLostAbbr}"
+                                       ToolTip="{my:Resource GamesLost}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" Text="{Binding GamesLost}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- GoalsDifference -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="GoalsDifference" my:GridViewColumnAssist.Width="32" Header="{my:Resource GoalsDifference}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource GoalsDifferenceAbbr}"
+                                       ToolTip="{my:Resource GoalsDifference}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" Text="{Binding GoalsDifference}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
+                <!-- Points -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Points" my:GridViewColumnAssist.Width="30" Header="{my:Resource Points}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Text="{my:Resource PointsAbbr}"
+                                       ToolTip="{my:Resource Points}"
+                                       Typography.Capitals="AllSmallCaps" />
+                        </DataTemplate>
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Center" FontWeight="Bold" Text="{Binding Points}" />
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+            </GridView.Columns>
+        </GridView>
+    </ListView.View>
+</ListView>

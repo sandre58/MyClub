@@ -55,12 +55,12 @@
                     <DatePicker Width="115"
                                 my:HintAssist.Hint="{my:Resource Date}"
                                 my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
-                                SelectedDate="{my:DateTime DateTime.Date}">
+                                SelectedDate="{my:DateTime CurrentDate.Date}">
                         <my:IconAssist.Icon>
                             <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding DateAvailability}" />
                         </my:IconAssist.Icon>
                     </DatePicker>
-                    <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time DateTime.Time}" />
+                    <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time CurrentDate.Time}" />
                 </my:SimpleStackPanel>
                 <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
                     <TextBlock Text="{my:Resource Automatic}">

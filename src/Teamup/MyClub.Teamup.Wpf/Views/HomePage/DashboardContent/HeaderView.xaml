@@ -110,9 +110,9 @@
 
                     <!--  Season  -->
                     <my:SimpleStackPanel Grid.Row="3" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
-                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation CurrentProject.Season.Period.Start, Format=DateShortMonthYearFormat, Casing=Title}" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime CurrentProject.Season.Period.Start, Format=Y, Casing=Title}" />
                         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="-" />
-                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation CurrentProject.Season.Period.End, Format=DateShortMonthYearFormat, Casing=Title}" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime CurrentProject.Season.Period.End, Format=Y, Casing=Title}" />
                     </my:SimpleStackPanel>
 
                 </Grid>

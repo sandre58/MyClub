@@ -27,7 +27,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [CanSetIsModified(false)]
         public Guid? Id { get; }
 
-        public EditableDateTime DateTime { get; set; } = new();
+        public EditableDateTime CurrentDate { get; set; } = new();
 
         [IsRequired]
         [Display(Name = nameof(HomeTeam), ResourceType = typeof(MyClubResources))]
@@ -71,7 +71,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 }));
         }
 
-        internal bool IsValid() => DateTime.HasValue && HomeTeam is not null && AwayTeam is not null;
+        internal bool IsValid() => CurrentDate.HasValue && HomeTeam is not null && AwayTeam is not null;
 
         public void InvertTeams()
         {

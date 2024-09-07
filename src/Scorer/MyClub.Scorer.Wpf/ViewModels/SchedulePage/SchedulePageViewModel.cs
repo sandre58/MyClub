@@ -11,6 +11,7 @@ using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Navigation.Models;
+using MyNet.UI.ViewModels.Display;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
@@ -52,8 +53,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         {
             base.LoadParameters(parameters);
 
-            if (parameters?.Get<object>(NavigationCommandsService.SelectionParameterKey) is IEnumerable<Guid> seletedGuids)
-                MatchesPlanningViewModel?.SelectItems(seletedGuids);
+            if (parameters?.Get<string>(NavigationCommandsService.DisplayModeParameterKey) is string displayMode && !string.IsNullOrEmpty(displayMode))
+            {
+                switch (displayMode)
+                {
+                    case nameof(DisplayModeByDate):
+                    case nameof(DisplayModeByParent):
+                    case nameof(DisplayModeDay):
+                    case nameof(DisplayModeList):
+                        MatchesPlanningViewModel?.Load(displayMode, parameters?.Get<object>(NavigationCommandsService.FilterParameterKey));
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 }

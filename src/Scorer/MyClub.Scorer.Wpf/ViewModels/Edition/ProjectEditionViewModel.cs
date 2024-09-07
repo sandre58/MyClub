@@ -12,7 +12,6 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.BuildAssistant;
@@ -171,7 +170,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             GeneralViewModel.Type = _projectInfoProvider.Type;
             GeneralViewModel.CanEditType = false;
             GeneralViewModel.TreatNoStadiumAsWarning = _projectInfoProvider.TreatNoStadiumAsWarning;
-
+            (GeneralViewModel.PeriodForPreviousMatchesValue, GeneralViewModel.PeriodForPreviousMatchesUnit) = _projectInfoProvider.PeriodForPreviousMatches.Simplify();
+            (GeneralViewModel.PeriodForNextMatchesValue, GeneralViewModel.PeriodForNextMatchesUnit) = _projectInfoProvider.PeriodForNextMatches.Simplify();
             StadiumsViewModel.IsEnabled = false;
             TeamsViewModel.IsEnabled = false;
             MatchFormatViewModel.IsEnabled = false;
@@ -247,6 +247,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Image = Image,
                 Name = Name,
                 TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
+                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
+                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit)
             });
         }
 
@@ -263,6 +265,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Image = Image,
                 Name = Name,
                 TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
+                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
+                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit),
                 Stadiums = ToStadiumDtos(),
                 Teams = ToTeamDtos(),
                 BuildParameters = ToLeagueBuildParameters()
@@ -272,6 +276,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Image = Image,
                 Name = Name,
                 TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
+                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
+                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit),
                 Stadiums = ToStadiumDtos(),
                 Teams = ToTeamDtos()
             },
@@ -280,6 +286,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Image = Image,
                 Name = Name,
                 TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
+                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
+                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit),
                 Stadiums = ToStadiumDtos(),
                 Teams = ToTeamDtos()
             },

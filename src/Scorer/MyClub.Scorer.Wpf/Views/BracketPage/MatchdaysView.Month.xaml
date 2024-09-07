@@ -20,63 +20,63 @@
 
                 <!-- Is Postponed -->
                 <Path HorizontalAlignment="Right"
-                                  VerticalAlignment="Top"
-                                  Data="M 20 0 V -20 H 0 Z"
-                                  Fill="{DynamicResource MyNet.Brushes.Warning}"
-                                  Stretch="Uniform"
-                                  ToolTip="{my:Resource Postponed}"
-                                  Visibility="{Binding Item.IsPostponed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                      VerticalAlignment="Top"
+                      Data="M 20 0 V -20 H 0 Z"
+                      Fill="{DynamicResource MyNet.Brushes.Warning}"
+                      Stretch="Uniform"
+                      ToolTip="{my:Resource Postponed}"
+                      Visibility="{Binding Item.IsPostponed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                 <DockPanel Margin="{StaticResource MyNet.Margins.Default}">
 
                     <!-- ToolBar -->
                     <v:MatchdayToolBar x:Name="ToolBar"
-                                                   Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
-                                                   HorizontalAlignment="Right"
-                                                   DataContext="{Binding Item}"
-                                                   DockPanel.Dock="Right"
-                                                   RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
-                                                   Visibility="Hidden" />
+                                       Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                       HorizontalAlignment="Right"
+                                       DataContext="{Binding Item}"
+                                       DockPanel.Dock="Right"
+                                       RemoveCommand="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                       Visibility="Hidden" />
 
                     <DockPanel>
 
                         <Grid Width="25">
                             <CheckBox x:Name="Selection"
-                                                  Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"
-                                                  BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
-                                                                                Opacity={StaticResource MyNet.Opacity.Secondary}}"
-                                                  IsChecked="{Binding IsSelected}"
-                                                  Visibility="Hidden" />
+                                      Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                                    Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                                      IsChecked="{Binding IsSelected}"
+                                      Visibility="Hidden" />
                             <my:PackIcon x:Name="Icon"
-                                                     Width="22"
-                                                     Height="22"
-                                                     HorizontalAlignment="Center"
-                                                     VerticalAlignment="Center"
-                                                     Kind="Soccer" />
+                                         Width="22"
+                                         Height="22"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Kind="Soccer" />
                         </Grid>
 
                         <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Left}"
-                                                         VerticalAlignment="Center"
-                                                         Orientation="Horizontal"
-                                                         Spacing="{StaticResource MyNet.Margin.Default}">
+                                             VerticalAlignment="Center"
+                                             Orientation="Horizontal"
+                                             Spacing="{StaticResource MyNet.Margin.Default}">
 
                             <!-- Name -->
                             <TextBlock Text="{Binding Item.Name}" />
 
                             <!-- Matches -->
                             <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
-                                                           MaxPopupWidth="{x:Static sys:Double.NaN}"
-                                                           PlacementMode="BottomAndAlignCentres"
-                                                           Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+                                               MaxPopupWidth="{x:Static sys:Double.NaN}"
+                                               PlacementMode="BottomAndAlignCentres"
+                                               Visibility="{Binding Item.Matches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                 <my:DropDownButton.ToggleContent>
                                     <my:Icon Kind="InfoCircle" />
                                 </my:DropDownButton.ToggleContent>
                                 <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}"
-                                                          Width="400"
-                                                          AlternationCount="2"
-                                                          ItemsSource="{Binding Item.Matches}">
+                                              Width="400"
+                                              AlternationCount="2"
+                                              ItemsSource="{Binding Item.Matches}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
@@ -209,12 +209,15 @@
                                            Focusable="False"
                                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
                                     <Grid>
-                                        <ContentPresenter x:Name="DayText"
-                                                          Margin="{StaticResource MyNet.Margins.Default}"
-                                                          HorizontalAlignment="Stretch"
-                                                          VerticalAlignment="Stretch"
-                                                          Content="{TemplateBinding Content}"
-                                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                        <Button x:Name="DayText"
+                                                Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
+                                                Margin="{StaticResource MyNet.Margins.Default}"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Top"
+                                                Command="{Binding Data.OpenDateCommand, Source={StaticResource Proxy}}"
+                                                CommandParameter="{TemplateBinding Content}"
+                                                Content="{TemplateBinding Content}"
+                                                ContentTemplate="{TemplateBinding ContentTemplate}" />
                                         <Button x:Name="PART_AddButton"
                                                 Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                                 Grid.Column="1"
@@ -227,7 +230,7 @@
                                                  Margin="0 25 0 0"
                                                  ItemContainerStyle="{StaticResource Scorer.Styles.ListBoxItem.Matchday}"
                                                  ItemTemplate="{StaticResource Scorer.DataTemplates.Matchday}"
-                                                 ItemsSource="{TemplateBinding Appointments}"
+                                                 ItemsSource="{Binding Appointments, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
                                                  SelectionMode="Extended">
 
                                             <ListBox.ItemsPanel>
@@ -276,6 +279,7 @@
         <my:CalendarDaysByMonth my:HeaderAssist.Background="{DynamicResource MyNet.Brushes.Control.Background}"
                                 AddCommand="{Binding AddToDateCommand}"
                                 Appointments="{Binding Wrappers}"
+                                AppointmentsDisplayMode="Cell"
                                 BorderThickness="0"
                                 CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
                                 DatesSelectionMode="None"
@@ -283,10 +287,6 @@
                                 FirstDayOfWeek="{Binding Display.Mode.FirstDayOfWeek}"
                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                 SelectionMode="Extended"
-                                ShowHeader="False">
-            <my:CalendarDaysByMonth.ItemsPanel>
-                <ItemsPanelTemplate />
-            </my:CalendarDaysByMonth.ItemsPanel>
-        </my:CalendarDaysByMonth>
+                                ShowHeader="False" />
     </my:Card>
 </UserControl>

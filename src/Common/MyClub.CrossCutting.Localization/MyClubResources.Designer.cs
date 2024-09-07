@@ -3696,6 +3696,15 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Prochain(s) match(s).
+        /// </summary>
+        public static string NextMatches {
+            get {
+                return ResourceManager.GetString("NextMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Prochain entrainement.
         /// </summary>
         public static string NextTraining {
@@ -4132,6 +4141,42 @@ namespace MyClub.CrossCutting.Localization {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Prochain(s) match(s).
+        /// </summary>
+        public static string PeriodForNextMatches {
+            get {
+                return ResourceManager.GetString("PeriodForNextMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Indique l&apos;intervalle de temps après la date du jour durant lequel les matchs seront pris en compte dans le tableau de bord de la page d&apos;accueil..
+        /// </summary>
+        public static string PeriodForNextMatchesDescription {
+            get {
+                return ResourceManager.GetString("PeriodForNextMatchesDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dernier(s) match(s).
+        /// </summary>
+        public static string PeriodForPreviousMatches {
+            get {
+                return ResourceManager.GetString("PeriodForPreviousMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Indique l&apos;intervalle de temps avant la date du jour durant lequel les matchs seront pris en compte dans le tableau de bord de la page d&apos;accueil..
+        /// </summary>
+        public static string PeriodForPreviousMatchesDescription {
+            get {
+                return ResourceManager.GetString("PeriodForPreviousMatchesDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Période(s).
         /// </summary>
         public static string Periods {
@@ -4426,6 +4471,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string PreviousMatch {
             get {
                 return ResourceManager.GetString("PreviousMatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dernier(s) match(s).
+        /// </summary>
+        public static string PreviousMatches {
+            get {
+                return ResourceManager.GetString("PreviousMatches", resourceCulture);
             }
         }
         
@@ -5256,6 +5310,15 @@ namespace MyClub.CrossCutting.Localization {
         public static string ShowHistory {
             get {
                 return ResourceManager.GetString("ShowHistory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Afficher les matchs joués.
+        /// </summary>
+        public static string ShowPlayedMatches {
+            get {
+                return ResourceManager.GetString("ShowPlayedMatches", resourceCulture);
             }
         }
         

@@ -7,7 +7,7 @@
                   xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
                   xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
                   Style="{StaticResource MyNet.Styles.ContentDialog}"
-                  Width="730"
+                  Width="750"
                   Height="580"
                   d:DataContext="{d:DesignInstance Type=vm:SchedulingParametersEditionViewModel}"
                   my:ViewModelAssist.AutoWire="True"

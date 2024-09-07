@@ -46,7 +46,7 @@
 
                         <!-- DateTime -->
                         <Grid x:Name="date">
-                            <TextBlock Text="{my:Translation Date, Format=ShortDateFormat, Casing=Title}">
+                            <TextBlock Text="{my:DisplayDateTime Date, Format=ShortDateFormat, Casing=Title}">
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfEqual}">
                                         <Binding Path="Date.Date" />
@@ -54,7 +54,7 @@
                                     </MultiBinding>
                                 </TextBlock.Visibility>
                             </TextBlock>
-                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Date, Format=t, Casing=Title}">
+                            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime Date, Format=t, Casing=Title}">
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfNotEqual}">
                                         <Binding Path="Date.Date" />

@@ -107,7 +107,7 @@
                                  HorizontalAlignment="Right"
                                  Orientation="Horizontal"
                                  Spacing="{StaticResource MyNet.Margin.Small}">
-                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" FontWeight="DemiBold" Text="{my:Translation DateSelection.DisplayDate, Casing=AllCaps, Format='MMMM yyyy'}" />
+                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" FontWeight="DemiBold" Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" />
                 <StackPanel Orientation="Horizontal">
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"

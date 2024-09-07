@@ -30,6 +30,7 @@ using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Generator;
 using MyNet.Utilities.Geography;
+using MyNet.Utilities.Localization;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 using MyNet.Utilities.Sequences;
@@ -163,6 +164,8 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
                 // Preferences
                 project.Preferences.TreatNoStadiumAsWarning = RandomGenerator.Bool();
+                project.Preferences.PeriodForPreviousMatches = asSoonAsPossible ? RandomGenerator.Int(1, 2).Hours() : RandomGenerator.Int(5, 8).Days();
+                project.Preferences.PeriodForNextMatches = asSoonAsPossible ? RandomGenerator.Int(1, 2).Hours() : RandomGenerator.Int(5, 8).Days();
 
                 // Teams
                 using (_progresser.Start(new ProgressMessage(string.Empty)))

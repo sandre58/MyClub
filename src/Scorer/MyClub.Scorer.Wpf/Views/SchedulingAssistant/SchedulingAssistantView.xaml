@@ -14,7 +14,6 @@
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   d:DataContext="{d:DesignInstance Type=vm:SchedulingAssistantViewModel}"
-                  BusyService="{Binding BusyService, Mode=OneWay}"
                   Header="{my:Resource SchedulingAssistant}"
                   ShowCloseButton="True"
                   mc:Ignorable="d">
@@ -44,9 +43,9 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal">
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
                     <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation EndDate, Format=ShortTimePattern}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
                 </StackPanel>
                 <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
                     <TextBlock Text="{Binding Item.HomeTeam.Name}" />
@@ -110,6 +109,10 @@
                             DockPanel.Dock="Right" />
                 </DockPanel>
             </Label>
+            <Grid Width="30"
+                  Height="30"
+                  my:BusyAssist.AttachService="{Binding BusyService}"
+                  my:BusyAssist.Style="{StaticResource MyNet.Styles.BusyControl.Small.Foreground}" />
             <Button Style="{StaticResource MyNet.Styles.Button.Reset}" HorizontalAlignment="Right" Command="{Binding ResetCommand}" />
             <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
             <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
@@ -143,7 +146,7 @@
                                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:MediumIcon Kind=ChevronLeft}" />
                                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToNextDateCommand}" Content="{my:MediumIcon Kind=ChevronRight}" />
                             </my:SimpleStackPanel>
-                            <TextBlock Text="{my:Translation DateSelection.DisplayDate, Casing=AllCaps, Format='MMMM yyyy'}" />
+                            <TextBlock Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" />
                         </DockPanel>
 
                         <!-- Date selection -->
@@ -195,7 +198,7 @@
                                         <Setter Property="ContentTemplate">
                                             <Setter.Value>
                                                 <DataTemplate>
-                                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" MaxPopupWidth="{x:Static sys:Double.NaN}">
+                                                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}" MaxPopupHeight="300" MaxPopupWidth="{x:Static sys:Double.NaN}">
                                                         <my:DropDownButton.ToggleContent>
                                                             <Label x:Name="text"
                                                                    Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
@@ -217,7 +220,7 @@
                                                                             <ColumnDefinition Width="10" />
                                                                             <ColumnDefinition Width="150" />
                                                                         </Grid.ColumnDefinitions>
-                                                                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation StartDate, Format=ShortTimePattern}" />
+                                                                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
 
                                                                         <!-- Home -->
                                                                         <ContentControl Grid.Column="2"
@@ -395,7 +398,7 @@
                                                         <DatePicker HorizontalAlignment="Stretch"
                                                                     my:HintAssist.Hint="{my:Resource Date}"
                                                                     my:TextFieldAssist.HasClearButton="True"
-                                                                    SelectedDate="{Binding SelectedOffsetDate}" />
+                                                                    SelectedDate="{my:DateTime SelectedOffsetDate}" />
                                                         <my:TimePicker Grid.Column="2"
                                                                        HorizontalAlignment="Stretch"
                                                                        my:HintAssist.Hint="{my:Resource Time}"
@@ -436,12 +439,13 @@
                                   ItemsSource="{my:HourRange Start=0,
                                                              End=22}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayTimeStart}" />
-                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
                         <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
                                   Width="110"
                                   ItemsSource="{my:HourRange Start=1,
                                                              End=23}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayTimeEnd}" />
+                        <ToggleButton Margin="{StaticResource MyNet.Margins.Large.Horizontal}" Content="{my:Resource ShowPlayedMatches}" IsChecked="{Binding ShowDisabledMatches}" />
                     </my:SimpleStackPanel>
                     <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
                         <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Right}"
@@ -450,9 +454,9 @@
                                              Orientation="Horizontal"
                                              TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}"
                                              TextElement.FontWeight="Bold">
-                            <TextBlock Text="{my:Translation Path=DisplayDateStart, ElementName=CalendarHoursByDay, Casing=Title, Format='dd MMMM'}" />
+                            <TextBlock Text="{my:DisplayDateTime Path=DisplayDateStart, ElementName=CalendarHoursByDay, Casing=Title, Format=M}" />
                             <TextBlock Text="-" />
-                            <TextBlock Text="{my:Translation Path=DisplayDateEnd, ElementName=CalendarHoursByDay, Casing=Title, Format='dd MMMM'}" />
+                            <TextBlock Text="{my:DisplayDateTime Path=DisplayDateEnd, ElementName=CalendarHoursByDay, Casing=Title, Format=M}" />
                         </my:SimpleStackPanel>
                         <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateTimeSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
                         <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateTimeSelection.MoveToNextDateCommand}" Content="{my:LargeIcon Kind=ChevronRight}" />
@@ -468,7 +472,7 @@
                                        dd:DragDrop.IsDropTarget="True"
                                        my:HeaderAssist.Background="Transparent"
                                        my:HeaderAssist.Height="50"
-                                       my:HeaderAssist.Width="35"
+                                       my:HeaderAssist.Width="45"
                                        Appointments="{Binding Matches.Wrappers}"
                                        AppointmentsMargin="0"
                                        AppointmentsSpacing="0"
@@ -560,8 +564,17 @@
                                 </Setter.Value>
                             </Setter>
                             <Setter Property="Cursor" Value="SizeAll" />
+                            <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
                             <Setter Property="Padding" Value="0" />
                             <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                            <Setter Property="Visibility">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.OrCollapse}">
+                                        <Binding Path="IsEnabled" />
+                                        <Binding Path="Data.ShowDisabledMatches" Source="{StaticResource Proxy}" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Conflicts.Count, Converter={x:Static my:CountToBooleanConverter.Any}}" Value="True">
                                     <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Warning}" />
@@ -574,12 +587,12 @@
                             <my:SimpleStackPanel HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
                                 <TextBlock HorizontalAlignment="Center"
                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                           Text="{my:Translation Format=ddd}"
+                                           Text="{my:DisplayDateTime Format=ddd}"
                                            Typography.Capitals="AllSmallCaps" />
                                 <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
                                            HorizontalAlignment="Center"
                                            Opacity="{StaticResource MyNet.Opacity.Default}"
-                                           Text="{my:Translation Format=dd}" />
+                                           Text="{my:DisplayDateTime Format=dd}" />
                             </my:SimpleStackPanel>
                         </DataTemplate>
                     </my:CalendarHoursByDay.ColumnHeaderTemplate>

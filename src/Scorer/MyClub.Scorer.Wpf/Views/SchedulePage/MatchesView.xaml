@@ -468,7 +468,7 @@
                                                             ToolTip="{my:Resource UnselectAll}"
                                                             Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                                                 </Grid>
-                                                <TextBlock Grid.Column="1" Text="{my:Translation Format=LongDatePattern, Casing=Title}" Typography.Capitals="AllSmallCaps" />
+                                                <TextBlock Grid.Column="1" Text="{my:DisplayDateTime Format=D, Casing=Title}" Typography.Capitals="AllSmallCaps" />
                                             </Grid>
                                         </DataTemplate>
                                     </Setter.Value>

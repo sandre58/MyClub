@@ -10,6 +10,7 @@ using MyNet.UI.ViewModels.List.Filtering.Filters;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using System.Collections.ObjectModel;
 using DynamicData.Binding;
+using DynamicData;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
@@ -24,11 +25,9 @@ namespace MyClub.Scorer.Wpf.Filters
 
             if (allowedValues is ReadOnlyObservableCollection<IMatchParent> collection)
             {
-                collection.ToObservableChangeSet().Subscribe(x =>
-                {
-                    if (Value is null || !AvailableValues!.Contains(Value))
-                        Reset();
-                });
+                collection.ToObservableChangeSet().OnItemAdded(x => Value.IfNull(Reset))
+                                                  .OnItemRemoved(x => (Value == x).IfTrue(Reset))
+                                                  .Subscribe();
             }
         }
 

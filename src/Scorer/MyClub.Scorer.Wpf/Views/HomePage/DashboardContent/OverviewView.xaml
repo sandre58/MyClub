@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.HomePage.DashboardContent"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent"
              d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
              d:DesignHeight="450"
@@ -13,4 +14,61 @@
         <my:BindingProxy x:Key="ProxyOverview" Data="{Binding}" />
     </UserControl.Resources>
 
+    <my:DynamicScrollViewer>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="400" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" MinWidth="400" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="400" />
+            </Grid.ColumnDefinitions>
+
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Previous Matches -->
+                <v:OverviewMatchesView Grid.Row="0"
+                                       VerticalAlignment="Top"
+                                       my:IconAssist.Icon="{my:MediumIcon Kind=Soccer}"
+                                       DataContext="{Binding PreviousMatchesViewModel}"
+                                       Header="{my:Resource PreviousMatches}" />
+
+                <!-- Previous Matches -->
+                <v:OverviewMatchesView Grid.Row="2"
+                                       VerticalAlignment="Top"
+                                       my:IconAssist.Icon="{my:MediumIcon Kind=Soccer}"
+                                       DataContext="{Binding NextMatchesViewModel}"
+                                       Header="{my:Resource NextMatches}" />
+            </Grid>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <!-- Live -->
+                <v:OverviewMatchesView Grid.Row="0"
+                                       VerticalAlignment="Top"
+                                       my:IconAssist.Icon="{my:MediumIcon Kind=Video}"
+                                       DataContext="{Binding LiveMatchesViewModel}"
+                                       Header="{my:Resource MatchStateInProgress}" />
+
+            </Grid>
+            
+            <!-- Ranking -->
+            <v:OverviewRankingView Grid.Column="4"
+                                   VerticalAlignment="Top"
+                                   my:IconAssist.Icon="{my:MediumIcon Kind=Podium}"
+                                   DataContext="{Binding RankingViewModel}"
+                                   Header="{my:Resource Ranking}" />
+        </Grid>
+    </my:DynamicScrollViewer>
 </UserControl>

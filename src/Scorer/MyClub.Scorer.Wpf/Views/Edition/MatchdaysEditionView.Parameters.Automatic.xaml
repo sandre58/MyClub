@@ -27,9 +27,9 @@
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource GenerateItemsFromDate}" />
             <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}"
                         my:HintAssist.IsFloating="False"
-                        DisplayDateEnd="{Binding EndDisplayDate, Mode=OneWay}"
-                        DisplayDateStart="{Binding StartDisplayDate, Mode=OneWay}"
-                        SelectedDate="{Binding StartDate}" />
+                        DisplayDateEnd="{my:DateTime EndDisplayDate, Mode=OneWay}"
+                        DisplayDateStart="{my:DateTime StartDisplayDate, Mode=OneWay}"
+                        SelectedDate="{my:DateTime StartDate}" />
         </my:SimpleStackPanel>
 
         <!-- End Date -->
@@ -52,9 +52,9 @@
                 <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Disablable}" Text="{my:Resource Until, Casing=LowerCase}" />
                 <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}"
                             my:HintAssist.IsFloating="False"
-                            DisplayDateEnd="{Binding EndDisplayDate, Mode=OneWay}"
-                            DisplayDateStart="{Binding StartDisplayDate, Mode=OneWay}"
-                            SelectedDate="{Binding EndDate}" />
+                            DisplayDateEnd="{my:DateTime EndDisplayDate, Mode=OneWay}"
+                            DisplayDateStart="{my:DateTime StartDisplayDate, Mode=OneWay}"
+                            SelectedDate="{my:DateTime EndDate}" />
             </my:SimpleStackPanel>
 
             <my:SimpleStackPanel Grid.Row="2"

@@ -15,6 +15,8 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public TimeOnly? DefaultTime { get; set; }
 
+        public DateTimeKind DateTimeKind { get; set; } = DateTimeKind.Utc;
+
         public TimeSpan Interval { get; set; } = 1.Days();
 
         public List<IDateSchedulingRule> DateRules { get; set; } = [];
@@ -41,7 +43,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                     {
                         var time = TimeRules.Select(x => x.ProvideTime(date, matchIndex)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
 
-                        match.Schedule(date.At(time));
+                        match.Schedule(date.At(time, DateTimeKind));
                     });
 
                     time = matchesProvider.Matches.MinOrDefault(x => x.Date.ToTime(), DefaultTime.GetValueOrDefault());
@@ -49,7 +51,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                 else
                     time = TimeRules.Select(x => x.ProvideTime(date, 0)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
 
-                item.Schedule(date.At(time));
+                item.Schedule(date.At(time, DateTimeKind));
 
                 previousDate = date;
                 date = date.BeginningOfDay().Add(Interval).ToDate();

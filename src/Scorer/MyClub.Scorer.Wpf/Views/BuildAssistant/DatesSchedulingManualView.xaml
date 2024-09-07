@@ -106,7 +106,7 @@
                                  DockPanel.Dock="Top"
                                  Orientation="Horizontal"
                                  Spacing="{StaticResource MyNet.Margin.Small}">
-                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" FontWeight="DemiBold" Text="{my:Translation DateSelection.DisplayDate, Casing=AllCaps, Format='MMMM yyyy'}" />
+                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" FontWeight="DemiBold" Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" />
                 <StackPanel Orientation="Horizontal">
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
@@ -241,9 +241,9 @@
                                                 my:HintAssist.IsFloating="False"
                                                 my:TextFieldAssist.IsReadOnly="True"
                                                 IsEnabled="False"
-                                                SelectedDate="{Binding Date, Mode=OneWay}" />
+                                                SelectedDate="{my:DateTime Date, Mode=OneWay}" />
                                     <my:TimePicker Grid.Column="4"
-                                                   Width="60"
+                                                   Width="80"
                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                    my:HintAssist.IsFloating="False"
                                                    SelectedTime="{my:Time Time}"
@@ -265,7 +265,7 @@
 
                                                     <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Index, Format=MatchXAbbr}" />
                                                     <my:TimePicker Grid.Column="2"
-                                                                   Width="60"
+                                                                   Width="80"
                                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                                    my:HintAssist.IsFloating="False"
                                                                    SelectedTime="{my:Time Time}" />
@@ -278,7 +278,7 @@
                                                     <DatePicker Grid.Column="6"
                                                                 Width="90"
                                                                 my:HintAssist.IsFloating="False"
-                                                                SelectedDate="{Binding Date}"
+                                                                SelectedDate="{my:DateTime Date}"
                                                                 Visibility="{Binding UpdateDate, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                                                 </Grid>
                                             </DataTemplate>
@@ -315,7 +315,7 @@
 
                                     <TextBlock HorizontalAlignment="Center" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Index, Format=MatchXAbbr}" />
                                     <my:TimePicker Grid.Column="2"
-                                                   Width="60"
+                                                   Width="80"
                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                    my:HintAssist.IsFloating="False"
                                                    SelectedTime="{my:Time Time}" />

@@ -6,11 +6,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Utilities;
+using MyNet.Utilities.Localization;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
@@ -44,20 +46,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         public void Load(SchedulingParameters schedulingParameters)
         {
-            StartDate = schedulingParameters.StartDate;
+            StartDate = schedulingParameters.GetCurrentStartDate();
             (IntervalValue, IntervalUnit) = schedulingParameters.Interval.Simplify();
-            DateRules.Load(schedulingParameters.DateRules);
-            TimeRules.Load(schedulingParameters.TimeRules);
+            DateRules.Load(schedulingParameters.DateRules.SelectMany(x => x.ConvertToTimeZone(TimeZoneInfo.Utc, GlobalizationService.Current.TimeZone)));
+            TimeRules.Load(schedulingParameters.TimeRules.SelectMany(x => x.ConvertToTimeZone(TimeZoneInfo.Utc, GlobalizationService.Current.TimeZone)));
         }
 
         public BuildDatesParametersDto ProvideBuildDatesParameters(int countMatchdays, int countMatchesByMatchday, TimeOnly defaultTime) => new BuildAutomaticDatesParametersDto
         {
-            StartDate = StartDate,
+            StartDate = StartDate.GetValueOrDefault().At(defaultTime).ToUniversalTime().ToDate(),
             IntervalValue = IntervalValue.GetValueOrDefault(),
             IntervalUnit = IntervalUnit,
-            DefaultTime = defaultTime,
-            DateRules = DateRules.Rules.Select(x => x.ProvideRule()).ToList(),
-            TimeRules = TimeRules.Rules.Select(x => x.ProvideRule()).ToList()
+            DefaultTime = StartDate.GetValueOrDefault().At(defaultTime).ToUniversalTime().ToTime(),
+            DateRules = DateRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList(),
+            TimeRules = TimeRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList()
         };
     }
 }

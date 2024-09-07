@@ -7,59 +7,63 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulePage"
+             Width="355"
              d:DataContext="{d:DesignInstance Type=vm:MatchesPlanningSpeedFiltersViewModel}"
-             Width="330"
              mc:Ignorable="d">
 
     <my:SimpleStackPanel>
-        <!--  Teams  -->
+        <!-- Teams -->
         <ContentControl Content="{Binding TeamFilter}" />
 
-        <!--  Date  -->
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" my:HeaderAssist.Size="60" Header="{my:Resource ComplexComparableOperatorIsBetween}">
+        <!-- Date -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Left}" my:HeaderAssist.Size="70" Header="{my:Resource ComplexComparableOperatorIsBetween}">
             <my:SimpleStackPanel Orientation="Horizontal">
                 <DatePicker Style="{StaticResource MyNet.Styles.DatePicker.Filled}"
                             Width="120"
                             my:TextFieldAssist.HasClearButton="True"
-                            SelectedDate="{Binding DateFilter.From}" />
+                            SelectedDate="{my:DateTime DateFilter.From}" />
                 <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Disablable}" Text="{my:Resource And}" />
                 <DatePicker Style="{StaticResource MyNet.Styles.DatePicker.Filled}"
                             Width="120"
                             my:TextFieldAssist.HasClearButton="True"
-                            SelectedDate="{Binding DateFilter.To}" />
+                            SelectedDate="{my:DateTime DateFilter.To}" />
             </my:SimpleStackPanel>
         </GroupBox>
 
-        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValuePath="DataContext" SelectionMode="Multiple">
+        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                 HorizontalAlignment="Stretch"
+                 SelectedValuePath="DataContext"
+                 SelectionMode="Multiple">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="4" IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
             <i:Interaction.Behaviors>
                 <my:ListBoxSelectionBehavior SelectedValues="{Binding StateFilter.Values}" />
             </i:Interaction.Behaviors>
-            <ListBoxItem Width="82"
-                         my:IconAssist.Alignment="Top"
+            <ListBoxItem my:IconAssist.Alignment="Top"
                          my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClock}"
                          my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
                          my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.None}"
                          my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
                          Content="{my:Resource MatchStateNone}"
                          DataContext="{x:Static enums:MatchState.None}" />
-            <ListBoxItem Width="82"
-                         my:IconAssist.Alignment="Top"
+            <ListBoxItem my:IconAssist.Alignment="Top"
                          my:IconAssist.Icon="{my:MediumIcon Kind=ProgressHelper}"
                          my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
                          my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Information}"
                          my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
                          Content="{my:Resource MatchStateInProgress}"
                          DataContext="{x:Static enums:MatchState.InProgress}" />
-            <ListBoxItem Width="82"
-                         my:IconAssist.Alignment="Top"
+            <ListBoxItem my:IconAssist.Alignment="Top"
                          my:IconAssist.Icon="{my:MediumIcon Kind=ProgressTick}"
                          my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
                          my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Positive}"
                          my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
                          Content="{my:Resource MatchStatePlayed}"
                          DataContext="{x:Static enums:MatchState.Played}" />
-            <ListBoxItem Width="82"
-                         my:IconAssist.Alignment="Top"
+            <ListBoxItem my:IconAssist.Alignment="Top"
                          my:IconAssist.Icon="{my:MediumIcon Kind=ProgressQuestion}"
                          my:IconAssist.Margin="{StaticResource MyNet.Margins.Small.Bottom}"
                          my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Warning}"
@@ -68,7 +72,7 @@
                          DataContext="{x:Static enums:MatchState.Postponed}" />
         </ListBox>
 
-        <!--  Stadiums  -->
+        <!-- Stadiums -->
         <my:MultiComboBox Style="{StaticResource MyNet.Styles.MultiComboBox.Filled}"
                           HorizontalAlignment="Stretch"
                           my:HintAssist.Hint="{my:Resource Stadium}"

@@ -98,6 +98,8 @@ namespace MyClub.Scorer.Application.Services
                 {
                     project = createProject();
                     project.Preferences.TreatNoStadiumAsWarning = dto.TreatNoStadiumAsWarning;
+                    project.Preferences.PeriodForPreviousMatches = dto.PeriodForPreviousMatches;
+                    project.Preferences.PeriodForNextMatches = dto.PeriodForNextMatches;
 
                     // Create stadiums
                     using (ProgressManager.Start())
@@ -173,6 +175,8 @@ namespace MyClub.Scorer.Application.Services
                 x.Name = properties.Name.OrThrow();
                 x.Image = properties.Image;
                 x.Preferences.TreatNoStadiumAsWarning = properties.TreatNoStadiumAsWarning;
+                x.Preferences.PeriodForPreviousMatches = properties.PeriodForPreviousMatches;
+                x.Preferences.PeriodForNextMatches = properties.PeriodForNextMatches;
             });
 
         public IProject Load(IProject project)

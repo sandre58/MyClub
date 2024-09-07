@@ -9,6 +9,8 @@ using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.UI.Commands;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.UI.ViewModels.Display;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 {
@@ -24,9 +26,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
             _matchdayPresentationService = matchdayPresentationService;
 
             AddMultipleCommand = CommandsManager.Create(async () => await AddMultipleAsync().ConfigureAwait(false));
+            OpenDateCommand = CommandsManager.Create<DateTime?>(x => NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeDay), x!.Value.ToDate()), x => x is not null);
         }
 
         public ICommand AddMultipleCommand { get; }
+
+        public ICommand OpenDateCommand { get; }
 
         private async Task AddMultipleAsync() => await _matchdayPresentationService.AddMultipleAsync(Parent).ConfigureAwait(false);
 

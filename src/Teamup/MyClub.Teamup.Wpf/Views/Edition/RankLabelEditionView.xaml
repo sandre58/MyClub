@@ -50,7 +50,7 @@
                                   my:HintAssist.IsFloating="False"
                                   Minimum="1"
                                   Value="{my:NullableBinding FromRank}" />
-                <TextBlock Text="{my:Resource To}" Visibility="{Binding IsRange, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <TextBlock Text="{my:Resource To, Casing=LowerCase}" Visibility="{Binding IsRange, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                 <my:NumericUpDown Width="70"
                                   my:HintAssist.IsFloating="False"
                                   Minimum="1"

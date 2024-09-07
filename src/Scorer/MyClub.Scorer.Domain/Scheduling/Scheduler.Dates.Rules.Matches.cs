@@ -27,7 +27,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
                     var time = TimeRules.Select(y => y.ProvideTime(date, matchIndex)).FirstOrDefault(y => y is not null) ?? DefaultTime ?? x.Date.ToTime();
 
-                    x.Schedule(date.At(time));
+                    x.Schedule(date.At(time, DateTimeKind));
 
                     previousDate = date;
                     date = date.BeginningOfDay().Add(Interval).ToDate();
@@ -48,7 +48,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                         var matchIndex = match.Parent.Matches.OrderBy(x => x.Date).ToList().IndexOf(match);
                         var time = TimeRules.Select(x => x.ProvideTime(date, matchIndex)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? match.Date.ToTime();
 
-                        match.Schedule(date.At(time));
+                        match.Schedule(date.At(time, DateTimeKind));
                     });
 
                     previousDate = date;

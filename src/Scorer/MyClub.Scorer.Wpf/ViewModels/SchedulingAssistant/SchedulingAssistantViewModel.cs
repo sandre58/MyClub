@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;
@@ -14,10 +16,13 @@ using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable.Attributes;
+using MyNet.Observable.Deferrers;
 using MyNet.UI.Commands;
+using MyNet.UI.Services;
 using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
+using MyNet.Utilities.Threading;
 using MyNet.Utilities.Units;
 using MyNet.Wpf.Controls;
 using MyNet.Wpf.DragAndDrop;
@@ -28,6 +33,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
         private readonly StadiumsProvider _stadiumsProvider;
+        private readonly SingleTaskRunner _checkConflictsRunner;
+        private readonly RefreshDeferrer _checkConflictsDeferrer = new();
 
         public SchedulingAssistantViewModel(StadiumsProvider stadiumsProvider, AvailibilityCheckingService availibilityCheckingService)
         {
@@ -35,16 +42,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
             _stadiumsProvider = stadiumsProvider;
             Matches = new SchedulingMatchesListViewModel();
             DropHandler = new((x, y) => x.OfType<EditableSchedulingMatchViewModel>().ForEach(z => z.SetDate(y)),
-                               x => x.All(y => y is EditableSchedulingMatchViewModel editableMatch && editableMatch.Item.CanBeRescheduled));
+                               x => x.All(y => y is EditableSchedulingMatchViewModel editableMatch && editableMatch.IsEnabled));
 
-            ShowConflictsCommand = CommandsManager.Create(() => ShowConflicts());
-            UpdateSelectionCommand = CommandsManager.Create(() => Update(Matches.SelectedItems?.OfType<CalendarAppointment>() ?? []), () => Matches.SelectedItems is not null && Matches.SelectedItems.OfType<CalendarAppointment>().Any() && CanUpdate());
+            _checkConflictsRunner = new SingleTaskRunner(async x => await CheckConflictsAsync(x).ConfigureAwait(false));
+
+            _checkConflictsDeferrer.Subscribe(this, () =>
+            {
+                _checkConflictsRunner.Cancel();
+                _checkConflictsRunner.Run();
+            }, 500);
+
+            ShowConflictsCommand = CommandsManager.Create(ShowConflicts);
+            UpdateSelectionCommand = CommandsManager.Create(() => Update(Matches.SelectedItems?.OfType<CalendarAppointment>() ?? []), () => Matches.SelectedItems is not null && Matches.SelectedItems.OfType<CalendarAppointment>().Any(x => x.IsEnabled) && CanUpdate());
 
             Disposables.AddRange(
             [
                 DateSelection.WhenPropertyChanged(x => x.DisplayDate, false).Subscribe(_ => DateTimeSelection.DisplayDate = DateSelection.DisplayDate.At(DateTimeSelection.DisplayDate.TimeOfDay)),
                 DateTimeSelection.WhenPropertyChanged(x => x.DisplayDate, false).Subscribe(_ => DateSelection.DisplayDate = DateTimeSelection.DisplayDate.BeginningOfDay()),
-                Matches.WrappersSource.ToObservableChangeSet().WhenAnyPropertyChanged().Subscribe(_ => ComputeAllConflicts()),
+                Matches.WrappersSource.ToObservableChangeSet().WhenAnyPropertyChanged().Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
                 Matches.WrappersSource.ToObservableChangeSet().MergeManyEx(x => x.Conflicts.ToObservableChangeSet()).Subscribe(_ => RaisePropertyChanged(nameof(HasConflicts))),
                 Matches.WhenPropertyChanged(x => x.SelectedItems).Subscribe(_ => {
                     if(Matches.SelectedItems is null || !Matches.SelectedItems.OfType<CalendarAppointment>().Any())
@@ -102,6 +117,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
         public ReadOnlyObservableCollection<IStadiumViewModel> Stadiums => _stadiumsProvider.Items;
+
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public bool ShowDisabledMatches { get; set; } = true;
 
         public ICommand ShowConflictsCommand { get; }
 
@@ -163,24 +182,37 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
             SelectedOffsetTime = null;
         }
 
-        private void ComputeAllConflicts()
+        private async Task CheckConflictsAsync(CancellationToken cancellationToken) => await ExecuteAsync(() =>
         {
-            var result = new Dictionary<EditableSchedulingMatchViewModel, IEnumerable<SchedulingConflict>>();
-            var associations = Matches.WrappersSource.RoundRobin().SelectMany(x => x).ToList();
-            foreach (var associationsGroupped in associations.GroupBy(x => x.item1))
+            try
             {
-                foreach (var (match1, match2) in associationsGroupped)
-                {
-                    var conflicts = GetConflictsBetween(match1, match2);
+                cancellationToken.ThrowIfCancellationRequested();
 
-                    result.AddOrUpdate(match1, result.GetOrDefault(match1, new List<SchedulingConflict>())!.Union(conflicts.Item1));
-                    result.AddOrUpdate(match2, result.GetOrDefault(match2, new List<SchedulingConflict>())!.Union(conflicts.Item2));
+                var result = new Dictionary<EditableSchedulingMatchViewModel, IEnumerable<SchedulingConflict>>();
+                var associations = Matches.WrappersSource.RoundRobin().SelectMany(x => x).ToList();
+                foreach (var associationsGroupped in associations.GroupBy(x => x.item1))
+                {
+                    foreach (var (match1, match2) in associationsGroupped)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var conflicts = GetConflictsBetween(match1, match2);
+
+                        result.AddOrUpdate(match1, result.GetOrDefault(match1, new List<SchedulingConflict>())!.Union(conflicts.Item1));
+                        result.AddOrUpdate(match2, result.GetOrDefault(match2, new List<SchedulingConflict>())!.Union(conflicts.Item2));
+                    }
+                }
+
+                foreach (var (match, conflicts) in result)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    match.SetConflicts(conflicts);
                 }
             }
-
-            foreach (var (match, conflicts) in result)
-                match.SetConflicts(conflicts);
-        }
+            catch (Exception)
+            {
+                // Nothing
+            }
+        }).ConfigureAwait(false);
 
         private (IEnumerable<SchedulingConflict>, IEnumerable<SchedulingConflict>) GetConflictsBetween(EditableSchedulingMatchViewModel match1, EditableSchedulingMatchViewModel match2)
         {
@@ -268,7 +300,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
                 DateTimeSelection.DisplayDate = displayDate.Value.BeginningOfDay();
 
             Matches.Load(matches);
-            ComputeAllConflicts();
+            _checkConflictsDeferrer.AskRefresh();
         }
 
         protected override void ResetCore() => Matches.WrappersSource.ForEach(x => x.Reset());
@@ -278,5 +310,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
         protected override void SaveCore() { }
 
         public override bool IsModified() => Matches.WrappersSource.Any(x => x.IsModified());
+
+        protected override void Cleanup()
+        {
+            base.Cleanup();
+            _checkConflictsDeferrer.Dispose();
+            _checkConflictsRunner.Dispose();
+            Matches.Dispose();
+        }
     }
 }

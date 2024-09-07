@@ -32,12 +32,12 @@
 
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From}" />
                         <my:TimePicker Grid.Column="2"
-                                       Width="60"
+                                       Width="80"
                                        my:HintAssist.IsFloating="False"
                                        SelectedTime="{my:Time StartTime}" />
                         <TextBlock Grid.Column="4" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
                         <my:TimePicker Grid.Column="6"
-                                       Width="60"
+                                       Width="80"
                                        my:HintAssist.IsFloating="False"
                                        SelectedTime="{my:Time EndTime}" />
 
@@ -89,16 +89,16 @@
     <DataTemplate DataType="{x:Type vm:EditableExcludeDatesRangeRuleViewModel}">
         <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ExcludeBetween}" />
-            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime StartDate}" />
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource And, Casing=LowerCase}" />
-            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding EndDate}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime EndDate}" />
         </my:SimpleStackPanel>
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type vm:EditableExcludeDateRuleViewModel}">
         <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
             <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ExcludeFrom}" />
-            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding Date}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime Date}" />
         </my:SimpleStackPanel>
     </DataTemplate>
 
@@ -147,7 +147,7 @@
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:TimePicker Grid.Column="6"
-                           Width="60"
+                           Width="80"
                            my:HintAssist.IsFloating="False"
                            SelectedTime="{my:Time Time}" />
             <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
@@ -191,7 +191,7 @@
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
+                <my:TimePicker Width="80" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
                 <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
                         Command="{Binding AddExceptionCommand}"
@@ -228,13 +228,13 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding Date}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime Date}" />
             <my:PackIcon Grid.Column="2"
                          Width="20"
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
+                <my:TimePicker Width="80" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
                 <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
                         Command="{Binding AddExceptionCommand}"
@@ -272,20 +272,20 @@
             </Grid.RowDefinitions>
 
             <my:SimpleStackPanel Orientation="Horizontal">
-                <TextBlock Width="16" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From1}" />
-                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
+                <TextBlock Width="30" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From1}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime StartDate}" />
             </my:SimpleStackPanel>
 
             <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal">
-                <TextBlock Width="16" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To1, Casing=LowerCase}" />
-                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding EndDate}" />
+                <TextBlock Width="30" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To1, Casing=LowerCase}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime EndDate}" />
             </my:SimpleStackPanel>
             <my:PackIcon Grid.Column="2"
                          Width="20"
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <my:TimePicker Width="60" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
+                <my:TimePicker Width="80" my:HintAssist.IsFloating="False" SelectedTime="{my:Time Time}" />
                 <Button Style="{StaticResource MyNet.Styles.Button.Text}"
                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
                         Command="{Binding AddExceptionCommand}"
@@ -330,7 +330,7 @@
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
             <my:TimePicker Grid.Column="6"
-                           Width="60"
+                           Width="80"
                            my:HintAssist.IsFloating="False"
                            SelectedTime="{my:Time Time}" />
         </Grid>
@@ -484,7 +484,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding Date}" />
+            <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime Date}" />
             <my:PackIcon Grid.Column="2"
                          Width="20"
                          Height="20"
@@ -529,13 +529,13 @@
             </Grid.RowDefinitions>
 
             <my:SimpleStackPanel Orientation="Horizontal">
-                <TextBlock Width="16" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From1}" />
-                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding StartDate}" />
+                <TextBlock Width="30" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From1}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime StartDate}" />
             </my:SimpleStackPanel>
 
             <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal">
-                <TextBlock Width="16" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To1, Casing=LowerCase}" />
-                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{Binding EndDate}" />
+                <TextBlock Width="30" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To1, Casing=LowerCase}" />
+                <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime EndDate}" />
             </my:SimpleStackPanel>
             <my:PackIcon Grid.Column="2"
                          Width="20"

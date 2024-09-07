@@ -131,7 +131,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                     ValidatePostponedDateAvaibility();
                 }),
                 StadiumSelection.WhenPropertyChanged(x => x.SelectedItem, false).Subscribe(_ => ValidateStadiumsAvaibility()),
-                DateTime.WhenPropertyChanged(x => x.DateTime).Subscribe(x =>
+                CurrentDate.WhenPropertyChanged(x => x.DateTime).Subscribe(x =>
                 {
                     ValidateOriginDateAvaibility();
                     ValidateStadiumsAvaibility();
@@ -164,7 +164,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [DoNotCheckEquality]
         public IMatchParent? Parent { get; set; }
 
-        public EditableDateTime DateTime { get; set; } = new();
+        public EditableDateTime CurrentDate { get; set; } = new();
 
         public EditableDateTime PostponedDateTime { get; set; } = new(false);
 
@@ -266,13 +266,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             if (IsModifiedSuspender.IsSuspended) return;
 
-            if (!DateTime.HasValue)
+            if (!CurrentDate.HasValue)
             {
                 DateAvailability = AvailabilityCheck.Unknown;
                 return;
             }
 
-            DateAvailability = CheckTeamsAvaibility(DateTime.ToUtcOrDefault());
+            DateAvailability = CheckTeamsAvaibility(CurrentDate.ToUtcOrDefault());
         }
 
         private void ValidatePostponedDateAvaibility()
@@ -296,8 +296,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             if (PostponedState == PostponedState.SpecifiedDate && PostponedDateTime.HasValue)
                 date = PostponedDateTime.ToUtcOrDefault();
-            else if (DateTime.HasValue)
-                date = DateTime.ToUtcOrDefault();
+            else if (CurrentDate.HasValue)
+                date = CurrentDate.ToUtcOrDefault();
 
             foreach (var item in StadiumSelection.Items)
                 item.Availability = date.HasValue ? CheckStadiumAvaibility(item.Stadium.Id, date.Value) : AvailabilityCheck.Unknown;
@@ -342,7 +342,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             {
                 var defaultValues = CrudService.New(Parent.Id, Parent.Date);
                 MatchFormat.Load(defaultValues.Format ?? Domain.MatchAggregate.MatchFormat.Default);
-                DateTime.Load(defaultValues.Date);
+                CurrentDate.Load(defaultValues.Date);
                 HomeTeam = null;
                 AwayTeam = null;
                 StadiumSelection.SelectedItem = defaultValues.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(defaultValues.Stadium.Id.Value) : null;
@@ -369,7 +369,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 ParentId = Parent?.Id ?? throw new InvalidOperationException("Parent cannot be null"),
                 HomeTeamId = HomeTeam?.Id ?? throw new InvalidOperationException("HomeTeam cannot be null"),
                 AwayTeamId = AwayTeam?.Id ?? throw new InvalidOperationException("AwayTeam cannot be null"),
-                Date = DateTime.ToUtcOrDefault(),
+                Date = CurrentDate.ToUtcOrDefault(),
                 Format = CanEditFormat && MatchFormat.IsModified() ? MatchFormat.Create() : null,
                 IsNeutralStadium = NeutralVenue,
                 Stadium = StadiumSelection.SelectedItem is not null ? new StadiumDto
@@ -399,7 +399,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 HomeTeam = Parent.GetAvailableTeams().GetById(item.HomeTeam.Id);
                 AwayTeam = Parent.GetAvailableTeams().GetById(item.AwayTeam.Id);
                 StadiumSelection.SelectedItem = item.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(item.Stadium.Id) : null;
-                DateTime.Load(item.OriginDate);
+                CurrentDate.Load(item.OriginDate);
                 MatchFormat.Load(item.Format);
                 NeutralVenue = item.IsNeutralStadium;
                 HomeScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Home.GetScore() : null;

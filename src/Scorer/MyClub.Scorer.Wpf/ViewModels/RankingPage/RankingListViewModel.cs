@@ -22,11 +22,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
     {
         public RankingListViewModel(RankingViewModel ranking, ListParametersProvider? listParametersProvider = null)
             : base(ranking.ToObservableChangeSet<RankingViewModel, RankingRowViewModel>(),
-                   parametersProvider: listParametersProvider ?? new RankingListParameterProvider())
+                   parametersProvider: listParametersProvider ?? RankingListParameterProvider.Full)
         {
             NavigateToPastPositionsCommand = CommandsManager.CreateNotNull<ITeamViewModel>(x => NavigationCommandsService.NavigateToPastPositionsPage([x.Id]));
-
-            ranking.SubscribeOnUpdate(Collection.DeferSort);
 
             Disposables.AddRange(
                 [

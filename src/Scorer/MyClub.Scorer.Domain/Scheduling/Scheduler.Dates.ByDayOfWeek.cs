@@ -15,6 +15,8 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public TimeOnly Time { get; set; } = new(15, 0, 0);
 
+        public DateTimeKind DateTimeKind { get; set; } = DateTimeKind.Utc;
+
         public IEnumerable<DayOfWeek> DayOfWeeks { get; set; } = [DayOfWeek.Sunday];
 
         public void Schedule(IEnumerable<T> items)
@@ -22,7 +24,7 @@ namespace MyClub.Scorer.Domain.Scheduling
             var previousDate = StartDate.PreviousDay();
             items.ForEach(x =>
             {
-                x.Schedule(DayOfWeeks.Min(x => previousDate.Next(x)).At(Time));
+                x.Schedule(DayOfWeeks.Min(x => previousDate.Next(x)).At(Time, DateTimeKind));
 
                 if (x is IMatchesProvider matchesProvider)
                     matchesProvider.Matches.ForEach(y => y.Schedule(x.Date));

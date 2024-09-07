@@ -95,6 +95,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public RankingViewModel LiveRanking { get; }
 
         public RankingViewModel HomeRanking { get; }
+
         public RankingViewModel AwayRanking { get; }
 
         public bool CanAutomaticReschedule() => Item.SchedulingParameters.CanAutomaticReschedule();

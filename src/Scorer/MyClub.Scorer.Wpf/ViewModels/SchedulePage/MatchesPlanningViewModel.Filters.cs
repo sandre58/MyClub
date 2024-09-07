@@ -48,7 +48,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         {
             SpeedFilters = new MatchesPlanningSpeedFiltersViewModel(teams, stadiums, schedulingParameters);
             DateFilter = new CompositeFilterViewModel(new DateFilterViewModel(nameof(MatchViewModel.DateOfDay), dates)) { IsEnabled = false };
-            DateRangeFilter = new CompositeFilterViewModel(new MyNet.UI.ViewModels.List.Filtering.Filters.DateFilterViewModel(nameof(MatchViewModel.DateOfDay)) { Operator = ComplexComparableOperator.IsBetween }) { IsEnabled = false };
+            DateRangeFilter = new CompositeFilterViewModel(new MyNet.UI.ViewModels.List.Filtering.Filters.DateFilterViewModel(nameof(MatchViewModel.Date)) { Operator = ComplexComparableOperator.IsBetween }) { IsEnabled = false };
             ParentFilter = new CompositeFilterViewModel(new MatchParentFilterViewModel(nameof(MatchViewModel.Parent), parents)) { IsEnabled = false };
 
             Disposables.AddRange(
@@ -88,15 +88,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         {
             using (Defer())
             {
-                if (DateFilter.Item.IsEmpty())
-                    using (Defer())
-                        DateFilter.Reset();
-                if (ParentFilter.Item.IsEmpty())
-                    using (Defer())
-                        ParentFilter.Reset();
-                if (DateRangeFilter.Item.IsEmpty())
-                    using (Defer())
-                        DateRangeFilter.Reset();
+                using (Defer())
+                {
+                    DateFilter.Reset();
+                    ParentFilter.Reset();
+                    DateRangeFilter.Reset();
+                }
             }
         }
 

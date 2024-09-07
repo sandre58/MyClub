@@ -35,8 +35,8 @@
             <Setter.Value>
                 <DataTemplate>
                     <StackPanel Orientation="{Binding Orientation, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:TrainingSessionButton}}}">
-                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Principal}" HorizontalAlignment="Center" Text="{my:Translation Item.StartDate, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:TrainingSessionButton}}, Format=DateDayNumberFormat}" />
-                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" HorizontalAlignment="Center" Text="{my:Translation Item.StartDate, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:TrainingSessionButton}}, Format=DateShortMonthFormat}" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Principal}" HorizontalAlignment="Center" Text="{my:DisplayDateTime Item.StartDate, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:TrainingSessionButton}}, Format=dd}" />
+                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" HorizontalAlignment="Center" Text="{my:DisplayDateTime Item.StartDate, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ctrl:TrainingSessionButton}}, Format=MMM}" />
                     </StackPanel>
                 </DataTemplate>
             </Setter.Value>

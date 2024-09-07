@@ -52,6 +52,10 @@ namespace MyClub.Scorer.Wpf.Services.Providers
 
         public bool TreatNoStadiumAsWarning { get; private set; }
 
+        public TimeSpan PeriodForPreviousMatches { get; private set; }
+
+        public TimeSpan PeriodForNextMatches { get; private set; }
+
         public ProjectInfoProvider()
         {
             Messenger.Default.Register<CurrentProjectLoadedMessage>(this, OnCurrentProjectLoaded);
@@ -80,6 +84,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers
                     currentProject.WhenPropertyChanged(x => x.Name).Subscribe(x => Name = x.Value),
                     currentProject.WhenPropertyChanged(x => x.Image).Subscribe(x => Image = x.Value),
                     currentProject.WhenPropertyChanged(x => x.Preferences.TreatNoStadiumAsWarning).Subscribe(x => TreatNoStadiumAsWarning = x.Value),
+                    currentProject.WhenPropertyChanged(x => x.Preferences.PeriodForPreviousMatches).Subscribe(x => PeriodForPreviousMatches = x.Value),
+                    currentProject.WhenPropertyChanged(x => x.Preferences.PeriodForNextMatches).Subscribe(x => PeriodForNextMatches = x.Value),
                     currentProject.Teams.ToObservableChangeSet(x => x.Id).SubscribeMany(x => x.Players.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).SubscribeAll(() => SetIsDirty(true)),
                     currentProject.Teams.ToObservableChangeSet(x => x.Id).SubscribeMany(x => x.Staff.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).Subscribe(),
                     currentProject.Stadiums.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true)),

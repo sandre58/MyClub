@@ -2257,4 +2257,25 @@ Cliquer sur cette notification pour éditer le match.</value>
   <data name="Staff" xml:space="preserve">
     <value>Dirigeant(s)</value>
   </data>
+  <data name="ShowPlayedMatches" xml:space="preserve">
+    <value>Afficher les matchs joués</value>
+  </data>
+  <data name="PreviousMatches" xml:space="preserve">
+    <value>Dernier(s) match(s)</value>
+  </data>
+  <data name="NextMatches" xml:space="preserve">
+    <value>Prochain(s) match(s)</value>
+  </data>
+  <data name="PeriodForPreviousMatchesDescription" xml:space="preserve">
+    <value>Indique l'intervalle de temps avant la date du jour durant lequel les matchs seront pris en compte dans le tableau de bord de la page d'accueil.</value>
+  </data>
+  <data name="PeriodForNextMatchesDescription" xml:space="preserve">
+    <value>Indique l'intervalle de temps après la date du jour durant lequel les matchs seront pris en compte dans le tableau de bord de la page d'accueil.</value>
+  </data>
+  <data name="PeriodForPreviousMatches" xml:space="preserve">
+    <value>Dernier(s) match(s)</value>
+  </data>
+  <data name="PeriodForNextMatches" xml:space="preserve">
+    <value>Prochain(s) match(s)</value>
+  </data>
 </root>

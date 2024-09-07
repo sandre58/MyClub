@@ -9,6 +9,8 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public interface IAvailableDateSchedulingRule
     {
+        IEnumerable<IAvailableDateSchedulingRule> ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone);
+
         IEnumerable<Period> GetAvailablePeriods(Period period);
 
         DateTime GetNextAvailableDate(Period matchPeriod);

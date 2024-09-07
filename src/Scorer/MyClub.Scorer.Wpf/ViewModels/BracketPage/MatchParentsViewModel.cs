@@ -94,7 +94,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
                 }),
             ]);
 
-        public DateTime StartDate => Item.Date.BeginningOfDay();
+        public DateTime StartDate => Item.Date;
 
         public DateTime EndDate => Item.Date.EndOfDay();
     }

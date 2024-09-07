@@ -68,7 +68,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
 
         public static ProjectPreferencesPackage ToPackage(this ProjectPreferences source) => new()
         {
-            TreatNoStadiumAsWarning = source.TreatNoStadiumAsWarning
+            TreatNoStadiumAsWarning = source.TreatNoStadiumAsWarning,
+            PeriodForNextMatches = source.PeriodForNextMatches,
+            PeriodForPreviousMatches = source.PeriodForPreviousMatches,
         };
 
         public static AddressPackage ToPackage(this Address source) => new()
@@ -223,9 +225,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
         public static SchedulingParametersPackage ToPackage(this SchedulingParameters source)
             => new()
             {
-                StartDate = source.StartDate,
-                EndDate = source.EndDate,
-                StartTime = source.StartTime,
+                StartDate = source.StartDate.DayNumber,
+                EndDate = source.EndDate.DayNumber,
+                StartTime = source.StartTime.ToTimeSpan(),
                 RestTime = source.RotationTime,
                 RotationTime = source.RestTime,
                 UseHomeVenue = source.UseHomeVenue,
@@ -242,8 +244,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             => source switch
             {
                 IncludeDaysOfWeekRule includeDaysOfWeekRule => new IncludeDaysOfWeekAsSoonAsPossibleRulePackage { DaysOfWeek = string.Join(";", includeDaysOfWeekRule.DaysOfWeek.Select(x => x.ToString()).ToList()) },
-                ExcludeDatesRangeRule excludePeriodRule => new ExcludeDatesRangeAsSoonAsPossibleRulePackage { StartDate = excludePeriodRule.StartDate, EndDate = excludePeriodRule.EndDate },
-                IncludeTimePeriodsRule includeTimePeriodsRule => new IncludeTimePeriodsRulePackage { TimePeriods = includeTimePeriodsRule.Periods.Select(x => new TimePeriodPackage() { StartTime = x.Start, EndTime = x.End }).ToList() },
+                ExcludeDatesRangeRule excludePeriodRule => new ExcludeDatesRangeAsSoonAsPossibleRulePackage { StartDate = excludePeriodRule.StartDate.DayNumber, EndDate = excludePeriodRule.EndDate.DayNumber },
+                IncludeTimePeriodsRule includeTimePeriodsRule => new IncludeTimePeriodsRulePackage { TimePeriods = includeTimePeriodsRule.Periods.Select(x => new TimePeriodPackage() { StartTime = x.Start.ToTimeSpan(), EndTime = x.End.ToTimeSpan() }).ToList() },
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
 
@@ -251,8 +253,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             => source switch
             {
                 IncludeDaysOfWeekRule dayOfWeeksRule => new IncludeDaysOfWeekRulePackage { DaysOfWeek = string.Join(";", dayOfWeeksRule.DaysOfWeek.Select(x => x.ToString()).ToList()) },
-                ExcludeDateRule excludeDateRule => new ExcludeDateRulePackage { Date = excludeDateRule.Date },
-                ExcludeDatesRangeRule excludeDatesRangeRule => new ExcludeDatesRangeRulePackage { StartDate = excludeDatesRangeRule.StartDate, EndDate = excludeDatesRangeRule.EndDate },
+                ExcludeDateRule excludeDateRule => new ExcludeDateRulePackage { Date = excludeDateRule.Date.DayNumber },
+                ExcludeDatesRangeRule excludeDatesRangeRule => new ExcludeDatesRangeRulePackage { StartDate = excludeDatesRangeRule.StartDate.DayNumber, EndDate = excludeDatesRangeRule.EndDate.DayNumber },
                 DateIntervalRule dateIntervalRule => new DateIntervalRulePackage { Interval = dateIntervalRule.Interval },
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
@@ -260,10 +262,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
         public static TimeSchedulingRulePackage ToPackage(this ITimeSchedulingRule source)
             => source switch
             {
-                TimeOfDayRule timeOfDayRule => new TimeOfDayRulePackage { Day = timeOfDayRule.Day, Time = timeOfDayRule.Time, MatchExceptions = timeOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
-                TimeOfDateRule timeOfDateRule => new TimeOfDateRulePackage { Date = timeOfDateRule.Date, Time = timeOfDateRule.Time, MatchExceptions = timeOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
-                TimeOfMatchNumberRule timeOfMatchNumberRule => new TimeOfMatchNumberRulePackage { MatchNumber = timeOfMatchNumberRule.MatchNumber, Time = timeOfMatchNumberRule.Time },
-                TimeOfDatesRangeRule timeOfDateRangeRule => new TimeOfDateRangeRulePackage { StartDate = timeOfDateRangeRule.StartDate, EndDate = timeOfDateRangeRule.EndDate, Time = timeOfDateRangeRule.Time, MatchExceptions = timeOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                TimeOfDayRule timeOfDayRule => new TimeOfDayRulePackage { Day = timeOfDayRule.Day, Time = timeOfDayRule.Time.ToTimeSpan(), MatchExceptions = timeOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                TimeOfDateRule timeOfDateRule => new TimeOfDateRulePackage { Date = timeOfDateRule.Date.DayNumber, Time = timeOfDateRule.Time.ToTimeSpan(), MatchExceptions = timeOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                TimeOfMatchNumberRule timeOfMatchNumberRule => new TimeOfMatchNumberRulePackage { MatchNumber = timeOfMatchNumberRule.MatchNumber, Time = timeOfMatchNumberRule.Time.ToTimeSpan() },
+                TimeOfDatesRangeRule timeOfDateRangeRule => new TimeOfDateRangeRulePackage { StartDate = timeOfDateRangeRule.StartDate.DayNumber, EndDate = timeOfDateRangeRule.EndDate.DayNumber, Time = timeOfDateRangeRule.Time.ToTimeSpan(), MatchExceptions = timeOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
 
@@ -275,9 +277,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 NoStadiumRule => new NoStadiumRulePackage(),
                 FirstAvailableStadiumRule firstAvailableStadiumRule => new FirstAvailableStadiumRulePackage() { UseRotationTime = (int)firstAvailableStadiumRule.UseRotationTime },
                 StadiumOfDayRule stadiumOfDayRule => new StadiumOfDayRulePackage { Day = stadiumOfDayRule.Day, StadiumId = stadiumOfDayRule.StadiumId, MatchExceptions = stadiumOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
-                StadiumOfDateRule stadiumOfDateRule => new StadiumOfDateRulePackage { Date = stadiumOfDateRule.Date, StadiumId = stadiumOfDateRule.StadiumId, MatchExceptions = stadiumOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
+                StadiumOfDateRule stadiumOfDateRule => new StadiumOfDateRulePackage { Date = stadiumOfDateRule.Date.DayNumber, StadiumId = stadiumOfDateRule.StadiumId, MatchExceptions = stadiumOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
                 StadiumOfMatchNumberRule stadiumOfMatchNumberRule => new StadiumOfMatchNumberRulePackage { MatchNumber = stadiumOfMatchNumberRule.MatchNumber, StadiumId = stadiumOfMatchNumberRule.StadiumId },
-                StadiumOfDatesRangeRule stadiumOfDateRangeRule => new StadiumOfDateRangeRulePackage { StartDate = stadiumOfDateRangeRule.StartDate, EndDate = stadiumOfDateRangeRule.EndDate, StadiumId = stadiumOfDateRangeRule.StadiumId, MatchExceptions = stadiumOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
+                StadiumOfDatesRangeRule stadiumOfDateRangeRule => new StadiumOfDateRangeRulePackage { StartDate = stadiumOfDateRangeRule.StartDate.DayNumber, EndDate = stadiumOfDateRangeRule.EndDate.DayNumber, StadiumId = stadiumOfDateRangeRule.StadiumId, MatchExceptions = stadiumOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
     }

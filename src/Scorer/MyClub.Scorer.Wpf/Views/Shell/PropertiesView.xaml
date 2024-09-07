@@ -37,10 +37,10 @@
                                   my:HeaderAssist.HorizontalAlignment="Left"
                                   my:HeaderAssist.Size="120"
                                   Header="{my:Resource CreatedAt}">
-                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding ProjectCreatedAt, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
-                                <TextBlock Text="{my:Translation ProjectCreatedAt, Format=LongDatePattern, Casing=Title}" />
-                                <TextBlock Text="{my:Resource To}" />
-                                <TextBlock Text="{my:Translation ProjectCreatedAt, Format=ShortTimePattern}" />
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding ProjectCreatedUtcDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <TextBlock Text="{my:DisplayDateTime ProjectCreatedUtcDate, Kind=Current, Format=D, Casing=Title}" />
+                                <TextBlock Text="{my:Resource To, Casing=LowerCase}" />
+                                <TextBlock Text="{my:DisplayDateTime ProjectCreatedUtcDate, Kind=Current, Format=t}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
@@ -52,10 +52,10 @@
                                   my:HeaderAssist.HorizontalAlignment="Left"
                                   my:HeaderAssist.Size="120"
                                   Header="{my:Resource ModifiedAt}">
-                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding ProjectModifiedAt, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
-                                <TextBlock Text="{my:Translation ProjectModifiedAt, Format=LongDatePattern, Casing=Title}" />
-                                <TextBlock Text="{my:Resource To}" />
-                                <TextBlock Text="{my:Translation ProjectModifiedAt, Format=ShortTimePattern}" />
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding ProjectModifiedUtcDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <TextBlock Text="{my:DisplayDateTime ProjectModifiedUtcDate, Kind=Current, Format=D, Casing=Title}" />
+                                <TextBlock Text="{my:Resource To, Casing=LowerCase}" />
+                                <TextBlock Text="{my:DisplayDateTime ProjectModifiedUtcDate, Kind=Current, Format=t}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
                     </my:SimpleStackPanel>
@@ -87,30 +87,30 @@
                                   my:HeaderAssist.HorizontalAlignment="Left"
                                   my:HeaderAssist.Size="120"
                                   Header="{my:Resource CreatedAt}">
-                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding FileCreatedDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
-                                <TextBlock Text="{my:Translation FileCreatedDate, Format=LongDatePattern, Casing=Title}" />
-                                <TextBlock Text="{my:Resource To}" />
-                                <TextBlock Text="{my:Translation FileCreatedDate, Format=ShortTimePattern}" />
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding FileCreatedUtcDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <TextBlock Text="{my:DisplayDateTime FileCreatedUtcDate, Kind=Current, Format=D, Casing=Title}" />
+                                <TextBlock Text="{my:Resource To, Casing=LowerCase}" />
+                                <TextBlock Text="{my:DisplayDateTime FileCreatedUtcDate, Kind=Current, Format=t}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
                                   my:HeaderAssist.HorizontalAlignment="Left"
                                   my:HeaderAssist.Size="120"
                                   Header="{my:Resource ModifiedAt}">
-                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding FileModifiedDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
-                                <TextBlock Text="{my:Translation FileModifiedDate, Format=LongDatePattern, Casing=Title}" />
-                                <TextBlock Text="{my:Resource To}" />
-                                <TextBlock Text="{my:Translation FileModifiedDate, Format=ShortTimePattern}" />
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding FileModifiedUtcDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <TextBlock Text="{my:DisplayDateTime FileModifiedUtcDate, Kind=Current, Format=D, Casing=Title}" />
+                                <TextBlock Text="{my:Resource To, Casing=LowerCase}" />
+                                <TextBlock Text="{my:DisplayDateTime FileModifiedUtcDate, Kind=Current, Format=t}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
                         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
                                   my:HeaderAssist.HorizontalAlignment="Left"
                                   my:HeaderAssist.Size="120"
                                   Header="{my:Resource LastAccessAt}">
-                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding FileLastAccessDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
-                                <TextBlock Text="{my:Translation FileLastAccessDate, Format=LongDatePattern, Casing=Title}" />
-                                <TextBlock Text="{my:Resource To}" />
-                                <TextBlock Text="{my:Translation FileLastAccessDate, Format=ShortTimePattern}" />
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}" Visibility="{Binding FileLastAccessUtcDate, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                <TextBlock Text="{my:DisplayDateTime FileLastAccessUtcDate, Kind=Current, Format=D, Casing=Title}" />
+                                <TextBlock Text="{my:Resource To, Casing=LowerCase}" />
+                                <TextBlock Text="{my:DisplayDateTime FileLastAccessUtcDate, Kind=Current, Format=t}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
                     </my:SimpleStackPanel>

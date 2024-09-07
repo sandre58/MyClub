@@ -11,6 +11,7 @@ using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
@@ -27,6 +28,7 @@ using MyNet.UI.ViewModels.Workspace;
 using MyNet.Utilities;
 using MyNet.Utilities.Deferring;
 using MyNet.Utilities.Helpers;
+using MyNet.Utilities.Localization;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
@@ -273,27 +275,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
             }
         };
 
-        public SchedulingParameters ToSchedulingParameters() => new(
-                       StartDate.GetValueOrDefault(),
-                       EndDate.GetValueOrDefault(),
-                       StartTime.GetValueOrDefault(),
-                       RotationTimeValue.GetValueOrDefault().ToTimeSpan(RotationTimeUnit),
-                       RestTimeValue.GetValueOrDefault().ToTimeSpan(RestTimeUnit),
-                       VenuesSchedulingMethod == VenuesSchedulingMethod.UseHomeVenue,
-                       DatesSchedulingMethod == DatesSchedulingMethod.AsSoonAsPossible,
-                       AutomaticDatesSchedulingViewModel.IntervalValue.GetValueOrDefault().ToTimeSpan(AutomaticDatesSchedulingViewModel.IntervalUnit),
-                       true,
-                       DatesSchedulingMethod == DatesSchedulingMethod.AsSoonAsPossible ? AsSoonAsPossibleDatesSchedulingViewModel.Rules.Rules.Select(x => x.ProvideRule()).ToList() : [],
-                       DatesSchedulingMethod == DatesSchedulingMethod.Automatic ? AutomaticDatesSchedulingViewModel.DateRules.Rules.Select(x => x.ProvideRule()).ToList() : [],
-                       DatesSchedulingMethod == DatesSchedulingMethod.Automatic ? AutomaticDatesSchedulingViewModel.TimeRules.Rules.Select(x => x.ProvideRule()).ToList() : [],
-                       VenuesSchedulingMethod == VenuesSchedulingMethod.Automatic ? VenueRules.Rules.Select(x => x.ProvideRule()).ToList() : []
-                       );
+        public SchedulingParameters ToSchedulingParameters()
+            => new(StartDate.GetValueOrDefault().ToDateTime(StartTime.GetValueOrDefault()).ToUniversalTime().ToDate(),
+                   EndDate.GetValueOrDefault().ToDateTime(StartTime.GetValueOrDefault()).ToUniversalTime().ToDate(),
+                   StartDate.GetValueOrDefault().ToDateTime(StartTime.GetValueOrDefault()).ToUniversalTime().ToTime(),
+                   RotationTimeValue.GetValueOrDefault().ToTimeSpan(RotationTimeUnit),
+                   RestTimeValue.GetValueOrDefault().ToTimeSpan(RestTimeUnit),
+                   VenuesSchedulingMethod == VenuesSchedulingMethod.UseHomeVenue,
+                   DatesSchedulingMethod == DatesSchedulingMethod.AsSoonAsPossible,
+                   AutomaticDatesSchedulingViewModel.IntervalValue.GetValueOrDefault().ToTimeSpan(AutomaticDatesSchedulingViewModel.IntervalUnit),
+                   true,
+                   DatesSchedulingMethod == DatesSchedulingMethod.AsSoonAsPossible ? AsSoonAsPossibleDatesSchedulingViewModel.Rules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList() : [],
+                   DatesSchedulingMethod == DatesSchedulingMethod.Automatic ? AutomaticDatesSchedulingViewModel.DateRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList() : [],
+                   DatesSchedulingMethod == DatesSchedulingMethod.Automatic ? AutomaticDatesSchedulingViewModel.TimeRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList() : [],
+                   VenuesSchedulingMethod == VenuesSchedulingMethod.Automatic ? VenueRules.Rules.Select(x => x.ProvideRule()).ToList() : []);
 
         private void LoadSchedulingParameters(SchedulingParameters schedulingParameters)
         {
-            StartDate = schedulingParameters.StartDate;
-            EndDate = schedulingParameters.EndDate;
-            StartTime = schedulingParameters.StartTime;
+            StartDate = schedulingParameters.GetCurrentStartDate();
+            EndDate = schedulingParameters.GetCurrentEndDate();
+            StartTime = schedulingParameters.GetCurrentStartTime();
             (RotationTimeValue, RotationTimeUnit) = schedulingParameters.RotationTime.Simplify();
             (RestTimeValue, RestTimeUnit) = schedulingParameters.RestTime.Simplify();
             VenuesSchedulingMethod = schedulingParameters.UseHomeVenue ? VenuesSchedulingMethod.UseHomeVenue : schedulingParameters.VenueRules.Count > 0 ? VenuesSchedulingMethod.Automatic : schedulingParameters.AsSoonAsPossible ? VenuesSchedulingMethod.AsSoonAsPossible : VenuesSchedulingMethod.None;

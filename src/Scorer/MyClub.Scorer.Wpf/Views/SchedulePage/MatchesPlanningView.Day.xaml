@@ -186,7 +186,7 @@
                       ItemsSource="{my:HourRange Start=0,
                                                  End=22}"
                       SelectedItem="{Binding Display.Mode.DisplayTimeStart}" />
-            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To}" />
+            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
             <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
                       Width="110"
                       ItemsSource="{my:HourRange Start=1,
@@ -204,13 +204,13 @@
                             <DataTemplate>
                                 <my:CalendarHoursByDay my:HeaderAssist.Background="Transparent"
                                                        my:HeaderAssist.Height="50"
-                                                       my:HeaderAssist.Width="50"
+                                                       my:HeaderAssist.Width="45"
                                                        Appointments="{Binding Wrappers}"
                                                        AppointmentsMargin="0"
                                                        AppointmentsSpacing="0"
                                                        BorderThickness="0"
                                                        DatesSelectionMode="None"
-                                                       DisplayDate="{my:DateTime Display.Mode.DisplayDate, Mode=OneWay}"
+                                                       DisplayDate="{my:DateTime Display.Mode.DisplayDate}"
                                                        DisplayDaysCount="{Binding Display.Mode.DisplayDaysCount}"
                                                        DisplayTimeEnd="{Binding Display.Mode.DisplayTimeEnd}"
                                                        DisplayTimeStart="{Binding Display.Mode.DisplayTimeStart}"
@@ -365,12 +365,12 @@
                                             <my:SimpleStackPanel HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
                                                 <TextBlock HorizontalAlignment="Center"
                                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                                           Text="{my:Translation Format=ddd}"
+                                                           Text="{my:DisplayDateTime Format=ddd}"
                                                            Typography.Capitals="AllSmallCaps" />
                                                 <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
                                                            HorizontalAlignment="Center"
                                                            Opacity="{StaticResource MyNet.Opacity.Default}"
-                                                           Text="{my:Translation Format=dd}" />
+                                                           Text="{my:DisplayDateTime Format=dd}" />
                                             </my:SimpleStackPanel>
                                         </DataTemplate>
                                     </my:CalendarHoursByDay.ColumnHeaderTemplate>

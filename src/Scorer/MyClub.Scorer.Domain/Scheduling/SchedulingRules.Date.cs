@@ -33,6 +33,12 @@ namespace MyClub.Scorer.Domain.Scheduling
 
             return start;
         }
+
+        public IEnumerable<IncludeDaysOfWeekRule> ConvertToTimeZone() => [new(DaysOfWeek)];
+
+        IEnumerable<IDateSchedulingRule> IDateSchedulingRule.ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone) => ConvertToTimeZone();
+
+        IEnumerable<IAvailableDateSchedulingRule> IAvailableDateSchedulingRule.ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone) => ConvertToTimeZone();
     }
 
     public class ExcludeDateRule : ValueObject, IDateSchedulingRule
@@ -42,6 +48,8 @@ namespace MyClub.Scorer.Domain.Scheduling
         public DateOnly Date { get; }
 
         public bool Match(DateOnly date, DateOnly? previousDate) => date != Date;
+
+        public IEnumerable<IDateSchedulingRule> ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone) => [new ExcludeDateRule(Date)];
     }
 
     public class ExcludeDatesRangeRule : ValueObject, IDateSchedulingRule, IAvailableDateSchedulingRule
@@ -63,6 +71,12 @@ namespace MyClub.Scorer.Domain.Scheduling
         public bool Match(DateOnly date, DateOnly? previousDate) => !GetPeriod().Contains(date.BeginningOfDay());
 
         public DateTime GetNextAvailableDate(Period matchPeriod) => GetPeriod().IntersectWith(matchPeriod) ? EndDate.NextDay().BeginningOfDay() : matchPeriod.Start;
+
+        public IEnumerable<ExcludeDatesRangeRule> ConvertToTimeZone() => [new(StartDate, EndDate)];
+
+        IEnumerable<IDateSchedulingRule> IDateSchedulingRule.ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone) => ConvertToTimeZone();
+
+        IEnumerable<IAvailableDateSchedulingRule> IAvailableDateSchedulingRule.ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone) => ConvertToTimeZone();
     }
 
     public class DateIntervalRule : ValueObject, IDateSchedulingRule
@@ -72,6 +86,8 @@ namespace MyClub.Scorer.Domain.Scheduling
         public TimeSpan Interval { get; }
 
         public bool Match(DateOnly date, DateOnly? previousDate) => !previousDate.HasValue || date >= previousDate.Value.BeginningOfDay().Add(Interval).ToDate();
+
+        public IEnumerable<IDateSchedulingRule> ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone) => [new DateIntervalRule(Interval)];
     }
 
     public class IncludeTimePeriodsRule : ValueObject, IAvailableDateSchedulingRule
@@ -102,6 +118,29 @@ namespace MyClub.Scorer.Domain.Scheduling
                 matchDate = matchDate.AddDays(1);
 
             return matchDate.At(utcPeriod.Start);
+        }
+
+        public IEnumerable<IAvailableDateSchedulingRule> ConvertToTimeZone(TimeZoneInfo sourceTimeZone, TimeZoneInfo destinationTimeZone)
+        {
+            var timePeriods = new List<TimePeriod>();
+
+            foreach (var period in Periods)
+            {
+                var startTime = period.Start.ToTimeZone(sourceTimeZone, destinationTimeZone);
+                var endTime = period.End.ToTimeZone(sourceTimeZone, destinationTimeZone);
+
+                if (endTime < startTime)
+                {
+                    timePeriods.Add(new TimePeriod(startTime, TimeOnly.MaxValue));
+
+                    if (endTime != TimeOnly.MinValue)
+                        timePeriods.Add(new TimePeriod(TimeOnly.MinValue, endTime));
+                }
+                else
+                    timePeriods.Add(new TimePeriod(startTime, endTime));
+            }
+
+            return [new IncludeTimePeriodsRule(timePeriods)];
         }
     }
 }

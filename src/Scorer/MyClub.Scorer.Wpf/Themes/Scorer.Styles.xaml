@@ -69,8 +69,7 @@ Styles\Scorer.Team.xaml
           <MenuItem Command="{Binding OpenCommand}" Header="{Binding Name}" />
           <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
           <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
-          <MenuItem Command="{Binding EditResultsCommand}" Header="{my:Resource EditResults}" Icon="{my:ToolIcon Kind=LibraryEdit}" />
-          <MenuItem Command="{Binding AddMatchesCommand}" Header="{my:Resource AddMatches}" Icon="{my:ToolIcon Kind=LibraryAdd}" />
+          <MenuItem Command="{Binding AddMatchCommand}" Header="{my:Resource AddMatch}" Icon="{my:ToolIcon Kind=LibraryAdd}" />
           <MenuItem Command="{Binding DuplicateCommand}" Header="{my:Resource Duplicate}" Icon="{my:ToolIcon Kind=ContentDuplicate}" />
           <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
           <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
@@ -325,14 +324,7 @@ Styles\Scorer.Team.xaml
               <ControlTemplate TargetType="{x:Type ListViewItem}">
                 <Border Margin="{TemplateBinding Margin}" Padding="{Binding RelativeSource={RelativeSource Self}, Path=(my:ListViewAssist.ListViewItemPadding)}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" ClipToBounds="{TemplateBinding ClipToBounds}">
                   <Grid>
-                    <!--<Border x:Name="rankBorder" Opacity="{StaticResource MyNet.Opacity.Checked}">
-                                            <Border.Background>
-                                                <MultiBinding Converter="{x:Static c:RankingRankToLabelConverter.Background}">
-                                                    <Binding Path="Rank" />
-                                                    <Binding Path="DataContext.RankingRules" RelativeSource="{RelativeSource AncestorType={x:Type ListView}}" />
-                                                </MultiBinding>
-                                            </Border.Background>
-                                        </Border>-->
+                    <Border x:Name="rankBorder" Background="{Binding Label.Color, Converter={x:Static my:BrushConverter.Default}}" Opacity="{StaticResource MyNet.Opacity.Checked}" />
                     <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
                       <GridViewRowPresenter.Resources>
                         <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
@@ -354,6 +346,10 @@ Styles\Scorer.Team.xaml
         </Style>
       </Setter.Value>
     </Setter>
+  </Style>
+  <Style x:Key="Scorer.Styles.ListView.Ranking.Small" BasedOn="{StaticResource Scorer.Styles.ListView.Ranking}" TargetType="{x:Type ListView}">
+    <Setter Property="my:ListViewAssist.HeaderHeight" Value="25" />
+    <Setter Property="my:ListViewAssist.ItemMinHeight" Value="22" />
   </Style>
   <Style x:Key="Scorer.Styles.PictureControl.Team" BasedOn="{StaticResource MyNet.Styles.PictureControl}" TargetType="{x:Type my:PictureControl}">
     <Setter Property="Background" Value="Transparent" />
@@ -448,7 +444,7 @@ Styles\Scorer.Team.xaml
             <my:PackIcon x:Name="postponed" Width="18" Height="18" Foreground="{DynamicResource MyNet.Brushes.Warning}" Kind="ProgressQuestion" ToolTip="{my:Resource Postponed}" Visibility="Collapsed" />
             <!-- DateTime -->
             <Grid x:Name="date">
-              <TextBlock Text="{my:Translation Date, Format=ShortDateFormat, Casing=Title}">
+              <TextBlock Text="{my:DisplayDateTime Date, Format=ShortDateFormat, Casing=Title}">
                 <TextBlock.Visibility>
                   <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfEqual}">
                     <Binding Path="Date.Date" />
@@ -456,7 +452,7 @@ Styles\Scorer.Team.xaml
                   </MultiBinding>
                 </TextBlock.Visibility>
               </TextBlock>
-              <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Date, Format=t, Casing=Title}">
+              <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime Date, Format=t, Casing=Title}">
                 <TextBlock.Visibility>
                   <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfNotEqual}">
                     <Binding Path="Date.Date" />
@@ -619,7 +615,7 @@ Styles\Scorer.Team.xaml
             </Grid.ColumnDefinitions>
             <!--  Date  -->
             <my:SimpleStackPanel Grid.ColumnSpan="5" HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Small}">
-              <TextBlock Text="{my:Translation Match.Date, RelativeSource={RelativeSource TemplatedParent}, Format=LongDatePattern, Casing=Title}" Typography.Capitals="AllSmallCaps" />
+              <TextBlock Text="{my:DisplayDateTime Match.Date, RelativeSource={RelativeSource TemplatedParent}, Format=D, Casing=Title}" Typography.Capitals="AllSmallCaps" />
               <!--<Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
                                     HorizontalAlignment="Center"
                                     Command="{Binding Match.OpenParentCommand, RelativeSource={RelativeSource TemplatedParent}}"
@@ -644,7 +640,7 @@ Styles\Scorer.Team.xaml
                       <TextBlock Foreground="{DynamicResource MyNet.Brushes.Warning}" Text="{my:Resource Postponed}" />
                     </my:SimpleStackPanel>
                     <!--  Time  -->
-                    <TextBlock x:Name="time" FontFamily="{StaticResource MyNet.Font.Family.Digital}" FontSize="{StaticResource MyNet.Font.Size.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Translation Date,                                                                          Format=ShortTimePattern,                                                                          Casing=Title}" Visibility="Visible" />
+                    <TextBlock x:Name="time" FontFamily="{StaticResource MyNet.Font.Family.Digital}" FontSize="{StaticResource MyNet.Font.Size.Title}" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime Date,                                                                          Format=t,                                                                          Casing=Title}" Visibility="Visible" />
                     <!--  Score  -->
                     <Grid x:Name="score" Visibility="Collapsed">
                       <Grid.ColumnDefinitions>
@@ -734,7 +730,7 @@ Styles\Scorer.Team.xaml
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="15" />
               <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="50" />
+              <ColumnDefinition Width="60" />
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="15" />
               <ColumnDefinition Width="*" />
@@ -764,7 +760,7 @@ Styles\Scorer.Team.xaml
                     <!--  IsPostponed  -->
                     <my:PackIcon x:Name="postponed" Width="24" Height="24" Foreground="{DynamicResource MyNet.Brushes.Warning}" Kind="ProgressQuestion" ToolTip="{my:Resource Postponed}" Visibility="Collapsed" />
                     <!--  Time  -->
-                    <TextBlock x:Name="time" Style="{StaticResource MyNet.Styles.TextBlock.Caption}" FontFamily="{StaticResource MyNet.Font.Family.Digital}" Text="{my:Translation Date,                                                                          Format=t,                                                                          Casing=Title}" Visibility="Visible" />
+                    <TextBlock x:Name="time" Style="{StaticResource MyNet.Styles.TextBlock.Caption}" FontFamily="{StaticResource MyNet.Font.Family.Digital}" Text="{my:DisplayDateTime Date,                                                                          Format=t,                                                                          Casing=Title}" Visibility="Visible" />
                     <!--  Score  -->
                     <Grid x:Name="score" Visibility="Collapsed">
                       <Grid.ColumnDefinitions>
@@ -845,7 +841,7 @@ Styles\Scorer.Team.xaml
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="15" />
               <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="50" />
+              <ColumnDefinition Width="60" />
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="15" />
               <ColumnDefinition Width="*" />

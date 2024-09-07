@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Attributes;
@@ -13,6 +14,7 @@ using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Resources;
 using MyNet.UI.ViewModels.Workspace;
 using MyNet.Utilities;
+using MyNet.Utilities.Localization;
 using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
@@ -28,18 +30,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         }
 
         public SchedulingParameters Create()
-            => new(StartDate.GetValueOrDefault(),
-                   EndDate.GetValueOrDefault(),
-                   StartTime.GetValueOrDefault(),
+            => new(StartDate.GetValueOrDefault().ToDateTime(StartTime.GetValueOrDefault()).ToUniversalTime().ToDate(),
+                   EndDate.GetValueOrDefault().ToDateTime(StartTime.GetValueOrDefault()).ToUniversalTime().ToDate(),
+                   StartDate.GetValueOrDefault().ToDateTime(StartTime.GetValueOrDefault()).ToUniversalTime().ToTime(),
                    RotationTimeValue.GetValueOrDefault().ToTimeSpan(RotationTimeUnit),
                    RestTimeValue.GetValueOrDefault().ToTimeSpan(RestTimeUnit),
                    UseHomeVenue,
                    AsSoonAsPossible,
                    IntervalValue.GetValueOrDefault().ToTimeSpan(IntervalUnit),
                    ScheduleByParent,
-                   AsSoonAsPossible ? AsSoonAsPossibleRules.Rules.Select(x => x.ProvideRule()).ToList() : [],
-                   AsSoonAsPossible ? [] : DateRules.Rules.Select(x => x.ProvideRule()).ToList(),
-                   AsSoonAsPossible ? [] : TimeRules.Rules.Select(x => x.ProvideRule()).ToList(),
+                   AsSoonAsPossible ? AsSoonAsPossibleRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList() : [],
+                   AsSoonAsPossible ? [] : DateRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList(),
+                   AsSoonAsPossible ? [] : TimeRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList(),
                    !UseHomeVenue ? VenueRules.Rules.Select(x => x.ProvideRule()).ToList() : []);
 
         [IsRequired]
@@ -127,9 +129,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public void Load(SchedulingParameters schedulingParameters)
         {
-            StartDate = schedulingParameters.StartDate;
-            EndDate = schedulingParameters.EndDate;
-            StartTime = schedulingParameters.StartTime;
+            StartDate = schedulingParameters.GetCurrentStartDate();
+            EndDate = schedulingParameters.GetCurrentEndDate();
+            StartTime = schedulingParameters.GetCurrentStartTime();
             (RotationTimeValue, RotationTimeUnit) = schedulingParameters.RotationTime.Simplify();
             (RestTimeValue, RestTimeUnit) = schedulingParameters.RestTime.Simplify();
             UseHomeVenue = schedulingParameters.UseHomeVenue;
@@ -139,15 +141,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             if (AsSoonAsPossible)
             {
-                AsSoonAsPossibleRules.Load(schedulingParameters.AsSoonAsPossibleRules);
+                AsSoonAsPossibleRules.Load(schedulingParameters.AsSoonAsPossibleRules.SelectMany(x => x.ConvertToTimeZone(TimeZoneInfo.Utc, GlobalizationService.Current.TimeZone)));
                 DateRules.Rules.Clear();
                 TimeRules.Rules.Clear();
             }
             else
             {
                 AsSoonAsPossibleRules.Rules.Clear();
-                DateRules.Load(schedulingParameters.DateRules);
-                TimeRules.Load(schedulingParameters.TimeRules);
+                DateRules.Load(schedulingParameters.DateRules.SelectMany(x => x.ConvertToTimeZone(TimeZoneInfo.Utc, GlobalizationService.Current.TimeZone)));
+                TimeRules.Load(schedulingParameters.TimeRules.SelectMany(x => x.ConvertToTimeZone(TimeZoneInfo.Utc, GlobalizationService.Current.TimeZone)));
             }
 
             if (!UseHomeVenue)

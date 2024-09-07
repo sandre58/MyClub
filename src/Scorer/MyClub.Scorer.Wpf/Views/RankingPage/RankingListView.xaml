@@ -8,51 +8,13 @@
           xmlns:my="http://mynet.com/xaml/themes"
           xmlns:sys="clr-namespace:System;assembly=mscorlib"
           xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.RankingPage"
-          Style="{StaticResource MyNet.Styles.ListView}"
+          Style="{StaticResource Scorer.Styles.ListView.Ranking}"
           d:DataContext="{d:DesignInstance Type=vm:RankingListViewModel}"
-          my:ListAssist.SynchronizedList="{Binding}"
-          my:ListBoxItemAssist.ShowSelection="False"
-          my:ListViewAssist.AutoResizeIsEnabled="True"
-          my:ListViewAssist.ItemMinHeight="40"
           x:Shared="False"
-          ItemsSource="{Binding Items}"
           mc:Ignorable="d">
     <ListView.Resources>
         <my:BindingProxy x:Key="RankingProxy" Data="{Binding}" />
     </ListView.Resources>
-    <ListView.ItemContainerStyle>
-        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource MyNet.Styles.ListViewItem}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ListViewItem}">
-                        <Border Margin="{TemplateBinding Margin}"
-                                Padding="{Binding RelativeSource={RelativeSource Self}, Path=(my:ListViewAssist.ListViewItemPadding)}"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                ClipToBounds="{TemplateBinding ClipToBounds}">
-                            <Grid>
-                                <Border x:Name="rankBorder" Background="{Binding Label.Color, Converter={x:Static my:BrushConverter.Default}}" Opacity="{StaticResource MyNet.Opacity.Checked}" />
-                                <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
-                                    <GridViewRowPresenter.Resources>
-                                        <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                                            <Setter Property="TextWrapping" Value="NoWrap" />
-                                        </Style>
-                                    </GridViewRowPresenter.Resources>
-                                </GridViewRowPresenter>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </ListView.ItemContainerStyle>
     <ListView.View>
         <GridView>
             <GridView.Columns>

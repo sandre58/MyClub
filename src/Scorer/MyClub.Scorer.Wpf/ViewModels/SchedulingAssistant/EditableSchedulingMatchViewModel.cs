@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
+using MyNet.Observable.Attributes;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
 
@@ -29,6 +30,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
         public IStadiumViewModel? Stadium { get; set; }
 
         public ReadOnlyObservableCollection<SchedulingConflict> Conflicts { get; }
+
+        public bool IsEnabled => Item.CanBeRescheduled;
 
         public void SetDate(DateTime startDate)
         {

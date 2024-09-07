@@ -69,6 +69,6 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public IReadOnlyCollection<ITimeSchedulingRule> TimeRules { get; }
 
-        public DateTime Start() => StartDate.At(StartTime);
+        public DateTime Start() => StartDate.At(StartTime, DateTimeKind.Utc);
     }
 }

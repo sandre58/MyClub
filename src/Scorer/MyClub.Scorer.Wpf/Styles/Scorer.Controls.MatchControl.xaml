@@ -52,7 +52,7 @@
 
                         <!--  Date  -->
                         <my:SimpleStackPanel Grid.ColumnSpan="5" HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Small}">
-                            <TextBlock Text="{my:Translation Match.Date, RelativeSource={RelativeSource TemplatedParent}, Format=LongDatePattern, Casing=Title}" Typography.Capitals="AllSmallCaps" />
+                            <TextBlock Text="{my:DisplayDateTime Match.Date, RelativeSource={RelativeSource TemplatedParent}, Format=D, Casing=Title}" Typography.Capitals="AllSmallCaps" />
                             <!--<Button Style="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}"
                                     HorizontalAlignment="Center"
                                     Command="{Binding Match.OpenParentCommand, RelativeSource={RelativeSource TemplatedParent}}"
@@ -102,8 +102,8 @@
                                                    FontFamily="{StaticResource MyNet.Font.Family.Digital}"
                                                    FontSize="{StaticResource MyNet.Font.Size.Title}"
                                                    Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                                   Text="{my:Translation Date,
-                                                                         Format=ShortTimePattern,
+                                                   Text="{my:DisplayDateTime Date,
+                                                                         Format=t,
                                                                          Casing=Title}"
                                                    Visibility="Visible" />
 
@@ -247,7 +247,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="15" />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="60" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="15" />
                             <ColumnDefinition Width="*" />
@@ -324,7 +324,7 @@
                                         <TextBlock x:Name="time"
                                                    Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
                                                    FontFamily="{StaticResource MyNet.Font.Family.Digital}"
-                                                   Text="{my:Translation Date,
+                                                   Text="{my:DisplayDateTime Date,
                                                                          Format=t,
                                                                          Casing=Title}"
                                                    Visibility="Visible" />
@@ -442,7 +442,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="15" />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="60" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="15" />
                             <ColumnDefinition Width="*" />

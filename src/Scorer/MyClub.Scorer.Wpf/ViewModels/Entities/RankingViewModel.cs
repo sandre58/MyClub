@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using DynamicData;
@@ -18,66 +18,38 @@ using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
+using MyNet.Utilities.Logging;
 using MyNet.Utilities.Sequences;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class RankingViewModel : ObservableObject, IReadOnlyCollection<RankingRowViewModel>, INotifyCollectionChanged
+    internal class RankingViewModel : ObservableObject, IReadOnlyCollection<RankingRowViewModel>, INotifyCollectionChanged, IIdentifiable<Guid>
     {
         private readonly UiObservableCollection<RankingRowViewModel> _rows = [];
         private readonly IEnumerable<MatchViewModel> _matches;
         private readonly Subject<bool> _sortRowsSubject = new();
-        private readonly object _lock = new();
-        private readonly List<Func<IDisposable>> _subscribers = [];
 
         public RankingViewModel(ReadOnlyObservableCollection<ITeamViewModel> teams, IEnumerable<MatchViewModel> matches)
             : base()
         {
-            Disposables.Add(teams.ToObservableChangeSet()
+            Disposables.AddRange(
+                [
+                teams.ToObservableChangeSet()
                                  .Transform(x => new RankingRowViewModel(this, x))
                                  .AutoRefreshOnObservable(x => _sortRowsSubject)
                                  .Sort(SortExpressionComparer<RankingRowViewModel>.Ascending(x => x.Rank))
                                  .DisposeMany()
                                  .Bind(_rows)
-                                 .Subscribe(_ => RaisePropertyChanged(nameof(Count))));
+                                 .Subscribe(),
+                _rows.ToObservableChangeSet().WhereReasonsAre(ListChangeReason.Add, ListChangeReason.Remove).Subscribe(_ => RaisePropertyChanged(nameof(Count)))
+                                 ]);
             _matches = matches;
 
             _rows.CollectionChanged += new NotifyCollectionChangedEventHandler(HandleCollectionChanged);
         }
 
-        public void SubscribeOnUpdate(Func<IDisposable> onUpdate) => _subscribers.Add(onUpdate);
-
-        public RankingRowViewModel? GetRow(ITeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
-
-        public void Update(RankingDto ranking)
-        {
-            lock (_lock)
-            {
-                var subscribers = _subscribers.Select(x => x()).ToList();
-
-                using (new CompositeDisposable(subscribers))
-                {
-                    var matches = _matches.ToList();
-                    _rows.ToList().ForEach(x =>
-                    {
-                        var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
-
-                        if (rowFound is not null)
-                            x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
-                        else
-                            x.Reset();
-                    });
-
-                    var teams = _rows.Select(x => x.Team).ToList();
-                    Rules = ranking.Rules;
-                    PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
-                    Labels = ranking.Labels?.AsReadOnly();
-
-                    _sortRowsSubject.OnNext(true);
-                }
-            }
-        }
+        public Guid Id { get; } = Guid.NewGuid();
 
         public int FormCount { get; set; } = 5;
 
@@ -88,6 +60,29 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public ReadOnlyDictionary<ITeamViewModel, int>? PenaltyPoints { get; private set; }
 
         public ReadOnlyDictionary<AcceptableValueRange<int>, RankLabel>? Labels { get; private set; }
+
+        public RankingRowViewModel? GetRow(ITeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
+
+        public void Update(RankingDto ranking)
+        {
+            var matches = _matches.ToList();
+            _rows.ToList().ForEach(x =>
+            {
+                var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
+
+                if (rowFound is not null)
+                    x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
+                else
+                    x.Reset();
+            });
+
+            var teams = _rows.Select(x => x.Team).ToList();
+            Rules = ranking.Rules;
+            PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
+            Labels = ranking.Labels?.AsReadOnly();
+
+            _sortRowsSubject.OnNext(true);
+        }
 
         #region INotifyCollectionChanged
 

@@ -96,9 +96,9 @@
 
                                     <!--  Season  -->
                                     <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
-                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Data.CurrentProject.Season.Period.Start, Source={StaticResource Proxy}, Format=DateShortMonthYearFormat, Casing=Title}" />
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:DisplayDateTime Data.CurrentProject.Season.Period.Start, Source={StaticResource Proxy}, Format=Y, Casing=Title}" />
                                         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="-" />
-                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:Translation Data.CurrentProject.Season.Period.End, Source={StaticResource Proxy}, Format=DateShortMonthYearFormat, Casing=Title}" />
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="{my:DisplayDateTime Data.CurrentProject.Season.Period.End, Source={StaticResource Proxy}, Format=Y, Casing=Title}" />
                                     </my:SimpleStackPanel>
 
                                 </StackPanel>

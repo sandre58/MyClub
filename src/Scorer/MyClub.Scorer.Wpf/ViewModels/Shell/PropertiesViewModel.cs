@@ -27,17 +27,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 
         public string? ProjectCreatedBy { get; private set; }
 
-        public DateTime? ProjectCreatedAt { get; private set; }
+        public DateTime? ProjectCreatedUtcDate { get; private set; }
 
         public string? ProjectModifiedBy { get; private set; }
 
-        public DateTime? ProjectModifiedAt { get; private set; }
+        public DateTime? ProjectModifiedUtcDate { get; private set; }
 
-        public DateTime? FileCreatedDate { get; private set; }
+        public DateTime? FileCreatedUtcDate { get; private set; }
 
-        public DateTime? FileModifiedDate { get; private set; }
+        public DateTime? FileModifiedUtcDate { get; private set; }
 
-        public DateTime? FileLastAccessDate { get; private set; }
+        public DateTime? FileLastAccessUtcDate { get; private set; }
 
         public string? FileName { get; private set; }
 
@@ -60,9 +60,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
                 }),
                 projectInfoProvider.WhenPropertyChanged(x => x.IsLoaded).Subscribe(x => ProjectIsLoaded = x.Value),
                 projectInfoProvider.WhenPropertyChanged(x => x.Name).Subscribe(x => Name = x.Value),
-                projectInfoProvider.WhenPropertyChanged(x => x.CreatedDate).Subscribe(x => FileCreatedDate = x.Value?.ToLocalTime()),
-                projectInfoProvider.WhenPropertyChanged(x => x.ModifiedDate).Subscribe(x => FileModifiedDate = x.Value?.ToLocalTime()),
-                projectInfoProvider.WhenPropertyChanged(x => x.LastAccessDate).Subscribe(x => FileLastAccessDate = x.Value?.ToLocalTime()),
+                projectInfoProvider.WhenPropertyChanged(x => x.CreatedDate).Subscribe(x => FileCreatedUtcDate = x.Value),
+                projectInfoProvider.WhenPropertyChanged(x => x.ModifiedDate).Subscribe(x => FileModifiedUtcDate = x.Value),
+                projectInfoProvider.WhenPropertyChanged(x => x.LastAccessDate).Subscribe(x => FileLastAccessUtcDate = x.Value),
                 projectInfoProvider.WhenPropertyChanged(x => x.FileSize).Subscribe(_ =>
                 {
                     FileSize.Value = projectInfoProvider.FileSize;
@@ -84,9 +84,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         private void UpdateProjectInfo(IProject? project)
         {
             ProjectCreatedBy = project?.CreatedBy;
-            ProjectCreatedAt = project?.CreatedAt?.ToLocalTime();
+            ProjectCreatedUtcDate = project?.CreatedAt;
             ProjectModifiedBy = project?.ModifiedBy;
-            ProjectModifiedAt = project?.ModifiedAt?.ToLocalTime();
+            ProjectModifiedUtcDate = project?.ModifiedAt;
         }
 
         protected override void Cleanup()
