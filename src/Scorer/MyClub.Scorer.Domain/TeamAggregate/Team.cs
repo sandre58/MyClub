@@ -15,7 +15,7 @@ using MyNet.Utilities.Geography;
 
 namespace MyClub.Scorer.Domain.TeamAggregate
 {
-    public class Team : NameEntity, IAggregateRoot, ITeam
+    public class Team : NameEntity, IAggregateRoot, IVirtualTeam
     {
         private readonly ExtendedObservableCollection<Player> _players = [];
         private readonly ExtendedObservableCollection<Manager> _staff = [];
@@ -39,6 +39,8 @@ namespace MyClub.Scorer.Domain.TeamAggregate
         public ReadOnlyObservableCollection<Player> Players { get; }
 
         public ReadOnlyObservableCollection<Manager> Staff { get; }
+
+        Team? IVirtualTeam.GetTeam() => this;
 
         #region Players
 

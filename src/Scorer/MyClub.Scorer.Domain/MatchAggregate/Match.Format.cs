@@ -3,6 +3,7 @@
 
 using System;
 using System.Text;
+using MyClub.Scorer.Domain.Enums;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
@@ -44,5 +45,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
             return str.ToString();
         }
+
+        public static implicit operator FixtureFormat(MatchFormat format) => new(format.RegulationTime, format.ExtraTimeIsEnabled ? NoDrawUsage.OnLastMatch : NoDrawUsage.None, format.ShootoutIsEnabled ? NoDrawUsage.OnLastMatch : NoDrawUsage.None, format.ExtraTime, format.NumberOfPenaltyShootouts);
     }
 }

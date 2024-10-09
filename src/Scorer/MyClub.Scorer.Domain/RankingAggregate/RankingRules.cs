@@ -29,17 +29,17 @@ namespace MyClub.Scorer.Domain.RankingAggregate
 
         public static Dictionary<string, IRankingColumnComputer> DefaultComputers => Enum.GetValues<DefaultRankingColumn>().ToDictionary(x => x.ToString(), CreateComputer);
 
-        public static Dictionary<MatchResultDetailled, int> DefaultPoints => new()
+        public static Dictionary<ExtendedResult, int> DefaultPoints => new()
         {
-                { MatchResultDetailled.Won, 3 },
-                { MatchResultDetailled.Drawn, 1 },
-                { MatchResultDetailled.Lost, 0 },
-                { MatchResultDetailled.Withdrawn, -1 },
+                { ExtendedResult.Won, 3 },
+                { ExtendedResult.Drawn, 1 },
+                { ExtendedResult.Lost, 0 },
+                { ExtendedResult.Withdrawn, -1 },
         };
 
         public static readonly RankingRules Default = new(DefaultPoints, RankingComparer.Default, DefaultComputers);
 
-        public RankingRules(IReadOnlyDictionary<MatchResultDetailled, int> pointsNumberByResult,
+        public RankingRules(IReadOnlyDictionary<ExtendedResult, int> pointsNumberByResult,
                             RankingComparer comparer,
                             Dictionary<string, IRankingColumnComputer> computers)
         {
@@ -48,12 +48,12 @@ namespace MyClub.Scorer.Domain.RankingAggregate
             Computers = computers;
         }
 
-        public IReadOnlyDictionary<MatchResultDetailled, int> PointsNumberByResult { get; }
+        public IReadOnlyDictionary<ExtendedResult, int> PointsNumberByResult { get; }
 
         public RankingComparer Comparer { get; }
 
         public IReadOnlyDictionary<string, IRankingColumnComputer> Computers { get; }
 
-        public int GetPoints(MatchResultDetailled result) => PointsNumberByResult.GetValueOrDefault(result);
+        public int GetPoints(ExtendedResult result) => PointsNumberByResult.GetValueOrDefault(result);
     }
 }

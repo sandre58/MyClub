@@ -33,8 +33,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("interval")]
         public TimeSpan Interval { get; set; }
 
-        [XmlAttribute("scheduleByParent")]
-        public bool ScheduleByParent { get; set; }
+        [XmlAttribute("scheduleByStage")]
+        public bool ScheduleByStage { get; set; }
 
         [XmlArray("AsSoonAsPossibleSchedulingRules")]
         [XmlArrayItem("IncludeTimePeriodsRule", typeof(IncludeTimePeriodsRulePackage))]
@@ -52,7 +52,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlArray("TimeRules")]
         [XmlArrayItem("TimeOfDayRule", typeof(TimeOfDayRulePackage))]
         [XmlArrayItem("TimeOfDateRule", typeof(TimeOfDateRulePackage))]
-        [XmlArrayItem("TimeOfMatchNumberRule", typeof(TimeOfMatchNumberRulePackage))]
+        [XmlArrayItem("TimeOfMatchNumberRule", typeof(TimeOfIndexRulePackage))]
         [XmlArrayItem("TimeOfDateRangeRule", typeof(TimeOfDateRangeRulePackage))]
         public List<TimeSchedulingRulePackage>? TimeRules { get; set; }
 
@@ -63,7 +63,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlArrayItem("FirstAvailableStadiumRule", typeof(FirstAvailableStadiumRulePackage))]
         [XmlArrayItem("StadiumOfDayRule", typeof(StadiumOfDayRulePackage))]
         [XmlArrayItem("StadiumOfDateRule", typeof(StadiumOfDateRulePackage))]
-        [XmlArrayItem("StadiumOfMatchNumberRule", typeof(StadiumOfMatchNumberRulePackage))]
         [XmlArrayItem("StadiumOfDateRangeRule", typeof(StadiumOfDateRangeRulePackage))]
         public List<VenueSchedulingRulePackage>? VenueRules { get; set; }
     }
@@ -85,7 +84,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 
     [XmlInclude(typeof(TimeOfDayRulePackage))]
     [XmlInclude(typeof(TimeOfDateRulePackage))]
-    [XmlInclude(typeof(TimeOfMatchNumberRulePackage))]
+    [XmlInclude(typeof(TimeOfIndexRulePackage))]
     [XmlInclude(typeof(TimeOfDateRangeRulePackage))]
     public class TimeSchedulingRulePackage
     {
@@ -97,7 +96,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
     [XmlInclude(typeof(NoStadiumRulePackage))]
     [XmlInclude(typeof(StadiumOfDayRulePackage))]
     [XmlInclude(typeof(StadiumOfDateRulePackage))]
-    [XmlInclude(typeof(StadiumOfMatchNumberRulePackage))]
     [XmlInclude(typeof(StadiumOfDateRangeRulePackage))]
     public class VenueSchedulingRulePackage
     {
@@ -172,9 +170,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("time")]
         public TimeSpan Time { get; set; }
 
-        [XmlArray("MatchExceptions")]
-        [XmlArrayItem("MatchException", typeof(TimeOfMatchNumberRulePackage))]
-        public List<TimeOfMatchNumberRulePackage>? MatchExceptions { get; set; }
+        [XmlArray("Exceptions")]
+        [XmlArrayItem("Exception", typeof(TimeOfIndexRulePackage))]
+        public List<TimeOfIndexRulePackage>? Exceptions { get; set; }
     }
 
     public class TimeOfDateRulePackage : TimeSchedulingRulePackage
@@ -185,15 +183,15 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("time")]
         public TimeSpan Time { get; set; }
 
-        [XmlArray("MatchExceptions")]
-        [XmlArrayItem("MatchException", typeof(TimeOfMatchNumberRulePackage))]
-        public List<TimeOfMatchNumberRulePackage>? MatchExceptions { get; set; }
+        [XmlArray("Exceptions")]
+        [XmlArrayItem("Exception", typeof(TimeOfIndexRulePackage))]
+        public List<TimeOfIndexRulePackage>? Exceptions { get; set; }
     }
 
-    public class TimeOfMatchNumberRulePackage : TimeSchedulingRulePackage
+    public class TimeOfIndexRulePackage : TimeSchedulingRulePackage
     {
-        [XmlAttribute("matchNumber")]
-        public int MatchNumber { get; set; }
+        [XmlAttribute("index")]
+        public int Index { get; set; }
 
         [XmlAttribute("time")]
         public TimeSpan Time { get; set; }
@@ -210,9 +208,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlAttribute("time")]
         public TimeSpan Time { get; set; }
 
-        [XmlArray("MatchExceptions")]
-        [XmlArrayItem("MatchException", typeof(TimeOfMatchNumberRulePackage))]
-        public List<TimeOfMatchNumberRulePackage>? MatchExceptions { get; set; }
+        [XmlArray("Exceptions")]
+        [XmlArrayItem("Exception", typeof(TimeOfIndexRulePackage))]
+        public List<TimeOfIndexRulePackage>? Exceptions { get; set; }
     }
 
     public class StadiumOfDayRulePackage : VenueSchedulingRulePackage
@@ -225,33 +223,12 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 
         [XmlIgnore]
         public bool StadiumIdSpecified => StadiumId.HasValue;
-
-        [XmlArray("MatchExceptions")]
-        [XmlArrayItem("MatchException", typeof(StadiumOfMatchNumberRulePackage))]
-        public List<StadiumOfMatchNumberRulePackage>? MatchExceptions { get; set; }
     }
 
     public class StadiumOfDateRulePackage : VenueSchedulingRulePackage
     {
         [XmlAttribute("date")]
         public int Date { get; set; }
-
-        [XmlElement("StadiumId", IsNullable = true)]
-        public Guid? StadiumId { get; set; }
-
-        [XmlIgnore]
-        public bool StadiumIdSpecified => StadiumId.HasValue;
-
-        [XmlArray("MatchExceptions")]
-        [XmlArrayItem("MatchException", typeof(StadiumOfMatchNumberRulePackage))]
-        public List<StadiumOfMatchNumberRulePackage>? MatchExceptions { get; set; }
-    }
-
-    public class StadiumOfMatchNumberRulePackage : VenueSchedulingRulePackage
-    {
-        [XmlAttribute("matchNumber")]
-        public int MatchNumber { get; set; }
-
 
         [XmlElement("StadiumId", IsNullable = true)]
         public Guid? StadiumId { get; set; }
@@ -273,10 +250,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 
         [XmlIgnore]
         public bool StadiumIdSpecified => StadiumId.HasValue;
-
-        [XmlArray("MatchExceptions")]
-        [XmlArrayItem("MatchException", typeof(StadiumOfMatchNumberRulePackage))]
-        public List<StadiumOfMatchNumberRulePackage>? MatchExceptions { get; set; }
     }
 
     public class HomeStadiumRulePackage : VenueSchedulingRulePackage

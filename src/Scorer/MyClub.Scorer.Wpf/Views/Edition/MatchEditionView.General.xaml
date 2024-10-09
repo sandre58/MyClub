@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:my="http://mynet.com/xaml/themes"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
@@ -36,103 +37,848 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-    </UserControl.Resources>
-    <my:SimpleStackPanel>
 
-        <!-- Date -->
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarOutline}">
-            <my:SimpleStackPanel Orientation="Horizontal">
-                <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
-                    <my:SimpleStackPanel.Style>
-                        <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
+        <Style x:Key="Scorer.Styles.Button.Score.Large" TargetType="{x:Type Button}" BasedOn="{StaticResource MyNet.Styles.Button.Elevation.Custom}">
+            <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Application.Background.Inverse}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}">
+                            <TextBlock.Visibility>
+                                <Binding Converter="{x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}" Path="DataContext.State" RelativeSource="{RelativeSource AncestorType={x:Type Button}}">
+                                    <Binding.ConverterParameter>
+                                        <x:Array Type="{x:Type enums:MatchState}">
+                                            <enums:MatchState>Played</enums:MatchState>
+                                            <enums:MatchState>InProgress</enums:MatchState>
+                                            <enums:MatchState>Suspended</enums:MatchState>
+                                        </x:Array>
+                                    </Binding.ConverterParameter>
+                                </Binding>
+                            </TextBlock.Visibility>
+                        </TextBlock>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="FontFamily" Value="{StaticResource MyNet.Font.Family.Daggersquare}" />
+            <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size.Header}" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Width" Value="40" />
+        </Style>
+
+        <Style x:Key="Scorer.Styles.Button.Score.Medium" TargetType="{x:Type Button}" BasedOn="{StaticResource Scorer.Styles.Button.Score.Large}">
+            <Setter Property="FontSize" Value="{StaticResource MyNet.Font.Size.Caption}" />
+            <Setter Property="Height" Value="25" />
+            <Setter Property="Width" Value="25" />
+        </Style>
+
+        <Style x:Key="Scorer.Styles.RadioButton.Score" TargetType="{x:Type RadioButton}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Icon.Foreground}">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Cursor" Value="Arrow" />
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Scorer.Styles.ListBoxItem.Player" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+            <Setter Property="Height" Value="Auto" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="IsEnabled" Value="True" />
+            <Setter Property="Margin" Value="{StaticResource MyNet.Margins.Small.Vertical}" />
+            <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Default}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="my:IconAssist.Alignment" Value="Left" />
+            <Setter Property="my:IconAssist.Margin" Value="{StaticResource MyNet.Margins.Default.Right}" />
+            <Setter Property="my:IconAssist.Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+            <Setter Property="my:ListBoxItemAssist.IsMouseOverBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Hovered}}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{DynamicResource MyNet.Brushes.Primary}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Primary}" />
+            <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{DynamicResource MyNet.Brushes.Primary.Foreground}" />
+            <Setter Property="my:ListBoxItemAssist.ShowSelection" Value="True" />
+            <Setter Property="my:ThemeAssist.CornerRadius" Value="{StaticResource MyNet.CornerRadius.Control}" />
+        </Style>
+
+        <Style x:Key="Scorer.Styles.ListBox.Players" TargetType="{x:Type ListBox}" BasedOn="{StaticResource MyNet.Styles.ListBox.Cards}">
+            <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Control.Border}" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource Scorer.Styles.ListBoxItem.Player}" />
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}"
+                                               Width="28"
+                                               Height="28"
+                                               DataContext="{Binding}" />
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock FontWeight="DemiBold" Text="{my:Translation LastName, Casing=AllCaps}" />
+                                <TextBlock Text="{Binding FirstName}" />
+                            </StackPanel>
+
+                            <my:PackIcon Grid.Column="4"
+                                         Width="24"
+                                         Height="24"
+                                         Margin="{StaticResource MyNet.Margins.Medium.Horizontal}"
+                                         VerticalAlignment="Center"
+                                         Kind="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                         Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        </Grid>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="1" IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="MaxHeight" Value="400" />
+            <Setter Property="my:ItemsControlAssist.SortingProperty" Value="LastName" />
+        </Style>
+
+        <Style x:Key="Scorer.Styles.Button.Result" TargetType="{x:Type Button}" BasedOn="{StaticResource MyNet.Styles.Button.Icon.Foreground}">
+            <Setter Property="Margin" Value="{Binding Path=(my:LayoutAssist.InnerMargin), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBar}}}" />
+            <Setter Property="Padding" Value="{Binding Path=(my:LayoutAssist.InnerPadding), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBar}}}" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Goal.Edition" DataType="{x:Type vm:EditableGoalViewModel}">
+            <Grid Width="500">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Type -->
+                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                         Grid.Row="0"
+                         HorizontalAlignment="Stretch"
+                         my:IconAssist.Alignment="Top"
+                         my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Bottom}"
+                         SelectedValue="{Binding Type}"
+                         SelectedValuePath="DataContext">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=Soccer}" Content="{my:Resource GoalTypeOther}" DataContext="{x:Static enums:GoalType.Other}" />
+                    <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=RegistrationMark}" Content="{my:Resource GoalTypePenalty}" DataContext="{x:Static enums:GoalType.Penalty}" />
+                    <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=TargetArrow}" Content="{my:Resource GoalTypeFreeKick}" DataContext="{x:Static enums:GoalType.FreeKick}" />
+                    <ListBoxItem my:IconAssist.Icon="{my:MediumIcon Kind=Soccer}"
+                                 my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Negative}"
+                                 my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.White}"
+                                 Content="{my:Resource GoalTypeOwnGoal}"
+                                 DataContext="{x:Static enums:GoalType.OwnGoal}" />
+                </ListBox>
+
+                <!-- Minute -->
+                <DockPanel Grid.Row="2">
+                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon}"
+                                  Content="{my:MediumIcon Kind=Stopwatch}"
+                                  DockPanel.Dock="Left"
+                                  IsChecked="{Binding MinuteIsEnabled}"
+                                  ToolTip="{my:Resource MinuteIsEnabled}" />
+                    <my:NumericUpDown Width="70"
+                                      DockPanel.Dock="Right"
+                                      IsEnabled="{Binding MinuteIsEnabled}"
+                                      Maximum="1000"
+                                      Minimum="1"
+                                      Value="{my:NullableBinding Minute}" />
+                    <Slider Style="{StaticResource MyNet.Styles.Slider.Discrete}"
+                            Margin="{StaticResource MyNet.Margins.Medium.Horizontal}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{Binding MinuteIsEnabled}"
+                            Maximum="{Binding Data.MatchFormat.EffectiveTime, Source={StaticResource Proxy}}"
+                            Minimum="1"
+                            TickFrequency="5"
+                            TickPlacement="TopLeft"
+                            Value="{my:NullableBinding Minute}" />
+                </DockPanel>
+
+                <Grid Grid.Row="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="col1" Width="*" />
+                        <ColumnDefinition x:Name="col2" Width="0" />
+                        <ColumnDefinition x:Name="col3" Width="0" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Scorer -->
+                    <DockPanel>
+                        <DockPanel.IsEnabled>
+                            <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Type">
+                                <Binding.ConverterParameter>
+                                    <x:Array Type="{x:Type enums:GoalType}">
+                                        <x:Static Member="enums:GoalType.Other" />
+                                        <x:Static Member="enums:GoalType.Penalty" />
+                                        <x:Static Member="enums:GoalType.FreeKick" />
+                                    </x:Array>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </DockPanel.IsEnabled>
+                        <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Filled}"
+                                      Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch"
+                                      my:IconAssist.Icon="{my:MediumIcon Kind=CircleOffOutline}"
+                                      my:IconAssist.Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                      Command="{Binding ClearScorerCommand}"
+                                      Content="{my:Resource NoScorer}"
+                                      DockPanel.Dock="Top"
+                                      FontStyle="Italic"
+                                      IsChecked="{Binding Scorer, Mode=OneWay, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}"
+                                      Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                        <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
+                                 ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                                 SelectedItem="{Binding Scorer}"
+                                 Tag="{x:Static md:PackIconKind.Soccer}" />
+                    </DockPanel>
+
+                    <!-- Assist -->
+                    <DockPanel x:Name="assist"
+                               Grid.Column="2"
+                               IsEnabled="{Binding Scorer, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}"
+                               Visibility="Collapsed">
+                        <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Filled}"
+                                      Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch"
+                                      my:IconAssist.Icon="{my:MediumIcon Kind=CircleOffOutline}"
+                                      Command="{Binding ClearAssistCommand}"
+                                      Content="{my:Resource NoAssist}"
+                                      DockPanel.Dock="Top"
+                                      FontStyle="Italic"
+                                      IsChecked="{Binding Assist, Mode=OneWay, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}"
+                                      Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                        <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
+                                 ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                                 SelectedItem="{Binding Assist}"
+                                 Tag="{x:Static md:PackIconKind.ShoeCleat}" />
+                    </DockPanel>
+                </Grid>
+            </Grid>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Type}" Value="{x:Static enums:GoalType.Other}">
+                    <Setter TargetName="assist" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="col2" Property="Width" Value="10" />
+                    <Setter TargetName="col3" Property="Width" Value="*" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Goal" DataType="{x:Type vm:EditableGoalViewModel}">
+            <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Filled.Custom}"
+                               Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Stretch"
+                               Background="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                               DropDownButtonOrientation="Right"
+                               PlacementMode="RightAndAlignMiddles"
+                               PopupContent="{Binding}"
+                               PopupContentTemplate="{StaticResource Scorer.DataTemplates.Goal.Edition}"
+                               StaysOpen="True"
+                               Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                               ToggleContent="{Binding}">
+                <my:DropDownButton.ToggleContentTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="15" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Minute -->
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal"
+                                        Visibility="{Binding MinuteIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Minute}" />
+                                <TextBlock Text="'" />
+                            </StackPanel>
+
+                            <!-- Icon -->
+                            <my:PackIcon x:Name="type"
+                                         Grid.Column="2"
+                                         Width="18"
+                                         Height="18"
+                                         HorizontalAlignment="Center"
+                                         Kind="Soccer" />
+
+                            <!-- Own goal -->
+                            <TextBlock Grid.Column="4"
+                                       FontStyle="Italic"
+                                       Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                       Text="{my:Resource GoalTypeOwnGoal}"
+                                       Visibility="{Binding Type, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static enums:GoalType.OwnGoal}}" />
+
+                            <!-- Ghost -->
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Grid.Column="4" Text="{my:Resource NoScorer}">
+                                <TextBlock.Visibility>
+                                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                                        <Binding Converter="{x:Static my:NullToBooleanConverter.TrueIfNull}" Path="Scorer" />
+                                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Type">
+                                            <Binding.ConverterParameter>
+                                                <x:Array Type="{x:Type enums:GoalType}">
+                                                    <enums:GoalType>Other</enums:GoalType>
+                                                </x:Array>
+                                            </Binding.ConverterParameter>
+                                        </Binding>
+                                    </MultiBinding>
+                                </TextBlock.Visibility>
+                            </TextBlock>
+
+                            <!-- Players -->
+                            <my:SimpleStackPanel Grid.Column="4"
+                                                 VerticalAlignment="Center"
+                                                 Orientation="Horizontal"
+                                                 Spacing="{StaticResource MyNet.Margin.Default}">
+                                <my:SimpleStackPanel Grid.Column="4"
+                                                     VerticalAlignment="Center"
+                                                     Orientation="Horizontal"
+                                                     Spacing="{StaticResource MyNet.Margin.Default}"
+                                                     Visibility="{Binding Scorer, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                    <TextBlock Text="{Binding Scorer.FullName}" />
+                                    <StackPanel VerticalAlignment="Center"
+                                                Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                                Orientation="Horizontal"
+                                                Visibility="{Binding Assist, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+                                        <TextBlock Text="(" />
+                                        <TextBlock Text="{Binding Assist.FullName}" />
+                                        <TextBlock Text=")" />
+                                    </StackPanel>
+                                </my:SimpleStackPanel>
+
+                                <!-- Penalty -->
+                                <StackPanel VerticalAlignment="Center"
+                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                            Orientation="Horizontal"
+                                            Visibility="{Binding Type, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static enums:GoalType.Penalty}}">
+                                    <TextBlock Text="(" />
+                                    <TextBlock Text="{my:Resource GoalTypePenalty}" />
+                                    <TextBlock Text=")" />
+                                </StackPanel>
+
+                                <!-- Free Kick -->
+                                <StackPanel VerticalAlignment="Center"
+                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                            Orientation="Horizontal"
+                                            Visibility="{Binding Type, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static enums:GoalType.FreeKick}}">
+                                    <TextBlock Text="(" />
+                                    <TextBlock Text="{my:Resource GoalTypeFreeKick}" />
+                                    <TextBlock Text=")" />
+                                </StackPanel>
+                            </my:SimpleStackPanel>
+
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                    Grid.Column="6"
+                                    Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                    Command="{Binding Tag.RemoveGoalCommand, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                                    CommandParameter="{Binding}"
+                                    Content="{my:ToolIcon Kind=Trash}"
+                                    ToolTip="{my:Resource Remove}" />
+                        </Grid>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Type}" Value="{x:Static enums:GoalType.OwnGoal}">
+                                <Setter TargetName="type" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </my:DropDownButton.ToggleContentTemplate>
+            </my:DropDownButton>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.PenaltyShootout.Creation">
+            <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
+                     Width="280"
+                     my:ItemsControlAssist.SortingProperty="LastName"
+                     ItemsSource="{Binding Team.Players}">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource Scorer.Styles.ListBoxItem.Player}">
+                        <Setter Property="my:ListBoxItemAssist.ShowSelection" Value="False" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}"
+                                               Width="28"
+                                               Height="28"
+                                               DataContext="{Binding}" />
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock FontWeight="DemiBold" Text="{my:Translation LastName, Casing=AllCaps}" />
+                                <TextBlock Text="{Binding FirstName}" />
+                            </StackPanel>
+
+                            <ToolBar x:Name="toolbar" Style="{StaticResource MyNet.Styles.ToolBar.Tools}" Grid.Column="3">
+                                <Button x:Name="none"
+                                        Style="{StaticResource Scorer.Styles.Button.Result}"
+                                        Command="{Binding DataContext.AddNonePenaltyShootoutCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=CircleOffOutline}"
+                                        ToolTip="{my:Resource PenaltyShootoutResultNone}" />
+                                <Button Style="{StaticResource Scorer.Styles.Button.Result}"
+                                        Command="{Binding DataContext.AddSucceededPenaltyShootoutCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=CheckCircle}"
+                                        ToolTip="{my:Resource PenaltyShootoutResultSucceeded}" />
+                                <Button Style="{StaticResource Scorer.Styles.Button.Result}"
+                                        Command="{Binding DataContext.AddFailedPenaltyShootoutCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                        CommandParameter="{Binding}"
+                                        Content="{my:ToolIcon Kind=CloseCircle}"
+                                        ToolTip="{my:Resource PenaltyShootoutResultFailed}" />
+                            </ToolBar>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.PenaltyShootout.Edition" DataType="{x:Type vm:EditablePenaltyShootoutViewModel}">
+            <!-- Taker -->
+            <DockPanel x:Name="base" Width="280">
+                <Grid Margin="{StaticResource MyNet.Margins.Small.Bottom}" DockPanel.Dock="Top" Opacity="{StaticResource MyNet.Opacity.Secondary}">
+                    <Button x:Name="button"
+                            Style="{StaticResource MyNet.Styles.Button.Filled}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            my:IconAssist.Icon="{my:MediumIcon Kind=CircleOffOutline}"
+                            my:IconAssist.Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                            Command="{Binding SetResultToNoneCommand}"
+                            Content="{my:Resource NoTaker}"
+                            FontStyle="Italic"
+                            Opacity="{StaticResource MyNet.Opacity.Default}" />
+
+                    <ToolBar x:Name="toolbar"
+                             Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                             Grid.Column="1"
+                             Margin="{StaticResource MyNet.Margins.Default.Right}"
+                             HorizontalAlignment="Right">
+                        <Button Style="{StaticResource Scorer.Styles.Button.Result}"
+                                Command="{Binding SetResultToSucceededCommand}"
+                                Content="{my:ToolIcon Kind=CheckCircle}"
+                                ToolTip="{my:Resource PenaltyShootoutResultSucceeded}" />
+                        <Button Style="{StaticResource Scorer.Styles.Button.Result}"
+                                Command="{Binding SetResultToFailedCommand}"
+                                Content="{my:ToolIcon Kind=CloseCircle}"
+                                ToolTip="{my:Resource PenaltyShootoutResultFailed}" />
+                    </ToolBar>
+                </Grid>
+                <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
+                         ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                         SelectedItem="{Binding Taker}"
+                         Tag="{Binding}">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource Scorer.Styles.ListBoxItem.Player}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
-                                    <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
+                                <DataTrigger Binding="{Binding Tag.Result, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" Value="{x:Static enums:PenaltyShootoutResult.None}">
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{my:BrushBinding SelfPath=Foreground, Opacity={StaticResource MyNet.Opacity.Checked}}" />
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{my:BrushBinding SelfPath=Foreground}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Tag.Result, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" Value="{x:Static enums:PenaltyShootoutResult.Failed}">
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{DynamicResource MyNet.Brushes.White}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Tag.Result, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" Value="{x:Static enums:PenaltyShootoutResult.Succeeded}">
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedBackground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                    <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{DynamicResource MyNet.Brushes.White}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </my:SimpleStackPanel.Style>
-                    <DatePicker Width="115"
-                                my:HintAssist.Hint="{my:Resource Date}"
-                                my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
-                                SelectedDate="{my:DateTime CurrentDate.Date}">
-                        <my:IconAssist.Icon>
-                            <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding DateAvailability}" />
-                        </my:IconAssist.Icon>
-                    </DatePicker>
-                    <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time CurrentDate.Time}" />
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}"
+                                                   Width="28"
+                                                   Height="28"
+                                                   DataContext="{Binding}" />
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock FontWeight="DemiBold" Text="{my:Translation LastName, Casing=AllCaps}" />
+                                    <TextBlock Text="{Binding FirstName}" />
+                                </StackPanel>
+
+                                <ToolBar x:Name="toolbar"
+                                         Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                         Grid.Column="3"
+                                         Visibility="Hidden">
+                                    <Button x:Name="none"
+                                            Style="{StaticResource Scorer.Styles.Button.Result}"
+                                            Command="{Binding Tag.SetResultToNoneCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=CircleOffOutline}"
+                                            ToolTip="{my:Resource PenaltyShootoutResultNone}"
+                                            Visibility="Collapsed" />
+                                    <Button Style="{StaticResource Scorer.Styles.Button.Result}"
+                                            Command="{Binding Tag.SetResultToSucceededCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=CheckCircle}"
+                                            ToolTip="{my:Resource PenaltyShootoutResultSucceeded}" />
+                                    <Button Style="{StaticResource Scorer.Styles.Button.Result}"
+                                            Command="{Binding Tag.SetResultToFailedCommand, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=CloseCircle}"
+                                            ToolTip="{my:Resource PenaltyShootoutResultFailed}" />
+                                </ToolBar>
+                            </Grid>
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                    <Setter TargetName="toolbar" Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                    <Setter TargetName="none" Property="Visibility" Value="Visible" />
+                                    <Setter TargetName="toolbar" Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Tag.Result, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" Value="{x:Static enums:PenaltyShootoutResult.None}">
+                                    <Setter TargetName="none" Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Taker}" Value="{x:Null}" />
+                        <Condition Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.None}" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="button" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Checked}}" />
+                    <Setter TargetName="button" Property="Foreground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Taker}" Value="{x:Null}" />
+                        <Condition Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Succeeded}" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="button" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                    <Setter TargetName="button" Property="Foreground" Value="{DynamicResource MyNet.Brushes.White}" />
+                    <Setter TargetName="toolbar" Property="Foreground" Value="{DynamicResource MyNet.Brushes.White}" />
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Taker}" Value="{x:Null}" />
+                        <Condition Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Failed}" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="button" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                    <Setter TargetName="button" Property="Foreground" Value="{DynamicResource MyNet.Brushes.White}" />
+                    <Setter TargetName="toolbar" Property="Foreground" Value="{DynamicResource MyNet.Brushes.White}" />
+                </MultiDataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.PenaltyShootout" DataType="{x:Type vm:EditablePenaltyShootoutViewModel}">
+            <my:DropDownButton x:Name="penalty"
+                               Style="{StaticResource MyNet.Styles.DropDownButton.Filled.Custom}"
+                               Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Stretch"
+                               DropDownButtonOrientation="Right"
+                               PlacementMode="RightAndAlignMiddles"
+                               PopupContent="{Binding}"
+                               PopupContentTemplate="{StaticResource Scorer.DataTemplates.PenaltyShootout.Edition}"
+                               StaysOpen="False"
+                               Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                               ToggleContent="{Binding}">
+                <my:DropDownButton.ToggleContentTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Icon -->
+                            <my:PackIcon x:Name="result"
+                                         Grid.Column="0"
+                                         Width="18"
+                                         Height="18"
+                                         HorizontalAlignment="Center"
+                                         Kind="RegistrationMark" />
+
+                            <!-- Ghost -->
+                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                       Grid.Column="2"
+                                       Text="{my:Resource NoTaker}"
+                                       Visibility="{Binding Taker, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+
+                            <!-- Taker -->
+                            <TextBlock Grid.Column="2" Text="{Binding Taker.FullName}" Visibility="{Binding Taker, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+
+                            <!-- Remove -->
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                    Grid.Column="4"
+                                    Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                    Command="{Binding Tag.RemovePenaltyShootoutCommand, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                                    CommandParameter="{Binding}"
+                                    Content="{my:ToolIcon Kind=Trash}"
+                                    ToolTip="{my:Resource Remove}" />
+                        </Grid>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.None}">
+                                <Setter TargetName="result" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Failed}">
+                                <Setter TargetName="result" Property="Kind" Value="Close" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Succeeded}">
+                                <Setter TargetName="result" Property="Kind" Value="Check" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </my:DropDownButton.ToggleContentTemplate>
+            </my:DropDownButton>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Failed}">
+                    <Setter TargetName="penalty" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Succeeded}">
+                    <Setter TargetName="penalty" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Opponent" DataType="{x:Type vm:EditableMatchOpponentViewModel}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Team Name -->
+                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" HorizontalAlignment="Center" Text="{Binding Team.Name}" />
+
+                <!-- Team Logo -->
+                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                   Grid.Row="2"
+                                   Width="100"
+                                   Height="100"
+                                   DataContext="{Binding Team}"
+                                   Validation.ErrorTemplate="{x:Null}" />
+
+                <!-- Withdraw -->
+                <my:SimpleStackPanel Grid.Row="4" HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
+                    <my:SimpleStackPanel.IsEnabled>
+                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                            <Binding.ConverterParameter>
+                                <x:Array Type="{x:Type enums:MatchState}">
+                                    <enums:MatchState>None</enums:MatchState>
+                                    <enums:MatchState>Played</enums:MatchState>
+                                    <enums:MatchState>InProgress</enums:MatchState>
+                                    <enums:MatchState>Suspended</enums:MatchState>
+                                </x:Array>
+                            </Binding.ConverterParameter>
+                        </Binding>
+                    </my:SimpleStackPanel.IsEnabled>
+                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Filled.Custom}"
+                                  HorizontalAlignment="Center"
+                                  my:IconAssist.Icon="{my:Icon Kind=Close}"
+                                  my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Negative}"
+                                  Content="{my:Resource Withdraw}"
+                                  IsChecked="{Binding IsWithdrawn}" />
                 </my:SimpleStackPanel>
-                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
-                    <TextBlock Text="{my:Resource Automatic}">
-                        <TextBlock.Style>
-                            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
+
+                <!-- Goals -->
+                <DockPanel Grid.Row="6" Visibility="{Binding Data.ShowGoals, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                    <DockPanel.IsEnabled>
+                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                            <Binding.ConverterParameter>
+                                <x:Array Type="{x:Type enums:MatchState}">
+                                    <enums:MatchState>None</enums:MatchState>
+                                    <enums:MatchState>Played</enums:MatchState>
+                                    <enums:MatchState>InProgress</enums:MatchState>
+                                    <enums:MatchState>Suspended</enums:MatchState>
+                                </x:Array>
+                            </Binding.ConverterParameter>
+                        </Binding>
+                    </DockPanel.IsEnabled>
+                    <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.Filled.Custom}"
+                                    Margin="{StaticResource MyNet.Margins.Small.Bottom}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Stretch"
+                                    my:IconAssist.Icon="{my:ToolIcon Kind=Plus}"
+                                    Command="{Binding AddGoalCommand}"
+                                    DockPanel.Dock="Top"
+                                    DropDownButtonOrientation="Right"
+                                    IsPopupOpen="{Binding NewGoalIsEditing}"
+                                    PlacementMode="RightAndAlignMiddles"
+                                    PopupContent="{Binding NewGoal, Mode=OneWay}"
+                                    PopupContentTemplate="{StaticResource Scorer.DataTemplates.Goal.Edition}"
+                                    StaysOpen="True"
+                                    Tag="{Binding}"
+                                    ToggleButtonWidth="40"
+                                    ToggleContent="{my:Resource AddGoal}" />
+                    <ItemsControl my:ItemsControlAssist.SortingProperty="Minute"
+                                  my:ThemeAssist.IsCheckedBackground="{Binding Team.HomeColor, Converter={x:Static my:ColorToBrushConverter.Default}}"
+                                  ItemTemplate="{StaticResource Scorer.DataTemplates.Goal}"
+                                  ItemsSource="{Binding Goals}" />
+                </DockPanel>
+
+                <!-- Shoutout -->
+                <DockPanel Grid.Row="6" Visibility="{Binding Data.ShowGoals, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}">
+                    <DockPanel.IsEnabled>
+                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                            <Binding.ConverterParameter>
+                                <x:Array Type="{x:Type enums:MatchState}">
+                                    <enums:MatchState>None</enums:MatchState>
+                                    <enums:MatchState>Played</enums:MatchState>
+                                    <enums:MatchState>InProgress</enums:MatchState>
+                                    <enums:MatchState>Suspended</enums:MatchState>
+                                </x:Array>
+                            </Binding.ConverterParameter>
+                        </Binding>
+                    </DockPanel.IsEnabled>
+                    <DockPanel Margin="{StaticResource MyNet.Margins.Small.Bottom}" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
+                        <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
+                                Width="95"
+                                Margin="0 0 1 0"
+                                Padding="{StaticResource MyNet.Margins.Default}"
+                                VerticalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                my:IconAssist.Icon="{my:ToolIcon Kind=Plus}"
+                                my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Control.Left}"
+                                Command="{Binding AddSucceededPenaltyShootoutCommand}"
+                                DockPanel.Dock="Left">
+                            <DockPanel>
+                                <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Right}" Foreground="{DynamicResource MyNet.Brushes.Positive}" Kind="CheckCircle" />
+                                <TextBlock Text="{my:Resource PenaltyShootoutResultSucceeded}" />
+                            </DockPanel>
+                        </Button>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
+                                Width="95"
+                                Margin="0 0 1 0"
+                                Padding="{StaticResource MyNet.Margins.Default}"
+                                VerticalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                my:IconAssist.Icon="{my:ToolIcon Kind=Plus}"
+                                my:ThemeAssist.CornerRadius="0"
+                                Command="{Binding AddFailedPenaltyShootoutCommand}"
+                                DockPanel.Dock="Left">
+                            <DockPanel>
+                                <my:PackIcon Margin="{StaticResource MyNet.Margins.Default.Right}" Foreground="{DynamicResource MyNet.Brushes.Negative}" Kind="CloseCircle" />
+                                <TextBlock Text="{my:Resource PenaltyShootoutResultFailed}" />
+                            </DockPanel>
+                        </Button>
+                        <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.Filled}"
+                                        Padding="{StaticResource MyNet.Margins.Default}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        my:IconAssist.Icon="{my:ToolIcon Kind=Plus}"
+                                        my:ThemeAssist.CornerRadius="{StaticResource MyNet.CornerRadius.Control.Right}"
+                                        Command="{Binding AddNonePenaltyShootoutCommand}"
+                                        DropDownButtonOrientation="Right"
+                                        PlacementMode="RightAndAlignMiddles"
+                                        PopupContent="{Binding}"
+                                        PopupContentTemplate="{StaticResource Scorer.DataTemplates.PenaltyShootout.Creation}"
+                                        StaysOpen="True"
+                                        Tag="{Binding}"
+                                        ToggleButtonWidth="40"
+                                        ToggleContent="{my:Resource PenaltyShootoutResultNone}" />
+                    </DockPanel>
+                    <ItemsControl ItemTemplate="{StaticResource Scorer.DataTemplates.PenaltyShootout}" ItemsSource="{Binding Shootout}" />
+                </DockPanel>
+
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <my:SimpleStackPanel>
+
+            <!-- Date -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=CalendarOutline}">
+                <my:SimpleStackPanel Orientation="Horizontal">
+                    <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
+                        <my:SimpleStackPanel.Style>
+                            <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ScheduleAutomatic}" Value="False">
-                                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                    <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
+                                        <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </ToggleButton>
-            </my:SimpleStackPanel>
-        </GroupBox>
-
-        <!-- IsPostponed -->
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Default.Top}" Header="{my:Resource Postponed}">
-            <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
-                <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding PostponedState}" SelectedValuePath="DataContext">
-                    <ListBoxItem Padding="15 7"
-                                 my:ListBoxItemAssist.IsSelectedBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
-                                                                                             Opacity={StaticResource MyNet.Opacity.Checked}}"
-                                 Content="{my:Resource No}"
-                                 DataContext="{x:Static vm:PostponedState.None}" />
-                    <ListBoxItem Padding="15 7" Content="{my:Resource AtUnknownDate}" DataContext="{x:Static vm:PostponedState.UnknownDate}" />
-                    <ListBoxItem Padding="15 7" Content="{my:Resource AtFollowingDate}" DataContext="{x:Static vm:PostponedState.SpecifiedDate}" />
-                </ListBox>
-
-                <!-- Postponed Date -->
-                <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
-                    <DatePicker Width="110"
-                                my:HintAssist.Hint="{my:Resource PostponedDate}"
-                                my:HintAssist.IsFloating="False"
-                                my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
-                                SelectedDate="{my:DateTime PostponedDateTime.Date}">
-                        <my:IconAssist.Icon>
-                            <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding PostponedDateAvailability}" />
-                        </my:IconAssist.Icon>
-                    </DatePicker>
-                    <my:TimePicker Width="80"
-                                   my:HintAssist.Hint="{my:Resource Time}"
-                                   my:HintAssist.IsFloating="False"
-                                   SelectedTime="{my:Time PostponedDateTime.Time}" />
-                </my:SimpleStackPanel>
-            </my:SimpleStackPanel>
-        </GroupBox>
-
-        <!-- Stadium -->
-        <StackPanel>
-            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Stadium}">
-                <my:SimpleStackPanel Orientation="Horizontal">
-                    <my:SimpleStackPanel IsEnabled="{Binding ScheduleStadiumAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}">
-                        <ComboBox Width="300"
-                                  my:HintAssist.Hint="{my:Resource Stadium}"
-                                  my:ItemsControlAssist.SortingProperty="Stadium.Address.City"
-                                  my:TextFieldAssist.HasClearButton="True"
-                                  ItemsSource="{Binding StadiumSelection.Items}"
-                                  SelectedItem="{Binding StadiumSelection.SelectedItem}" />
-                        <CheckBox Content="{my:Resource NeutralVenue}" IsChecked="{Binding NeutralVenue}" />
+                        </my:SimpleStackPanel.Style>
+                        <DatePicker Width="115"
+                                    my:HintAssist.Hint="{my:Resource Date}"
+                                    my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
+                                    SelectedDate="{my:DateTime CurrentDate.Date}">
+                            <my:IconAssist.Icon>
+                                <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding DateAvailability}" />
+                            </my:IconAssist.Icon>
+                        </DatePicker>
+                        <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time CurrentDate.Time}" />
                     </my:SimpleStackPanel>
-                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}"
-                                  Margin="{StaticResource MyNet.Margins.Medium.Top}"
-                                  VerticalAlignment="Top"
-                                  IsChecked="{Binding ScheduleStadiumAutomatic}"
-                                  IsEnabled="{Binding CanScheduleStadiumAutomatic}">
+                    <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
                         <TextBlock Text="{my:Resource Automatic}">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ScheduleStadiumAutomatic}" Value="False">
+                                        <DataTrigger Binding="{Binding ScheduleAutomatic}" Value="False">
                                             <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -142,249 +888,239 @@
                     </ToggleButton>
                 </my:SimpleStackPanel>
             </GroupBox>
-        </StackPanel>
 
-        <!-- State -->
-        <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
-                 Margin="{StaticResource MyNet.Margins.Large.Top}"
-                 HorizontalAlignment="Center"
-                 SelectedValue="{Binding State}"
-                 SelectedValuePath="DataContext">
-            <ListBox.IsEnabled>
-                <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
-                    <Binding.ConverterParameter>
-                        <x:Array Type="{x:Type enums:MatchState}">
-                            <x:Static Member="enums:MatchState.None" />
-                            <x:Static Member="enums:MatchState.Played" />
-                            <x:Static Member="enums:MatchState.InProgress" />
-                            <x:Static Member="enums:MatchState.Suspended" />
-                            <x:Static Member="enums:MatchState.Cancelled" />
-                        </x:Array>
-                    </Binding.ConverterParameter>
-                </Binding>
-            </ListBox.IsEnabled>
-            <ListBoxItem Width="125"
-                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClock}"
-                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.None}"
-                         my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
-                                                                                     RelativeSource={RelativeSource Self},
-                                                                                     Contrast=True}"
-                         Content="{my:Resource MatchStateNone}"
-                         DataContext="{x:Static enums:MatchState.None}" />
-            <ListBoxItem Width="125"
-                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressHelper}"
-                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Information}"
-                         my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
-                                                                                     RelativeSource={RelativeSource Self},
-                                                                                     Contrast=True}"
-                         Content="{my:Resource MatchStateInProgress}"
-                         DataContext="{x:Static enums:MatchState.InProgress}" />
-            <ListBoxItem Width="125"
-                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressAlert}"
-                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.Match.State.Suspended}"
-                         my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
-                                                                                     RelativeSource={RelativeSource Self},
-                                                                                     Contrast=True}"
-                         Content="{my:Resource MatchStateSuspended}"
-                         DataContext="{x:Static enums:MatchState.Suspended}" />
-            <ListBoxItem Width="125"
-                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressCheck}"
-                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Positive}"
-                         my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
-                                                                                     RelativeSource={RelativeSource Self},
-                                                                                     Contrast=True}"
-                         Content="{my:Resource MatchStatePlayed}"
-                         DataContext="{x:Static enums:MatchState.Played}" />
-            <ListBoxItem Width="125"
-                         my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClose}"
-                         my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Negative}"
-                         my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
-                                                                                     RelativeSource={RelativeSource Self},
-                                                                                     Contrast=True}"
-                         Content="{my:Resource MatchStateCancelled}"
-                         DataContext="{x:Static enums:MatchState.Cancelled}" />
-        </ListBox>
+            <!-- IsPostponed -->
+            <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Margin="{StaticResource MyNet.Margins.Default.Top}" Header="{my:Resource Postponed}">
+                <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
+                    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding PostponedState}" SelectedValuePath="DataContext">
+                        <ListBoxItem Padding="15 7"
+                                     my:ListBoxItemAssist.IsSelectedBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                                                                 Opacity={StaticResource MyNet.Opacity.Checked}}"
+                                     Content="{my:Resource No}"
+                                     DataContext="{x:Static vm:PostponedState.None}" />
+                        <ListBoxItem Padding="15 7" Content="{my:Resource AtUnknownDate}" DataContext="{x:Static vm:PostponedState.UnknownDate}" />
+                        <ListBoxItem Padding="15 7" Content="{my:Resource AtFollowingDate}" DataContext="{x:Static vm:PostponedState.SpecifiedDate}" />
+                    </ListBox>
 
-        <Grid Margin="{StaticResource MyNet.Margins.Medium.Top}">
+                    <!-- Postponed Date -->
+                    <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
+                        <DatePicker Width="110"
+                                    my:HintAssist.Hint="{my:Resource PostponedDate}"
+                                    my:HintAssist.IsFloating="False"
+                                    my:IconAssist.Opacity="{StaticResource MyNet.Opacity.Default}"
+                                    SelectedDate="{my:DateTime PostponedDateTime.Date}">
+                            <my:IconAssist.Icon>
+                                <my:PackIcon Style="{StaticResource Scorer.Styles.PackIcon.Available}" Tag="{Binding PostponedDateAvailability}" />
+                            </my:IconAssist.Icon>
+                        </DatePicker>
+                        <my:TimePicker Width="80"
+                                       my:HintAssist.Hint="{my:Resource Time}"
+                                       my:HintAssist.IsFloating="False"
+                                       SelectedTime="{my:Time PostponedDateTime.Time}" />
+                    </my:SimpleStackPanel>
+                </my:SimpleStackPanel>
+            </GroupBox>
+
+            <!-- Stadium -->
+            <StackPanel>
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Stadium}">
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <my:SimpleStackPanel IsEnabled="{Binding ScheduleStadiumAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}">
+                            <ComboBox Width="300"
+                                      my:HintAssist.Hint="{my:Resource Stadium}"
+                                      my:ItemsControlAssist.SortingProperty="Stadium.Address.City"
+                                      my:TextFieldAssist.HasClearButton="True"
+                                      ItemsSource="{Binding StadiumSelection.Items}"
+                                      SelectedItem="{Binding StadiumSelection.SelectedItem}" />
+                            <CheckBox Content="{my:Resource NeutralVenue}" IsChecked="{Binding NeutralVenue}" />
+                        </my:SimpleStackPanel>
+                        <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}"
+                                      Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                                      VerticalAlignment="Top"
+                                      IsChecked="{Binding ScheduleStadiumAutomatic}"
+                                      IsEnabled="{Binding CanScheduleStadiumAutomatic}">
+                            <TextBlock Text="{my:Resource Automatic}">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ScheduleStadiumAutomatic}" Value="False">
+                                                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </ToggleButton>
+                    </my:SimpleStackPanel>
+                </GroupBox>
+            </StackPanel>
+
+            <!-- State -->
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     Margin="{StaticResource MyNet.Margins.Large.Top}"
+                     HorizontalAlignment="Center"
+                     SelectedValue="{Binding State}"
+                     SelectedValuePath="DataContext">
+                <ListBox.IsEnabled>
+                    <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
+                        <Binding.ConverterParameter>
+                            <x:Array Type="{x:Type enums:MatchState}">
+                                <x:Static Member="enums:MatchState.None" />
+                                <x:Static Member="enums:MatchState.Played" />
+                                <x:Static Member="enums:MatchState.InProgress" />
+                                <x:Static Member="enums:MatchState.Suspended" />
+                                <x:Static Member="enums:MatchState.Cancelled" />
+                            </x:Array>
+                        </Binding.ConverterParameter>
+                    </Binding>
+                </ListBox.IsEnabled>
+                <ListBoxItem Width="125"
+                             my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClock}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.None}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
+                                                                                         RelativeSource={RelativeSource Self},
+                                                                                         Contrast=True}"
+                             Content="{my:Resource MatchStateNone}"
+                             DataContext="{x:Static enums:MatchState.None}" />
+                <ListBoxItem Width="125"
+                             my:IconAssist.Icon="{my:MediumIcon Kind=ProgressHelper}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Information}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
+                                                                                         RelativeSource={RelativeSource Self},
+                                                                                         Contrast=True}"
+                             Content="{my:Resource MatchStateInProgress}"
+                             DataContext="{x:Static enums:MatchState.InProgress}" />
+                <ListBoxItem Width="125"
+                             my:IconAssist.Icon="{my:MediumIcon Kind=ProgressAlert}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.Match.State.Suspended}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
+                                                                                         RelativeSource={RelativeSource Self},
+                                                                                         Contrast=True}"
+                             Content="{my:Resource MatchStateSuspended}"
+                             DataContext="{x:Static enums:MatchState.Suspended}" />
+                <ListBoxItem Width="125"
+                             my:IconAssist.Icon="{my:MediumIcon Kind=ProgressCheck}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Positive}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
+                                                                                         RelativeSource={RelativeSource Self},
+                                                                                         Contrast=True}"
+                             Content="{my:Resource MatchStatePlayed}"
+                             DataContext="{x:Static enums:MatchState.Played}" />
+                <ListBoxItem Width="125"
+                             my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClose}"
+                             my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Negative}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{my:BrushBinding Path=(my:ListBoxItemAssist.IsSelectedBackground),
+                                                                                         RelativeSource={RelativeSource Self},
+                                                                                         Contrast=True}"
+                             Content="{my:Resource MatchStateCancelled}"
+                             DataContext="{x:Static enums:MatchState.Cancelled}" />
+            </ListBox>
+
+        </my:SimpleStackPanel>
+
+        <!-- Opponents -->
+        <Grid Grid.Row="2" Margin="{StaticResource MyNet.Margins.Medium.Top}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+
+            <ContentControl Content="{Binding Home}" ContentTemplate="{StaticResource Scorer.DataTemplates.Opponent}" />
+            <ContentControl Grid.Column="2" Content="{Binding Away}" ContentTemplate="{StaticResource Scorer.DataTemplates.Opponent}" />
+        </Grid>
+
+        <!-- Score -->
+        <Grid Grid.Row="2" Height="182" VerticalAlignment="Top">
             <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="10" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="20" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Team 1 -->
-            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                               Width="100"
-                               Height="100"
-                               DataContext="{Binding HomeTeam}"
-                               Validation.ErrorTemplate="{x:Null}" />
-
-            <!-- Withdraw -->
-            <my:SimpleStackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
-                <my:SimpleStackPanel.IsEnabled>
+            <!-- Score -->
+            <RadioButton Style="{StaticResource Scorer.Styles.RadioButton.Score}"
+                         Grid.Row="1"
+                         HorizontalAlignment="Center"
+                         IsChecked="{Binding ShowGoals}">
+                <RadioButton.IsEnabled>
                     <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
                         <Binding.ConverterParameter>
                             <x:Array Type="{x:Type enums:MatchState}">
-                                <x:Static Member="enums:MatchState.None" />
-                                <x:Static Member="enums:MatchState.Played" />
-                                <x:Static Member="enums:MatchState.InProgress" />
-                                <x:Static Member="enums:MatchState.Suspended" />
+                                <enums:MatchState>None</enums:MatchState>
+                                <enums:MatchState>Played</enums:MatchState>
+                                <enums:MatchState>InProgress</enums:MatchState>
+                                <enums:MatchState>Suspended</enums:MatchState>
                             </x:Array>
                         </Binding.ConverterParameter>
                     </Binding>
-                </my:SimpleStackPanel.IsEnabled>
-                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Filled}"
-                              HorizontalAlignment="Center"
-                              my:IconAssist.Icon="{my:Icon Kind=Close}"
-                              my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Negative}"
-                              my:ThemeAssist.IsCheckedBorderBrush="{DynamicResource MyNet.Brushes.Negative}"
-                              my:ThemeAssist.IsCheckedForeground="{DynamicResource MyNet.Brushes.White}"
-                              Content="{my:Resource Withdraw}"
-                              IsChecked="{Binding HomeIsWithdrawn}" />
-            </my:SimpleStackPanel>
-
-            <Grid Grid.Column="2" VerticalAlignment="Center">
-                <Grid.IsEnabled>
-                    <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
-                        <Binding.ConverterParameter>
-                            <x:Array Type="{x:Type enums:MatchState}">
-                                <x:Static Member="enums:MatchState.None" />
-                                <x:Static Member="enums:MatchState.Played" />
-                                <x:Static Member="enums:MatchState.InProgress" />
-                                <x:Static Member="enums:MatchState.Suspended" />
-                            </x:Array>
-                        </Binding.ConverterParameter>
-                    </Binding>
-                </Grid.IsEnabled>
-
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <!-- Score -->
+                </RadioButton.IsEnabled>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Filled}"
-                                      Width="70"
-                                      my:NumericUpDownAssist.AcceptableValue="{Binding HomeScore}"
-                                      ButtonsAlignment="Opposite"
-                                      FontSize="{StaticResource MyNet.Font.Size.Title}"
-                                      TextAlignment="Center" />
-                    <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="-" />
-                    <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Filled}"
-                                      Grid.Column="2"
-                                      Width="70"
-                                      my:NumericUpDownAssist.AcceptableValue="{Binding AwayScore}"
-                                      ButtonsAlignment="Opposite"
-                                      FontSize="{StaticResource MyNet.Font.Size.Title}"
-                                      TextAlignment="Center" />
+                    <Border Background="White" Opacity="0.001" />
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource Scorer.Styles.Button.Score.Large}"
+                                Command="{Binding Home.AddGoalCommand}"
+                                Content="{Binding Home.Goals.Count}"
+                                ToolTip="{my:Resource AddGoal}" />
+                        <Button Style="{StaticResource Scorer.Styles.Button.Score.Large}"
+                                Command="{Binding Away.AddGoalCommand}"
+                                Content="{Binding Away.Goals.Count}"
+                                ToolTip="{my:Resource AddGoal}" />
+                    </my:SimpleStackPanel>
                 </Grid>
+            </RadioButton>
 
-                <!-- ExraTime -->
-                <ToggleButton Grid.Row="1"
-                              Margin="{StaticResource MyNet.Margins.Medium.Top}"
-                              HorizontalAlignment="Center"
-                              my:ToggleButtonAssist.OnContent="{my:Resource AfterExtraTimeAbbr,
-                                                                            Casing=Title}"
-                              IsChecked="{Binding AfterExtraTime}"
-                              ToolTip="{my:Resource AfterExtraTime}"
-                              Visibility="{Binding MatchFormat.ExtraTimeIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Disabled}" Text="{my:Resource AfterExtraTimeAbbr, Casing=Title}" />
-                    <ToggleButton.IsEnabled>
-                        <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
-                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="HasDraw" />
-                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="HomeIsWithdrawn" />
-                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="AwayIsWithdrawn" />
-                        </MultiBinding>
-                    </ToggleButton.IsEnabled>
-                </ToggleButton>
+            <!-- ExraTime -->
+            <ToggleButton Grid.Row="2"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          my:ToggleButtonAssist.OnContent="{my:Resource AfterExtraTimeAbbr,
+                                                                        Casing=Title}"
+                          IsChecked="{Binding AfterExtraTime}"
+                          ToolTip="{my:Resource AfterExtraTime}"
+                          Visibility="{Binding Data.CanEditExtraTime, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Disabled}" Text="{my:Resource AfterExtraTimeAbbr, Casing=Title}" />
+            </ToggleButton>
 
-                <!-- Shootout -->
-                <Grid Grid.Row="2" Margin="{StaticResource MyNet.Margins.Medium.Top}" Visibility="{Binding MatchFormat.ShootoutsIsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
-                    <Grid.IsEnabled>
-                        <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
-                            <Binding Path="HasDraw" />
-                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="HomeIsWithdrawn" />
-                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="AwayIsWithdrawn" />
-                        </MultiBinding>
-                    </Grid.IsEnabled>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Filled}"
-                                      Width="60"
-                                      HorizontalAlignment="Center"
-                                      my:NumericUpDownAssist.AcceptableValue="{Binding HomeShootoutScore}"
-                                      ButtonsAlignment="Opposite"
-                                      TextAlignment="Center" />
-                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
-                               Grid.Column="1"
-                               HorizontalAlignment="Center"
-                               Text="{my:Resource ShootoutsAbbr}" />
-                    <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Filled}"
-                                      Grid.Column="2"
-                                      Width="60"
-                                      HorizontalAlignment="Center"
-                                      my:NumericUpDownAssist.AcceptableValue="{Binding AwayShootoutScore}"
-                                      ButtonsAlignment="Opposite"
-                                      TextAlignment="Center" />
+            <!-- Shootout -->
+            <RadioButton Style="{StaticResource Scorer.Styles.RadioButton.Score}"
+                         Grid.Row="2"
+                         Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                         HorizontalAlignment="Center"
+                         IsChecked="{Binding ShowGoals, Converter={x:Static my:NotBooleanConverter.Default}}"
+                         Visibility="{Binding Data.CanEditShootout, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                <Grid>
+                    <Border Background="White" Opacity="0.001" />
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource Scorer.Styles.Button.Score.Medium}"
+                                Command="{Binding Home.AddSucceededPenaltyShootoutCommand}"
+                                Content="{Binding Home.SucceedShootouts}"
+                                ToolTip="{my:Resource AddSucceededPenaltySHootout}" />
+                        <Button Style="{StaticResource Scorer.Styles.Button.Score.Medium}"
+                                Command="{Binding Away.AddSucceededPenaltyShootoutCommand}"
+                                Content="{Binding Away.SucceedShootouts}"
+                                ToolTip="{my:Resource AddSucceededPenaltySHootout}" />
+                    </my:SimpleStackPanel>
                 </Grid>
-            </Grid>
+            </RadioButton>
 
-            <!-- Team 2 -->
-            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                               Grid.Column="4"
-                               Width="100"
-                               Height="100"
-                               DataContext="{Binding AwayTeam}"
-                               Validation.ErrorTemplate="{x:Null}" />
-
-            <!-- Withdraw -->
-            <my:SimpleStackPanel Grid.Row="2"
-                                 Grid.Column="4"
+            <!-- Show Goals -->
+            <my:SimpleStackPanel Grid.Row="3"
+                                 Margin="{StaticResource MyNet.Margins.Medium.Top}"
                                  HorizontalAlignment="Center"
-                                 Spacing="{StaticResource MyNet.Margin.Default}">
-                <my:SimpleStackPanel.IsEnabled>
-                    <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
-                        <Binding.ConverterParameter>
-                            <x:Array Type="{x:Type enums:MatchState}">
-                                <x:Static Member="enums:MatchState.None" />
-                                <x:Static Member="enums:MatchState.Played" />
-                                <x:Static Member="enums:MatchState.InProgress" />
-                                <x:Static Member="enums:MatchState.Suspended" />
-                            </x:Array>
-                        </Binding.ConverterParameter>
-                    </Binding>
-                </my:SimpleStackPanel.IsEnabled>
-                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Filled}"
-                              HorizontalAlignment="Center"
-                              my:IconAssist.Icon="{my:Icon Kind=Close}"
-                              my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Negative}"
-                              my:ThemeAssist.IsCheckedBorderBrush="{DynamicResource MyNet.Brushes.Negative}"
-                              my:ThemeAssist.IsCheckedForeground="{DynamicResource MyNet.Brushes.White}"
-                              Content="{my:Resource Withdraw}"
-                              IsChecked="{Binding AwayIsWithdrawn}" />
+                                 Orientation="Horizontal"
+                                 Visibility="{Binding Data.CanEditShootout, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                <RadioButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon.Foreground}"
+                             Content="{my:ToolIcon Kind=Soccer}"
+                             IsChecked="{Binding ShowGoals}"
+                             ToolTip="{my:Resource ShowGoals}" />
+                <RadioButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon.Foreground}"
+                             Content="{my:ToolIcon Kind=Target}"
+                             IsChecked="{Binding ShowGoals, Converter={x:Static my:NotBooleanConverter.Default}}"
+                             ToolTip="{my:Resource ShowShootout}" />
             </my:SimpleStackPanel>
         </Grid>
-
-    </my:SimpleStackPanel>
+    </Grid>
 
 </UserControl>

@@ -13,6 +13,7 @@
              xmlns:vS="clr-namespace:MyNet.Wpf.Presentation.Views.Shell;assembly=MyNet.Wpf.Presentation"
              xmlns:vSc="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
              xmlns:vSt="clr-namespace:MyClub.Scorer.Wpf.Views.StadiumsPage"
+             xmlns:vStt="clr-namespace:MyClub.Scorer.Wpf.Views.StatisticsPage"
              xmlns:vT="clr-namespace:MyClub.Scorer.Wpf.Views.TeamsPage"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Shell"
              d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
@@ -96,24 +97,24 @@
                 </my:NavigationView.ContentTemplateSelector>
 
                 <!-- Home -->
-                <my:NavigationViewItem Header="{my:Resource Home}"
+                <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Home}"
+                                       Header="{my:Resource Home}"
                                        Icon="{my:MediumIcon Kind=Home}"
-                                       TargetViewType="{x:Type vH:HomePageView}"
-                                       ToolTip="{my:Resource Home}" />
+                                       TargetViewType="{x:Type vH:HomePageView}" />
 
                 <my:NavigationViewItemSeparator Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                 <!-- Bracket -->
-                <my:NavigationViewItem Header="{my:Resource Bracket}"
+                <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Bracket}"
+                                       Header="{my:Resource Bracket}"
                                        TargetViewType="{x:Type vB:BracketPageView}"
-                                       ToolTip="{my:Resource Bracket}"
                                        Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                     <my:NavigationViewItem.Icon>
-                        <HeaderedContentControl Content="{my:MediumIcon Kind=Bracket}" Header="{Binding CountParents}">
+                        <HeaderedContentControl Content="{my:MediumIcon Kind=Bracket}" Header="{Binding CountCompetitionStages}">
                             <HeaderedContentControl.Style>
                                 <Style TargetType="{x:Type HeaderedContentControl}" BasedOn="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CountParents}" Value="0">
+                                        <DataTrigger Binding="{Binding CountCompetitionStages}" Value="0">
                                             <Setter Property="my:HeaderAssist.Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
                                             <Setter Property="my:HeaderAssist.Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
                                         </DataTrigger>
@@ -125,10 +126,10 @@
                 </my:NavigationViewItem>
 
                 <!-- Schedule -->
-                <my:NavigationViewItem Header="{my:Resource Schedule}"
-                                       IsEnabled="{Binding CountParents, Converter={x:Static my:CountToBooleanConverter.Any}}"
+                <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Schedule}"
+                                       Header="{my:Resource Schedule}"
+                                       IsEnabled="{Binding CountCompetitionStages, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                        TargetViewType="{x:Type vSc:SchedulePageView}"
-                                       ToolTip="{my:Resource Schedule}"
                                        Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                     <my:NavigationViewItem.Icon>
                         <HeaderedContentControl Content="{my:MediumIcon Kind=Calendar}" Header="{Binding CountMatches}">
@@ -147,26 +148,33 @@
                 </my:NavigationViewItem>
 
                 <!-- Ranking -->
-                <my:NavigationViewItem Header="{my:Resource Ranking}"
+                <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Ranking}"
+                                       Header="{my:Resource Ranking}"
                                        Icon="{my:MediumIcon Kind=Podium}"
                                        IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                        TargetViewType="{x:Type vR:RankingPageView}"
-                                       ToolTip="{my:Resource Ranking}"
-                                       Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                       Visibility="{Binding IsLeague, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                 <!-- Past Positions -->
-                <my:NavigationViewItem Header="{my:Resource PastPositions}"
+                <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource PastPositions}"
+                                       Header="{my:Resource PastPositions}"
                                        Icon="{my:MediumIcon Kind=ChartLineVariant}"
                                        IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                        TargetViewType="{x:Type vP:PastPositionsPageView}"
-                                       ToolTip="{my:Resource PastPositions}"
+                                       Visibility="{Binding IsLeague, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                <!-- Statistics -->
+                <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Statistics}"
+                                       Header="{my:Resource Statistics}"
+                                       Icon="{my:MediumIcon Kind=Analytics}"
+                                       TargetViewType="{x:Type vStt:StatisticsPageView}"
                                        Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                 <my:NavigationView.FooterMenuItems>
                     <!-- Teams -->
-                    <my:NavigationViewItem Header="{my:Resource Teams}"
+                    <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Teams}"
+                                           Header="{my:Resource Teams}"
                                            TargetViewType="{x:Type vT:TeamsPageView}"
-                                           ToolTip="{my:Resource Teams}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                         <my:NavigationViewItem.Icon>
                             <HeaderedContentControl Content="{my:MediumIcon Kind=Shield}" Header="{Binding CountTeams}">
@@ -185,9 +193,9 @@
                     </my:NavigationViewItem>
 
                     <!-- Stadiums -->
-                    <my:NavigationViewItem Header="{my:Resource Stadiums}"
+                    <my:NavigationViewItem my:ToolTipAssist.Content="{my:Resource Stadiums}"
+                                           Header="{my:Resource Stadiums}"
                                            TargetViewType="{x:Type vSt:StadiumsPageView}"
-                                           ToolTip="{my:Resource Stadiums}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                         <my:NavigationViewItem.Icon>
                             <HeaderedContentControl Content="{my:MediumIcon Kind=Stadium}" Header="{Binding CountStadiums}">
@@ -209,23 +217,30 @@
 
                     <!-- Build -->
                     <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding OpenBuildAssistantCommand}"
+                                           my:ToolTipAssist.Content="{my:ShortcutResource Build,
+                                                                                          ShortcutKey=Ctrl+B}"
                                            Header="{my:Resource Build}"
                                            Icon="{my:MediumIcon Kind=DesktopClassic}"
                                            IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
-                                           ToolTip="{my:ShortcutResource Build,
-                                                                         ShortcutKey=Ctrl+B}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
+                    <!-- Ranking Rules -->
+                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditRankingRulesCommand}"
+                                           my:ToolTipAssist.Content="{my:ShortcutResource RankingRules,
+                                                                                          ShortcutKey=F9}"
+                                           Header="{my:Resource RankingRules}"
+                                           Icon="{my:MediumIcon Kind=SortBoolAscendingVariant}"
+                                           Visibility="{Binding IsLeague, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+                    <!-- Project -->
                     <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditProjectCommand}"
+                                           my:ToolTipAssist.Content="{my:ShortcutResource EditProject,
+                                                                                          ShortcutKey=F8}"
                                            Header="{my:Resource Edit}"
-                                           ToolTip="{my:ShortcutResource EditProject,
-                                                                         ShortcutKey=Ctrl+Alt+T}"
                                            Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                         <my:NavigationViewItem.Icon>
                             <HeaderedContentControl Style="{StaticResource Scorer.Styles.HeaderedContentControl.MainMenu}">
                                 <Grid Width="24" Height="24" VerticalAlignment="Top">
-
-                                    <!-- Image -->
                                     <my:PackIcon Width="24"
                                                  Height="24"
                                                  Kind="ShieldCrown"
@@ -238,8 +253,6 @@
                                 </Grid>
                             </HeaderedContentControl>
                         </my:NavigationViewItem.Icon>
-                        <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditSchedulingParametersCommand}" Header="{my:Resource SchedulingParameters}" Icon="{my:MediumIcon Kind=TimerCog}" />
-                        <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditRankingRulesCommand}" Header="{my:Resource RankingRules}" Icon="{my:MediumIcon Kind=SortBoolAscendingVariant}" />
                     </my:NavigationViewItem>
 
                 </my:NavigationView.FooterMenuItems>

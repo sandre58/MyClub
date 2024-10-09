@@ -1,0 +1,44 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.SchedulePage.MatchesPlanningByStageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulePage"
+             d:DataContext="{d:DesignInstance Type=vm:MatchesPlanningViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Large.Bottom}"
+                             HorizontalAlignment="Center"
+                             DockPanel.Dock="Top"
+                             Orientation="Horizontal">
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.DropDown.Filled}"
+                      Width="250"
+                      VerticalAlignment="Stretch"
+                      my:HintAssist.Hint="{Binding Filters.CompetitionStageFilter.Item.Value.Name}"
+                      my:HintAssist.HintOpacity="{StaticResource MyNet.Opacity.Default}"
+                      my:ItemsControlAssist.SortingProperty="StartDate"
+                      DisplayMemberPath="Name"
+                      ItemsSource="{Binding Filters.CompetitionStageFilter.Item.AvailableValues}"
+                      SelectedItem="{Binding Filters.CompetitionStageFilter.Item.Value}" />
+
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
+                    VerticalAlignment="Stretch"
+                    my:IconAssist.Icon="{my:Icon Kind=Soccer}"
+                    Command="{Binding Filters.CompetitionStageFilter.Item.LatestResultsCommand}"
+                    Content="{my:Resource LatestResults}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
+                    VerticalAlignment="Stretch"
+                    my:IconAssist.Icon="{my:Icon Kind=Calendar}"
+                    Command="{Binding Filters.CompetitionStageFilter.Item.NextFixturesCommand}"
+                    Content="{my:Resource NextFixtures}" />
+        </my:SimpleStackPanel>
+
+        <v:MatchesView ShowGrouping="False" />
+    </DockPanel>
+</UserControl>

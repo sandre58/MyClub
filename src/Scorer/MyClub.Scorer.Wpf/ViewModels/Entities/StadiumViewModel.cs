@@ -8,7 +8,7 @@ using DynamicData.Binding;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Wpf.Services;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyNet.Observable;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
@@ -17,7 +17,7 @@ using MyNet.Utilities.Geography;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class StadiumViewModel : EntityViewModelBase<Stadium>, IStadiumViewModel
+    internal class StadiumViewModel : EntityViewModelBase<Stadium>, IEditableStadiumViewModel
     {
         private readonly StadiumPresentationService _stadiumPresentationService;
 
@@ -66,13 +66,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
     {
         public AvailabilityCheck Availability { get; set; }
 
-        public IStadiumViewModel Stadium { get; }
+        public StadiumViewModel Stadium { get; }
 
         public Guid Id => Stadium.Id;
 
         public string? Header => Stadium.Address?.City;
 
-        public StadiumWrapper(IStadiumViewModel item) => Stadium = item;
+        public StadiumWrapper(StadiumViewModel item) => Stadium = item;
     }
 
     internal class AutomaticStadiumWrapper : EditableObject, IStadiumWrapper

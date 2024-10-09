@@ -8,7 +8,118 @@
         <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <!--  ListView  -->
+    <!-- Dates and times -->
+    <Style x:Key="Scorer.Styles.ContentControl.Date.Accent" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
+        <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent.Dark}" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Border BorderBrush="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}" BorderThickness="1" CornerRadius="2">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Padding="{StaticResource MyNet.Margins.Default.Horizontal}"
+                                    HorizontalAlignment="Left"
+                                    Background="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                    BorderThickness="0"
+                                    CornerRadius="2 0 0 2">
+                                <TextBlock VerticalAlignment="Top"
+                                           FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                           FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                                           Foreground="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                           Text="{my:Translation Path='',
+                                                                 Format=dd}" />
+                            </Border>
+                            <Border Padding="{StaticResource MyNet.Margins.Default.Horizontal}"
+                                    HorizontalAlignment="Left"
+                                    Background="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                    BorderThickness="0"
+                                    CornerRadius="0 2 2 0"
+                                    TextElement.Foreground="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.4}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}" Text="{my:Translation Path='', Format=MMM, Casing=AllCaps}" />
+                                    <Separator Margin="0" />
+                                    <TextBlock FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}, Converter={x:Static my:MathConverter.Multiply}, ConverterParameter=0.45}"
+                                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                               Text="{my:Translation Path='',
+                                                                     Format=yyyy}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FontSize" Value="50" />
+        <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.White}" />
+        <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
+    </Style>
+
+    <Style x:Key="Scorer.Styles.ContentControl.Date.Foreground" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource Scorer.Styles.ContentControl.Date.Accent}">
+        <Setter Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Secondary}}" />
+        <Setter Property="BorderBrush" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+        <Setter Property="Foreground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Contrast=True}" />
+        <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Filled}}" />
+        <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+    </Style>
+
+    <Style x:Key="Scorer.Styles.ContentControl.Time.Accent" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
+        <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent.Dark}" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Border BorderBrush="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}" BorderThickness="1" CornerRadius="2">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Padding="{StaticResource MyNet.Margins.Default.Horizontal}"
+                                    HorizontalAlignment="Left"
+                                    Background="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                    BorderThickness="0"
+                                    CornerRadius="2 0 0 2">
+                                <TextBlock VerticalAlignment="Top"
+                                           FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                           FontWeight="{StaticResource MyNet.Font.Weight.Header}"
+                                           Foreground="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                           Text="{my:Translation Path='',
+                                                                 Format=HH}" />
+                            </Border>
+                            <Border Padding="{StaticResource MyNet.Margins.Default.Horizontal}"
+                                    HorizontalAlignment="Left"
+                                    Background="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                    BorderThickness="0"
+                                    CornerRadius="0 2 2 0"
+                                    TextElement.Foreground="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}">
+                                <TextBlock VerticalAlignment="Top"
+                                           FontSize="{Binding FontSize, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}}"
+                                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                           Text="{my:Translation Path='',
+                                                                 Format=mm}" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Accent.Foreground}" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{DynamicResource MyNet.Brushes.White}" />
+        <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{DynamicResource MyNet.Brushes.Black}" />
+    </Style>
+
+    <Style x:Key="Scorer.Styles.ContentControl.Time.Foreground" TargetType="{x:Type ContentControl}" BasedOn="{StaticResource Scorer.Styles.ContentControl.Time.Accent}">
+        <Setter Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Secondary}}" />
+        <Setter Property="BorderBrush" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+        <Setter Property="Foreground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Contrast=True}" />
+        <Setter Property="my:ThemeAssist.IsCheckedBackground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity={StaticResource MyNet.Opacity.Filled}}" />
+        <Setter Property="my:ThemeAssist.IsCheckedForeground" Value="{my:BrushBinding InheritPath=(TextElement.Foreground)}" />
+    </Style>
+
+    <!-- ListView -->
     <DataTemplate x:Key="Scorer.DataTemplates.ListView.SelectAll">
         <CheckBox x:Name="SelectAllCheckBox"
                   Margin="{StaticResource MyNet.Margins.Small.Left}"
@@ -21,21 +132,16 @@
             </Trigger>
         </DataTemplate.Triggers>
     </DataTemplate>
-    <Style x:Key="Scorer.Styles.ListViewItem.Selectable" BasedOn="{StaticResource MyNet.Styles.ListViewItem}" TargetType="ListViewItem">
-        <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+    <Style x:Key="Scorer.Styles.ListViewItem.Selectable" TargetType="ListViewItem" BasedOn="{StaticResource MyNet.Styles.ListViewItem}">
         <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+        <Setter Property="IsSelected" Value="{Binding IsSelected}" />
     </Style>
-    <Style x:Key="Scorer.Styles.ListView.Selectable" BasedOn="{StaticResource MyNet.Styles.ListView}" TargetType="{x:Type ListView}">
+    <Style x:Key="Scorer.Styles.ListView.Selectable" TargetType="{x:Type ListView}" BasedOn="{StaticResource MyNet.Styles.ListView}">
         <Setter Property="ItemContainerStyle" Value="{StaticResource Scorer.Styles.ListViewItem.Selectable}" />
     </Style>
 
-    <!--  DataGrid  -->
-    <Style x:Key="Scorer.Styles.CheckBox.Embedded.DataGrid.Import" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}" TargetType="{x:Type CheckBox}">
-        <Setter Property="Width" Value="30" />
-        <Setter Property="Height" Value="30" />
-        <Setter Property="HorizontalAlignment" Value="Center" />
-        <Setter Property="IsHitTestVisible" Value="False" />
-        <Setter Property="Focusable" Value="False" />
+    <!-- DataGrid -->
+    <Style x:Key="Scorer.Styles.CheckBox.Embedded.DataGrid.Import" TargetType="{x:Type CheckBox}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}">
         <Setter Property="ContentTemplate">
             <Setter.Value>
                 <DataTemplate>
@@ -43,6 +149,11 @@
                 </DataTemplate>
             </Setter.Value>
         </Setter>
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Width" Value="30" />
         <Style.Triggers>
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
@@ -75,12 +186,12 @@
         </Style.Triggers>
     </Style>
 
-    <Style x:Key="Scorer.Styles.CheckBox.Embedded.DataGrid.Import.Edition" BasedOn="{StaticResource Scorer.Styles.CheckBox.Embedded.DataGrid.Import}" TargetType="{x:Type CheckBox}">
-        <Setter Property="IsHitTestVisible" Value="True" />
+    <Style x:Key="Scorer.Styles.CheckBox.Embedded.DataGrid.Import.Edition" TargetType="{x:Type CheckBox}" BasedOn="{StaticResource Scorer.Styles.CheckBox.Embedded.DataGrid.Import}">
         <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsHitTestVisible" Value="True" />
     </Style>
 
-    <Style x:Key="Scorer.Styles.ToggleButton.Embedded.ListView.Selection" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}" TargetType="{x:Type ToggleButton}">
+    <Style x:Key="Scorer.Styles.ToggleButton.Embedded.ListView.Selection" TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action.Custom}">
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Style.Triggers>
             <Trigger Property="IsChecked" Value="True">
@@ -89,25 +200,25 @@
         </Style.Triggers>
     </Style>
 
-    <!--  NavigationView  -->
-    <Style x:Key="Scorer.Styles.NavigationView.Top" BasedOn="{StaticResource MyNet.Styles.NavigationView.Top}" TargetType="{x:Type my:NavigationView}">
-        <Setter Property="ShowAutoSuggestBox" Value="False" />
-        <Setter Property="ShowHeader" Value="False" />
-        <Setter Property="ShowNavigationButtons" Value="False" />
+    <!-- NavigationView -->
+    <Style x:Key="Scorer.Styles.NavigationView.Top" TargetType="{x:Type my:NavigationView}" BasedOn="{StaticResource MyNet.Styles.NavigationView.Top}">
         <Setter Property="FrameBackground" Value="Transparent" />
         <Setter Property="FrameCornerRadius" Value="0" />
         <Setter Property="FrameMargin" Value="{StaticResource MyNet.Margins.Medium.Top}" />
         <Setter Property="Margin" Value="{StaticResource MyNet.Margins.Medium}" />
+        <Setter Property="ShowAutoSuggestBox" Value="False" />
+        <Setter Property="ShowHeader" Value="False" />
+        <Setter Property="ShowNavigationButtons" Value="False" />
     </Style>
 
-    <!--  Count List  -->
+    <!-- Count List -->
     <DataTemplate x:Key="Scorer.DataTemplates.List.Count">
         <Border x:Name="border"
                 VerticalAlignment="Center"
                 BorderBrush="{DynamicResource MyNet.Brushes.Control.Border}"
                 BorderThickness="1"
                 CornerRadius="17">
-            <!--  Count  -->
+            <!-- Count -->
             <StackPanel Margin="11 5" Orientation="Horizontal" TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
                 <TextBlock Text="{Binding Wrappers.Count}" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                 <TextBlock Margin="{StaticResource MyNet.Margins.Small.Horizontal}" Text="/" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
@@ -121,10 +232,11 @@
                 my:IconAssist.Icon="{my:ToolIcon Kind=CheckAll}"
                 my:IconAssist.Margin="{StaticResource MyNet.Margins.Default.Left}"
                 my:ThemeAssist.CornerRadius="17"
+                my:ToolTipAssist.Content="{my:ShortcutResource SelectAll,
+                                                               ShortcutKey='Ctrl+A'}"
+                my:ToolTipAssist.PlacementMode="BottomAndAlignCentres"
                 Command="{Binding SelectAllCommand}"
-                FontSize="{StaticResource MyNet.Font.Size.Caption}"
-                ToolTip="{my:ShortcutResource SelectAll,
-                                              ShortcutKey='Ctrl+A'}">
+                FontSize="{StaticResource MyNet.Font.Size.Caption}">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding Wrappers.Count}" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                 <TextBlock Margin="{StaticResource MyNet.Margins.Small.Horizontal}" Text="/" Visibility="{Binding IsFiltered, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
@@ -163,9 +275,9 @@
                 </my:DropDownButton.ToggleContent>
                 <my:Submenu ItemsSource="{Binding PresetSelections}">
                     <my:Submenu.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource MyNet.Styles.MenuItem}" TargetType="{x:Type MenuItem}">
-                            <Setter Property="Header" Value="{my:Translation Key}" />
+                        <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                             <Setter Property="Command" Value="{Binding Value}" />
+                            <Setter Property="Header" Value="{my:Translation Key}" />
                         </Style>
                     </my:Submenu.ItemContainerStyle>
                 </my:Submenu>
@@ -173,7 +285,7 @@
         </Border>
     </DataTemplate>
 
-    <!--  Ghost No data  -->
+    <!-- Ghost No data -->
     <DataTemplate x:Key="Scorer.DataTemplates.Ghost.NoData.Large">
         <my:SimpleStackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Huge}">
             <my:PackIcon Width="150"
@@ -208,7 +320,7 @@
         </my:SimpleStackPanel>
     </DataTemplate>
 
-    <!--  Reschedule  -->
+    <!-- Reschedule -->
     <DataTemplate x:Key="Scorer.DataTemplates.Reschedule">
         <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">
             <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" HorizontalAlignment="Center" Text="{my:Resource Personalize}" />

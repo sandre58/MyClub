@@ -1,0 +1,54 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.ProjectEditionHomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:ProjectEditionViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.VeryLarge}">
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}" my:IconAssist.Icon="{my:MediumIcon Kind=Soccer}" Header="{my:Resource LastResults}">
+            <my:SimpleStackPanel>
+                <my:SimpleStackPanel Orientation="Horizontal">
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ShowMatchesInInterval}" />
+                    <my:NumericUpDown Width="60" Minimum="0" Value="{my:NullableBinding PeriodForPreviousMatchesValue}" />
+                    <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                              SelectedIndex="0"
+                              SelectedValue="{Binding PeriodForPreviousMatchesUnit}"
+                              SelectedValuePath="DataContext">
+                        <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
+                    </ComboBox>
+                </my:SimpleStackPanel>
+                <ToggleButton Content="{my:Resource IfNoPreviousMatchesInInterval}" IsChecked="{Binding ShowLastMatchFallback}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}" my:IconAssist.Icon="{my:MediumIcon Kind=Soccer}" Header="{my:Resource Incoming}">
+            <my:SimpleStackPanel>
+                <my:SimpleStackPanel Orientation="Horizontal">
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ShowMatchesInInterval}" />
+                    <my:NumericUpDown Width="60" Minimum="0" Value="{my:NullableBinding PeriodForNextMatchesValue}" />
+                    <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
+                              SelectedIndex="0"
+                              SelectedValue="{Binding PeriodForNextMatchesUnit}"
+                              SelectedValuePath="DataContext">
+                        <ComboBoxItem Content="{my:Resource TimeUnitMinute}" DataContext="{x:Static units:TimeUnit.Minute}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitHour}" DataContext="{x:Static units:TimeUnit.Hour}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitDay}" DataContext="{x:Static units:TimeUnit.Day}" />
+                        <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
+                    </ComboBox>
+                </my:SimpleStackPanel>
+                <ToggleButton Content="{my:Resource IfNoNextMatchesInInterval}" IsChecked="{Binding ShowNextMatchFallback}" />
+            </my:SimpleStackPanel>
+        </GroupBox>
+    </my:SimpleStackPanel>
+</UserControl>

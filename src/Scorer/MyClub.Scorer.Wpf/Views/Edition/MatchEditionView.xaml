@@ -8,8 +8,10 @@
                   xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
                   xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
                   Style="{StaticResource MyNet.Styles.ContentDialog}"
-                  Width="750"
-                  Height="700"
+                  MaxWidth="750"
+                  MaxHeight="750"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
                   d:DataContext="{d:DesignInstance Type=vm:MatchEditionViewModel}"
                   BusyService="{Binding BusyService, Mode=OneWay}"
                   HeaderHeight="70"
@@ -41,18 +43,18 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!--  Parent  -->
+            <!-- Stage -->
             <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
-                       Text="{Binding Parent.Name}"
+                       Text="{Binding Stage.Name}"
                        Typography.Capitals="AllSmallCaps"
                        Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}" />
             <ComboBox Width="{StaticResource MyNet.Widths.Control.Large}"
                       my:ItemsControlAssist.SortingProperty="Date"
-                      ItemsSource="{Binding Parents}"
-                      SelectedItem="{Binding Parent}"
+                      ItemsSource="{Binding Stages}"
+                      SelectedItem="{Binding Stage}"
                       Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Creation}}" />
 
-            <!--  Opponents  -->
+            <!-- Opponents -->
             <Grid Grid.Row="1" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -66,18 +68,18 @@
                                      Orientation="Horizontal"
                                      Spacing="{StaticResource MyNet.Margin.Default}"
                                      Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}">
-                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Title}" Text="{Binding HomeTeam.Name}" />
+                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Title}" Text="{Binding Home.Team.Name}" />
                     <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                        Width="35"
                                        Height="35"
-                                       DataContext="{Binding HomeTeam}" />
+                                       DataContext="{Binding Home.Team}" />
                 </my:SimpleStackPanel>
                 <ComboBox my:HintAssist.Hint="{my:Resource HomeTeam}"
                           my:HintAssist.IsFloating="False"
                           my:ItemsControlAssist.SortingProperty="Name"
-                          ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                          ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                           ItemsSource="{Binding AvailableTeams}"
-                          SelectedItem="{Binding HomeTeam}"
+                          SelectedItem="{Binding Home.Team}"
                           Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Creation}}" />
 
                 <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Caption}"
@@ -93,20 +95,20 @@
                     <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                        Width="35"
                                        Height="35"
-                                       DataContext="{Binding AwayTeam}" />
-                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Title}" Text="{Binding AwayTeam.Name}" />
+                                       DataContext="{Binding Away.Team}" />
+                    <TextBlock FontSize="{StaticResource MyNet.Font.Size.Title}" Text="{Binding Away.Team.Name}" />
                 </my:SimpleStackPanel>
                 <ComboBox Grid.Column="4"
                           my:HintAssist.Hint="{my:Resource AwayTeam}"
                           my:HintAssist.IsFloating="False"
                           my:ItemsControlAssist.SortingProperty="Name"
-                          ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                          ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                           ItemsSource="{Binding AvailableTeams}"
-                          SelectedItem="{Binding AwayTeam}"
+                          SelectedItem="{Binding Away.Team}"
                           Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Creation}}" />
             </Grid>
 
-            <!--  Info  -->
+            <!-- Info -->
             <ContentControl HorizontalAlignment="Right"
                             VerticalAlignment="Top"
                             Content="{StaticResource MyNet.PackIcon.ItemTraking}"
@@ -117,6 +119,9 @@
     <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
         <TabItem my:IconAssist.Icon="{my:Icon Kind=InformationCircle}" Header="{my:Resource General}">
             <v:MatchEditionGeneralView />
+        </TabItem>
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=Cards}" Header="{my:Resource Events}">
+            <v:MatchEditionEventsView />
         </TabItem>
         <TabItem my:IconAssist.Icon="{my:Icon Kind=Settings}" Header="{my:Resource Rules}">
             <v:MatchEditionRulesView />

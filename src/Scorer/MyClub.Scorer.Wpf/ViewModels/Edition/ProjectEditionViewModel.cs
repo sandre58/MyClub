@@ -2,99 +2,52 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
+using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
-using MyClub.Scorer.Domain.Enums;
-using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
-using MyClub.Scorer.Wpf.ViewModels.BuildAssistant;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
-using MyNet.UI.Toasting;
-using MyNet.UI.Toasting.Settings;
-using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
-using MyNet.Wpf.Extensions;
+using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class ProjectEditionViewModel : EditionViewModel
     {
         private readonly ProjectInfoProvider _projectInfoProvider;
+        private readonly ParametersService _parametersService;
         private readonly ProjectService _projectService;
+        private readonly MatchesProvider _matchesProvider;
 
         public ProjectEditionViewModel(ProjectInfoProvider projectInfoProvider,
                                        ProjectService projectService,
-                                       PluginsService pluginService,
-                                       AddressService addressService)
+                                       ParametersService parametersService,
+                                       MatchesProvider matchesProvider,
+                                       StadiumsProvider stadiumsProvider)
         {
             _projectInfoProvider = projectInfoProvider;
+            _parametersService = parametersService;
             _projectService = projectService;
-
-            StadiumsViewModel = new(pluginService, addressService);
-            TeamsViewModel = new(pluginService, new ObservableSourceProvider<EditableStadiumViewModel>(StadiumsViewModel.Items));
-            RankingRulesViewModel = new(new ObservableSourceProvider<ITeamViewModel>(TeamsViewModel.Items.ToObservableChangeSet().Transform(x => (ITeamViewModel)x)));
-            SchedulingParametersViewModel = new(new ObservableSourceProvider<IStadiumViewModel>(StadiumsViewModel.Items.ToObservableChangeSet().Transform(x => (IStadiumViewModel)x)));
-            LeagueBuildAssistantParametersViewModel = new(new ObservableSourceProvider<IStadiumViewModel>(StadiumsViewModel.Items.ToObservableChangeSet().Transform(x => (IStadiumViewModel)x)));
-            AddSubWorkspaces(
-            [
-                GeneralViewModel,
-                StadiumsViewModel,
-                TeamsViewModel,
-                MatchFormatViewModel,
-                SchedulingParametersViewModel,
-                LeagueBuildAssistantParametersViewModel,
-                RankingRulesViewModel
-            ]);
-
-            NavigationService.Navigating += OnSubWorkspaceNavigating;
-
+            _matchesProvider = matchesProvider;
+            SchedulingParameters = new(new ObservableSourceProvider<IEditableStadiumViewModel>(stadiumsProvider.Items.ToObservableChangeSet().Transform(x => (IEditableStadiumViewModel)x)));
             Disposables.AddRange(
             [
-                TeamsViewModel.Items.ToObservableChangeSet().Subscribe(_ => CanBuildCompetition = TeamsViewModel.Items.Count > 1),
-                GeneralViewModel.WhenPropertyChanged(x => x.Type).Subscribe(_ =>
-                {
-                    if(Mode != ScreenMode.Creation) return;
-
-                    RankingRulesViewModel.IsEnabled =  GeneralViewModel.Type == CompetitionType.League;
-                    LeagueBuildAssistantParametersViewModel.IsEnabled = GeneralViewModel.Type == CompetitionType.League && BuildCompetition && CanBuildCompetition;
-
-                    if(!MatchFormatViewModel.IsModified()) {
-                        switch (GeneralViewModel.Type) {
-                            case CompetitionType.League:
-                                MatchFormatViewModel.Load(MatchFormat.Default);
-                                break;
-                            default:
-                                MatchFormatViewModel.Load(MatchFormat.NoDraw);
-                                break;
-                        }
-                    }
-                }),
-                this.WhenPropertyChanged(x => x.CanBuildCompetition).Subscribe(_ =>
-                {
-                    if(Mode == ScreenMode.Creation && !CanBuildCompetition)
-                        BuildCompetition = false;
-                }),
-                this.WhenAnyPropertyChanged(nameof(BuildCompetition), nameof(CanBuildCompetition)).Subscribe(_ =>
-                {
-                    if(Mode != ScreenMode.Creation) return;
-
-                    LeagueBuildAssistantParametersViewModel.IsEnabled = GeneralViewModel.Type == CompetitionType.League && BuildCompetition && CanBuildCompetition;
-                    MatchFormatViewModel.IsEnabled = !BuildCompetition || !CanBuildCompetition;
-                    SchedulingParametersViewModel.IsEnabled = !BuildCompetition || !CanBuildCompetition;
-                })
+                MatchRules.WhenAnyPropertyChanged().Subscribe(_ => ShowMatchRulesWarning = _matchesProvider.Count > 0 && MatchRules.IsModified()),
+                MatchRules.Cards.ToObservableChangeSet().Subscribe(_ => ShowMatchRulesWarning = _matchesProvider.Count > 0 && MatchRules.IsModified())
             ]);
         }
+
+        public EditableSchedulingParametersViewModel SchedulingParameters { get; }
+
+        public EditableMatchFormatViewModel MatchFormat { get; } = new();
+
+        public EditableMatchRulesViewModel MatchRules { get; } = new();
 
         [IsRequired]
         [Display(Name = nameof(Name), ResourceType = typeof(MyClubResources))]
@@ -102,227 +55,89 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public byte[]? Image { get; set; }
 
-        public ProjectEditionGeneralViewModel GeneralViewModel { get; } = new();
+        public bool TreatNoStadiumAsWarning { get; set; }
 
-        public ProjectEditionTeamsViewModel TeamsViewModel { get; }
+        [IsRequired]
+        [Display(Name = "PeriodForPreviousMatches", ResourceType = typeof(MyClubResources))]
+        public int? PeriodForPreviousMatchesValue { get; set; }
 
-        public ProjectEditionStadiumsViewModel StadiumsViewModel { get; }
+        [IsRequired]
+        [Display(Name = "PeriodForPreviousMatches", ResourceType = typeof(MyClubResources))]
+        public TimeUnit PeriodForPreviousMatchesUnit { get; set; }
 
-        public EditableMatchFormatViewModel MatchFormatViewModel { get; } = new();
+        public bool ShowLastMatchFallback { get; set; }
 
-        public EditableRankingRulesViewModel RankingRulesViewModel { get; }
+        [IsRequired]
+        [Display(Name = "PeriodForNextMatches", ResourceType = typeof(MyClubResources))]
+        public int? PeriodForNextMatchesValue { get; set; }
 
-        public EditableSchedulingParametersViewModel SchedulingParametersViewModel { get; }
+        [IsRequired]
+        [Display(Name = "PeriodForNextMatches", ResourceType = typeof(MyClubResources))]
+        public TimeUnit PeriodForNextMatchesUnit { get; set; }
 
-        public LeagueBuildAssistantParametersViewModel LeagueBuildAssistantParametersViewModel { get; }
+        public bool ShowNextMatchFallback { get; set; }
 
-        [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public bool BuildCompetition { get; set; }
-
         [CanSetIsModified(false)]
-        [CanBeValidated(false)]
-        public bool CanBuildCompetition { get; private set; }
+        public bool CanEditMatchFormat { get; private set; }
 
+        [CanBeValidated(false)]
         [CanSetIsModified(false)]
+        public bool CanEditMatchRules { get; private set; }
+
         [CanBeValidated(false)]
-        public bool StretchSize { get; private set; } = false;
+        [CanSetIsModified(false)]
+        public bool ShowMatchRulesWarning { get; private set; }
 
-        private void OnSubWorkspaceNavigating(object? sender, MyNet.UI.Navigation.NavigatingEventArgs e)
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public bool ApplyMatchRulesOnExistingMatches { get; set; }
+
+        protected override void RefreshCore()
         {
-            if (AllWorkspaces.IndexOf(e.NewPage) > AllWorkspaces.IndexOf(e.OldPage) && e.OldPage is IEditableObject editableObject && !editableObject.ValidateProperties())
-            {
-                editableObject.GetErrors().ForEach(x => ToasterManager.ShowError(x, ToastClosingStrategy.AutoClose));
-                e.Cancel = true;
-                return;
-            }
+            var matchFormat = _parametersService.GetMatchFormat();
+            var matchRules = _parametersService.GetMatchRules();
+            var schedulingParameters = _parametersService.GetSchedulingParameters();
+            var preferences = _parametersService.GetPreferences();
 
-            StretchSize = e.NewPage == LeagueBuildAssistantParametersViewModel;
-
-            if (e.NewPage == RankingRulesViewModel)
-                RankingRulesViewModel.ShowShootouts = BuildCompetition && CanBuildCompetition ? LeagueBuildAssistantParametersViewModel.MatchFormat.ShootoutsIsEnabled : MatchFormatViewModel.ShootoutsIsEnabled;
-
-            if (e.NewPage == LeagueBuildAssistantParametersViewModel)
-                LeagueBuildAssistantParametersViewModel.Refresh(TeamsViewModel.Items.Count);
-        }
-
-        public void New()
-        {
-            Mode = ScreenMode.Creation;
-
-            StadiumsViewModel.IsEnabled = true;
-            TeamsViewModel.IsEnabled = true;
-            MatchFormatViewModel.IsEnabled = true;
-            SchedulingParametersViewModel.IsEnabled = true;
-            LeagueBuildAssistantParametersViewModel.IsEnabled = true;
-            RankingRulesViewModel.IsEnabled = true;
-            GeneralViewModel.CanEditType = true;
-            Reset();
-        }
-
-        public void Edit()
-        {
-            GoToTab(0);
-            Mode = ScreenMode.Edition;
-            Reset();
+            CanEditMatchFormat = _matchesProvider.Count == 0;
+            CanEditMatchRules = true;
+            MatchFormat.Load(matchFormat);
+            MatchRules.Load(matchRules);
+            SchedulingParameters.Load(schedulingParameters);
+            TreatNoStadiumAsWarning = preferences.TreatNoStadiumAsWarning;
+            (PeriodForPreviousMatchesValue, PeriodForPreviousMatchesUnit) = preferences.PeriodForPreviousMatches.Simplify();
+            (PeriodForNextMatchesValue, PeriodForNextMatchesUnit) = preferences.PeriodForNextMatches.Simplify();
+            ShowLastMatchFallback = preferences.ShowLastMatchFallback;
+            ShowNextMatchFallback = preferences.ShowNextMatchFallback;
             Name = _projectInfoProvider.Name;
             Image = _projectInfoProvider.Image;
-            GeneralViewModel.Type = _projectInfoProvider.Type;
-            GeneralViewModel.CanEditType = false;
-            GeneralViewModel.TreatNoStadiumAsWarning = _projectInfoProvider.TreatNoStadiumAsWarning;
-            (GeneralViewModel.PeriodForPreviousMatchesValue, GeneralViewModel.PeriodForPreviousMatchesUnit) = _projectInfoProvider.PeriodForPreviousMatches.Simplify();
-            (GeneralViewModel.PeriodForNextMatchesValue, GeneralViewModel.PeriodForNextMatchesUnit) = _projectInfoProvider.PeriodForNextMatches.Simplify();
-            StadiumsViewModel.IsEnabled = false;
-            TeamsViewModel.IsEnabled = false;
-            MatchFormatViewModel.IsEnabled = false;
-            SchedulingParametersViewModel.IsEnabled = false;
-            LeagueBuildAssistantParametersViewModel.IsEnabled = false;
-            RankingRulesViewModel.IsEnabled = false;
+            ShowMatchRulesWarning = false;
+            ApplyMatchRulesOnExistingMatches = false;
         }
-
-        protected override void ResetCore()
-        {
-            base.ResetCore();
-            Name = MyClubResources.League;
-            Image = null;
-            BuildCompetition = false;
-            CanBuildCompetition = false;
-            LeagueBuildAssistantParametersViewModel.IsEnabled = false;
-            GoToTab(0);
-        }
-
-        public override void GoToPreviousTab()
-        {
-            if (SelectedWorkspace is null || Mode != ScreenMode.Creation) return;
-
-            var activeSubWorkaces = AllWorkspaces.Where(x => x.IsEnabled).ToList();
-            var currentIndex = activeSubWorkaces.IndexOf(SelectedWorkspace);
-            var previousSubworkspace = activeSubWorkaces.GetByIndex(currentIndex - 1);
-
-            if (previousSubworkspace is not null)
-                GoToTab(previousSubworkspace);
-        }
-
-        public override void GoToNextTab()
-        {
-            if (SelectedWorkspace is null || Mode != ScreenMode.Creation) return;
-
-            var activeSubWorkaces = AllWorkspaces.Where(x => x.IsEnabled).ToList();
-            var currentIndex = activeSubWorkaces.IndexOf(SelectedWorkspace);
-            var nextSubworkspace = activeSubWorkaces.GetByIndex(currentIndex + 1);
-
-            if (nextSubworkspace is not null)
-                GoToTab(nextSubworkspace);
-        }
-
-        protected override bool CanGoToNextTab()
-        {
-            if (SelectedWorkspace is null || Mode != ScreenMode.Creation) return false;
-
-            var activeSubWorkaces = AllWorkspaces.Where(x => x.IsEnabled).ToList();
-            var currentIndex = activeSubWorkaces.IndexOf(SelectedWorkspace);
-
-            return activeSubWorkaces.GetByIndex(currentIndex + 1) is not null;
-        }
-
-        protected override bool CanGoToPreviousTab()
-        {
-            if (SelectedWorkspace is null || Mode != ScreenMode.Creation) return false;
-
-            var activeSubWorkaces = AllWorkspaces.Where(x => x.IsEnabled).ToList();
-            var currentIndex = activeSubWorkaces.IndexOf(SelectedWorkspace);
-
-            return activeSubWorkaces.GetByIndex(currentIndex - 1) is not null;
-        }
-
-        protected override bool CanSave() => SelectedWorkspace == AllWorkspaces.Last(x => x.IsEnabled);
-
 
         protected override void SaveCore()
         {
-            if (Mode != ScreenMode.Edition) return;
+            if (CanEditMatchFormat)
+                _parametersService.UpdateMatchFormat(MatchFormat.Create());
 
+            if (CanEditMatchRules)
+                _parametersService.UpdateMatchRules(MatchRules.Create(), ApplyMatchRulesOnExistingMatches);
+
+            _parametersService.UpdateSchedulingParameters(SchedulingParameters.Create());
             _projectService.Update(new ProjectMetadataDto
             {
                 Image = Image,
                 Name = Name,
-                TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
-                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
-                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit)
+                Preferences = new PreferencesDto
+                {
+                    PeriodForNextMatches = PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(PeriodForNextMatchesUnit),
+                    PeriodForPreviousMatches = PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(PeriodForPreviousMatchesUnit),
+                    ShowLastMatchFallback = ShowLastMatchFallback,
+                    ShowNextMatchFallback = ShowNextMatchFallback,
+                    TreatNoStadiumAsWarning = TreatNoStadiumAsWarning
+                }
             });
         }
-
-        protected override void Cleanup()
-        {
-            base.Cleanup();
-            NavigationService.Navigating -= OnSubWorkspaceNavigating;
-        }
-
-        internal ProjectMetadataDto ToMetadata() => GeneralViewModel.Type switch
-        {
-            CompetitionType.League => new LeagueMetadataDto
-            {
-                Image = Image,
-                Name = Name,
-                TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
-                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
-                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit),
-                Stadiums = ToStadiumDtos(),
-                Teams = ToTeamDtos(),
-                BuildParameters = ToLeagueBuildParameters()
-            },
-            CompetitionType.Cup => new CupMetadataDto
-            {
-                Image = Image,
-                Name = Name,
-                TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
-                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
-                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit),
-                Stadiums = ToStadiumDtos(),
-                Teams = ToTeamDtos()
-            },
-            CompetitionType.Tournament => new TournamentMetadataDto
-            {
-                Image = Image,
-                Name = Name,
-                TreatNoStadiumAsWarning = GeneralViewModel.TreatNoStadiumAsWarning,
-                PeriodForNextMatches = GeneralViewModel.PeriodForNextMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForNextMatchesUnit),
-                PeriodForPreviousMatches = GeneralViewModel.PeriodForPreviousMatchesValue.GetValueOrDefault().ToTimeSpan(GeneralViewModel.PeriodForPreviousMatchesUnit),
-                Stadiums = ToStadiumDtos(),
-                Teams = ToTeamDtos()
-            },
-            _ => throw new InvalidOperationException("No competition type provided")
-        };
-
-        private List<TeamDto> ToTeamDtos() => TeamsViewModel.Items.Select(x => new TeamDto
-        {
-            Name = x.Name,
-            Id = x.Id,
-            AwayColor = x.AwayColor?.ToHex(),
-            Country = x.Country,
-            HomeColor = x.HomeColor?.ToHex(),
-            Logo = x.Logo,
-            ShortName = x.ShortName,
-            Stadium = x.Stadium is not null ? new StadiumDto { Id = x.Stadium.Id } : null
-        }).ToList();
-
-        private List<StadiumDto> ToStadiumDtos() => StadiumsViewModel.Items.Select(x => new StadiumDto
-        {
-            Id = x.Id,
-            Address = x.Address,
-            Ground = x.Ground,
-            Name = x.Name,
-        }).ToList();
-
-        private BuildParametersDto ToLeagueBuildParameters()
-            => BuildCompetition && CanBuildCompetition
-                ? LeagueBuildAssistantParametersViewModel.ToBuildParameters()
-                : new()
-                {
-                    MatchFormat = MatchFormatViewModel.Create(),
-                    SchedulingParameters = SchedulingParametersViewModel.Create(),
-                    AutomaticEndDate = false,
-                    AutomaticStartDate = false,
-                };
     }
 }

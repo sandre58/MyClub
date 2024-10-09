@@ -19,7 +19,7 @@
         <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium}">
 
             <!-- New League -->
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Custom}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled.Custom}"
                     Height="Auto"
                     MinHeight="80"
                     HorizontalAlignment="Stretch"
@@ -35,7 +35,7 @@
             </Button>
 
             <!-- New cup -->
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Custom}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled.Custom}"
                     Height="Auto"
                     MinHeight="80"
                     HorizontalAlignment="Stretch"

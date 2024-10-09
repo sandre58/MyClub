@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.Services;
@@ -16,15 +18,22 @@ using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
 
+
 namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 {
     internal class RankingListViewModel : ListViewModel<RankingRowViewModel>
     {
+        private readonly RankingViewModel _ranking;
+
         public RankingListViewModel(RankingViewModel ranking, ListParametersProvider? listParametersProvider = null)
             : base(ranking.ToObservableChangeSet<RankingViewModel, RankingRowViewModel>(),
                    parametersProvider: listParametersProvider ?? RankingListParameterProvider.Full)
         {
-            NavigateToPastPositionsCommand = CommandsManager.CreateNotNull<ITeamViewModel>(x => NavigationCommandsService.NavigateToPastPositionsPage([x.Id]));
+            _ranking = ranking;
+
+            NavigateToPastPositionsCommand = CommandsManager.CreateNotNull<TeamViewModel>(x => NavigationCommandsService.NavigateToPastPositionsPage([x.Id]));
+
+            ranking.UpdateRunner.Register(this, Collection.DeferRefresh);
 
             Disposables.AddRange(
                 [
@@ -33,15 +42,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
                     ranking.WhenPropertyChanged(x => Labels).Subscribe(_ => Labels = ranking.Labels)
                 ]);
 
-            Display.Mode?.CastIn<DisplayModeList>().Reset();
+            MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => Display.Mode?.CastIn<DisplayModeList>().Reset());
         }
 
         public ICommand NavigateToPastPositionsCommand { get; private set; }
 
         public RankingRules? Rules { get; private set; }
 
-        public ReadOnlyDictionary<ITeamViewModel, int>? PenaltyPoints { get; private set; }
+        public ReadOnlyDictionary<TeamViewModel, int>? PenaltyPoints { get; private set; }
 
         public ReadOnlyDictionary<AcceptableValueRange<int>, RankLabel>? Labels { get; private set; }
+
+        protected override void Cleanup()
+        {
+            _ranking.UpdateRunner.Unregister(this);
+            base.Cleanup();
+        }
     }
 }

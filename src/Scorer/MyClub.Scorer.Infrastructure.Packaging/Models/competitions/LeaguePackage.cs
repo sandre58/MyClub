@@ -15,6 +15,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlElement("MatchFormat")]
         public MatchFormatPackage? MatchFormat { get; set; }
 
+        [XmlElement("MatchRules")]
+        public MatchRulesPackage? MatchRules { get; set; }
+
         [XmlElement("RankingRules")]
         public RankingRulesPackage? RankingRules { get; set; }
 

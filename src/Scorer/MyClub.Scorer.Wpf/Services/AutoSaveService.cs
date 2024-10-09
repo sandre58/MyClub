@@ -49,13 +49,13 @@ namespace MyClub.Scorer.Wpf.Services
                     Clean();
                 }, Start));
 
-            _projectInfoProvider.WhenProjectClosing(() =>
+            _projectInfoProvider.UnloadRunner.RegisterOnStart(this, () =>
             {
                 Stop();
                 Clean();
             });
 
-            _projectInfoProvider.WhenProjectLoaded(_ => Start());
+            _projectInfoProvider.LoadRunner.RegisterOnEnd(this, _ => Start());
         }
 
         protected override async Task<bool> SaveCoreAsync(CancellationToken? cancellationToken = null)
@@ -114,6 +114,13 @@ namespace MyClub.Scorer.Wpf.Services
                     LogManager.Warning($"An error occured when attempting to delete autosave project {Path.GetFileName(filename)}");
                 }
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            _projectInfoProvider.LoadRunner.Unregister(this);
+            _projectInfoProvider.UnloadRunner.Unregister(this);
+            base.Dispose(disposing);
         }
     }
 }

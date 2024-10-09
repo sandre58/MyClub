@@ -337,49 +337,6 @@
     </DataTemplate>
 
     <!-- Venue -->
-    <DataTemplate x:Key="Scorer.DataTemplates.StadiumOfMatchNumberRuleViewModel.Embedded" DataType="{x:Type vm:EditableStadiumOfMatchNumberRuleViewModel}">
-        <Grid Margin="{StaticResource MyNet.Margins.Small.Vertical}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ExceptForMatch}" />
-            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown}"
-                              Grid.Column="2"
-                              Width="60"
-                              Minimum="1"
-                              Value="{my:NullableBinding MatchNumber}" />
-            <my:PackIcon Grid.Column="4"
-                         Width="20"
-                         Height="20"
-                         Kind="ArrowRightBoldOutline" />
-            <ComboBox Grid.Column="6"
-                      Width="{StaticResource MyNet.Widths.Control.Large}"
-                      my:HintAssist.Hint="{my:Resource NoStadium}"
-                      my:ItemsControlAssist.SortingProperty="Address.City"
-                      my:TextFieldAssist.HasClearButton="True"
-                      DisplayMemberPath="DisplayName"
-                      ItemsSource="{Binding AllStadiums, Mode=OneWay}"
-                      MaxDropDownHeight="350"
-                      SelectedValue="{Binding StadiumId}"
-                      SelectedValuePath="Id" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Icon}"
-                    Grid.Column="8"
-                    Command="{Binding DataContext.RemoveExceptionCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
-                    CommandParameter="{Binding}"
-                    Content="{my:ToolIcon Kind=MinusCircle}"
-                    ToolTip="{my:Resource Remove}"
-                    Validation.ErrorTemplate="{x:Null}" />
-        </Grid>
-    </DataTemplate>
-
     <DataTemplate DataType="{x:Type vm:EditableFirstAvailableStadiumRuleViewModel}">
         <my:SimpleStackPanel>
             <TextBlock Text="{my:Resource FirstAvailableStadiumDescription}" />
@@ -424,10 +381,6 @@
                 <ColumnDefinition Width="20" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
 
             <ComboBox Width="{StaticResource MyNet.Widths.Control.Medium}"
                       HorizontalContentAlignment="Left"
@@ -445,28 +398,16 @@
                          Width="20"
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
-            <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <ComboBox Width="{StaticResource MyNet.Widths.Control.Large}"
-                          my:HintAssist.Hint="{my:Resource NoStadium}"
-                          my:ItemsControlAssist.SortingProperty="Address.City"
-                          my:TextFieldAssist.HasClearButton="True"
-                          DisplayMemberPath="DisplayName"
-                          ItemsSource="{Binding AllStadiums, Mode=OneWay}"
-                          MaxDropDownHeight="350"
-                          SelectedValue="{Binding StadiumId}"
-                          SelectedValuePath="Id" />
-                <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                        my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
-                        Command="{Binding AddExceptionCommand}"
-                        Content="{my:Resource AddException}" />
-            </my:SimpleStackPanel>
-            <ItemsControl Grid.Row="1"
-                          Grid.Column="4"
-                          Grid.ColumnSpan="3"
-                          Margin="{StaticResource MyNet.Margins.Default.Top}"
-                          ItemTemplate="{StaticResource Scorer.DataTemplates.StadiumOfMatchNumberRuleViewModel.Embedded}"
-                          ItemsSource="{Binding MatchExceptions}"
-                          Visibility="{Binding MatchExceptions.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+            <ComboBox Grid.Column="4"
+                      Width="{StaticResource MyNet.Widths.Control.Large}"
+                      my:HintAssist.Hint="{my:Resource NoStadium}"
+                      my:ItemsControlAssist.SortingProperty="Address.City"
+                      my:TextFieldAssist.HasClearButton="True"
+                      DisplayMemberPath="DisplayName"
+                      ItemsSource="{Binding AllStadiums, Mode=OneWay}"
+                      MaxDropDownHeight="350"
+                      SelectedValue="{Binding StadiumId}"
+                      SelectedValuePath="Id" />
         </Grid>
     </DataTemplate>
 
@@ -479,38 +420,22 @@
                 <ColumnDefinition Width="20" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
 
             <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime Date}" />
             <my:PackIcon Grid.Column="2"
                          Width="20"
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
-            <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <ComboBox Width="{StaticResource MyNet.Widths.Control.Large}"
-                          my:HintAssist.Hint="{my:Resource NoStadium}"
-                          my:ItemsControlAssist.SortingProperty="Address.City"
-                          my:TextFieldAssist.HasClearButton="True"
-                          DisplayMemberPath="DisplayName"
-                          ItemsSource="{Binding AllStadiums, Mode=OneWay}"
-                          MaxDropDownHeight="350"
-                          SelectedValue="{Binding StadiumId}"
-                          SelectedValuePath="Id" />
-                <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                        my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
-                        Command="{Binding AddExceptionCommand}"
-                        Content="{my:Resource AddException}" />
-            </my:SimpleStackPanel>
-            <ItemsControl Grid.Row="1"
-                          Grid.Column="4"
-                          Grid.ColumnSpan="3"
-                          Margin="{StaticResource MyNet.Margins.Default.Top}"
-                          ItemTemplate="{StaticResource Scorer.DataTemplates.StadiumOfMatchNumberRuleViewModel.Embedded}"
-                          ItemsSource="{Binding MatchExceptions}"
-                          Visibility="{Binding MatchExceptions.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
+            <ComboBox Grid.Column="4"
+                      Width="{StaticResource MyNet.Widths.Control.Large}"
+                      my:HintAssist.Hint="{my:Resource NoStadium}"
+                      my:ItemsControlAssist.SortingProperty="Address.City"
+                      my:TextFieldAssist.HasClearButton="True"
+                      DisplayMemberPath="DisplayName"
+                      ItemsSource="{Binding AllStadiums, Mode=OneWay}"
+                      MaxDropDownHeight="350"
+                      SelectedValue="{Binding StadiumId}"
+                      SelectedValuePath="Id" />
         </Grid>
     </DataTemplate>
 
@@ -523,71 +448,19 @@
                 <ColumnDefinition Width="20" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
 
             <my:SimpleStackPanel Orientation="Horizontal">
-                <TextBlock Width="30" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From1}" />
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource From1}" />
                 <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime StartDate}" />
-            </my:SimpleStackPanel>
-
-            <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal">
-                <TextBlock Width="30" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To1, Casing=LowerCase}" />
+                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To1, Casing=LowerCase}" />
                 <DatePicker Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime EndDate}" />
             </my:SimpleStackPanel>
+
             <my:PackIcon Grid.Column="2"
                          Width="20"
                          Height="20"
                          Kind="ArrowRightBoldOutline" />
-            <my:SimpleStackPanel Grid.Column="4" Orientation="Horizontal">
-                <ComboBox Width="{StaticResource MyNet.Widths.Control.Large}"
-                          my:HintAssist.Hint="{my:Resource NoStadium}"
-                          my:ItemsControlAssist.SortingProperty="Address.City"
-                          my:TextFieldAssist.HasClearButton="True"
-                          DisplayMemberPath="DisplayName"
-                          ItemsSource="{Binding AllStadiums, Mode=OneWay}"
-                          MaxDropDownHeight="350"
-                          SelectedValue="{Binding StadiumId}"
-                          SelectedValuePath="Id" />
-                <Button Style="{StaticResource MyNet.Styles.Button.Text}"
-                        my:IconAssist.Icon="{my:ToolIcon Kind=PlusCircle}"
-                        Command="{Binding AddExceptionCommand}"
-                        Content="{my:Resource AddException}" />
-            </my:SimpleStackPanel>
-            <ItemsControl Grid.Row="1"
-                          Grid.Column="4"
-                          Grid.ColumnSpan="3"
-                          Margin="{StaticResource MyNet.Margins.Default.Top}"
-                          ItemTemplate="{StaticResource Scorer.DataTemplates.StadiumOfMatchNumberRuleViewModel.Embedded}"
-                          ItemsSource="{Binding MatchExceptions}"
-                          Visibility="{Binding MatchExceptions.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
-        </Grid>
-    </DataTemplate>
-
-    <DataTemplate DataType="{x:Type vm:EditableStadiumOfMatchNumberRuleViewModel}">
-        <Grid Margin="{StaticResource MyNet.Margins.Small.Vertical}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource ForMatch}" />
-            <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown}"
-                              Grid.Column="2"
-                              Width="60"
-                              Minimum="1"
-                              Value="{my:NullableBinding MatchNumber}" />
-            <my:PackIcon Grid.Column="4"
-                         Width="20"
-                         Height="20"
-                         Kind="ArrowRightBoldOutline" />
-            <ComboBox Grid.Column="6"
+            <ComboBox Grid.Column="4"
                       Width="{StaticResource MyNet.Widths.Control.Large}"
                       my:HintAssist.Hint="{my:Resource NoStadium}"
                       my:ItemsControlAssist.SortingProperty="Address.City"

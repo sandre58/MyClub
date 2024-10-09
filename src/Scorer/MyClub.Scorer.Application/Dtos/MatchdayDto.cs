@@ -19,7 +19,7 @@ namespace MyClub.Scorer.Application.Dtos
 
         public DateTime? PostponedDate { get; set; }
 
-        public Guid? ParentId { get; set; }
+        public Guid? StageId { get; set; }
 
         public List<Guid>? MatchesToDelete { get; set; }
 

@@ -10,12 +10,14 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
+using System.Threading;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
+using MyNet.Observable.Deferrers;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
@@ -30,18 +32,45 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly IEnumerable<MatchViewModel> _matches;
         private readonly Subject<bool> _sortRowsSubject = new();
 
-        public RankingViewModel(ReadOnlyObservableCollection<ITeamViewModel> teams, IEnumerable<MatchViewModel> matches)
+        public RankingViewModel(ReadOnlyObservableCollection<TeamViewModel> teams, IEnumerable<MatchViewModel> matches)
             : base()
         {
+            UpdateRunner = new(x =>
+            {
+                var matches = _matches!.ToList();
+                _rows.ToList().ForEach(y =>
+                {
+                    x.token?.ThrowIfCancellationRequested();
+                    var rowFound = x.ranking.Rows?.Find(z => z.TeamId == y.Team.Id);
+
+                    if (rowFound is not null)
+                        y.Update(rowFound, rowFound.MatchIds?.Select(z => matches.GetByIdOrDefault(z)).NotNull().ToList() ?? []);
+                    else
+                        y.Reset();
+                });
+
+                x.token?.ThrowIfCancellationRequested();
+
+                var teams = _rows.Select(x => x.Team).ToList();
+                Rules = x.ranking.Rules;
+                PenaltyPoints = x.ranking.PenaltyPoints?.ToDictionary(z => teams.GetById(z.Key), x => x.Value).AsReadOnly();
+                Labels = x.ranking.Labels?.AsReadOnly();
+
+                x.token?.ThrowIfCancellationRequested();
+                _sortRowsSubject.OnNext(true);
+            }, true);
+            UpdateRunner.RegisterOnEnd(this, x => LogManager.Trace($"{GetType().Name} : Update ranking '{x.Id}' in {UpdateRunner.LastTimeElapsed.Milliseconds}ms"));
+
             Disposables.AddRange(
                 [
-                teams.ToObservableChangeSet()
-                                 .Transform(x => new RankingRowViewModel(this, x))
-                                 .AutoRefreshOnObservable(x => _sortRowsSubject)
-                                 .Sort(SortExpressionComparer<RankingRowViewModel>.Ascending(x => x.Rank))
-                                 .DisposeMany()
-                                 .Bind(_rows)
-                                 .Subscribe(),
+                teams.ToObservableChangeSet().Transform(x => new RankingRowViewModel(this, x))
+                                             .DisposeMany()
+                                             .Bind(_rows)
+                                             .Subscribe(),
+                _rows.ToObservableChangeSet().SkipInitial()
+                                             .AutoRefreshOnObservable(x => _sortRowsSubject)
+                                             .Sort(SortExpressionComparer<RankingRowViewModel>.Ascending(x => x.Rank))
+                                             .Subscribe(),
                 _rows.ToObservableChangeSet().WhereReasonsAre(ListChangeReason.Add, ListChangeReason.Remove).Subscribe(_ => RaisePropertyChanged(nameof(Count)))
                                  ]);
             _matches = matches;
@@ -51,38 +80,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public Guid Id { get; } = Guid.NewGuid();
 
+        public ActionRunner<(RankingDto ranking, CancellationToken? token), RankingViewModel> UpdateRunner { get; }
+
         public int FormCount { get; set; } = 5;
 
         public int Count => _rows.Count;
 
         public RankingRules? Rules { get; private set; }
 
-        public ReadOnlyDictionary<ITeamViewModel, int>? PenaltyPoints { get; private set; }
+        public ReadOnlyDictionary<TeamViewModel, int>? PenaltyPoints { get; private set; }
 
         public ReadOnlyDictionary<AcceptableValueRange<int>, RankLabel>? Labels { get; private set; }
 
-        public RankingRowViewModel? GetRow(ITeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
+        public RankingRowViewModel? GetRow(TeamViewModel team) => _rows.FirstOrDefault(x => x.Team == team);
 
-        public void Update(RankingDto ranking)
-        {
-            var matches = _matches.ToList();
-            _rows.ToList().ForEach(x =>
-            {
-                var rowFound = ranking.Rows?.Find(y => y.TeamId == x.Team.Id);
-
-                if (rowFound is not null)
-                    x.Update(rowFound, rowFound.MatchIds?.Select(y => matches.GetByIdOrDefault(y)).NotNull().ToList() ?? []);
-                else
-                    x.Reset();
-            });
-
-            var teams = _rows.Select(x => x.Team).ToList();
-            Rules = ranking.Rules;
-            PenaltyPoints = ranking.PenaltyPoints?.ToDictionary(x => teams.GetById(x.Key), x => x.Value).AsReadOnly();
-            Labels = ranking.Labels?.AsReadOnly();
-
-            _sortRowsSubject.OnNext(true);
-        }
+        public void Update(RankingDto ranking, CancellationToken? token = null) => UpdateRunner.Run((ranking, token), () => this);
 
         #region INotifyCollectionChanged
 

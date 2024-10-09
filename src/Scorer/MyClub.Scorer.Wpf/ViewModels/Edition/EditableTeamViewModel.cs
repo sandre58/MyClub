@@ -3,14 +3,13 @@
 
 using System;
 using System.Windows.Media;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Utilities;
 using MyNet.Utilities.Geography;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class EditableTeamViewModel : EditableObject, ISimilar<EditableTeamViewModel>, ITeamViewModel
+    internal class EditableTeamViewModel : EditableObject, ISimilar<EditableTeamViewModel>, IEditableTeamViewModel
     {
         public Guid Id { get; } = Guid.NewGuid();
 
@@ -28,7 +27,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public EditableStadiumViewModel? Stadium { get; set; }
 
-        IStadiumViewModel? ITeamViewModel.Stadium => Stadium;
+        IEditableStadiumViewModel? IEditableTeamViewModel.Stadium => Stadium;
 
         public bool IsSimilar(EditableTeamViewModel? obj) => Name.ToLower().Equals(obj?.Name.ToLower());
 

@@ -2,87 +2,32 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using MyClub.Domain;
-using MyClub.Domain.Enums;
+using System.Collections.Generic;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
-using MyNet.Utilities.Collections;
-using PropertyChanged;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public class Matchday : NameEntity, IMatchesProvider, ISchedulable
+    public class Matchday : MatchesStage<MatchOfMatchday>
     {
-        private DateTime? _postponedDate;
-        private readonly ExtendedObservableCollection<Match> _matches = [];
-        private readonly IMatchdaysProvider _parent;
+        public Matchday(IMatchdaysStage stage, DateTime date, string name, string? shortName = null, Guid? id = null) : base(date, name, shortName, id) => Stage = stage;
 
-        public Matchday(IMatchdaysProvider parent, DateTime date, string name, string? shortName = null, Guid? id = null) : base(name, shortName, id)
-        {
-            _parent = parent;
-            OriginDate = date;
-            Matches = new(_matches);
-        }
+        public IMatchdaysStage Stage { get; }
 
-        [AlsoNotifyFor(nameof(Date))]
-        public DateTime OriginDate { get; set; }
+        protected override MatchOfMatchday Create(DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam) => new(this, date, homeTeam, awayTeam);
 
-        public DateTime Date => _postponedDate ?? OriginDate;
+        public override MatchFormat ProvideFormat() => Stage.ProvideFormat();
 
-        public bool IsPostponed { get; private set; }
+        public override MatchRules ProvideRules() => Stage.ProvideRules();
 
-        public ReadOnlyObservableCollection<Match> Matches { get; }
+        public override SchedulingParameters ProvideSchedulingParameters() => Stage.ProvideSchedulingParameters();
 
-        public void Postpone(DateTime? date = null, bool propagateToMatches = true)
-        {
-            IsPostponed = true;
-            _postponedDate = date;
-            RaisePropertyChanged(nameof(Date));
+        public override IEnumerable<IVirtualTeam> ProvideTeams() => Stage.ProvideTeams();
 
-            if (propagateToMatches)
-                Matches.Where(x => x.State is MatchState.None or MatchState.Postponed).ToList().ForEach(x => x.Postpone(date));
-        }
-
-        public void Schedule(DateTime date)
-        {
-            IsPostponed = false;
-            _postponedDate = null;
-            OriginDate = date;
-        }
-
-        public void ScheduleWithMatches(DateTime date)
-        {
-            Schedule(date);
-
-            Matches.Where(x => x.State is MatchState.None or MatchState.Postponed).ToList().ForEach(x =>
-            {
-                x.Reset();
-                x.Schedule(date);
-            });
-        }
-
-        public Match AddMatch(ITeam homeTeam, ITeam awayTeam) => AddMatch(Date, homeTeam, awayTeam);
-
-        public Match AddMatch(DateTime date, ITeam homeTeam, ITeam awayTeam) => AddMatch(new Match(this, date, homeTeam, awayTeam, _parent.ProvideFormat()));
-
-        public Match AddMatch(Match match)
-        {
-            _matches.Add(match);
-
-            return match;
-        }
-
-        public bool RemoveMatch(Match item) => _matches.Remove(item);
-
-        MatchFormat IMatchFormatProvider.ProvideFormat() => _parent.ProvideFormat();
-
-        public SchedulingParameters ProvideSchedulingParameters() => _parent.ProvideSchedulingParameters();
-
-        public override int CompareTo(object? obj) => obj is Matchday other ? OriginDate.CompareTo(other.OriginDate) : 1;
-
-        public override string ToString() => Name;
+        public override MatchOfMatchday AddMatch(MatchOfMatchday match)
+            => !ReferenceEquals(match.Stage, this)
+                ? throw new ArgumentException("Match stage is not this matchday", nameof(match))
+                : base.AddMatch(match);
     }
 }

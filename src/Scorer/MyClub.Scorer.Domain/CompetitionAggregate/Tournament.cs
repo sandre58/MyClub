@@ -13,7 +13,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class Tournament : AuditableEntity, ICompetition
     {
-        private readonly ExtendedObservableCollection<IStage> _stages = [];
+        private readonly ExtendedObservableCollection<ITournamentStage> _stages = [];
 
         public Tournament() : this(SchedulingParameters.Default) { }
 
@@ -23,19 +23,19 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             SchedulingParameters = schedulingParameters;
         }
 
-        public ReadOnlyObservableCollection<IStage> Stages { get; }
+        public ReadOnlyObservableCollection<ITournamentStage> Stages { get; }
 
         public MatchFormat MatchFormat { get; set; } = MatchFormat.NoDraw;
 
+        public MatchRules MatchRules { get; set; } = MatchRules.Default;
+
         public SchedulingParameters SchedulingParameters { get; set; }
 
-        MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+        public IEnumerable<Match> GetAllMatches() => Stages.SelectMany(x => x.GetAllMatches());
 
-        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
+        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Stages.OfType<T>().Union(Stages.SelectMany(x => x.GetStages<T>()));
 
-        public IEnumerable<IMatchdaysProvider> GetAllMatchdaysProviders() => Stages.OfType<IMatchdaysProvider>();
-
-        public IEnumerable<IMatchesProvider> GetAllMatchesProviders() => GetAllMatchdaysProviders().SelectMany(x => x.Matchdays.OfType<IMatchesProvider>()).Union(Stages.OfType<Knockout>().SelectMany(x => x.Rounds).SelectMany(x => x.Fixtures));
+        public bool RemoveMatch(Match item) => _stages.Any(x => x.RemoveMatch(item));
     }
 }
 

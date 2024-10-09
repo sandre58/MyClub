@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
@@ -43,10 +44,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand ClearCommand { get; }
 
-        public void Reset(IMatchdayParent parent)
+        public void Reset(LeagueViewModel stage)
         {
-            StartDisplayDate = parent.SchedulingParameters.StartDate;
-            EndDisplayDate = parent.SchedulingParameters.EndDate;
+            StartDisplayDate = stage.SchedulingParameters.StartDate;
+            EndDisplayDate = stage.SchedulingParameters.EndDate;
             Dates.Clear();
         }
 

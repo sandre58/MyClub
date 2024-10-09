@@ -12,7 +12,7 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation}"
+        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Filled}"
                            Margin="{StaticResource MyNet.Margins.Medium.Bottom}"
                            HorizontalAlignment="Stretch"
                            HorizontalContentAlignment="Stretch"
@@ -27,7 +27,7 @@
                         <Setter Property="Command" Value="{Binding Data.AddTeamPenaltyCommand, Source={StaticResource Proxy}}" />
                         <Setter Property="CommandParameter" Value="{Binding}" />
                         <Setter Property="Header" Value="{Binding}" />
-                        <Setter Property="HeaderTemplate" Value="{StaticResource Scorer.DataTemplates.Team.ComboBox}" />
+                        <Setter Property="HeaderTemplateSelector" Value="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}" />
                     </Style>
                 </my:Submenu.ItemContainerStyle>
             </my:Submenu>
@@ -40,7 +40,10 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Margin="{StaticResource MyNet.Margins.Small}" Padding="{StaticResource MyNet.Margins.Default}">
+                    <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                             Margin="{StaticResource MyNet.Margins.Small}"
+                             Padding="{StaticResource MyNet.Margins.Default}"
+                             my:ElevationAssist.Elevation="Dp0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />

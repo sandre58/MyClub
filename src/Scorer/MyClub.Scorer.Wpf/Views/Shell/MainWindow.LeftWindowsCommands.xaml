@@ -50,13 +50,12 @@
         </StackPanel>
 
         <!-- Time -->
-        <Label Style="{StaticResource MyNet.Styles.Label.Elevation}"
-               Width="90"
-               Content="{my:LiveDateTime Kind=Current,
-                                         Format=T}"
-               FontFamily="{StaticResource MyNet.Font.Family.Digital}"
-               FontSize="{StaticResource MyNet.Font.Size.Caption}"
-               FontWeight="DemiBold" />
+        <TextBlock Width="90" VerticalAlignment="Center"
+                   FontFamily="{StaticResource MyNet.Font.Family.Digital}"
+                   FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                   FontWeight="DemiBold"
+                   Text="{my:LiveDateTime Kind=Current,
+                                          Format=T}" />
 
     </my:SimpleStackPanel>
 </mah:WindowCommands>

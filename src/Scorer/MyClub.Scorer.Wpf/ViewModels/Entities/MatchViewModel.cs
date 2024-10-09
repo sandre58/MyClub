@@ -10,6 +10,7 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
+using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Extensions;
@@ -18,6 +19,7 @@ using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
+using MyNet.Observable.Attributes;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
@@ -34,20 +36,22 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly UiObservableCollection<MatchConflict> _conflicts = [];
 
         public MatchViewModel(Match item,
+                              IMatchesStageViewModel stage,
                               MatchPresentationService matchPresentationService,
                               StadiumsProvider stadiumsProvider,
-                              TeamsProvider teamsProvider,
-                              IMatchParent parent) : base(item)
+                              TeamsProvider teamsProvider) : base(item)
         {
             _matchPresentationService = matchPresentationService;
             _stadiumsProvider = stadiumsProvider;
 
             MatchesInConflicts = new(_matchesInConflicts);
             Conflicts = new(_conflicts);
-            Parent = parent;
+            Stage = stage;
+            WinnerTeam = new WinnerOfMatchTeamViewModel(item.GetWinnerTeam(), this);
+            LooserTeam = new LooserOfMatchTeamViewModel(item.GetLooserTeam(), this);
 
-            HomeTeam = teamsProvider.GetOrThrow(item.HomeTeam.Id);
-            AwayTeam = teamsProvider.GetOrThrow(item.AwayTeam.Id);
+            Home = new(item.WhenChanged(x => x.Home, (x, y) => (y, x.Home is not null ? teamsProvider.Get(x.Home.Team.Id) : null, teamsProvider.GetVirtualTeam(x.HomeTeam))), this, _matchPresentationService);
+            Away = new(item.WhenChanged(x => x.Away, (x, y) => (y, x.Away is not null ? teamsProvider.Get(x.Away.Team.Id) : null, teamsProvider.GetVirtualTeam(x.AwayTeam))), this, _matchPresentationService);
 
             EditCommand = CommandsManager.Create(async () => await EditAsync().ConfigureAwait(false));
             RemoveCommand = CommandsManager.Create(async () => await RemoveAsync().ConfigureAwait(false));
@@ -58,8 +62,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             CancelCommand = CommandsManager.Create(async () => await CancelAsync().ConfigureAwait(false), () => CanBe(MatchState.Cancelled));
             FinishCommand = CommandsManager.Create(async () => await FinishAsync().ConfigureAwait(false), () => CanBe(MatchState.Played));
             ResetCommand = CommandsManager.Create(async () => await ResetAsync().ConfigureAwait(false), () => CanBe(MatchState.None));
-            DoWithdrawForHomeTeamCommand = CommandsManager.Create(async () => await DoWithdrawForHomeTeamAsync().ConfigureAwait(false), CanDoWithdraw);
-            DoWithdrawForAwayTeamCommand = CommandsManager.Create(async () => await DoWithdrawForAwayTeamAsync().ConfigureAwait(false), CanDoWithdraw);
             RandomizeCommand = CommandsManager.Create(async () => await RandomizeAsync().ConfigureAwait(false), CanRandomize);
             InvertTeamsCommand = CommandsManager.Create(async () => await InvertTeamsAsync().ConfigureAwait(false), CanInvertTeams);
             RescheduleXMinutesCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleAsync(x, TimeUnit.Minute).ConfigureAwait(false), x => CanReschedule());
@@ -76,21 +78,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                     RaiseScoreProperties();
                     ScoreChanged?.Invoke(this, EventArgs.Empty);
                 }),
-                item.WhenPropertyChanged(x => x.HomeTeam, false).Subscribe(x => HomeTeam = teamsProvider.GetOrThrow(item.HomeTeam.Id)),
-                item.WhenPropertyChanged(x => x.AwayTeam, false).Subscribe(x => AwayTeam = teamsProvider.GetOrThrow(item.AwayTeam.Id)),
-                item.Home.Events.ToObservableChangeSet(x => x.Id)
-                                .Merge(item.Away.Events.ToObservableChangeSet(x => x.Id))
-                                .SkipInitial()
-                                .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
-                item.Home.WhenPropertyChanged(x => x.IsWithdrawn, false)
-                         .Merge(item.Away.WhenPropertyChanged(x => x.IsWithdrawn, false))
-                         .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
+                Home.Goals.ToObservableChangeSet()
+                          .Merge(Away.Goals.ToObservableChangeSet())
+                          .SkipInitial()
+                          .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
+                Home.Shootouts.ToObservableChangeSet()
+                              .Merge(Away.Shootouts.ToObservableChangeSet())
+                              .SkipInitial()
+                              .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
+                Home.WhenPropertyChanged(x => x.IsWithdrawn, false)
+                    .Merge(Away.WhenPropertyChanged(x => x.IsWithdrawn, false))
+                    .Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.AfterExtraTime, false).Subscribe(_ => scoreChangedRequestedSubject.OnNext(true)),
                 this.WhenPropertyChanged(x => x.State).Subscribe(_ =>
                 {
                     IsPlayed = State is MatchState.Played;
-                    IsPlaying = State is MatchState.InProgress;
-                    HasResult = State is MatchState.Played or MatchState.InProgress or MatchState.Suspended;
+                    IsPlaying = State is MatchState.InProgress or MatchState.Suspended;
+                    IsPostponed = State is MatchState.Postponed;
+                    HasResult = Item.HasResult();
                     RaisePropertyChanged(nameof(CanBeWithdraw));
                     RaisePropertyChanged(nameof(CanBeRescheduled));
                 }),
@@ -101,47 +106,41 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             ]);
         }
 
-        public IMatchParent Parent { get; set; }
-
         public event EventHandler? ScoreChanged;
+
+        public IMatchesStageViewModel Stage { get; set; }
+
+        [UpdateOnCultureChanged]
+        public string Name => (Stage.Matches.IndexOf(this) + 1).ToString(MyClubResources.MatchX);
+
+        [UpdateOnCultureChanged]
+        public string ShortName => (Stage.Matches.IndexOf(this) + 1).ToString(MyClubResources.MatchXAbbr);
+
+        [UpdateOnCultureChanged]
+        public string DisplayName => $"{Stage.Name} {Name}";
+
+        [UpdateOnCultureChanged]
+        public string DisplayShortName => $"{Stage.ShortName}{ShortName}";
+
+        public WinnerOfMatchTeamViewModel WinnerTeam { get; }
+
+        public LooserOfMatchTeamViewModel LooserTeam { get; }
 
         public MatchFormat Format => Item.Format;
 
-        public ITeamViewModel HomeTeam { get; private set; }
+        public MatchRules Rules => Item.Rules;
 
-        public ITeamViewModel AwayTeam { get; private set; }
+        public MatchOpponentViewModel Home { get; private set; }
+
+        public MatchOpponentViewModel Away { get; private set; }
 
         public bool NeutralVenue => Item.IsNeutralStadium;
 
-        public IStadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
-
-        public int HomeScore => Item.Home.GetScore();
-
-        public int AwayScore => Item.Away.GetScore();
-
-        public int HomeShootoutScore => Item.Home.GetShootoutScore();
-
-        public int AwayShootoutScore => Item.Away.GetShootoutScore();
-
-        public bool HomeIsWithdrawn => Item.Home.IsWithdrawn;
-
-        public bool AwayIsWithdrawn => Item.Away.IsWithdrawn;
+        public StadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
 
         public bool AfterExtraTime => Item.Format.ExtraTimeIsEnabled && Item.AfterExtraTime;
 
-        public bool AfterShootouts => Item.Format.ShootoutIsEnabled && Item.IsDraw() && (HomeShootoutScore > 0 || AwayShootoutScore > 0);
-
-        public bool HomeHasWon => Item.IsWonBy(Item.HomeTeam);
-
-        public bool AwayHasWon => Item.IsWonBy(Item.AwayTeam);
-
-        public bool HomeHasWonAfterExtraTime => AfterExtraTime && Item.IsWonBy(Item.HomeTeam);
-
-        public bool AwayHasWonAfterExtraTime => AfterExtraTime && Item.IsWonBy(Item.AwayTeam);
-
-        public bool HomeHasWonAfterShootouts => AfterShootouts && Item.IsWonBy(Item.HomeTeam);
-
-        public bool AwayHasWonAfterShootouts => AfterShootouts && Item.IsWonBy(Item.AwayTeam);
+        public bool AfterShootouts => Item.Format.ShootoutIsEnabled && Item.IsDraw() && (Home.ShootoutScore > 0 || Away.ShootoutScore > 0);
 
         public DateOnly DateOfDay => Date.ToDate();
 
@@ -156,6 +155,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public bool IsPlayed { get; private set; }
 
         public bool IsPlaying { get; private set; }
+
+        public bool IsPostponed { get; private set; }
 
         public bool HasResult { get; private set; }
 
@@ -183,10 +184,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public ICommand FinishCommand { get; }
 
-        public ICommand DoWithdrawForHomeTeamCommand { get; }
-
-        public ICommand DoWithdrawForAwayTeamCommand { get; }
-
         public ICommand RandomizeCommand { get; }
 
         public ICommand InvertTeamsCommand { get; }
@@ -211,7 +208,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 MatchState.Suspended => State is MatchState.InProgress,
                 MatchState.Played => State is MatchState.None or MatchState.Suspended or MatchState.Postponed or MatchState.InProgress,
                 MatchState.Postponed => State is MatchState.None or MatchState.Suspended,
-                MatchState.Cancelled => State is MatchState.None or MatchState.Postponed && Parent.CanCancelMatch(),
+                MatchState.Cancelled => State is MatchState.None or MatchState.Postponed && Stage.CanCancelMatch(),
                 _ => false,
             };
 
@@ -227,29 +224,29 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool CanDoWithdraw() => State is MatchState.None or MatchState.InProgress or MatchState.Suspended;
 
-        public bool Participate(ITeamViewModel team) => Item.Participate(team.Id);
+        public bool Participate(IVirtualTeamViewModel team) => Item.Participate(team.Id);
 
         public bool Participate(Guid teamId) => Item.Participate(teamId);
 
-        public ITeamViewModel? GetOpponentOf(ITeamViewModel team) => HomeTeam == team ? AwayTeam : AwayTeam == team ? HomeTeam : null;
+        public IVirtualTeamViewModel? GetOpponentOf(IVirtualTeamViewModel team) => Home.Team == team ? Away.Team : Away.Team == team ? Home.Team : null;
 
-        public MatchResult GetResultOf(ITeamViewModel team) => Item.GetResultOf(team.Id);
+        public Result GetResultOf(IVirtualTeamViewModel team) => Item.GetResultOf(team.Id);
 
-        public MatchResultDetailled GetDetailledResultOf(ITeamViewModel team) => Item.GetDetailledResultOf(team.Id);
+        public ExtendedResult GetDetailledResultOf(IVirtualTeamViewModel team) => Item.GetExtendedResultOf(team.Id);
 
-        public ITeamViewModel? GetWinner() => GetResultOf(HomeTeam) == MatchResult.Won ? HomeTeam : GetResultOf(AwayTeam) == MatchResult.Won ? AwayTeam : null;
+        public IVirtualTeamViewModel? GetWinner() => GetResultOf(Home.Team) == Result.Won ? Home.Team : GetResultOf(Away.Team) == Result.Won ? Away.Team : null;
 
-        public ITeamViewModel? GetLooser() => GetResultOf(HomeTeam) == MatchResult.Lost ? HomeTeam : GetResultOf(AwayTeam) == MatchResult.Lost ? AwayTeam : null;
+        public IVirtualTeamViewModel? GetLooser() => GetResultOf(Home.Team) == Result.Lost ? Home.Team : GetResultOf(Away.Team) == Result.Lost ? Away.Team : null;
 
-        public bool IsWonBy(ITeamViewModel team) => Item.IsWonBy(team.Id);
+        public bool IsWonBy(IVirtualTeamViewModel team) => Item.IsWonBy(team.Id);
 
-        public bool IsLostBy(ITeamViewModel team) => Item.IsLostBy(team.Id);
+        public bool IsLostBy(IVirtualTeamViewModel team) => Item.IsLostBy(team.Id);
 
-        public int GoalsFor(ITeamViewModel team) => Item.GoalsFor(team.Id);
+        public int GoalsFor(IVirtualTeamViewModel team) => Item.GoalsFor(team.Id);
 
-        public int GoalsAgainst(ITeamViewModel team) => Item.GoalsAgainst(team.Id);
+        public int GoalsAgainst(IVirtualTeamViewModel team) => Item.GoalsAgainst(team.Id);
 
-        public bool IsWithdrawn(ITeamViewModel team) => Item.IsWithdrawn(team.Id);
+        public bool IsWithdrawn(IVirtualTeamViewModel team) => Item.IsWithdrawn(team.Id);
 
         public TimeSpan GetTotalTime() => Item.Format.RegulationTime.Duration * Item.Format.RegulationTime.Number + 15.Minutes();
 
@@ -277,10 +274,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public async Task RescheduleAutomaticStadiumAsync() => await _matchPresentationService.RescheduleAutomaticStadiumAsync(this).ConfigureAwait(false);
 
-        public async Task DoWithdrawForHomeTeamAsync() => await _matchPresentationService.DoWithdrawForHomeTeamAsync(this).ConfigureAwait(false);
-
-        public async Task DoWithdrawForAwayTeamAsync() => await _matchPresentationService.DoWithdrawForAwayTeamAsync(this).ConfigureAwait(false);
-
         public async Task RandomizeAsync() => await _matchPresentationService.RandomizeAsync(this).ConfigureAwait(false);
 
         public async Task InvertTeamsAsync() => await _matchPresentationService.InvertTeamsAsync(this).ConfigureAwait(false);
@@ -295,23 +288,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         private void RaiseScoreProperties()
         {
-            RaisePropertyChanged(nameof(HomeScore));
-            RaisePropertyChanged(nameof(AwayScore));
-            RaisePropertyChanged(nameof(HomeShootoutScore));
-            RaisePropertyChanged(nameof(AwayShootoutScore));
-            RaisePropertyChanged(nameof(HomeIsWithdrawn));
-            RaisePropertyChanged(nameof(AwayIsWithdrawn));
             RaisePropertyChanged(nameof(AfterExtraTime));
             RaisePropertyChanged(nameof(AfterShootouts));
-
-            RaisePropertyChanged(nameof(HomeHasWon));
-            RaisePropertyChanged(nameof(AwayHasWon));
-            RaisePropertyChanged(nameof(HomeHasWonAfterExtraTime));
-            RaisePropertyChanged(nameof(AwayHasWonAfterExtraTime));
-            RaisePropertyChanged(nameof(HomeHasWonAfterShootouts));
-            RaisePropertyChanged(nameof(AwayHasWonAfterShootouts));
-
-            RaisePropertyChanged(nameof(CanDoWithdraw));
+            RaisePropertyChanged(nameof(CanBeWithdraw));
         }
 
         private void RaiseDateProperties()
@@ -319,6 +298,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             RaisePropertyChanged(nameof(IAppointment.StartDate));
             RaisePropertyChanged(nameof(EndDate));
             RaisePropertyChanged(nameof(DateOfDay));
+        }
+
+        protected override void Cleanup()
+        {
+            Home.Dispose();
+            Away.Dispose();
+            base.Cleanup();
         }
     }
 

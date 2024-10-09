@@ -46,7 +46,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
                                    ProjectCommandsService projectCommandsService,
                                    CompetitionCommandsService competitionCommandsService,
                                    ProjectInfoProvider projectInfoProvider,
-                                   MatchdaysProvider matchdaysProvider,
+                                   CompetitionInfoProvider competitionInfoProvider,
+                                   CompetitionStagesProvider competitionStagesProvider,
                                    MatchesProvider matchesProvider,
                                    TeamsProvider teamsProvider,
                                    StadiumsProvider stadiumsProvider,
@@ -80,8 +81,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
             SaveCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
             SaveAsCommand = CommandsManager.Create(async () => await projectCommandsService.SaveAsAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
             OpenBuildAssistantCommand = CommandsManager.Create(async () => await competitionCommandsService.OpenBuildAssistantAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
-            EditSchedulingParametersCommand = CommandsManager.Create(async () => await competitionCommandsService.EditSchedulingParametersAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
-            EditRankingRulesCommand = CommandsManager.Create(async () => await competitionCommandsService.EditRankingRulesAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
+            EditRankingRulesCommand = CommandsManager.Create(async () => await competitionCommandsService.EditRankingRulesAsync().ConfigureAwait(false), () => IsLeague && projectCommandsService.IsEnabled());
             EditProjectCommand = CommandsManager.Create(async () => await projectCommandsService.EditAsync().ConfigureAwait(false), () => ProjectIsLoaded && projectCommandsService.IsEnabled());
 
             Disposables.AddRange(
@@ -104,8 +104,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
                     Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PropertiesViewModel), VisibilityAction.Hide));
                     RaisePropertyChanged(nameof(ShowNavigationControls));
                 }),
+                competitionInfoProvider.WhenPropertyChanged(x => x.Type).Subscribe(x =>
+                {
+                    IsLeague = x.Value is CompetitionType.League;
+                    IsCup = x.Value is CompetitionType.Cup;
+                }),
                 matchesProvider.Connect().Subscribe(_ => CountMatches = matchesProvider.Count),
-                matchdaysProvider.Connect().Subscribe(_ => CountParents = matchdaysProvider.Count),
+                competitionStagesProvider.Connect().Subscribe(_ => CountCompetitionStages = competitionStagesProvider.Count),
                 teamsProvider.Connect().Subscribe(_ => CountTeams = teamsProvider.Count),
                 stadiumsProvider.Connect().Subscribe(_ => CountStadiums = stadiumsProvider.Count),
             ]);
@@ -113,7 +118,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
             NavigationService.Navigated += OnNavigatedCallback;
         }
 
-        public int CountParents { get; private set; }
+        public int CountCompetitionStages { get; private set; }
 
         public int CountMatches { get; private set; }
 
@@ -161,8 +166,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 
         public ICommand EditProjectCommand { get; }
 
-        public ICommand EditSchedulingParametersCommand { get; }
-
         public ICommand EditRankingRulesCommand { get; }
 
         public ICommand CloseCommand { get; }
@@ -197,6 +200,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
                 return str.ToString();
             }
         }
+
+        public bool IsLeague { get; private set; }
+
+        public bool IsCup { get; private set; }
 
         public bool ProjectIsLoaded { get; private set; }
 

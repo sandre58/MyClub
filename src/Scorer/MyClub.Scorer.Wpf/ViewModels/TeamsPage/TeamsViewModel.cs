@@ -6,19 +6,17 @@ using System.Threading.Tasks;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
 {
-    internal class TeamsViewModel : TeamsViewModelBase<ITeamViewModel>
+    internal class TeamsViewModel : TeamsViewModelBase<TeamViewModel>
     {
         private readonly TeamPresentationService _teamPresentationService;
 
         public TeamDetailsViewModel DetailsViewModel { get; private set; }
 
-        public TeamsViewModel(TeamsProvider teamsProvider,
-                              TeamPresentationService teamPresentationService)
+        public TeamsViewModel(TeamsProvider teamsProvider, TeamPresentationService teamPresentationService)
             : base(teamsProvider, teamPresentationService.HasImportSources(), new TeamsListParametersProvider())
         {
             _teamPresentationService = teamPresentationService;
@@ -28,23 +26,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
 
         protected override async Task AddItemAsync(string name) => await _teamPresentationService.AddAsync(name).ConfigureAwait(false);
 
-        protected override async Task<ITeamViewModel?> CreateNewItemAsync()
+        protected override async Task<TeamViewModel?> CreateNewItemAsync()
         {
             var id = await _teamPresentationService.AddAsync().ConfigureAwait(false);
 
             return Source.GetByIdOrDefault(id.GetValueOrDefault());
         }
 
-        protected override async Task<ITeamViewModel?> UpdateItemAsync(ITeamViewModel oldItem)
+        protected override async Task<TeamViewModel?> UpdateItemAsync(TeamViewModel oldItem)
         {
             await _teamPresentationService.EditAsync(oldItem).ConfigureAwait(false);
 
             return null;
         }
 
-        public override async Task RemoveRangeAsync(IEnumerable<ITeamViewModel> oldItems) => await _teamPresentationService.RemoveAsync(oldItems).ConfigureAwait(false);
+        public override async Task RemoveRangeAsync(IEnumerable<TeamViewModel> oldItems) => await _teamPresentationService.RemoveAsync(oldItems).ConfigureAwait(false);
 
-        protected override void OnAddCompleted(ITeamViewModel item)
+        protected override void OnAddCompleted(TeamViewModel item)
         {
             if (Items.Contains(item))
                 Collection.SetSelection([item]);

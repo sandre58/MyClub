@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
-using System.Linq;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 
@@ -16,15 +14,15 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public MatchFormat MatchFormat { get; set; } = MatchFormat.NoDraw;
 
+        public MatchRules MatchRules { get; set; } = MatchRules.Default;
+
         public SchedulingParameters SchedulingParameters { get; set; }
 
-        MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+        public override MatchFormat ProvideFormat() => MatchFormat;
 
-        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
+        public override MatchRules ProvideRules() => MatchRules;
 
-        public IEnumerable<IMatchdaysProvider> GetAllMatchdaysProviders() => [];
-
-        public IEnumerable<IMatchesProvider> GetAllMatchesProviders() => Rounds.SelectMany(x => x.Fixtures);
+        public override SchedulingParameters ProvideSchedulingParameters() => SchedulingParameters;
     }
 }
 

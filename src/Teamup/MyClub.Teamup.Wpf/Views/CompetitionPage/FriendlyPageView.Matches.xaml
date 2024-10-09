@@ -50,7 +50,7 @@
 
                 <my:CommandsBar.LeftCommands>
                     <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                        <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.ToolBar.Elevation.Primary}"
+                        <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.ToolBar.Filled.Primary}"
                                         my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
                                         Command="{Binding AddCommand}"
                                         PopupPadding="0"

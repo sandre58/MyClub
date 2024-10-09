@@ -11,6 +11,7 @@ using DynamicData.Binding;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
+using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.Commands;
 using MyNet.UI.Threading;
@@ -20,7 +21,7 @@ using MyNet.Wpf.Extensions;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class TeamViewModel : EntityViewModelBase<Team>, ITeamViewModel
+    internal class TeamViewModel : EntityViewModelBase<Team>, IEditableTeamViewModel, IVirtualTeamViewModel
     {
         private readonly TeamPresentationService _teamPresentationService;
         private readonly StadiumsProvider _stadiumsProvider;
@@ -40,8 +41,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
             Disposables.AddRange(
             [
-                Item.Players.ToObservableChangeSet(x => x.Id).Transform(x => new PlayerViewModel(x, this, personPresentationService)).ObserveOn(Scheduler.UI).Bind(_players).DisposeMany().Subscribe(),
-                Item.Staff.ToObservableChangeSet(x => x.Id).Transform(x => new ManagerViewModel(x, this, personPresentationService)).ObserveOn(Scheduler.UI).Bind(_staff).DisposeMany().Subscribe(),
+                Item.Players.ToObservableChangeSet().Transform(x => new PlayerViewModel(x, this, personPresentationService)).ObserveOn(Scheduler.UI).Bind(_players).DisposeMany().Subscribe(),
+                Item.Staff.ToObservableChangeSet().Transform(x => new ManagerViewModel(x, this, personPresentationService)).ObserveOn(Scheduler.UI).Bind(_staff).DisposeMany().Subscribe(),
             ]);
         }
 
@@ -57,7 +58,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public Country? Country => Item.Country;
 
-        public IStadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
+        public StadiumViewModel? Stadium => Item.Stadium is not null ? _stadiumsProvider.Get(Item.Stadium.Id) : null;
+
+        IEditableStadiumViewModel? IEditableTeamViewModel.Stadium => Stadium;
 
         public ReadOnlyObservableCollection<PlayerViewModel> Players { get; }
 

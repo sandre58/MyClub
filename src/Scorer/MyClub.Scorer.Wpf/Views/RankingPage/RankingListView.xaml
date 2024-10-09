@@ -122,7 +122,7 @@
                     </GridViewColumn.HeaderTemplate>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <ContentControl Content="{Binding Team}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Away}" />
+                            <ContentControl Content="{Binding Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
@@ -348,17 +348,17 @@
                                                        Height="15"
                                                        Margin="{StaticResource MyNet.Margins.Small.Horizontal}" />
                                             </my:DropDownButton.ToggleContent>
-                                            <ctrl:MatchControl Width="300" EnableContextMenu="False" Match="{Binding Match}" />
+                                            <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Large}" Width="300" Match="{Binding Match}" />
                                         </my:DropDownButton>
 
                                         <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:MatchResult.Won}">
+                                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:Result.Won}">
                                                 <Setter TargetName="label" Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:MatchResult.Drawn}">
+                                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:Result.Drawn}">
                                                 <Setter TargetName="label" Property="Background" Value="{DynamicResource MyNet.Brushes.Warning}" />
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:MatchResult.Lost}">
+                                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:Result.Lost}">
                                                 <Setter TargetName="label" Property="Background" Value="{DynamicResource MyNet.Brushes.Negative}" />
                                             </DataTrigger>
                                         </DataTemplate.Triggers>

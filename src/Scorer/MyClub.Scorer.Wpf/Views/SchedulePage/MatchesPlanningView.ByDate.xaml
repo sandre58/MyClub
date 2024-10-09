@@ -17,7 +17,7 @@
                              HorizontalAlignment="Center"
                              DockPanel.Dock="Top"
                              Orientation="Horizontal">
-            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Alternate.Outlined}"
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.DropDown.Filled}"
                       Width="250"
                       VerticalAlignment="Stretch"
                       my:HintAssist.Hint="{my:DisplayDateTime Filters.DateFilter.Item.Value,
@@ -34,12 +34,12 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
                     VerticalAlignment="Stretch"
                     my:IconAssist.Icon="{my:Icon Kind=Soccer}"
                     Command="{Binding Filters.DateFilter.Item.LatestResultsCommand}"
                     Content="{my:Resource LatestResults}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
                     VerticalAlignment="Stretch"
                     my:IconAssist.Icon="{my:Icon Kind=Calendar}"
                     Command="{Binding Filters.DateFilter.Item.NextFixturesCommand}"

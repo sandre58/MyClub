@@ -10,7 +10,7 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.Services.Providers.Base;
 using MyClub.Scorer.Wpf.Settings;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Humanizer;
 using MyNet.UI.ViewModels.Export;
 using MyNet.Utilities.IO.FileExtensions;
@@ -18,7 +18,7 @@ using MyNet.Utilities.IO.FileExtensions;
 namespace MyClub.Scorer.Wpf.ViewModels.Export
 {
     internal class StadiumsExportViewModel(ProjectInfoProvider projectInfoProvider)
-        : FileExportByColumnsViewModelBase<IStadiumViewModel, ColumnMappingWrapper<StadiumExportDto, object?>>(FileExtensionInfoProvider.Excel.Concat(FileExtensionInfoProvider.Csv),
+        : FileExportByColumnsViewModelBase<StadiumViewModel, ColumnMappingWrapper<StadiumExportDto, object?>>(FileExtensionInfoProvider.Excel.Concat(FileExtensionInfoProvider.Csv),
                () => projectInfoProvider.ProvideExportName(MyClubResources.Stadiums),
                new StadiumColumnsExportProvider().ProvideWrappers(),
                defaultFolder: ExportStadiumsSettings.Default.Folder)
@@ -32,6 +32,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Export
             ExportStadiumsSettings.Default.Save();
         }
 
-        protected override Task<bool> ExportItemsAsync(IEnumerable<IStadiumViewModel> items) => Task.FromResult(true);
+        protected override Task<bool> ExportItemsAsync(IEnumerable<StadiumViewModel> items) => Task.FromResult(true);
     }
 }

@@ -39,7 +39,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 {
                     CompetitionType.League => new LeaguePackage
                     {
-                        SchedulingParameters = source.Competition.ProvideSchedulingParameters().ToPackage(),
+                        SchedulingParameters = source.Competition.SchedulingParameters.ToPackage(),
+                        MatchFormat = source.Competition.MatchFormat.ToPackage(),
+                        MatchRules = source.Competition.MatchRules.ToPackage(),
                         Labels = ((League)source.Competition).Labels.Select(x => new RankLabelPackage
                         {
                             Color = x.Value.Color,
@@ -50,7 +52,6 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                             StartRank = x.Key.Min ?? 1
                         }).ToList(),
                         Matchdays = ((League)source.Competition).Matchdays.Select(x => x.ToPackage()).ToList(),
-                        MatchFormat = ((League)source.Competition).MatchFormat.ToPackage(),
                         Penalties = ((League)source.Competition).GetPenaltyPoints().Select(x => new PenaltyPackage() { TeamId = x.Key.Id, Penalty = x.Value }).ToList(),
                         RankingRules = ((League)source.Competition).RankingRules.ToPackage(),
                     },
@@ -71,6 +72,8 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
             TreatNoStadiumAsWarning = source.TreatNoStadiumAsWarning,
             PeriodForNextMatches = source.PeriodForNextMatches,
             PeriodForPreviousMatches = source.PeriodForPreviousMatches,
+            ShowLastMatchFallback = source.ShowLastMatchFallback,
+            ShowNextMatchFallback = source.ShowNextMatchFallback,
         };
 
         public static AddressPackage ToPackage(this Address source) => new()
@@ -151,26 +154,29 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 Id = source.Id,
                 AfterExtraTime = source.AfterExtraTime,
                 Format = source.Format.ToPackage(),
+                Rules = source.Rules.ToPackage(),
                 IsNeutralStadium = source.IsNeutralStadium,
                 State = (int)source.State,
                 OriginDate = source.OriginDate,
                 StadiumId = source.Stadium?.Id,
-                Away = new MatchOpponentPackage
-                {
-                    TeamId = source.AwayTeam.Id,
-                    IsWithdrawn = source.Away.IsWithdrawn,
-                    Goals = source.Away.GetGoals().Select(x => new GoalPackage { Id = x.Id, AssistId = x.Assist?.Id, Minute = x.Minute, ScorerId = x.Scorer?.Id, Type = (int)x.Type }).ToList(),
-                    Cards = source.Away.GetCards().Select(x => new CardPackage { Id = x.Id, PlayerId = x.Player?.Id, Minute = x.Minute, Color = (int)x.Color, Description = x.Description, Infraction = (int)x.Infraction }).ToList(),
-                    Shootout = source.Away.Shootout.Select(x => new PenaltyShootoutPackage { Id = x.Id, TakerId = x.Taker?.Id, Result = (int)x.Result }).ToList(),
-                },
-                Home = new MatchOpponentPackage
-                {
-                    TeamId = source.HomeTeam.Id,
-                    IsWithdrawn = source.Home.IsWithdrawn,
-                    Goals = source.Home.GetGoals().Select(x => new GoalPackage { Id = x.Id, AssistId = x.Assist?.Id, Minute = x.Minute, ScorerId = x.Scorer?.Id, Type = (int)x.Type }).ToList(),
-                    Cards = source.Home.GetCards().Select(x => new CardPackage { Id = x.Id, PlayerId = x.Player?.Id, Minute = x.Minute, Color = (int)x.Color, Description = x.Description, Infraction = (int)x.Infraction }).ToList(),
-                    Shootout = source.Home.Shootout.Select(x => new PenaltyShootoutPackage { Id = x.Id, TakerId = x.Taker?.Id, Result = (int)x.Result }).ToList(),
-                },
+                Away = source.Away is not null
+                       ? new MatchOpponentPackage
+                       {
+                           TeamId = source.Away.Team.Id,
+                           IsWithdrawn = source.Away.IsWithdrawn,
+                           Goals = source.Away.GetGoals().Select(x => new GoalPackage { Id = x.Id, AssistId = x.Assist?.Id, Minute = x.Minute, ScorerId = x.Scorer?.Id, Type = (int)x.Type }).ToList(),
+                           Cards = source.Away.GetCards().Select(x => new CardPackage { Id = x.Id, PlayerId = x.Player?.Id, Minute = x.Minute, Color = (int)x.Color, Description = x.Description, Infraction = (int)x.Infraction }).ToList(),
+                           Shootout = source.Away.Shootout.Select(x => new PenaltyShootoutPackage { Id = x.Id, TakerId = x.Taker?.Id, Result = (int)x.Result }).ToList(),
+                       } : null,
+                Home = source.Home is not null
+                       ? new MatchOpponentPackage
+                       {
+                           TeamId = source.Home.Team.Id,
+                           IsWithdrawn = source.Home.IsWithdrawn,
+                           Goals = source.Home.GetGoals().Select(x => new GoalPackage { Id = x.Id, AssistId = x.Assist?.Id, Minute = x.Minute, ScorerId = x.Scorer?.Id, Type = (int)x.Type }).ToList(),
+                           Cards = source.Home.GetCards().Select(x => new CardPackage { Id = x.Id, PlayerId = x.Player?.Id, Minute = x.Minute, Color = (int)x.Color, Description = x.Description, Infraction = (int)x.Infraction }).ToList(),
+                           Shootout = source.Home.Shootout.Select(x => new PenaltyShootoutPackage { Id = x.Id, TakerId = x.Taker?.Id, Result = (int)x.Result }).ToList(),
+                       } : null,
                 PostponedDate = source.State == MatchState.Postponed ? source.Date : null,
                 CreatedAt = source.CreatedAt,
                 CreatedBy = source.CreatedBy,
@@ -210,6 +216,12 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 NumberOfPenaltyShootouts = source.NumberOfPenaltyShootouts
             };
 
+        public static MatchRulesPackage ToPackage(this MatchRules source)
+            => new()
+            {
+                AllowedCards = string.Join(";", source.AllowedCards),
+            };
+
         public static RankingRulesPackage ToPackage(this RankingRules source)
             => new()
             {
@@ -233,7 +245,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 UseHomeVenue = source.UseHomeVenue,
                 AsSoonAsPossible = source.AsSoonAsPossible,
                 Interval = source.Interval,
-                ScheduleByParent = source.ScheduleByParent,
+                ScheduleByStage = source.ScheduleByStage,
                 AsSoonAsPossibleRules = source.AsSoonAsPossibleRules.Select(x => x.ToPackage()).ToList(),
                 DateRules = source.DateRules.Select(x => x.ToPackage()).ToList(),
                 TimeRules = source.TimeRules.Select(x => x.ToPackage()).ToList(),
@@ -262,10 +274,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
         public static TimeSchedulingRulePackage ToPackage(this ITimeSchedulingRule source)
             => source switch
             {
-                TimeOfDayRule timeOfDayRule => new TimeOfDayRulePackage { Day = timeOfDayRule.Day, Time = timeOfDayRule.Time.ToTimeSpan(), MatchExceptions = timeOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
-                TimeOfDateRule timeOfDateRule => new TimeOfDateRulePackage { Date = timeOfDateRule.Date.DayNumber, Time = timeOfDateRule.Time.ToTimeSpan(), MatchExceptions = timeOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
-                TimeOfMatchNumberRule timeOfMatchNumberRule => new TimeOfMatchNumberRulePackage { MatchNumber = timeOfMatchNumberRule.MatchNumber, Time = timeOfMatchNumberRule.Time.ToTimeSpan() },
-                TimeOfDatesRangeRule timeOfDateRangeRule => new TimeOfDateRangeRulePackage { StartDate = timeOfDateRangeRule.StartDate.DayNumber, EndDate = timeOfDateRangeRule.EndDate.DayNumber, Time = timeOfDateRangeRule.Time.ToTimeSpan(), MatchExceptions = timeOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<TimeOfMatchNumberRulePackage>().ToList() },
+                TimeOfDayRule timeOfDayRule => new TimeOfDayRulePackage { Day = timeOfDayRule.Day, Time = timeOfDayRule.Time.ToTimeSpan(), Exceptions = timeOfDayRule.Exceptions.Select(x => x.ToPackage()).OfType<TimeOfIndexRulePackage>().ToList() },
+                TimeOfDateRule timeOfDateRule => new TimeOfDateRulePackage { Date = timeOfDateRule.Date.DayNumber, Time = timeOfDateRule.Time.ToTimeSpan(), Exceptions = timeOfDateRule.Exceptions.Select(x => x.ToPackage()).OfType<TimeOfIndexRulePackage>().ToList() },
+                TimeOfIndexRule timeOfMatchNumberRule => new TimeOfIndexRulePackage { Index = timeOfMatchNumberRule.Index, Time = timeOfMatchNumberRule.Time.ToTimeSpan() },
+                TimeOfDatesRangeRule timeOfDateRangeRule => new TimeOfDateRangeRulePackage { StartDate = timeOfDateRangeRule.StartDate.DayNumber, EndDate = timeOfDateRangeRule.EndDate.DayNumber, Time = timeOfDateRangeRule.Time.ToTimeSpan(), Exceptions = timeOfDateRangeRule.Exceptions.Select(x => x.ToPackage()).OfType<TimeOfIndexRulePackage>().ToList() },
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
 
@@ -276,10 +288,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 AwayStadiumRule => new AwayStadiumRulePackage(),
                 NoStadiumRule => new NoStadiumRulePackage(),
                 FirstAvailableStadiumRule firstAvailableStadiumRule => new FirstAvailableStadiumRulePackage() { UseRotationTime = (int)firstAvailableStadiumRule.UseRotationTime },
-                StadiumOfDayRule stadiumOfDayRule => new StadiumOfDayRulePackage { Day = stadiumOfDayRule.Day, StadiumId = stadiumOfDayRule.StadiumId, MatchExceptions = stadiumOfDayRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
-                StadiumOfDateRule stadiumOfDateRule => new StadiumOfDateRulePackage { Date = stadiumOfDateRule.Date.DayNumber, StadiumId = stadiumOfDateRule.StadiumId, MatchExceptions = stadiumOfDateRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
-                StadiumOfMatchNumberRule stadiumOfMatchNumberRule => new StadiumOfMatchNumberRulePackage { MatchNumber = stadiumOfMatchNumberRule.MatchNumber, StadiumId = stadiumOfMatchNumberRule.StadiumId },
-                StadiumOfDatesRangeRule stadiumOfDateRangeRule => new StadiumOfDateRangeRulePackage { StartDate = stadiumOfDateRangeRule.StartDate.DayNumber, EndDate = stadiumOfDateRangeRule.EndDate.DayNumber, StadiumId = stadiumOfDateRangeRule.StadiumId, MatchExceptions = stadiumOfDateRangeRule.MatchExceptions.Select(x => x.ToPackage()).OfType<StadiumOfMatchNumberRulePackage>().ToList() },
+                StadiumOfDayRule stadiumOfDayRule => new StadiumOfDayRulePackage { Day = stadiumOfDayRule.Day, StadiumId = stadiumOfDayRule.StadiumId },
+                StadiumOfDateRule stadiumOfDateRule => new StadiumOfDateRulePackage { Date = stadiumOfDateRule.Date.DayNumber, StadiumId = stadiumOfDateRule.StadiumId },
+                StadiumOfDatesRangeRule stadiumOfDateRangeRule => new StadiumOfDateRangeRulePackage { StartDate = stadiumOfDateRangeRule.StartDate.DayNumber, EndDate = stadiumOfDateRangeRule.EndDate.DayNumber, StadiumId = stadiumOfDateRangeRule.StadiumId },
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
     }

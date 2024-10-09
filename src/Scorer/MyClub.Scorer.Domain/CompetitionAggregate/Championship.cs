@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using MyClub.Domain;
 using MyClub.Domain.Enums;
 using MyClub.Domain.Exceptions;
@@ -16,20 +17,22 @@ using MyNet.Utilities.Sequences;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public abstract class Championship : AuditableEntity
+    public abstract class Championship : AuditableEntity, IMatchesProvider, ITeamsProvider
     {
-        private readonly ExtendedObservableCollection<ITeam> _teams = [];
-        private readonly Dictionary<ITeam, int> _penaltyPoints = [];
+        private readonly ExtendedObservableCollection<IVirtualTeam> _teams = [];
+        private readonly Dictionary<IVirtualTeam, int> _penaltyPoints = [];
 
         protected Championship(Guid? id = null) : base(id) => Teams = new(_teams);
 
-        public ReadOnlyObservableCollection<ITeam> Teams { get; }
+        public ReadOnlyObservableCollection<IVirtualTeam> Teams { get; }
 
         public Dictionary<AcceptableValueRange<int>, RankLabel> Labels { get; } = [];
 
         public abstract IEnumerable<Match> GetAllMatches();
 
         public abstract RankingRules GetRankingRules();
+
+        IEnumerable<IVirtualTeam> ITeamsProvider.ProvideTeams() => Teams.AsEnumerable();
 
         #region Ranking
 
@@ -45,13 +48,13 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         #region Penalty
 
-        public virtual IReadOnlyDictionary<ITeam, int> GetPenaltyPoints() => _penaltyPoints;
+        public virtual IReadOnlyDictionary<IVirtualTeam, int> GetPenaltyPoints() => _penaltyPoints;
 
-        public virtual void AddPenalty(ITeam team, int points) => _ = _penaltyPoints.AddOrUpdate(team, points);
+        public virtual void AddPenalty(IVirtualTeam team, int points) => _ = _penaltyPoints.AddOrUpdate(team, points);
 
         public virtual void AddPenalty(Guid teamId, int points) => _ = _penaltyPoints.AddOrUpdate(Teams.GetById(teamId), points);
 
-        public virtual bool RemovePenalty(ITeam team) => _penaltyPoints.Remove(team);
+        public virtual bool RemovePenalty(IVirtualTeam team) => _penaltyPoints.Remove(team);
 
         public virtual void ClearPenaltyPoints() => _penaltyPoints.Clear();
 
@@ -59,7 +62,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         #region Teams
 
-        public Team AddTeam(Team team)
+        public IVirtualTeam AddTeam(IVirtualTeam team)
         {
             if (Teams.Contains(team))
                 throw new AlreadyExistsException(nameof(Teams), team);
@@ -69,7 +72,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             return team;
         }
 
-        public virtual bool RemoveTeam(Team team)
+        public virtual bool RemoveTeam(IVirtualTeam team)
         {
             _penaltyPoints.Remove(team);
             return _teams.Remove(team);

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 
@@ -16,16 +17,16 @@ namespace MyClub.Scorer.Domain.RankingAggregate
 
         object IRankingColumnComputer.Compute(RankingRow row) => Compute(row)!;
 
-        protected abstract T Compute(ITeam team, IEnumerable<Match> matches);
+        protected abstract T Compute(IVirtualTeam team, IEnumerable<Match> matches);
     }
 
     public class DefaultRankingColumnComputer<T> : RankingColumnComputer<T>
     {
-        private readonly Func<IEnumerable<Match>, ITeam, T> _aggregate;
+        private readonly Func<IEnumerable<Match>, IVirtualTeam, T> _aggregate;
 
-        public DefaultRankingColumnComputer(Func<IEnumerable<Match>, ITeam, T> aggregate) => _aggregate = aggregate;
+        public DefaultRankingColumnComputer(Func<IEnumerable<Match>, IVirtualTeam, T> aggregate) => _aggregate = aggregate;
 
-        protected override T Compute(ITeam team, IEnumerable<Match> matches) => _aggregate.Invoke(matches, team);
+        protected override T Compute(IVirtualTeam team, IEnumerable<Match> matches) => _aggregate.Invoke(matches, team);
     }
 
     public class PlayedColumnComputer : DefaultRankingColumnComputer<int>
@@ -35,46 +36,46 @@ namespace MyClub.Scorer.Domain.RankingAggregate
 
     public class GamesWonColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GamesWonColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Won)) { }
+        public GamesWonColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Count(x => x.GetExtendedResultOf(team1) == ExtendedResult.Won) : 0) { }
     }
 
     public class GamesWonAfterShootoutsColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GamesWonAfterShootoutsColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.WonAfterShootouts)) { }
+        public GamesWonAfterShootoutsColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Count(x => x.GetExtendedResultOf(team1) == ExtendedResult.WonAfterShootouts) : 0) { }
     }
 
     public class GamesDrawnColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GamesDrawnColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Drawn)) { }
+        public GamesDrawnColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Count(x => x.GetExtendedResultOf(team1) == ExtendedResult.Drawn) : 0) { }
     }
 
     public class GamesLostColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GamesLostColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Lost)) { }
+        public GamesLostColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Count(x => x.GetExtendedResultOf(team1) == ExtendedResult.Lost) : 0) { }
     }
 
     public class GamesLostAfterShootoutsColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GamesLostAfterShootoutsColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.LostAfterShootouts)) { }
+        public GamesLostAfterShootoutsColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Count(x => x.GetExtendedResultOf(team1) == ExtendedResult.LostAfterShootouts) : 0) { }
     }
 
     public class GamesWithdrawnColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GamesWithdrawnColumnComputer() : base((matches, team) => matches.Count(x => x.GetDetailledResultOf(team) == MatchResultDetailled.Withdrawn)) { }
+        public GamesWithdrawnColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Count(x => x.GetExtendedResultOf(team1) == ExtendedResult.Withdrawn) : 0) { }
     }
 
     public class GoalsForColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GoalsForColumnComputer() : base((matches, team) => matches.Sum(x => x.GoalsFor(team))) { }
+        public GoalsForColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Sum(x => x.GoalsFor(team1)) : 0) { }
     }
 
     public class GoalsAgainstColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GoalsAgainstColumnComputer() : base((matches, team) => matches.Sum(x => x.GoalsAgainst(team))) { }
+        public GoalsAgainstColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Sum(x => x.GoalsAgainst(team1)) : 0) { }
     }
 
     public class GoalsDifferenceColumnComputer : DefaultRankingColumnComputer<int>
     {
-        public GoalsDifferenceColumnComputer() : base((matches, team) => matches.Sum(x => x.GoalsFor(team) - x.GoalsAgainst(team))) { }
+        public GoalsDifferenceColumnComputer() : base((matches, team) => team.GetTeam() is Team team1 ? matches.Sum(x => x.GoalsFor(team1) - x.GoalsAgainst(team1)) : 0) { }
     }
 }

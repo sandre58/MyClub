@@ -14,14 +14,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0">
+    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.1.0">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Utilities" Version="5.1.0">
+    <PackageReference Include="MyNet.Utilities" Version="5.2.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Wpf" Version="6.0.6-pre.9">
+    <PackageReference Include="MyNet.Wpf" Version="6.0.6-pre.40">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

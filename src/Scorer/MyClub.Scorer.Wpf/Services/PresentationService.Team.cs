@@ -35,7 +35,7 @@ namespace MyClub.Scorer.Wpf.Services
                                            PlayerService playerService,
                                            ManagerService managerService,
                                            PluginsService pluginsService,
-                                           IViewModelLocator viewModelLocator) : PresentationServiceBase<ITeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
+                                           IViewModelLocator viewModelLocator) : PresentationServiceBase<TeamViewModel, TeamEditionViewModel, TeamService>(service, viewModelLocator)
     {
         private readonly PlayerService _playerService = playerService;
         private readonly ManagerService _managerService = managerService;
@@ -65,7 +65,7 @@ namespace MyClub.Scorer.Wpf.Services
             return result.HasValue && result.Value ? item.Staff.FirstOrDefault(x => x.Id == vm.ItemId) : null;
         }
 
-        public override async Task RemoveAsync(IEnumerable<ITeamViewModel> oldItems)
+        public override async Task RemoveAsync(IEnumerable<TeamViewModel> oldItems)
         {
             var idsList = oldItems.Select(x => x.Id).ToList();
 
@@ -120,7 +120,7 @@ namespace MyClub.Scorer.Wpf.Services
             }
         }
 
-        public async Task ExportAsync(IEnumerable<ITeamViewModel> items)
+        public async Task ExportAsync(IEnumerable<TeamViewModel> items)
         {
             var vm = ViewModelLocator.Get<TeamsExportViewModel>();
             var list = items.ToList();

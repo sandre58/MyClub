@@ -8,11 +8,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.Import
 {
     internal class StadiumsImportBySourcesDialogViewModel : ImportBySourcesDialogViewModel<StadiumImportableViewModel, StadiumsImportListViewModel>
     {
+        private readonly ProjectInfoProvider? _projectInfoProvider;
+
         public StadiumsImportBySourcesDialogViewModel(ProjectInfoProvider projectInfoProvider, StadiumsImportBySourcesProvider provider)
             : base(provider, new StadiumsImportListViewModel(provider))
-            => projectInfoProvider.WhenProjectClosing(Reset);
+        {
+            _projectInfoProvider = projectInfoProvider;
+            projectInfoProvider.UnloadRunner.RegisterOnStart(this, Reset);
+        }
 
         public StadiumsImportBySourcesDialogViewModel(StadiumsImportBySourcesProvider provider) : base(provider, new StadiumsImportListViewModel(provider)) { }
+
+        protected override void Cleanup()
+        {
+            _projectInfoProvider?.UnloadRunner.Unregister(this);
+            base.Cleanup();
+        }
+
     }
 
     internal class StadiumsImportListViewModel : ImportListViewModel<StadiumImportableViewModel>

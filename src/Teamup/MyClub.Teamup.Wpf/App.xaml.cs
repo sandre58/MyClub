@@ -62,7 +62,6 @@ using MyClub.Teamup.Wpf.ViewModels.TrainingSessionPage;
 using MyClub.UserContext.Application.Services;
 using MyClub.UserContext.Domain.UserAggregate;
 using MyClub.UserContext.Infrastructure.Authentication.Registry;
-using MyNet.Humanizer;
 using MyNet.UI.Busy;
 using MyNet.UI.Commands;
 using MyNet.UI.Dialogs;

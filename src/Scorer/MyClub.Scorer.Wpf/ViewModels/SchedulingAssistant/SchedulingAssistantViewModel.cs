@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,11 +19,9 @@ using MyNet.DynamicData.Extensions;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Deferrers;
 using MyNet.UI.Commands;
-using MyNet.UI.Services;
 using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.Edition;
 using MyNet.Utilities;
-using MyNet.Utilities.Threading;
 using MyNet.Utilities.Units;
 using MyNet.Wpf.Controls;
 using MyNet.Wpf.DragAndDrop;
@@ -33,8 +32,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
         private readonly StadiumsProvider _stadiumsProvider;
-        private readonly SingleTaskRunner _checkConflictsRunner;
-        private readonly RefreshDeferrer _checkConflictsDeferrer = new();
+        private readonly SingleTaskDeferrer _checkConflictsDeferrer;
 
         public SchedulingAssistantViewModel(StadiumsProvider stadiumsProvider, AvailibilityCheckingService availibilityCheckingService)
         {
@@ -44,13 +42,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
             DropHandler = new((x, y) => x.OfType<EditableSchedulingMatchViewModel>().ForEach(z => z.SetDate(y)),
                                x => x.All(y => y is EditableSchedulingMatchViewModel editableMatch && editableMatch.IsEnabled));
 
-            _checkConflictsRunner = new SingleTaskRunner(async x => await CheckConflictsAsync(x).ConfigureAwait(false));
-
-            _checkConflictsDeferrer.Subscribe(this, () =>
-            {
-                _checkConflictsRunner.Cancel();
-                _checkConflictsRunner.Run();
-            }, 500);
+            _checkConflictsDeferrer = new(async x => await CheckConflictsAsync(x).ConfigureAwait(false), throttle: 100);
 
             ShowConflictsCommand = CommandsManager.Create(ShowConflicts);
             UpdateSelectionCommand = CommandsManager.Create(() => Update(Matches.SelectedItems?.OfType<CalendarAppointment>() ?? []), () => Matches.SelectedItems is not null && Matches.SelectedItems.OfType<CalendarAppointment>().Any(x => x.IsEnabled) && CanUpdate());
@@ -88,7 +80,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public IStadiumViewModel? SelectedStadium { get; set; }
+        public StadiumViewModel? SelectedStadium { get; set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -116,7 +108,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<IStadiumViewModel> Stadiums => _stadiumsProvider.Items;
+        public ReadOnlyObservableCollection<StadiumViewModel> Stadiums => _stadiumsProvider.Items;
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -223,8 +215,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
                 Id = match1.Item.Id,
                 Date = match1.StartDate,
                 Format = match1.Item.Format,
-                HomeTeamId = match1.Item.HomeTeam.Id,
-                AwayTeamId = match1.Item.AwayTeam.Id,
+                HomeTeamId = match1.Item.Home.Team.Id,
+                AwayTeamId = match1.Item.Away.Team.Id,
                 Stadium = match1.Stadium is not null
                           ? new StadiumDto
                           {
@@ -236,8 +228,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
                 Id = match2.Item.Id,
                 Date = match2.StartDate,
                 Format = match2.Item.Format,
-                HomeTeamId = match2.Item.HomeTeam.Id,
-                AwayTeamId = match2.Item.AwayTeam.Id,
+                HomeTeamId = match2.Item.Home.Team.Id,
+                AwayTeamId = match2.Item.Away.Team.Id,
                 Stadium = match2.Stadium is not null
                           ? new StadiumDto
                           {
@@ -246,26 +238,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
             };
             if (_availibilityCheckingService.TeamsOfMatchesIsInConflict(matchDto1, matchDto2, false))
             {
-                if (match2.Item.Participate(match1.Item.HomeTeam))
-                    conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.HomeTeam));
-                if (match1.Item.Participate(match2.Item.HomeTeam))
-                    conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.HomeTeam));
-                if (match2.Item.Participate(match1.Item.AwayTeam))
-                    conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.AwayTeam));
-                if (match1.Item.Participate(match2.Item.AwayTeam))
-                    conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.AwayTeam));
+                if (match2.Item.Participate(match1.Item.Home.Team))
+                    conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.Home.Team));
+                if (match1.Item.Participate(match2.Item.Home.Team))
+                    conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.Home.Team));
+                if (match2.Item.Participate(match1.Item.Away.Team))
+                    conflicts1.Add(new SchedulingTeamBusyConflict(match1.Item.Away.Team));
+                if (match1.Item.Participate(match2.Item.Away.Team))
+                    conflicts2.Add(new SchedulingTeamBusyConflict(match2.Item.Away.Team));
             }
 
             if (_availibilityCheckingService.TeamsOfMatchesIsInConflict(matchDto1, matchDto2, true))
             {
-                if (match2.Item.Participate(match1.Item.HomeTeam))
-                    conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.HomeTeam));
-                if (match1.Item.Participate(match2.Item.HomeTeam))
-                    conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.HomeTeam));
-                if (match2.Item.Participate(match1.Item.AwayTeam))
-                    conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.AwayTeam));
-                if (match1.Item.Participate(match2.Item.AwayTeam))
-                    conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.AwayTeam));
+                if (match2.Item.Participate(match1.Item.Home.Team))
+                    conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.Home.Team));
+                if (match1.Item.Participate(match2.Item.Home.Team))
+                    conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.Home.Team));
+                if (match2.Item.Participate(match1.Item.Away.Team))
+                    conflicts1.Add(new SchedulingTeamRestTimeNotRespectedConflict(match1.Item.Away.Team));
+                if (match1.Item.Participate(match2.Item.Away.Team))
+                    conflicts2.Add(new SchedulingTeamRestTimeNotRespectedConflict(match2.Item.Away.Team));
             }
 
             if (_availibilityCheckingService.StadiumOfMatchesIsInConflict(matchDto1, matchDto2, false))
@@ -311,11 +303,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         public override bool IsModified() => Matches.WrappersSource.Any(x => x.IsModified());
 
+        protected override void OnCloseRequest(CancelEventArgs e)
+        {
+            base.OnCloseRequest(e);
+
+            if (!e.Cancel)
+                _checkConflictsDeferrer.Cancel();
+        }
+
         protected override void Cleanup()
         {
             base.Cleanup();
             _checkConflictsDeferrer.Dispose();
-            _checkConflictsRunner.Dispose();
             Matches.Dispose();
         }
     }

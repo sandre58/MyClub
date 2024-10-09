@@ -47,8 +47,8 @@ namespace MyClub.Scorer.Application.Services
             var match2 = _matchRepository.GetById(matchDto2.Id ?? Guid.Empty).OrThrow();
             var stadium1 = matchDto1.Stadium?.Id is not null ? _stadiumRepository.GetById(matchDto1.Stadium.Id.Value) : null;
             var stadium2 = matchDto2.Stadium?.Id is not null ? _stadiumRepository.GetById(matchDto2.Stadium.Id.Value) : null;
-            var period1 = new Period(matchDto1.Date, matchDto1.Date.AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRotationTime ? match1.GetRestTime() : TimeSpan.Zero)));
-            var period2 = new Period(matchDto2.Date, matchDto2.Date.AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRotationTime ? match2.GetRestTime() : TimeSpan.Zero)));
+            var period1 = new Period(matchDto1.Date, matchDto1.Date.AddFluentTimeSpan(match1.Format.GetFullTime() + (checkWithRotationTime ? match1.GetRotationTime() : TimeSpan.Zero)));
+            var period2 = new Period(matchDto2.Date, matchDto2.Date.AddFluentTimeSpan(match2.Format.GetFullTime() + (checkWithRotationTime ? match2.GetRotationTime() : TimeSpan.Zero)));
 
             return period1.IntersectWith(period2) && stadium1 is not null && stadium1.Equals(stadium2);
         }

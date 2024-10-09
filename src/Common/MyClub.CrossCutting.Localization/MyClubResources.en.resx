@@ -1164,7 +1164,7 @@ Please consolidate or change the order of the items.</value>
   <data name="Promotion" xml:space="preserve">
     <value>Promotion</value>
   </data>
-  <data name="PromotionAbbr" xml:space="preserve">
+  <data name="05" xml:space="preserve">
     <value>PRO</value>
   </data>
   <data name="RelegationAbbr" xml:space="preserve">
@@ -1219,7 +1219,7 @@ Please consolidate or change the order of the items.</value>
     <value>Rule</value>
   </data>
   <data name="MatchesFormat" xml:space="preserve">
-    <value>Matches format</value>
+    <value>Format</value>
   </data>
   <data name="ExtraTime" xml:space="preserve">
     <value>Extra time</value>
@@ -1750,8 +1750,8 @@ See Notification Center for details.</value>
   <data name="EditConflict" xml:space="preserve">
     <value>Edit conflict</value>
   </data>
-  <data name="DisplayModeByParent" xml:space="preserve">
-    <value>View by matchday</value>
+  <data name="DisplayModeByStage" xml:space="preserve">
+    <value>View by stage</value>
   </data>
   <data name="DisplayModeByDate" xml:space="preserve">
     <value>View by date</value>
@@ -2258,22 +2258,223 @@ Click on this notification to edit the match.</value>
   <data name="ShowPlayedMatches" xml:space="preserve">
     <value>Show played matches</value>
   </data>
-  <data name="PreviousMatches" xml:space="preserve">
-    <value>Last match(es)</value>
+  <data name="IfNoNextMatchesInInterval" xml:space="preserve">
+    <value>If no matches in the meantime, display the next match</value>
   </data>
-  <data name="NextMatches" xml:space="preserve">
-    <value>Next match(es)</value>
-  </data>
-  <data name="PeriodForPreviousMatchesDescription" xml:space="preserve">
-    <value>Specify the time interval before today's date during which matches will be considered in the dashboard on the home page.</value>
-  </data>
-  <data name="PeriodForNextMatchesDescription" xml:space="preserve">
-    <value>Specify the time interval after today's date during which matches will be considered in the dashboard on the home page.</value>
+  <data name="IfNoPreviousMatchesInInterval" xml:space="preserve">
+    <value>If no matches in the meantime, display the last match</value>
   </data>
   <data name="PeriodForPreviousMatches" xml:space="preserve">
     <value>Last match(es)</value>
   </data>
-  <data name="PeriodForNextMatches" xml:space="preserve">
-    <value>Next match(es)</value>
+  <data name="ShowMatchesInInterval" xml:space="preserve">
+    <value>Show matches in interval of</value>
+  </data>
+  <data name="CompetitionStateIncoming" xml:space="preserve">
+    <value>Incoming</value>
+  </data>
+  <data name="CompetitionStateFinished" xml:space="preserve">
+    <value>Finished</value>
+  </data>
+  <data name="CompetitionStateInProgress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="Conflicts" xml:space="preserve">
+    <value>Conflicts</value>
+  </data>
+  <data name="Incoming" xml:space="preserve">
+    <value>Incoming</value>
+  </data>
+  <data name="PostponedMatches" xml:space="preserve">
+    <value>Postponed matches</value>
+  </data>
+  <data name="NoLiveMatches" xml:space="preserve">
+    <value>No live matches currently</value>
+  </data>
+  <data name="NoConflicts" xml:space="preserve">
+    <value>There are no conflicts</value>
+  </data>
+  <data name="PendingResults" xml:space="preserve">
+    <value>Pending results</value>
+  </data>
+  <data name="NoIncomingMatches" xml:space="preserve">
+    <value>There are no incoming matches</value>
+  </data>
+  <data name="LastResults" xml:space="preserve">
+    <value>Last results</value>
+  </data>
+  <data name="Scorer" xml:space="preserve">
+    <value>Scorer</value>
+  </data>
+  <data name="AssistPlayer" xml:space="preserve">
+    <value>Assist player</value>
+  </data>
+  <data name="GoalTypeFreeKick" xml:space="preserve">
+    <value>Free kick</value>
+  </data>
+  <data name="GoalTypePenalty" xml:space="preserve">
+    <value>Penalty</value>
+  </data>
+  <data name="GoalTypeOther" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="GoalTypeOwnGoal" xml:space="preserve">
+    <value>Own goal</value>
+  </data>
+  <data name="MinuteIsEnabled" xml:space="preserve">
+    <value>Activate minute</value>
+  </data>
+  <data name="NoPlayersInTeam" xml:space="preserve">
+    <value>There are no players in team</value>
+  </data>
+  <data name="GoalTypeOwnGoalAbbr" xml:space="preserve">
+    <value>OG</value>
+  </data>
+  <data name="GoalTypeOtherAbbr" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="GoalTypePenaltyAbbr" xml:space="preserve">
+    <value>Pen.</value>
+  </data>
+  <data name="GoalTypeFreeKickAbbr" xml:space="preserve">
+    <value>FK</value>
+  </data>
+  <data name="NoScorer" xml:space="preserve">
+    <value>No defined scorer</value>
+  </data>
+  <data name="AddGoal" xml:space="preserve">
+    <value>Add goal</value>
+  </data>
+  <data name="NoAssist" xml:space="preserve">
+    <value>No defined assist player</value>
+  </data>
+  <data name="NoTaker" xml:space="preserve">
+    <value>No defined taker</value>
+  </data>
+  <data name="PenaltyShootoutResultSucceeded" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="PenaltyShootoutResultFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="PenaltyShootoutResultNone" xml:space="preserve">
+    <value>Not shoot</value>
+  </data>
+  <data name="Events" xml:space="preserve">
+    <value>Events</value>
+  </data>
+  <data name="MatchesRules" xml:space="preserve">
+    <value>Rules</value>
+  </data>
+  <data name="CardColorGreen" xml:space="preserve">
+    <value>Green card</value>
+  </data>
+  <data name="CardColorWhite" xml:space="preserve">
+    <value>White card</value>
+  </data>
+  <data name="CardColorBlack" xml:space="preserve">
+    <value>Black card</value>
+  </data>
+  <data name="CardColorRed" xml:space="preserve">
+    <value>Red card</value>
+  </data>
+  <data name="CardColorYellow" xml:space="preserve">
+    <value>Yellow card</value>
+  </data>
+  <data name="ApplyMatchRulesOnExistingMatches" xml:space="preserve">
+    <value>Apply rules on every matches</value>
+  </data>
+  <data name="EditMatchRulesWarning" xml:space="preserve">
+    <value>The rules have been changed even though the competition already contains matches.  By default, these changes will only be effective for new matches.</value>
+  </data>
+  <data name="NoPlayer" xml:space="preserve">
+    <value>No defined player</value>
+  </data>
+  <data name="RemoveGoal" xml:space="preserve">
+    <value>Remove goal</value>
+  </data>
+  <data name="AddPenaltyShootout" xml:space="preserve">
+    <value>Add penalty shootout</value>
+  </data>
+  <data name="RemovePenaltyShootout" xml:space="preserve">
+    <value>Remove penalty shootout</value>
+  </data>
+  <data name="ShowGoals" xml:space="preserve">
+    <value>Show goals</value>
+  </data>
+  <data name="ShowShootout" xml:space="preserve">
+    <value>Show shootout</value>
+  </data>
+  <data name="RoundNamePattern" xml:space="preserve">
+    <value>Round {index}</value>
+  </data>
+  <data name="RoundShortNamePattern" xml:space="preserve">
+    <value>R{index}</value>
+  </data>
+  <data name="RoundXAbbr" xml:space="preserve">
+    <value>R#</value>
+  </data>
+  <data name="PromotionAbbr" xml:space="preserve">
+    <value>PRO</value>
+  </data>
+  <data name="MatchdayX" xml:space="preserve">
+    <value>Matchday #</value>
+  </data>
+  <data name="WinnerOfX" xml:space="preserve">
+    <value>Winner of {0}</value>
+  </data>
+  <data name="LooserOfX" xml:space="preserve">
+    <value>Looser of {0}</value>
+  </data>
+  <data name="FixtureXAbbr" xml:space="preserve">
+    <value>M#</value>
+  </data>
+  <data name="FixtureX" xml:space="preserve">
+    <value>Match#</value>
+  </data>
+  <data name="WinnerOfXAbbr" xml:space="preserve">
+    <value>W{0}</value>
+  </data>
+  <data name="LooserXAbbr" xml:space="preserve">
+    <value>L{0}</value>
+  </data>
+  <data name="RoundOf1" xml:space="preserve">
+    <value>Final</value>
+  </data>
+  <data name="RoundOf2" xml:space="preserve">
+    <value>Semi-Finals</value>
+  </data>
+  <data name="RoundOf4" xml:space="preserve">
+    <value>Quarter-Finals</value>
+  </data>
+  <data name="RoundOf8" xml:space="preserve">
+    <value>Round of 16</value>
+  </data>
+  <data name="RoundOf16" xml:space="preserve">
+    <value>Round of 32</value>
+  </data>
+  <data name="RoundOf32" xml:space="preserve">
+    <value>Round of 64</value>
+  </data>
+  <data name="RoundOf1Abbr" xml:space="preserve">
+    <value>F</value>
+  </data>
+  <data name="RoundOf2Abbr" xml:space="preserve">
+    <value>1/2</value>
+  </data>
+  <data name="RoundOf4Abbr" xml:space="preserve">
+    <value>1/4</value>
+  </data>
+  <data name="RoundOf8Abbr" xml:space="preserve">
+    <value>1/8</value>
+  </data>
+  <data name="RoundOf16Abbr" xml:space="preserve">
+    <value>1/16</value>
+  </data>
+  <data name="RoundOf32Abbr" xml:space="preserve">
+    <value>1/32</value>
+  </data>
+  <data name="Stage" xml:space="preserve">
+    <value>Stage</value>
   </data>
 </root>

@@ -122,7 +122,7 @@ namespace MyClub.Scorer.Domain.Scheduling
         private Availabilities GetStadiumAvailabilities(Stadium stadium, IEnumerable<Match> scheduledMatches)
             => GetAvailabilities(scheduledMatches.Where(x => x.State != MatchState.Cancelled && x.Stadium is not null && x.Stadium == stadium), x => x.GetRotationTime());
 
-        private Availabilities GetTeamAvailabilities(ITeam team, IEnumerable<Match> scheduledMatches)
+        private Availabilities GetTeamAvailabilities(IVirtualTeam team, IEnumerable<Match> scheduledMatches)
             => GetAvailabilities(scheduledMatches.Where(x => x.State != MatchState.Cancelled && x.Participate(team)), x => x.GetRestTime());
 
         private Availabilities GetAvailabilities(IEnumerable<Match> matches, Func<Match, TimeSpan> provideOffsetTime)

@@ -14,6 +14,14 @@
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
+        <DataTemplate x:Key="Scorer.DataTemplates.ColumnHeader">
+            <TextBlock HorizontalAlignment="Center"
+                       Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                       Text="{my:DisplayDateTime Format=MMMM,
+                                                 Casing=AllCaps}"
+                       Typography.Capitals="AllSmallCaps" />
+        </DataTemplate>
+
         <Style x:Key="Scorer.Styles.ListBoxItem.Matchday.Alternate" TargetType="{x:Type ListBoxItem}">
             <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
             <Setter Property="BorderBrush" Value="Transparent" />
@@ -83,7 +91,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
-                                                        <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" EnableContextMenu="False" Match="{Binding}" />
+                                                        <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" Match="{Binding}" />
                                                     </Border>
                                                     <DataTemplate.Triggers>
                                                         <Trigger Property="ItemsControl.AlternationIndex" Value="1">
@@ -312,7 +320,7 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
-                                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" EnableContextMenu="False" Match="{Binding}" />
+                                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" Match="{Binding}" />
                                             </Border>
                                             <DataTemplate.Triggers>
                                                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
@@ -466,7 +474,7 @@
                                                 </ItemsPanelTemplate>
                                             </ListBox.ItemsPanel>
                                         </ListBox>
-                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Elevation}"
+                                        <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Filled}"
                                                            Padding="7 2"
                                                            HorizontalAlignment="Center"
                                                            MaxPopupHeight="400"
@@ -520,29 +528,27 @@
                     <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Accent}" />
                 </Trigger>
                 <Trigger Property="IsLastOfWeek" Value="True">
-                    <Setter Property="Background" Value="Transparent" />
-                    <Setter Property="FontWeight" Value="ExtraBold" />
+                    <Setter Property="Background" Value="{my:BrushBinding SelfPath=Foreground, Opacity=0.05}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
 
     </UserControl.Resources>
 
-    <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
-        <my:DynamicScrollViewer>
-            <my:CalendarDaysByYear my:HeaderAssist.Background="{DynamicResource MyNet.Brushes.Control.Background}"
-                                   AddCommand="{Binding AddToDateCommand}"
-                                   Appointments="{Binding Wrappers}"
-                                   AppointmentsDisplayMode="Cell"
-                                   AppointmentsMargin="0"
-                                   BorderThickness="0"
-                                   CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
-                                   DatesSelectionMode="None"
-                                   DisplayDate="{Binding Display.Mode.DisplayDate}"
-                                   LastDayOfWeekIsHighlighted="True"
-                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                   SelectionMode="Extended"
-                                   ShowHeader="False" />
-        </my:DynamicScrollViewer>
-    </my:Card>
+    <my:DynamicScrollViewer>
+        <my:CalendarDaysByYear my:HeaderAssist.Background="Transparent"
+                               AddCommand="{Binding AddToDateCommand}"
+                               Appointments="{Binding Wrappers}"
+                               AppointmentsDisplayMode="Cell"
+                               AppointmentsMargin="0"
+                               BorderThickness="0"
+                               CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
+                               ColumnHeaderTemplate="{StaticResource Scorer.DataTemplates.ColumnHeader}"
+                               DatesSelectionMode="None"
+                               DisplayDate="{Binding Display.Mode.DisplayDate}"
+                               LastDayOfWeekIsHighlighted="True"
+                               ScrollViewer.VerticalScrollBarVisibility="Auto"
+                               SelectionMode="Extended"
+                               ShowHeader="False" />
+    </my:DynamicScrollViewer>
 </UserControl>

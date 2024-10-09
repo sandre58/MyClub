@@ -303,7 +303,7 @@
 
     </UserControl.Resources>
 
-    <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+    <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Light}">
         <my:DynamicScrollViewer>
             <my:CalendarDaysByYear my:HeaderAssist.Background="{DynamicResource MyNet.Brushes.Control.Background}"
                                    Appointments="{Binding Wrappers}"

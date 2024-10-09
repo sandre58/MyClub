@@ -211,7 +211,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+                <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
                         Width="300"
                         Height="80"
                         HorizontalAlignment="Center"
@@ -226,7 +226,7 @@
                     </GroupBox>
                 </Button>
 
-                <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+                <Button Style="{StaticResource MyNet.Styles.Button.Filled.Primary}"
                         Grid.Column="2"
                         Width="230"
                         Height="80"

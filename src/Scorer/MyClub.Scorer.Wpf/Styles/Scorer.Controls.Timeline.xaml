@@ -1,0 +1,192 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:MyClub.Scorer.Wpf.Converters"
+                    xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
+                    xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
+                    xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+                    xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <ResourceDictionary.MergedDictionaries>
+        <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="Scorer.Styles.MatchTimeline" TargetType="{x:Type ctrl:MatchTimeline}">
+        <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+        <Setter Property="BarWidth" Value="5" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="{x:Type ContentPresenter}">
+                    <Setter Property="Canvas.Left">
+                        <Setter.Value>
+                            <MultiBinding Converter="{x:Static c:MinuteToCanvasPositionConverter.Default}">
+                                <Binding Path="Minute" />
+                                <Binding Path="MatchFormat" RelativeSource="{RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}" />
+                                <Binding Path="ShowExtraTime" RelativeSource="{RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}" />
+                            </MultiBinding>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Canvas.Top" Value="50" />
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <DataTemplate.Resources>
+                        <DataTemplate DataType="{x:Type entities:CardViewModel}">
+                            <my:Card x:Name="icon"
+                                     Style="{StaticResource MyNet.Styles.Card.Elevation}"
+                                     Grid.Column="0"
+                                     Width="10"
+                                     Height="14"
+                                     Padding="0"
+                                     HorizontalAlignment="Center"
+                                     Background="{Binding Color, Converter={x:Static c:CardToBrushConverter.Default}}"
+                                     UniformCornerRadius="3" />
+                        </DataTemplate>
+
+                        <DataTemplate DataType="{x:Type entities:GoalViewModel}">
+                            <my:PackIcon x:Name="icon"
+                                         Width="14"
+                                         Height="14"
+                                         Margin="-1 0 0 0"
+                                         HorizontalAlignment="Center"
+                                         Kind="Soccer" />
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Type}" Value="{x:Static enums:GoalType.OwnGoal}">
+                                    <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </DataTemplate.Resources>
+                    <Grid Margin="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static my:DoubleToThicknessConverter.All}}" HorizontalAlignment="Center" Tag="{Binding MinuteSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}, Converter={x:Static my:MathConverter.Divide}, ConverterParameter=-2}">
+                        <!-- Minute -->
+                        <Label x:Name="minute"
+                               Style="{StaticResource MyNet.Styles.Label.Rounded.Custom}"
+                               Width="{Binding MinuteSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}"
+                               Height="{Binding MinuteSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}"
+                               Background="{Binding Color, Converter={x:Static my:ColorToBrushConverter.Default}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                           DockPanel.Dock="Left"
+                                           FontSize="8"
+                                           Text="{Binding Minute}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}" Text="'" />
+                            </StackPanel>
+                        </Label>
+
+                        <Canvas>
+                            <Grid x:Name="event" Margin="-12 -40 0 0" ToolTip="{Binding DisplayName}">
+                                <Viewbox Width="30" Height="30">
+                                    <Path x:Name="marker"
+                                          Data="M 12 2 A 7 7 0 0 0 5 9 C 5 14.25 12 22 12 22 C 12 22 19 14.25 19 9 A 7 7 0 0 0 12 2 Z"
+                                          Fill="{Binding Color, Converter={x:Static my:ColorToBrushConverter.Default}}"
+                                          RenderTransformOrigin="0.65 0.54" />
+                                </Viewbox>
+                                <ContentControl x:Name="label"
+                                                Margin="7 -3 0 0"
+                                                Content="{Binding Item}"
+                                                Foreground="{Binding Color, Converter={x:Static my:BrushConverter.Contrast}}" />
+                            </Grid>
+                        </Canvas>
+                    </Grid>
+
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsHome}" Value="False">
+                            <Setter TargetName="event" Property="Margin" Value="-12 17 0 0" />
+                            <Setter TargetName="label" Property="Margin" Value="10 7 0 0" />
+                            <Setter TargetName="marker" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="180" />
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <my:RelativeCanvas IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="MinuteSize" Value="15" />
+        <Setter Property="PeriodSize" Value="25" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ctrl:MatchTimeline}">
+                    <Grid Margin="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static my:DoubleToThicknessConverter.Horizontal}}" Tag="{Binding PeriodSize, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:MathConverter.Divide}, ConverterParameter=2}">
+
+                        <!-- Bar -->
+                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                                 Height="{TemplateBinding BarWidth}"
+                                 Padding="0"
+                                 VerticalAlignment="Center"
+                                 Background="{TemplateBinding Background}" />
+
+                        <!-- Periods -->
+                        <ItemsControl x:Name="PART_Periods"
+                                      Style="{StaticResource MyNet.Styles.ItemsControl}"
+                                      VerticalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch"
+                                      VerticalContentAlignment="Stretch">
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="{x:Type ContentPresenter}">
+                                    <Setter Property="Canvas.Left">
+                                        <Setter.Value>
+                                            <MultiBinding Converter="{x:Static c:MinuteToCanvasPositionConverter.Default}">
+                                                <Binding />
+                                                <Binding Path="MatchFormat" RelativeSource="{RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}" />
+                                                <Binding Path="ShowExtraTime" RelativeSource="{RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}" />
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Canvas.Top" Value="50" />
+                                    <Setter Property="Height" Value="{Binding PeriodSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}" />
+                                    <Setter Property="Margin" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={x:Static my:DoubleToThicknessConverter.All}}" />
+                                    <Setter Property="Tag" Value="{Binding PeriodSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}, Converter={x:Static my:MathConverter.Divide}, ConverterParameter=-2}" />
+                                    <Setter Property="Width" Value="{Binding PeriodSize, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <my:RelativeCanvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsItemsHost="True" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Custom}"
+                                           Width="Auto"
+                                           Height="Auto"
+                                           HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch"
+                                           Background="{Binding Background, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}, AncestorLevel=2}}">
+                                        <StackPanel Opacity="{Binding Path=(my:HeaderAssist.Opacity), RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}"
+                                                    Orientation="Horizontal"
+                                                    TextElement.FontSize="{Binding Path=(my:HeaderAssist.FontSize), RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}"
+                                                    TextElement.Foreground="{Binding Path=(my:HeaderAssist.Foreground), RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchTimeline}}}">
+                                            <TextBlock DockPanel.Dock="Left" Text="{Binding}" />
+                                            <TextBlock Text="'" />
+                                        </StackPanel>
+                                    </Label>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Events -->
+                        <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="my:HeaderAssist.FontSize" Value="{StaticResource MyNet.Font.Size}" />
+        <Setter Property="my:HeaderAssist.Foreground" Value="{my:BrushBinding SelfPath=Foreground}" />
+        <Setter Property="my:HeaderAssist.Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+    </Style>
+</ResourceDictionary>

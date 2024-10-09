@@ -3,15 +3,14 @@
 
 using System.ComponentModel.DataAnnotations;
 using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class EditableTeamPenaltyViewModel(ITeamViewModel team) : EditableObject
+    internal class EditableTeamPenaltyViewModel(IEditableTeamViewModel team) : EditableObject
     {
-        public ITeamViewModel Team { get; private set; } = team;
+        public IEditableTeamViewModel Team { get; private set; } = team;
 
         [Display(Name = nameof(Points), ResourceType = typeof(MyClubResources))]
         [IsRequired]

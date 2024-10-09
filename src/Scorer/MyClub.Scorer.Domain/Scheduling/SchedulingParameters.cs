@@ -22,7 +22,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                                     bool useHomeVenue,
                                     bool asSoonAsPossible,
                                     TimeSpan interval,
-                                    bool scheduleByParent,
+                                    bool scheduleByStage,
                                     IEnumerable<IAvailableDateSchedulingRule> asSoonAsPossibleRules,
                                     IEnumerable<IDateSchedulingRule> dateRules,
                                     IEnumerable<ITimeSchedulingRule> timeRules,
@@ -36,7 +36,7 @@ namespace MyClub.Scorer.Domain.Scheduling
             UseHomeVenue = useHomeVenue;
             AsSoonAsPossible = asSoonAsPossible;
             Interval = interval;
-            ScheduleByParent = scheduleByParent;
+            ScheduleByStage = scheduleByStage;
             VenueRules = new List<IAvailableVenueSchedulingRule>(venueRules).AsReadOnly();
             AsSoonAsPossibleRules = new List<IAvailableDateSchedulingRule>(asSoonAsPossibleRules).AsReadOnly();
             DateRules = new List<IDateSchedulingRule>(dateRules).AsReadOnly();
@@ -59,7 +59,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public TimeSpan Interval { get; }
 
-        public bool ScheduleByParent { get; }
+        public bool ScheduleByStage { get; }
 
         public IReadOnlyCollection<IAvailableVenueSchedulingRule> VenueRules { get; }
 

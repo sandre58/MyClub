@@ -7,6 +7,7 @@
     <Style x:Key="Scorer.Styles.ListView.Ranking" BasedOn="{StaticResource MyNet.Styles.ListView}" TargetType="{x:Type ListView}">
         <Style.Resources>
             <Style BasedOn="{StaticResource MyNet.Styles.GridViewColumnHeader}" TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="Height" Value="32" />
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="my:DataGridAssist.ColumnHeaderPadding" Value="3" />
             </Style>
@@ -55,7 +56,13 @@
     </Style>
 
     <Style x:Key="Scorer.Styles.ListView.Ranking.Small" BasedOn="{StaticResource Scorer.Styles.ListView.Ranking}" TargetType="{x:Type ListView}">
-        <Setter Property="my:ListViewAssist.HeaderHeight" Value="25" />
+        <Style.Resources>
+            <Style TargetType="{x:Type GridViewColumnHeader}" BasedOn="{StaticResource MyNet.Styles.GridViewColumnHeader}">
+                <Setter Property="Height" Value="25" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="my:DataGridAssist.ColumnHeaderPadding" Value="3" />
+            </Style>
+        </Style.Resources>
         <Setter Property="my:ListViewAssist.ItemMinHeight" Value="22" />
     </Style>
 </ResourceDictionary>

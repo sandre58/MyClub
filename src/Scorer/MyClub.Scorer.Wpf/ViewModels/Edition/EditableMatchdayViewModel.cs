@@ -1,7 +1,8 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -20,12 +21,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class EditableMatchdayViewModel : EditableObject
     {
         private readonly bool _useHomeTeamStadium;
-        private readonly ISourceProvider<IStadiumViewModel> _stadiums;
-        private readonly ISourceProvider<ITeamViewModel> _teams;
+        private readonly ISourceProvider<StadiumViewModel> _stadiums;
+        private readonly ISourceProvider<IVirtualTeamViewModel> _teams;
 
         public EditableMatchdayViewModel(ISourceProvider<MatchdayViewModel> matchdays,
-                                         ISourceProvider<IStadiumViewModel> stadiums,
-                                         ISourceProvider<ITeamViewModel> teams,
+                                         ISourceProvider<StadiumViewModel> stadiums,
+                                         IEnumerable<IVirtualTeamViewModel> teams,
+                                         bool useHomeTeamStadium = false) : this(matchdays, stadiums, new ItemsSourceProvider<IVirtualTeamViewModel>(teams), useHomeTeamStadium)
+        { }
+
+        public EditableMatchdayViewModel(ISourceProvider<MatchdayViewModel> matchdays,
+                                         ISourceProvider<StadiumViewModel> stadiums,
+                                         ISourceProvider<IVirtualTeamViewModel> teams,
                                          bool useHomeTeamStadium = false)
         {
             _useHomeTeamStadium = useHomeTeamStadium;
@@ -40,9 +47,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             ClearDuplicatedMatchdayCommand = CommandsManager.Create(ClearDuplicatedMatchday);
             DuplicateMatchdayCommand = CommandsManager.CreateNotNull<MatchdayViewModel>(DuplicateMatchday);
         }
-        [CanBeValidated(false)]
-        [CanSetIsModified(false)]
-        public Guid? Id { get; }
 
         public EditableDateTime CurrentDate { get; set; } = new();
 
@@ -102,8 +106,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
                 if (result.CurrentDate.HasValue)
                     result.CurrentDate.Load(CurrentDate.DateTime.GetValueOrDefault());
-                result.HomeTeam = result.AvailableTeams.GetById(x.HomeTeam.Id);
-                result.AwayTeam = result.AvailableTeams.GetById(x.AwayTeam.Id);
+                result.HomeTeam = result.AvailableTeams.GetById(x.Home.Team.Id);
+                result.AwayTeam = result.AvailableTeams.GetById(x.Away.Team.Id);
                 result.StadiumSelection.Select(x.Stadium?.Id);
 
                 return result;

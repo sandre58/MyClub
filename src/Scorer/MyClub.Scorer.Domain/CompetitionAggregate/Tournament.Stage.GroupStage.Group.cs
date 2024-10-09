@@ -16,11 +16,11 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     {
         private string _name = string.Empty;
         private string _shortName = string.Empty;
-        private readonly GroupStage _parent;
+        private readonly GroupStage _stage;
 
-        internal Group(GroupStage parent, string name, string shortName, Guid? id = null) : base(id)
+        internal Group(GroupStage stage, string name, string shortName, Guid? id = null) : base(id)
         {
-            _parent = parent;
+            _stage = stage;
             Name = name;
             ShortName = shortName ?? name.GetInitials();
         }
@@ -39,9 +39,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public int Order { get; set; }
 
-        public override IEnumerable<Match> GetAllMatches() => _parent.GetAllMatches().Where(x => Teams.Contains(x.HomeTeam) && Teams.Contains(x.AwayTeam));
+        public override IEnumerable<Match> GetAllMatches() => _stage.GetAllMatches().Where(x => Teams.Contains(x.HomeTeam) && Teams.Contains(x.AwayTeam));
 
-        public override RankingRules GetRankingRules() => _parent.RankingRules;
+        public override RankingRules GetRankingRules() => _stage.RankingRules;
 
         public override string ToString() => Name;
 

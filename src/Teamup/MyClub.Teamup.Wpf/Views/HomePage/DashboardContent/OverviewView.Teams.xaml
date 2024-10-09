@@ -96,7 +96,7 @@
                         <Setter TargetName="groupBox" Property="Opacity" Value="{StaticResource MyNet.Opacity.Disabled}" />
                     </DataTrigger>
                     <DataTrigger Binding="{Binding Item.IsMainTeam}" Value="True">
-                        <Setter TargetName="groupBox" Property="Background" Value="{DynamicResource MyNet.Brushes.Control.Background.Inverse}" />
+                        <Setter TargetName="groupBox" Property="Background" Value="{DynamicResource MyNet.Brushes.Application.Background.Inverse}" />
                     </DataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>

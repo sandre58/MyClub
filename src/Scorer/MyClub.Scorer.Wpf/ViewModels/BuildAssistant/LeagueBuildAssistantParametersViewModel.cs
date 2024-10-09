@@ -15,7 +15,6 @@ using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Collections;
@@ -54,7 +53,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
             { DatesSchedulingMethod.Automatic, new DatesSchedulingAutomaticViewModel() },
         };
 
-        public LeagueBuildAssistantParametersViewModel(ISourceProvider<IStadiumViewModel> stadiumsProvider)
+        public LeagueBuildAssistantParametersViewModel(ISourceProvider<IEditableStadiumViewModel> stadiumsProvider)
         {
             VenueRules = new(stadiumsProvider.Source);
 

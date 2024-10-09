@@ -1,9 +1,11 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
+using DynamicData;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
+using MyNet.Observable.Collections.Providers;
 using MyNet.UI.ViewModels.Edition;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
@@ -15,7 +17,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public RankingRulesEditionViewModel(LeagueService leagueService, TeamsProvider teamsProvider)
         {
             _leagueService = leagueService;
-            RankingRules = new(teamsProvider);
+            RankingRules = new(new ObservableSourceProvider<IEditableTeamViewModel>(teamsProvider.Connect().Transform(x => (IEditableTeamViewModel)x)));
         }
 
         public EditableRankingRulesViewModel RankingRules { get; }

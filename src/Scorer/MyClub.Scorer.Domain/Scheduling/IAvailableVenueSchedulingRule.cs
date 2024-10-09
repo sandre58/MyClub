@@ -20,9 +20,9 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public bool IsNeutral { get; }
     }
+
     public interface IAvailableVenueSchedulingRule
     {
-        AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums);
+        AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums);
     }
 }
-

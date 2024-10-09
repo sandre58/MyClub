@@ -18,7 +18,6 @@ using MyClub.Scorer.Infrastructure.Packaging.Models;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Geography;
-using MyNet.Utilities.Localization;
 using MyNet.Utilities.Sequences;
 
 namespace MyClub.Scorer.Infrastructure.Packaging.Converters
@@ -38,6 +37,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
 
             // Preferences
             project.Preferences.TreatNoStadiumAsWarning = source.Metadata!.Preferences!.TreatNoStadiumAsWarning;
+            project.Preferences.ShowLastMatchFallback = source.Metadata!.Preferences!.ShowLastMatchFallback;
+            project.Preferences.ShowNextMatchFallback = source.Metadata!.Preferences!.ShowNextMatchFallback;
+            project.Preferences.PeriodForNextMatches = source.Metadata!.Preferences!.PeriodForNextMatches;
+            project.Preferences.PeriodForPreviousMatches = source.Metadata!.Preferences!.PeriodForPreviousMatches;
 
             var stadiums = source.Stadiums?.Select(x => x.CreateStadium()).ToArray() ?? [];
             var teams = source.Teams?.Select(x => x.CreateTeam(x.StadiumId.HasValue ? stadiums.GetByIdOrDefault(x.StadiumId.Value) : null)).ToArray() ?? [];
@@ -56,6 +59,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                     league.Labels.AddRange(leaguePackage.Labels?.ToDictionary(x => new AcceptableValueRange<int>(x.StartRank, x.EndRank), x => new RankLabel(x.Color, x.Name.OrEmpty(), x.ShortName.OrEmpty(), x.Description)));
                     league.RankingRules = leaguePackage.RankingRules?.CreateRankingRules() ?? RankingRules.Default;
                     league.MatchFormat = leaguePackage.MatchFormat?.CreateMatchFormat() ?? MatchFormat.Default;
+                    league.MatchRules = leaguePackage.MatchRules?.CreateMatchRules() ?? MatchRules.Default;
                     leaguePackage.Matchdays?.ForEach(x => league.AddMatchday(x.CreateMatchday(league, teams, stadiums, teams.SelectMany(y => y.Players).ToList())));
 
                     league.MarkedAsCreated(leaguePackage.CreatedAt, leaguePackage.CreatedBy);
@@ -87,7 +91,7 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                    schedulingParametersPackage.UseHomeVenue,
                    schedulingParametersPackage.AsSoonAsPossible,
                    schedulingParametersPackage.Interval,
-                   schedulingParametersPackage.ScheduleByParent,
+                   schedulingParametersPackage.ScheduleByStage,
                    schedulingParametersPackage.AsSoonAsPossibleRules?.Select(x => x.CreateAsSoonAsPossibleSchedulingRule()).ToList() ?? [],
                    schedulingParametersPackage.DateRules?.Select(x => x.CreateDateSchedulingRule()).ToList() ?? [],
                    schedulingParametersPackage.TimeRules?.Select(x => x.CreateTimeSchedulingRule()).ToList() ?? [],
@@ -115,10 +119,10 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
         public static ITimeSchedulingRule CreateTimeSchedulingRule(this TimeSchedulingRulePackage source)
             => source switch
             {
-                TimeOfDayRulePackage timeOfDayRule => new TimeOfDayRule(timeOfDayRule.Day, TimeOnly.FromTimeSpan(timeOfDayRule.Time), timeOfDayRule.MatchExceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfMatchNumberRule>() ?? []),
-                TimeOfDateRulePackage timeOfDateRule => new TimeOfDateRule(DateOnly.FromDayNumber(timeOfDateRule.Date), TimeOnly.FromTimeSpan(timeOfDateRule.Time), timeOfDateRule.MatchExceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfMatchNumberRule>() ?? []),
-                TimeOfMatchNumberRulePackage timeOfMatchNumberRule => new TimeOfMatchNumberRule(timeOfMatchNumberRule.MatchNumber, TimeOnly.FromTimeSpan(timeOfMatchNumberRule.Time)),
-                TimeOfDateRangeRulePackage timeOfDateRangeRule => new TimeOfDatesRangeRule(DateOnly.FromDayNumber(timeOfDateRangeRule.StartDate), DateOnly.FromDayNumber(timeOfDateRangeRule.EndDate), TimeOnly.FromTimeSpan(timeOfDateRangeRule.Time), timeOfDateRangeRule.MatchExceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfMatchNumberRule>() ?? []),
+                TimeOfDayRulePackage timeOfDayRule => new TimeOfDayRule(timeOfDayRule.Day, TimeOnly.FromTimeSpan(timeOfDayRule.Time), timeOfDayRule.Exceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfIndexRule>() ?? []),
+                TimeOfDateRulePackage timeOfDateRule => new TimeOfDateRule(DateOnly.FromDayNumber(timeOfDateRule.Date), TimeOnly.FromTimeSpan(timeOfDateRule.Time), timeOfDateRule.Exceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfIndexRule>() ?? []),
+                TimeOfIndexRulePackage timeOfMatchNumberRule => new TimeOfIndexRule(timeOfMatchNumberRule.Index, TimeOnly.FromTimeSpan(timeOfMatchNumberRule.Time)),
+                TimeOfDateRangeRulePackage timeOfDateRangeRule => new TimeOfDatesRangeRule(DateOnly.FromDayNumber(timeOfDateRangeRule.StartDate), DateOnly.FromDayNumber(timeOfDateRangeRule.EndDate), TimeOnly.FromTimeSpan(timeOfDateRangeRule.Time), timeOfDateRangeRule.Exceptions?.Select(x => x.CreateTimeSchedulingRule()).OfType<TimeOfIndexRule>() ?? []),
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
 
@@ -129,10 +133,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
                 AwayStadiumRulePackage => new AwayStadiumRule(),
                 NoStadiumRulePackage => new NoStadiumRule(),
                 FirstAvailableStadiumRulePackage firstAvailableStadiumRule => new FirstAvailableStadiumRule((UseRotationTime)firstAvailableStadiumRule.UseRotationTime),
-                StadiumOfDayRulePackage stadiumOfDayRule => new StadiumOfDayRule(stadiumOfDayRule.Day, stadiumOfDayRule.StadiumId, stadiumOfDayRule.MatchExceptions?.Select(x => x.CreateVenueSchedulingRule()).OfType<StadiumOfMatchNumberRule>() ?? []),
-                StadiumOfDateRulePackage stadiumOfDateRule => new StadiumOfDateRule(DateOnly.FromDayNumber(stadiumOfDateRule.Date), stadiumOfDateRule.StadiumId, stadiumOfDateRule.MatchExceptions?.Select(x => x.CreateVenueSchedulingRule()).OfType<StadiumOfMatchNumberRule>() ?? []),
-                StadiumOfMatchNumberRulePackage stadiumOfMatchNumberRule => new StadiumOfMatchNumberRule(stadiumOfMatchNumberRule.MatchNumber, stadiumOfMatchNumberRule.StadiumId),
-                StadiumOfDateRangeRulePackage stadiumOfDateRangeRule => new StadiumOfDatesRangeRule(DateOnly.FromDayNumber(stadiumOfDateRangeRule.StartDate), DateOnly.FromDayNumber(stadiumOfDateRangeRule.EndDate), stadiumOfDateRangeRule.StadiumId, stadiumOfDateRangeRule.MatchExceptions?.Select(x => x.CreateVenueSchedulingRule()).OfType<StadiumOfMatchNumberRule>() ?? []),
+                StadiumOfDayRulePackage stadiumOfDayRule => new StadiumOfDayRule(stadiumOfDayRule.Day, stadiumOfDayRule.StadiumId),
+                StadiumOfDateRulePackage stadiumOfDateRule => new StadiumOfDateRule(DateOnly.FromDayNumber(stadiumOfDateRule.Date), stadiumOfDateRule.StadiumId),
+                StadiumOfDateRangeRulePackage stadiumOfDateRangeRule => new StadiumOfDatesRangeRule(DateOnly.FromDayNumber(stadiumOfDateRangeRule.StartDate), DateOnly.FromDayNumber(stadiumOfDateRangeRule.EndDate), stadiumOfDateRangeRule.StadiumId),
                 _ => throw new InvalidOperationException($"{source.GetType()} cannot be converted in package"),
             };
 
@@ -200,72 +203,82 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Converters
 
         private static MatchFormat CreateMatchFormat(this MatchFormatPackage source) => new(source.RegulationTime?.CreateHalfFormat() ?? HalfFormat.Default, source.ExtraTime?.CreateHalfFormat(), source.NumberOfPenaltyShootouts);
 
+        private static MatchRules CreateMatchRules(this MatchRulesPackage source) => new(source.AllowedCards?.Split(";").Select(Enum.Parse<CardColor>) ?? []);
+
         private static RankingRules CreateRankingRules(this RankingRulesPackage source)
-            => new(source.Points?.ToDictionary(x => (MatchResultDetailled)x.Result, x => x.Points) ?? [],
+            => new(source.Points?.ToDictionary(x => (ExtendedResult)x.Result, x => x.Points) ?? [],
                    new RankingComparer(source.Comparers?.Split(';').Select(x => RankingComparer.AllAvailableComparers.GetOrDefault(x)).NotNull() ?? RankingComparer.Default),
                    source.Computers?.Split(';').ToDictionary(x => x, x => RankingRules.CreateComputer(Enum.Parse<DefaultRankingColumn>(x))) ?? RankingRules.DefaultComputers);
 
-        private static Match CreateMatch(this MatchPackage source, IMatchesProvider parent, IEnumerable<Team> teams, IEnumerable<Stadium> stadiums, IEnumerable<Player> players)
+        private static MatchOfMatchday CreateMatchOfMatchday(this MatchPackage source, Matchday stage, IEnumerable<Team> teams, IEnumerable<Stadium> stadiums, IEnumerable<Player> players)
         {
-            var matchFormatInMatch = source.Format?.CreateMatchFormat() ?? MatchFormat.Default;
-            var matchFormatOfParent = parent.ProvideFormat();
-            var result = new Match(parent, source.OriginDate, teams.GetById(source.Home!.TeamId), teams.GetById(source.Away!.TeamId), matchFormatInMatch == matchFormatOfParent ? matchFormatOfParent : matchFormatInMatch, source.Id)
-            {
-                AfterExtraTime = source.AfterExtraTime,
-                IsNeutralStadium = source.IsNeutralStadium,
-                Stadium = source.StadiumId.HasValue ? stadiums.GetById(source.StadiumId.Value) : null,
-            };
+            var result = new MatchOfMatchday(stage,
+                                             source.OriginDate,
+                                             teams.GetById(source.Home!.TeamId),
+                                             teams.GetById(source.Away!.TeamId),
+                                             source.Id);
 
-            source.Home.Goals?.ForEach(x => result.Home.AddGoal(new Goal((GoalType)x.Type, x.ScorerId.HasValue ? players.GetById(x.ScorerId.Value) : null, x.AssistId.HasValue ? players.GetById(x.AssistId.Value) : null, x.Minute, x.Id)));
-            source.Home.Cards?.ForEach(x => result.Home.AddCard(new Card((CardColor)x.Color, x.PlayerId.HasValue ? players.GetById(x.PlayerId.Value) : null, (CardInfraction)x.Infraction, x.Minute, x.Id)));
-            source.Home.Shootout?.ForEach(x => result.Home.AddPenaltyShootout(new PenaltyShootout(x.TakerId.HasValue ? players.GetById(x.TakerId.Value) : null, (PenaltyShootoutResult)x.Result, x.Id)));
-
-            if (source.Home.IsWithdrawn)
-                result.Home.DoWithdraw();
-
-            source.Away.Goals?.ForEach(x => result.Away.AddGoal(new Goal((GoalType)x.Type, x.ScorerId.HasValue ? players.GetById(x.ScorerId.Value) : null, x.AssistId.HasValue ? players.GetById(x.AssistId.Value) : null, x.Minute, x.Id)));
-            source.Away.Cards?.ForEach(x => result.Away.AddCard(new Card((CardColor)x.Color, x.PlayerId.HasValue ? players.GetById(x.PlayerId.Value) : null, (CardInfraction)x.Infraction, x.Minute, x.Id)));
-            source.Away.Shootout?.ForEach(x => result.Away.AddPenaltyShootout(new PenaltyShootout(x.TakerId.HasValue ? players.GetById(x.TakerId.Value) : null, (PenaltyShootoutResult)x.Result, x.Id)));
-
-            if (source.Away.IsWithdrawn)
-                result.Away.DoWithdraw();
-
-            switch ((MatchState)source.State)
-            {
-                case MatchState.None:
-                    result.Reset();
-                    break;
-                case MatchState.InProgress:
-                    result.Start();
-                    break;
-                case MatchState.Suspended:
-                    result.Suspend();
-                    break;
-                case MatchState.Cancelled:
-                    result.Cancel();
-                    break;
-                case MatchState.Played:
-                    result.Played();
-                    break;
-                case MatchState.Postponed:
-                    result.Postpone(source.PostponedDate);
-                    break;
-            }
-
-            result.MarkedAsCreated(source.CreatedAt, source.CreatedBy);
-            result.MarkedAsModified(source.ModifiedAt, source.ModifiedBy);
+            result.Update(source, stadiums, players);
 
             return result;
         }
 
-        private static Matchday CreateMatchday(this MatchdayPackage source, IMatchdaysProvider parent, IList<Team> teams, IList<Stadium> stadiums, IList<Player> players)
+        private static void Update(this MatchOfMatchday match, MatchPackage source, IEnumerable<Stadium> stadiums, IEnumerable<Player> players)
         {
-            var result = new Matchday(parent, source.OriginDate, source.Name.OrEmpty(), source.ShortName, source.Id);
+            match.AfterExtraTime = source.AfterExtraTime;
+            match.IsNeutralStadium = source.IsNeutralStadium;
+            match.Stadium = source.StadiumId.HasValue ? stadiums.GetById(source.StadiumId.Value) : null;
+            switch ((MatchState)source.State)
+            {
+                case MatchState.None:
+                    match.Reset();
+                    break;
+                case MatchState.InProgress:
+                    match.Start();
+                    break;
+                case MatchState.Suspended:
+                    match.Suspend();
+                    break;
+                case MatchState.Cancelled:
+                    match.Cancel();
+                    break;
+                case MatchState.Played:
+                    match.Played();
+                    break;
+                case MatchState.Postponed:
+                    match.Postpone(source.PostponedDate);
+                    break;
+            }
+
+            if (source.Home is null || source.Away is null)
+                return;
+
+            if (source.Home.IsWithdrawn)
+                match.Home?.DoWithdraw();
+
+            if (source.Away.IsWithdrawn)
+                match.Away?.DoWithdraw();
+
+            source.Home.Goals?.ForEach(x => match.Home?.AddGoal(new Goal((GoalType)x.Type, x.ScorerId.HasValue ? players.GetById(x.ScorerId.Value) : null, x.AssistId.HasValue ? players.GetById(x.AssistId.Value) : null, x.Minute, x.Id)));
+            source.Home.Cards?.ForEach(x => match.Home?.AddCard(new Card((CardColor)x.Color, x.PlayerId.HasValue ? players.GetById(x.PlayerId.Value) : null, (CardInfraction)x.Infraction, x.Minute, x.Id)));
+            source.Home.Shootout?.ForEach(x => match.Home?.AddPenaltyShootout(new PenaltyShootout(x.TakerId.HasValue ? players.GetById(x.TakerId.Value) : null, (PenaltyShootoutResult)x.Result, x.Id)));
+
+            source.Away.Goals?.ForEach(x => match.Away?.AddGoal(new Goal((GoalType)x.Type, x.ScorerId.HasValue ? players.GetById(x.ScorerId.Value) : null, x.AssistId.HasValue ? players.GetById(x.AssistId.Value) : null, x.Minute, x.Id)));
+            source.Away.Cards?.ForEach(x => match.Away?.AddCard(new Card((CardColor)x.Color, x.PlayerId.HasValue ? players.GetById(x.PlayerId.Value) : null, (CardInfraction)x.Infraction, x.Minute, x.Id)));
+            source.Away.Shootout?.ForEach(x => match.Away?.AddPenaltyShootout(new PenaltyShootout(x.TakerId.HasValue ? players.GetById(x.TakerId.Value) : null, (PenaltyShootoutResult)x.Result, x.Id)));
+
+            match.MarkedAsCreated(source.CreatedAt, source.CreatedBy);
+            match.MarkedAsModified(source.ModifiedAt, source.ModifiedBy);
+        }
+
+        private static Matchday CreateMatchday(this MatchdayPackage source, IMatchdaysStage stage, IList<Team> teams, IList<Stadium> stadiums, IList<Player> players)
+        {
+            var result = new Matchday(stage, source.OriginDate, source.Name.OrEmpty(), source.ShortName, source.Id);
 
             if (source.IsPostponed)
                 result.Postpone(source.PostponedDate);
 
-            source.Matches?.ForEach(x => result.AddMatch(x.CreateMatch(result, teams, stadiums, players)));
+            source.Matches?.ForEach(x => result.AddMatch(x.CreateMatchOfMatchday(result, teams, stadiums, players)));
 
             result.MarkedAsCreated(source.CreatedAt, source.CreatedBy);
             result.MarkedAsModified(source.ModifiedAt, source.ModifiedBy);

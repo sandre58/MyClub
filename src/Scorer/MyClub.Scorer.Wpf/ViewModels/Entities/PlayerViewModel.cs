@@ -19,8 +19,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             Team = team;
         }
 
-        public Guid TeamId => Team.Id;
-
         public TeamViewModel Team { get; }
 
         public override async Task OpenAsync() => await _personPresentationService.OpenAsync(this).ConfigureAwait(false);

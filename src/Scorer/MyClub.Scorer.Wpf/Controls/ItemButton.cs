@@ -33,5 +33,17 @@ namespace MyClub.Scorer.Wpf.Controls
         }
 
         #endregion
+
+        #region TextWrapping
+
+        public static readonly DependencyProperty TextWrappingProperty = DependencyProperty.Register(nameof(TextWrapping), typeof(TextWrapping), typeof(ItemButton<T>), new PropertyMetadata(TextWrapping.NoWrap));
+
+        public TextWrapping TextWrapping
+        {
+            get => (TextWrapping)GetValue(TextWrappingProperty);
+            set => SetValue(TextWrappingProperty, value);
+        }
+
+        #endregion
     }
 }

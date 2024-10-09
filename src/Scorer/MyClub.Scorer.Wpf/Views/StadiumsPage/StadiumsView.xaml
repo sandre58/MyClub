@@ -35,7 +35,7 @@
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled.Primary}"
                             my:IconAssist.Icon="{my:Icon Kind=Plus}"
                             Command="{Binding AddCommand}"
                             Content="{my:Resource New}"
@@ -53,12 +53,12 @@
             </my:CommandsBar.LeftCommands>
 
             <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
-                <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
+                <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" my:ToolTipAssist.Content="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
                 <Button my:ThemeAssist.IsMouseOverBackground="{DynamicResource MyNet.Brushes.Negative}"
                         my:ThemeAssist.IsMouseOverForeground="{DynamicResource MyNet.Brushes.White}"
                         Command="{Binding RemoveSelectedItemsCommand}"
                         Content="{my:MediumIcon Kind=Trash}"
-                        ToolTip="{my:ShortcutResource Remove,
+                        my:ToolTipAssist.Content="{my:ShortcutResource Remove,
                                                       ShortcutKey=InputDelete}" />
             </my:SelectionCommandsBar>
 
@@ -92,8 +92,7 @@
                                 <v:StadiumsGridView />
 
                                 <!-- Details -->
-                                <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
-                                         Grid.Column="1"
+                                <my:Card Grid.Column="1"
                                          Width="300"
                                          HorizontalContentAlignment="Stretch"
                                          VerticalContentAlignment="Stretch">

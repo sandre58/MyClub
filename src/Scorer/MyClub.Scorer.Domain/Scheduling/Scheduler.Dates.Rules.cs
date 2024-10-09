@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
@@ -25,38 +24,43 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public virtual void Schedule(IEnumerable<T> items)
         {
-            var date = StartDate;
+            var startDate = StartDate;
             DateOnly? previousDate = null;
-            var maxDate = DateTime.MaxValue.Date.Subtract(Interval).ToDate();
-            items.ForEach(item =>
+            items.ForEach((item, index) =>
             {
-                while (!DateRules.All(x => x.Match(date, previousDate)) && date < maxDate)
-                    date = date.BeginningOfDay().Add(Interval).ToDate();
+                var newDate = ScheduleItem(item, startDate, previousDate, index);
 
-                if (date >= maxDate)
-                    date = StartDate;
-
-                TimeOnly time;
-                if (item is IMatchesProvider matchesProvider && matchesProvider.Matches.Count > 0)
-                {
-                    matchesProvider.Matches.OrderBy(x => x.Date).ToList().ForEach((match, matchIndex) =>
-                    {
-                        var time = TimeRules.Select(x => x.ProvideTime(date, matchIndex)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
-
-                        match.Schedule(date.At(time, DateTimeKind));
-                    });
-
-                    time = matchesProvider.Matches.MinOrDefault(x => x.Date.ToTime(), DefaultTime.GetValueOrDefault());
-                }
-                else
-                    time = TimeRules.Select(x => x.ProvideTime(date, 0)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
-
-                item.Schedule(date.At(time, DateTimeKind));
-
-                previousDate = date;
-                date = date.BeginningOfDay().Add(Interval).ToDate();
+                previousDate = newDate.ToDate();
+                startDate = newDate.BeginningOfDay().Add(Interval).ToDate();
             });
         }
+
+        protected virtual DateTime ScheduleItem(T item, DateOnly startDate, DateOnly? previousDate, int index)
+        {
+            var date = ComputeNextDate(startDate, previousDate);
+
+            var time = ComputeTime(item, date, index);
+
+            item.Schedule(date.At(time, DateTimeKind));
+
+            return item.Date;
+        }
+
+        protected virtual DateOnly ComputeNextDate(DateOnly startDate, DateOnly? previousDate)
+        {
+            var date = startDate;
+            var maxDate = DateTime.MaxValue.Date.Subtract(Interval).ToDate();
+
+            while (!DateRules.All(x => x.Match(date, previousDate)) && date < maxDate)
+                date = date.BeginningOfDay().Add(Interval).ToDate();
+
+            if (date >= maxDate)
+                date = startDate;
+
+            return date;
+        }
+
+        protected virtual TimeOnly ComputeTime(T item, DateOnly date, int index) => TimeRules.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
     }
 }
 

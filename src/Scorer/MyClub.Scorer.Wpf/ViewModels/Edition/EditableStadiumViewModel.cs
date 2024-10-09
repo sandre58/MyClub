@@ -3,7 +3,6 @@
 
 using System;
 using MyClub.Domain.Enums;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Utilities;
 using MyNet.Utilities.Geography;
@@ -11,7 +10,7 @@ using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
-    internal class EditableStadiumViewModel : EditableObject, IStadiumViewModel
+    internal class EditableStadiumViewModel : EditableObject, IEditableStadiumViewModel
     {
         public Guid Id { get; } = Guid.NewGuid();
 

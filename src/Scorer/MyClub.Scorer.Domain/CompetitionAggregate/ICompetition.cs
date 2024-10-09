@@ -8,15 +8,17 @@ using MyClub.Scorer.Domain.Scheduling;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface ICompetition : IEntity, IAggregateRoot, IMatchFormatProvider, ISchedulingParametersProvider
+    public interface ICompetition : IAuditableEntity, IAggregateRoot, IMatchesProvider
     {
         MatchFormat MatchFormat { get; set; }
 
+        MatchRules MatchRules { get; set; }
+
         SchedulingParameters SchedulingParameters { get; set; }
 
-        IEnumerable<IMatchdaysProvider> GetAllMatchdaysProviders();
+        IEnumerable<T> GetStages<T>() where T : ICompetitionStage;
 
-        IEnumerable<IMatchesProvider> GetAllMatchesProviders();
+        bool RemoveMatch(Match item);
     }
 }
 

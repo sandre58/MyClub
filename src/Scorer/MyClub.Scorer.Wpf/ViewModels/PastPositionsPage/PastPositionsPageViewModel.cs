@@ -30,7 +30,6 @@ using MyNet.UI.Extensions;
 using MyNet.UI.Navigation.Models;
 using MyNet.Utilities;
 using MyNet.Utilities.Helpers;
-using MyNet.Utilities.Threading;
 using MyNet.Wpf.Schedulers;
 
 namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
@@ -41,8 +40,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
         private readonly LeagueService _leagueService;
         private readonly UiObservableCollection<TeamPositionsSerieWrapper> _teamSeries = [];
         private CompositeDisposable? _leagueSubscriptions;
-        private readonly RefreshDeferrer _refreshSeriesDeferrer = new();
-        private readonly SingleTaskRunner _refreshSeriesRunner;
+        private readonly SingleTaskDeferrer _refreshSeriesDeferrer;
 
         public PastPositionsPageViewModel(CompetitionInfoProvider competitionInfoProvider,
                                           TeamsProvider teamsProvider,
@@ -51,13 +49,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
             _competitionInfoProvider = competitionInfoProvider;
             _leagueService = leagueService;
             TeamSeries = new(_teamSeries);
-            _refreshSeriesRunner = new SingleTaskRunner(async x => await RefreshAllAsync(x).ConfigureAwait(false));
-
-            _refreshSeriesDeferrer.Subscribe(this, () =>
-            {
-                _refreshSeriesRunner.Cancel();
-                _refreshSeriesRunner.Run();
-            }, 100);
+            _refreshSeriesDeferrer = new(async x => await RefreshAllAsync(x).ConfigureAwait(false), throttle: 100);
 
             Disposables.AddRange(
                 [
@@ -70,24 +62,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
                               .Transform(x => x.Serie)
                               .OnItemAdded(Series.Add)
                               .OnItemRemoved(x => Series.Remove(x))
-                              .Subscribe(_ => RefreshYLabels())
+                              .Subscribe(_ => RefreshYLabels()),
+                    competitionInfoProvider.UnloadRunner.WhenStart().Subscribe(_ =>
+                    {
+                        _leagueSubscriptions?.Dispose();
+                        _leagueSubscriptions = null;
+                    }),
+                    competitionInfoProvider.LoadRunner.WhenEnd().Subscribe(x =>
+                    {
+                        if (x is LeagueViewModel leagueViewModel)
+                        {
+                            _leagueSubscriptions = new(
+                                [
+                                    leagueViewModel.WhenRankingChanged(() => _refreshSeriesDeferrer.AskRefresh())
+                                ]);
+                            _refreshSeriesDeferrer.AskRefresh();
+                        }
+                    })
                 ]);
-
-            competitionInfoProvider.WhenCompetitionChanged(x =>
-            {
-                if (x is LeagueViewModel leagueViewModel)
-                {
-                    _leagueSubscriptions = new(
-                        [
-                            leagueViewModel.WhenRankingChanged(() => _refreshSeriesDeferrer.AskRefresh())
-                        ]);
-                    _refreshSeriesDeferrer.AskRefresh();
-                }
-            }, _ =>
-            {
-                _leagueSubscriptions?.Dispose();
-                _leagueSubscriptions = null;
-            });
         }
 
         public List<string>? AxeXLabels { get; private set; } = [string.Empty, string.Empty];
@@ -105,7 +97,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
             {
                 try
                 {
-                    var league = _competitionInfoProvider.GetCompetition<LeagueViewModel>();
+                    var league = _competitionInfoProvider.GetLeague();
                     var matchdays = league.Matchdays.OrderBy(x => x.OriginDate).ToList();
                     var rankingByMatchdays = matchdays.Select(x => x.Matches.Any(y => y.IsPlayed)
                                                               ? (x, _leagueService.GetRanking(x.Id))
@@ -156,9 +148,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
             base.OnCultureChanged();
             RefreshYLabels();
         }
+
+        protected override void Cleanup()
+        {
+            _leagueSubscriptions?.Dispose();
+            _refreshSeriesDeferrer.Dispose();
+            base.Cleanup();
+        }
     }
 
-    internal class TeamPositionsSerieWrapper : Wrapper<ITeamViewModel>
+    internal class TeamPositionsSerieWrapper : Wrapper<TeamViewModel>
     {
         private readonly ObservableCollection<PastPosition> _pastPositions = [];
 
@@ -170,7 +169,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.PastPositionsPage
 
         public int Rank { get; private set; }
 
-        public TeamPositionsSerieWrapper(ITeamViewModel team) : base(team)
+        public TeamPositionsSerieWrapper(TeamViewModel team) : base(team)
         {
             Serie = new LineSeries(GetMapper())
             {

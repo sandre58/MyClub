@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using MyClub.Domain;
 using MyClub.Domain.Exceptions;
 using MyClub.Scorer.Domain.CompetitionAggregate;
@@ -30,7 +29,7 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
         {
             base.RemoveStadiumOnCascade(stadium);
 
-            Competition.GetAllMatchesProviders().SelectMany(x => x.Matches).ForEach(x =>
+            Competition.GetAllMatches().ForEach(x =>
             {
                 if (x.Stadium?.Id == stadium.Id)
                     x.Stadium = null;

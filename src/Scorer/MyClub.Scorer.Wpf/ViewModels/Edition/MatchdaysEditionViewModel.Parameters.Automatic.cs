@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
@@ -50,13 +51,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public bool UseEndDate { get; set; }
 
-        public void Reset(IMatchdayParent parent)
+        public void Reset(LeagueViewModel stage)
         {
             UseEndDate = false;
             StartDate = DateTime.Today.ToDate();
-            EndDate = parent.SchedulingParameters.EndDate;
-            StartDisplayDate = parent.SchedulingParameters.StartDate;
-            EndDisplayDate = parent.SchedulingParameters.EndDate;
+            EndDate = stage.SchedulingParameters.EndDate;
+            StartDisplayDate = stage.SchedulingParameters.StartDate;
+            EndDisplayDate = stage.SchedulingParameters.EndDate;
             CountMatchdays = 1;
             DateRules.Rules.Clear();
             TimeRules.Rules.Clear();

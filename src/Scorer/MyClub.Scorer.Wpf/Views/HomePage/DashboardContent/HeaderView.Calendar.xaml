@@ -40,7 +40,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Home -->
-                                <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" ToolTip="{Binding HomeTeam.Name}" />
+                                <ContentControl Content="{Binding Home.Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Home}" ToolTip="{Binding Home.Team.Name}" />
 
                                 <!-- Score -->
                                 <Grid x:Name="score" Grid.Column="2" Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
@@ -53,12 +53,12 @@
                                     <Label x:Name="homeScore"
                                            Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                            Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
-                                           Content="{Binding HomeScore}" />
+                                           Content="{Binding Home.Score}" />
                                     <Label x:Name="awayScore"
                                            Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                            Grid.Column="2"
                                            Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
-                                           Content="{Binding AwayScore}" />
+                                           Content="{Binding Away.Score}" />
                                 </Grid>
                                 <TextBlock Grid.Column="2"
                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
@@ -67,9 +67,9 @@
 
                                 <!-- Away -->
                                 <ContentControl Grid.Column="4"
-                                                Content="{Binding AwayTeam}"
-                                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}"
-                                                ToolTip="{Binding AwayTeam.Name}" />
+                                                Content="{Binding Away.Team}"
+                                                ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Home}"
+                                                ToolTip="{Binding Away.Team.Name}" />
 
                             </Grid>
                         </Grid>
@@ -121,6 +121,7 @@
                                  BorderBrush="{TemplateBinding BorderBrush}"
                                  BorderThickness="{TemplateBinding BorderThickness}"
                                  ClipToBounds="{TemplateBinding ClipToBounds}"
+                                 Foreground="{TemplateBinding Foreground}"
                                  UniformCornerRadius="{TemplateBinding my:ThemeAssist.UniformCornerRadius}">
                             <Grid x:Name="base">
                                 <Grid.RowDefinitions>
@@ -201,5 +202,8 @@
                           DatesSelectionMode="None"
                           DisplayDate="{my:DateTime DisplayDate,
                                                     Mode=OneWay}"
-                          DisplayDaysCount="9" />
+                          DisplayDaysCount="9"
+                          Foreground="{my:BrushBinding Path=Background,
+                                                       RelativeSource={RelativeSource AncestorType={x:Type v:HeaderCalendarView}},
+                                                       Contrast=True}" />
 </UserControl>

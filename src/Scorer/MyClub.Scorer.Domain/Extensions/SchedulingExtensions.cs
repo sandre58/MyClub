@@ -64,7 +64,7 @@ namespace MyClub.Scorer.Domain.Extensions
             {
                 return new DateRulesMatchesScheduler()
                 {
-                    ScheduleByParent = parameters.ScheduleByParent,
+                    ScheduleByStage = parameters.ScheduleByStage,
                     Interval = parameters.Interval,
                     DateRules = [.. parameters.DateRules],
                     TimeRules = [.. parameters.TimeRules],
@@ -79,14 +79,14 @@ namespace MyClub.Scorer.Domain.Extensions
         public static IScheduler<Matchday>? GetMatchdaysScheduler(this SchedulingParameters parameters, DateTime? startDate = null, IEnumerable<Matchday>? scheduledMatchdays = null)
         {
             if (parameters.AsSoonAsPossible)
-                return new AsSoonAsPossibleScheduler<Matchday>(scheduledMatchdays)
+                return new AsSoonAsPossibleStageScheduler<Matchday>(scheduledMatchdays)
                 {
                     StartDate = startDate ?? parameters.Start(),
                     Rules = [.. parameters.AsSoonAsPossibleRules],
                     ScheduleVenues = false
                 };
             else if (parameters.DateRules.Count > 0)
-                return new DateRulesScheduler<Matchday>()
+                return new DateRulesStageScheduler<Matchday>()
                 {
                     Interval = parameters.Interval,
                     DateRules = [.. parameters.DateRules],

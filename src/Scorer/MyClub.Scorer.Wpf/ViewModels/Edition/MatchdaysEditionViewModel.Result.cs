@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
@@ -63,14 +64,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [CanBeValidated(false)]
         public bool CanScheduleStadiumsAutomatic { get; set; }
 
-        public MatchdaysDto ToResultDto(Guid? parentId) => new()
+        public MatchdaysDto ToResultDto(Guid? stageId) => new()
         {
             ScheduleAutomatic = ScheduleAutomatic,
             ScheduleStadiumsAutomatic = ScheduleStadiumsAutomatic,
             StartDate = Matchdays.MinOrDefault(x => x.Item.CurrentDate.ToUtcOrDefault()),
             Matchdays = Matchdays.Select(x => new MatchdayDto
             {
-                ParentId = parentId,
+                StageId = stageId,
                 Date = x.Item.CurrentDate.ToUtcOrDefault(),
                 Name = x.Item.Name,
                 ShortName = x.Item.ShortName,
@@ -91,20 +92,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             }).ToList()
         };
 
-        public void Reset(IMatchdayParent parent)
+        public void Reset(LeagueViewModel stage)
         {
             Matchdays.Clear();
             MatchesToAdd = 1;
-            CanScheduleAutomatic = parent.CanAutomaticReschedule();
-            CanScheduleStadiumsAutomatic = parent.CanAutomaticRescheduleVenue();
+            CanScheduleAutomatic = stage.CanAutomaticReschedule();
+            CanScheduleStadiumsAutomatic = stage.CanAutomaticRescheduleVenue();
             ScheduleAutomatic = false;
             ScheduleStadiumsAutomatic = false;
         }
 
-        public void Refresh(IMatchdayParent parent)
+        public void Refresh(LeagueViewModel stage)
         {
-            CanScheduleAutomatic = parent.CanAutomaticReschedule();
-            CanScheduleStadiumsAutomatic = parent.CanAutomaticRescheduleVenue();
+            CanScheduleAutomatic = stage.CanAutomaticReschedule();
+            CanScheduleStadiumsAutomatic = stage.CanAutomaticRescheduleVenue();
             if (!CanScheduleAutomatic) ScheduleAutomatic = false;
             if (!CanScheduleStadiumsAutomatic) ScheduleStadiumsAutomatic = false;
         }

@@ -9,7 +9,7 @@ namespace MyClub.Scorer.Application.Dtos
 {
     public class MatchdaysDto : EntityDto
     {
-        public Guid? ParentId { get; set; }
+        public Guid? StageId { get; set; }
 
         public DateTime? StartDate { get; set; }
 

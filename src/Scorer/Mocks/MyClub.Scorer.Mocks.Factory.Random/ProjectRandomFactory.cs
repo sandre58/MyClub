@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using MyClub.CrossCutting.Images;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.BracketComputing;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.Factories;
@@ -38,13 +39,14 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
         public async Task<LeagueProject> CreateLeagueAsync(CancellationToken cancellationToken = default)
         {
-            var project = await CreateAsync((w, x, y, z) =>
+            var project = await CreateAsync((name, image, matchFormat, matchRules, schedulingParameters) =>
             {
-                var competition = new LeagueProject(w, x);
-                competition.Competition.SchedulingParameters = z;
-                competition.Competition.MatchFormat = y;
+                var competition = new LeagueProject(name, image);
+                competition.Competition.SchedulingParameters = schedulingParameters;
+                competition.Competition.MatchFormat = matchFormat;
+                competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, 8, 20, cancellationToken).ConfigureAwait(false);
+            }, true, 8, 20, cancellationToken).ConfigureAwait(false);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -58,14 +60,14 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
             // Scheduler
             var matchdaysScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
-                ? new AsSoonAsPossibleScheduler<Matchday>()
+                ? new AsSoonAsPossibleStageScheduler<Matchday>()
                 {
                     StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
                     ScheduleVenues = true,
                     AvailableStadiums = project.Stadiums
                 }
-                : (IScheduler<Matchday>)new DateRulesScheduler<Matchday>()
+                : (IScheduler<Matchday>)new DateRulesStageScheduler<Matchday>()
                 {
                     Interval = project.Competition.SchedulingParameters.Interval,
                     DateRules = [.. project.Competition.SchedulingParameters.DateRules],
@@ -94,7 +96,7 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                 x.Matches.ForEach(match =>
                 {
                     if (match.Date.IsInPast())
-                        match.RandomizeScore(!match.GetPeriod().Contains(DateTime.UtcNow));
+                        match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
                     match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
                 });
                 x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
@@ -106,24 +108,76 @@ namespace MyClub.Scorer.Mocks.Factory.Random
         }
 
         public async Task<CupProject> CreateCupAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync((w, x, y, z) =>
+        {
+            var project = await CreateAsync((name, image, matchFormat, matchRules, schedulingParameters) =>
             {
-                var competition = new CupProject(w, x);
-                competition.Competition.SchedulingParameters = z;
-                competition.Competition.MatchFormat = y;
+                var competition = new CupProject(name, image);
+                competition.Competition.SchedulingParameters = schedulingParameters;
+                competition.Competition.MatchFormat = matchFormat;
+                competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, 16, 32, cancellationToken).ConfigureAwait(false);
+            }, false, 16, 128, cancellationToken).ConfigureAwait(false);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Scheduler
+            var roundsScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
+                ? new AsSoonAsPossibleStageScheduler<RoundOfMatches>()
+                {
+                    StartDate = project.Competition.SchedulingParameters.Start(),
+                    Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
+                    ScheduleVenues = true,
+                    AvailableStadiums = project.Stadiums
+                }
+                : (IScheduler<RoundOfMatches>)new DateRulesStageScheduler<RoundOfMatches>()
+                {
+                    Interval = project.Competition.SchedulingParameters.Interval,
+                    DateRules = [.. project.Competition.SchedulingParameters.DateRules],
+                    TimeRules = [.. project.Competition.SchedulingParameters.TimeRules],
+                    DefaultTime = project.Competition.SchedulingParameters.StartTime,
+                    StartDate = project.Competition.SchedulingParameters.StartDate
+                };
+            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IMatchesScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
+            {
+                Rules = [.. project.Competition.SchedulingParameters.VenueRules],
+            };
+
+            // Algorithm
+            var numberOfMatchesBetweenTeams = RandomGenerator.Int(1, 2);
+            var algorithms = new List<IRoundsAlgorithm>
+            {
+                new KnockoutAlgorithm()
+            };
+
+            var rounds = new RoundOfMatchesBuilder(roundsScheduler, venueScheduler).Build(project.Competition, RandomGenerator.ListItem(algorithms));
+
+            rounds.ForEach(x =>
+            {
+                x.GetAllMatches().ForEach(match =>
+                {
+                    match.ComputeOpponents();
+                    if (match.Date.IsInPast())
+                        match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
+                    match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+                });
+                x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+
+                project.Competition.AddRound(x);
+            });
+            return project;
+        }
 
         public async Task<TournamentProject> CreateTournamentAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync((w, x, y, z) =>
+            => await CreateAsync((name, image, matchFormat, matchRules, schedulingParameters) =>
             {
-                var competition = new TournamentProject(w, x);
-                competition.Competition.SchedulingParameters = z;
-                competition.Competition.MatchFormat = y;
+                var competition = new TournamentProject(name, image);
+                competition.Competition.SchedulingParameters = schedulingParameters;
+                competition.Competition.MatchFormat = matchFormat;
+                competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, 32, 128, cancellationToken).ConfigureAwait(false);
+            }, false, 32, 128, cancellationToken).ConfigureAwait(false);
 
-        public Task<T> CreateAsync<T>(Func<string, byte[]?, MatchFormat, SchedulingParameters, T> createInstance, int minTeams, int maxTeams, CancellationToken cancellationToken = default)
+        public Task<T> CreateAsync<T>(Func<string, byte[]?, MatchFormat, MatchRules, SchedulingParameters, T> createInstance, bool allowDraw, int minTeams, int maxTeams, CancellationToken cancellationToken = default)
             where T : IProject
         {
             using (_progresser.Start(3, new ProgressMessage(string.Empty)))
@@ -134,7 +188,7 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
                     var name = $"{NameGenerator.LastName()} Cup";
-                    project = createInstance(name, RandomProvider.GetCompetitionLogo(), CreateMatchFormat(asSoonAsPossible), CreateScheduleParameters(asSoonAsPossible));
+                    project = createInstance(name, RandomProvider.GetCompetitionLogo(), CreateMatchFormat(asSoonAsPossible, allowDraw), CreateMatchRules(), CreateScheduleParameters(asSoonAsPossible));
                 }
 
                 if (project is null) throw new InvalidOperationException($"Impossible to create an instance of {typeof(T)}");
@@ -151,7 +205,7 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                 // Teams
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
-                    var teams = EnumerableHelper.Range(minTeams, maxTeams, 1).Select(_ => AddressGenerator.City()).Distinct().Select(x =>
+                    var teams = EnumerableHelper.Range(1, RandomGenerator.Int(minTeams, maxTeams), 1).Select(_ => AddressGenerator.City()).Distinct().Select(x =>
                     {
                         var team = new Team(x)
                         {
@@ -209,9 +263,9 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                 // Stadiums
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
-                    if (!project.Competition.ProvideSchedulingParameters().UseHomeVenue)
+                    if (!project.Competition.SchedulingParameters.UseHomeVenue)
                     {
-                        var countStadiums = project.Competition.ProvideSchedulingParameters().AsSoonAsPossible ? RandomGenerator.Int(2, project.Teams.Count / 2) : RandomGenerator.Int(project.Teams.Count / 2, project.Teams.Count);
+                        var countStadiums = project.Competition.SchedulingParameters.AsSoonAsPossible ? RandomGenerator.Int(2, project.Teams.Count / 2) : RandomGenerator.Int(project.Teams.Count / 2, project.Teams.Count);
                         countStadiums.Range().Select(x => CreateStadium()).ForEach(x => project.AddStadium(x));
                     }
                 }
@@ -222,15 +276,17 @@ namespace MyClub.Scorer.Mocks.Factory.Random
             }
         }
 
-        private static MatchFormat CreateMatchFormat(bool asSoonAsPossible) => asSoonAsPossible
-                ? new MatchFormat(new HalfFormat(RandomGenerator.Int(1, 2), RandomGenerator.Int(8, 30).Minutes(), 5.Minutes()))
-                : MatchFormat.Default;
+        private static MatchRules CreateMatchRules() => MatchRules.Default;
+
+        private static MatchFormat CreateMatchFormat(bool asSoonAsPossible, bool allowDraw) => asSoonAsPossible
+                ? new MatchFormat(new HalfFormat(RandomGenerator.Int(1, 2), RandomGenerator.Int(8, 30).Minutes(), 5.Minutes()), allowDraw ? null : new HalfFormat(RandomGenerator.Int(1, 2), RandomGenerator.Int(4, 10).Minutes(), 2.Minutes()), allowDraw ? null : RandomGenerator.Int(3, 5))
+                : (allowDraw ? MatchFormat.Default : MatchFormat.NoDraw);
 
         private static SchedulingParameters CreateScheduleParameters(bool asSoonAsPossible)
         {
             var useHomeVenue = RandomGenerator.Bool();
-            return new SchedulingParameters(asSoonAsPossible ? DateTime.UtcNow.AddDays(-RandomGenerator.Int(2, 4)).ToDate() : DateTime.UtcNow.AddMonths(-RandomGenerator.Int(4, 6)).ToDate(),
-                                            asSoonAsPossible ? DateTime.UtcNow.AddDays(RandomGenerator.Int(6, 8)).ToDate() : DateTime.UtcNow.AddMonths(RandomGenerator.Int(4, 6)).ToDate(),
+            return new SchedulingParameters(asSoonAsPossible ? DateTime.UtcNow.AddDays(-RandomGenerator.Int(1, 2)).ToDate() : DateTime.UtcNow.AddMonths(-RandomGenerator.Int(2, 4)).ToDate(),
+                                            asSoonAsPossible ? DateTime.UtcNow.AddDays(RandomGenerator.Int(3, 6)).ToDate() : DateTime.UtcNow.AddMonths(RandomGenerator.Int(4, 6)).ToDate(),
                                             RandomGenerator.Int(8, 22).Hours().ToTime(),
                                             asSoonAsPossible ? RandomGenerator.Int(2, 5).Minutes() : RandomGenerator.Int(1, 3).Days(),
                                             asSoonAsPossible ? RandomGenerator.Int(5, 30).Minutes() : RandomGenerator.Int(1, 6).Days(),

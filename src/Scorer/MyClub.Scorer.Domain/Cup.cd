@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyClub.Scorer.Domain.CompetitionAggregate.Cup">
+    <Position X="5" Y="2.25" Width="1.5" />
+    <AssociationLine Name="MatchFormat" Type="MyClub.Scorer.Domain.MatchAggregate.MatchFormat" ManuallyRouted="true">
+      <Path>
+        <Point X="6.5" Y="2.524" />
+        <Point X="6.789" Y="2.524" />
+        <Point X="6.789" Y="1.781" />
+        <Point X="10.531" Y="1.781" />
+        <Point X="10.531" Y="1.191" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAgAAAAAAAAAAAABAAIAAAAIEAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Cup.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="MatchFormat" />
+      <Property Name="SchedulingParameters" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.CompetitionAggregate.Knockout">
+    <Position X="7.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAAACgAAgAAAQAAAAAACACEAAABAAIIAAAJAAAJAIII=</HashCode>
+      <FileName>CompetitionAggregate\Knockout.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Rounds" />
+      <Property Name="Teams" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.MatchAggregate.FixtureRules" Collapsed="true">
+    <Position X="7.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAIAAAAAAAAAAAQAAAAAEAAAA=</HashCode>
+      <FileName>MatchAggregate\Fixture.Rules.cs</FileName>
+      <NewMemberFileName>MatchAggregate\Match.Rules.cs</NewMemberFileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.MatchAggregate.MatchFormat" Collapsed="true">
+    <Position X="9.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAQAAAAQEAAAAIAAAAQCAAAACAAAAAAAAAIA=</HashCode>
+      <FileName>MatchAggregate\Match.Format.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.Scheduling.SchedulingParameters" Collapsed="true">
+    <Position X="5.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CgAAAAAAACAAAAGAAIAAIAAgIIAAIAAAQAAAAkAAAAA=</HashCode>
+      <FileName>Scheduling\SchedulingParameters.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.CompetitionAggregate.RoundStage">
+    <Position X="14.5" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAQAAAAAAAQAAAAEBAAMAAAAIAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\RoundStage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.CompetitionAggregate.RoundOfFixtures">
+    <Position X="14.5" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAgAAAQAAAAAACEAAAAAAAAAIAAAgAIAJAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Round.Fixtures.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Stages" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.CompetitionAggregate.RoundOfMatches">
+    <Position X="14.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAABAAgBAAQAAAAAAAEAAAQEAAAAIDAAAAAAAAAAA=</HashCode>
+      <FileName>CompetitionAggregate\Round.Matches.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyClub.Scorer.Domain.CompetitionAggregate.Round&lt;T&gt;">
+    <Position X="12" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAICgAAgAAIQgAAAAACUAMAAAAAAEIAAAAEAAJAAJA=</HashCode>
+      <FileName>CompetitionAggregate\Round.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="MyClub.Scorer.Domain.TeamAggregate.IVirtualTeam">
+    <Position X="10" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>TeamAggregate\IVirtualTeam.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="MyClub.Scorer.Domain.CompetitionAggregate.IRound">
+    <Position X="10" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAQAAAAAACQAUAAAAAAIIAAAAAAABAAAA=</HashCode>
+      <FileName>CompetitionAggregate\IRound.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

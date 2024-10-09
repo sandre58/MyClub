@@ -48,9 +48,9 @@
                     <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
                 </StackPanel>
                 <my:SimpleStackPanel Grid.Row="2" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
-                    <TextBlock Text="{Binding Item.HomeTeam.Name}" />
+                    <TextBlock Text="{Binding Item.Home.Team.Name}" />
                     <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " Typography.Capitals="AllSmallCaps" />
-                    <TextBlock Text="{Binding Item.AwayTeam.Name}" />
+                    <TextBlock Text="{Binding Item.Away.Team.Name}" />
                 </my:SimpleStackPanel>
                 <DockPanel Grid.Row="4" Visibility="{Binding Stadium, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
                     <my:PackIcon Width="12"
@@ -141,27 +141,31 @@
                         </Grid.RowDefinitions>
 
                         <!-- Date header -->
-                        <DockPanel Grid.Row="1">
-                            <my:SimpleStackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
-                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:MediumIcon Kind=ChevronLeft}" />
-                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToNextDateCommand}" Content="{my:MediumIcon Kind=ChevronRight}" />
-                            </my:SimpleStackPanel>
-                            <TextBlock Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" />
-                        </DockPanel>
+                        <my:SimpleStackPanel Grid.Row="1"
+                                             HorizontalAlignment="Right"
+                                             Orientation="Horizontal"
+                                             Spacing="{StaticResource MyNet.Margin.Small}">
+                            <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" Typography.Capitals="AllSmallCaps" />
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:MediumIcon Kind=ChevronLeft}" />
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
+                                    Command="{Binding DateSelection.MoveToTodayCommand}"
+                                    Content="{my:ToolIcon Kind=CalendarToday}"
+                                    ToolTip="{my:Resource Today}" />
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToNextDateCommand}" Content="{my:MediumIcon Kind=ChevronRight}" />
+                        </my:SimpleStackPanel>
 
                         <!-- Date selection -->
-                        <my:Card Grid.Row="3"
+                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                 Grid.Row="3"
                                  Width="300"
                                  Height="300"
                                  Padding="0"
-                                 VerticalAlignment="Top"
-                                 Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+                                 VerticalAlignment="Top">
                             <my:CalendarDaysByMonth my:HeaderAssist.Background="Transparent"
                                                     my:HeaderAssist.Height="25"
                                                     Appointments="{Binding Matches.GroupedWrappers}"
                                                     AppointmentsMargin="3 15 3 3"
                                                     AppointmentsSpacing="0"
-                                                    Background="{DynamicResource MyNet.Brushes.Application.Background}"
                                                     BorderThickness="0"
                                                     DatesSelectionMode="SingleDate"
                                                     DisplayDate="{Binding DateSelection.DisplayDate, Mode=OneWay}"
@@ -225,8 +229,8 @@
                                                                         <!-- Home -->
                                                                         <ContentControl Grid.Column="2"
                                                                                         Margin="{StaticResource MyNet.Margins.Small}"
-                                                                                        Content="{Binding Item.HomeTeam}"
-                                                                                        ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Small.Home}"
+                                                                                        Content="{Binding Item.Home.Team}"
+                                                                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Home}"
                                                                                         IsEnabled="False" />
 
                                                                         <TextBlock Grid.Column="4"
@@ -238,8 +242,8 @@
                                                                         <!-- Away -->
                                                                         <ContentControl Grid.Column="6"
                                                                                         Margin="{StaticResource MyNet.Margins.Small}"
-                                                                                        Content="{Binding Item.AwayTeam}"
-                                                                                        ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Small.Away}"
+                                                                                        Content="{Binding Item.Away.Team}"
+                                                                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Away}"
                                                                                         IsEnabled="False" />
                                                                     </Grid>
                                                                 </DataTemplate>
@@ -306,7 +310,7 @@
                                                               Format=XSelectedItems}"
                                       Visibility="{Binding SelectedItems.Count, ElementName=CalendarHoursByDay, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
                                 <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Top}">
-                                    <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Filled.Primary}"
                                             HorizontalAlignment="Right"
                                             my:IconAssist.Icon="{my:ToolIcon Kind=Check}"
                                             Command="{Binding UpdateSelectionCommand}"
@@ -422,8 +426,9 @@
                 <DockPanel Margin="{StaticResource MyNet.Margins.Default.Bottom}" DockPanel.Dock="Top">
                     <my:SimpleStackPanel Margin="40 0 0 0" VerticalAlignment="Center" Orientation="Horizontal">
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Display}" />
-                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Outlined}"
-                                  Width="{StaticResource MyNet.Widths.Control.Medium}"
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
+                                  Width="110"
+                                  Height="28"
                                   ItemsSource="{my:IntegerRange Start=1,
                                                                 End=7}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayDaysCount}">
@@ -434,14 +439,16 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Of, Casing=LowerCase}" />
-                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Filled}"
                                   Width="110"
+                                  VerticalAlignment="Stretch"
                                   ItemsSource="{my:HourRange Start=0,
                                                              End=22}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayTimeStart}" />
                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource To, Casing=LowerCase}" />
-                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Outlined}"
+                        <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Hour.Filled}"
                                   Width="110"
+                                  VerticalAlignment="Stretch"
                                   ItemsSource="{my:HourRange Start=1,
                                                              End=23}"
                                   SelectedItem="{Binding DateTimeSelection.DisplayTimeEnd}" />
@@ -452,11 +459,11 @@
                                              VerticalAlignment="Center"
                                              DockPanel.Dock="Right"
                                              Orientation="Horizontal"
-                                             TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}"
-                                             TextElement.FontWeight="Bold">
-                            <TextBlock Text="{my:DisplayDateTime Path=DisplayDateStart, ElementName=CalendarHoursByDay, Casing=Title, Format=M}" />
-                            <TextBlock Text="-" />
-                            <TextBlock Text="{my:DisplayDateTime Path=DisplayDateEnd, ElementName=CalendarHoursByDay, Casing=Title, Format=M}" />
+                                             Spacing="{StaticResource MyNet.Margin.Default}"
+                                             TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
+                            <TextBlock Text="{my:DisplayDateTime Path=DisplayDateStart, ElementName=CalendarHoursByDay, Casing=Title, Format=M}" Typography.Capitals="AllSmallCaps" />
+                            <TextBlock Text="-" Typography.Capitals="AllSmallCaps" />
+                            <TextBlock Text="{my:DisplayDateTime Path=DisplayDateEnd, ElementName=CalendarHoursByDay, Casing=Title, Format=M}" Typography.Capitals="AllSmallCaps" />
                         </my:SimpleStackPanel>
                         <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateTimeSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
                         <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateTimeSelection.MoveToNextDateCommand}" Content="{my:LargeIcon Kind=ChevronRight}" />
@@ -514,7 +521,7 @@
                                                     <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                                                        Width="19"
                                                                        Height="19"
-                                                                       DataContext="{Binding Item.HomeTeam}"
+                                                                       DataContext="{Binding Item.Home.Team}"
                                                                        ToolTip="{Binding Name}" />
                                                     <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
                                                                Opacity="{StaticResource MyNet.Opacity.Secondary}"
@@ -523,7 +530,7 @@
                                                     <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
                                                                        Width="19"
                                                                        Height="19"
-                                                                       DataContext="{Binding Item.AwayTeam}"
+                                                                       DataContext="{Binding Item.Away.Team}"
                                                                        ToolTip="{Binding Name}" />
 
                                                 </my:SimpleStackPanel>

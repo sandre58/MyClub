@@ -25,7 +25,7 @@
         </Grid.RowDefinitions>
 
         <!--  Get from Clipboard  -->
-        <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Elevation}"
+        <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Filled}"
                 Margin="{StaticResource MyNet.Margins.Medium.Right}"
                 Command="{Binding GetFromClipboardCommand}"
                 Content="{my:MediumIcon Kind=ClipboardTextSearch}"
@@ -97,7 +97,7 @@
         </my:BusyControl>
 
         <!--  Compute Coordinates  -->
-        <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Elevation}"
+        <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Filled}"
                 Grid.Row="2"
                 Margin="{StaticResource MyNet.Margins.Medium.Right}"
                 HorizontalAlignment="Center"

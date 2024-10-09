@@ -44,9 +44,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                             Day = timeOfDayRule.Day,
                             Time = timeOfDayRule.Time,
                         };
-                        rule1.MatchExceptions.AddRange(timeOfDayRule.MatchExceptions.Select(x => new EditableTimeOfMatchNumberRuleViewModel()
+                        rule1.MatchExceptions.AddRange(timeOfDayRule.Exceptions.Select(x => new EditableTimeOfMatchNumberRuleViewModel()
                         {
-                            MatchNumber = x.MatchNumber,
+                            MatchNumber = x.Index,
                             Time = x.Time
                         }));
                         return rule1;
@@ -57,17 +57,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                             Date = timeOfDateRule.Date,
                             Time = timeOfDateRule.Time,
                         };
-                        rule2.MatchExceptions.AddRange(timeOfDateRule.MatchExceptions.Select(x => new EditableTimeOfMatchNumberRuleViewModel()
+                        rule2.MatchExceptions.AddRange(timeOfDateRule.Exceptions.Select(x => new EditableTimeOfMatchNumberRuleViewModel()
                         {
-                            MatchNumber = x.MatchNumber,
+                            MatchNumber = x.Index + 1,
                             Time = x.Time
                         }));
                         return rule2;
 
-                    case TimeOfMatchNumberRule timeOfMatchNumberRule:
+                    case TimeOfIndexRule timeOfMatchNumberRule:
                         return (EditableTimeSchedulingRuleViewModel)new EditableTimeOfMatchNumberRuleViewModel()
                         {
-                            MatchNumber = timeOfMatchNumberRule.MatchNumber,
+                            MatchNumber = timeOfMatchNumberRule.Index,
                             Time = timeOfMatchNumberRule.Time
                         };
 
@@ -78,9 +78,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                             EndDate = timeOfDateRangeRule.EndDate,
                             Time = timeOfDateRangeRule.Time,
                         };
-                        rule3.MatchExceptions.AddRange(timeOfDateRangeRule.MatchExceptions.Select(x => new EditableTimeOfMatchNumberRuleViewModel()
+                        rule3.MatchExceptions.AddRange(timeOfDateRangeRule.Exceptions.Select(x => new EditableTimeOfMatchNumberRuleViewModel()
                         {
-                            MatchNumber = x.MatchNumber,
+                            MatchNumber = x.Index + 1,
                             Time = x.Time
                         }));
                         return rule3;
@@ -132,7 +132,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand RemoveExceptionCommand { get; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfDayRule(Day.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>() : []);
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfDayRule(Day.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfIndexRule>() : []);
     }
 
     internal class EditableTimeOfDateRuleViewModel : EditableTimeSchedulingRuleViewModel
@@ -161,7 +161,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand RemoveExceptionCommand { get; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfDateRule(Date.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>() : []);
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfDateRule(Date.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfIndexRule>() : []);
     }
 
     internal class EditableTimeOfMatchNumberRuleViewModel : EditableTimeSchedulingRuleViewModel
@@ -174,7 +174,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [Display(Name = nameof(Time), ResourceType = typeof(MyClubResources))]
         public TimeOnly? Time { get; set; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfMatchNumberRule(MatchNumber.GetValueOrDefault(), Time.GetValueOrDefault());
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfIndexRule(MatchNumber.GetValueOrDefault() - 1, Time.GetValueOrDefault());
     }
 
     internal class EditableTimeOfDateRangeRuleViewModel : EditableTimeSchedulingRuleViewModel
@@ -210,6 +210,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand RemoveExceptionCommand { get; }
 
-        public override ITimeSchedulingRule ProvideRule() => new TimeOfDatesRangeRule(StartDate.GetValueOrDefault(), EndDate.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfMatchNumberRule>() : []);
+        public override ITimeSchedulingRule ProvideRule() => new TimeOfDatesRangeRule(StartDate.GetValueOrDefault(), EndDate.GetValueOrDefault(), Time.GetValueOrDefault(), AllowExceptions ? MatchExceptions.Select(x => x.ProvideRule()).OfType<TimeOfIndexRule>() : []);
     }
 }

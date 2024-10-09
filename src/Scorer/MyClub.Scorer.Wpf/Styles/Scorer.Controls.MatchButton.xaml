@@ -17,7 +17,7 @@
     <sys:Int32 x:Key="Fifteen">15</sys:Int32>
     <sys:Int32 x:Key="Thirty">30</sys:Int32>
 
-    <Style x:Key="Scorer.Styles.MatchButton" TargetType="{x:Type ctrl:MatchButton}" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}">
+    <Style x:Key="Scorer.Styles.MatchButton" TargetType="{x:Type ctrl:MatchButton}" BasedOn="{StaticResource MyNet.Styles.Button.Icon.Foreground}">
         <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
         <Setter Property="Content" Value="{Binding Item, RelativeSource={RelativeSource Self}}" />
         <Setter Property="ContentTemplate">
@@ -45,12 +45,12 @@
                                      Visibility="Collapsed" />
 
                         <!-- DateTime -->
-                        <Grid x:Name="date">
+                        <Grid x:Name="date" Visibility="Collapsed">
                             <TextBlock Text="{my:DisplayDateTime Date, Format=ShortDateFormat, Casing=Title}">
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfEqual}">
                                         <Binding Path="Date.Date" />
-                                        <Binding Path="Parent.Date.Date" />
+                                        <Binding Path="Stage.StartDate.Date" />
                                     </MultiBinding>
                                 </TextBlock.Visibility>
                             </TextBlock>
@@ -58,11 +58,16 @@
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{x:Static my:EqualityToVisibilityConverter.CollapsedIfNotEqual}">
                                         <Binding Path="Date.Date" />
-                                        <Binding Path="Parent.Date.Date" />
+                                        <Binding Path="Stage.StartDate.Date" />
                                     </MultiBinding>
                                 </TextBlock.Visibility>
                             </TextBlock>
                         </Grid>
+
+                        <!-- Versus -->
+                        <TextBlock x:Name="versus"
+                                   Text="{my:Resource VersusAbbr}"
+                                   Visibility="Collapsed" />
 
                         <!-- Score -->
                         <Grid x:Name="score" Visibility="Collapsed">
@@ -72,171 +77,52 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding HomeScore}" />
+                            <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Home.Score}" />
                             <Label x:Name="awayScore"
                                    Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                    Grid.Column="2"
-                                   Content="{Binding AwayScore}" />
+                                   Content="{Binding Away.Score}" />
                         </Grid>
 
                     </Grid>
 
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding State}" Value="{x:Static enums:MatchState.Played}">
-                            <Setter TargetName="date" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="score" Property="Visibility" Value="Visible" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding State}" Value="{x:Static enums:MatchState.InProgress}">
                             <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
-                            <Setter TargetName="date" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
                             <Setter TargetName="score" Property="Visibility" Value="Visible" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding State}" Value="{x:Static enums:MatchState.Suspended}">
                             <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
-                            <Setter TargetName="date" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
                             <Setter TargetName="score" Property="ToolTip" Value="{my:Resource MatchStateSuspended}" />
                             <Setter TargetName="score" Property="Visibility" Value="Visible" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding State}" Value="{x:Static enums:MatchState.Cancelled}">
                             <Setter TargetName="cancel" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="date" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding State}" Value="{x:Static enums:MatchState.Postponed}">
-                            <Setter TargetName="date" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="postponed" Property="Visibility" Value="Visible" />
                         </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding State}" Value="{x:Static enums:MatchState.None}" />
+                                <Condition Binding="{Binding ShowTime, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchButton}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="date" Property="Visibility" Value="Visible" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding State}" Value="{x:Static enums:MatchState.None}" />
+                                <Condition Binding="{Binding ShowTime, RelativeSource={RelativeSource AncestorType={x:Type ctrl:MatchButton}}}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="versus" Property="Visibility" Value="Visible" />
+                        </MultiDataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>
-            </Setter.Value>
-        </Setter>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu DataContext="{Binding PlacementTarget.Item, RelativeSource={RelativeSource Self}}">
-                    <ContextMenu.Resources>
-                        <my:BindingProxy x:Key="MatchProxy" Data="{Binding}" />
-                    </ContextMenu.Resources>
-                    <MenuItem Command="{Binding OpenCommand}" Icon="{my:ToolIcon Kind=Eye}">
-                        <MenuItem.Header>
-                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
-                                <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" IsEnabled="False" />
-                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
-                                <ContentControl Content="{Binding AwayTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Away}" IsEnabled="False" />
-                            </my:SimpleStackPanel>
-                        </MenuItem.Header>
-                    </MenuItem>
-                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
-                    <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
-                    <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding CanBeRescheduled}">
-                        <MenuItem Command="{Binding RescheduleAutomaticCommand}" Header="{my:Resource Automatic}" Icon="{my:ToolIcon Kind=Magic}" />
-                        <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Pluralize=True}">
-                            <MenuItem.Icon>
-                                <Grid>
-                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
-                                           Width="16"
-                                           Height="16"
-                                           Padding="0"
-                                           Content="{StaticResource Five}"
-                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                           FontWeight="Bold" />
-                                </Grid>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Pluralize=True}">
-                            <MenuItem.Icon>
-                                <Grid>
-                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
-                                           Width="16"
-                                           Height="16"
-                                           Padding="0"
-                                           Content="{StaticResource Ten}"
-                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                           FontWeight="Bold" />
-                                </Grid>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Pluralize=True}">
-                            <MenuItem.Icon>
-                                <Grid>
-                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
-                                           Width="16"
-                                           Height="16"
-                                           Padding="0"
-                                           Content="{StaticResource Fifteen}"
-                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                           FontWeight="Bold" />
-                                </Grid>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Command="{Binding RescheduleXMinutesCommand}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Pluralize=True}">
-                            <MenuItem.Icon>
-                                <Grid>
-                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
-                                           Width="16"
-                                           Height="16"
-                                           Padding="0"
-                                           Content="{StaticResource Thirty}"
-                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                           FontWeight="Bold" />
-                                </Grid>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Pluralize=True}">
-                            <MenuItem.Icon>
-                                <Grid>
-                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
-                                           Width="16"
-                                           Height="16"
-                                           Padding="0"
-                                           Content="{StaticResource One}"
-                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                           FontWeight="Bold" />
-                                </Grid>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Command="{Binding RescheduleXHoursCommand}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Pluralize=True}">
-                            <MenuItem.Icon>
-                                <Grid>
-                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
-                                           Width="16"
-                                           Height="16"
-                                           Padding="0"
-                                           Content="{StaticResource Two}"
-                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
-                                           FontWeight="Bold" />
-                                </Grid>
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Height="50"
-                                  my:RippleAssist.Feedback="Transparent"
-                                  my:ThemeAssist.IsMouseOverBackground="Transparent"
-                                  Header="{Binding Data.RescheduleCommand, Source={StaticResource MatchProxy}}"
-                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
-                                  Icon="{my:ToolIcon Kind=ClockEdit}" />
-                    </MenuItem>
-                    <MenuItem Command="{Binding InvertTeamsCommand}" Header="{my:Resource InvertTeams}" Icon="{my:ToolIcon Kind=SwapHorizontal}" />
-                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
-                    <MenuItem Header="{my:Resource Update}" Icon="{my:ToolIcon Kind=TimerRefreshOutline}">
-                        <MenuItem Command="{Binding ResetCommand}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
-                        <MenuItem Command="{Binding StartCommand}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
-                        <MenuItem Command="{Binding SuspendCommand}" Header="{my:Resource Suspend}" Icon="{my:ToolIcon Kind=ProgressAlert}" />
-                        <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
-                        <MenuItem Command="{Binding CancelCommand}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
-                    </MenuItem>
-                    <MenuItem Command="{Binding RandomizeCommand}" Header="{my:Resource Randomize}" Icon="{my:ToolIcon Kind=Counter}" />
-                    <MenuItem Header="{my:Resource DoWithdraw}" Icon="{my:ToolIcon Kind=Close}" IsEnabled="{Binding CanBeWithdraw}">
-                        <MenuItem Command="{Binding DoWithdrawForHomeTeamCommand}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
-                        <MenuItem Command="{Binding DoWithdrawForAwayTeamCommand}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
-                    </MenuItem>
-                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
-                    <MenuItem Background="{DynamicResource MyNet.Brushes.Negative}"
-                              Command="{Binding RemoveCommand}"
-                              Foreground="{my:BrushBinding SelfPath=Background,
-                                                           Contrast=True}"
-                              Header="{my:Resource Remove}"
-                              Icon="{my:ToolIcon Kind=Trash}" />
-                </ContextMenu>
             </Setter.Value>
         </Setter>
         <Setter Property="HorizontalAlignment" Value="Left" />

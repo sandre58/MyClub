@@ -18,6 +18,7 @@
                 <Setter.Value>
                     <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
                         <Setter Property="Background" Value="{Binding Path=(my:ThemeAssist.IsCheckedBackground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
+                        <Setter Property="BorderThickness" Value="{Binding Path=Tag, RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
                         <Setter Property="Foreground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
                         <Setter Property="Visibility" Value="{Binding IsEnabled, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
                         <Setter Property="my:ListBoxItemAssist.IsSelectedForeground" Value="{Binding Path=(my:ThemeAssist.IsCheckedForeground), RelativeSource={RelativeSource AncestorType={x:Type ListBox}}}" />
@@ -39,6 +40,7 @@
                 </Setter.Value>
             </Setter>
             <Setter Property="Padding" Value="{StaticResource MyNet.Margins.Small}" />
+            <Setter Property="Tag" Value="2" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListBox}">
@@ -133,21 +135,6 @@
                                       Value="{my:NullableBinding PointsByGamesDrawn}" />
                 </GroupBox>
 
-                <!-- Lost -->
-                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}">
-                    <GroupBox.Header>
-                        <my:PackIcon Width="24"
-                                     Height="24"
-                                     Foreground="{DynamicResource MyNet.Brushes.Negative}"
-                                     Kind="CloseCircle" />
-                    </GroupBox.Header>
-                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
-                                      my:HintAssist.Hint="{my:Resource ByGamesLost}"
-                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
-                                                                                  Casing=LowerCase}"
-                                      Value="{my:NullableBinding PointsByGamesLost}" />
-                </GroupBox>
-
                 <!-- Lost after shootouts -->
                 <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}" Visibility="{Binding ShowShootouts, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                     <GroupBox.Header>
@@ -161,6 +148,21 @@
                                       my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
                                                                                   Casing=LowerCase}"
                                       Value="{my:NullableBinding PointsByGamesLostAfterShootouts}" />
+                </GroupBox>
+
+                <!-- Lost -->
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" my:HeaderAssist.Foreground="{DynamicResource MyNet.Brushes.Negative}">
+                    <GroupBox.Header>
+                        <my:PackIcon Width="24"
+                                     Height="24"
+                                     Foreground="{DynamicResource MyNet.Brushes.Negative}"
+                                     Kind="CloseCircle" />
+                    </GroupBox.Header>
+                    <my:NumericUpDown Width="{StaticResource MyNet.Widths.Control.Large}"
+                                      my:HintAssist.Hint="{my:Resource ByGamesLost}"
+                                      my:TextFieldAssist.SuffixText="{my:Resource PointsAbbr,
+                                                                                  Casing=LowerCase}"
+                                      Value="{my:NullableBinding PointsByGamesLost}" />
                 </GroupBox>
 
                 <!-- Withdrawn -->
@@ -195,7 +197,10 @@
                                                             Opacity={StaticResource MyNet.Opacity.Secondary}}"
                                Text="{my:Resource Compute}"
                                Typography.Capitals="AllSmallCaps" />
-                    <my:PackIcon Kind="HelpCircle" Opacity="{StaticResource MyNet.Opacity.Secondary}" ToolTip="{my:Resource RankingComputersDescription}" />
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                       my:HeaderAssist.Header="{my:Resource Compute}"
+                                       PopupContent="{my:Resource RankingComputersDescription}"
+                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                 </my:SimpleStackPanel>
             </GroupBox.Header>
             <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl}" ItemsSource="{Binding RankingColumnComputers}">
@@ -226,7 +231,10 @@
                                                             Opacity={StaticResource MyNet.Opacity.Secondary}}"
                                Text="{my:Resource Sort}"
                                Typography.Capitals="AllSmallCaps" />
-                    <my:PackIcon Kind="HelpCircle" Opacity="{StaticResource MyNet.Opacity.Secondary}" ToolTip="{my:Resource RankingComparersDescription}" />
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
+                                       my:HeaderAssist.Header="{my:Resource Sort}"
+                                       PopupContent="{my:Resource RankingComparersDescription}"
+                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                 </my:SimpleStackPanel>
             </GroupBox.Header>
             <Grid>
@@ -254,7 +262,8 @@
                          dd:DragDrop.UseDefaultDragAdorner="True"
                          my:ThemeAssist.IsCheckedBackground="{DynamicResource MyNet.Brushes.Accent}"
                          my:ThemeAssist.IsCheckedForeground="{DynamicResource MyNet.Brushes.White}"
-                         ItemsSource="{Binding RankingRowComparers}" />
+                         ItemsSource="{Binding RankingRowComparers}"
+                         Tag="0" />
             </Grid>
         </GroupBox>
 

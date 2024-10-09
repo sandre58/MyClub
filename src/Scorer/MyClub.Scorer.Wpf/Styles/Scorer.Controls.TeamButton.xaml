@@ -20,26 +20,8 @@
         <Setter Property="ContentTemplate">
             <Setter.Value>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamButton}}}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                 </DataTemplate>
-            </Setter.Value>
-        </Setter>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu DataContext="{Binding PlacementTarget.Item, RelativeSource={RelativeSource Self}}">
-                    <ContextMenu.Resources>
-                        <my:BindingProxy x:Key="TeamProxy" Data="{Binding}" />
-                    </ContextMenu.Resources>
-                    <MenuItem Command="{Binding OpenCommand}" Header="{Binding Name}">
-                        <MenuItem.Icon>
-                            <Grid>
-                                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}" Margin="-5 0 0 0" DataContext="{Binding Data, Source={StaticResource TeamProxy}}" />
-                            </Grid>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
-                    <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
-                </ContextMenu>
             </Setter.Value>
         </Setter>
         <Style.Triggers>

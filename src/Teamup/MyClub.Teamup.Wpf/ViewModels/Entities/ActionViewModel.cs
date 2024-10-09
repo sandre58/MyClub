@@ -4,7 +4,6 @@
 using System;
 using MaterialDesignThemes.Wpf;
 using MyNet.Utilities;
-using MyNet.Humanizer;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Translatables;
 using MyClub.CrossCutting.Localization;

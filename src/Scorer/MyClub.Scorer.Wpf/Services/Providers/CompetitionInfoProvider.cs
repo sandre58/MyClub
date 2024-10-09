@@ -2,106 +2,132 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Services;
+using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
+using MyNet.Observable.Deferrers;
+using MyNet.Utilities;
+using MyNet.Utilities.Logging;
 
 namespace MyClub.Scorer.Wpf.Services.Providers
 {
+    public enum CompetitionState
+    {
+        Incoming,
+
+        InProgress,
+
+        Finished
+    }
+
     internal class CompetitionInfoProvider : ObservableObject
     {
-        private readonly MatchdayPresentationService _matchdayPresentationService;
-        private readonly MatchPresentationService _matchPresentationService;
-        private readonly StadiumsProvider _stadiumsProvider;
-        private readonly TeamsProvider _teamsProvider;
+        private readonly ProjectInfoProvider _projectInfoProvider;
         private readonly LeagueService _leagueService;
-        private readonly Subject<ICompetitionViewModel> _competitionLoadedSubject = new();
-        private readonly Subject<ICompetitionViewModel> _competitionDisposingSubject = new();
+        private CompositeDisposable _competitionDisposables = [];
         private ICompetitionViewModel? _currentCompetition;
 
         public CompetitionInfoProvider(ProjectInfoProvider projectInfoProvider,
                                        MatchdayPresentationService matchdayPresentationService,
+                                       RoundPresentationService roundPresentationService,
                                        MatchPresentationService matchPresentationService,
                                        StadiumsProvider stadiumsProvider,
                                        TeamsProvider teamsProvider,
                                        LeagueService leagueService)
         {
-            _matchdayPresentationService = matchdayPresentationService;
-            _matchPresentationService = matchPresentationService;
-            _stadiumsProvider = stadiumsProvider;
-            _teamsProvider = teamsProvider;
+            _projectInfoProvider = projectInfoProvider;
             _leagueService = leagueService;
 
-            projectInfoProvider.WhenProjectClosing(Clear);
-            projectInfoProvider.WhenProjectLoaded(Reload);
-        }
-
-        public bool HasMatches { get; private set; }
-
-        public ICompetitionViewModel GetCompetition() => GetCompetition<ICompetitionViewModel>();
-
-        public T GetCompetition<T>() where T : ICompetitionViewModel => (T)_currentCompetition! ?? throw new InvalidCastException($"Competition is not of type {typeof(T)}");
-
-        private void Clear()
-        {
-            if (_currentCompetition is null) return;
-
-            _competitionDisposingSubject.OnNext(_currentCompetition);
-
-            _currentCompetition.Dispose();
-            _currentCompetition = null;
-        }
-
-        protected void Reload(IProject project)
-        {
-            switch (project)
+            UnloadRunner = new(() =>
             {
-                case LeagueProject leagueProject:
-                    var league = new LeagueViewModel(leagueProject.Competition,
-                                                     leagueProject.Competition.WhenChanged(x => x.SchedulingParameters, (x, y) => y),
-                                                     _matchdayPresentationService,
-                                                     _matchPresentationService,
-                                                     _stadiumsProvider,
-                                                     _teamsProvider,
-                                                     _leagueService);
+                StartDate = null;
+                EndDate = null;
+                Type = null;
+                State = null;
+                _competitionDisposables.Dispose();
+                _currentCompetition?.Dispose();
+                _currentCompetition = null;
+            });
+            LoadRunner = new(x =>
+            {
+                Type = x.Type;
+                _currentCompetition = x switch
+                {
+                    LeagueProject leagueProject => new LeagueViewModel(leagueProject.Competition,
+                                                                       leagueProject.Competition.WhenChanged(x => x.SchedulingParameters, (x, y) => y),
+                                                                       matchdayPresentationService,
+                                                                       matchPresentationService,
+                                                                       stadiumsProvider,
+                                                                       teamsProvider,
+                                                                       _leagueService),
+                    CupProject cupProject => new CupViewModel(cupProject.Competition,
+                                                              cupProject.Competition.WhenChanged(x => x.SchedulingParameters, (x, y) => y),
+                                                              roundPresentationService,
+                                                              matchPresentationService,
+                                                              stadiumsProvider,
+                                                              teamsProvider),
+                    TournamentProject => _currentCompetition = null,
+                    _ => null
+                };
 
-                    _currentCompetition = league;
-                    break;
-                case CupProject cupProject:
-                    _currentCompetition = new CupViewModel(cupProject.Competition);
-                    break;
-                case TournamentProject _:
-                    _currentCompetition = null;
-                    break;
-                default:
-                    break;
-            }
+                if (_currentCompetition is null) return;
 
+                _competitionDisposables = new(x.WhenPropertyChanged(x => x.Competition.SchedulingParameters).Subscribe(y =>
+                {
+                    StartDate = y.Value?.StartDate;
+                    EndDate = y.Value?.EndDate;
+
+                    if (StartDate.HasValue && EndDate.HasValue)
+                        State = StartDate.Value.IsInFuture() ? CompetitionState.Incoming : EndDate.Value.IsInPast() ? CompetitionState.Finished : CompetitionState.InProgress;
+                }));
+            }, true);
+            LoadRunner.RegisterOnEnd(this, x => LogManager.Trace($"{GetType().Name} : Load {x?.GetType()} in {LoadRunner.LastTimeElapsed.Milliseconds}ms"));
+
+            projectInfoProvider.UnloadRunner.RegisterOnStart(this, Unload);
+            projectInfoProvider.LoadRunner.RegisterOnEnd(this, Reload);
+        }
+
+        public CompetitionType? Type { get; private set; }
+
+        public DateOnly? StartDate { get; private set; }
+
+        public DateOnly? EndDate { get; private set; }
+
+        public CompetitionState? State { get; private set; }
+
+        public ActionRunner UnloadRunner { get; }
+
+        public ActionRunner<IProject, ICompetitionViewModel> LoadRunner { get; }
+
+        public ICompetitionViewModel GetCompetition() => _currentCompetition!;
+
+        public LeagueViewModel GetLeague() => (LeagueViewModel)_currentCompetition! ?? throw new InvalidCastException($"Competition is not of type {typeof(LeagueViewModel)}");
+
+        public CupViewModel GetCup() => (CupViewModel)_currentCompetition! ?? throw new InvalidCastException($"Competition is not of type {typeof(CupViewModel)}");
+
+        private void Unload()
+        {
             if (_currentCompetition is null) return;
 
-            _competitionLoadedSubject.OnNext(_currentCompetition);
+            UnloadRunner.Run();
         }
 
-        public void WhenCompetitionChanged(Action<ICompetitionViewModel>? onLoaded = null, Action<ICompetitionViewModel>? onDisposing = null)
-        {
-            if (onLoaded is not null)
-                Disposables.Add(_competitionLoadedSubject.Subscribe(onLoaded));
-
-            if (onDisposing is not null)
-                Disposables.Add(_competitionDisposingSubject.Subscribe(onDisposing));
-        }
+        protected void Reload(IProject project) => LoadRunner.Run(project, () => _currentCompetition!);
 
         protected override void Cleanup()
         {
             base.Cleanup();
+            _projectInfoProvider.LoadRunner.Unregister(this);
+            _projectInfoProvider.UnloadRunner.Unregister(this);
+            LoadRunner.Dispose();
+            UnloadRunner.Dispose();
             _currentCompetition?.Dispose();
-            _competitionDisposingSubject.Dispose();
-            _competitionLoadedSubject.Dispose();
         }
     }
 }

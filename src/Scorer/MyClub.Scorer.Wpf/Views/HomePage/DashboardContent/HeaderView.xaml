@@ -71,7 +71,7 @@
                                    Margin="0 0 0 -25"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Bottom"
-                                   my:IconAssist.Icon="{my:Icon Kind=ShieldCrown,
+                                   Content="{my:Icon Kind=ShieldCrown,
                                                                 Size=150}"
                                    my:ThemeAssist.IsMouseOverBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
                                                                                           Opacity={StaticResource MyNet.Opacity.Hovered}}"
@@ -79,27 +79,36 @@
                                    Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
                                    Image="{Binding Image, Mode=OneWay, Converter={x:Static my:BytesToImageConverter.Default}}" />
 
-                <my:SimpleStackPanel Grid.Column="3" Margin="{StaticResource MyNet.Margins.VeryLarge}" VerticalAlignment="Top">
+                <my:SimpleStackPanel Grid.Column="3" Margin="{StaticResource MyNet.Margins.Large}" VerticalAlignment="Top">
 
                     <!-- Name -->
                     <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Header}" FontSize="50" Text="{Binding Name}" />
 
-                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.VeryLarge}">
+                    <my:SimpleStackPanel>
 
-                        <!-- Count Teams -->
-                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Foreground}"
-                                  Width="60"
-                                  Height="60"
-                                  Content="{Binding CountTeams}"
-                                  Header="{my:Resource TeamsOptionalPlural}" />
-
-                        <!-- Count Stadiums -->
-                        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Label.Foreground}"
-                                  Width="60"
-                                  Height="60"
-                                  Content="{Binding CountStadiums}"
-                                  Header="{my:Resource StadiumsOptionalPlural}" />
-
+                        <my:SimpleStackPanel Orientation="Horizontal">
+                            <ContentControl Style="{StaticResource Scorer.Styles.ContentControl.Date.Foreground}" Content="{Binding StartDate}" FontSize="25" />
+                            <ContentControl Style="{StaticResource Scorer.Styles.ContentControl.Date.Foreground}" Content="{Binding EndDate}" FontSize="25" />
+                        </my:SimpleStackPanel>
+                        <Label Content="{my:Translation State}" ContentTemplate="{StaticResource MyNet.DataTemplates.Icon.Label}">
+                            <Label.Style>
+                                <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyNet.Styles.Label.Elevation.Foreground}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding State}" Value="Incoming">
+                                            <Setter Property="my:IconAssist.Icon" Value="{my:ToolIcon Kind=ProgressClock}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding State}" Value="InProgress">
+                                            <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
+                                            <Setter Property="my:IconAssist.Icon" Value="{my:ToolIcon Kind=ProgressHelper}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding State}" Value="Finished">
+                                            <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                            <Setter Property="my:IconAssist.Icon" Value="{my:ToolIcon Kind=ProgressClose}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
                     </my:SimpleStackPanel>
                 </my:SimpleStackPanel>
 

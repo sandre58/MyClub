@@ -15,7 +15,6 @@ namespace MyClub.Scorer.Wpf.Services.Providers
 
         public MatchesProvider(ProjectInfoProvider projectInfoProvider, CompetitionInfoProvider competitionInfoProvider) : base(projectInfoProvider) => _competitionInfoProvider = competitionInfoProvider;
 
-        protected override IObservable<IChangeSet<MatchViewModel, Guid>> ProvideObservable(IProject project) => _competitionInfoProvider.GetCompetition().ProvideMatches();
-
+        protected override IObservable<IChangeSet<MatchViewModel>> ProvideObservable(IProject project) => _competitionInfoProvider.GetCompetition().ProvideMatches();
     }
 }

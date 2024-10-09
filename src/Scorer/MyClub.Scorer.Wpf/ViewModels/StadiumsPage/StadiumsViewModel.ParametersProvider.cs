@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.UI.ViewModels.List;
 using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.UI.ViewModels.List.Sorting;
@@ -18,9 +18,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.StadiumsPage
         public override ISortingViewModel ProvideSorting()
             => new ExtendedSortingViewModel(new Dictionary<string, string>
             {
-                { nameof(MyClubResources.Name), nameof(IStadiumViewModel.Name) },
-                { nameof(MyClubResources.City), $"{nameof(IStadiumViewModel.Address)}.{nameof(Address.City)}" },
-                { nameof(MyClubResources.Ground), nameof(IStadiumViewModel.Ground) },
-            }, [$"{nameof(IStadiumViewModel.Address)}.{nameof(Address.City)}"]);
+                { nameof(MyClubResources.Name), nameof(StadiumViewModel.Name) },
+                { nameof(MyClubResources.City), $"{nameof(StadiumViewModel.Address)}.{nameof(Address.City)}" },
+                { nameof(MyClubResources.Ground), nameof(StadiumViewModel.Ground) },
+            }, [$"{nameof(StadiumViewModel.Address)}.{nameof(Address.City)}"]);
     }
 }

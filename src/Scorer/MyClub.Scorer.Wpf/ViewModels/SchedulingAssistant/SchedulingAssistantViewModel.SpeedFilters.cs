@@ -12,7 +12,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {
     internal class SchedulingAssistantSpeedFiltersViewModel : SpeedFiltersViewModel
     {
-        public SchedulingAssistantSpeedFiltersViewModel(IEnumerable<ITeamViewModel> teams, IEnumerable<IStadiumViewModel> stadiums)
+        public SchedulingAssistantSpeedFiltersViewModel(IEnumerable<IVirtualTeamViewModel> teams, IEnumerable<StadiumViewModel> stadiums)
         {
             TeamFilter = new MatchTeamFilterViewModel(teams);
             StadiumFilter = new(nameof(MatchViewModel.Stadium), stadiums);
@@ -21,6 +21,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 
         public MatchTeamFilterViewModel TeamFilter { get; }
 
-        public SelectedValuesFilterViewModel<IStadiumViewModel> StadiumFilter { get; }
+        public SelectedValuesFilterViewModel<StadiumViewModel> StadiumFilter { get; }
     }
 }

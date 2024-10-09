@@ -14,5 +14,9 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
         public TimeSpan PeriodForPreviousMatches { get; set; } = 8.Days();
 
         public TimeSpan PeriodForNextMatches { get; set; } = 8.Days();
+
+        public bool ShowNextMatchFallback { get; set; } = true;
+
+        public bool ShowLastMatchFallback { get; set; } = true;
     }
 }

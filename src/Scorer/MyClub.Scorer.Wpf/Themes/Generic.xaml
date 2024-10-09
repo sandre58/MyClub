@@ -11,7 +11,8 @@
     <Style BasedOn="{StaticResource Scorer.Styles.StadiumButton}" TargetType="{x:Type ctrl:StadiumButton}" />
     <Style BasedOn="{StaticResource Scorer.Styles.TeamButton}" TargetType="{x:Type ctrl:PlayerButton}" />
     <Style BasedOn="{StaticResource Scorer.Styles.MatchButton}" TargetType="{x:Type ctrl:MatchButton}" />
-    <Style BasedOn="{StaticResource Scorer.Styles.MatchdayButton}" TargetType="{x:Type ctrl:MatchdayButton}" />
-    <Style BasedOn="{StaticResource Scorer.Styles.MatchControl}" TargetType="{x:Type ctrl:MatchControl}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.CompetitionStageButton}" TargetType="{x:Type ctrl:CompetitionStageButton}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.MatchControl.Medium}" TargetType="{x:Type ctrl:MatchControl}" />
+    <Style BasedOn="{StaticResource Scorer.Styles.MatchTimeline}" TargetType="{x:Type ctrl:MatchTimeline}" />
 
 </ResourceDictionary>

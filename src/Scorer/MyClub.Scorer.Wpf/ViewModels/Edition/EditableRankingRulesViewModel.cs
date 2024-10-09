@@ -12,7 +12,6 @@ using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.RankingAggregate;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
@@ -41,18 +40,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 new RankingRowComparerWrapper(RankingComparer.AllAvailableComparers[nameof(RankingRowByGamesWithdrawnComparer)], nameof(MyClubResources.SortingByGamesWithdrawn)),
             ];
 
-        private readonly UiObservableCollection<ITeamViewModel> _teams = [];
+        private readonly UiObservableCollection<IEditableTeamViewModel> _teams = [];
 
-        public EditableRankingRulesViewModel(ISourceProvider<ITeamViewModel> teamsProvider)
+        public EditableRankingRulesViewModel(ISourceProvider<IEditableTeamViewModel> teamsProvider)
         {
             Teams = new(_teams);
 
-            AddTeamPenaltyCommand = CommandsManager.CreateNotNull<ITeamViewModel>(x => Penalties.Add(new EditableTeamPenaltyViewModel(x)), x => !Penalties.Select(x => x.Team).Contains(x));
+            AddTeamPenaltyCommand = CommandsManager.CreateNotNull<IEditableTeamViewModel>(x => Penalties.Add(new EditableTeamPenaltyViewModel(x)), x => !Penalties.Select(x => x.Team).Contains(x));
             RemoveTeamPenaltyCommand = CommandsManager.CreateNotNull<EditableTeamPenaltyViewModel>(x => Penalties.Remove(x), x => x is not null);
 
             Disposables.AddRange(
             [
-                teamsProvider.Connect().AutoRefresh(x => x.Name).Sort(SortExpressionComparer<ITeamViewModel>.Ascending(x => x.Name)).Bind(_teams).Subscribe(),
+                teamsProvider.Connect().AutoRefresh(x => x.Name).Sort(SortExpressionComparer<IEditableTeamViewModel>.Ascending(x => x.Name)).Bind(_teams).Subscribe(),
                 teamsProvider.Connect().Subscribe(_ => Labels.Update(teamsProvider.Source.Count)),
             ]);
 
@@ -107,7 +106,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<ITeamViewModel> Teams { get; }
+        public ReadOnlyObservableCollection<IEditableTeamViewModel> Teams { get; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
@@ -126,12 +125,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             ShowShootouts = showShootouts;
 
-            PointsByGamesWon = GetPoints(rankingRules, MatchResultDetailled.Won);
-            PointsByGamesWonAfterShootouts = GetPoints(rankingRules, MatchResultDetailled.WonAfterShootouts);
-            PointsByGamesDrawn = GetPoints(rankingRules, MatchResultDetailled.Drawn);
-            PointsByGamesLost = GetPoints(rankingRules, MatchResultDetailled.Lost);
-            PointsByGamesLostAfterShootouts = GetPoints(rankingRules, MatchResultDetailled.LostAfterShootouts);
-            PointsByGamesWithdrawn = GetPoints(rankingRules, MatchResultDetailled.Withdrawn);
+            PointsByGamesWon = GetPoints(rankingRules, ExtendedResult.Won);
+            PointsByGamesWonAfterShootouts = GetPoints(rankingRules, ExtendedResult.WonAfterShootouts);
+            PointsByGamesDrawn = GetPoints(rankingRules, ExtendedResult.Drawn);
+            PointsByGamesLost = GetPoints(rankingRules, ExtendedResult.Lost);
+            PointsByGamesLostAfterShootouts = GetPoints(rankingRules, ExtendedResult.LostAfterShootouts);
+            PointsByGamesWithdrawn = GetPoints(rankingRules, ExtendedResult.Withdrawn);
 
             var availableRankingRowComparers = GetAvailableRankingRowComparers();
 
@@ -160,30 +159,30 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public RankingRules Create()
         {
-            var pointsByResult = new Dictionary<MatchResultDetailled, int>();
+            var pointsByResult = new Dictionary<ExtendedResult, int>();
 
             if (PointsByGamesWon.HasValue)
-                pointsByResult.Add(MatchResultDetailled.Won, PointsByGamesWon.Value);
+                pointsByResult.Add(ExtendedResult.Won, PointsByGamesWon.Value);
 
             if (PointsByGamesWonAfterShootouts.HasValue)
-                pointsByResult.Add(MatchResultDetailled.WonAfterShootouts, PointsByGamesWonAfterShootouts.Value);
+                pointsByResult.Add(ExtendedResult.WonAfterShootouts, PointsByGamesWonAfterShootouts.Value);
 
             if (PointsByGamesDrawn.HasValue)
-                pointsByResult.Add(MatchResultDetailled.Drawn, PointsByGamesDrawn.Value);
+                pointsByResult.Add(ExtendedResult.Drawn, PointsByGamesDrawn.Value);
 
             if (PointsByGamesLost.HasValue)
-                pointsByResult.Add(MatchResultDetailled.Lost, PointsByGamesLost.Value);
+                pointsByResult.Add(ExtendedResult.Lost, PointsByGamesLost.Value);
 
             if (PointsByGamesLostAfterShootouts.HasValue)
-                pointsByResult.Add(MatchResultDetailled.LostAfterShootouts, PointsByGamesLostAfterShootouts.Value);
+                pointsByResult.Add(ExtendedResult.LostAfterShootouts, PointsByGamesLostAfterShootouts.Value);
 
             if (PointsByGamesWithdrawn.HasValue)
-                pointsByResult.Add(MatchResultDetailled.Withdrawn, PointsByGamesWithdrawn.Value);
+                pointsByResult.Add(ExtendedResult.Withdrawn, PointsByGamesWithdrawn.Value);
 
             return new RankingRules(pointsByResult, new RankingComparer(RankingRowComparers.Select(x => x.Item)), RankingColumnComputers.Where(x => x.IsEnabled && x.IsActive).ToDictionary(x => x.DisplayName.Key, x => x.Item));
         }
 
-        private static int? GetPoints(RankingRules rankingRules, MatchResultDetailled result) => rankingRules.PointsNumberByResult.ContainsKey(result) ? rankingRules.GetPoints(result) : null;
+        private static int? GetPoints(RankingRules rankingRules, ExtendedResult result) => rankingRules.PointsNumberByResult.ContainsKey(result) ? rankingRules.GetPoints(result) : null;
     }
 
     internal class RankingColumnComputerWrapper : EditableWrapper<IRankingColumnComputer>

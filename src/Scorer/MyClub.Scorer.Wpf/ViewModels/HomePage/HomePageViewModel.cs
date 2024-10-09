@@ -25,12 +25,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.HomePage
                                  ProjectInfoProvider projectInfoProvider,
                                  CompetitionInfoProvider competitionInfoProvider,
                                  MatchesProvider matchesProvider,
-                                 TeamsProvider teamsProvider,
-                                 StadiumsProvider stadiumsProvider,
-                                 RecentFilesViewModel recentFilesViewModel)
+                                 RecentFilesViewModel recentFilesViewModel,
+                                 MatchPresentationService matchPresentationService)
         {
             OpenAssistant = new(recentFilesViewModel, projectCommandsService);
-            Dashboard = new(projectInfoProvider, competitionInfoProvider, matchesProvider, teamsProvider, stadiumsProvider);
+            Dashboard = new(projectInfoProvider, competitionInfoProvider, matchesProvider, matchPresentationService);
             Disposables.Add(projectInfoProvider.WhenPropertyChanged(x => x.IsLoaded).Subscribe(x => ProjectIsLoaded = x.Value));
         }
 

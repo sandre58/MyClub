@@ -22,8 +22,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly UiObservableCollection<MatchOppositionViewModel> _lastMatches = [];
         private readonly UiObservableCollection<MatchOppositionViewModel> _matches = [];
         private readonly RankingViewModel _ranking;
+        private readonly object _lock = new();
 
-        public RankingRowViewModel(RankingViewModel ranking, ITeamViewModel team)
+        public RankingRowViewModel(RankingViewModel ranking, TeamViewModel team)
         {
             Team = team;
             _ranking = ranking;
@@ -33,7 +34,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public Guid Id => Team.Id;
 
-        public ITeamViewModel Team { get; }
+        public TeamViewModel Team { get; }
 
         public RankLabel? Label { get; private set; }
 
@@ -84,9 +85,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             GoalsAgainst = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GoalsAgainst.ToString()) ?? 0;
             GoalsFor = (int?)row.Columns?.GetOrDefault(DefaultRankingColumn.GoalsFor.ToString()) ?? 0;
 
-            _matches.Set(matches.OrderBy(x => x.Date).Select(x => new MatchOppositionViewModel(Team, x)).ToList());
-            _lastMatches.Set(_matches.TakeLast(_ranking.FormCount));
+            lock (_lock)
+            {
+                _matches.Set(matches.OrderBy(x => x.Date).Select(x => new MatchOppositionViewModel(Team, x)).ToList());
+                _lastMatches.Set(_matches.TakeLast(_ranking.FormCount));
+            }
         }
+
         public void Reset()
         {
             Progression = null;
@@ -126,21 +131,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
     internal class MatchOppositionViewModel : ObservableObject
     {
-        public ITeamViewModel Team { get; }
+        public IVirtualTeamViewModel Team { get; }
 
-        public ITeamViewModel? Opponent { get; }
+        public IVirtualTeamViewModel? Opponent { get; }
 
         public int GoalsFor { get; }
 
         public int GoalsAgainst { get; }
 
-        public MatchResult Result { get; }
+        public Result Result { get; }
 
-        public MatchResultDetailled ResultDetailled { get; }
+        public ExtendedResult ResultDetailled { get; }
 
         public MatchViewModel Match { get; }
 
-        public MatchOppositionViewModel(ITeamViewModel team, MatchViewModel match)
+        public MatchOppositionViewModel(IVirtualTeamViewModel team, MatchViewModel match)
         {
             Match = match;
             Team = team;

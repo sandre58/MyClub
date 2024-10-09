@@ -19,7 +19,7 @@
                              HorizontalAlignment="Right"
                              DockPanel.Dock="Top"
                              Orientation="Horizontal">
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Foreground}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled.Foreground}"
                     my:IconAssist.Icon="{my:ToolIcon Kind=FolderOpen}"
                     Command="{Binding LoadCommand}"
                     Content="{my:Resource Browse}" />

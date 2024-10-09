@@ -8,7 +8,6 @@ using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Resources;
@@ -21,7 +20,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 {
     internal class EditableSchedulingParametersViewModel : NavigableWorkspaceViewModel
     {
-        public EditableSchedulingParametersViewModel(ISourceProvider<IStadiumViewModel> stadiums)
+        public EditableSchedulingParametersViewModel(ISourceProvider<IEditableStadiumViewModel> stadiums)
         {
             VenueRules = new(stadiums.Source);
             ValidationRules.Add<EditableSchedulingParametersViewModel, DateOnly?>(x => x.EndDate, MessageResources.FieldEndDateMustBeUpperOrEqualsThanStartDateError, x => !x.HasValue || !StartDate.HasValue || x.Value > StartDate);
@@ -38,7 +37,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                    UseHomeVenue,
                    AsSoonAsPossible,
                    IntervalValue.GetValueOrDefault().ToTimeSpan(IntervalUnit),
-                   ScheduleByParent,
+                   ScheduleByStage,
                    AsSoonAsPossible ? AsSoonAsPossibleRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList() : [],
                    AsSoonAsPossible ? [] : DateRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList(),
                    AsSoonAsPossible ? [] : TimeRules.Rules.Select(x => x.ProvideRule()).SelectMany(x => x.ConvertToTimeZone(GlobalizationService.Current.TimeZone, TimeZoneInfo.Utc)).ToList(),
@@ -90,8 +89,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         public TimeUnit IntervalUnit { get; set; }
 
         [IsRequired]
-        [Display(Name = nameof(ScheduleByParent), ResourceType = typeof(MyClubResources))]
-        public bool ScheduleByParent { get; set; }
+        [Display(Name = nameof(ScheduleByStage), ResourceType = typeof(MyClubResources))]
+        public bool ScheduleByStage { get; set; }
 
         [CanBeValidated(false)]
         public EditableAsSoonAsPossibleDateSchedulingRulesViewModel AsSoonAsPossibleRules { get; } = new();
@@ -137,7 +136,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             UseHomeVenue = schedulingParameters.UseHomeVenue;
             AsSoonAsPossible = schedulingParameters.AsSoonAsPossible;
             (IntervalValue, IntervalUnit) = schedulingParameters.Interval.Simplify();
-            ScheduleByParent = schedulingParameters.ScheduleByParent;
+            ScheduleByStage = schedulingParameters.ScheduleByStage;
 
             if (AsSoonAsPossible)
             {

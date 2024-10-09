@@ -14,7 +14,7 @@ namespace MyClub.Scorer.Domain.Scheduling
         {
             foreach (var match in matches)
             {
-                match.Stadium = match.HomeTeam.Stadium;
+                match.Stadium = match.Home?.Team.Stadium;
                 match.IsNeutralStadium = false;
             }
         }

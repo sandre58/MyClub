@@ -23,7 +23,7 @@
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled.Primary}"
                             my:IconAssist.Icon="{my:Icon Kind=SortBoolAscendingVariant}"
                             Command="{Binding EditRulesCommand}"
                             Content="{my:Resource EditRules}"

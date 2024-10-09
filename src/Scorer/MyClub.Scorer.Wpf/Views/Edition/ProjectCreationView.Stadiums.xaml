@@ -1,0 +1,133 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.ProjectCreationStadiumsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:ProjectCreationStadiumsViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+              my:HeaderAssist.FontSize="{StaticResource MyNet.Font.Size.Title}"
+              my:IconAssist.Icon="{my:MediumIcon Kind=Stadium}"
+              Header="{my:Resource Stadiums}">
+        <DockPanel>
+            <Grid Margin="{StaticResource MyNet.Margins.Large.Bottom}" DockPanel.Dock="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Select stadium -->
+                <TextBox Grid.Column="0"
+                         Width="200"
+                         my:HintAssist.Hint="{my:Resource NewStadium}"
+                         my:IconAssist.Alignment="Right"
+                         my:TextFieldAssist.HasClearButton="True"
+                         Text="{Binding SpeedItemName, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding AddSpeedItemCommand}" />
+                    </TextBox.InputBindings>
+                    <my:IconAssist.Icon>
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                Command="{Binding AddSpeedItemCommand}"
+                                Content="{my:Icon Kind=Plus}"
+                                ToolTip="{my:Resource Add}" />
+                    </my:IconAssist.Icon>
+                </TextBox>
+
+                <!-- Add stadium -->
+                <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.Filled.Primary}"
+                                Grid.Column="2"
+                                my:IconAssist.Icon="{my:Icon Kind=PlusCircle}"
+                                Command="{Binding SpeedAddCommand}"
+                                PopupPadding="0"
+                                ToggleContent="{my:Resource New}">
+                    <my:Submenu>
+                        <MenuItem Command="{Binding AddCommand}" Header="{my:Resource Create}" Icon="{my:Icon Kind=Plus}" />
+                        <MenuItem Command="{Binding ImportCommand}"
+                                  Header="{my:Resource Import}"
+                                  Icon="{my:Icon Kind=Download}"
+                                  Visibility="{Binding HasImportSources, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    </my:Submenu>
+                </my:SplitButton>
+
+                <!-- Count -->
+                <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                         Grid.Column="3"
+                         Padding="{StaticResource MyNet.Margins.Default}"
+                         HorizontalAlignment="Right"
+                         VerticalAlignment="Stretch">
+                    <my:SimpleStackPanel Orientation="Horizontal">
+                        <TextBlock FontWeight="DemiBold" Text="{my:Translation Items.Count, Format=XItems, Pluralize=True}" Typography.Capitals="AllSmallCaps" />
+                        <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                Command="{Binding ClearCommand}"
+                                Content="{my:ToolIcon Kind=Close}"
+                                ToolTip="{my:Resource Clear}" />
+                    </my:SimpleStackPanel>
+                </my:Card>
+            </Grid>
+
+            <my:GhostControl GhostTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Medium}" ShowGhost="{Binding Items.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+                <ItemsControl VerticalAlignment="Top" ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <my:Card x:Name="card"
+                                     Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                     Margin="{StaticResource MyNet.Margins.Small}"
+                                     Padding="{StaticResource MyNet.Margins.Default}"
+                                     my:ElevationAssist.Elevation="Dp0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="5" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="5" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Icon -->
+                                    <my:PackIcon Width="18"
+                                                 Height="18"
+                                                 Kind="Stadium"
+                                                 Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+
+                                    <!-- Name -->
+                                    <TextBlock Grid.Column="2" DockPanel.Dock="Left" Text="{Binding DisplayName}" />
+
+                                    <!-- Edit stadium -->
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            Grid.Column="4"
+                                            Command="{Binding Data.EditCommand, Source={StaticResource Proxy}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=Edit}"
+                                            ToolTip="{my:Resource EditStadium}" />
+
+                                    <!-- Delete stadium -->
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Remove}"
+                                            Grid.Column="6"
+                                            Command="{Binding Data.RemoveCommand, Source={StaticResource Proxy}}"
+                                            CommandParameter="{Binding}" />
+                                </Grid>
+                            </my:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </my:GhostControl>
+        </DockPanel>
+    </GroupBox>
+</UserControl>

@@ -27,7 +27,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public UseRotationTime UseRotationTime { get; }
 
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
         {
             var availableStadiums = stadiums.Where(x => x.IsAvailable(scheduledMatches, match.GetPeriod(), UseRotationTime is UseRotationTime.Yes or UseRotationTime.YesOrOtherwiseNo)).ToList();
             if (availableStadiums.Count == 0 && UseRotationTime == UseRotationTime.YesOrOtherwiseNo)
@@ -46,90 +46,64 @@ namespace MyClub.Scorer.Domain.Scheduling
 
     public class HomeStadiumRule : ValueObject, IAvailableVenueSchedulingRule
     {
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
-            => match.HomeTeam.Stadium is not null ? new AvailableStadiumResult(match.HomeTeam.Stadium.Id, false) : null;
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
+            => match.Home?.Team.Stadium is not null ? new AvailableStadiumResult(match.Home.Team.Stadium.Id, false) : null;
     }
 
     public class AwayStadiumRule : ValueObject, IAvailableVenueSchedulingRule
     {
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
-            => match.AwayTeam.Stadium is not null ? new AvailableStadiumResult(match.AwayTeam.Stadium.Id, false) : null;
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
+            => match.Away?.Team.Stadium is not null ? new AvailableStadiumResult(match.Away.Team.Stadium.Id, false) : null;
     }
 
     public class NoStadiumRule : ValueObject, IAvailableVenueSchedulingRule
     {
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums) => new AvailableStadiumResult(null, false);
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums) => new AvailableStadiumResult(null, false);
     }
 
     public class StadiumOfDayRule : ValueObject, IAvailableVenueSchedulingRule
     {
-        public StadiumOfDayRule(DayOfWeek day, Guid? stadiumId, IEnumerable<StadiumOfMatchNumberRule>? matchExceptions = null)
+        public StadiumOfDayRule(DayOfWeek day, Guid? stadiumId)
         {
             Day = day;
             StadiumId = stadiumId;
-            MatchExceptions = new List<StadiumOfMatchNumberRule>(matchExceptions ?? []).AsReadOnly();
         }
 
         public DayOfWeek Day { get; }
 
         public Guid? StadiumId { get; }
 
-        public IReadOnlyCollection<StadiumOfMatchNumberRule> MatchExceptions { get; }
-
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
             => match.Date.DayOfWeek == Day
-                ? MatchExceptions.Select(x => x.GetAvailableStadium(match, index, scheduledMatches, stadiums)).FirstOrDefault(x => x is not null) is AvailableStadiumResult result
-                    ? result
-                    : new AvailableStadiumResult(StadiumId, true)
-                : (AvailableStadiumResult?)null;
+                ? new AvailableStadiumResult(StadiumId, true)
+                : null;
     }
 
     public class StadiumOfDateRule : ValueObject, IAvailableVenueSchedulingRule
     {
-        public StadiumOfDateRule(DateOnly date, Guid? stadiumId, IEnumerable<StadiumOfMatchNumberRule>? matchExceptions = null)
+        public StadiumOfDateRule(DateOnly date, Guid? stadiumId)
         {
             Date = date;
             StadiumId = stadiumId;
-            MatchExceptions = new List<StadiumOfMatchNumberRule>(matchExceptions ?? []).AsReadOnly();
         }
 
         public DateOnly Date { get; }
 
         public Guid? StadiumId { get; }
 
-        public IReadOnlyCollection<StadiumOfMatchNumberRule> MatchExceptions { get; }
-
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
             => match.Date.ToDate() == Date
-                ? MatchExceptions.Select(x => x.GetAvailableStadium(match, index, scheduledMatches, stadiums)).FirstOrDefault(x => x is not null) is AvailableStadiumResult result
-                    ? result
-                    : new AvailableStadiumResult(StadiumId, true)
-                : (AvailableStadiumResult?)null;
-    }
-
-    public class StadiumOfMatchNumberRule : ValueObject, IAvailableVenueSchedulingRule
-    {
-        public StadiumOfMatchNumberRule(int matchNumber, Guid? stadiumId)
-        {
-            MatchNumber = matchNumber;
-            StadiumId = stadiumId;
-        }
-
-        public int MatchNumber { get; }
-
-        public Guid? StadiumId { get; }
-
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums) => new AvailableStadiumResult(MatchNumber == index + 1 ? StadiumId : null, true);
+                ? new AvailableStadiumResult(StadiumId, true)
+                : null;
     }
 
     public class StadiumOfDatesRangeRule : IAvailableVenueSchedulingRule
     {
-        public StadiumOfDatesRangeRule(DateOnly startDate, DateOnly endDate, Guid? stadiumId, IEnumerable<StadiumOfMatchNumberRule>? matchExceptions = null)
+        public StadiumOfDatesRangeRule(DateOnly startDate, DateOnly endDate, Guid? stadiumId)
         {
             StartDate = startDate;
             EndDate = endDate;
             StadiumId = stadiumId;
-            MatchExceptions = new List<StadiumOfMatchNumberRule>(matchExceptions ?? []).AsReadOnly();
         }
 
         public DateOnly StartDate { get; set; }
@@ -138,14 +112,10 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public Guid? StadiumId { get; set; }
 
-        public IReadOnlyCollection<StadiumOfMatchNumberRule> MatchExceptions { get; } = [];
-
-        public AvailableStadiumResult? GetAvailableStadium(Match match, int index, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
+        public AvailableStadiumResult? GetAvailableStadium(Match match, IEnumerable<Match> scheduledMatches, IEnumerable<Stadium> stadiums)
             => new DatePeriod(StartDate, EndDate).Contains(match.Date.ToDate())
-                ? MatchExceptions.Select(x => x.GetAvailableStadium(match, index, scheduledMatches, stadiums)).FirstOrDefault(x => x is not null) is AvailableStadiumResult result
-                    ? result
-                    : new AvailableStadiumResult(StadiumId, true)
-                : (AvailableStadiumResult?)null;
+                ? new AvailableStadiumResult(StadiumId, true)
+                : null;
     }
 }
 

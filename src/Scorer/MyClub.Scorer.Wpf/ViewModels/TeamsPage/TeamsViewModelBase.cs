@@ -6,9 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Plugins.Contracts;
-using MyClub.Scorer.Wpf.Services;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Commands;
@@ -17,8 +15,7 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
 {
-    internal abstract class TeamsViewModelBase<T> : SelectionListViewModel<T>
-        where T : ITeamViewModel
+    internal abstract class TeamsViewModelBase<T> : SelectionListViewModel<T> where T : IEditableTeamViewModel
     {
         [CanSetIsModified(false)]
         [CanBeValidated(false)]

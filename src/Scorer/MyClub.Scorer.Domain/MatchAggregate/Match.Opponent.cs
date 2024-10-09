@@ -10,6 +10,7 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities.Collections;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
@@ -18,14 +19,14 @@ namespace MyClub.Scorer.Domain.MatchAggregate
         private readonly ExtendedObservableCollection<MatchEvent> _events = [];
         private readonly ExtendedObservableCollection<PenaltyShootout> _shootout = [];
 
-        public MatchOpponent(ITeam team)
+        public MatchOpponent(Team team)
         {
             Team = team;
             Events = new(_events);
             Shootout = new(_shootout);
         }
 
-        public ITeam Team { get; }
+        public Team Team { get; }
 
         public bool IsWithdrawn { get; private set; }
 
@@ -42,6 +43,14 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             return goal;
         }
 
+        public void RemoveLastGoal()
+        {
+            var lastGoal = _events.OfType<Goal>().LastOrDefault();
+
+            if (lastGoal is not null)
+                _events.Remove(lastGoal);
+        }
+
         public PenaltyShootout AddPenaltyShootout(PenaltyShootoutResult result, Player? taker = null) => AddPenaltyShootout(new PenaltyShootout(taker, result));
 
         public PenaltyShootout AddPenaltyShootout(PenaltyShootout penaltyShootout)
@@ -49,6 +58,20 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             _shootout.Add(penaltyShootout);
 
             return penaltyShootout;
+        }
+
+        public void RemoveLastSucceededPenaltyShootout()
+        {
+            var lastPenaltyShootout = _shootout.LastOrDefault(x => x.Result == PenaltyShootoutResult.Succeeded);
+
+            if (lastPenaltyShootout is not null)
+                _shootout.Remove(lastPenaltyShootout);
+        }
+
+        public void SetCards(IEnumerable<Card> cards)
+        {
+            GetCards().ToList().ForEach(x => _events.Remove(x));
+            cards.ForEach(x => AddCard(x));
         }
 
         public IEnumerable<Goal> GetGoals() => Events.OfType<Goal>();
@@ -64,6 +87,13 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
             if (shootoutScore.HasValue)
                 EnumerableHelper.Iteration(shootoutScore.Value, _ => AddPenaltyShootout(new PenaltyShootout(result: PenaltyShootoutResult.Succeeded)));
+        }
+
+        public void SetScore(IEnumerable<Goal> goals, IEnumerable<PenaltyShootout>? shootouts = null)
+        {
+            ResetScore();
+            goals.ForEach(x => AddGoal(x));
+            shootouts?.ForEach(x => AddPenaltyShootout(x));
         }
 
         public int GetShootoutScore() => Shootout.Count(x => x.Result == PenaltyShootoutResult.Succeeded);
@@ -83,6 +113,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
         {
             IsWithdrawn = isWithdrawn;
             _events.Clear();
+            _shootout.Clear();
         }
 
         private void ResetScore()
@@ -90,5 +121,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             GetGoals().ToList().ForEach(x => _events.Remove(x));
             _shootout.Clear();
         }
+
+        public override string? ToString() => Team.ToString();
     }
 }

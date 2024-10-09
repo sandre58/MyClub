@@ -94,7 +94,10 @@
 
         <!-- Header -->
         <DockPanel DockPanel.Dock="Top">
-            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Padding="{StaticResource MyNet.Margins.Default}" VerticalAlignment="Center">
+            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                     Padding="{StaticResource MyNet.Margins.Default}"
+                     VerticalAlignment="Center"
+                     my:ElevationAssist.Elevation="Dp0">
                 <my:SimpleStackPanel Orientation="Horizontal">
                     <TextBlock FontWeight="DemiBold" Text="{my:Translation Dates.Count, Format=XItems, Pluralize=True}" Typography.Capitals="AllSmallCaps" />
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
@@ -124,7 +127,7 @@
         <my:Card Padding="0"
                  HorizontalAlignment="Stretch"
                  VerticalAlignment="Stretch"
-                 Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+                 Background="{DynamicResource MyNet.Brushes.Application.Background.Light}">
             <my:CalendarDaysByMonth HorizontalAlignment="Stretch"
                                     VerticalAlignment="Stretch"
                                     my:HeaderAssist.Background="Transparent"

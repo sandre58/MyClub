@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Wpf.ViewModels.SchedulePage;
 using MyNet.UI.Dialogs;
 using MyNet.UI.Extensions;
@@ -23,23 +22,23 @@ namespace MyClub.Scorer.Wpf.Services
     {
         public Task OpenAsync(MatchdayViewModel item)
         {
-            NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeByParent), item.Id);
+            NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeByStage), item.Id);
 
             return Task.CompletedTask;
         }
 
-        public async Task AddMultipleAsync(IMatchdayParent parent)
+        public async Task AddMultipleAsync(LeagueViewModel league)
         {
             var vm = ViewModelLocator.Get<MatchdaysEditionViewModel>();
-            vm.Load(parent);
+            vm.Load(league);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
 
-        public async Task AddAsync(IMatchdayParent parent, DateTime? date = null)
+        public async Task AddAsync(LeagueViewModel league, DateTime? date = null)
         {
             var vm = ViewModelLocator.Get<MatchdayEditionViewModel>();
-            vm.New(parent, date);
+            vm.New(league, date);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }

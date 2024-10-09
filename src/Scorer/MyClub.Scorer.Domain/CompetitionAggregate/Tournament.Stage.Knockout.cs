@@ -2,25 +2,26 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.ObjectModel;
-using MyNet.Utilities.Extensions;
-using MyClub.Scorer.Domain.TeamAggregate;
-using MyNet.Utilities.Collections;
+using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
+using MyNet.Utilities;
+using MyNet.Utilities.Extensions;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public class KnockoutStage : Knockout, IStage
+    public class KnockoutStage : Knockout, ITournamentStage
     {
+        private string _shortName = string.Empty;
         private string _name = string.Empty;
-        private readonly ExtendedObservableCollection<ITeam> _teams = [];
 
-        public KnockoutStage(string name, IStage? parent = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
+        public KnockoutStage(IStage stage, string name, string? shortName = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {
-            Parent = parent;
+            Stage = stage;
             Name = name;
-            Teams = new(_teams);
-            SchedulingParameters = schedulingParameters ?? SchedulingParameters.Default;
+            ShortName = shortName ?? name.GetInitials();
+            MatchFormat = matchFormat ?? stage.ProvideFormat();
+            MatchRules = matchRules ?? stage.ProvideRules();
+            SchedulingParameters = schedulingParameters ?? stage.ProvideSchedulingParameters();
         }
 
         public string Name
@@ -29,12 +30,24 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             set => _name = value.IsRequiredOrThrow();
         }
 
-        public ReadOnlyObservableCollection<ITeam> Teams { get; }
+        public string ShortName
+        {
+            get => _shortName;
+            set => _shortName = value.IsRequiredOrThrow();
+        }
 
-        public IStage? Parent { get; }
+        public IStage Stage { get; }
+
+        public MatchFormat MatchFormat { get; set; }
+
+        public MatchRules MatchRules { get; set; }
 
         public SchedulingParameters SchedulingParameters { get; set; }
 
-        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
+        public override MatchFormat ProvideFormat() => MatchFormat;
+
+        public override MatchRules ProvideRules() => MatchRules;
+
+        public override SchedulingParameters ProvideSchedulingParameters() => SchedulingParameters;
     }
 }

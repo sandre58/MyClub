@@ -11,19 +11,33 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 {
     internal class BracketPageViewModel : PageViewModel
     {
+        private readonly CompetitionInfoProvider _competitionInfoProvider;
         public BracketPageViewModel(CompetitionInfoProvider competitionInfoProvider,
-                                    MatchdaysProvider matchdaysProvider,
-                                    MatchdayPresentationService matchdayPresentationService)
-        => competitionInfoProvider.WhenCompetitionChanged(x => MatchParentsViewModel = x switch
+                                    MatchdayPresentationService matchdayPresentationService,
+                                    RoundPresentationService roundPresentationService)
         {
-            LeagueViewModel league => new MatchdaysViewModel(league, matchdaysProvider, matchdayPresentationService),
-            _ => throw new NotImplementedException(),
-        }, _ =>
-        {
-            MatchParentsViewModel?.Dispose();
-            MatchParentsViewModel = null;
-        });
+            _competitionInfoProvider = competitionInfoProvider;
+            competitionInfoProvider.LoadRunner.RegisterOnEnd(this, x => MatchStagesViewModel = x switch
+            {
+                LeagueViewModel league => new MatchdaysViewModel(league, matchdayPresentationService),
+                CupViewModel cup => new RoundsViewModel(cup, roundPresentationService),
+                _ => throw new NotImplementedException(),
+            });
 
-        public IListViewModel? MatchParentsViewModel { get; private set; }
+            competitionInfoProvider.UnloadRunner.RegisterOnStart(this, () =>
+            {
+                MatchStagesViewModel?.Dispose();
+                MatchStagesViewModel = null;
+            });
+        }
+
+        public IListViewModel? MatchStagesViewModel { get; private set; }
+
+        protected override void Cleanup()
+        {
+            _competitionInfoProvider.LoadRunner.Unregister(this);
+            _competitionInfoProvider.UnloadRunner.Unregister(this);
+            base.Cleanup();
+        }
     }
 }

@@ -16,16 +16,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant
 {
     internal sealed class SchedulingAssistantParametersProvider : ListParametersProvider, IDisposable
     {
-        private readonly ObservableCollectionExtended<IStadiumViewModel> _stadiums = [];
-        private readonly ObservableCollectionExtended<ITeamViewModel> _teams = [];
+        private readonly ObservableCollectionExtended<StadiumViewModel> _stadiums = [];
+        private readonly ObservableCollectionExtended<IVirtualTeamViewModel> _teams = [];
         private readonly CompositeDisposable _disposables = [];
 
         public override IFiltersViewModel ProvideFilters() => new SchedulingAssistantSpeedFiltersViewModel(_teams, _stadiums);
 
         internal void Connect(IObservable<IChangeSet<MatchViewModel>> observable)
             => _disposables.AddRange([
-                observable.AutoRefresh(x => x.Stadium).Filter(x => x.Stadium is not null).DistinctValues(x => x.Stadium!).Sort(SortExpressionComparer<IStadiumViewModel>.Ascending(x => x.Address?.City ?? x.DisplayName)).Bind(_stadiums).Subscribe(),
-                observable.Transform(x => x.HomeTeam).Merge(observable.Transform(x => x.AwayTeam)).DistinctValues(x => x).Sort(SortExpressionComparer<ITeamViewModel>.Ascending(x => x.Name)).Bind(_teams).Subscribe()
+                observable.AutoRefresh(x => x.Stadium).Filter(x => x.Stadium is not null).DistinctValues(x => x.Stadium!).Sort(SortExpressionComparer<StadiumViewModel>.Ascending(x => x.Address?.City ?? x.DisplayName)).Bind(_stadiums).Subscribe(),
+                observable.Transform(x => x.Home.Team).Merge(observable.Transform(x => x.Away.Team)).DistinctValues(x => x).Sort(SortExpressionComparer<IVirtualTeamViewModel>.Ascending(x => x.Name)).Bind(_teams).Subscribe()
                 ]);
 
         public void Dispose() => _disposables.Dispose();

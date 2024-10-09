@@ -32,7 +32,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Small}">
-                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" EnableContextMenu="False" Match="{Binding}" />
+                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" Match="{Binding}" />
                             </Border>
                             <DataTemplate.Triggers>
                                 <Trigger Property="ItemsControl.AlternationIndex" Value="1">
@@ -87,7 +87,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Matchday}">
+    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}" Grid.IsSharedSizeScope="True" ItemTemplate="{StaticResource Scorer.DataTemplates.ListBoxItem.Matchday}">
         <i:Interaction.Behaviors>
             <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
             <my:ItemsControlAsyncBehavior Items="{Binding Wrappers, Mode=OneWay}" />

@@ -6,7 +6,7 @@
           xmlns:my="http://mynet.com/xaml/themes"
           xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.RankingPage"
           xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent"
-          Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+          Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Application.Light}"
           d:DataContext="{d:DesignInstance Type=vm:OverviewRankingViewModel}"
           d:DesignHeight="450"
           d:DesignWidth="800"
@@ -16,7 +16,7 @@
         <my:BindingProxy x:Key="RankingProxy" Data="{Binding}" />
     </GroupBox.Resources>
     <my:GroupBoxAssist.MoreContent>
-        <ToggleButton Content="{my:Resource Live}" IsChecked="{Binding ShowLive}" Margin="{StaticResource MyNet.Margins.Medium.Horizontal}" />
+        <ToggleButton Margin="{StaticResource MyNet.Margins.Medium.Horizontal}" Content="{my:Resource Live}" IsChecked="{Binding ShowLive}" />
     </my:GroupBoxAssist.MoreContent>
 
     <my:TransitioningContent>
@@ -25,7 +25,14 @@
                 <Setter Property="ContentTemplate">
                     <Setter.Value>
                         <DataTemplate>
-                            <v:RankingListSmallView />
+                            <Grid>
+                                <v:RankingListSmallView x:Name="ranking" />
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Data.ShowLive, Source={StaticResource RankingProxy}}" Value="True">
+                                    <Setter TargetName="ranking" Property="ShowProgression" Value="True" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </Setter.Value>
                 </Setter>

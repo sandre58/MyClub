@@ -23,7 +23,7 @@
         <sys:Int32 x:Key="Fifteen">15</sys:Int32>
         <sys:Int32 x:Key="Thirty">30</sys:Int32>
 
-        <DataTemplate DataType="{x:Type vm:DisplayModeByParent}">
+        <DataTemplate DataType="{x:Type vm:DisplayModeByStage}">
             <my:PackIcon Width="24" Height="24" Kind="FormatListText" />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DisplayModeByDate}">
@@ -54,34 +54,26 @@
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
                     <!-- Read -->
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled.Primary}"
                             my:IconAssist.Icon="{my:Icon Kind=CircleEditOutline}"
                             Command="{Binding EditResultsCommand}"
                             Content="{my:Resource EditResults}"
                             ToolTip="Ctrl+Maj+E"
                             Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
-                    <my:SplitButton my:IconAssist.Icon="{my:Icon Kind=CalendarEdit}"
-                                    Command="{Binding OpenSchedulingAssistantCommand}"
-                                    PopupPadding="0"
-                                    ToggleContent="{my:Resource SchedulingAssistant}"
-                                    ToolTip="Ctrl+Alt+E"
-                                    Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}">
-                        <my:Submenu>
-                            <MenuItem Command="{Binding EditSchedulingParametersCommand}"
-                                      Header="{my:Resource SchedulingParameters}"
-                                      Icon="{my:Icon Kind=TimerCog}"
-                                      InputGestureText="F8" />
-                        </my:Submenu>
-                    </my:SplitButton>
+                    <Button my:IconAssist.Icon="{my:Icon Kind=CalendarEdit}"
+                            Command="{Binding OpenSchedulingAssistantCommand}"
+                            Content="{my:Resource SchedulingAssistant}"
+                            ToolTip="Ctrl+Alt+E"
+                            Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
 
                     <!-- Edition -->
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled}"
                             my:IconAssist.Icon="{my:Icon Kind=Cancel}"
                             Command="{Binding CancelResultsCommand}"
                             Content="{my:Resource Cancel}"
                             ToolTip="Esc"
                             Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}" />
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled.Primary}"
                             my:IconAssist.Icon="{my:Icon Kind=Check}"
                             Command="{Binding ValidateResultsCommand}"
                             Content="{my:Resource Validate}"
@@ -91,11 +83,11 @@
             </my:CommandsBar.LeftCommands>
 
             <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
-                <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
-                <my:DropDownButton IsEnabled="{Binding CanRescheduleSelectedItems}"
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" />
+                <my:DropDownButton my:ToolTipAssist.Content="{my:Resource Reschedule}"
+                                   IsEnabled="{Binding CanRescheduleSelectedItems}"
                                    PopupPadding="0"
-                                   ToggleContent="{my:MediumIcon Kind=ClockPlus}"
-                                   ToolTip="{my:Resource Reschedule}">
+                                   ToggleContent="{my:MediumIcon Kind=ClockPlus}">
                     <my:Submenu>
                         <MenuItem Command="{Binding Data.RescheduleAutomaticCommand, Source={StaticResource Proxy}}" Header="{my:Resource Automatic}" Icon="{my:ToolIcon Kind=Magic}" />
                         <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Pluralize=True}">
@@ -184,10 +176,10 @@
                                   Icon="{my:ToolIcon Kind=ClockEdit}" />
                     </my:Submenu>
                 </my:DropDownButton>
-                <my:DropDownButton IsEnabled="{Binding CanRescheduleSelectedItems}"
+                <my:DropDownButton my:ToolTipAssist.Content="{my:Resource ChangeLocation}"
+                                   IsEnabled="{Binding CanRescheduleSelectedItems}"
                                    PopupPadding="0"
-                                   ToggleContent="{my:MediumIcon Kind=Stadium}"
-                                   ToolTip="{my:Resource ChangeLocation}">
+                                   ToggleContent="{my:MediumIcon Kind=Stadium}">
                     <my:Submenu my:ItemsControlAssist.SortingProperty="Header" ItemsSource="{Binding Stadiums.Items}">
                         <my:Submenu.ItemContainerStyle>
                             <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
@@ -198,11 +190,11 @@
                         </my:Submenu.ItemContainerStyle>
                     </my:Submenu>
                 </my:DropDownButton>
-                <Button Command="{Binding InvertTeamsSelectedItemsCommand}" Content="{my:MediumIcon Kind=SwapHorizontal}" ToolTip="{my:Resource InvertTeams}" />
-                <my:DropDownButton IsEnabled="{Binding SelectedWrappers.Count, Converter={x:Static my:CountToBooleanConverter.Any}}"
+                <Button my:ToolTipAssist.Content="{my:Resource InvertTeams}" Command="{Binding InvertTeamsSelectedItemsCommand}" Content="{my:MediumIcon Kind=SwapHorizontal}" />
+                <my:DropDownButton my:ToolTipAssist.Content="{my:Resource Update}"
+                                   IsEnabled="{Binding SelectedWrappers.Count, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                    PopupPadding="0"
-                                   ToggleContent="{my:MediumIcon Kind=TimerRefreshOutline}"
-                                   ToolTip="{my:Resource Update}">
+                                   ToggleContent="{my:MediumIcon Kind=TimerRefreshOutline}">
                     <my:Submenu>
                         <MenuItem Command="{Binding Data.ResetSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
                         <MenuItem Command="{Binding Data.StartSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
@@ -212,7 +204,7 @@
                         <MenuItem Command="{Binding Data.CancelSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
                     </my:Submenu>
                 </my:DropDownButton>
-                <Button Command="{Binding RandomizeSelectedItemsCommand}" Content="{my:MediumIcon Kind=Counter}" ToolTip="{my:ShortcutResource Randomize, ShortcutKey=Ctrl+R}" />
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Randomize, ShortcutKey=Ctrl+R}" Command="{Binding RandomizeSelectedItemsCommand}" Content="{my:MediumIcon Kind=Counter}" />
             </my:SelectionCommandsBar>
 
             <my:CommandsBar.RightCommands>
@@ -249,11 +241,11 @@
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeByParent">
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeByStage">
                             <Setter Property="ContentTemplate">
                                 <Setter.Value>
                                     <DataTemplate>
-                                        <v:MatchesPlanningByParentView />
+                                        <v:MatchesPlanningByStageView />
                                     </DataTemplate>
                                 </Setter.Value>
                             </Setter>

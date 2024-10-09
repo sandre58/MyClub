@@ -54,7 +54,6 @@ namespace MyClub.Scorer.Wpf.Services
             if (!EnsureProjectIsLoaded()) return;
 
             var vm = ViewModelManager.Get<ProjectEditionViewModel>();
-            vm.Edit();
 
             await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
@@ -177,8 +176,8 @@ namespace MyClub.Scorer.Wpf.Services
         {
             if (!await EnsureProjectIsSavedAsync().ConfigureAwait(false)) return;
 
-            var vm = ViewModelManager.Get<ProjectEditionViewModel>();
-            vm.New();
+            var vm = ViewModelManager.Get<ProjectCreationViewModel>();
+            vm.Reset();
 
             MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(async _ =>
             {

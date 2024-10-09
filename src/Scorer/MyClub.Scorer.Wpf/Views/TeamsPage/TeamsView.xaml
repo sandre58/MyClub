@@ -35,7 +35,7 @@
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled.Primary}"
                             my:IconAssist.Icon="{my:Icon Kind=Plus}"
                             Command="{Binding AddCommand}"
                             Content="{my:Resource New}"
@@ -53,22 +53,22 @@
             </my:CommandsBar.LeftCommands>
 
             <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
-                <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" />
                 <Button my:ThemeAssist.IsMouseOverBackground="{DynamicResource MyNet.Brushes.Negative}"
                         my:ThemeAssist.IsMouseOverForeground="{DynamicResource MyNet.Brushes.White}"
+                        my:ToolTipAssist.Content="{my:ShortcutResource Remove,
+                                                                       ShortcutKey=InputDelete}"
                         Command="{Binding RemoveSelectedItemsCommand}"
-                        Content="{my:MediumIcon Kind=Trash}"
-                        ToolTip="{my:ShortcutResource Remove,
-                                                      ShortcutKey=InputDelete}" />
+                        Content="{my:MediumIcon Kind=Trash}" />
             </my:SelectionCommandsBar>
 
             <my:CommandsBar.RightCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
                     <ContentControl Margin="{StaticResource MyNet.Margins.Medium.Right}" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.List.Count.Selectable}" />
 
-                    <TextBox Style="{StaticResource MyNet.Styles.TextBox.Outlined}"
+                    <TextBox Style="{StaticResource MyNet.Styles.TextBox.Filled}"
                              Width="{StaticResource MyNet.Widths.Control.VeryLarge}"
-                             Margin="{StaticResource MyNet.Margins.Small}"
+                             Margin="{StaticResource MyNet.Margins.Small.Horizontal}"
                              VerticalAlignment="Stretch"
                              my:HintAssist.Hint="{my:Resource Search}"
                              my:HintAssist.IsFloating="False"
@@ -95,8 +95,7 @@
                                 <v:TeamsGridView />
 
                                 <!-- Details -->
-                                <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
-                                         Grid.Column="1"
+                                <my:Card Grid.Column="1"
                                          Width="300"
                                          HorizontalContentAlignment="Stretch"
                                          VerticalContentAlignment="Stretch">

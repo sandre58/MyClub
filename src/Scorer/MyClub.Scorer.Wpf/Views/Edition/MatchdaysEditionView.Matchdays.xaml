@@ -17,7 +17,7 @@
 
         <DockPanel>
             <DockPanel Margin="{StaticResource MyNet.Margins.Medium.Bottom}" DockPanel.Dock="Top">
-                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Alternate.Outlined}"
+                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.DropDown.Filled}"
                                   Width="200"
                                   VerticalAlignment="Stretch"
                                   my:IconAssist.Alignment="Right"
@@ -105,7 +105,10 @@
                 </i:Interaction.Behaviors>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Margin="{StaticResource MyNet.Margins.Small}" Padding="{StaticResource MyNet.Margins.Default}">
+                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                 Margin="{StaticResource MyNet.Margins.Small}"
+                                 Padding="{StaticResource MyNet.Margins.Default}"
+                                 my:ElevationAssist.Elevation="Dp0">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -251,7 +254,7 @@
                                                                   HorizontalAlignment="Stretch"
                                                                   my:HintAssist.Hint="{my:Resource HomeTeam}"
                                                                   my:ItemsControlAssist.SortingProperty="Name"
-                                                                  ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                                                                  ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                                                                   ItemsSource="{Binding AvailableTeams}"
                                                                   SelectedItem="{Binding HomeTeam}" />
                                                         <ComboBox x:Name="comboBox"
@@ -259,7 +262,7 @@
                                                                   HorizontalAlignment="Stretch"
                                                                   my:HintAssist.Hint="{my:Resource AwayTeam}"
                                                                   my:ItemsControlAssist.SortingProperty="Name"
-                                                                  ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                                                                  ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                                                                   ItemsSource="{Binding AvailableTeams}"
                                                                   SelectedItem="{Binding AwayTeam}" />
                                                         <v:StadiumSelectionView Grid.Column="8"

@@ -14,7 +14,6 @@ using MyClub.Teamup.Plugins.Contracts.Dtos;
 using MyNet.CsvHelper.Extensions;
 using MyNet.CsvHelper.Extensions.Excel;
 using MyNet.CsvHelper.Extensions.Exceptions;
-using MyNet.Humanizer;
 using MyNet.Utilities;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Extensions;

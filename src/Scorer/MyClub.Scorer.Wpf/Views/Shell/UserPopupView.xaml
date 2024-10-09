@@ -9,7 +9,7 @@
              d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
              mc:Ignorable="d">
     <StackPanel>
-        <Grid Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+        <Grid Background="{DynamicResource MyNet.Brushes.Application.Background.Light}">
             <Grid Margin="{StaticResource MyNet.Margins.Medium}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="90" />

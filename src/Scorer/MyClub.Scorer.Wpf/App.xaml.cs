@@ -43,12 +43,14 @@ using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.HomePage;
 using MyClub.Scorer.Wpf.ViewModels.Import;
+using MyClub.Scorer.Wpf.ViewModels.MatchDetails;
 using MyClub.Scorer.Wpf.ViewModels.PastPositionsPage;
 using MyClub.Scorer.Wpf.ViewModels.RankingPage;
 using MyClub.Scorer.Wpf.ViewModels.SchedulePage;
 using MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant;
 using MyClub.Scorer.Wpf.ViewModels.Shell;
 using MyClub.Scorer.Wpf.ViewModels.StadiumsPage;
+using MyClub.Scorer.Wpf.ViewModels.StatisticsPage;
 using MyClub.Scorer.Wpf.ViewModels.TeamsPage;
 using MyClub.UserContext.Application.Services;
 using MyClub.UserContext.Domain.UserAggregate;
@@ -168,12 +170,15 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<IUserRepository>(x => x.GetRequiredService<RegistryAuthenticationService>())
                 .AddSingleton<IProjectRepository, ProjectRepository>()
                 .AddSingleton<ILeagueRepository, LeagueRepository>()
+                .AddSingleton<ICupRepository, CupRepository>()
                 .AddScoped<ITeamRepository, TeamRepository>()
                 .AddScoped<IStadiumRepository, StadiumRepository>()
                 .AddScoped<IPlayerRepository, PlayerRepository>()
                 .AddScoped<IManagerRepository, ManagerRepository>()
                 .AddScoped<IMatchdayRepository, MatchdayRepository>()
+                .AddScoped<IRoundRepository, RoundRepository>()
                 .AddScoped<IMatchRepository, MatchRepository>()
+                .AddScoped<IParametersRepository, ParametersRepository>()
                 .AddScoped<ISchedulingDomainService, SchedulingDomainService>()
 
                 // Application Services
@@ -184,8 +189,11 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<PlayerService>()
                 .AddScoped<ManagerService>()
                 .AddScoped<MatchdayService>()
+                .AddScoped<RoundService>()
                 .AddScoped<MatchService>()
+                .AddScoped<MatchStatisticsService>()
                 .AddScoped<LeagueService>()
+                .AddScoped<ParametersService>()
                 .AddScoped<AvailibilityCheckingService>()
 
                 // Infrastructure Service
@@ -206,6 +214,7 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<StadiumPresentationService>()
                 .AddScoped<PersonPresentationService>()
                 .AddScoped<MatchdayPresentationService>()
+                .AddScoped<RoundPresentationService>()
                 .AddScoped<MatchPresentationService>()
                 .AddScoped<LeaguePresentationService>()
 
@@ -218,7 +227,7 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<CompetitionInfoProvider>()
                 .AddSingleton<TeamsProvider>()
                 .AddSingleton<StadiumsProvider>()
-                .AddSingleton<MatchdaysProvider>()
+                .AddSingleton<CompetitionStagesProvider>()
                 .AddSingleton<MatchesProvider>()
 
                 // Notifications handlers
@@ -238,21 +247,25 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<RankingPageViewModel>()
                 .AddSingleton<BracketPageViewModel>()
                 .AddSingleton<PastPositionsPageViewModel>()
+                .AddSingleton<StatisticsPageViewModel>()
                 // ViewModels - Edition dialogs
                 .AddSingleton<SettingsEditionViewModel>()
                 .AddSingleton<UserEditionViewModel>()
-                .AddSingleton<ProjectEditionViewModel>()
                 .AddSingleton<TeamEditionViewModel>()
                 .AddSingleton<StadiumEditionViewModel>()
                 .AddSingleton<PlayerEditionViewModel>()
                 .AddSingleton<ManagerEditionViewModel>()
                 .AddSingleton<MatchdayEditionViewModel>()
                 .AddSingleton<MatchdaysEditionViewModel>()
+                .AddSingleton<RoundEditionViewModel>()
                 .AddSingleton<MatchEditionViewModel>()
                 .AddSingleton<RankingRulesEditionViewModel>()
-                .AddSingleton<SchedulingParametersEditionViewModel>()
+                .AddSingleton<ProjectEditionViewModel>()
                 .AddSingleton<SchedulingAssistantViewModel>()
                 .AddSingleton<LeagueBuildAssistantViewModel>()
+                .AddSingleton<ProjectCreationViewModel>()
+                // ViewModels - Item dialogs
+                .AddSingleton<MatchDetailsViewModel>()
                 // ViewModels - Other dialogs
                 .AddSingleton<StadiumsExportViewModel>()
                 .AddSingleton<TeamsExportViewModel>()

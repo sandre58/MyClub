@@ -14,21 +14,20 @@ using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyNet.Observable;
 using MyNet.UI.Commands;
 using MyNet.UI.Threading;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class MatchdayViewModel : EntityViewModelBase<Matchday>, IMatchParent, IAppointment
+    internal class MatchdayViewModel : EntityViewModelBase<Matchday>, IMatchesStageViewModel
     {
         private readonly MatchdayPresentationService _matchdayPresentationService;
         private readonly MatchPresentationService _matchPresentationService;
         private readonly ReadOnlyObservableCollection<MatchViewModel> _matches;
 
         public MatchdayViewModel(Matchday item,
-                                 IMatchdayParent parent,
+                                 LeagueViewModel stage,
                                  MatchdayPresentationService matchdayPresentationService,
                                  MatchPresentationService matchPresentationService,
                                  StadiumsProvider stadiumsProvider,
@@ -37,7 +36,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             _matchdayPresentationService = matchdayPresentationService;
             _matchPresentationService = matchPresentationService;
 
-            Parent = parent;
+            Stage = stage;
 
             EditCommand = CommandsManager.Create(async () => await EditAsync().ConfigureAwait(false));
             DuplicateCommand = CommandsManager.Create(async () => await DuplicateAsync().ConfigureAwait(false));
@@ -48,8 +47,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
             Disposables.AddRange(
             [
-                item.Matches.ToObservableChangeSet(x => x.Id)
-                            .Transform(x => new MatchViewModel(x, _matchPresentationService, stadiumsProvider, teamsProvider, this))
+                item.Matches.ToObservableChangeSet()
+                            .Transform(x => new MatchViewModel(x, this, _matchPresentationService, stadiumsProvider, teamsProvider))
                             .ObserveOn(Scheduler.UI)
                             .Bind(out _matches)
                             .DisposeMany()
@@ -64,9 +63,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             ]);
         }
 
-        public IMatchdayParent Parent { get; set; }
+        public LeagueViewModel Stage { get; set; }
 
-        public SchedulingParametersViewModel SchedulingParameters => Parent.SchedulingParameters;
+        public SchedulingParametersViewModel SchedulingParameters => Stage.SchedulingParameters;
 
         public string Name => Item.Name;
 
@@ -98,17 +97,19 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public ICommand AddMatchCommand { get; }
 
-        public bool CanAutomaticReschedule() => Parent.CanAutomaticReschedule();
+        public bool CanAutomaticReschedule() => Stage.CanAutomaticReschedule();
 
-        public bool CanAutomaticRescheduleVenue() => Parent.CanAutomaticRescheduleVenue();
+        public bool CanAutomaticRescheduleVenue() => Stage.CanAutomaticRescheduleVenue();
 
         public bool CanEditMatchFormat() => false;
+
+        public bool CanEditMatchRules() => false;
 
         public bool CanCancelMatch() => false;
 
         public bool CanBePostponed() => !Item.IsPostponed && Matches.Any(x => !x.IsPlayed);
 
-        public IEnumerable<ITeamViewModel> GetAvailableTeams() => Parent.GetAvailableTeams();
+        public IEnumerable<IVirtualTeamViewModel> GetAvailableTeams() => Stage.GetAvailableTeams();
 
         public async Task OpenAsync() => await _matchdayPresentationService.OpenAsync(this).ConfigureAwait(false);
 

@@ -37,6 +37,55 @@
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>
 
+                <!-- Progression -->
+                <GridViewColumn my:GridViewColumnAssist.PropertyName="Progression" my:GridViewColumnAssist.Width="30" Header="{my:Resource Progression}">
+                    <GridViewColumn.HeaderTemplate>
+                        <DataTemplate />
+                    </GridViewColumn.HeaderTemplate>
+                    <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="grid">
+                                <my:PackIcon x:Name="icon"
+                                             Width="16"
+                                             Height="16"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Foreground="{DynamicResource MyNet.Brushes.Warning}"
+                                             Kind="Equal" />
+                                <TextBlock x:Name="text"
+                                           Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
+                                           HorizontalAlignment="Center"
+                                           FontWeight="Bold"
+                                           Text="{Binding Progression}"
+                                           Visibility="Collapsed" />
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Progression}" Value="{x:Null}">
+                                    <Setter TargetName="grid" Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=0}" Value="True">
+                                    <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                    <Setter TargetName="icon" Property="Kind" Value="Triangle" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter=0}" Value="True">
+                                    <Setter TargetName="icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                    <Setter TargetName="icon" Property="Kind" Value="TriangleDown" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=1}" Value="True">
+                                    <Setter TargetName="text" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                    <Setter TargetName="text" Property="Margin" Value="16 0 0 5" />
+                                    <Setter TargetName="text" Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Progression, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter=-1}" Value="True">
+                                    <Setter TargetName="text" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                    <Setter TargetName="text" Property="Margin" Value="16 5 0 0" />
+                                    <Setter TargetName="text" Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GridViewColumn.CellTemplate>
+                </GridViewColumn>
+
                 <!-- Team -->
                 <GridViewColumn my:GridViewColumnAssist.PropertyName="Team" my:GridViewColumnAssist.Width="*" Header="{my:Resource Team}">
                     <GridViewColumn.HeaderTemplate>
@@ -46,7 +95,7 @@
                     </GridViewColumn.HeaderTemplate>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <ContentControl Content="{Binding Team}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Small.Away}" />
+                            <ContentControl Content="{Binding Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Away}" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>

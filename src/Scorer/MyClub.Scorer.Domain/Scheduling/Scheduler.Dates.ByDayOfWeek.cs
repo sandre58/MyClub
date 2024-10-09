@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
@@ -24,13 +23,18 @@ namespace MyClub.Scorer.Domain.Scheduling
             var previousDate = StartDate.PreviousDay();
             items.ForEach(x =>
             {
-                x.Schedule(DayOfWeeks.Min(x => previousDate.Next(x)).At(Time, DateTimeKind));
+                var newDate = ScheduleItem(x, previousDate, Time);
 
-                if (x is IMatchesProvider matchesProvider)
-                    matchesProvider.Matches.ForEach(y => y.Schedule(x.Date));
-
-                previousDate = x.Date.ToDate();
+                previousDate = newDate.ToDate();
             });
+        }
+
+        protected virtual DateTime ScheduleItem(T item, DateOnly previousDate, TimeOnly time)
+        {
+            var date = DayOfWeeks.Min(x => previousDate.Next(x)).At(time, DateTimeKind);
+            item.Schedule(date);
+
+            return item.Date;
         }
     }
 }

@@ -20,19 +20,19 @@ using MyNet.Utilities.DateTimes;
 namespace MyClub.Scorer.Application.Services
 {
     public class MatchdayService(IMatchdayRepository repository,
+                                 ILeagueRepository leagueRepository,
                                  IProjectRepository projectRepository,
                                  IStadiumRepository stadiumRepository,
                                  MatchService matchService) : CrudService<Matchday, MatchdayDto, IMatchdayRepository>(repository)
     {
         private readonly IProjectRepository _projectRepository = projectRepository;
         private readonly IStadiumRepository _stadiumRepository = stadiumRepository;
+        private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly MatchService _matchService = matchService;
 
         protected override Matchday CreateEntity(MatchdayDto dto)
         {
-            var parent = _projectRepository.GetCompetition().GetAllMatchdaysProviders().GetByIdOrDefault(dto.ParentId ?? _projectRepository.GetCompetition().Id) ?? throw new InvalidOperationException($"Matchday parent '{dto.ParentId}' not found");
-
-            var entity = Repository.Insert(parent, dto.Date, dto.Name.OrEmpty(), dto.ShortName);
+            var entity = !dto.StageId.HasValue ? _leagueRepository.InsertMatchday(dto.Date, dto.Name.OrEmpty(), dto.ShortName) : throw new NotImplementedException();
 
             UpdateEntity(entity, dto);
 
@@ -49,7 +49,7 @@ namespace MyClub.Scorer.Application.Services
 
             if (dto.MatchesToAdd is not null)
             {
-                dto.MatchesToAdd.ForEach(x => x.ParentId = entity.Id);
+                dto.MatchesToAdd.ForEach(x => x.StageId = entity.Id);
                 _matchService.Save(dto.MatchesToAdd);
             }
 
@@ -66,7 +66,7 @@ namespace MyClub.Scorer.Application.Services
                 if (dto.IsPostponed || dto.PostponedDate.HasValue)
                     entity.Postpone(dto.PostponedDate, true);
                 else if (dto.Date != default)
-                    entity.ScheduleWithMatches(dto.Date);
+                    entity.ScheduleAll(dto.Date);
             }
 
             if (dto.ScheduleStadiumsAutomatic)
@@ -80,8 +80,8 @@ namespace MyClub.Scorer.Application.Services
 
         public virtual IList<MatchdayDto> New(NewMatchdaysDto dto)
         {
-            var parent = _projectRepository.GetCompetition().GetAllMatchdaysProviders().GetByIdOrDefault(dto.ParentId ?? _projectRepository.GetCompetition().Id) ?? throw new InvalidOperationException($"Matchday parent '{dto.ParentId}' not found");
-            var currentMatchdays = parent.Matchdays.OrderBy(x => x.Date).ToList();
+            var stage = _projectRepository.GetCompetition().GetStage<IMatchdaysStage>(dto.StageId) ?? throw new InvalidOperationException($"Matchday stage '{dto.StageId}' not found");
+            var currentMatchdays = stage.GetStages<Matchday>().OrderBy(x => x.Date).ToList();
 
             // Build Matchdays
             var countMatchdays = dto.DatesParameters switch
@@ -96,7 +96,7 @@ namespace MyClub.Scorer.Application.Services
             if (countMatchdays == 0) return [];
 
             // Temporary date, name and shortName
-            var matchdays = countMatchdays.Range().Select(x => new Matchday(parent, DateTime.Today, MyClubResources.MatchdayNamePattern, MyClubResources.MatchdayShortNamePattern)).ToList();
+            var matchdays = countMatchdays.Range().Select(x => new Matchday(stage, DateTime.Today, MyClubResources.MatchdayNamePattern, MyClubResources.MatchdayShortNamePattern)).ToList();
 
             // Add Matches
             if (dto.StartDuplicatedMatchday.HasValue)
@@ -115,12 +115,12 @@ namespace MyClub.Scorer.Application.Services
             }
 
             // Schedule dates
-            var schedulingParameters = parent.ProvideSchedulingParameters();
+            var schedulingParameters = stage.ProvideSchedulingParameters();
             var stadiums = _stadiumRepository.GetAll().ToList();
             var matchdaysScheduler = dto.DatesParameters switch
             {
-                AddMatchdaysManualDatesParametersDto manualParametersDto => (IScheduler<Matchday>)new ByDatesScheduler<Matchday>().SetDates(manualParametersDto.Dates?.Select(x => x.At(schedulingParameters.StartTime)).ToList() ?? [], schedulingParameters.StartTime),
-                AddMatchdaysAutomaticDatesParametersDto automaticParametersDto => new DateRulesScheduler<Matchday>()
+                AddMatchdaysManualDatesParametersDto manualParametersDto => (IScheduler<Matchday>)new ByDatesStageScheduler<Matchday>().SetDates(manualParametersDto.Dates?.Select(x => x.At(schedulingParameters.StartTime)).ToList() ?? [], schedulingParameters.StartTime),
+                AddMatchdaysAutomaticDatesParametersDto automaticParametersDto => new DateRulesStageScheduler<Matchday>()
                 {
                     DefaultTime = dto.StartTime,
                     Interval = 1.Days(),
@@ -141,8 +141,8 @@ namespace MyClub.Scorer.Application.Services
 
             return matchdays.OrderBy(x => x.Date).Select((x, y) => new MatchdayDto
             {
-                Name = StageNamesFactory.ComputePattern(dto.NamePattern.OrEmpty(), dto.StartIndex + y, x.Date),
-                ShortName = StageNamesFactory.ComputePattern(dto.ShortNamePattern.OrEmpty(), dto.StartIndex + y, x.Date),
+                Name = StageNamesFactory.ComputePattern(dto.NamePattern.OrEmpty(), dto.StartIndex + y, x),
+                ShortName = StageNamesFactory.ComputePattern(dto.ShortNamePattern.OrEmpty(), dto.StartIndex + y, x),
                 Date = x.Date,
                 MatchesToAdd = x.Matches.Select(z => new MatchDto
                 {
@@ -180,18 +180,18 @@ namespace MyClub.Scorer.Application.Services
                 ids.ForEach(x => Postpone(x, postponedDate));
         }
 
-        public MatchdayDto New(Guid? parentId = null)
+        public MatchdayDto New(Guid? stageId = null)
         {
-            var parent = _projectRepository.GetCompetition().GetAllMatchdaysProviders().GetByIdOrDefault(parentId ?? _projectRepository.GetCompetition().Id) ?? throw new InvalidOperationException($"Matchday parent '{parentId}' not found");
+            var stage = _projectRepository.GetCompetition().GetStage<IMatchdaysStage>(stageId) ?? throw new InvalidOperationException($"Matchday stage '{stageId}' not found");
 
-            var name = MyClubResources.Matchday.Increment(parent.Matchdays.Select(x => x.Name), format: " #");
-            var time = parent.ProvideSchedulingParameters().StartTime;
+            var name = MyClubResources.Matchday.Increment(stage.GetStages<Matchday>().Select(x => x.Name), format: " #");
+            var time = stage.ProvideSchedulingParameters().StartTime;
             return new()
             {
                 Date = DateTime.UtcNow.At(time),
                 IsPostponed = false,
                 PostponedDate = null,
-                ParentId = parentId,
+                StageId = stageId,
                 Name = name,
                 ShortName = name.GetInitials(),
             };
@@ -201,10 +201,10 @@ namespace MyClub.Scorer.Application.Services
         {
             if (dto.Matchdays is null) return 0;
 
-            var parent = _projectRepository.GetCompetition().GetAllMatchdaysProviders().GetByIdOrDefault(dto.ParentId ?? _projectRepository.GetCompetition().Id) ?? throw new InvalidOperationException($"Matchday parent '{dto.ParentId}' not found");
+            var stage = _projectRepository.GetCompetition().GetStage<IMatchdaysStage>(dto.StageId) ?? throw new InvalidOperationException($"Matchday stage '{dto.StageId}' not found");
 
-            var scheduledMatchdays = parent.Matchdays.ToList();
-            var schedulingParameters = parent.ProvideSchedulingParameters();
+            var scheduledMatchdays = stage.GetStages<Matchday>().ToList();
+            var schedulingParameters = stage.ProvideSchedulingParameters();
 
             var matchdays = Save(dto.Matchdays);
 

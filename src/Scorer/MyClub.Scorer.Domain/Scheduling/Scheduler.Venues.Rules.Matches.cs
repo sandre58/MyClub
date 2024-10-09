@@ -28,8 +28,7 @@ namespace MyClub.Scorer.Domain.Scheduling
             var newScheduledMatches = new List<Match>(_scheduledMatches.Except(matches));
             matches.ForEach(match =>
             {
-                var matchIndex = match.Parent.Matches.OrderBy(x => x.Date).ToList().IndexOf(match);
-                var result = Rules.Select(x => x.GetAvailableStadium(match, matchIndex, newScheduledMatches, _stadiums)).FirstOrDefault(x => x is not null);
+                var result = Rules.Select(x => x.GetAvailableStadium(match, newScheduledMatches, _stadiums)).FirstOrDefault(x => x is not null);
 
                 if (result.HasValue)
                 {

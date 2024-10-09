@@ -1,20 +1,196 @@
 ﻿<GroupBox x:Class="MyClub.Scorer.Wpf.Views.HomePage.DashboardContent.OverviewMatchesView"
           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
+          xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
           xmlns:my="http://mynet.com/xaml/themes"
-          xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.RankingPage"
-          xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent"
-          Style="{StaticResource MyNet.Styles.GroupBox.Elevation}"
+          xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.HomePage.DashboardContent"
+          xmlns:vS="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
+          xmlns:vmS="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulePage"
+          x:Name="local"
+          Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Application.Light}"
+          d:DataContext="{d:DesignInstance Type=vmS:MatchesViewModel}"
           d:DesignHeight="450"
           d:DesignWidth="800"
           mc:Ignorable="d">
     <GroupBox.Resources>
-        <my:BindingProxy x:Key="RankingProxy" Data="{Binding}" />
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </GroupBox.Resources>
 
-    <my:GhostControl GhostTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Medium}" ShowGhost="{Binding Items.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
-        <ItemsControl ItemsSource="{Binding Items}" />
+    <my:GhostControl GhostTemplate="{Binding GhostTemplate, ElementName=local}" ShowGhost="{Binding Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
+        <DockPanel>
+            <my:PaginationView Margin="{StaticResource MyNet.Margins.Medium.Bottom}"
+                               HorizontalAlignment="Center"
+                               DataContext="{Binding Paging}"
+                               DockPanel.Dock="Top"
+                               ShowPageSize="False"
+                               Visibility="{Binding TotalPages, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotMany}}" />
+
+            <ListBox x:Name="itemscontrol"
+                     Style="{StaticResource MyNet.Styles.ListBox.Cards}"
+                     Grid.IsSharedSizeScope="True"
+                     ItemTemplate="{Binding ItemTemplate, ElementName=local}">
+                <i:Interaction.Behaviors>
+                    <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
+                    <my:ItemsControlAsyncBehavior Items="{Binding PagedWrappers, Mode=OneWay}" />
+                </i:Interaction.Behaviors>
+
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Card}">
+                        <Setter Property="BorderThickness" Value="7 0 0 0" />
+                        <Setter Property="ContextMenu">
+                            <Setter.Value>
+                                <ContextMenu>
+                                    <MenuItem Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
+                                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                                    <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}">
+                                        <MenuItem Command="{Binding Data.RescheduleAutomaticCommand, Source={StaticResource Proxy}}" Header="{my:Resource Automatic}" Icon="{my:ToolIcon Kind=Magic}" />
+                                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Pluralize=True}">
+                                            <MenuItem.Icon>
+                                                <Grid>
+                                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                                           Width="16"
+                                                           Height="16"
+                                                           Padding="0"
+                                                           Content="{StaticResource Five}"
+                                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                           FontWeight="Bold" />
+                                                </Grid>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Ten}" Header="{my:Translation Source={StaticResource Ten}, Format=TimeSpanMinute, Pluralize=True}">
+                                            <MenuItem.Icon>
+                                                <Grid>
+                                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                                           Width="16"
+                                                           Height="16"
+                                                           Padding="0"
+                                                           Content="{StaticResource Ten}"
+                                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                           FontWeight="Bold" />
+                                                </Grid>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Fifteen}" Header="{my:Translation Source={StaticResource Fifteen}, Format=TimeSpanMinute, Pluralize=True}">
+                                            <MenuItem.Icon>
+                                                <Grid>
+                                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                                           Width="16"
+                                                           Height="16"
+                                                           Padding="0"
+                                                           Content="{StaticResource Fifteen}"
+                                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                           FontWeight="Bold" />
+                                                </Grid>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Thirty}" Header="{my:Translation Source={StaticResource Thirty}, Format=TimeSpanMinute, Pluralize=True}">
+                                            <MenuItem.Icon>
+                                                <Grid>
+                                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                                           Width="16"
+                                                           Height="16"
+                                                           Padding="0"
+                                                           Content="{StaticResource Thirty}"
+                                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                           FontWeight="Bold" />
+                                                </Grid>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Command="{Binding Data.RescheduleXHoursCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource One}" Header="{my:Translation Source={StaticResource One}, Format=TimeSpanHour, Pluralize=True}">
+                                            <MenuItem.Icon>
+                                                <Grid>
+                                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                                           Width="16"
+                                                           Height="16"
+                                                           Padding="0"
+                                                           Content="{StaticResource One}"
+                                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                           FontWeight="Bold" />
+                                                </Grid>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Command="{Binding Data.RescheduleXHoursCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Two}" Header="{my:Translation Source={StaticResource Two}, Format=TimeSpanHour, Pluralize=True}">
+                                            <MenuItem.Icon>
+                                                <Grid>
+                                                    <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
+                                                           Width="16"
+                                                           Height="16"
+                                                           Padding="0"
+                                                           Content="{StaticResource Two}"
+                                                           FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                                           FontWeight="Bold" />
+                                                </Grid>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Height="50"
+                                                  my:RippleAssist.Feedback="Transparent"
+                                                  my:ThemeAssist.IsMouseOverBackground="Transparent"
+                                                  Header="{Binding Data.RescheduleCommand, Source={StaticResource Proxy}}"
+                                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
+                                                  Icon="{my:ToolIcon Kind=ClockEdit}"
+                                                  StaysOpenOnClick="True" />
+                                    </MenuItem>
+                                    <MenuItem Command="{Binding Data.InvertTeamsSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource InvertTeams}" Icon="{my:ToolIcon Kind=SwapHorizontal}" />
+                                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                                    <MenuItem Header="{my:Resource Update}" Icon="{my:ToolIcon Kind=TimerRefreshOutline}">
+                                        <MenuItem Command="{Binding Data.ResetSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Reset}" Icon="{my:ToolIcon Kind=ProgressClock}" />
+                                        <MenuItem Command="{Binding Data.StartSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Start}" Icon="{my:ToolIcon Kind=ProgressHelper}" />
+                                        <MenuItem Command="{Binding Data.SuspendSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Suspend}" Icon="{my:ToolIcon Kind=ProgressAlert}" />
+                                        <MenuItem Command="{Binding Data.FinishSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Finish}" Icon="{my:ToolIcon Kind=ProgressCheck}" />
+                                        <MenuItem Command="{Binding Data.PostponeSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+                                        <MenuItem Command="{Binding Data.CancelSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Cancel}" Icon="{my:ToolIcon Kind=ProgressClose}" />
+                                    </MenuItem>
+                                    <MenuItem Command="{Binding Data.RandomizeSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource Randomize}" Icon="{my:ToolIcon Kind=Counter}" />
+                                    <MenuItem Header="{my:Resource DoWithdraw}" Icon="{my:ToolIcon Kind=Close}" IsEnabled="{Binding Data.CanDoWithdrawSelectedItems, Source={StaticResource Proxy}}">
+                                        <MenuItem Command="{Binding Data.DoWithdrawForHomeTeamSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
+                                        <MenuItem Command="{Binding Data.DoWithdrawForAwayTeamSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                        <Setter Property="my:ThemeAssist.CornerRadius" Value="{StaticResource MyNet.CornerRadius.Container}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.None}">
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="Transparent" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Played}">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.InProgress}">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Information}" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Information}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Suspended}">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Cancelled}">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Postponed}">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MyNet.Brushes.Warning}" />
+                                <Setter Property="my:ListBoxItemAssist.IsSelectedBorderBrush" Value="{DynamicResource MyNet.Brushes.Warning}" />
+
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+        </DockPanel>
     </my:GhostControl>
 </GroupBox>

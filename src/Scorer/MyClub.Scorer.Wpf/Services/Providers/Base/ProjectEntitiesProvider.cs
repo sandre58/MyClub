@@ -18,8 +18,8 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
 
         protected ProjectEntitiesProvider(ProjectInfoProvider projectInfoProvider, Func<T, TViewModel> createViewModel) : base(projectInfoProvider) => _createViewModel = createViewModel;
 
-        protected override IObservable<IChangeSet<TViewModel, Guid>> ProvideObservable(IProject project) => ProvideProjectObservable(project).Transform(_createViewModel);
+        protected override IObservable<IChangeSet<TViewModel>> ProvideObservable(IProject project) => ProvideProjectObservable(project).Transform(_createViewModel);
 
-        protected abstract IObservable<IChangeSet<T, Guid>> ProvideProjectObservable(IProject project);
+        protected abstract IObservable<IChangeSet<T>> ProvideProjectObservable(IProject project);
     }
 }

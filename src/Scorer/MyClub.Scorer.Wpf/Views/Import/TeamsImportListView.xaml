@@ -148,14 +148,14 @@
                     <!-- HomeColor -->
                     <my:DataGridColorColumn Width="140"
                                             Binding="{Binding Item.HomeColor, UpdateSourceTrigger=PropertyChanged}"
-                                            CellTemplate="{StaticResource Scorer.DataTemplates.TeamColor.Embedded.DataGrid}"
+                                            CellTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.TeamColor.Embedded.DataGrid}"
                                             HasClearButton="True"
                                             Header="{my:Resource LocationHome}" />
 
                     <!-- AwayColor -->
                     <my:DataGridColorColumn Width="140"
                                             Binding="{Binding Item.AwayColor, UpdateSourceTrigger=PropertyChanged}"
-                                            CellTemplate="{StaticResource Scorer.DataTemplates.TeamColor.Embedded.DataGrid}"
+                                            CellTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.TeamColor.Embedded.DataGrid}"
                                             HasClearButton="True"
                                             Header="{my:Resource LocationAway}" />
 

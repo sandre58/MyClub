@@ -1,104 +1,30 @@
 ﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.Edition.ProjectEditionView"
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                  xmlns:bA="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:my="http://mynet.com/xaml/themes"
-                  xmlns:sys="clr-namespace:System;assembly=mscorlib"
                   xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
                   xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
-                  HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
+                  Style="{StaticResource MyNet.Styles.ContentDialog}"
+                  Width="750"
+                  Height="700"
                   d:DataContext="{d:DesignInstance Type=vm:ProjectEditionViewModel}"
-                  d:DesignHeight="450"
-                  d:DesignWidth="800"
                   my:ViewModelAssist.AutoWire="True"
                   BusyService="{Binding BusyService, Mode=OneWay}"
                   HeaderHeight="100"
                   mc:Ignorable="d">
-    <my:ContentDialog.Style>
-        <Style TargetType="{x:Type my:ContentDialog}" BasedOn="{StaticResource MyNet.Styles.ContentDialog}">
-            <Setter Property="MaxHeight" Value="700" />
-            <Setter Property="MaxWidth" Value="700" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding StretchSize}" Value="true">
-                    <Setter Property="MaxHeight" Value="{x:Static sys:Double.PositiveInfinity}" />
-                    <Setter Property="MaxWidth" Value="{x:Static sys:Double.PositiveInfinity}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </my:ContentDialog.Style>
     <my:ContentDialog.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
-
-        <DataTemplate DataType="{x:Type vm:ProjectEditionGeneralViewModel}">
-            <v:ProjectEditionGeneralView />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:ProjectEditionTeamsViewModel}">
-            <DockPanel>
-                <ToggleButton HorizontalAlignment="Right"
-                              Content="{my:Resource BuildCompetition}"
-                              DockPanel.Dock="Bottom"
-                              IsChecked="{Binding Data.BuildCompetition, Source={StaticResource Proxy}}"
-                              IsEnabled="{Binding Data.CanBuildCompetition, Source={StaticResource Proxy}}" />
-                <v:ProjectEditionTeamsView />
-            </DockPanel>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:ProjectEditionStadiumsViewModel}">
-            <v:ProjectEditionStadiumsView />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:EditableRankingRulesViewModel}">
-            <v:ProjectEditionRankingRulesView />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:EditableMatchFormatViewModel}">
-            <v:ProjectEditionMatchFormatView />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:EditableSchedulingParametersViewModel}">
-            <v:ProjectEditionSchedulingParametersView />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type bA:LeagueBuildAssistantParametersViewModel}">
-            <v:ProjectEditionBuildParametersView />
-        </DataTemplate>
-
     </my:ContentDialog.Resources>
 
     <my:InputAssist.InputBindings>
         <InputBindingCollection>
-            <KeyBinding Key="F5" Command="{Binding Data.ResetAsyncCommand, Source={StaticResource Proxy}}" />
+            <KeyBinding Key="F5" Command="{Binding Data.RefreshCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding Data.SaveAndCloseAsyncCommand, Source={StaticResource Proxy}}" />
             <KeyBinding Key="Esc" Command="{Binding Data.CancelCommand, Source={StaticResource Proxy}}" />
         </InputBindingCollection>
     </my:InputAssist.InputBindings>
-
-    <my:ContentDialog.Footer>
-        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-            <Button Style="{StaticResource MyNet.Styles.Button.Reset}" HorizontalAlignment="Right" Command="{Binding ResetAsyncCommand}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
-                    HorizontalAlignment="Right"
-                    my:IconAssist.Icon="{my:Icon Kind=ArrowLeft}"
-                    Command="{Binding GoToPreviousTabCommand}"
-                    Content="{my:Resource Previous}"
-                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
-                    HorizontalAlignment="Right"
-                    my:IconAssist.Icon="{my:Icon Kind=ArrowRight}"
-                    Command="{Binding GoToNextTabCommand}"
-                    Content="{my:Resource Next}"
-                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Validate}"
-                    HorizontalAlignment="Right"
-                    Command="{Binding SaveAndCloseAsyncCommand}"
-                    Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-        </my:SimpleStackPanel>
-    </my:ContentDialog.Footer>
 
     <my:ContentDialog.Header>
         <Grid Height="90" Margin="{StaticResource MyNet.Margins.Medium.Horizontal}">
@@ -131,5 +57,82 @@
         </Grid>
     </my:ContentDialog.Header>
 
-    <my:TransitioningContent Content="{Binding SelectedWorkspace, Mode=OneWay}" />
+    <my:ContentDialog.Footer>
+        <my:SimpleStackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Style="{StaticResource MyNet.Styles.Button.Refresh}" HorizontalAlignment="Right" Command="{Binding RefreshCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Cancel}" HorizontalAlignment="Right" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource MyNet.Styles.Button.Validate}" HorizontalAlignment="Right" Command="{Binding SaveAndCloseAsyncCommand}" />
+        </my:SimpleStackPanel>
+    </my:ContentDialog.Footer>
+
+    <TabControl Style="{StaticResource MyNet.Styles.TabControl.Navigation}" Padding="{StaticResource MyNet.Margins.Default.Left}" TabStripPlacement="Left">
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=InformationCircle}" Header="{my:Resource General}">
+            <v:EditableSchedulingParametersGeneralView DataContext="{Binding SchedulingParameters}" />
+        </TabItem>
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=Settings}" Header="{my:Resource Rules}">
+            <my:DynamicScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <my:SimpleStackPanel>
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                              my:HeaderAssist.HorizontalAlignment="Left"
+                              my:IconAssist.Icon="{my:MediumIcon Kind=TimerSettings}"
+                              Header="{my:Resource MatchesFormat}"
+                              IsEnabled="{Binding CanEditMatchFormat}">
+                        <my:SimpleStackPanel>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Warning.Dialog}" Content="{my:Resource CannotEditMatchFormatWarning}" Visibility="{Binding CanEditMatchFormat, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                            <v:EditableMatchFormatView DataContext="{Binding MatchFormat}" />
+                        </my:SimpleStackPanel>
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                              my:HeaderAssist.HorizontalAlignment="Left"
+                              my:IconAssist.Icon="{my:MediumIcon Kind=CardBulletedSettings}"
+                              Header="{my:Resource MatchesRules}"
+                              IsEnabled="{Binding CanEditMatchRules}">
+                        <my:SimpleStackPanel>
+                            <Label Style="{StaticResource MyNet.Styles.Label.Warning.Dialog}" Content="{Binding}" Visibility="{Binding ShowMatchRulesWarning, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                                <Label.ContentTemplate>
+                                    <DataTemplate>
+                                        <DockPanel>
+                                            <my:PackIcon Width="25"
+                                                         Height="25"
+                                                         Margin="{StaticResource MyNet.Margins.Medium.Right}"
+                                                         VerticalAlignment="Center"
+                                                         DockPanel.Dock="Left"
+                                                         Kind="WarningCircle" />
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="*" />
+                                                    <RowDefinition Height="10" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="{my:Resource EditMatchRulesWarning}" TextWrapping="Wrap" />
+                                                <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch.Foreground}"
+                                                              Grid.Row="2"
+                                                              Content="{my:Resource ApplyMatchRulesOnExistingMatches}"
+                                                              IsChecked="{Binding ApplyMatchRulesOnExistingMatches}" />
+                                            </Grid>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </Label.ContentTemplate>
+                            </Label>
+                            <v:EditableMatchRulesView DataContext="{Binding MatchRules}" />
+                        </my:SimpleStackPanel>
+                    </GroupBox>
+                </my:SimpleStackPanel>
+            </my:DynamicScrollViewer>
+        </TabItem>
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=CalendarTime}" Header="{my:Resource Calendar}">
+            <v:EditableSchedulingParametersDatesView DataContext="{Binding SchedulingParameters}" />
+        </TabItem>
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=Stadium}" Header="{my:Resource Stadiums}">
+            <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Large}">
+                <v:EditableSchedulingParametersVenuesView DataContext="{Binding SchedulingParameters}" />
+                <ToggleButton Content="{my:Resource TreatNoStadiumAsWarning}" IsChecked="{Binding TreatNoStadiumAsWarning}" />
+            </my:SimpleStackPanel>
+        </TabItem>
+        <TabItem my:IconAssist.Icon="{my:Icon Kind=Home}" Header="{my:Resource Home}">
+            <v:ProjectEditionHomeView />
+        </TabItem>
+    </TabControl>
+
 </my:ContentDialog>
+

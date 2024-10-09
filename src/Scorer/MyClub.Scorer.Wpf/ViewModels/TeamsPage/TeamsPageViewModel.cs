@@ -10,8 +10,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
     {
         public TeamsViewModel TeamsViewModel { get; }
 
-        public TeamsPageViewModel(TeamsProvider teamsProvider,
-                                  TeamPresentationService teamPresentationService) => TeamsViewModel = new TeamsViewModel(teamsProvider, teamPresentationService);
+        public TeamsPageViewModel(TeamsProvider teamsProvider, TeamPresentationService teamPresentationService) => TeamsViewModel = new TeamsViewModel(teamsProvider, teamPresentationService);
 
         protected override void Cleanup()
         {

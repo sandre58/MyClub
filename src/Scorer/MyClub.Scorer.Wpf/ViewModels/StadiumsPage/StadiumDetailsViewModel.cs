@@ -7,7 +7,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using DynamicData;
 using DynamicData.Binding;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Threading;
 using MyNet.UI.ViewModels.Workspace;
@@ -15,18 +15,18 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.StadiumsPage
 {
-    internal class StadiumDetailsViewModel : ItemViewModel<IStadiumViewModel>
+    internal class StadiumDetailsViewModel : ItemViewModel<StadiumViewModel>
     {
-        private readonly ReadOnlyObservableCollection<ITeamViewModel> _teams;
-        private readonly Subject<IStadiumViewModel?> _refreshTeamsSubject = new();
+        private readonly ReadOnlyObservableCollection<TeamViewModel> _teams;
+        private readonly Subject<StadiumViewModel?> _refreshTeamsSubject = new();
 
-        public StadiumDetailsViewModel(ISourceProvider<ITeamViewModel> teamsProvider)
+        public StadiumDetailsViewModel(ISourceProvider<TeamViewModel> teamsProvider)
         {
-            var dynamicFilter = _refreshTeamsSubject.Select(x => new Func<ITeamViewModel, bool>(y => x is not null && x.Id == y.Stadium?.Id));
+            var dynamicFilter = _refreshTeamsSubject.Select(x => new Func<TeamViewModel, bool>(y => x is not null && x.Id == y.Stadium?.Id));
             Disposables.AddRange(
             [
                 teamsProvider.Connect().Filter(dynamicFilter)
-                                       .Sort(SortExpressionComparer<ITeamViewModel>.Ascending(x => x.Name))
+                                       .Sort(SortExpressionComparer<TeamViewModel>.Ascending(x => x.Name))
                                        .ObserveOn(Scheduler.UI)
                                        .Bind(out _teams)
                                        .Subscribe(),
@@ -39,6 +39,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.StadiumsPage
             base.OnItemChanged();
             _refreshTeamsSubject.OnNext(Item);
         }
-        public ReadOnlyObservableCollection<ITeamViewModel> Teams => _teams;
+        public ReadOnlyObservableCollection<TeamViewModel> Teams => _teams;
     }
 }

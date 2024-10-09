@@ -6,7 +6,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reactive.Linq;
-using DynamicData;
 using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
@@ -19,7 +18,6 @@ using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Commands;
-using MyNet.UI.Threading;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Edition
@@ -35,37 +33,24 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class MatchdayEditionViewModel : EntityEditionViewModel<Matchday, MatchdayDto, MatchdayService>
     {
-        private readonly ReadOnlyObservableCollection<MatchdayViewModel> _matchdays;
-        private readonly ISourceProvider<ITeamViewModel> _teamsProvider;
-        private readonly ISourceProvider<IStadiumViewModel> _stadiumsProvider;
+        //private readonly ISourceProvider<ITeamViewModel> _teamsProvider;
+        private readonly ISourceProvider<StadiumViewModel> _stadiumsProvider;
 
         public MatchdayEditionViewModel(MatchdayService matchdayService,
-                                        MatchdaysProvider matchdaysProvider,
-                                        StadiumsProvider stadiumsProvider,
-                                        TeamsProvider teamsProvider) : base(matchdayService)
+                                        StadiumsProvider stadiumsProvider) : base(matchdayService)
         {
             _stadiumsProvider = stadiumsProvider;
-            _teamsProvider = teamsProvider;
             InvertTeamsCommand = CommandsManager.Create(InvertTeams, () => Matches.Any(x => !x.IsReadOnly));
-            AddMatchCommand = CommandsManager.Create(AddMatch, () => teamsProvider.Items.Count > 0);
+            AddMatchCommand = CommandsManager.Create(AddMatch, () => Stage?.GetAvailableTeams().Count() > 0);
             RemoveMatchCommand = CommandsManager.CreateNotNull<EditableMatchViewModel>(RemoveMatch);
             CancelRemoveMatchCommand = CommandsManager.CreateNotNull<EditableMatchViewModel>(CancelRemoveMatch);
             DuplicateMatchdayCommand = CommandsManager.CreateNotNull<MatchdayViewModel>(DuplicateMatchday);
             ClearDuplicatedMatchdayCommand = CommandsManager.Create(ClearDuplicatedMatchday);
-
-            Disposables.AddRange(
-            [
-                matchdaysProvider.ConnectById().SortBy(x => x.Date).Bind(out _matchdays).ObserveOn(Scheduler.UI).Subscribe(),
-            ]);
         }
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public IMatchdayParent? Parent { get; private set; }
-
-        [CanBeValidated(false)]
-        [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<MatchdayViewModel> Matchdays => _matchdays;
+        public LeagueViewModel? Stage { get; private set; }
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
@@ -120,7 +105,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private void AddMatch()
         {
-            var item = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue());
+            var item = new EditableMatchViewModel(Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue());
 
             item.CurrentDate.Date = CurrentDate.Date;
             item.CurrentDate.Time = CurrentDate.Time;
@@ -134,12 +119,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DuplicatedMatchday = matchday;
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(_teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue());
+                var result = new EditableMatchViewModel(Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue());
 
                 if (CurrentDate.HasValue)
                     result.CurrentDate.Load(CurrentDate.DateTime.GetValueOrDefault());
-                result.HomeTeam = result.AvailableTeams.GetById(x.HomeTeam.Id);
-                result.AwayTeam = result.AvailableTeams.GetById(x.AwayTeam.Id);
+                result.HomeTeam = result.AvailableTeams.GetById(x.Home.Team.Id);
+                result.AwayTeam = result.AvailableTeams.GetById(x.Away.Team.Id);
                 result.StadiumSelection.Select(x.Stadium?.Id);
 
                 return result;
@@ -152,12 +137,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Matches.Clear();
         }
 
-        public void New(IMatchdayParent parent, DateTime? date = null)
+        public void New(LeagueViewModel stage, DateTime? date = null)
         {
             DuplicatedMatchday = null;
-            Parent = parent;
-            CanScheduleAutomatic = Parent?.CanAutomaticReschedule() ?? false;
-            CanScheduleStadiumsAutomatic = Parent?.CanAutomaticRescheduleVenue() ?? false;
+            Stage = stage;
+            CanScheduleAutomatic = Stage?.CanAutomaticReschedule() ?? false;
+            CanScheduleStadiumsAutomatic = Stage?.CanAutomaticRescheduleVenue() ?? false;
             New(() =>
             {
                 if (date.HasValue)
@@ -172,22 +157,22 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public void Duplicate(MatchdayViewModel matchday, DateTime? date = null)
         {
-            New(matchday.Parent, date);
+            New(matchday.Stage, date);
             DuplicatedMatchday = matchday;
         }
 
         public void Load(MatchdayViewModel matchday)
         {
             DuplicatedMatchday = null;
-            Parent = matchday.Parent;
-            CanScheduleAutomatic = Parent?.CanAutomaticReschedule() ?? false;
-            CanScheduleStadiumsAutomatic = Parent?.CanAutomaticRescheduleVenue() ?? false;
+            Stage = matchday.Stage;
+            CanScheduleAutomatic = Stage?.CanAutomaticReschedule() ?? false;
+            CanScheduleStadiumsAutomatic = Stage?.CanAutomaticRescheduleVenue() ?? false;
             Load(matchday.Id);
         }
 
         protected override void ResetItem()
         {
-            var defaultValues = CrudService.New(Parent?.Id);
+            var defaultValues = CrudService.New(Stage?.Id);
             CurrentDate.Load(defaultValues.Date);
             ShortName = defaultValues.ShortName.OrEmpty();
             Name = defaultValues.Name.OrEmpty();
@@ -206,7 +191,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             => new()
             {
                 Id = ItemId,
-                ParentId = Parent?.Id,
+                StageId = Stage?.Id,
                 Name = Name,
                 ShortName = ShortName,
                 Date = CurrentDate.ToUtcOrDefault(),
@@ -243,7 +228,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             PostponedState = !PostponedDateTime.HasValue && !item.IsPostponed ? PostponedState.None : PostponedDateTime.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
             Matches.Set(item.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(x.Id, _teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue());
+                var result = new EditableMatchViewModel(x.Id, Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue());
                 result.CurrentDate.Load(x.Date);
                 result.HomeTeam = result.AvailableTeams.GetById(x.HomeTeam.Id);
                 result.AwayTeam = result.AvailableTeams.GetById(x.AwayTeam.Id);

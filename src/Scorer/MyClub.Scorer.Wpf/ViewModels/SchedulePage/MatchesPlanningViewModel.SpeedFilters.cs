@@ -16,7 +16,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
     internal class MatchesPlanningSpeedFiltersViewModel : SpeedFiltersViewModel
     {
-        public MatchesPlanningSpeedFiltersViewModel(IEnumerable<ITeamViewModel> teams, IEnumerable<IStadiumViewModel> stadiums, SchedulingParametersViewModel schedulingParameters)
+        public MatchesPlanningSpeedFiltersViewModel(IEnumerable<IVirtualTeamViewModel> teams, IEnumerable<StadiumViewModel> stadiums, SchedulingParametersViewModel schedulingParameters)
         {
             TeamFilter = new MatchTeamFilterViewModel(teams);
             StadiumFilter = new(nameof(MatchViewModel.Stadium), stadiums);
@@ -31,6 +31,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public EnumValuesFilterViewModel<MatchState> StateFilter { get; } = new(nameof(MatchViewModel.State));
 
-        public SelectedValuesFilterViewModel<IStadiumViewModel> StadiumFilter { get; }
+        public SelectedValuesFilterViewModel<StadiumViewModel> StadiumFilter { get; }
     }
 }

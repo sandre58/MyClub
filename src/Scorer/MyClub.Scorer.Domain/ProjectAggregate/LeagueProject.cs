@@ -16,7 +16,7 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
         public override Team AddTeam(Team team)
         {
             base.AddTeam(team);
-            return Competition.AddTeam(team);
+            return (Team)Competition.AddTeam(team);
         }
 
         public override bool RemoveTeam(Team team, bool removeStadium = false)

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyClub.CrossCutting.Localization;
+using MyClub.Scorer.Domain.BracketComputing;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities;
@@ -28,14 +29,14 @@ namespace MyClub.Scorer.Domain.Factories
 
         public bool ScheduleVenuesBeforeDates { get; set; } = false;
 
-        public virtual IEnumerable<Matchday> Build(IMatchdaysProvider matchdaysProvider, IMatchdaysAlgorithm algorithm)
+        public virtual IEnumerable<Matchday> Build(IMatchdaysStage stage, IMatchdaysAlgorithm algorithm)
         {
             // 1 - Create matchdays and matches with default dates and names
-            var matchdays = algorithm.Build(matchdaysProvider.Teams)
+            var matchdays = algorithm.Compute(stage.ProvideTeams())
                                      .Select((x, y) =>
                                      {
-                                         var matchday = new Matchday(matchdaysProvider, DateTime.Today, $"{MyClubResources.Matchday} {y + 1}", (y + 1).ToString(MyClubResources.MatchdayXAbbr));
-                                         x.ForEach(x => matchday.AddMatch(x.home, x.away));
+                                         var matchday = new Matchday(stage, DateTime.Today, (y + 1).ToString(MyClubResources.MatchdayX), (y + 1).ToString(MyClubResources.MatchdayXAbbr));
+                                         x.ForEach(x => matchday.AddMatch(x.Team1, x.Team2));
 
                                          return matchday;
                                      })
@@ -50,8 +51,8 @@ namespace MyClub.Scorer.Domain.Factories
             // Update names
             matchdays.OrderBy(x => x.Date).ForEach((x, y) =>
             {
-                x.Name = StageNamesFactory.ComputePattern(NamePattern, y + 1, x.Date);
-                x.ShortName = StageNamesFactory.ComputePattern(ShortNamePattern, y + 1, x.Date);
+                x.Name = StageNamesFactory.ComputePattern(NamePattern, y + 1, x);
+                x.ShortName = StageNamesFactory.ComputePattern(ShortNamePattern, y + 1, x);
             });
 
             return matchdays;

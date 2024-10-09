@@ -3,7 +3,6 @@
 
 using System;
 using System.Linq;
-using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData;
@@ -24,34 +23,40 @@ namespace MyClub.Scorer.Wpf.ViewModels.RankingPage
 
         public RankingPageViewModel(CompetitionInfoProvider competitionInfoProvider, MatchesProvider matchesProvider, LeaguePresentationService leaguePresentationService)
         {
-            competitionInfoProvider.WhenCompetitionChanged(x => MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
-            {
-                if (x is LeagueViewModel leagueViewModel)
-                {
-                    Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
-                    LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
-                    HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
-                    AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
-
-                    _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseHomeVenue).Subscribe(x => ShowHomeAwayRankings = x.Value));
-                }
-            }), _ =>
-            {
-                Ranking?.Dispose();
-                LiveRanking?.Dispose();
-                HomeRanking?.Dispose();
-                AwayRanking?.Dispose();
-
-                Ranking = null;
-                LiveRanking = null;
-                HomeRanking = null;
-                AwayRanking = null;
-                _disposables?.Dispose();
-            });
-
             EditRulesCommand = CommandsManager.Create(async () => await leaguePresentationService.EditRankingRulesAsync().ConfigureAwait(false));
 
-            Disposables.Add(matchesProvider.Connect().AutoRefresh(x => x.State).Throttle(50.Milliseconds()).Subscribe(_ => LiveIsEnabled = matchesProvider.Items.Any(x => x.State == MatchState.InProgress)));
+            Disposables.AddRange(
+                [
+                    matchesProvider.Connect()
+                                   .AutoRefreshOnObservable(x => x.WhenPropertyChanged(y => y.State, false))
+                                   .AutoRefreshOnObservable(_ => matchesProvider.LoadRunner.WhenEnd())
+                                   .Subscribe(_ => LiveIsEnabled = !matchesProvider.LoadRunner.IsRunning && matchesProvider.Items.Any(x => x.State == MatchState.InProgress)),
+                    competitionInfoProvider.UnloadRunner.WhenStart().Subscribe(_ =>
+                    {
+                        Ranking?.Dispose();
+                        LiveRanking?.Dispose();
+                        HomeRanking?.Dispose();
+                        AwayRanking?.Dispose();
+
+                        Ranking = null;
+                        LiveRanking = null;
+                        HomeRanking = null;
+                        AwayRanking = null;
+                        _disposables?.Dispose();
+                    }),
+                    competitionInfoProvider.LoadRunner.WhenEnd().Subscribe(x =>
+                    {
+                        if (x is LeagueViewModel leagueViewModel)
+                        {
+                            Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
+                            LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
+                            HomeRanking = new RankingListViewModel(leagueViewModel.HomeRanking, _rankingListParameterProvider);
+                            AwayRanking = new RankingListViewModel(leagueViewModel.AwayRanking, _rankingListParameterProvider);
+
+                            _disposables = new(leagueViewModel.SchedulingParameters.WhenPropertyChanged(x => x.UseHomeVenue).Subscribe(x => ShowHomeAwayRankings = x.Value));
+                        }
+                    })
+               ]);
         }
 
         public bool LiveIsEnabled { get; private set; }

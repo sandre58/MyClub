@@ -13,25 +13,29 @@ namespace MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent
 {
     internal class OverviewRankingViewModel : ObservableObject
     {
+        private readonly CompetitionInfoProvider _competitionInfoProvider;
         private readonly RankingListParameterProvider _rankingListParameterProvider = RankingListParameterProvider.Compact;
 
         public OverviewRankingViewModel(CompetitionInfoProvider competitionInfoProvider)
             : base()
         {
-            competitionInfoProvider.WhenCompetitionChanged(x => MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
+            _competitionInfoProvider = competitionInfoProvider;
+            competitionInfoProvider.LoadRunner.RegisterOnEnd(this, x => MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() =>
                                  {
                                      if (x is LeagueViewModel leagueViewModel)
                                      {
                                          Ranking = new RankingListViewModel(leagueViewModel.Ranking, _rankingListParameterProvider);
                                          LiveRanking = new RankingListViewModel(leagueViewModel.LiveRanking, _rankingListParameterProvider);
                                      }
-                                 }), _ =>
-                                 {
-                                     Ranking?.Dispose();
-                                     LiveRanking?.Dispose();
-                                     Ranking = null;
-                                     LiveRanking = null;
-                                 });
+                                 }));
+
+            competitionInfoProvider.UnloadRunner.RegisterOnStart(this, () =>
+            {
+                Ranking?.Dispose();
+                LiveRanking?.Dispose();
+                Ranking = null;
+                LiveRanking = null;
+            });
 
             NavigateToRankingCommand = CommandsManager.Create(() => NavigationCommandsService.NavigateToRankingPage());
         }
@@ -43,5 +47,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent
         public RankingListViewModel? LiveRanking { get; private set; }
 
         public ICommand NavigateToRankingCommand { get; private set; }
+
+        protected override void Cleanup()
+        {
+            _competitionInfoProvider.LoadRunner.Unregister(this);
+            _competitionInfoProvider.UnloadRunner.Unregister(this);
+            base.Cleanup();
+        }
     }
 }

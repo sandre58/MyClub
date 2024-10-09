@@ -9,6 +9,7 @@ using MyNet.Utilities;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyClub.Scorer.Domain.Extensions;
 
 namespace MyClub.Scorer.Domain.RankingAggregate
 {
@@ -18,18 +19,18 @@ namespace MyClub.Scorer.Domain.RankingAggregate
         public const string GamesLostAfterShootouts = "GamesLostAfterShootouts";
 
         private readonly Ranking _ranking;
-        private readonly Func<Match, ITeam, bool> _filterMatches;
+        private readonly Func<Match, IVirtualTeam, bool> _filterMatches;
         private readonly Dictionary<string, object> _cache = [];
         private int? _points;
 
-        internal RankingRow(Ranking ranking, ITeam team, Func<Match, ITeam, bool> filterMatches)
+        internal RankingRow(Ranking ranking, IVirtualTeam team, Func<Match, IVirtualTeam, bool> filterMatches)
         {
             _ranking = ranking;
-            _filterMatches = filterMatches ?? new Func<Match, ITeam, bool>((x, _) => x.State == MatchState.Played);
+            _filterMatches = filterMatches ?? new Func<Match, IVirtualTeam, bool>((x, _) => x.State == MatchState.Played);
             Team = team;
         }
 
-        public ITeam Team { get; }
+        public IVirtualTeam Team { get; }
 
         public IEnumerable<Match> GetMatches() => _ranking.GetMatches().Where(x => x.Participate(Team) && _filterMatches.Invoke(x, Team));
 
@@ -55,14 +56,14 @@ namespace MyClub.Scorer.Domain.RankingAggregate
 
         public int Get(DefaultRankingColumn column) => Get<int?>(column.ToString()) ?? 0;
 
-        public int CompareWith(ITeam team)
+        public int CompareWith(IVirtualTeam team)
         {
             var ranking = GetRankingAgainst([team]);
 
             return -ranking.GetRank(Team).CompareTo(ranking.GetRank(team));
         }
 
-        public Ranking GetRankingAgainst(IEnumerable<ITeam> teams)
+        public Ranking GetRankingAgainst(IEnumerable<IVirtualTeam> teams)
         {
             var againstTeams = teams.Union([Team]).ToList();
             return new(againstTeams,
@@ -91,11 +92,11 @@ namespace MyClub.Scorer.Domain.RankingAggregate
                 _cache.AddOrUpdate(column, computers[column].Compute(this));
         }
 
-        private void ComputePoints() => _points = GetMatches().Sum(x => _ranking.Rules.GetPoints(x.GetDetailledResultOf(Team))) - GetPenaltyPoints();
+        private void ComputePoints() => _points = Team.GetTeam() is Team team ? GetMatches().Sum(x => _ranking.Rules.GetPoints(x.GetExtendedResultOf(team))) - GetPenaltyPoints() : 0;
 
         public override string ToString()
         {
-            var str = new StringBuilder($"{Team.Name} | {GetPoints()} PTS | ");
+            var str = new StringBuilder($"{Team} | {GetPoints()} PTS | ");
 
             str.Append(string.Join(" | ", _ranking.Rules.Computers.Select(x => $"{Get(x.Key)} ({x.Key})")));
 

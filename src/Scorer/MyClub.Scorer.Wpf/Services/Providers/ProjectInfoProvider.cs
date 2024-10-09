@@ -5,32 +5,29 @@ using System;
 using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Messages;
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Wpf.Messages;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable;
+using MyNet.Observable.Deferrers;
 using MyNet.Utilities;
 using MyNet.Utilities.Extensions;
+using MyNet.Utilities.Logging;
 using MyNet.Utilities.Messaging;
 using MyNet.Utilities.Suspending;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.Services.Providers
 {
-    public sealed class ProjectInfoProvider : ObservableObject
+    internal sealed class ProjectInfoProvider : ObservableObject
     {
-        private readonly Subject<IProject> _projectLoadedSubject = new();
-        private readonly Subject<bool> _projectClosingSubject = new();
         private readonly Suspender _isDirtySuspender = new();
         private CompositeDisposable? _projectDisposables;
-
-        public CompetitionType Type { get; private set; }
 
         public string? Name { get; private set; }
 
@@ -50,76 +47,74 @@ namespace MyClub.Scorer.Wpf.Services.Providers
 
         public bool IsLoaded { get; private set; }
 
-        public bool TreatNoStadiumAsWarning { get; private set; }
+        public ActionRunner UnloadRunner { get; }
 
-        public TimeSpan PeriodForPreviousMatches { get; private set; }
+        public ActionRunner<(IProject project, string? filename), IProject> LoadRunner { get; }
 
-        public TimeSpan PeriodForNextMatches { get; private set; }
+        public ProjectPreferencesViewModel Preferences { get; private set; } = new();
 
         public ProjectInfoProvider()
         {
+            UnloadRunner = new(() =>
+            {
+                ClearProject();
+                ResetFileInfo();
+                SetIsDirty(false);
+            });
+            LoadRunner = new(x =>
+            {
+                using (_isDirtySuspender.Suspend())
+                {
+                    Preferences.Load(x.project.Preferences);
+                    _projectDisposables = new(
+                        x.project.WhenPropertyChanged(y => y.Name).Subscribe(y => Name = y.Value),
+                        x.project.WhenPropertyChanged(y => y.Image).Subscribe(y => Image = y.Value),
+                        x.project.Teams.ToObservableChangeSet(y => y.Id).SubscribeMany(y => y.Players.ToObservableChangeSet(y => y.Id).SubscribeAll(() => SetIsDirty(true))).SubscribeAll(() => SetIsDirty(true)),
+                        x.project.Teams.ToObservableChangeSet(y => y.Id).SubscribeMany(x => x.Staff.ToObservableChangeSet(y => y.Id).SubscribeAll(() => SetIsDirty(true))).Subscribe(),
+                        x.project.Stadiums.ToObservableChangeSet(y => y.Id).SubscribeAll(() => SetIsDirty(true)),
+                        x.project.Competition.WhenAnyPropertyChanged().Subscribe(_ => SetIsDirty(true)),
+                        x.project.WhenAnyPropertyChanged().Subscribe(_ => SetIsDirty(true)),
+                        x.project.Preferences.WhenAnyPropertyChanged().Subscribe(_ => SetIsDirty(true))
+                    );
+
+                    switch (x.project.Competition)
+                    {
+                        case League league:
+                            _projectDisposables.Add(league.Matchdays.ToObservableChangeSet().SubscribeMany(x => x.Matches.ToObservableChangeSet(y => y.Id).SubscribeAll(() => SetIsDirty(true))).SubscribeAll(() => SetIsDirty(true)));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                // New project or project from template
+                if (string.IsNullOrEmpty(x.filename))
+                {
+                    ResetFileInfo();
+                    SetIsDirty(true);
+                }
+
+                // Open a project
+                else
+                {
+                    SetFileInfo(x.filename);
+                    SetIsDirty(false);
+                }
+
+                IsLoaded = true;
+            }, true);
+            LoadRunner.RegisterOnEnd(this, x => LogManager.Trace($"{GetType().Name} : Load Project '{x.Name}' in {LoadRunner.LastTimeElapsed.Milliseconds}ms"));
+
             Messenger.Default.Register<CurrentProjectLoadedMessage>(this, OnCurrentProjectLoaded);
             Messenger.Default.Register<CurrentProjectCloseRequestMessage>(this, OnCurrentProjectCloseRequest);
             Messenger.Default.Register<CurrentProjectSavedMessage>(this, OnCurrentProjectSaved);
         }
 
         [SuppressPropertyChangedWarnings]
-        private void OnCurrentProjectCloseRequest(CurrentProjectCloseRequestMessage message)
-        {
-            _projectClosingSubject.OnNext(true);
-            ClearProject();
-            ResetFileInfo();
-            SetIsDirty(false);
-        }
+        private void OnCurrentProjectCloseRequest(CurrentProjectCloseRequestMessage message) => UnloadRunner.Run();
 
         [SuppressPropertyChangedWarnings]
-        private void OnCurrentProjectLoaded(CurrentProjectLoadedMessage message)
-        {
-            var currentProject = message.Project;
-
-            using (_isDirtySuspender.Suspend())
-            {
-                Type = currentProject.Type;
-                _projectDisposables = new(
-                    currentProject.WhenPropertyChanged(x => x.Name).Subscribe(x => Name = x.Value),
-                    currentProject.WhenPropertyChanged(x => x.Image).Subscribe(x => Image = x.Value),
-                    currentProject.WhenPropertyChanged(x => x.Preferences.TreatNoStadiumAsWarning).Subscribe(x => TreatNoStadiumAsWarning = x.Value),
-                    currentProject.WhenPropertyChanged(x => x.Preferences.PeriodForPreviousMatches).Subscribe(x => PeriodForPreviousMatches = x.Value),
-                    currentProject.WhenPropertyChanged(x => x.Preferences.PeriodForNextMatches).Subscribe(x => PeriodForNextMatches = x.Value),
-                    currentProject.Teams.ToObservableChangeSet(x => x.Id).SubscribeMany(x => x.Players.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).SubscribeAll(() => SetIsDirty(true)),
-                    currentProject.Teams.ToObservableChangeSet(x => x.Id).SubscribeMany(x => x.Staff.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).Subscribe(),
-                    currentProject.Stadiums.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true)),
-                    currentProject.Competition.WhenAnyPropertyChanged().Subscribe(_ => SetIsDirty(true)),
-                    currentProject.WhenAnyPropertyChanged().Subscribe(_ => SetIsDirty(true))
-                );
-
-                switch (currentProject.Competition)
-                {
-                    case League league:
-                        _projectDisposables.Add(league.Matchdays.ToObservableChangeSet().SubscribeMany(x => x.Matches.ToObservableChangeSet(x => x.Id).SubscribeAll(() => SetIsDirty(true))).SubscribeAll(() => SetIsDirty(true)));
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            // New project or project from template
-            if (string.IsNullOrEmpty(message.Filename))
-            {
-                ResetFileInfo();
-                SetIsDirty(true);
-            }
-
-            // Open a project
-            else
-            {
-                SetFileInfo(message.Filename);
-                SetIsDirty(false);
-            }
-
-            IsLoaded = true;
-            _projectLoadedSubject.OnNext(currentProject);
-        }
+        private void OnCurrentProjectLoaded(CurrentProjectLoadedMessage message) => LoadRunner.Run((message.Project, message.Filename), () => message.Project);
 
         private void OnCurrentProjectSaved(CurrentProjectSavedMessage message)
         {
@@ -130,6 +125,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers
         private void ClearProject()
         {
             _projectDisposables?.Dispose();
+            Preferences.Clear();
             IsLoaded = false;
             Name = null;
             Image = null;
@@ -175,14 +171,11 @@ namespace MyClub.Scorer.Wpf.Services.Providers
         {
             base.Cleanup();
 
-            _projectClosingSubject.Dispose();
-            _projectLoadedSubject.Dispose();
+            LoadRunner.Dispose();
+            UnloadRunner.Dispose();
+            Preferences.Dispose();
             ClearProject();
             Messenger.Default.Unregister(this);
         }
-
-        internal void WhenProjectLoaded(Action<IProject> action) => Disposables.Add(_projectLoadedSubject.Subscribe(action));
-
-        internal void WhenProjectClosing(Action action) => Disposables.Add(_projectClosingSubject.Subscribe(_ => action()));
     }
 }

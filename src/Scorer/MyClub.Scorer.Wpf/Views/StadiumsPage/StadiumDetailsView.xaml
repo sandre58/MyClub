@@ -51,7 +51,7 @@
                   my:IconAssist.Icon="{my:MediumIcon Kind=Map}"
                   Header="{my:Resource Address}">
             <DockPanel Visibility="{Binding Item.Address, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
-                <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Elevation}"
+                <Button Style="{StaticResource MyNet.Styles.Button.Rounded.Filled}"
                         Width="30"
                         Height="30"
                         Margin="{StaticResource MyNet.Margins.Medium.Right}"
@@ -81,7 +81,7 @@
                   my:IconAssist.Icon="{my:MediumIcon Kind=Shield}"
                   Header="{my:Resource Teams}">
             <my:GhostControl ShowGhost="{Binding Teams.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
-                <ItemsControl ItemTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Away}" ItemsSource="{Binding Teams}">
+                <ItemsControl ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}" ItemsSource="{Binding Teams}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />

@@ -76,7 +76,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [CanSetIsModified(false)]
         public ReadOnlyObservableCollection<MatchdayViewModel> AvailableMatchdays { get; }
 
-        public NewMatchdaysDto ToParametersDto(Guid? parentId) => new()
+        public NewMatchdaysDto ToParametersDto(Guid? stageId) => new()
         {
             NamePattern = NamePattern,
             ShortNamePattern = ShortNamePattern,
@@ -85,26 +85,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             StartIndex = Index,
             StartTime = DefaultTime.GetValueOrDefault(),
             ScheduleVenues = true,
-            ParentId = parentId,
+            StageId = stageId,
             DatesParameters = _datesSchedulingMethodViewModels[DatesSchedulingMethod].ProvideDatesParameters()
         };
 
-        internal void Refresh(IMatchdayParent parent)
+        internal void Refresh(LeagueViewModel stage)
         {
-            _availableMatchdays.Set(parent.Matchdays.OrderBy(x => x.Date));
+            _availableMatchdays.Set(stage.Matchdays.OrderBy(x => x.Date));
             DuplicationStart = AvailableMatchdays.FirstOrDefault();
         }
 
-        internal void Reset(IMatchdayParent parent)
+        internal void Reset(LeagueViewModel stage)
         {
             DatesSchedulingMethod = DatesSchedulingMethod.Manual;
             NamePattern = MyClubResources.MatchdayNamePattern;
             ShortNamePattern = MyClubResources.MatchdayShortNamePattern;
-            DefaultTime = parent.SchedulingParameters.StartTime;
+            DefaultTime = stage.SchedulingParameters.StartTime;
             DuplicationIsEnabled = false;
             InvertTeams = true;
-            Index = parent.Matchdays.Count + 1;
-            _datesSchedulingMethodViewModels.Values.ForEach(x => x.Reset(parent));
+            Index = stage.Matchdays.Count + 1;
+            _datesSchedulingMethodViewModels.Values.ForEach(x => x.Reset(stage));
         }
 
         public override bool ValidateProperties()

@@ -62,7 +62,7 @@
                     Content="{my:Translation CountMatchdays,
                                              Format=ValidateXItems}"
                     Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Primary}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled.Primary}"
                     HorizontalAlignment="Right"
                     my:IconAssist.Icon="{my:Icon Kind=Flash}"
                     Command="{Binding GenerateCommand}"

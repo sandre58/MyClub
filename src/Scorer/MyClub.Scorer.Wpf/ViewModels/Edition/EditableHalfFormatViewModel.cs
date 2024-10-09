@@ -23,6 +23,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         [Display(Name = nameof(HalfTimeDuration), ResourceType = typeof(MyClubResources))]
         public int? HalfTimeDuration { get; set; } = 15;
 
+        public int GetEffectiveTime() => Number.GetValueOrDefault() * Duration.GetValueOrDefault();
+
         public HalfFormat Create()
             => new(Number.GetValueOrDefault(), Duration.GetValueOrDefault().Minutes(), HalfTimeDuration?.Minutes());
 

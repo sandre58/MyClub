@@ -13,11 +13,20 @@
     </UserControl.Resources>
 
     <my:SimpleStackPanel>
-        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
                   my:HeaderAssist.HorizontalAlignment="Left"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=TimerSettings}"
                   Header="{my:Resource MatchesFormat}"
                   IsEnabled="{Binding CanEditFormat}">
             <v:EditableMatchFormatView DataContext="{Binding MatchFormat}" />
+        </GroupBox>
+
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                  my:HeaderAssist.HorizontalAlignment="Left"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=CardBulletedSettings}"
+                  Header="{my:Resource MatchesRules}"
+                  IsEnabled="{Binding CanEditRules}">
+            <v:EditableMatchRulesView DataContext="{Binding MatchRules}" />
         </GroupBox>
     </my:SimpleStackPanel>
 

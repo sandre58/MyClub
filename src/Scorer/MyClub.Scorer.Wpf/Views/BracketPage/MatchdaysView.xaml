@@ -39,7 +39,7 @@
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.ToolBar.Elevation.Primary}"
+                    <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.ToolBar.Filled.Primary}"
                                     my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
                                     Command="{Binding AddCommand}"
                                     PopupPadding="0"
@@ -56,22 +56,22 @@
             </my:CommandsBar.LeftCommands>
 
             <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
-                <Button Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" ToolTip="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" />
-                <Button Command="{Binding AddMatchToSelectedItemCommand}" Content="{my:MediumIcon Kind=PlusCircle}" ToolTip="{my:ShortcutResource AddMatch, ShortcutKey=Ctrl+Alt+N}" />
-                <Button Command="{Binding DuplicateSelectedItemCommand}" Content="{my:MediumIcon Kind=ContentDuplicate}" ToolTip="{my:ShortcutResource Duplicate, ShortcutKey=Ctrl+D}" />
-                <Button Command="{Binding PostponeSelectedItemsCommand}" Content="{my:MediumIcon Kind=ProgressQuestion}" ToolTip="{my:ShortcutResource Postpone, ShortcutKey=Ctrl+P}" />
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" />
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource AddMatch, ShortcutKey=Ctrl+Alt+N}" Command="{Binding AddMatchToSelectedItemCommand}" Content="{my:MediumIcon Kind=PlusCircle}" />
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Duplicate, ShortcutKey=Ctrl+D}" Command="{Binding DuplicateSelectedItemCommand}" Content="{my:MediumIcon Kind=ContentDuplicate}" />
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Postpone, ShortcutKey=Ctrl+P}" Command="{Binding PostponeSelectedItemsCommand}" Content="{my:MediumIcon Kind=ProgressQuestion}" />
                 <Button my:ThemeAssist.IsMouseOverBackground="{DynamicResource MyNet.Brushes.Negative}"
                         my:ThemeAssist.IsMouseOverForeground="{DynamicResource MyNet.Brushes.White}"
+                        my:ToolTipAssist.Content="{my:ShortcutResource Remove,
+                                                                       ShortcutKey=InputDelete}"
                         Command="{Binding RemoveSelectedItemsCommand}"
-                        Content="{my:MediumIcon Kind=Trash}"
-                        ToolTip="{my:ShortcutResource Remove,
-                                                      ShortcutKey=InputDelete}" />
+                        Content="{my:MediumIcon Kind=Trash}" />
             </my:SelectionCommandsBar>
 
             <my:CommandsBar.RightCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
                     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.List.Count.Selectable}" />
-                    <ContentControl Margin="10 2">
+                    <ContentControl Margin="10 0">
                         <ContentControl.Style>
                             <Style TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
                                 <Style.Triggers>
@@ -81,25 +81,29 @@
                                     <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeMonth">
                                         <Setter Property="Content">
                                             <Setter.Value>
-                                                <my:MonthPicker Style="{StaticResource MyNet.Styles.MonthPicker.Alternate.Outlined}"
+                                                <Grid>
+                                                    <my:MonthPicker Style="{StaticResource MyNet.Styles.MonthPicker.DropDown.Filled}"
                                                                 Width="210"
+                                                                VerticalAlignment="Stretch"
                                                                 FontSize="{StaticResource MyNet.Font.Size.Caption}"
                                                                 FontWeight="SemiBold"
                                                                 SelectedMonth="{my:DateTime Display.Mode.DisplayDate}"
                                                                 SelectedMonthFormat="Y" />
+                                                </Grid>
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeYear">
                                         <Setter Property="Content">
                                             <Setter.Value>
-                                                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.Alternate.Outlined}"
+                                                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.DropDown.Filled}"
                                                                   Width="210"
                                                                   my:HintAssist.HelperTextForeground="{DynamicResource MyNet.Brushes.Application.Foreground}"
                                                                   FontSize="{StaticResource MyNet.Font.Size.Caption}"
                                                                   FontWeight="SemiBold"
                                                                   Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
-                                                                  Value="{my:DateTime Display.Mode.DisplayDate, Converter={x:Static my:DateToYearConverter.Default}}" />
+                                                                  Value="{my:DateTime Display.Mode.DisplayDate,
+                                                                                      Converter={x:Static my:DateToYearConverter.Default}}" />
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>

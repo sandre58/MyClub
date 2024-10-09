@@ -11,7 +11,6 @@ using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.Utilities;
-using MyNet.Utilities.Comparaison;
 using MyNet.Utilities.Localization;
 using PropertyChanged;
 
@@ -21,11 +20,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
     {
         None,
 
-        Parent,
+        CompetitionStage,
 
-        Date,
-
-        DateRange
+        Date
     }
 
     internal class MatchesPlanningFiltersViewModel : SpeedFiltersViewModel
@@ -36,25 +33,22 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public CompositeFilterViewModel DateFilter { get; }
 
-        public CompositeFilterViewModel DateRangeFilter { get; }
+        public CompositeFilterViewModel CompetitionStageFilter { get; }
 
-        public CompositeFilterViewModel ParentFilter { get; }
-
-        public MatchesPlanningFiltersViewModel(IEnumerable<ITeamViewModel> teams,
-                                               IEnumerable<IStadiumViewModel> stadiums,
+        public MatchesPlanningFiltersViewModel(IEnumerable<IVirtualTeamViewModel> teams,
+                                               IEnumerable<StadiumViewModel> stadiums,
                                                IEnumerable<DateOnly> dates,
-                                               IEnumerable<IMatchParent> parents,
+                                               IEnumerable<IStageViewModel> stages,
                                                SchedulingParametersViewModel schedulingParameters)
         {
             SpeedFilters = new MatchesPlanningSpeedFiltersViewModel(teams, stadiums, schedulingParameters);
             DateFilter = new CompositeFilterViewModel(new DateFilterViewModel(nameof(MatchViewModel.DateOfDay), dates)) { IsEnabled = false };
-            DateRangeFilter = new CompositeFilterViewModel(new MyNet.UI.ViewModels.List.Filtering.Filters.DateFilterViewModel(nameof(MatchViewModel.Date)) { Operator = ComplexComparableOperator.IsBetween }) { IsEnabled = false };
-            ParentFilter = new CompositeFilterViewModel(new MatchParentFilterViewModel(nameof(MatchViewModel.Parent), parents)) { IsEnabled = false };
+            CompetitionStageFilter = new CompositeFilterViewModel(new CompetitionStageFilterViewModel(nameof(MatchViewModel.Stage), stages)) { IsEnabled = false };
 
             Disposables.AddRange(
             [
                 Observable.FromEventPattern<FiltersChangedEventArgs>(x => SpeedFilters.FiltersChanged += x, x => SpeedFilters.FiltersChanged -= x).Subscribe(_ => OnSubFiltersChanged()),
-                DateFilter.WhenAnyPropertyChanged().Merge(ParentFilter.WhenAnyPropertyChanged()).Merge(DateRangeFilter.WhenAnyPropertyChanged().Throttle(10.Milliseconds())).Subscribe(_ => DeferOrExecute()),
+                DateFilter.WhenAnyPropertyChanged().Merge(CompetitionStageFilter.WhenAnyPropertyChanged()).Subscribe(_ => DeferOrExecute()),
                 Observable.FromEventPattern(x => GlobalizationService.Current.TimeZoneChanged += x, x => GlobalizationService.Current.TimeZoneChanged -= x).Throttle(10.Milliseconds()).Subscribe(_ => DeferOrExecute()),
             ]);
         }
@@ -66,7 +60,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                 CompositeFilters.Set(SpeedFilters);
         }
 
-        protected override void ApplyFilters(IEnumerable<ICompositeFilterViewModel> compositeFilters) => base.ApplyFilters(compositeFilters.Concat([DateFilter, ParentFilter, DateRangeFilter]));
+        protected override void ApplyFilters(IEnumerable<ICompositeFilterViewModel> compositeFilters) => base.ApplyFilters(compositeFilters.Concat([DateFilter, CompetitionStageFilter]));
 
         public override void Clear()
         {
@@ -91,8 +85,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
                 using (Defer())
                 {
                     DateFilter.Reset();
-                    ParentFilter.Reset();
-                    DateRangeFilter.Reset();
+                    CompetitionStageFilter.Reset();
                 }
             }
         }
@@ -102,27 +95,17 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             using (Defer())
                 switch (mode)
                 {
-                    case FilterMode.None:
-                        DateRangeFilter.IsEnabled = false;
+                    case FilterMode.CompetitionStage:
                         DateFilter.IsEnabled = false;
-                        ParentFilter.IsEnabled = false;
-                        break;
-                    case FilterMode.Parent:
-                        DateRangeFilter.IsEnabled = false;
-                        DateFilter.IsEnabled = false;
-                        ParentFilter.IsEnabled = true;
+                        CompetitionStageFilter.IsEnabled = true;
                         break;
                     case FilterMode.Date:
-                        DateRangeFilter.IsEnabled = false;
                         DateFilter.IsEnabled = true;
-                        ParentFilter.IsEnabled = false;
-                        break;
-                    case FilterMode.DateRange:
-                        DateRangeFilter.IsEnabled = true;
-                        DateFilter.IsEnabled = false;
-                        ParentFilter.IsEnabled = false;
+                        CompetitionStageFilter.IsEnabled = false;
                         break;
                     default:
+                        DateFilter.IsEnabled = false;
+                        CompetitionStageFilter.IsEnabled = false;
                         break;
                 }
         }

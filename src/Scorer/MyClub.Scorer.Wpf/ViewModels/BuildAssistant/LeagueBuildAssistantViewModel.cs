@@ -2,11 +2,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Threading.Tasks;
+using DynamicData;
+using DynamicData.Binding;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Edition;
+using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Dialogs;
 using MyNet.UI.ViewModels.Edition;
 
@@ -16,7 +19,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
     internal class LeagueBuildAssistantViewModel : EditionViewModel
     {
         private readonly LeagueService _leagueService;
-        private readonly MatchdaysProvider _matchdaysProvider;
         private readonly MatchesProvider _matchesProvider;
         private readonly TeamsProvider _teamsProvider;
         private readonly CompetitionInfoProvider _competitionInfoProvider;
@@ -24,22 +26,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 
         public LeagueBuildAssistantViewModel(LeagueService leagueService,
                                              CompetitionInfoProvider competitionInfoProvider,
-                                             MatchdaysProvider matchdaysProvider,
                                              MatchesProvider matchesProvider,
                                              StadiumsProvider stadiumsProvider,
                                              TeamsProvider teamsProvider,
                                              ConflictsManager conflictsManager)
         {
             _leagueService = leagueService;
-            _matchdaysProvider = matchdaysProvider;
             _matchesProvider = matchesProvider;
             _teamsProvider = teamsProvider;
             _competitionInfoProvider = competitionInfoProvider;
             _conflictsManager = conflictsManager;
-            BuildParameters = new(stadiumsProvider);
+            BuildParameters = new(new ObservableSourceProvider<IEditableStadiumViewModel>(stadiumsProvider.Items.ToObservableChangeSet().Transform(x => (IEditableStadiumViewModel)x)));
 
             Reset();
-            _competitionInfoProvider.WhenCompetitionChanged(_ => Reset());
+            _competitionInfoProvider.LoadRunner.RegisterOnEnd(this, _ => Reset());
         }
 
         public LeagueBuildAssistantParametersViewModel BuildParameters { get; }
@@ -55,9 +55,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         protected override void SaveCore()
         {
             using (_conflictsManager.Defer())
-            using (_competitionInfoProvider.GetCompetition<LeagueViewModel>().DeferRefreshRankings())
+            using (_competitionInfoProvider.GetLeague().DeferRefreshRankings())
             using (_matchesProvider.DeferReload())
-            using (_matchdaysProvider.DeferReload())
             {
                 var parameters = BuildParameters.ToBuildParameters();
                 _leagueService.Build(parameters);
@@ -74,5 +73,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         protected override Task<bool> CanCancelAsync() => Task.FromResult(true);
 
         protected override Task<MessageBoxResult> SavingRequestAsync() => Task.FromResult(MessageBoxResult.No);
+
+        protected override void Cleanup()
+        {
+            _competitionInfoProvider.LoadRunner.Unregister(this);
+            base.Cleanup();
+        }
     }
 }

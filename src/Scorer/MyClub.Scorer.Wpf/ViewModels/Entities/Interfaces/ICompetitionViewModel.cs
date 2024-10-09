@@ -11,11 +11,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
 {
     internal interface ICompetitionViewModel : IIdentifiable<Guid>, INotifyPropertyChanged, IDisposable
     {
-        IObservable<IChangeSet<MatchViewModel, Guid>> ProvideMatches();
-
-        IObservable<IChangeSet<IMatchParent, Guid>> ProvideMatchParents();
+        IObservable<IChangeSet<MatchViewModel>> ProvideMatches();
 
         MatchFormat MatchFormat { get; }
+
+        MatchRules MatchRules { get; }
 
         SchedulingParametersViewModel SchedulingParameters { get; }
     }

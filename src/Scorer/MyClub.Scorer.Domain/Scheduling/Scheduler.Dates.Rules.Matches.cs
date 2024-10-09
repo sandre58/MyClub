@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 
@@ -11,48 +13,41 @@ namespace MyClub.Scorer.Domain.Scheduling
 {
     public class DateRulesMatchesScheduler : DateRulesScheduler<Match>, IMatchesScheduler
     {
-        public bool ScheduleByParent { get; set; }
+        public bool ScheduleByStage { get; set; }
 
         public override void Schedule(IEnumerable<Match> items)
         {
-            if (!ScheduleByParent)
+            var startDate = StartDate;
+            if (!ScheduleByStage)
             {
-                var date = StartDate;
                 DateOnly? previousDate = null;
-                items.ForEach(x =>
+                items.ForEach(item =>
                 {
-                    var matchIndex = x.Parent.Matches.OrderBy(x => x.Date).ToList().IndexOf(x);
-                    while (!DateRules.All(y => y.Match(date, previousDate)))
-                        date = date.BeginningOfDay().Add(Interval).ToDate();
+                    var matchIndex = item.GetStage().GetAllMatches().OrderBy(x => x.Date).ToList().IndexOf(item);
+                    var newDate = ScheduleItem(item, startDate, previousDate, matchIndex);
 
-                    var time = TimeRules.Select(y => y.ProvideTime(date, matchIndex)).FirstOrDefault(y => y is not null) ?? DefaultTime ?? x.Date.ToTime();
-
-                    x.Schedule(date.At(time, DateTimeKind));
-
-                    previousDate = date;
-                    date = date.BeginningOfDay().Add(Interval).ToDate();
+                    previousDate = newDate.ToDate();
+                    startDate = newDate.BeginningOfDay().Add(Interval).ToDate();
                 });
             }
             else
             {
-                var itemsGroupByParents = items.OrderBy(x => x.Date).GroupBy(x => x.Parent);
-                var date = StartDate;
+                var itemsGroupByStages = items.OrderBy(x => x.Date).GroupBy(x => x.GetStage());
                 DateOnly? previousDate = null;
-                itemsGroupByParents.ForEach(item =>
+                itemsGroupByStages.ForEach(item =>
                 {
-                    while (!DateRules.All(x => x.Match(date, previousDate)))
-                        date = date.BeginningOfDay().Add(Interval).ToDate();
+                    var newDate = ComputeNextDate(startDate, previousDate);
 
                     item.OrderBy(x => x.Date).ToList().ForEach(match =>
                     {
-                        var matchIndex = match.Parent.Matches.OrderBy(x => x.Date).ToList().IndexOf(match);
-                        var time = TimeRules.Select(x => x.ProvideTime(date, matchIndex)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? match.Date.ToTime();
+                        var matchIndex = match.GetStage().GetAllMatches().OrderBy(x => x.Date).ToList().IndexOf(match);
+                        var time = ComputeTime(match, newDate, matchIndex);
 
-                        match.Schedule(date.At(time, DateTimeKind));
+                        match.Schedule(newDate.At(time, DateTimeKind));
                     });
 
-                    previousDate = date;
-                    date = date.BeginningOfDay().Add(Interval).ToDate();
+                    previousDate = newDate;
+                    startDate = newDate.BeginningOfDay().Add(Interval).ToDate();
                 });
             }
         }

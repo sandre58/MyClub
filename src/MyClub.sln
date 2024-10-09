@@ -166,8 +166,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mocks", "Mocks", "{989B480C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mocks", "Mocks", "{5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.UnitTests.Scorer.Infrastructure.Packaging", "tests\MyClub.UnitTests.Scorer.Infrastructure.Packaging\MyClub.UnitTests.Scorer.Infrastructure.Packaging.csproj", "{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Scorer.Mocks.Factory.Random", "Scorer\Mocks\MyClub.Scorer.Mocks.Factory.Random\MyClub.Scorer.Mocks.Factory.Random.csproj", "{E95CEBE5-E971-431C-BD88-36DFC2CEB336}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.CrossCutting.Images", "Common\MyClub.CrossCutting.Images\MyClub.CrossCutting.Images.csproj", "{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0}"
@@ -354,10 +352,6 @@ Global
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E95CEBE5-E971-431C-BD88-36DFC2CEB336}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -422,16 +416,15 @@ Global
 		{126621BC-0EDA-4861-AFDA-F30FF5CF95A4} = {96B7E178-7B55-4A2D-970E-33C72A0113BF}
 		{989B480C-A477-44DC-A801-08A380AB46CC} = {A5C631A1-F5A2-4C22-8A49-AD37E63C8BE0}
 		{5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
-		{76B1238E-BB0C-4E26-9EA7-D19E3862EE8D} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
 		{E95CEBE5-E971-431C-BD88-36DFC2CEB336} = {5C82BAEF-64E0-4DF4-B8B2-FE2D9F56885A}
 		{4A926B7C-E37D-4CBB-9AD3-9E3997D72DA0} = {F9AF5D17-4ABE-46FC-8AF5-040FF37922F7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		RESX_ShowErrorsInErrorList = False
-		RESX_CodeReferences = {"Items":[{"Expression":"\\W($File.$Key)\\W","Extensions":".cs,.xaml,.cshtml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($File.$Key)\\W","Extensions":".vbhtml","IsCaseSensitive":false,"SingleLineComment":null},{"Expression":"ResourceManager.GetString\\(\"($Key)\"\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+\"($Key)\"|\"($Key)\".+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($Key)\\W","Extensions":".vb","IsCaseSensitive":false,"SingleLineComment":"'"},{"Expression":"\\W($File::$Key)\\W","Extensions":".cpp,.c,.hxx,.h","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"&lt;%\\$\\s+Resources:\\s*($File)\\s*,\\s*($Key)\\s*%&gt;","Extensions":".aspx,.ascx,.master","IsCaseSensitive":true,"SingleLineComment":null},{"Expression":"StringResourceKey\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\.($Key)","Extensions":".ts,.html","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+nameof\\(($Key)\\)|nameof\\(($Key)\\).+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Translation .*Format=$Key.*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"Format=($Key)","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:ShortcutResource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":".*Resources\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"}]}
-		SolutionGuid = {4C2A7472-FBCC-4D2C-B21D-0C83E4ADAA1A}
-		RESX_NeutralResourcesLanguage = fr-FR
-		RESX_AutoCreateNewLanguageFiles = True
 		RESX_ConfirmAddLanguageFile = True
+		RESX_AutoCreateNewLanguageFiles = True
+		RESX_NeutralResourcesLanguage = fr-FR
+		SolutionGuid = {4C2A7472-FBCC-4D2C-B21D-0C83E4ADAA1A}
+		RESX_CodeReferences = {"Items":[{"Expression":"\\W($File.$Key)\\W","Extensions":".cs,.xaml,.cshtml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($File.$Key)\\W","Extensions":".vbhtml","IsCaseSensitive":false,"SingleLineComment":null},{"Expression":"ResourceManager.GetString\\(\"($Key)\"\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+\"($Key)\"|\"($Key)\".+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($Key)\\W","Extensions":".vb","IsCaseSensitive":false,"SingleLineComment":"'"},{"Expression":"\\W($File::$Key)\\W","Extensions":".cpp,.c,.hxx,.h","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"&lt;%\\$\\s+Resources:\\s*($File)\\s*,\\s*($Key)\\s*%&gt;","Extensions":".aspx,.ascx,.master","IsCaseSensitive":true,"SingleLineComment":null},{"Expression":"StringResourceKey\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\.($Key)","Extensions":".ts,.html","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+nameof\\(($Key)\\)|nameof\\(($Key)\\).+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Translation .*Format=$Key.*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"Format=($Key)","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:ShortcutResource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":".*Resources\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"}]}
+		RESX_ShowErrorsInErrorList = False
 	EndGlobalSection
 EndGlobal

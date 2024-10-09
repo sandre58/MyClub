@@ -87,7 +87,7 @@
                       my:TextFieldAssist.HasClearButton="True"
                       IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                       IsReadOnly="{Binding IsReadOnly}"
-                      ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                      ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                       ItemsSource="{Binding AvailableValues}"
                       SelectedValue="{Binding Value, Mode=TwoWay}" />
 

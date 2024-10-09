@@ -1,0 +1,21 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.StatisticsPage.StatisticsPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.StatisticsPage"
+             d:DataContext="{d:DesignInstance Type=vm:StatisticsPageViewModel}"
+             my:InputAssist.PropagateInWindow="True"
+             my:ViewModelAssist.AutoWire="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid my:BusyAssist.AttachService="{Binding BusyService}">
+        <my:GhostControl GhostTemplate="{StaticResource Scorer.DataTemplates.Ghost.NoData.Large}">
+            <Grid Margin="{StaticResource MyNet.Margins.Medium}" />
+        </my:GhostControl>
+    </Grid>
+</UserControl>

@@ -12,6 +12,9 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
         [XmlElement("Format")]
         public MatchFormatPackage? Format { get; set; }
 
+        [XmlElement("Rules")]
+        public MatchRulesPackage? Rules { get; set; }
+
         [XmlAttribute("date")]
         public DateTime OriginDate { get; set; }
 

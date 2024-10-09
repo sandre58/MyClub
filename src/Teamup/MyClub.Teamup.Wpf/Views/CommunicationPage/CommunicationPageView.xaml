@@ -79,7 +79,7 @@
                 </my:CommandsBar.RightCommands>
 
                 <my:SelectionCommandsBar SelectedCount="{Binding PlayersViewModel.SelectedWrappers.Count}" UnselectAllCommand="{Binding PlayersViewModel.ClearSelectionCommand}">
-                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Elevation.Primary}"
+                    <Button Style="{StaticResource MyNet.Styles.Button.ToolBar.Filled.Primary}"
                             my:IconAssist.Icon="{my:Icon Kind=Send}"
                             Command="{Binding SendMailCommand}"
                             Content="{my:Resource Send}"

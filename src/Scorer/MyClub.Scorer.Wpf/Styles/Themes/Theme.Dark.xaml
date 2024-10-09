@@ -11,9 +11,21 @@
     <!-- Match -->
     <Color x:Key="Scorer.Colors.Match.State.Suspended">#CE3B3B</Color>
     
+    <!-- Cards -->
+    <Color x:Key="Scorer.Colors.Card.Red">#F60002</Color>
+    <Color x:Key="Scorer.Colors.Card.Yellow">#f7c802</Color>
+    <Color x:Key="Scorer.Colors.Card.Black">#000000</Color>
+    <Color x:Key="Scorer.Colors.Card.White">#FFFFFF</Color>
+    <Color x:Key="Scorer.Colors.Card.Green">#1FC522</Color>
+
     <SolidColorBrush x:Key="Scorer.Brushes.Saved" po:Freeze="true" Color="{StaticResource Scorer.Colors.Saved}" />
     <SolidColorBrush x:Key="Scorer.Brushes.Dirty" po:Freeze="true" Color="{StaticResource Scorer.Colors.Dirty}" />
     <SolidColorBrush x:Key="Scorer.Brushes.League" po:Freeze="true" Color="{StaticResource Scorer.Colors.League}" />
     <SolidColorBrush x:Key="Scorer.Brushes.Cup" po:Freeze="true" Color="{StaticResource Scorer.Colors.Cup}" />
     <SolidColorBrush x:Key="Scorer.Brushes.Match.State.Suspended" po:Freeze="true" Color="{StaticResource Scorer.Colors.Match.State.Suspended}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Card.Red" po:Freeze="true" Color="{StaticResource Scorer.Colors.Card.Red}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Card.Yellow" po:Freeze="true" Color="{StaticResource Scorer.Colors.Card.Yellow}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Card.Black" po:Freeze="true" Color="{StaticResource Scorer.Colors.Card.Black}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Card.White" po:Freeze="true" Color="{StaticResource Scorer.Colors.Card.White}" />
+    <SolidColorBrush x:Key="Scorer.Brushes.Card.Green" po:Freeze="true" Color="{StaticResource Scorer.Colors.Card.Green}" />
 </ResourceDictionary>

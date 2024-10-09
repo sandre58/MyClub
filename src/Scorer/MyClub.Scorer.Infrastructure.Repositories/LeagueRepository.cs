@@ -5,10 +5,8 @@ using System;
 using System.Collections.Generic;
 using MyClub.Domain.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.RankingAggregate;
-using MyClub.Scorer.Domain.Scheduling;
 using MyNet.Utilities;
 using MyNet.Utilities.Sequences;
 
@@ -52,20 +50,25 @@ namespace MyClub.Scorer.Infrastructure.Repositories
             _auditService.Update(league);
         }
 
-        public void UpdateMatchFormat(MatchFormat format)
+        public Matchday InsertMatchday(DateTime date, string name, string? shortName = null)
         {
-            var league = GetCurrentOrThrow();
+            var added = GetCurrentOrThrow().AddMatchday(date, name, shortName);
 
-            league.MatchFormat = format;
+            _auditService.New(added);
 
-            _auditService.Update(league);
+            return added;
         }
 
-        public void UpdateSchedulingParameters(SchedulingParameters schedulingParameters)
+        public void Fill(IEnumerable<Matchday> matchdays)
         {
             var league = GetCurrentOrThrow();
+            league.Clear();
 
-            league.SchedulingParameters = schedulingParameters;
+            foreach (var item in matchdays)
+            {
+                var matchday = league.AddMatchday(item);
+                _auditService.New(matchday);
+            }
 
             _auditService.Update(league);
         }

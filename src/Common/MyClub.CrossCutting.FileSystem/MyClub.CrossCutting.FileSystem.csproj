@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="MyNet.Utilities" Version="5.1.0" />
+    <PackageReference Include="MyNet.Utilities" Version="5.2.1-pre.4" />
   </ItemGroup>
 </Project>

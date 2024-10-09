@@ -134,7 +134,7 @@
                 </Grid.RowDefinitions>
 
                 <!--  New League  -->
-                <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Custom}"
+                <Button Style="{StaticResource MyNet.Styles.Button.Filled.Custom}"
                         Grid.Column="0"
                         Height="Auto"
                         MinHeight="80"
@@ -151,7 +151,7 @@
                 </Button>
 
                 <!--  New cup  -->
-                <Button Style="{StaticResource MyNet.Styles.Button.Elevation.Custom}"
+                <Button Style="{StaticResource MyNet.Styles.Button.Filled.Custom}"
                         Grid.Column="2"
                         Height="Auto"
                         MinHeight="80"

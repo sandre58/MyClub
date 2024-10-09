@@ -51,7 +51,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             Disposables.Add(_resultViewModel.Matchdays.ToObservableChangeSet().Subscribe(_ => CountMatchdays = _resultViewModel.Matchdays.Count));
 
-            competitionInfoProvider.WhenCompetitionChanged(_ => Reset());
+            competitionInfoProvider.LoadRunner.RegisterOnEnd(this, _ => Reset());
         }
 
         [CanSetIsModified(false)]
@@ -62,7 +62,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public IMatchdayParent? Parent { get; private set; }
+        public LeagueViewModel? Stage { get; private set; }
 
         public ICommand GenerateCommand { get; }
 
@@ -74,12 +74,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private EditableMatchdayWrapper CreateEditableMatchday(MatchdayDto matchdayDto)
         {
-            var teamsProvider = new ItemsSourceProvider<ITeamViewModel>(Parent?.GetAvailableTeams().ToList() ?? []);
+            var teamsProvider = new ItemsSourceProvider<IVirtualTeamViewModel>(Stage?.GetAvailableTeams().ToList() ?? []);
             var matchday = new EditableMatchdayViewModel(
-                new ItemsSourceProvider<MatchdayViewModel>(Parent?.Matchdays.ToList() ?? []),
+                new ItemsSourceProvider<MatchdayViewModel>(Stage?.Matchdays.ToList() ?? []),
                 _stadiumsProvider,
                 teamsProvider,
-                (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
+                (Stage?.SchedulingParameters.UseHomeVenue).IsTrue())
             {
                 Name = matchdayDto.Name,
                 ShortName = matchdayDto.ShortName
@@ -87,7 +87,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             matchday.CurrentDate.Load(matchdayDto.Date);
             matchday.Matches.AddRange(matchdayDto.MatchesToAdd?.Select(x =>
             {
-                var match = new EditableMatchViewModel(teamsProvider, _stadiumsProvider, (Parent?.SchedulingParameters.UseHomeVenue).IsTrue())
+                var match = new EditableMatchViewModel(teamsProvider, _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue())
                 {
                     HomeTeam = teamsProvider.Source.GetById(x.HomeTeamId),
                     AwayTeam = teamsProvider.Source.GetById(x.AwayTeamId),
@@ -101,11 +101,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             return new(matchday);
         }
 
-        public void Load(IMatchdayParent parent)
+        public void Load(LeagueViewModel stage)
         {
-            if (parent != Parent)
+            if (!ReferenceEquals(stage, Stage))
             {
-                Parent = parent;
+                Stage = stage;
 
                 Reset();
             }
@@ -113,10 +113,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         protected override void RefreshCore()
         {
-            if (Parent is not null)
+            if (Stage is not null)
             {
-                _parametersViewModel.Refresh(Parent);
-                _resultViewModel.Refresh(Parent);
+                _parametersViewModel.Refresh(Stage);
+                _resultViewModel.Refresh(Stage);
             }
         }
 
@@ -124,10 +124,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             CurrentViewModel = _parametersViewModel;
 
-            if (Parent is not null)
+            if (Stage is not null)
             {
-                _parametersViewModel.Reset(Parent);
-                _resultViewModel.Reset(Parent);
+                _parametersViewModel.Reset(Stage);
+                _resultViewModel.Reset(Stage);
             }
         }
 
@@ -138,9 +138,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         protected override void SaveCore()
         {
             using (_conflictsManager.Defer())
-            using (_competitionInfoProvider.GetCompetition<LeagueViewModel>().DeferRefreshRankings())
+            using (_competitionInfoProvider.GetLeague().DeferRefreshRankings())
             {
-                var count = _matchdayService.Save(_resultViewModel.ToResultDto(Parent?.Id));
+                var count = _matchdayService.Save(_resultViewModel.ToResultDto(Stage?.Id));
                 _parametersViewModel.Index += count;
             }
 
@@ -153,7 +153,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             if (_parametersViewModel.ValidateProperties())
             {
-                var matchdays = _matchdayService.New(_parametersViewModel.ToParametersDto(Parent?.Id));
+                var matchdays = _matchdayService.New(_parametersViewModel.ToParametersDto(Stage?.Id));
 
                 if (matchdays.Count == 0)
                     ToasterManager.ShowError(MyClubResources.NoDatesGeneratedWarning);
@@ -172,5 +172,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         protected override Task<bool> CanCancelAsync() => Task.FromResult(true);
 
         protected override Task<MessageBoxResult> SavingRequestAsync() => Task.FromResult(MessageBoxResult.No);
+
+        protected override void Cleanup()
+        {
+            _competitionInfoProvider.LoadRunner.Unregister(this);
+            base.Cleanup();
+        }
     }
 }

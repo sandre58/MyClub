@@ -155,7 +155,7 @@
                 <Grid>
                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Text}"
                                        my:IconAssist.Icon="{my:ToolIcon Kind=ContentDuplicate}"
-                                       IsEnabled="{Binding Matchdays.Count, Converter={x:Static my:CountToBooleanConverter.Any}}"
+                                       IsEnabled="{Binding Stage.Matchdays.Count, Converter={x:Static my:CountToBooleanConverter.Any}}"
                                        PopupPadding="0"
                                        Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Creation}}">
                         <my:DropDownButton.ToggleContent>
@@ -171,7 +171,7 @@
                                 <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Duplicate}" Visibility="{Binding DuplicatedMatchday, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
                             </Grid>
                         </my:DropDownButton.ToggleContent>
-                        <my:Submenu MaxHeight="450" ItemsSource="{Binding Matchdays}">
+                        <my:Submenu MaxHeight="450" my:ItemsControlAssist.SortingProperty="OriginDate" ItemsSource="{Binding Stage.Matchdays}">
                             <my:Submenu.ItemContainerStyle>
                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MyNet.Styles.MenuItem}">
                                     <Setter Property="Command" Value="{Binding Data.DuplicateMatchdayCommand, Source={StaticResource Proxy}}" />
@@ -197,7 +197,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Padding="{StaticResource MyNet.Margins.Default}">
+                        <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Padding="{StaticResource MyNet.Margins.Default}" my:ElevationAssist.Elevation="Dp0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
@@ -231,7 +231,7 @@
                                           my:ItemsControlAssist.SortingProperty="Name"
                                           IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                                           IsReadOnly="{Binding IsReadOnly}"
-                                          ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                                          ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                                           ItemsSource="{Binding AvailableTeams}"
                                           SelectedItem="{Binding HomeTeam}" />
                                 <ComboBox x:Name="comboBox"
@@ -242,7 +242,7 @@
                                           my:ItemsControlAssist.SortingProperty="Name"
                                           IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
                                           IsReadOnly="{Binding IsReadOnly}"
-                                          ItemTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}"
+                                          ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                                           ItemsSource="{Binding AvailableTeams}"
                                           SelectedItem="{Binding AwayTeam}" />
                                 <Grid Grid.Column="8" IsEnabled="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}">

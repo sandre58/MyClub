@@ -132,8 +132,8 @@
             </MenuItem>
             <MenuItem Command="{Binding RandomizeCommand}" Header="{my:Resource Randomize}" Icon="{my:ToolIcon Kind=Counter}" />
             <MenuItem Header="{my:Resource DoWithdraw}" Icon="{my:ToolIcon Kind=Close}" IsEnabled="{Binding CanBeWithdraw}">
-                <MenuItem Command="{Binding DoWithdrawForHomeTeamCommand}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
-                <MenuItem Command="{Binding DoWithdrawForAwayTeamCommand}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
+                <MenuItem Command="{Binding Home.DoWithdrawCommand}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
+                <MenuItem Command="{Binding Away.DoWithdrawCommand}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
             </MenuItem>
             <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
             <MenuItem Background="{DynamicResource MyNet.Brushes.Warning}"
@@ -164,11 +164,11 @@
                                                 <ColumnDefinition Width="5" />
                                                 <ColumnDefinition Width="60" />
                                             </Grid.ColumnDefinitions>
-                                            <ContentControl Content="{Binding HomeTeam}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Home}" IsEnabled="False" />
+                                            <ContentControl Content="{Binding Home.Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Home}" IsEnabled="False" />
                                             <TextBlock Grid.Column="2" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
                                             <ContentControl Grid.Column="4"
-                                                            Content="{Binding AwayTeam}"
-                                                            ContentTemplate="{StaticResource Scorer.DataTemplates.Team.ShortName.Away}"
+                                                            Content="{Binding Away.Team}"
+                                                            ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Away}"
                                                             IsEnabled="False" />
                                         </Grid>
                                     </DataTemplate>

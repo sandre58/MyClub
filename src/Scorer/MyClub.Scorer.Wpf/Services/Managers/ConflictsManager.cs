@@ -18,7 +18,6 @@ using MyNet.UI.Services;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Messaging;
-using MyNet.Utilities.Threading;
 
 namespace MyClub.Scorer.Wpf.Services.Managers
 {
@@ -26,8 +25,7 @@ namespace MyClub.Scorer.Wpf.Services.Managers
     {
         private readonly MatchesProvider _matchesProvider;
         private readonly AvailibilityCheckingService _availibilityCheckingService;
-        private readonly SingleTaskRunner _checkConflictsRunner;
-        private readonly RefreshDeferrer _checkConflictsDeferrer = new();
+        private readonly SingleTaskDeferrer _checkConflictsDeferrer;
         private CompositeDisposable _matchesDisposables = [];
         private CompositeDisposable _competitionDisposables = [];
 
@@ -36,26 +34,23 @@ namespace MyClub.Scorer.Wpf.Services.Managers
             _matchesProvider = matchesProvider;
             _availibilityCheckingService = availibilityCheckingService;
 
-            _checkConflictsRunner = new SingleTaskRunner(async x => await CheckConflictsAsync(x).ConfigureAwait(false));
+            _checkConflictsDeferrer = new(async x => await CheckConflictsAsync(x).ConfigureAwait(false), throttle: 500);
 
-            _checkConflictsDeferrer.Subscribe(this, () =>
-            {
-                _checkConflictsRunner.Cancel();
-                _checkConflictsRunner.Run();
-            }, 500);
-
-            competitionInfoProvider.WhenCompetitionChanged(x => _competitionDisposables = new([
-                    x.WhenPropertyChanged(x => x.MatchFormat, false).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
-                    x.SchedulingParameters.WhenAnyPropertyChanged().Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
-                ]),
-            _ => _competitionDisposables.Dispose());
-
-            matchesProvider.WhenLoaded(() => _matchesDisposables = new([
-                    matchesProvider.ConnectById().WhereReasonsAre(ChangeReason.Add, ChangeReason.Remove).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
-                    matchesProvider.ConnectById().WhenAnyPropertyChanged([nameof(MatchViewModel.Date), nameof(MatchViewModel.State), nameof(MatchViewModel.Stadium)]).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+            matchesProvider.LoadRunner.RegisterOnEnd(this, _ => _matchesDisposables = new([
+                    matchesProvider.Connect().WhereReasonsAre(ListChangeReason.Add, ListChangeReason.Remove, ListChangeReason.RemoveRange, ListChangeReason.AddRange, ListChangeReason.Clear).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+                    matchesProvider.Connect().WhenAnyPropertyChanged([nameof(MatchViewModel.Date), nameof(MatchViewModel.State), nameof(MatchViewModel.Stadium)]).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+                    competitionInfoProvider.UnloadRunner.WhenStart().Subscribe(_ => _competitionDisposables.Dispose()),
+                    competitionInfoProvider.LoadRunner.WhenEnd().Subscribe(x =>
+                    {
+                        if (x is null) return;
+                        _competitionDisposables = new([
+                            x.WhenPropertyChanged(x => x.MatchFormat, false).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+                            x.SchedulingParameters.WhenAnyPropertyChanged().Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+                        ]);
+                    })
                 ]));
 
-            matchesProvider.WhenUnloaded(() => _matchesDisposables.Dispose());
+            matchesProvider.UnloadRunner.RegisterOnEnd(this, () => _matchesDisposables.Dispose());
         }
 
         public IDisposable Defer() => _checkConflictsDeferrer.Defer();
@@ -96,10 +91,11 @@ namespace MyClub.Scorer.Wpf.Services.Managers
 
         public void Dispose()
         {
+            _matchesProvider.LoadRunner.Unregister(this);
+            _matchesProvider.UnloadRunner.Unregister(this);
             _matchesDisposables.Dispose();
             _competitionDisposables.Dispose();
             _checkConflictsDeferrer.Dispose();
-            _checkConflictsRunner.Dispose();
         }
     }
 }

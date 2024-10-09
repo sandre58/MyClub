@@ -11,6 +11,7 @@ using MyClub.Scorer.Application.Contracts;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Enums;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.StadiumAggregate;
@@ -97,9 +98,8 @@ namespace MyClub.Scorer.Application.Services
                 using (LogManager.MeasureTime($"Create new project : {dto.Name}", TraceLevel.Debug))
                 {
                     project = createProject();
-                    project.Preferences.TreatNoStadiumAsWarning = dto.TreatNoStadiumAsWarning;
-                    project.Preferences.PeriodForPreviousMatches = dto.PeriodForPreviousMatches;
-                    project.Preferences.PeriodForNextMatches = dto.PeriodForNextMatches;
+                    if (dto.Preferences is not null)
+                        UpdatePreferences(project, dto.Preferences);
 
                     // Create stadiums
                     using (ProgressManager.Start())
@@ -120,35 +120,39 @@ namespace MyClub.Scorer.Application.Services
                         }));
                     }
 
-
+                    // Update Rules & Format
                     using (ProgressManager.Start())
                     {
+                        if (dto.MatchRules is not null)
+                            project.Competition.MatchRules = dto.MatchRules;
+
                         if (dto.BuildParameters?.MatchFormat is not null)
                             project.Competition.MatchFormat = dto.BuildParameters.MatchFormat;
                     }
 
+                    // Build competition
                     using (ProgressManager.Start())
                     {
                         if (dto.BuildParameters?.BracketParameters is BuildMatchdaysParametersDto buildMatchdaysParametersDto)
                             buildCompetition(project.Competition, project.Stadiums, dto.BuildParameters.BracketParameters);
                     }
 
+                    // Schedule competition
                     using (ProgressManager.Start())
                     {
                         if (dto.BuildParameters?.SchedulingParameters is not null)
                         {
-                            var allMatches = project.Competition.GetAllMatchesProviders().SelectMany(x => x.Matches).ToList();
-                            var allMatchdays = project.Competition.GetAllMatchdaysProviders().SelectMany(x => x.Matchdays).ToList();
+                            var allSchedulables = project.Competition.GetAllSchedulables().ToList();
                             project.Competition.SchedulingParameters = new SchedulingParameters(
-                               !dto.BuildParameters.AutomaticStartDate ? allMatches.MinOrDefault(x => x.Date.ToDate(), allMatchdays.MinOrDefault(x => x.Date.ToDate())) : dto.BuildParameters.SchedulingParameters.StartDate,
-                               !dto.BuildParameters.AutomaticEndDate ? allMatches.MaxOrDefault(x => x.Date.ToDate(), allMatchdays.MaxOrDefault(x => x.Date.ToDate())) : dto.BuildParameters.SchedulingParameters.EndDate,
+                               dto.BuildParameters.AutomaticStartDate ? allSchedulables.MinOrDefault(x => x.Date.ToDate()) : dto.BuildParameters.SchedulingParameters.StartDate,
+                               dto.BuildParameters.AutomaticEndDate ? allSchedulables.MaxOrDefault(x => x.Date.ToDate()) : dto.BuildParameters.SchedulingParameters.EndDate,
                                dto.BuildParameters.SchedulingParameters.StartTime,
                                dto.BuildParameters.SchedulingParameters.RotationTime,
                                dto.BuildParameters.SchedulingParameters.RestTime,
                                dto.BuildParameters.SchedulingParameters.UseHomeVenue,
                                dto.BuildParameters.SchedulingParameters.AsSoonAsPossible,
                                dto.BuildParameters.SchedulingParameters.Interval,
-                               dto.BuildParameters.SchedulingParameters.ScheduleByParent,
+                               dto.BuildParameters.SchedulingParameters.ScheduleByStage,
                                dto.BuildParameters.SchedulingParameters.AsSoonAsPossibleRules,
                                dto.BuildParameters.SchedulingParameters.DateRules,
                                dto.BuildParameters.SchedulingParameters.TimeRules,
@@ -169,14 +173,14 @@ namespace MyClub.Scorer.Application.Services
             }
         }
 
-        public void Update(ProjectMetadataDto properties)
+        public void Update(ProjectMetadataDto dto)
             => _projectRepository.Update(x =>
             {
-                x.Name = properties.Name.OrThrow();
-                x.Image = properties.Image;
-                x.Preferences.TreatNoStadiumAsWarning = properties.TreatNoStadiumAsWarning;
-                x.Preferences.PeriodForPreviousMatches = properties.PeriodForPreviousMatches;
-                x.Preferences.PeriodForNextMatches = properties.PeriodForNextMatches;
+                x.Name = dto.Name.OrThrow();
+                x.Image = dto.Image;
+
+                if (dto.Preferences is not null)
+                    UpdatePreferences(x, dto.Preferences);
             });
 
         public IProject Load(IProject project)
@@ -222,6 +226,15 @@ namespace MyClub.Scorer.Application.Services
             }
 
             return true;
+        }
+
+        private static void UpdatePreferences(IProject project, PreferencesDto dto)
+        {
+            project.Preferences.TreatNoStadiumAsWarning = dto.TreatNoStadiumAsWarning;
+            project.Preferences.PeriodForPreviousMatches = dto.PeriodForPreviousMatches;
+            project.Preferences.PeriodForNextMatches = dto.PeriodForNextMatches;
+            project.Preferences.ShowNextMatchFallback = dto.ShowNextMatchFallback;
+            project.Preferences.ShowLastMatchFallback = dto.ShowLastMatchFallback;
         }
     }
 }

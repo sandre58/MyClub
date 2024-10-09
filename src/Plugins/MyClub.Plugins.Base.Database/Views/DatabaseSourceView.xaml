@@ -96,7 +96,7 @@
                 </Grid>
             </GroupBox>
 
-            <Button Style="{StaticResource MyNet.Styles.Button.Elevation}"
+            <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
                     Grid.Row="2"
                     Width="300"
                     Height="Auto"

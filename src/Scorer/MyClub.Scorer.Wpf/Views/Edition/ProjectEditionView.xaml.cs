@@ -3,9 +3,6 @@
 
 namespace MyClub.Scorer.Wpf.Views.Edition
 {
-    /// <summary>
-    /// Interaction logic for UserProfileEditionView.xaml
-    /// </summary>
     public partial class ProjectEditionView
     {
         public ProjectEditionView() => InitializeComponent();

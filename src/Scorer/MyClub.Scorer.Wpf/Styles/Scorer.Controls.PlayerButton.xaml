@@ -37,24 +37,6 @@
                 </DataTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu DataContext="{Binding PlacementTarget.Item, RelativeSource={RelativeSource Self}}">
-                    <ContextMenu.Resources>
-                        <my:BindingProxy x:Key="PlayerProxy" Data="{Binding}" />
-                    </ContextMenu.Resources>
-                    <MenuItem Command="{Binding OpenCommand}" Header="{Binding FullName}">
-                        <MenuItem.Icon>
-                            <Grid>
-                                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}" DataContext="{Binding Data, Source={StaticResource PlayerProxy}}" />
-                            </Grid>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
-                    <MenuItem Command="{Binding EditCommand}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
-                </ContextMenu>
-            </Setter.Value>
-        </Setter>
         <Style.Triggers>
             <Trigger Property="IsEnabled" Value="false">
                 <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />

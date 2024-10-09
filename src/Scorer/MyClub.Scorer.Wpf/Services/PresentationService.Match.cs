@@ -5,11 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.MatchDetails;
 using MyClub.Scorer.Wpf.ViewModels.SchedulingAssistant;
 using MyNet.Humanizer;
 using MyNet.UI.Dialogs;
@@ -28,12 +30,19 @@ namespace MyClub.Scorer.Wpf.Services
         private readonly MatchService _matchService = matchService;
         private readonly IViewModelLocator _viewModelLocator = viewModelLocator;
 
-        public async Task OpenAsync(MatchViewModel item) => await EditAsync(item).ConfigureAwait(false);
+        public async Task OpenAsync(MatchViewModel item)
+        {
+            var vm = _viewModelLocator.Get<MatchDetailsViewModel>();
 
-        public async Task AddAsync(IMatchParent? parent = null)
+            vm.SetItem(item);
+
+            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+        }
+
+        public async Task AddAsync(IMatchesStageViewModel? stage = null)
         {
             var vm = _viewModelLocator.Get<MatchEditionViewModel>();
-            vm.New(parent);
+            vm.New(stage);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
@@ -69,6 +78,14 @@ namespace MyClub.Scorer.Wpf.Services
 
             await AppBusyManager.WaitAsync(() => _matchService.SaveScores(items)).ConfigureAwait(false);
         }
+
+        public async Task AddGoalAsync(MatchViewModel item, TeamViewModel team) => await AppBusyManager.BackgroundAsync(() => _matchService.AddGoal(item.Id, team.Id, new GoalDto())).ConfigureAwait(false);
+
+        public async Task RemoveGoalAsync(MatchViewModel item, TeamViewModel team) => await AppBusyManager.BackgroundAsync(() => _matchService.RemoveGoal(item.Id, team.Id)).ConfigureAwait(false);
+
+        public async Task AddSucceededPenaltyShootoutAsync(MatchViewModel item, TeamViewModel team) => await AppBusyManager.BackgroundAsync(() => _matchService.AddPenaltyShootout(item.Id, team.Id, new PenaltyShootoutDto() { Result = PenaltyShootoutResult.Succeeded })).ConfigureAwait(false);
+
+        public async Task RemoveSucceededPenaltyShootoutAsync(MatchViewModel item, TeamViewModel team) => await AppBusyManager.BackgroundAsync(() => _matchService.RemoveSucceededPenaltyShootout(item.Id, team.Id)).ConfigureAwait(false);
 
         public async Task StartAsync(MatchViewModel item) => await StartAsync([item]).ConfigureAwait(false);
 
@@ -178,13 +195,11 @@ namespace MyClub.Scorer.Wpf.Services
             await AppBusyManager.WaitAsync(() => _matchService.Finish(idsList)).ConfigureAwait(false);
         }
 
-        public async Task DoWithdrawForHomeTeamAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(item.Id, item.HomeTeam.Id)).ConfigureAwait(false);
+        public async Task DoWithdrawAsync(MatchViewModel item, TeamViewModel team) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(item.Id, team.Id)).ConfigureAwait(false);
 
-        public async Task DoWithdrawForHomeTeamAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(items.Select(x => (x.Id, x.HomeTeam.Id)))).ConfigureAwait(false);
+        public async Task DoWithdrawForHomeTeamsAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(items.Select(x => (x.Id, x.Home.Team.Id)))).ConfigureAwait(false);
 
-        public async Task DoWithdrawForAwayTeamAsync(MatchViewModel item) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(item.Id, item.AwayTeam.Id)).ConfigureAwait(false);
-
-        public async Task DoWithdrawForAwayTeamAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(items.Select(x => (x.Id, x.AwayTeam.Id)))).ConfigureAwait(false);
+        public async Task DoWithdrawForAwayTeamsAsync(IEnumerable<MatchViewModel> items) => await AppBusyManager.WaitAsync(() => _matchService.DoWithdraw(items.Select(x => (x.Id, x.Away.Team.Id)))).ConfigureAwait(false);
 
         public async Task RandomizeAsync(MatchViewModel item) => await RandomizeAsync([item]).ConfigureAwait(false);
 
@@ -208,7 +223,7 @@ namespace MyClub.Scorer.Wpf.Services
             await AppBusyManager.WaitAsync(() => _matchService.InvertTeams(idsList)).ConfigureAwait(false);
         }
 
-        public async Task SetStadiumAsync(IEnumerable<MatchViewModel> items, IStadiumViewModel? stadium)
+        public async Task SetStadiumAsync(IEnumerable<MatchViewModel> items, StadiumViewModel? stadium)
         {
             var idsList = items.Select(x => x.Id).ToList();
 
@@ -229,7 +244,7 @@ namespace MyClub.Scorer.Wpf.Services
             var dtos = vm.Matches.Wrappers.Where(x => x.IsModified()).Select(x => new MatchDto
             {
                 Id = x.Item.Id,
-                Date = x.StartDate,
+                Date = x.StartDate.ToUniversalTime(),
                 Stadium = x.Stadium is not null
                           ? new StadiumDto
                           {

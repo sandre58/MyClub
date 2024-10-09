@@ -34,7 +34,7 @@ namespace MyClub.Scorer.Wpf.Services.Handlers
             {
                 foreach (var conflict in newConflicts)
                 {
-                    var matchDisplayName = new Func<MatchViewModel, string>(x => $"{x.HomeTeam.Name} - {x.AwayTeam.Name} ({x.Parent.Name})");
+                    var matchDisplayName = new Func<MatchViewModel, string>(x => $"{x.Home.Team.Name} - {x.Away.Team.Name} ({x.Stage.Name})");
                     var firstMessage = conflict.Item3 is not null
                         ? $"{MyClubResources.ConflictBetweenMatchXAndMatchY.FormatWith(matchDisplayName(conflict.Item2), matchDisplayName(conflict.Item3))}"
                         : $"{MyClubResources.ConflictWithMatchX.FormatWith(matchDisplayName(conflict.Item2))}";

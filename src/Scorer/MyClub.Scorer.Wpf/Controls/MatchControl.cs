@@ -12,7 +12,6 @@ namespace MyClub.Scorer.Wpf.Controls
         static MatchControl() => DefaultStyleKeyProperty.OverrideMetadata(typeof(MatchControl), new FrameworkPropertyMetadata(typeof(MatchControl)));
 
         public static readonly DependencyProperty MatchProperty = DependencyProperty.Register(nameof(Match), typeof(MatchViewModel), typeof(MatchControl));
-        public static readonly DependencyProperty EnableContextMenuProperty = DependencyProperty.Register(nameof(EnableContextMenu), typeof(bool), typeof(MatchControl), new FrameworkPropertyMetadata(true));
 
         public MatchViewModel Match
         {
@@ -20,10 +19,12 @@ namespace MyClub.Scorer.Wpf.Controls
             set => SetValue(MatchProperty, value);
         }
 
-        public bool EnableContextMenu
+        public static readonly DependencyProperty ShowTimeProperty = DependencyProperty.Register(nameof(ShowTime), typeof(bool), typeof(MatchControl), new PropertyMetadata(true));
+
+        public bool ShowTime
         {
-            get => (bool)GetValue(EnableContextMenuProperty);
-            set => SetValue(EnableContextMenuProperty, value);
+            get => (bool)GetValue(ShowTimeProperty);
+            set => SetValue(ShowTimeProperty, value);
         }
     }
 }

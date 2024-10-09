@@ -49,7 +49,7 @@
                                    Content="{Binding Item.Item}"
                                    FontSize="{StaticResource MyNet.Font.Size.Secondary}">
                                 <Label.Style>
-                                    <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyNet.Styles.Label.Rounded.Elevation}">
+                                    <Style TargetType="{x:Type Label}" BasedOn="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Application}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Item.Label, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" Value="True">
                                                 <Setter Property="Background" Value="{Binding Item.Label.Color, Converter={x:Static my:BrushConverter.Default}}" />

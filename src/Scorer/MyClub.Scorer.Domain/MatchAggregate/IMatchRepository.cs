@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using MyClub.Domain;
-using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyNet.Utilities.DateTimes;
 
@@ -12,7 +11,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 {
     public interface IMatchRepository : IRepository<Match>
     {
-        Match Insert(IMatchesProvider parent, DateTime date, ITeam homeTeam, ITeam awayTeam);
+        Match Insert(Guid stageId, DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam);
 
         IEnumerable<Match> GetByPeriod(Period period);
 

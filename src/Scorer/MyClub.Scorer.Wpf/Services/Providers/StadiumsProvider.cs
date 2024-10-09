@@ -8,14 +8,13 @@ using MyClub.Scorer.Domain.ProjectAggregate;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyClub.Scorer.Wpf.Services.Providers.Base;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 
 namespace MyClub.Scorer.Wpf.Services.Providers
 {
-    internal sealed class StadiumsProvider : ProjectEntitiesProvider<Stadium, IStadiumViewModel>
+    internal sealed class StadiumsProvider : ProjectEntitiesProvider<Stadium, StadiumViewModel>
     {
         public StadiumsProvider(ProjectInfoProvider projectInfoProvider, StadiumPresentationService stadiumPresentationService) : base(projectInfoProvider, x => new StadiumViewModel(x, stadiumPresentationService)) { }
 
-        protected override IObservable<IChangeSet<Stadium, Guid>> ProvideProjectObservable(IProject project) => project.Stadiums.ToObservableChangeSet(x => x.Id);
+        protected override IObservable<IChangeSet<Stadium>> ProvideProjectObservable(IProject project) => project.Stadiums.ToObservableChangeSet();
     }
 }

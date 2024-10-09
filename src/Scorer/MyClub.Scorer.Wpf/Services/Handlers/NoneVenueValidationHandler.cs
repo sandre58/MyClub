@@ -27,10 +27,10 @@ namespace MyClub.Scorer.Wpf.Services.Handlers
         {
             _matchesProvider = matchesProvider;
             _matchPresentationService = matchPresentationService;
-            _disposable = new(matchesProvider.Connect().WhenPropertyChanged(x => x.Stadium).Subscribe(x => projectInfoProvider.TreatNoStadiumAsWarning.IfTrue(() => CheckMatch(x.Sender))),
-                                                  projectInfoProvider.WhenPropertyChanged(x => x.TreatNoStadiumAsWarning).Subscribe(_ =>
+            _disposable = new(matchesProvider.Connect().WhenPropertyChanged(x => x.Stadium).Subscribe(x => projectInfoProvider.Preferences.TreatNoStadiumAsWarning.IfTrue(() => CheckMatch(x.Sender))),
+                                                  projectInfoProvider.WhenPropertyChanged(x => x.Preferences.TreatNoStadiumAsWarning).Subscribe(_ =>
                                                   {
-                                                      if (projectInfoProvider.TreatNoStadiumAsWarning)
+                                                      if (projectInfoProvider.Preferences.TreatNoStadiumAsWarning)
                                                           CheckAllMatches();
                                                       else
                                                           Unnotify(x => x.Category.StartsWith(Category));
@@ -48,7 +48,7 @@ namespace MyClub.Scorer.Wpf.Services.Handlers
             }
             else
             {
-                var notification = new ActionNotification(MyClubResources.NoStadiumWarning.FormatWith($"{match.HomeTeam.Name} - {match.AwayTeam.Name} ({match.Parent.Name})"), MyClubResources.NoStadiumWarningTitle, NotificationSeverity.Warning, category, false, async x => await _matchPresentationService.EditAsync(match).ConfigureAwait(false));
+                var notification = new ActionNotification(MyClubResources.NoStadiumWarning.FormatWith($"{match.Home.Team.Name} - {match.Away.Team.Name} ({match.Stage.Name})"), MyClubResources.NoStadiumWarningTitle, NotificationSeverity.Warning, category, false, async x => await _matchPresentationService.EditAsync(match).ConfigureAwait(false));
                 Notify(notification);
             }
         }

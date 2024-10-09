@@ -4,7 +4,7 @@
     <Compile Remove="Services\TeamsImportService.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.0.0" />
+    <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\MyClub.Application\MyClub.Application.csproj" />

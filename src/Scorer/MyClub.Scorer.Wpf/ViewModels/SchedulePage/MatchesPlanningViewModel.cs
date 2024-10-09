@@ -17,6 +17,7 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Filters;
 using MyClub.Scorer.Wpf.Services;
+using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
@@ -32,102 +33,76 @@ using MyNet.UI.Toasting.Settings;
 using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.Display;
 using MyNet.UI.ViewModels.List;
+using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.Utilities;
 using MyNet.Utilities.Localization;
-using MyNet.Utilities.Units;
 using PropertyChanged;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
-    internal class MatchesPlanningViewModel : SelectionListViewModel<MatchViewModel>
+    internal class MatchesPlanningViewModel : MatchesViewModel
     {
+        private readonly MatchesProvider _matchesProvider;
         private readonly MatchPresentationService _matchPresentationService;
         private readonly AvailibilityCheckingService _availibilityCheckingService;
 
         public MatchesPlanningViewModel(SchedulingParametersViewModel schedulingParameters,
-                                        ISourceProvider<MatchViewModel> matchesProvider,
-                                        ISourceProvider<IMatchParent> parentsProvider,
-                                        ISourceProvider<ITeamViewModel> teamsProvider,
-                                        ISourceProvider<IStadiumViewModel> stadiumsProvider,
+                                        MatchesProvider matchesProvider,
+                                        CompetitionStagesProvider competitionStagesProvider,
+                                        TeamsProvider teamsProvider,
+                                        StadiumsProvider stadiumsProvider,
                                         MatchPresentationService matchPresentationService,
-                                        CompetitionCommandsService competitionCommandsService,
                                         AvailibilityCheckingService availibilityCheckingService)
-            : base(collection: new MatchesCollection(matchesProvider),
-                  parametersProvider: new MatchesPlanningListParametersProvider(parentsProvider.Source,
-                                                                                new ObservableSourceProvider<DateOnly>(matchesProvider.Connect()
-                                                                                                                                      .AutoRefreshOnObservable(x => Observable.FromEventPattern(x => GlobalizationService.Current.TimeZoneChanged += x, x => GlobalizationService.Current.TimeZoneChanged -= x))
-                                                                                                                                      .AutoRefreshOnObservable(x => x.WhenPropertyChanged(y => y.DateOfDay))
-                                                                                                                                      .DistinctValues(x => x.DateOfDay)
-                                                                                                                                      .ObserveOn(Scheduler.UI)).Source,
-                                                                                teamsProvider.Source,
-                                                                                stadiumsProvider.Source,
-                                                                                schedulingParameters))
+            : base(new MatchesCollection(matchesProvider), matchPresentationService,
+                   new MatchesPlanningListParametersProvider(competitionStagesProvider.Items,
+                                                             new ObservableSourceProvider<DateOnly>(matchesProvider.Connect()
+                                                                                                                   .AutoRefreshOnObservable(x => Observable.FromEventPattern(x => GlobalizationService.Current.TimeZoneChanged += x, x => GlobalizationService.Current.TimeZoneChanged -= x))
+                                                                                                                   .AutoRefreshOnObservable(x => x.WhenPropertyChanged(y => y.DateOfDay))
+                                                                                                                   .DistinctValues(x => x.DateOfDay)
+                                                                                                                   .ObserveOn(Scheduler.UI)).Source,
+                                                             teamsProvider.Items,
+                                                             stadiumsProvider.Items,
+                                                             schedulingParameters))
         {
+            _matchesProvider = matchesProvider;
             _matchPresentationService = matchPresentationService;
             _availibilityCheckingService = availibilityCheckingService;
             Stadiums = new ListViewModel<IStadiumWrapper>(stadiumsProvider.Connect().Transform(x => (IStadiumWrapper)new StadiumWrapper(x)).Merge(new ObservableCollection<IStadiumWrapper>() { new AutomaticStadiumWrapper(), new NoStadiumWrapper() }.ToObservableChangeSet()));
-            Mode = ScreenMode.Read;
-            CanPage = true;
-            CanAdd = false;
-            CanRemove = false;
 
-            SelectAllByParentCommand = CommandsManager.CreateNotNull<IMatchParent>(x => Collection.Select(Items.Where(y => y.Parent == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Parent == x && y.IsSelectable).Any(y => !y.IsSelected));
-            UnselectAllByParentCommand = CommandsManager.CreateNotNull<IMatchParent>(x => Collection.Unselect(Items.Where(y => y.Parent == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Parent == x && y.IsSelectable).All(y => y.IsSelected));
+            SelectAllByStageCommand = CommandsManager.CreateNotNull<IStageViewModel>(x => Collection.Select(Items.Where(y => y.Stage == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Stage == x && y.IsSelectable).Any(y => !y.IsSelected));
+            UnselectAllByStageCommand = CommandsManager.CreateNotNull<IStageViewModel>(x => Collection.Unselect(Items.Where(y => y.Stage == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.Stage == x && y.IsSelectable).All(y => y.IsSelected));
             SelectAllByDateCommand = CommandsManager.CreateNotNull<DateOnly>(x => Collection.Select(Items.Where(y => y.DateOfDay == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.DateOfDay == x && y.IsSelectable).Any(y => !y.IsSelected));
             UnselectAllByDateCommand = CommandsManager.CreateNotNull<DateOnly>(x => Collection.Unselect(Items.Where(y => y.DateOfDay == x).ToList()), x => Mode == ScreenMode.Read && Wrappers.Where(y => y.Item.DateOfDay == x && y.IsSelectable).All(y => y.IsSelected));
+            OpenSchedulingAssistantCommand = CommandsManager.Create(async () => await OpenSchedulingAssistantAsync().ConfigureAwait(false));
+            RescheduleConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(async x => await RescheduleConflictsAsync(x).ConfigureAwait(false), x => x.MatchesInConflicts.Count > 0);
             EditResultsCommand = CommandsManager.Create(StartEditResults, () => Mode == ScreenMode.Read && Items.Count > 0);
             ValidateResultsCommand = CommandsManager.Create(async () => await ValidateResultsAsync().ConfigureAwait(false), () => Mode == ScreenMode.Edition);
             CancelResultsCommand = CommandsManager.Create(CancelResults, () => Mode == ScreenMode.Edition);
-            StartSelectedItemsCommand = CommandsManager.Create(async () => await StartSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanBe(MatchState.InProgress)));
-            SuspendSelectedItemsCommand = CommandsManager.Create(async () => await SuspendSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanBe(MatchState.Suspended)));
-            PostponeSelectedItemsCommand = CommandsManager.Create(async () => await PostponeSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanBe(MatchState.Postponed)));
-            CancelSelectedItemsCommand = CommandsManager.Create(async () => await CancelSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanBe(MatchState.Cancelled)));
-            FinishSelectedItemsCommand = CommandsManager.Create(async () => await FinishSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanBe(MatchState.Played)));
-            ResetSelectedItemsCommand = CommandsManager.Create(async () => await ResetSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanBe(MatchState.None)));
-            DoWithdrawForHomeTeamSelectedItemsCommand = CommandsManager.Create(async () => await DoWithdrawForHomeTeamSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanDoWithdraw()));
-            DoWithdrawForAwayTeamSelectedItemsCommand = CommandsManager.Create(async () => await DoWithdrawForAwayTeamSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanDoWithdraw()));
-            RandomizeSelectedItemsCommand = CommandsManager.Create(async () => await RandomizeSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanRandomize()));
-            InvertTeamsSelectedItemsCommand = CommandsManager.Create(async () => await InvertTeamsSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanInvertTeams()));
-            RescheduleCommand = CommandsManager.CreateNotNull<object[]>(async x => await RescheduleSelectedItemsAsync(Convert.ToInt32(x[0]), (TimeUnit)x[1]).ConfigureAwait(false), x => x.Length == 2 && x[0] is double && x[1] is TimeUnit && SelectionIsAvailable(x => x.CanReschedule()));
-            RescheduleXMinutesCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleSelectedItemsAsync(x, TimeUnit.Minute).ConfigureAwait(false), x => SelectionIsAvailable(x => x.CanReschedule()));
-            RescheduleXHoursCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleSelectedItemsAsync(x, TimeUnit.Hour).ConfigureAwait(false), x => SelectionIsAvailable(x => x.CanReschedule()));
-            RescheduleAutomaticCommand = CommandsManager.Create(async () => await RescheduleAutomaticSelectedItemsAsync().ConfigureAwait(false), () => SelectionIsAvailable(x => x.CanRescheduleAutomatic()));
-            SelectConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(x => SelectConflicts(x), x => x.MatchesInConflicts.Count > 0);
-            RescheduleConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(async x => await RescheduleConflictsAsync(x).ConfigureAwait(false), x => x.MatchesInConflicts.Count > 0);
-            SetStadiumForSelectedItemsCommand = CommandsManager.CreateNotNull<IStadiumWrapper>(async x => await SetStadiumForSelectedItemsAsync(x).ConfigureAwait(false), x => SelectionIsAvailable(y => y.CanReschedule() && (x is not AutomaticStadiumWrapper || y.CanRescheduleAutomaticStadium())));
-            OpenSchedulingAssistantCommand = CommandsManager.Create(async () => await OpenSchedulingAssistantAsync().ConfigureAwait(false));
-            EditSchedulingParametersCommand = CommandsManager.Create(async () => await competitionCommandsService.EditSchedulingParametersAsync().ConfigureAwait(false), () => Mode == ScreenMode.Read);
+            SelectConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(SelectConflicts, x => x.MatchesInConflicts.Count > 0);
 
             Disposables.AddRange(
             [
-                Items.ToObservableChangeSet().WhenPropertyChanged(x => x.State).Subscribe(_ =>
-                {
-                    RaisePropertyChanged(nameof(CanDoWithdrawSelectedItems));
-                    RaisePropertyChanged(nameof(CanRescheduleSelectedItems));
-                }),
-                SelectedWrappers.ToObservableChangeSet().Throttle(1000.Milliseconds()).Subscribe(_ => ValidateStadiumsAvaibility(SelectedItems.ToList()))
+                SelectedWrappers.ToObservableChangeSet().Throttle(1000.Milliseconds()).Subscribe(_ => ValidateStadiumsAvaibility(SelectedItems.ToList())),
             ]);
+
+            matchesProvider.LoadRunner.Register(this, DeferRefresh);
         }
-
-        [CanSetIsModified(false)]
-        [CanBeValidated(false)]
-        public bool CanDoWithdrawSelectedItems => SelectionIsAvailable(x => x.CanDoWithdraw());
-
-        [CanSetIsModified(false)]
-        [CanBeValidated(false)]
-        public bool CanRescheduleSelectedItems => SelectionIsAvailable(x => x.CanReschedule());
 
         [CanBeValidated]
         [CanSetIsModified]
         public ListViewModel<IStadiumWrapper> Stadiums { get; }
 
-        public ICommand SelectAllByParentCommand { get; }
+        public ICommand SelectAllByStageCommand { get; }
 
-        public ICommand UnselectAllByParentCommand { get; }
+        public ICommand UnselectAllByStageCommand { get; }
 
         public ICommand SelectAllByDateCommand { get; }
 
         public ICommand UnselectAllByDateCommand { get; }
+
+        public ICommand OpenSchedulingAssistantCommand { get; }
+
+        public ICommand RescheduleConflictsCommand { get; }
 
         public ICommand CancelResultsCommand { get; }
 
@@ -135,50 +110,69 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         public ICommand EditResultsCommand { get; }
 
-        public ICommand EditSchedulingParametersCommand { get; }
-
-        public ICommand ResetSelectedItemsCommand { get; }
-
-        public ICommand StartSelectedItemsCommand { get; }
-
-        public ICommand PostponeSelectedItemsCommand { get; }
-
-        public ICommand CancelSelectedItemsCommand { get; }
-
-        public ICommand SuspendSelectedItemsCommand { get; }
-
-        public ICommand FinishSelectedItemsCommand { get; }
-
-        public ICommand DoWithdrawForHomeTeamSelectedItemsCommand { get; }
-
-        public ICommand DoWithdrawForAwayTeamSelectedItemsCommand { get; }
-
-        public ICommand RandomizeSelectedItemsCommand { get; }
-
-        public ICommand InvertTeamsSelectedItemsCommand { get; }
-
-        public ICommand RescheduleXMinutesCommand { get; }
-
-        public ICommand RescheduleXHoursCommand { get; }
-
-        public ICommand RescheduleCommand { get; }
-
-        public ICommand RescheduleAutomaticCommand { get; }
-
-        public ICommand OpenSchedulingAssistantCommand { get; }
-
         public ICommand SelectConflictsCommand { get; }
 
-        public ICommand RescheduleConflictsCommand { get; }
-
-        public ICommand SetStadiumForSelectedItemsCommand { get; }
-
-        protected override async Task<MatchViewModel?> UpdateItemAsync(MatchViewModel oldItem)
+        private async Task OpenSchedulingAssistantAsync()
         {
-            await _matchPresentationService.EditAsync(oldItem).ConfigureAwait(false);
-
-            return null;
+            var filters = (MatchesPlanningFiltersViewModel)Filters;
+            var displayDate = Display.Mode switch
+            {
+                DisplayModeDay displayModeDay => (DateOnly?)displayModeDay.DisplayDate.ToDate(),
+                DisplayModeByDate => filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value,
+                DisplayModeByStage => filters.CompetitionStageFilter.Item.CastIn<CompetitionStageFilterViewModel>().Value?.StartDate.ToDate(),
+                _ => null,
+            };
+            await OpenSchedulingAssistantAsync(displayDate).ConfigureAwait(false);
         }
+
+        private async Task OpenSchedulingAssistantAsync(DateOnly? displayDate)
+            => await _matchPresentationService.OpenSchedulingAssistantAsync(Source, displayDate).ConfigureAwait(false);
+
+        private async Task RescheduleConflictsAsync(MatchViewModel match)
+            => await OpenSchedulingAssistantAsync(match.DateOfDay).ConfigureAwait(false);
+
+        public void Load(string displayMode, object? filterValue = null)
+        {
+            Display.SetMode(displayMode);
+
+            var filters = (MatchesPlanningFiltersViewModel)Filters;
+            if (filterValue is Guid id)
+            {
+                filters.Clear();
+                var stage = filters.CompetitionStageFilter.Item.CastIn<CompetitionStageFilterViewModel>().AvailableValues?.GetByIdOrDefault(id);
+                if (stage is not null)
+                    filters.CompetitionStageFilter.Item.CastIn<CompetitionStageFilterViewModel>().Value = stage;
+            }
+            else if (filterValue is DateOnly date)
+            {
+                filters.Clear();
+                if (displayMode == nameof(DisplayModeByDate))
+                {
+                    var found = filters.DateFilter.Item.CastIn<DateFilterViewModel>().AvailableValues?.Any(x => x == date);
+                    if (found.IsTrue())
+                        filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value = date;
+                }
+                else
+                {
+                    Display.AllowedModes.OfType<DisplayModeDay>().First().DisplayDate = date.BeginningOfDay();
+                }
+            }
+            else if (filterValue is IEnumerable<IFilterViewModel> newFilters)
+            {
+                filters.Set(newFilters);
+            }
+        }
+
+        private void ValidateStadiumsAvaibility(IEnumerable<MatchViewModel> matches)
+        {
+            foreach (var item in Stadiums.Items.OfType<StadiumWrapper>())
+                item.Availability = CheckStadiumAvaibility(item.Stadium.Id, matches);
+        }
+
+        private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, IEnumerable<MatchViewModel> matches)
+            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, x.GetPeriod(), matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
+
+        private void SelectConflicts(MatchViewModel match) => SelectItems(match.MatchesInConflicts.Select(x => x.Id).ToList());
 
         private void StartEditResults()
         {
@@ -224,108 +218,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             EndEditResults();
         }
 
-        public async Task StartSelectedItemsAsync() => await _matchPresentationService.StartAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task ResetSelectedItemsAsync() => await _matchPresentationService.ResetAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task CancelSelectedItemsAsync() => await _matchPresentationService.CancelAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task PostponeSelectedItemsAsync() => await _matchPresentationService.PostponeAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task SuspendSelectedItemsAsync() => await _matchPresentationService.SuspendAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task FinishSelectedItemsAsync() => await _matchPresentationService.FinishAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task RescheduleSelectedItemsAsync(int offset, TimeUnit timeUnit) => await _matchPresentationService.RescheduleAsync(SelectedItems, offset, timeUnit).ConfigureAwait(false);
-
-        public async Task RescheduleAutomaticSelectedItemsAsync() => await _matchPresentationService.RescheduleAutomaticAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task DoWithdrawForHomeTeamSelectedItemsAsync() => await _matchPresentationService.DoWithdrawForHomeTeamAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task DoWithdrawForAwayTeamSelectedItemsAsync() => await _matchPresentationService.DoWithdrawForAwayTeamAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task RandomizeSelectedItemsAsync() => await _matchPresentationService.RandomizeAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task InvertTeamsSelectedItemsAsync() => await _matchPresentationService.InvertTeamsAsync(SelectedItems).ConfigureAwait(false);
-
-        public async Task SetStadiumForSelectedItemsAsync(IStadiumWrapper stadiumWrapper)
+        protected override void Cleanup()
         {
-            if (stadiumWrapper is AutomaticStadiumWrapper)
-                await _matchPresentationService.RescheduleAutomaticStadiumAsync(SelectedItems).ConfigureAwait(false);
-            else
-                await _matchPresentationService.SetStadiumAsync(SelectedItems, (stadiumWrapper as StadiumWrapper)?.Stadium).ConfigureAwait(false);
-        }
-
-        private async Task RescheduleConflictsAsync(MatchViewModel match)
-            => await OpenSchedulingAssistantAsync(match.DateOfDay).ConfigureAwait(false);
-
-        private async Task OpenSchedulingAssistantAsync()
-        {
-            var filters = (MatchesPlanningFiltersViewModel)Filters;
-            var displayDate = Display.Mode switch
-            {
-                DisplayModeDay displayModeDay => (DateOnly?)displayModeDay.DisplayDate.ToDate(),
-                DisplayModeByDate => filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value,
-                DisplayModeByParent => filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().Value?.Date.ToDate(),
-                _ => null,
-            };
-            await OpenSchedulingAssistantAsync(displayDate).ConfigureAwait(false);
-        }
-
-        private async Task OpenSchedulingAssistantAsync(DateOnly? displayDate)
-            => await _matchPresentationService.OpenSchedulingAssistantAsync(Source, displayDate).ConfigureAwait(false);
-
-        public void Load(string displayMode, object? filterValue = null)
-        {
-            Display.SetMode(displayMode);
-
-            var filters = (MatchesPlanningFiltersViewModel)Filters;
-            if (filterValue is Guid id)
-            {
-                var parent = filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().AvailableValues?.GetByIdOrDefault(id);
-                if (parent is not null)
-                    filters.ParentFilter.Item.CastIn<MatchParentFilterViewModel>().Value = parent;
-            }
-            else if (filterValue is DateOnly date)
-            {
-                if (displayMode == nameof(DisplayModeByDate))
-                {
-                    var found = filters.DateFilter.Item.CastIn<DateFilterViewModel>().AvailableValues?.Any(x => x == date);
-                    if (found.IsTrue())
-                        filters.DateFilter.Item.CastIn<DateFilterViewModel>().Value = date;
-                }
-                else
-                {
-                    Display.AllowedModes.OfType<DisplayModeDay>().First().DisplayDate = date.BeginningOfDay();
-                }
-            }
-        }
-
-        public void SelectItems(IEnumerable<Guid> selectedItems)
-        {
-            Mode = ScreenMode.Read;
-            UpdateSelection(Source.Where(x => selectedItems.Contains(x.Id)));
-        }
-
-        private void SelectConflicts(MatchViewModel match) => SelectItems(match.MatchesInConflicts.Select(x => x.Id).ToList());
-
-        private void ValidateStadiumsAvaibility(IEnumerable<MatchViewModel> matches)
-        {
-            foreach (var item in Stadiums.Items.OfType<StadiumWrapper>())
-                item.Availability = CheckStadiumAvaibility(item.Stadium.Id, matches);
-        }
-
-        private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, IEnumerable<MatchViewModel> matches)
-            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, x.GetPeriod(), matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
-
-        protected override bool SelectionIsAvailable(Func<MatchViewModel, bool> predicate) => Mode == ScreenMode.Read && base.SelectionIsAvailable(predicate);
-
-        protected override void OnSelectionChanged()
-        {
-            base.OnSelectionChanged();
-
-            RaisePropertyChanged(nameof(CanDoWithdrawSelectedItems));
-            RaisePropertyChanged(nameof(CanRescheduleSelectedItems));
+            _matchesProvider.LoadRunner.Unregister(this);
+            base.Cleanup();
         }
     }
 
@@ -406,10 +302,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         {
             if (Item.HasResult)
             {
-                HomeScore.Value = Item.HomeScore;
-                AwayScore.Value = Item.AwayScore;
-                HomeShootoutScore.Value = Item.HomeShootoutScore;
-                AwayShootoutScore.Value = Item.AwayShootoutScore;
+                HomeScore.Value = Item.Home.Score;
+                AwayScore.Value = Item.Away.Score;
+                HomeShootoutScore.Value = Item.Home.ShootoutScore;
+                AwayShootoutScore.Value = Item.Away.ShootoutScore;
                 AfterExtraTime = Item.AfterExtraTime;
             }
             else

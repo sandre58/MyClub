@@ -17,12 +17,11 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyClub.Scorer.Wpf.ViewModels.TeamsPage;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Translatables;
 using MyNet.UI.Collections;
 using MyNet.UI.Resources;
-using MyNet.UI.Threading;
 using MyNet.UI.ViewModels;
 using MyNet.UI.ViewModels.List;
 using MyNet.Utilities;
@@ -34,13 +33,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
     internal class MatchEditionViewModel : EntityEditionViewModel<Match, MatchDto, MatchService>
     {
         private readonly AvailibilityCheckingService _availibilityCheckingService;
-        private readonly ReadOnlyObservableCollection<IMatchParent> _parents;
-        private readonly UiObservableCollection<ITeamViewModel> _availableTeams = [];
+        private readonly UiObservableCollection<IMatchesStageViewModel> _stages = [];
+        private readonly UiObservableCollection<IVirtualTeamViewModel> _availableTeams = [];
 
         public MatchEditionViewModel(MatchService matchService,
                                      AvailibilityCheckingService availibilityCheckingService,
-                                     StadiumsProvider stadiumsProvider,
-                                     MatchdaysProvider matchdaysProvider) : base(matchService)
+                                     StadiumsProvider stadiumsProvider) : base(matchService)
         {
             _availibilityCheckingService = availibilityCheckingService;
             StadiumSelection = new ListViewModel<StadiumWrapper>(stadiumsProvider.Connect().Transform(x => new StadiumWrapper(x)));
@@ -48,37 +46,58 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
             Mode = ScreenMode.Edition;
 
-            ValidationRules.Add<MatchEditionViewModel, ITeamViewModel?>(x => x.HomeTeam, MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x is null || AwayTeam is null || x.Id != AwayTeam.Id);
+            ValidationRules.Add<MatchEditionViewModel, EditableMatchOpponentViewModel?>(x => x.Home, () => MessageResources.FieldXMustBeDifferentOfFieldYError.FormatWith(MyClubResources.HomeTeam, MyClubResources.AwayTeam), x => x?.Team is null || Away.Team is null || x.Team.Id != Away.Team.Id);
 
             Disposables.AddRange(
             [
-                matchdaysProvider.ConnectById().Transform(x => (IMatchParent)x).SortBy(x => x.Date).Bind(out _parents).ObserveOn(Scheduler.UI).Subscribe(),
-                HomeScore.WhenPropertyChanged(x => x.Value, false).Subscribe(_ => OnScoreChanged()),
-                AwayScore.WhenPropertyChanged(x => x.Value, false).Subscribe(_ => OnScoreChanged()),
-                this.WhenPropertyChanged(x => x.HomeIsWithdrawn, false).Subscribe(_ =>
+                // Stages
+                this.WhenPropertyChanged(x => x.Stage, false).Subscribe(x =>
+                {
+                    CanEditFormat = x.Value?.CanEditMatchFormat() ?? false;
+                    CanEditRules = x.Value?.CanEditMatchRules() ?? false;
+                    CanScheduleAutomatic = x.Value?.CanAutomaticReschedule() ?? false;
+                    CanScheduleStadiumAutomatic = x.Value?.CanAutomaticRescheduleVenue() ?? false;
+                    _availableTeams.Set(x.Value?.GetAvailableTeams() ?? []);
+
+                    if(IsModifiedSuspender.IsSuspended) return;
+
+                    Reset();
+                }),
+
+                // Home
+                Home.WhenPropertyChanged(x => x.Team, false).Subscribe(x =>
+                {
+                    if (!IsModifiedSuspender.IsSuspended && Mode == ScreenMode.Creation && !NeutralVenue && x.Value is TeamViewModel homeTeam)
+                        StadiumSelection.SelectedItem = homeTeam.Stadium?.Id is Guid id ? StadiumSelection.GetByIdOrDefault(id) : null;
+
+                    ValidateOriginDateAvaibility();
+                    ValidatePostponedDateAvaibility();
+                }),
+                Home.Goals.ToObservableChangeSet().Subscribe(_ => OnScoreChanged()),
+                Home.Shootout.ToObservableChangeSet().Subscribe(_ => OnShootoutChanged()),
+                Home.WhenPropertyChanged(x => x.IsWithdrawn, false).Subscribe(x =>
                 {
                     if(IsModifiedSuspender.IsSuspended) return;
 
-                    if(HomeIsWithdrawn)
-                    {
-                        AwayIsWithdrawn = false;
-                        HomeScore.Value = 0;
-                        AwayScore.Value = 3;
-                        State = MatchState.Played;
-                    }
+                     x.Value.IfTrue(() => DoWithdraw(Home, Away), OnScoreChanged);
                 }),
-                this.WhenPropertyChanged(x => x.AwayIsWithdrawn, false).Subscribe(_ =>
+
+                // Away
+                Away.WhenPropertyChanged(x => x.Team, false).Subscribe(_ =>
+                {
+                    ValidateOriginDateAvaibility();
+                    ValidatePostponedDateAvaibility();
+                }),
+                Away.Goals.ToObservableChangeSet().Subscribe(_ => OnScoreChanged()),
+                Away.Shootout.ToObservableChangeSet().Subscribe(_ => OnShootoutChanged()),
+                Away.WhenPropertyChanged(x => x.IsWithdrawn, false).Subscribe(x =>
                 {
                     if(IsModifiedSuspender.IsSuspended) return;
 
-                    if(AwayIsWithdrawn)
-                    {
-                        HomeIsWithdrawn = false;
-                        HomeScore.Value = 3;
-                        AwayScore.Value = 0;
-                        State = MatchState.Played;
-                    }
+                    x.Value.IfTrue(() => DoWithdraw(Away, Home), OnScoreChanged);
                 }),
+
+                // State
                 this.WhenPropertyChanged(x => x.State, false).Subscribe(_ =>
                 {
                     if(IsModifiedSuspender.IsSuspended) return;
@@ -90,12 +109,19 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                         case MatchState.Postponed:
                             ResetScore();
                             break;
+                        default:
+                            break;
+
                     }
 
                     if(State == MatchState.Postponed && PostponedState != PostponedState.UnknownDate)
                         PostponedState = PostponedState.UnknownDate;
                     else if(State != MatchState.Postponed && PostponedState == PostponedState.UnknownDate)
                         PostponedState = PostponedState.None;
+
+                    RaisePropertyChanged(nameof(HasDraw));
+                    RaisePropertyChanged(nameof(CanEditShootout));
+                    RaisePropertyChanged(nameof(CanEditExtraTime));
                 }),
                 this.WhenPropertyChanged(x => x.PostponedState, false).Subscribe(x =>
                 {
@@ -106,31 +132,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
                     ValidateStadiumsAvaibility();
                 }),
-                this.WhenPropertyChanged(x => x.Parent, false).Subscribe(x =>
-                {
-                    CanEditFormat = x.Value?.CanEditMatchFormat() ?? false;
-                    CanScheduleAutomatic = x.Value?.CanAutomaticReschedule() ?? false;
-                    CanScheduleStadiumAutomatic = x.Value?.CanAutomaticRescheduleVenue() ?? false;
-                    _availableTeams.Set(x.Value?.GetAvailableTeams() ?? []);
 
-                    if(IsModifiedSuspender.IsSuspended) return;
-
-                    Reset();
-                }),
-                this.WhenPropertyChanged(x => x.HomeTeam, false).Subscribe(x =>
-                {
-                    if (!IsModifiedSuspender.IsSuspended && Mode == ScreenMode.Creation && !NeutralVenue)
-                        StadiumSelection.SelectedItem = x.Value?.Stadium?.Id is Guid id ? StadiumSelection.GetByIdOrDefault(id) : null;
-
-                    ValidateOriginDateAvaibility();
-                    ValidatePostponedDateAvaibility();
-                }),
-                this.WhenPropertyChanged(x => x.AwayTeam, false).Subscribe(_ =>
-                {
-                    ValidateOriginDateAvaibility();
-                    ValidatePostponedDateAvaibility();
-                }),
-                StadiumSelection.WhenPropertyChanged(x => x.SelectedItem, false).Subscribe(_ => ValidateStadiumsAvaibility()),
+                // Date
                 CurrentDate.WhenPropertyChanged(x => x.DateTime).Subscribe(x =>
                 {
                     ValidateOriginDateAvaibility();
@@ -144,8 +147,19 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
                     ScheduleAutomatic = false;
                 }),
-                StadiumSelection.WhenPropertyChanged(x => x.SelectedItem).Subscribe(_ => ScheduleStadiumAutomatic = false)
+
+                // Stadium
+                StadiumSelection.WhenPropertyChanged(x => x.SelectedItem, false).Subscribe(_ => ValidateStadiumsAvaibility()),
+                StadiumSelection.WhenPropertyChanged(x => x.SelectedItem).Subscribe(_ => ScheduleStadiumAutomatic = false),
             ]);
+        }
+
+        private void DoWithdraw(EditableMatchOpponentViewModel teamWidrawn, EditableMatchOpponentViewModel otherTeam)
+        {
+            State = MatchState.Played;
+            AfterExtraTime = false;
+            teamWidrawn.DoWithdraw();
+            otherTeam.WinByWithdraw();
         }
 
         [CanBeValidated(false)]
@@ -158,11 +172,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<IMatchParent> Parents => _parents;
+        public ReadOnlyObservableCollection<IMatchesStageViewModel> Stages { get; }
 
         [IsRequired]
         [DoNotCheckEquality]
-        public IMatchParent? Parent { get; set; }
+        public IMatchesStageViewModel? Stage { get; set; }
 
         public EditableDateTime CurrentDate { get; set; } = new();
 
@@ -188,64 +202,53 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public EditableMatchFormatViewModel MatchFormat { get; } = new();
 
+        public EditableMatchRulesViewModel MatchRules { get; } = new();
+
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public bool ShowGoals { get; set; }
+
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
         public bool CanEditFormat { get; private set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public bool CanEditExtraTimeOrShootout => (MatchFormat.ExtraTimeIsEnabled || MatchFormat.ShootoutsIsEnabled) && HasDraw;
-
-        [IsRequired]
-        [Display(Name = nameof(HomeTeam), ResourceType = typeof(MyClubResources))]
-        public ITeamViewModel? HomeTeam { get; set; }
-
-        [IsRequired]
-        [Display(Name = nameof(AwayTeam), ResourceType = typeof(MyClubResources))]
-        public ITeamViewModel? AwayTeam { get; set; }
+        public bool CanEditRules { get; private set; }
 
         [CanBeValidated(false)]
         [CanSetIsModified(false)]
-        public ReadOnlyObservableCollection<ITeamViewModel> AvailableTeams { get; }
+        public bool CanEditShootout => MatchFormat.ShootoutsIsEnabled && HasDraw;
+
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public bool CanEditExtraTime => MatchFormat.ExtraTimeIsEnabled && State is MatchState.Played or MatchState.Suspended or MatchState.InProgress && Home.Goals.Count != Away.Goals.Count && !Home.IsWithdrawn && !Away.IsWithdrawn;
+
+        public EditableMatchOpponentViewModel Home { get; } = new(MyClubResources.HomeTeam);
+
+        public EditableMatchOpponentViewModel Away { get; } = new(MyClubResources.AwayTeam);
+
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public ReadOnlyObservableCollection<IVirtualTeamViewModel> AvailableTeams { get; }
 
         [CanBeValidated]
         [CanSetIsModified]
         public ListViewModel<StadiumWrapper> StadiumSelection { get; }
 
-        [Display(Name = nameof(HomeScore), ResourceType = typeof(MyClubResources))]
-        public AcceptableValue<int> HomeScore { get; } = new AcceptableValue<int>(Match.AcceptableRangeScore);
-
-        [Display(Name = nameof(AwayScore), ResourceType = typeof(MyClubResources))]
-        public AcceptableValue<int> AwayScore { get; } = new AcceptableValue<int>(Match.AcceptableRangeScore);
-
-        [Display(Name = nameof(HomeScore), ResourceType = typeof(MyClubResources))]
-        public AcceptableValue<int> HomeShootoutScore { get; } = new AcceptableValue<int>(Match.AcceptableRangeScore);
-
-        [Display(Name = nameof(AwayScore), ResourceType = typeof(MyClubResources))]
-        public AcceptableValue<int> AwayShootoutScore { get; } = new AcceptableValue<int>(Match.AcceptableRangeScore);
-
         [Display(Name = nameof(AfterExtraTime), ResourceType = typeof(MyClubResources))]
         public bool AfterExtraTime { get; set; }
 
-        [Display(Name = nameof(HomeIsWithdrawn), ResourceType = typeof(MyClubResources))]
-        public bool HomeIsWithdrawn { get; set; }
-
-        [Display(Name = nameof(AwayIsWithdrawn), ResourceType = typeof(MyClubResources))]
-        public bool AwayIsWithdrawn { get; set; }
-
-        public bool HasDraw => HomeScore == AwayScore && !HomeIsWithdrawn && !AwayIsWithdrawn;
+        public bool HasDraw => State is MatchState.Played or MatchState.Suspended or MatchState.InProgress && Home.Goals.Count == Away.Goals.Count && !Home.IsWithdrawn && !Away.IsWithdrawn;
 
         private void ResetScore()
         {
             using (IsModifiedSuspender.Suspend())
             {
-                HomeScore.Reset();
-                AwayScore.Reset();
-                HomeShootoutScore.Reset();
-                AwayShootoutScore.Reset();
-                HomeIsWithdrawn = false;
-                AwayIsWithdrawn = false;
+                Home.ResetScore();
+                Away.ResetScore();
                 AfterExtraTime = false;
+                ShowGoals = true;
             }
         }
 
@@ -257,10 +260,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             if (State == MatchState.None) State = MatchState.Played;
 
             RaisePropertyChanged(nameof(HasDraw));
-            RaisePropertyChanged(nameof(CanEditExtraTimeOrShootout));
+            RaisePropertyChanged(nameof(CanEditShootout));
+            RaisePropertyChanged(nameof(CanEditExtraTime));
             if (HasDraw)
                 AfterExtraTime = false;
+            ShowGoals = true;
         }
+
+        [SuppressPropertyChangedWarnings]
+        private void OnShootoutChanged() => ShowGoals = false;
 
         private void ValidateOriginDateAvaibility()
         {
@@ -304,26 +312,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         }
 
         private AvailabilityCheck CheckTeamsAvaibility(DateTime utcDate)
-            => HomeTeam is null && AwayTeam is null
+            => Home.Team is null && Away.Team is null
                 ? AvailabilityCheck.Unknown
-                : _availibilityCheckingService.GetTeamsAvaibility(new[] { HomeTeam?.Id, AwayTeam?.Id }.NotNull().OfType<Guid>(), new Period(utcDate, utcDate.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
+                : _availibilityCheckingService.GetTeamsAvaibility(new[] { Home.Team?.Id, Away.Team?.Id }.NotNull().OfType<Guid>(), new Period(utcDate, utcDate.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
 
         private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, DateTime utcDate)
             => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, new Period(utcDate, utcDate.AddFluentTimeSpan(MatchFormat.Create().GetFullTime())), [ItemId ?? Guid.Empty]);
 
         public void Load(MatchViewModel match)
         {
-            Parent = match.Parent;
-            CanScheduleAutomatic = match.Parent.CanAutomaticReschedule();
-            CanScheduleStadiumAutomatic = match.Parent.CanAutomaticRescheduleVenue();
+            Stage = match.Stage;
+            CanScheduleAutomatic = match.Stage.CanAutomaticReschedule();
+            CanScheduleStadiumAutomatic = match.Stage.CanAutomaticRescheduleVenue();
             Load(match.Id);
         }
 
-        public void New(IMatchParent? parent = null, Action? initialize = null)
+        public void New(IMatchesStageViewModel? stage = null, Action? initialize = null)
         {
-            Parent = parent ?? _parents.LastOrDefault();
-            CanScheduleAutomatic = Parent?.CanAutomaticReschedule() ?? false;
-            CanScheduleStadiumAutomatic = Parent?.CanAutomaticRescheduleVenue() ?? false;
+            Stage = stage ?? _stages.LastOrDefault();
+            CanScheduleAutomatic = Stage?.CanAutomaticReschedule() ?? false;
+            CanScheduleStadiumAutomatic = Stage?.CanAutomaticRescheduleVenue() ?? false;
             New(initialize);
         }
 
@@ -338,27 +346,23 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         protected override void ResetItem()
         {
-            if (Parent is not null)
+            if (Stage is not null)
             {
-                var defaultValues = CrudService.New(Parent.Id, Parent.Date);
+                var defaultValues = CrudService.New(Stage.Id, Stage.Date);
                 MatchFormat.Load(defaultValues.Format ?? Domain.MatchAggregate.MatchFormat.Default);
+                MatchRules.Load(defaultValues.Rules ?? Domain.MatchAggregate.MatchRules.Default);
                 CurrentDate.Load(defaultValues.Date);
-                HomeTeam = null;
-                AwayTeam = null;
+                Home.Reset();
+                Away.Reset();
                 StadiumSelection.SelectedItem = defaultValues.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(defaultValues.Stadium.Id.Value) : null;
                 NeutralVenue = defaultValues.IsNeutralStadium;
-                HomeScore.Value = defaultValues.HomeScore;
-                AwayScore.Value = defaultValues.AwayScore;
-                HomeShootoutScore.Value = defaultValues.HomeShootoutScore;
-                AwayShootoutScore.Value = defaultValues.AwayShootoutScore;
-                HomeIsWithdrawn = defaultValues.HomeIsWithdrawn;
-                AwayIsWithdrawn = defaultValues.AwayIsWithdrawn;
                 AfterExtraTime = defaultValues.AfterExtraTime;
                 State = defaultValues.State;
                 PostponedState = PostponedState.None;
                 PostponedDateTime.Clear();
                 ScheduleAutomatic = false;
                 ScheduleStadiumAutomatic = false;
+                ShowGoals = true;
             }
         }
 
@@ -366,11 +370,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             => new()
             {
                 Id = ItemId,
-                ParentId = Parent?.Id ?? throw new InvalidOperationException("Parent cannot be null"),
-                HomeTeamId = HomeTeam?.Id ?? throw new InvalidOperationException("HomeTeam cannot be null"),
-                AwayTeamId = AwayTeam?.Id ?? throw new InvalidOperationException("AwayTeam cannot be null"),
+                StageId = Stage?.Id ?? throw new InvalidOperationException("Stage cannot be null"),
+                HomeTeamId = Home.Team?.Id ?? throw new InvalidOperationException("HomeTeam cannot be null"),
+                AwayTeamId = Away.Team?.Id ?? throw new InvalidOperationException("AwayTeam cannot be null"),
                 Date = CurrentDate.ToUtcOrDefault(),
                 Format = CanEditFormat && MatchFormat.IsModified() ? MatchFormat.Create() : null,
+                Rules = CanEditRules && MatchRules.IsModified() ? MatchRules.Create() : null,
                 IsNeutralStadium = NeutralVenue,
                 Stadium = StadiumSelection.SelectedItem is not null ? new StadiumDto
                 {
@@ -379,13 +384,27 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                     Ground = StadiumSelection.SelectedItem.Stadium.Ground,
                     Address = StadiumSelection.SelectedItem.Stadium.Address,
                 } : null,
-                HomeScore = HomeScore.Value,
-                AwayScore = AwayScore.Value,
-                HomeShootoutScore = HomeShootoutScore.Value,
-                AwayShootoutScore = AwayShootoutScore.Value,
-                HomeIsWithdrawn = HomeIsWithdrawn,
-                AwayIsWithdrawn = AwayIsWithdrawn,
-                AfterExtraTime = AfterExtraTime,
+                HomeGoals = State is MatchState.Played or MatchState.Suspended or MatchState.InProgress
+                            ? Home.Goals.Where(x => x.Type.HasValue).Select(x => x.ToDto()).ToList()
+                            : [],
+                AwayGoals = State is MatchState.Played or MatchState.Suspended or MatchState.InProgress
+                            ? Away.Goals.Where(x => x.Type.HasValue).Select(x => x.ToDto()).ToList()
+                            : [],
+                HomeShootout = HasDraw
+                            ? Home.Shootout.Where(x => x.Result.HasValue).Select(x => x.ToDto()).ToList()
+                            : [],
+                AwayShootout = HasDraw
+                            ? Away.Shootout.Where(x => x.Result.HasValue).Select(x => x.ToDto()).ToList()
+                            : [],
+                HomeCards = State is MatchState.Played or MatchState.Suspended or MatchState.InProgress
+                            ? Home.Cards.Where(x => x.Color.HasValue).Select(x => x.ToDto()).ToList()
+                            : [],
+                AwayCards = State is MatchState.Played or MatchState.Suspended or MatchState.InProgress
+                            ? Away.Cards.Where(x => x.Color.HasValue).Select(x => x.ToDto()).ToList()
+                            : [],
+                HomeIsWithdrawn = Home.IsWithdrawn,
+                AwayIsWithdrawn = Away.IsWithdrawn,
+                AfterExtraTime = CanEditExtraTime && AfterExtraTime,
                 State = State,
                 PostponedDate = PostponedState == PostponedState.SpecifiedDate ? PostponedDateTime.ToUtc() : null,
                 ScheduleStadiumAutomatic = CanScheduleStadiumAutomatic && ScheduleStadiumAutomatic,
@@ -394,20 +413,16 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         protected override void RefreshFrom(Match item)
         {
-            if (Parent is not null)
+            if (Stage is not null)
             {
-                HomeTeam = Parent.GetAvailableTeams().GetById(item.HomeTeam.Id);
-                AwayTeam = Parent.GetAvailableTeams().GetById(item.AwayTeam.Id);
+                Home.Load(Stage.GetAvailableTeams().GetById(item.HomeTeam.Id), item.State, item.Home);
+                Away.Load(Stage.GetAvailableTeams().GetById(item.AwayTeam.Id), item.State, item.Away);
+
                 StadiumSelection.SelectedItem = item.Stadium?.Id is not null ? StadiumSelection.Items.GetByIdOrDefault(item.Stadium.Id) : null;
                 CurrentDate.Load(item.OriginDate);
                 MatchFormat.Load(item.Format);
+                MatchRules.Load(item.Rules);
                 NeutralVenue = item.IsNeutralStadium;
-                HomeScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Home.GetScore() : null;
-                AwayScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Away.GetScore() : null;
-                HomeShootoutScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Home.GetShootoutScore() : null;
-                AwayShootoutScore.Value = item.State == MatchState.InProgress || item.State == MatchState.Suspended || item.State == MatchState.Played ? item.Away.GetShootoutScore() : null;
-                HomeIsWithdrawn = item.Home.IsWithdrawn;
-                AwayIsWithdrawn = item.Away.IsWithdrawn;
                 AfterExtraTime = item.AfterExtraTime;
                 State = item.State;
                 if (item.OriginDate == item.Date)
@@ -417,7 +432,19 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 PostponedState = !PostponedDateTime.HasValue && item.State != MatchState.Postponed ? PostponedState.None : PostponedDateTime.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
                 ScheduleAutomatic = false;
                 ScheduleStadiumAutomatic = false;
+                ShowGoals = true;
             }
+        }
+
+        protected override void Cleanup()
+        {
+            Home.Dispose();
+            Away.Dispose();
+            CurrentDate.Dispose();
+            PostponedDateTime.Dispose();
+            MatchFormat.Dispose();
+            MatchRules.Dispose();
+            base.Cleanup();
         }
     }
 }

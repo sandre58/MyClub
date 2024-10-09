@@ -1,17 +1,17 @@
 ﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.BuildAssistant.LeagueBuildAssistantParametersView"
-                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                  xmlns:edition="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
-                  xmlns:editionVm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
-                  xmlns:enums="clr-namespace:MyClub.Scorer.Domain.Enums;assembly=MyClub.Scorer.Domain"
-                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                  xmlns:my="http://mynet.com/xaml/themes"
-                  xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
-                  xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.BuildAssistant"
-                  xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
-                  d:DataContext="{d:DesignInstance Type=vm:LeagueBuildAssistantParametersViewModel}"
-                  mc:Ignorable="d">
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:edition="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:editionVm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             xmlns:enums="clr-namespace:MyClub.Scorer.Domain.Enums;assembly=MyClub.Scorer.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.BuildAssistant"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
+             d:DataContext="{d:DesignInstance Type=vm:LeagueBuildAssistantParametersViewModel}"
+             mc:Ignorable="d">
     <UserControl.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
     </UserControl.Resources>
@@ -50,7 +50,7 @@
                                         <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                            my:HeaderAssist.Header="{my:Resource ChampionshipAlgorithmRoundRobin}"
                                                            PopupContent="{my:Resource RoundRobinDescription}"
-                                                           ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                           ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                     </my:SimpleStackPanel>
                                 </ListBoxItem>
                                 <ListBoxItem Width="160"
@@ -62,7 +62,7 @@
                                         <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                            my:HeaderAssist.Header="{my:Resource ChampionshipAlgorithmSwissSystem}"
                                                            PopupContent="{my:Resource SwissSystemDescription}"
-                                                           ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                           ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                     </my:SimpleStackPanel>
                                 </ListBoxItem>
                             </ListBox>
@@ -135,7 +135,10 @@
                 </my:SimpleStackPanel>
 
                 <!-- Scheduling parameters -->
-                <GroupBox Grid.Row="2" my:IconAssist.Icon="{my:MediumIcon Kind=CalendarClock}" Header="{my:Resource SchedulingParameters}">
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Application.Light}"
+                          Grid.Row="2"
+                          my:IconAssist.Icon="{my:MediumIcon Kind=CalendarClock}"
+                          Header="{my:Resource SchedulingParameters}">
                     <my:SimpleStackPanel>
 
                         <!-- Start date -->
@@ -185,7 +188,7 @@
                                 <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                    my:HeaderAssist.Header="{my:Resource StartTime}"
                                                    PopupContent="{my:Resource StartTimeDescription}"
-                                                   ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                   ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
 
@@ -206,7 +209,7 @@
                                 <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                    my:HeaderAssist.Header="{my:Resource RestTime}"
                                                    PopupContent="{my:Resource RestTimeDescription}"
-                                                   ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                   ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
 
@@ -227,14 +230,15 @@
                                 <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                    my:HeaderAssist.Header="{my:Resource RotationTime}"
                                                    PopupContent="{my:Resource RotationTimeDescription}"
-                                                   ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                   ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                             </my:SimpleStackPanel>
                         </GroupBox>
                     </my:SimpleStackPanel>
                 </GroupBox>
 
                 <!-- Match format -->
-                <GroupBox Grid.Row="4"
+                <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Elevation.Application.Light}"
+                          Grid.Row="4"
                           VerticalAlignment="Top"
                           my:IconAssist.Icon="{my:MediumIcon Kind=TimerSettings}"
                           Header="{my:Resource MatchesFormat}">
@@ -279,7 +283,7 @@
                                             <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                                my:HeaderAssist.Header="{my:Resource AsSoonAsPossible}"
                                                                PopupContent="{my:Resource DatesSchedulingMethodAsSoonAsPossibleDescription}"
-                                                               ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                               ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                         </my:SimpleStackPanel>
                                     </ListBoxItem>
                                     <ListBoxItem Width="160" my:IconAssist.Icon="{my:MediumIcon Kind=CalendarCursor}" DataContext="{x:Static editionVm:DatesSchedulingMethod.Manual}">
@@ -288,7 +292,7 @@
                                             <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                                my:HeaderAssist.Header="{my:Resource Manual}"
                                                                PopupContent="{my:Resource DatesSchedulingMethodManualDescription}"
-                                                               ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                               ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                         </my:SimpleStackPanel>
                                     </ListBoxItem>
                                     <ListBoxItem Width="160" my:IconAssist.Icon="{my:MediumIcon Kind=Magic}" DataContext="{x:Static editionVm:DatesSchedulingMethod.Automatic}">
@@ -297,7 +301,7 @@
                                             <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                                my:HeaderAssist.Header="{my:Resource Automatic}"
                                                                PopupContent="{my:Resource DatesSchedulingMethodAutomaticDescription}"
-                                                               ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                               ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                         </my:SimpleStackPanel>
                                     </ListBoxItem>
                                 </ListBox>
@@ -313,7 +317,7 @@
                                         <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                            my:HeaderAssist.Header="{my:Resource Patterns}"
                                                            PopupContent="{my:Resource PatternsDescription}"
-                                                           ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                           ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                     </my:SimpleStackPanel>
                                 </GroupBox>
                             </Grid>
@@ -348,7 +352,7 @@
                                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                        my:HeaderAssist.Header="{my:Resource None}"
                                                        PopupContent="{my:Resource VenuesSchedulingMethodNoneDescription}"
-                                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                 </my:SimpleStackPanel>
                             </ListBoxItem>
                             <ListBoxItem Width="230" my:IconAssist.Icon="{my:MediumIcon Kind=HomeSwap}" DataContext="{x:Static vm:VenuesSchedulingMethod.UseHomeVenue}">
@@ -357,7 +361,7 @@
                                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                        my:HeaderAssist.Header="{my:Resource UseHomeVenue}"
                                                        PopupContent="{my:Resource VenueSchedulingMethodUseHomeVenueDescription}"
-                                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                 </my:SimpleStackPanel>
                             </ListBoxItem>
                             <ListBoxItem Width="230"
@@ -369,7 +373,7 @@
                                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                        my:HeaderAssist.Header="{my:Resource AsSoonAsPossible}"
                                                        PopupContent="{my:Resource VenuesSchedulingMethodAsSoonAsPossibleDescription}"
-                                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                 </my:SimpleStackPanel>
                             </ListBoxItem>
                             <ListBoxItem Width="230" my:IconAssist.Icon="{my:MediumIcon Kind=Magic}" DataContext="{x:Static vm:VenuesSchedulingMethod.Automatic}">
@@ -378,7 +382,7 @@
                                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                        my:HeaderAssist.Header="{my:Resource Automatic}"
                                                        PopupContent="{my:Resource VenuesSchedulingMethodAutomaticDescription}"
-                                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                                 </my:SimpleStackPanel>
                             </ListBoxItem>
                         </ListBox>
@@ -399,7 +403,7 @@
                                 <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                                    my:HeaderAssist.Header="{my:Resource ScheduleVenuesBeforeDates}"
                                                    PopupContent="{my:Resource ScheduleVenuesBeforeDatesDescription}"
-                                                   ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                                   ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                             </my:SimpleStackPanel>
                         </Grid>
 

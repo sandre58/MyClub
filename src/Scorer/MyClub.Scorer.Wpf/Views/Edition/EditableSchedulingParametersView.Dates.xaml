@@ -43,7 +43,7 @@
                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                        my:HeaderAssist.Header="{my:Resource RestTime}"
                                        PopupContent="{my:Resource RestTimeDescription}"
-                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                 </my:SimpleStackPanel>
             </GroupBox>
 
@@ -64,7 +64,7 @@
                     <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                        my:HeaderAssist.Header="{my:Resource RotationTime}"
                                        PopupContent="{my:Resource RotationTimeDescription}"
-                                       ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                       ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
                 </my:SimpleStackPanel>
             </GroupBox>
         </my:SimpleStackPanel>
@@ -167,8 +167,8 @@
                         <ComboBoxItem Content="{my:Resource TimeUnitWeek}" DataContext="{x:Static units:TimeUnit.Week}" />
                     </ComboBox>
                     <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource By, Casing=LowerCase}" />
-                    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding ScheduleByParent}" SelectedValuePath="DataContext">
-                        <ListBoxItem Width="80" Content="{my:Resource Parent}" DataContext="{x:Static my:Booleans.True}" />
+                    <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding ScheduleByStage}" SelectedValuePath="DataContext">
+                        <ListBoxItem Width="80" Content="{my:Resource Stage}" DataContext="{x:Static my:Booleans.True}" />
                         <ListBoxItem Width="80" Content="{my:Resource Match}" DataContext="{x:Static my:Booleans.False}" />
                     </ListBox>
                 </my:SimpleStackPanel>

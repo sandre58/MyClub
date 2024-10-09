@@ -5,14 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
-using System.Reactive.Subjects;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.HomePage;
 using MyClub.Scorer.Wpf.ViewModels.PastPositionsPage;
 using MyClub.Scorer.Wpf.ViewModels.RankingPage;
 using MyClub.Scorer.Wpf.ViewModels.SchedulePage;
+using MyClub.Scorer.Wpf.ViewModels.StatisticsPage;
 using MyNet.UI.Navigation;
-using MyNet.Utilities.Geography;
 using MyNet.Utilities.Suspending;
 using MyNet.Wpf.Schedulers;
 
@@ -24,11 +23,14 @@ namespace MyClub.Scorer.Wpf.Services
         public const string DisplayModeParameterKey = "DisplayMode";
         public const string FilterParameterKey = "Filter";
 
+        private readonly ProjectInfoProvider _projectInfoProvider;
         private readonly CompositeDisposable _disposables = [];
         private readonly Suspender _navigationSuspender = new();
 
         public NavigationCommandsService(ProjectInfoProvider projectInfoProvider)
-            => projectInfoProvider.WhenProjectClosing(() =>
+        {
+            _projectInfoProvider = projectInfoProvider;
+            projectInfoProvider.UnloadRunner.RegisterOnStart(this, () =>
             {
                 using (_navigationSuspender.Suspend())
                 {
@@ -37,8 +39,7 @@ namespace MyClub.Scorer.Wpf.Services
                     ClearJournal();
                 }
             });
-
-        public void Dispose() => _disposables.Dispose();
+        }
 
         public static void NavigateToHomePage() => NavigationManager.NavigateTo<HomePageViewModel>();
 
@@ -60,6 +61,13 @@ namespace MyClub.Scorer.Wpf.Services
                 NavigationManager.NavigateTo<PastPositionsPageViewModel>();
         }
 
+        public static void NavigateToStatisticsPage() => NavigationManager.NavigateTo<StatisticsPageViewModel>();
+
         public static void NavigateToRankingPage() => NavigationManager.NavigateTo<RankingPageViewModel>();
+        public void Dispose()
+        {
+            _projectInfoProvider.UnloadRunner.Unregister(this);
+            _disposables.Dispose();
+        }
     }
 }

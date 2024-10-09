@@ -106,7 +106,7 @@
                                  DockPanel.Dock="Top"
                                  Orientation="Horizontal"
                                  Spacing="{StaticResource MyNet.Margin.Small}">
-                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" FontWeight="DemiBold" Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" />
+                <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" Text="{my:DisplayDateTime DateSelection.DisplayDate, Casing=AllCaps, Format=Y}" Typography.Capitals="AllSmallCaps" />
                 <StackPanel Orientation="Horizontal">
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}" Command="{Binding DateSelection.MoveToPreviousDateCommand}" Content="{my:LargeIcon Kind=ChevronLeft}" />
                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Foreground}"
@@ -119,15 +119,15 @@
             </my:SimpleStackPanel>
 
             <!-- Calendar -->
-            <my:Card Width="380"
+            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                     Width="380"
                      Height="340"
-                     Padding="0"
-                     Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+                     Padding="0">
                 <my:CalendarDaysByMonth my:HeaderAssist.Background="Transparent"
                                         my:HeaderAssist.Height="25"
                                         AddCommand="{Binding AddToDateCommand}"
                                         Appointments="{Binding Dates}"
-                                        Background="{DynamicResource MyNet.Brushes.Application.Background}"
+                                        Background="Transparent"
                                         BorderThickness="0"
                                         CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
                                         DatesSelectionMode="None"
@@ -216,7 +216,10 @@
                     </my:ItemsControlAssist.EmptyTemplate>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Margin="{StaticResource MyNet.Margins.Small}" Padding="{StaticResource MyNet.Margins.Default}">
+                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                     Margin="{StaticResource MyNet.Margins.Small}"
+                                     Padding="{StaticResource MyNet.Margins.Default}"
+                                     my:ElevationAssist.Elevation="Dp0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="30" />
@@ -230,8 +233,9 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock HorizontalAlignment="Center"
-                                               VerticalAlignment="Top" Margin="0 6 0 0"
+                                    <TextBlock Margin="0 6 0 0"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Top"
                                                Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                                Text="{my:Translation Index,
                                                                      Format=MatchdayXAbbr}" />
@@ -241,7 +245,8 @@
                                                 my:HintAssist.IsFloating="False"
                                                 my:TextFieldAssist.IsReadOnly="True"
                                                 IsEnabled="False"
-                                                SelectedDate="{my:DateTime Date, Mode=OneWay}" />
+                                                SelectedDate="{my:DateTime Date,
+                                                                           Mode=OneWay}" />
                                     <my:TimePicker Grid.Column="4"
                                                    Width="80"
                                                    my:HintAssist.Hint="{my:Resource Time}"
@@ -305,7 +310,10 @@
                               Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatches}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}" Margin="{StaticResource MyNet.Margins.Small}" Padding="{StaticResource MyNet.Margins.Default}">
+                            <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                     Margin="{StaticResource MyNet.Margins.Small}"
+                                     Padding="{StaticResource MyNet.Margins.Default}"
+                                     my:ElevationAssist.Elevation="Dp0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="30" />

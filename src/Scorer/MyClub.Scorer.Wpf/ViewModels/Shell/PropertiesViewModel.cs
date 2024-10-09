@@ -19,6 +19,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 {
     internal class PropertiesViewModel : WorkspaceViewModel
     {
+        private readonly ProjectInfoProvider _projectInfoProvider;
         private CompositeDisposable _projectDisposables = [];
 
         public bool ProjectIsLoaded { get; private set; }
@@ -49,6 +50,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 
         public PropertiesViewModel(ProjectInfoProvider projectInfoProvider)
         {
+            _projectInfoProvider = projectInfoProvider;
             OpenFolderLocationCommand = CommandsManager.Create(() => IOHelper.OpenFolderLocation(projectInfoProvider.FilePath!), () => !string.IsNullOrEmpty(projectInfoProvider.FilePath));
 
             Disposables.AddRange(
@@ -70,13 +72,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
                 }),
             ]);
 
-            projectInfoProvider.WhenProjectClosing(() =>
+            projectInfoProvider.UnloadRunner.RegisterOnEnd(this, () =>
             {
                 _projectDisposables.Dispose();
                 UpdateProjectInfo(null);
             });
 
-            projectInfoProvider.WhenProjectLoaded(x => _projectDisposables = new(x.WhenAnyPropertyChanged(nameof(IProject.CreatedBy), nameof(IProject.CreatedAt), nameof(IProject.ModifiedBy), nameof(IProject.ModifiedAt)).Subscribe(_ => UpdateProjectInfo(x))));
+            projectInfoProvider.LoadRunner.RegisterOnEnd(this, x => _projectDisposables = new(x.WhenAnyPropertyChanged(nameof(IProject.CreatedBy), nameof(IProject.CreatedAt), nameof(IProject.ModifiedBy), nameof(IProject.ModifiedAt)).Subscribe(_ => UpdateProjectInfo(x))));
         }
 
         protected override string CreateTitle() => MyClubResources.Properties;
@@ -91,6 +93,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 
         protected override void Cleanup()
         {
+            _projectInfoProvider.LoadRunner.Unregister(this);
+            _projectInfoProvider.UnloadRunner.Unregister(this);
             _projectDisposables.Dispose();
             Messenger.Default.Unregister(this);
             base.Cleanup();

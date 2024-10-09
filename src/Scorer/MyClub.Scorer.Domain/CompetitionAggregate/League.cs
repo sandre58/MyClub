@@ -16,16 +16,17 @@ using MyNet.Utilities.Collections;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public class League : Championship, ICompetition, IMatchdaysProvider
+    public class League : Championship, IMatchdaysStage, ICompetition
     {
         private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
-        public League() : this(RankingRules.Default, MatchFormat.Default, SchedulingParameters.Default) { }
+        public League() : this(RankingRules.Default, MatchFormat.Default, MatchRules.Default, SchedulingParameters.Default) { }
 
-        public League(RankingRules rankingRules, MatchFormat matchFormat, SchedulingParameters schedulingParameters)
+        public League(RankingRules rankingRules, MatchFormat matchFormat, MatchRules matchRules, SchedulingParameters schedulingParameters)
         {
             RankingRules = rankingRules;
             MatchFormat = matchFormat;
+            MatchRules = matchRules;
             SchedulingParameters = schedulingParameters;
             Matchdays = new(_matchdays);
         }
@@ -34,21 +35,23 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public MatchFormat MatchFormat { get; set; }
 
+        public MatchRules MatchRules { get; set; }
+
         public SchedulingParameters SchedulingParameters { get; set; }
 
         public ReadOnlyObservableCollection<Matchday> Matchdays { get; }
 
         public override RankingRules GetRankingRules() => RankingRules;
 
-        public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
-
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+
+        MatchRules IMatchRulesProvider.ProvideRules() => MatchRules;
 
         SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
-        public IEnumerable<IMatchdaysProvider> GetAllMatchdaysProviders() => new[] { this };
+        public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.GetAllMatches());
 
-        public IEnumerable<IMatchesProvider> GetAllMatchesProviders() => Matchdays;
+        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Matchdays.OfType<T>();
 
         public Ranking GetRanking(Matchday matchday)
         {
@@ -56,11 +59,13 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             return new Ranking(Teams, matches, GetRankingRules(), GetPenaltyPoints(), Labels, (x, y) => x.State == MatchState.Played);
         }
 
-        public override bool RemoveTeam(Team team)
+        public override bool RemoveTeam(IVirtualTeam team)
         {
             _matchdays.ForEach(x => x.Matches.Where(x => x.Participate(team)).ToList().ForEach(y => x.RemoveMatch(y)));
             return base.RemoveTeam(team);
         }
+
+        public bool RemoveMatch(Match item) => _matchdays.Any(x => x.RemoveMatch(item));
 
         #region Matchdays
 
@@ -68,6 +73,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public Matchday AddMatchday(Matchday matchday)
         {
+            if (!ReferenceEquals(matchday.Stage, this))
+                throw new ArgumentException("Matchday stage is not this league", nameof(matchday));
+
             if (Matchdays.Contains(matchday))
                 throw new AlreadyExistsException(nameof(Matchdays), matchday);
 

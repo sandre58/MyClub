@@ -205,7 +205,7 @@
         </Style>
     </UserControl.Resources>
 
-    <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Secondary}">
+    <my:Card Margin="2" Padding="0" Background="{DynamicResource MyNet.Brushes.Application.Background.Light}">
         <my:CalendarDaysByMonth my:HeaderAssist.Background="{DynamicResource MyNet.Brushes.Control.Background}"
                                 AddCommand="{Binding AddToDateCommand}"
                                 Appointments="{Binding Wrappers}"

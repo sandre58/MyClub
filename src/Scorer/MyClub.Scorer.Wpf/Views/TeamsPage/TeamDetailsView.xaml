@@ -49,15 +49,15 @@
         <DataTemplate x:Key="Scorer.DataTemplates.Manager">
             <DockPanel>
                 <ToolBar x:Name="ToolBar"
-                 Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
-                 Padding="0"
-                 DockPanel.Dock="Right"
-                 Visibility="Hidden">
+                         Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                         Padding="0"
+                         DockPanel.Dock="Right"
+                         Visibility="Hidden">
                     <Button Command="{Binding EditCommand}" Content="{my:ToolIcon Kind=Edit}" ToolTip="{my:Resource Edit}" />
                     <Button Command="{Binding Data.RemoveManagerCommand, Source={StaticResource Proxy}}"
-                    CommandParameter="{Binding}"
-                    Content="{my:ToolIcon Kind=Trash}"
-                    ToolTip="{my:Resource Remove}" />
+                            CommandParameter="{Binding}"
+                            Content="{my:ToolIcon Kind=Trash}"
+                            ToolTip="{my:Resource Remove}" />
                 </ToolBar>
                 <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Player.Small}" Margin="{StaticResource MyNet.Margins.Medium.Right}" DockPanel.Dock="Left" />
                 <my:SimpleStackPanel Spacing="{StaticResource MyNet.Margin.Small}">

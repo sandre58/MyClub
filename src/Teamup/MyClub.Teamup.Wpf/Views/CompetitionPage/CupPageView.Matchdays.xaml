@@ -38,7 +38,7 @@
 
             <my:CommandsBar.LeftCommands>
                 <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
-                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.ToolBar.Elevation.Primary}"
+                    <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.ToolBar.Filled.Primary}"
                                        my:IconAssist.Icon="{my:ToolIcon Kind=PlusThick}"
                                        Background="{DynamicResource MyNet.Brushes.Primary}"
                                        BorderBrush="{DynamicResource MyNet.Brushes.Primary}"

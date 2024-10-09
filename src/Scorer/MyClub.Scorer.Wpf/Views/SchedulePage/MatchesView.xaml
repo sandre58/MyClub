@@ -56,8 +56,8 @@
                 <ContentControl x:Name="home"
                                 Grid.Column="4"
                                 HorizontalAlignment="Right"
-                                Content="{Binding Item.HomeTeam}"
-                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Home}"
+                                Content="{Binding Item.Home.Team}"
+                                ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Home}"
                                 IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
 
                 <Grid Grid.Column="6">
@@ -78,7 +78,7 @@
                                Content="{my:Resource WithdrawAbbr,
                                                      Casing=AllCaps}"
                                ToolTip="{my:Resource Withdraw}"
-                               Visibility="{Binding Item.HomeIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                               Visibility="{Binding Item.Home.IsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                         <!-- Home won after extra time -->
                         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
@@ -86,7 +86,7 @@
                                    HorizontalAlignment="Center"
                                    Text="{my:Resource AfterExtraTimeAbbr2}"
                                    ToolTip="{my:Resource AfterExtraTime}"
-                                   Visibility="{Binding Item.HomeHasWonAfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                   Visibility="{Binding Item.Home.HasWonAfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                         <!-- Home won after shootouts -->
                         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
@@ -94,7 +94,7 @@
                                    HorizontalAlignment="Center"
                                    Text="{my:Resource ShootoutsAbbr2}"
                                    ToolTip="{my:Resource Shootouts}"
-                                   Visibility="{Binding Item.HomeHasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                   Visibility="{Binding Item.Home.HasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                         <Grid Grid.Column="1">
 
@@ -132,11 +132,11 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Item.HomeScore}" />
+                                <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Item.Home.Score}" />
                                 <Label x:Name="awayScore"
                                        Style="{StaticResource Scorer.Styles.Label.Score.Small}"
                                        Grid.Column="2"
-                                       Content="{Binding Item.AwayScore}" />
+                                       Content="{Binding Item.Away.Score}" />
                             </Grid>
 
                         </Grid>
@@ -147,7 +147,7 @@
                                    HorizontalAlignment="Center"
                                    Text="{my:Resource AfterExtraTimeAbbr2}"
                                    ToolTip="{my:Resource AfterExtraTime}"
-                                   Visibility="{Binding Item.AwayHasWonAfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                   Visibility="{Binding Item.Away.HasWonAfterExtraTime, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                         <!-- Away won after shootouts -->
                         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
@@ -155,7 +155,7 @@
                                    HorizontalAlignment="Center"
                                    Text="{my:Resource ShootoutsAbbr2}"
                                    ToolTip="{my:Resource Shootouts}"
-                                   Visibility="{Binding Item.AwayHasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                   Visibility="{Binding Item.Away.HasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                         <!-- Away is withdrawn -->
                         <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
@@ -167,7 +167,7 @@
                                Content="{my:Resource WithdrawAbbr,
                                                      Casing=AllCaps}"
                                ToolTip="{my:Resource Withdraw}"
-                               Visibility="{Binding Item.AwayIsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                               Visibility="{Binding Item.Away.IsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                     </Grid>
                     <Grid Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}">
@@ -254,8 +254,8 @@
                 <ContentControl x:Name="away"
                                 Grid.Column="8"
                                 HorizontalAlignment="Left"
-                                Content="{Binding Item.AwayTeam}"
-                                ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Medium.Away}"
+                                Content="{Binding Item.Away.Team}"
+                                ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}"
                                 IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
             </Grid>
 
@@ -285,10 +285,10 @@
                     <Setter TargetName="postponed" Property="Visibility" Value="Visible" />
                     <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding Item.HomeHasWon}" Value="True">
+                <DataTrigger Binding="{Binding Item.Home.HasWon}" Value="True">
                     <Setter TargetName="away" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding Item.AwayHasWon}" Value="True">
+                <DataTrigger Binding="{Binding Item.Away.HasWon}" Value="True">
                     <Setter TargetName="home" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
@@ -303,11 +303,11 @@
                     <ColumnDefinition Width="110" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Parent -->
-                <TextBlock x:Name="parent"
+                <!-- Stage -->
+                <TextBlock x:Name="stage"
                            HorizontalAlignment="Center"
                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                           Text="{Binding Item.Parent.ShortName}" />
+                           Text="{Binding Item.Stage.ShortName}" />
 
                 <!-- Selection -->
                 <CheckBox x:Name="selection"
@@ -347,7 +347,7 @@
 
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
-                    <Setter TargetName="parent" Property="Visibility" Value="Hidden" />
+                    <Setter TargetName="stage" Property="Visibility" Value="Hidden" />
                     <Setter TargetName="selection" Property="Visibility" Value="Visible" />
                 </DataTrigger>
                 <MultiDataTrigger>
@@ -358,7 +358,7 @@
                     <Setter TargetName="toolBar" Property="Visibility" Value="Visible" />
                 </MultiDataTrigger>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter TargetName="parent" Property="Visibility" Value="Hidden" />
+                    <Setter TargetName="stage" Property="Visibility" Value="Hidden" />
                     <Setter TargetName="selection" Property="Visibility" Value="Visible" />
                 </DataTrigger>
             </DataTemplate.Triggers>
@@ -378,11 +378,11 @@
                         <ColumnDefinition Width="110" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Parent -->
-                    <TextBlock x:Name="parent"
+                    <!-- Stage -->
+                    <TextBlock x:Name="stage"
                                HorizontalAlignment="Center"
                                Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                               Text="{Binding Item.Parent.ShortName}" />
+                               Text="{Binding Item.Stage.ShortName}" />
 
                     <!-- Content -->
                     <ContentControl Grid.Column="2" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
@@ -416,13 +416,13 @@
                                                 </Grid.ColumnDefinitions>
                                                 <Grid HorizontalAlignment="Center">
                                                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
-                                                            Command="{Binding Data.SelectAllByParentCommand, Source={StaticResource Proxy}}"
+                                                            Command="{Binding Data.SelectAllByStageCommand, Source={StaticResource Proxy}}"
                                                             CommandParameter="{Binding}"
                                                             Content="{my:ToolIcon Kind=CheckCircleOutline}"
                                                             ToolTip="{my:Resource SelectAll}"
                                                             Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
                                                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
-                                                            Command="{Binding Data.UnselectAllByParentCommand, Source={StaticResource Proxy}}"
+                                                            Command="{Binding Data.UnselectAllByStageCommand, Source={StaticResource Proxy}}"
                                                             CommandParameter="{Binding}"
                                                             Content="{my:ToolIcon Kind=CloseCircleOutline}"
                                                             ToolTip="{my:Resource UnselectAll}"

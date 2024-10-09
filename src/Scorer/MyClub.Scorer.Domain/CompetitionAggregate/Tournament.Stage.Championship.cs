@@ -16,27 +16,21 @@ using MyNet.Utilities.Extensions;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public class ChampionshipStage : Championship, IStage, IMatchdaysProvider
+    public class ChampionshipStage : Championship, ITournamentStage, IMatchdaysStage
     {
         private string _name = string.Empty;
+        private string _shortName = string.Empty;
         private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
 
-        public ChampionshipStage(IStage parent, string name, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
+        public ChampionshipStage(IStage stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {
-            Parent = parent;
-            SchedulingParameters = parent.ProvideSchedulingParameters();
+            Stage = stage;
             Name = name;
+            ShortName = shortName ?? name.GetInitials();
             RankingRules = rankingRules ?? RankingRules.Default;
-            MatchFormat = matchFormat ?? MatchFormat.Default;
-            Matchdays = new(_matchdays);
-        }
-
-        public ChampionshipStage(string name, SchedulingParameters schedulingParameters, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, Guid? id = null) : base(id)
-        {
-            SchedulingParameters = schedulingParameters;
-            Name = name;
-            RankingRules = rankingRules ?? RankingRules.Default;
-            MatchFormat = matchFormat ?? MatchFormat.Default;
+            MatchFormat = matchFormat ?? stage.ProvideFormat();
+            MatchRules = matchRules ?? stage.ProvideRules();
+            SchedulingParameters = schedulingParameters ?? stage.ProvideSchedulingParameters();
             Matchdays = new(_matchdays);
         }
 
@@ -46,11 +40,19 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             set => _name = value.IsRequiredOrThrow();
         }
 
-        public IStage? Parent { get; }
+        public string ShortName
+        {
+            get => _shortName;
+            set => _shortName = value.IsRequiredOrThrow();
+        }
+
+        public IStage Stage { get; }
 
         public RankingRules RankingRules { get; set; }
 
         public MatchFormat MatchFormat { get; set; }
+
+        public MatchRules MatchRules { get; set; }
 
         public SchedulingParameters SchedulingParameters { get; set; }
 
@@ -58,17 +60,22 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public override RankingRules GetRankingRules() => RankingRules;
 
-        public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
-
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
+
+        MatchRules IMatchRulesProvider.ProvideRules() => MatchRules;
 
         SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
-        public override bool RemoveTeam(Team team)
+        public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
+        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Matchdays.OfType<T>();
+
+        public override bool RemoveTeam(IVirtualTeam team)
         {
             _matchdays.ForEach(x => x.Matches.Where(x => x.Participate(team)).ToList().ForEach(y => x.RemoveMatch(y)));
             return base.RemoveTeam(team);
         }
+
+        public bool RemoveMatch(Match item) => _matchdays.Any(x => x.RemoveMatch(item));
 
         #region Matchdays
 
@@ -76,6 +83,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public Matchday AddMatchday(Matchday matchday)
         {
+            if (!ReferenceEquals(matchday.Stage, this))
+                throw new ArgumentException("Matchday stage is not this stage", nameof(matchday));
+
             if (Matchdays.Contains(matchday))
                 throw new AlreadyExistsException(nameof(Matchdays), matchday);
 

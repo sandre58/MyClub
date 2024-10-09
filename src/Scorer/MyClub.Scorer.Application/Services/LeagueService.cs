@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyClub.Scorer.Application.Dtos;
+using MyClub.Scorer.Domain.BracketComputing;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Factories;
 using MyClub.Scorer.Domain.MatchAggregate;
@@ -16,10 +17,10 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Application.Services
 {
-    public class LeagueService(ILeagueRepository leagueRepository, IMatchdayRepository matchdayRepository, IStadiumRepository stadiumRepository)
+    public class LeagueService(ILeagueRepository leagueRepository, IStadiumRepository stadiumRepository, IParametersRepository parametersRepository)
     {
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
-        private readonly IMatchdayRepository _matchdayRepository = matchdayRepository;
+        private readonly IParametersRepository _parametersRepository = parametersRepository;
         private readonly IStadiumRepository _stadiumRepository = stadiumRepository;
 
         public void UpdateRankingRules(RankingRulesDto dto)
@@ -34,15 +35,9 @@ namespace MyClub.Scorer.Application.Services
                 _leagueRepository.UpdatePenaltyPoints(dto.PenaltyPoints);
         }
 
-        public void UpdateMatchFormat(MatchFormat matchFormat) => _leagueRepository.UpdateMatchFormat(matchFormat);
-
-        public void UpdateSchedulingParameters(SchedulingParameters schedulingParameters) => _leagueRepository.UpdateSchedulingParameters(schedulingParameters);
-
         public MatchFormat GetMatchFormat() => _leagueRepository.GetCurrentOrThrow().MatchFormat;
 
         public SchedulingParameters GetSchedulingParameters() => _leagueRepository.GetCurrentOrThrow().SchedulingParameters;
-
-        public bool HasMatches() => _leagueRepository.GetCurrentOrThrow().GetAllMatches().Any();
 
         public RankingRulesDto GetRankingRules()
         {
@@ -83,14 +78,14 @@ namespace MyClub.Scorer.Application.Services
 
             // Save MatchFormat
             if (dto.MatchFormat is not null)
-                _leagueRepository.UpdateMatchFormat(dto.MatchFormat);
+                _parametersRepository.UpdateMatchFormat(dto.MatchFormat);
 
             var league = _leagueRepository.GetCurrentOrThrow();
             var matchdays = ComputeMatchdays(league, matchdaysParametersDto, _stadiumRepository.GetAll().ToList());
 
             // Save SchedulingParameters
             if (dto.SchedulingParameters is not null)
-                _leagueRepository.UpdateSchedulingParameters(new SchedulingParameters(
+                _parametersRepository.UpdateSchedulingParameters(new SchedulingParameters(
                    !dto.AutomaticStartDate ? matchdays.SelectMany(x => x.Matches).MinOrDefault(x => x.Date.ToDate(), matchdays.MinOrDefault(x => x.Date.ToDate())) : dto.SchedulingParameters.StartDate,
                    !dto.AutomaticEndDate ? matchdays.SelectMany(x => x.Matches).MaxOrDefault(x => x.Date.ToDate(), matchdays.MaxOrDefault(x => x.Date.ToDate())) : dto.SchedulingParameters.EndDate,
                    dto.SchedulingParameters.StartTime,
@@ -99,7 +94,7 @@ namespace MyClub.Scorer.Application.Services
                    dto.SchedulingParameters.UseHomeVenue,
                    dto.SchedulingParameters.AsSoonAsPossible,
                    dto.SchedulingParameters.Interval,
-                   dto.SchedulingParameters.ScheduleByParent,
+                   dto.SchedulingParameters.ScheduleByStage,
                    dto.SchedulingParameters.AsSoonAsPossibleRules ?? [],
                    dto.SchedulingParameters.DateRules ?? [],
                    dto.SchedulingParameters.TimeRules ?? [],
@@ -107,8 +102,7 @@ namespace MyClub.Scorer.Application.Services
                    ));
 
             // Save matchdays
-            _matchdayRepository.Clear(league);
-            matchdays.ForEach(x => _matchdayRepository.Insert(league, x));
+            _leagueRepository.Fill(matchdays);
 
             return matchdays;
         }
@@ -124,8 +118,8 @@ namespace MyClub.Scorer.Application.Services
             // Build Matchdays
             var matchdaysScheduler = dto.BuildDatesParameters switch
             {
-                BuildManualDatesParametersDto buildManualParametersDto => (IScheduler<Matchday>)new ByDatesScheduler<Matchday>().SetDates(buildManualParametersDto.Dates ?? []),
-                BuildAutomaticDatesParametersDto buildAutomaticParametersDto => new DateRulesScheduler<Matchday>()
+                BuildManualDatesParametersDto buildManualParametersDto => (IScheduler<Matchday>)new ByDatesStageScheduler<Matchday>().SetDates(buildManualParametersDto.Dates ?? []),
+                BuildAutomaticDatesParametersDto buildAutomaticParametersDto => new DateRulesStageScheduler<Matchday>()
                 {
                     DefaultTime = buildAutomaticParametersDto.DefaultTime,
                     Interval = buildAutomaticParametersDto.IntervalValue.ToTimeSpan(buildAutomaticParametersDto.IntervalUnit),
@@ -133,7 +127,7 @@ namespace MyClub.Scorer.Application.Services
                     TimeRules = buildAutomaticParametersDto.TimeRules ?? [],
                     StartDate = buildAutomaticParametersDto.StartDate.GetValueOrDefault()
                 },
-                BuildAsSoonAsPossibleDatesParametersDto buildAsSoonAsPossibleParametersDto => new AsSoonAsPossibleScheduler<Matchday>()
+                BuildAsSoonAsPossibleDatesParametersDto buildAsSoonAsPossibleParametersDto => new AsSoonAsPossibleStageScheduler<Matchday>()
                 {
                     Rules = buildAsSoonAsPossibleParametersDto.Rules ?? [],
                     ScheduleVenues = dto.ScheduleVenues && dto.AsSoonAsPossibleVenues,

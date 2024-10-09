@@ -20,5 +20,11 @@ namespace MyClub.Scorer.Infrastructure.Packaging.Models
 
         [XmlElement("PeriodForNextMatches")]
         public TimeSpan PeriodForNextMatches { get; set; }
+
+        [XmlElement("ShowNextMatchFallback")]
+        public bool ShowNextMatchFallback { get; set; }
+
+        [XmlElement("ShowLastMatchFallback")]
+        public bool ShowLastMatchFallback { get; set; }
     }
 }

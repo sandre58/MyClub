@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using MyClub.CrossCutting.Localization;
 using MyClub.DatabaseContext.Infrastructure.Data;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.BracketComputing;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.Factories;
@@ -30,7 +31,6 @@ using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Exceptions;
 using MyNet.Utilities.Generator;
 using MyNet.Utilities.Geography;
-using MyNet.Utilities.Localization;
 using MyNet.Utilities.Logging;
 using MyNet.Utilities.Progress;
 using MyNet.Utilities.Sequences;
@@ -44,13 +44,14 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
         public async Task<LeagueProject> CreateLeagueAsync(CancellationToken cancellationToken = default)
         {
-            var project = await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.League, (w, x, y, z) =>
+            var project = await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.League, (name, image, matchFormat, matchRules, schedulingParameters) =>
             {
-                var competition = new LeagueProject(w, x);
-                competition.Competition.SchedulingParameters = z;
-                competition.Competition.MatchFormat = y;
+                var competition = new LeagueProject(name, image);
+                competition.Competition.SchedulingParameters = schedulingParameters;
+                competition.Competition.MatchFormat = matchFormat;
+                competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, 8, 20, cancellationToken).ConfigureAwait(false);
+            }, true, 8, 20, cancellationToken).ConfigureAwait(false);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -64,14 +65,14 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
             // Scheduler
             var matchdaysScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
-                ? new AsSoonAsPossibleScheduler<Matchday>()
+                ? new AsSoonAsPossibleStageScheduler<Matchday>()
                 {
                     StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
                     ScheduleVenues = true,
                     AvailableStadiums = project.Stadiums
                 }
-                : (IScheduler<Matchday>)new DateRulesScheduler<Matchday>()
+                : (IScheduler<Matchday>)new DateRulesStageScheduler<Matchday>()
                 {
                     Interval = project.Competition.SchedulingParameters.Interval,
                     DateRules = [.. project.Competition.SchedulingParameters.DateRules],
@@ -100,7 +101,7 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                 x.Matches.ForEach(match =>
                 {
                     if (match.Date.IsInPast())
-                        match.RandomizeScore(!match.GetPeriod().Contains(DateTime.UtcNow));
+                        match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
                     match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
                 });
                 x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
@@ -112,24 +113,26 @@ namespace MyClub.Scorer.Mocks.Factory.Database
         }
 
         public async Task<CupProject> CreateCupAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (w, x, y, z) =>
+            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (name, image, matchFormat, matchRules, schedulingParameters) =>
             {
-                var competition = new CupProject(w, x);
-                competition.Competition.SchedulingParameters = z;
-                competition.Competition.MatchFormat = y;
+                var competition = new CupProject(name, image);
+                competition.Competition.SchedulingParameters = schedulingParameters;
+                competition.Competition.MatchFormat = matchFormat;
+                competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, 16, 32, cancellationToken).ConfigureAwait(false);
+            }, false, 16, 32, cancellationToken).ConfigureAwait(false);
 
         public async Task<TournamentProject> CreateTournamentAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (w, x, y, z) =>
+            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (name, image, matchFormat, matchRules, schedulingParameters) =>
             {
-                var competition = new TournamentProject(w, x);
-                competition.Competition.SchedulingParameters = z;
-                competition.Competition.MatchFormat = y;
+                var competition = new TournamentProject(name, image);
+                competition.Competition.SchedulingParameters = schedulingParameters;
+                competition.Competition.MatchFormat = matchFormat;
+                competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, 32, 128, cancellationToken).ConfigureAwait(false);
+            }, false, 32, 128, cancellationToken).ConfigureAwait(false);
 
-        public Task<T> CreateAsync<T>(string type, Func<string, byte[]?, MatchFormat, SchedulingParameters, T> createInstance, int minTeams, int maxTeams, CancellationToken cancellationToken = default)
+        public Task<T> CreateAsync<T>(string type, Func<string, byte[]?, MatchFormat, MatchRules, SchedulingParameters, T> createInstance, bool allowDraw, int minTeams, int maxTeams, CancellationToken cancellationToken = default)
             where T : IProject
         {
             // Configuration
@@ -154,7 +157,7 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                 var asSoonAsPossible = RandomGenerator.Bool();
 
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
-                    project = createInstance(selectedCompetition.Name, selectedCompetition.Logo, CreateMatchFormat(asSoonAsPossible), CreateScheduleParameters(asSoonAsPossible));
+                    project = createInstance(selectedCompetition.Name, selectedCompetition.Logo, CreateMatchFormat(asSoonAsPossible, allowDraw), CreateMatchRules(), CreateScheduleParameters(asSoonAsPossible));
 
                 if (project is null) throw new InvalidOperationException($"Impossible to create an instance of {typeof(T)}");
 
@@ -179,7 +182,7 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
                     teams.ForEach(x =>
                     {
-                        var convertedTeam = Convert(x, project.Competition.ProvideSchedulingParameters().UseHomeVenue);
+                        var convertedTeam = Convert(x, project.Competition.SchedulingParameters.UseHomeVenue);
 
                         var players = GetPlayers(allDatabasePlayers, x, RandomGenerator.Int(10, 20));
                         players.ForEach(y =>
@@ -219,10 +222,10 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                 // Stadiums
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
-                    if (!project.Competition.ProvideSchedulingParameters().UseHomeVenue)
+                    if (!project.Competition.SchedulingParameters.UseHomeVenue)
                     {
                         var allDatabaseStadiums = unitOfWork.StadiumRepository.GetAll().ToList();
-                        var stadiums = GetRandomItems(allDatabaseStadiums, project.Competition.ProvideSchedulingParameters().AsSoonAsPossible ? RandomGenerator.Int(2, project.Teams.Count / 2) : RandomGenerator.Int(project.Teams.Count / 2, project.Teams.Count)).Select(Convert).ToList();
+                        var stadiums = GetRandomItems(allDatabaseStadiums, project.Competition.SchedulingParameters.AsSoonAsPossible ? RandomGenerator.Int(2, project.Teams.Count / 2) : RandomGenerator.Int(project.Teams.Count / 2, project.Teams.Count)).Select(Convert).ToList();
                         stadiums.ForEach(x =>
                         {
                             x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
@@ -237,15 +240,17 @@ namespace MyClub.Scorer.Mocks.Factory.Database
             }
         }
 
-        private static MatchFormat CreateMatchFormat(bool asSoonAsPossible) => asSoonAsPossible
-                ? new MatchFormat(new HalfFormat(RandomGenerator.Int(1, 2), RandomGenerator.Int(8, 30).Minutes(), 5.Minutes()))
-                : MatchFormat.Default;
+        private static MatchRules CreateMatchRules() => MatchRules.Default;
+
+        private static MatchFormat CreateMatchFormat(bool asSoonAsPossible, bool allowDraw) => asSoonAsPossible
+                ? new MatchFormat(new HalfFormat(RandomGenerator.Int(1, 2), RandomGenerator.Int(8, 30).Minutes(), 5.Minutes()), allowDraw ? null : new HalfFormat(RandomGenerator.Int(1, 2), RandomGenerator.Int(4, 10).Minutes(), 2.Minutes()), allowDraw ? null : RandomGenerator.Int(3, 5))
+                : (allowDraw ? MatchFormat.Default : MatchFormat.NoDraw);
 
         private static SchedulingParameters CreateScheduleParameters(bool asSoonAsPossible)
         {
             var useHomeVenue = RandomGenerator.Bool();
-            return new SchedulingParameters(asSoonAsPossible ? DateTime.UtcNow.AddDays(-RandomGenerator.Int(2, 4)).ToDate() : DateTime.UtcNow.AddMonths(-RandomGenerator.Int(4, 6)).ToDate(),
-                                            asSoonAsPossible ? DateTime.UtcNow.AddDays(RandomGenerator.Int(6, 8)).ToDate() : DateTime.UtcNow.AddMonths(RandomGenerator.Int(4, 6)).ToDate(),
+            return new SchedulingParameters(asSoonAsPossible ? DateTime.UtcNow.AddDays(-RandomGenerator.Int(1, 2)).ToDate() : DateTime.UtcNow.AddMonths(-RandomGenerator.Int(2, 4)).ToDate(),
+                                            asSoonAsPossible ? DateTime.UtcNow.AddDays(RandomGenerator.Int(3, 6)).ToDate() : DateTime.UtcNow.AddMonths(RandomGenerator.Int(4, 6)).ToDate(),
                                             RandomGenerator.Int(8, 22).Hours().ToTime(),
                                             asSoonAsPossible ? RandomGenerator.Int(2, 5).Minutes() : RandomGenerator.Int(1, 3).Days(),
                                             asSoonAsPossible ? RandomGenerator.Int(5, 30).Minutes() : RandomGenerator.Int(1, 6).Days(),

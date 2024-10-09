@@ -11,13 +11,13 @@ using MyNet.UI.ViewModels.List.Filtering.Filters;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
-    internal class MatchTeamFilterViewModel : SelectedValueFilterViewModel<ITeamViewModel, ITeamViewModel>
+    internal class MatchTeamFilterViewModel : SelectedValueFilterViewModel<IVirtualTeamViewModel, IVirtualTeamViewModel>
     {
         public EnumValueFilterViewModel<VenueContext> VenueFilter { get; }
 
         public bool ShowVenueFilter { get; set; } = true;
 
-        public MatchTeamFilterViewModel(IEnumerable<ITeamViewModel> teams) : base(string.Empty, teams)
+        public MatchTeamFilterViewModel(IEnumerable<IVirtualTeamViewModel> teams) : base(string.Empty, teams)
         {
             VenueFilter = new(string.Empty);
             VenueFilter.WhenPropertyChanged(x => x.Value).Subscribe(_ => RaisePropertyChanged(nameof(VenueFilter)));
@@ -55,9 +55,9 @@ namespace MyClub.Scorer.Wpf.Filters
                     ? match.Participate(Value)
                     : VenueFilter.Value switch
                     {
-                        VenueContext.Home => match.HomeTeam == Value,
+                        VenueContext.Home => match.Home.Team == Value,
                         VenueContext.Neutral => match.Participate(Value) && match.NeutralVenue,
-                        VenueContext.Away => match.AwayTeam == Value,
+                        VenueContext.Away => match.Away.Team == Value,
                         _ => throw new InvalidOperationException("Unknown venue")
                     });
 

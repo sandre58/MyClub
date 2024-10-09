@@ -29,7 +29,7 @@
                 <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Icon.ToolTip}"
                                    my:HeaderAssist.Header="{my:Resource StartTime}"
                                    PopupContent="{my:Resource StartTimeDescription}"
-                                   ToggleContent="{my:ToolIcon Kind=InformationCircle}" />
+                                   ToggleContent="{my:ToolIcon Kind=HelpCircle}" />
             </my:SimpleStackPanel>
         </GroupBox>
     </my:SimpleStackPanel>
