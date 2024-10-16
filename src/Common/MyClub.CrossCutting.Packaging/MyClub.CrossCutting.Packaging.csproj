@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="MyNet.Utilities" Version="5.2.1-pre.4" />
+    <PackageReference Include="MyNet.Utilities" Version="5.2.1-pre.6" />
     <PackageReference Include="System.IO.Packaging" Version="9.0.0-rc.2.24473.5" />
   </ItemGroup>
 </Project>

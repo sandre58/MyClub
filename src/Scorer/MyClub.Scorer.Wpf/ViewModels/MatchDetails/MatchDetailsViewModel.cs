@@ -23,6 +23,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.MatchDetails
         private readonly ObservableCollection<IMatchEventViewModel> _homeEvents = [];
         private readonly ObservableCollection<IMatchEventViewModel> _awayEvents = [];
         private readonly ObservableCollection<TimelineEventsWrapper> _events = [];
+        private readonly ObservableCollection<MatchViewModel> _fixtureMatches = [];
 
         public MatchDetailsViewModel()
         {
@@ -31,6 +32,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.MatchDetails
             HomeEvents = new(_homeEvents);
             AwayEvents = new(_awayEvents);
             Events = new(_events);
+            FixtureMatches = new(_fixtureMatches);
         }
 
         protected override void OnItemChanged()
@@ -40,8 +42,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.MatchDetails
             if (Item is null) return;
 
             var homeEvents = setEvents(Item.Home, _homeCards, _homeEvents);
-            var awayEvents = setEvents(Item.Away, _awayCards, _awayEvents);
+            var awayEvents = setEvents(Item.Away, _awayCards, _awayEvents, false);
             _events.Set(homeEvents.Union(awayEvents).OrderBy(x => x.Item.Minute));
+            _fixtureMatches.Set(Item.Fixture?.Matches.Except([Item]).ToList());
 
             IEnumerable<TimelineEventsWrapper> toTimelineEvents(IEnumerable<IMatchEventViewModel> events, Color? color, bool isHome)
                 => events.Where(x => x.Minute.HasValue)
@@ -50,7 +53,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.MatchDetails
                                         : Math.Min(x.Minute!.Value, (int)Item.Format.GetFullTime(false).TotalMinutes))
                          .SelectMany(x => x.Select((y, z) => new TimelineEventsWrapper(y, x.Key, color, isHome, z))).ToList();
 
-            IEnumerable<TimelineEventsWrapper> setEvents(MatchOpponentViewModel opponent, ObservableCollection<CardColorWrapper> cards, ObservableCollection<IMatchEventViewModel> events)
+            IEnumerable<TimelineEventsWrapper> setEvents(MatchOpponentViewModel opponent, ObservableCollection<CardColorWrapper> cards, ObservableCollection<IMatchEventViewModel> events, bool isHome = true)
             {
                 cards.Clear();
                 events.Clear();
@@ -59,7 +62,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.MatchDetails
                     cards.AddRange(opponent.Cards.GroupBy(x => x.Color).Select(x => new CardColorWrapper(x.Key, x.Select(y => y).OrderBy(x => x.Minute).ToList())).OrderBy(x => x.Item));
                     events.AddRange(opponent.Cards.Union(opponent.Goals.OfType<IMatchEventViewModel>()).OrderBy(x => x.Minute).ToList());
 
-                    return toTimelineEvents(events, team.HomeColor, true);
+                    return toTimelineEvents(events, isHome ? team.HomeColor : team.AwayColor, isHome);
                 }
 
                 return [];
@@ -75,6 +78,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.MatchDetails
         public ReadOnlyObservableCollection<IMatchEventViewModel> AwayEvents { get; private set; }
 
         public ReadOnlyObservableCollection<TimelineEventsWrapper> Events { get; private set; }
+
+        public ReadOnlyObservableCollection<MatchViewModel> FixtureMatches { get; private set; }
     }
 
     internal class CardColorWrapper : Wrapper<CardColor>

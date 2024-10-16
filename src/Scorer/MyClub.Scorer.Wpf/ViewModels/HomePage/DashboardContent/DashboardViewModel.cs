@@ -62,13 +62,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent
             NavigateToLastMatchesCommand = CommandsManager.Create(() =>
             {
                 var stages = matchesProvider.Items.Select(x => x.Stage).OrderBy(x => x).ToList();
-                var stage = stages.LastOrDefault(x => x.Date.IsInPast()) ?? stages.FirstOrDefault();
+                var stage = stages.LastOrDefault(x => x.StartDate.IsInPast()) ?? stages.FirstOrDefault();
                 NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeByStage), stage?.Id);
             });
             NavigateToNextMatchesCommand = CommandsManager.Create(() =>
             {
                 var stages = matchesProvider.Items.Select(x => x.Stage).OrderBy(x => x).ToList();
-                var stage = stages.FirstOrDefault(x => x.Date.IsInFuture()) ?? stages.LastOrDefault();
+                var stage = stages.FirstOrDefault(x => x.StartDate.IsInFuture()) ?? stages.LastOrDefault();
                 NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeByStage), stage?.Id);
             });
             NavigateToPostponedMatchesCommand = CommandsManager.Create(() => NavigationCommandsService.NavigateToSchedulePage(nameof(DisplayModeList), new List<IFilterViewModel>

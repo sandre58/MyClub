@@ -3,12 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:busy="clr-namespace:MyNet.UI.Busy.Models;assembly=MyNet.UI"
              xmlns:contracts="clr-namespace:MyNet.UI.ViewModels;assembly=MyNet.UI"
+             xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
              xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:p="clr-namespace:MyClub.Scorer.Wpf.Parameters"
+             xmlns:s="clr-namespace:MyClub.Scorer.Wpf.Selectors"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.SchedulePage"
@@ -53,19 +56,19 @@
                 </my:GhostControl>
 
                 <!-- Home -->
-                <ContentControl x:Name="home"
-                                Grid.Column="4"
-                                HorizontalAlignment="Right"
-                                Content="{Binding Item.Home.Team}"
-                                ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Home}"
-                                IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+                <ctrl:TeamControl x:Name="home"
+                                  Grid.Column="4"
+                                  HorizontalAlignment="Right"
+                                  IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}"
+                                  QualificationState="{Binding Item.Home.QualificationState}"
+                                  Team="{Binding Item.Home.Team}" />
 
                 <Grid Grid.Column="6">
                     <Grid Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="30" />
-                            <ColumnDefinition Width="40" />
-                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="30" SharedSizeGroup="col1" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="col2" />
+                            <ColumnDefinition Width="30" SharedSizeGroup="col3" />
                         </Grid.ColumnDefinitions>
 
                         <!-- Home is withdrawn -->
@@ -96,50 +99,12 @@
                                    ToolTip="{my:Resource Shootouts}"
                                    Visibility="{Binding Item.Home.HasWonAfterShootouts, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
-                        <Grid Grid.Column="1">
-
-                            <!-- IsCancelled -->
-                            <my:PackIcon x:Name="cancel"
-                                         Width="20"
-                                         Height="20"
-                                         Foreground="{DynamicResource MyNet.Brushes.Negative}"
-                                         Kind="ProgressClose"
-                                         ToolTip="{my:Resource Cancelled}"
-                                         Visibility="Collapsed" />
-
-                            <!-- IsPostponed -->
-                            <my:PackIcon x:Name="postponed"
-                                         Width="20"
-                                         Height="20"
-                                         Foreground="{DynamicResource MyNet.Brushes.Warning}"
-                                         Kind="ProgressQuestion"
-                                         ToolTip="{my:Resource Postponed}"
-                                         Visibility="Collapsed" />
-
-                            <!-- None -->
-                            <my:PackIcon x:Name="versus"
-                                         Width="20"
-                                         Height="20"
-                                         Kind="ProgressClock"
-                                         Opacity="{StaticResource MyNet.Opacity.Overlay}"
-                                         Visibility="Visible" />
-
-                            <!-- Score -->
-                            <Grid x:Name="score" Visibility="Collapsed">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="4" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <Label x:Name="homeScore" Style="{StaticResource Scorer.Styles.Label.Score.Small}" Content="{Binding Item.Home.Score}" />
-                                <Label x:Name="awayScore"
-                                       Style="{StaticResource Scorer.Styles.Label.Score.Small}"
-                                       Grid.Column="2"
-                                       Content="{Binding Item.Away.Score}" />
-                            </Grid>
-
-                        </Grid>
+                        <!-- Score -->
+                        <ctrl:MatchButton x:Name="button"
+                                          Grid.Column="1"
+                                          HorizontalAlignment="Center"
+                                          Item="{Binding Item}"
+                                          ShowTime="false" />
 
                         <!-- Away won after extra time -->
                         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Secondary}"
@@ -170,7 +135,7 @@
                                Visibility="{Binding Item.Away.IsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
 
                     </Grid>
-                    <Grid Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}">
+                    <Grid IsEnabled="{Binding CanEdit}" Visibility="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Edition}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="5" />
@@ -251,40 +216,16 @@
                 </Grid>
 
                 <!-- Away -->
-                <ContentControl x:Name="away"
-                                Grid.Column="8"
-                                HorizontalAlignment="Left"
-                                Content="{Binding Item.Away.Team}"
-                                ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}"
-                                IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+                <ctrl:TeamControl x:Name="away"
+                                  Grid.Column="8"
+                                  HorizontalAlignment="Left"
+                                  IsAway="True"
+                                  IsEnabled="{Binding Data.Mode, Source={StaticResource Proxy}, Converter={x:Static my:EnumToBooleanConverter.Any}, ConverterParameter={x:Static contracts:ScreenMode.Read}}"
+                                  QualificationState="{Binding Item.Away.QualificationState}"
+                                  Team="{Binding Item.Away.Team}" />
             </Grid>
 
             <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Played}">
-                    <Setter TargetName="score" Property="Visibility" Value="Visible" />
-                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.InProgress}">
-                    <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
-                    <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource MyNet.Brushes.Information}" />
-                    <Setter TargetName="score" Property="Visibility" Value="Visible" />
-                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Suspended}">
-                    <Setter TargetName="awayScore" Property="Background" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
-                    <Setter TargetName="homeScore" Property="Background" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
-                    <Setter TargetName="score" Property="ToolTip" Value="{my:Resource MatchStateSuspended}" />
-                    <Setter TargetName="score" Property="Visibility" Value="Visible" />
-                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Cancelled}">
-                    <Setter TargetName="cancel" Property="Visibility" Value="Visible" />
-                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Item.State}" Value="{x:Static enums:MatchState.Postponed}">
-                    <Setter TargetName="postponed" Property="Visibility" Value="Visible" />
-                    <Setter TargetName="versus" Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
                 <DataTrigger Binding="{Binding Item.Home.HasWon}" Value="True">
                     <Setter TargetName="away" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
                 </DataTrigger>
@@ -297,10 +238,11 @@
         <DataTemplate x:Key="Scorer.DataTemplates.Match.ListBox">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="35" />
+                    <ColumnDefinition Width="60" />
                     <ColumnDefinition Width="60" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="155" />
                 </Grid.ColumnDefinitions>
 
                 <!-- Stage -->
@@ -308,6 +250,24 @@
                            HorizontalAlignment="Center"
                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
                            Text="{Binding Item.Stage.ShortName}" />
+
+                <!-- Name -->
+                <DockPanel Grid.Column="1" VerticalAlignment="Center">
+                    <DockPanel.ToolTip>
+                        <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                            <TextBlock Text="{Binding Item.Stage.Name}" />
+                            <TextBlock Text="-" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            <TextBlock Text="{Binding Item.Parent.Name}" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                            <TextBlock Text="-" />
+                            <TextBlock Text="{Binding Item.DisplayName}" />
+                        </my:SimpleStackPanel>
+                    </DockPanel.ToolTip>
+                    <TextBlock Margin="{StaticResource MyNet.Margins.Default.Right}"
+                               Opacity="{StaticResource MyNet.Opacity.Medium}"
+                               Text="{Binding Item.Parent.ShortName}"
+                               Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="{Binding Item.DisplayShortName}" />
+                </DockPanel>
 
                 <!-- Selection -->
                 <CheckBox x:Name="selection"
@@ -322,7 +282,7 @@
 
                 <!-- Conflicts -->
                 <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
-                       Grid.Column="1"
+                       Grid.Column="2"
                        Width="20"
                        Height="20"
                        HorizontalAlignment="Center"
@@ -332,23 +292,24 @@
                        Visibility="{Binding Item.Conflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
 
                 <!-- Content -->
-                <ContentControl Grid.Column="2" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
+                <ContentControl Grid.Column="3" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
 
                 <!-- Toolbar -->
                 <v:MatchToolBar x:Name="toolBar"
-                                Grid.Column="3"
+                                Grid.Column="4"
                                 Padding="0"
                                 HorizontalAlignment="Right"
                                 DataContext="{Binding Item}"
                                 RescheduleConflictsCommand="{Binding Data.RescheduleConflictsCommand, Source={StaticResource Proxy}}"
                                 SelectConflictsCommand="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
+                                SelectFixtureMatchesCommand="{Binding Data.SelectFixtureMatchesCommand, Source={StaticResource Proxy}}"
                                 Visibility="Hidden" />
             </Grid>
 
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
-                    <Setter TargetName="stage" Property="Visibility" Value="Hidden" />
                     <Setter TargetName="selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="stage" Property="Visibility" Value="Hidden" />
                 </DataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
@@ -358,8 +319,8 @@
                     <Setter TargetName="toolBar" Property="Visibility" Value="Visible" />
                 </MultiDataTrigger>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter TargetName="stage" Property="Visibility" Value="Hidden" />
                     <Setter TargetName="selection" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="stage" Property="Visibility" Value="Hidden" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -372,10 +333,11 @@
                      VerticalContentAlignment="Center">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="50" />
+                        <ColumnDefinition Width="35" />
+                        <ColumnDefinition Width="60" />
                         <ColumnDefinition Width="60" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="155" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Stage -->
@@ -384,8 +346,26 @@
                                Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                Text="{Binding Item.Stage.ShortName}" />
 
+                    <!-- Name -->
+                    <DockPanel Grid.Column="1" VerticalAlignment="Center">
+                        <DockPanel.ToolTip>
+                            <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                <TextBlock Text="{Binding Item.Stage.Name}" />
+                                <TextBlock Text="-" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                <TextBlock Text="{Binding Item.Parent.Name}" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                <TextBlock Text="-" />
+                                <TextBlock Text="{Binding Item.DisplayName}" />
+                            </my:SimpleStackPanel>
+                        </DockPanel.ToolTip>
+                        <TextBlock Margin="{StaticResource MyNet.Margins.Default.Right}"
+                                   Opacity="{StaticResource MyNet.Opacity.Medium}"
+                                   Text="{Binding Item.Parent.ShortName}"
+                                   Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="{Binding Item.DisplayShortName}" />
+                    </DockPanel>
+
                     <!-- Content -->
-                    <ContentControl Grid.Column="2" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
+                    <ContentControl Grid.Column="3" Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.Match}" />
                 </Grid>
             </my:Card>
         </DataTemplate>
@@ -493,8 +473,12 @@
                                     <ListBox Style="{StaticResource MyNet.Styles.ListBox.Cards}"
                                              my:ListAssist.SynchronizedGrouping="{Binding ShowGrouping, RelativeSource={RelativeSource AncestorType={x:Type v:MatchesView}}}"
                                              my:ListAssist.SynchronizedList="{Binding Data, Source={StaticResource Proxy}}"
+                                             Grid.IsSharedSizeScope="True"
                                              ItemTemplate="{StaticResource Scorer.DataTemplates.Match.ListBox}"
                                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                        <ListBox.InputBindings>
+                                            <KeyBinding Key="Return" Command="{Binding Data.OpenSelectedItemCommand, Source={StaticResource Proxy}}" />
+                                        </ListBox.InputBindings>
                                         <i:Interaction.Behaviors>
                                             <my:ListBoxSelectOnMouseOverBehavior ShowSelectionArea="False" />
                                             <my:ItemsControlAsyncBehavior Items="{Binding Mode=OneWay}" />
@@ -680,6 +664,7 @@
                                             <ItemsControl x:Name="itemscontrol"
                                                           my:ListAssist.SynchronizedGrouping="{Binding ShowGrouping, RelativeSource={RelativeSource AncestorType={x:Type v:MatchesView}}}"
                                                           my:ListAssist.SynchronizedList="{Binding Data, Source={StaticResource Proxy}}"
+                                                          Grid.IsSharedSizeScope="True"
                                                           ItemTemplate="{StaticResource Scorer.DataTemplates.Match.ItemsControl}"
                                                           ItemsSource="{Binding}"
                                                           ScrollViewer.HorizontalScrollBarVisibility="Auto">

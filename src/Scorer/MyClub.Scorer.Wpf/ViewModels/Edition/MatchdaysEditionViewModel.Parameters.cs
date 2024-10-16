@@ -89,18 +89,18 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DatesParameters = _datesSchedulingMethodViewModels[DatesSchedulingMethod].ProvideDatesParameters()
         };
 
-        internal void Refresh(LeagueViewModel stage)
+        internal void Refresh(IMatchdaysStageViewModel stage)
         {
             _availableMatchdays.Set(stage.Matchdays.OrderBy(x => x.Date));
             DuplicationStart = AvailableMatchdays.FirstOrDefault();
         }
 
-        internal void Reset(LeagueViewModel stage)
+        internal void Reset(IMatchdaysStageViewModel stage)
         {
             DatesSchedulingMethod = DatesSchedulingMethod.Manual;
             NamePattern = MyClubResources.MatchdayNamePattern;
             ShortNamePattern = MyClubResources.MatchdayShortNamePattern;
-            DefaultTime = stage.SchedulingParameters.StartTime;
+            DefaultTime = stage.ProvideStartTime();
             DuplicationIsEnabled = false;
             InvertTeams = true;
             Index = stage.Matchdays.Count + 1;

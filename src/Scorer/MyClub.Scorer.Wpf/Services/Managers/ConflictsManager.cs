@@ -44,8 +44,8 @@ namespace MyClub.Scorer.Wpf.Services.Managers
                     {
                         if (x is null) return;
                         _competitionDisposables = new([
-                            x.WhenPropertyChanged(x => x.MatchFormat, false).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
-                            x.SchedulingParameters.WhenAnyPropertyChanged().Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+                            //x.WhenPropertyChanged(x => x.MatchFormat, false).Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
+                            //x.SchedulingParameters.WhenAnyPropertyChanged().Subscribe(_ => _checkConflictsDeferrer.AskRefresh()),
                         ]);
                     })
                 ]));

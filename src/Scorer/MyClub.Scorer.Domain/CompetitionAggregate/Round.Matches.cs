@@ -15,7 +15,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class RoundOfMatches : MatchesStage<MatchOfRound>, IRound
     {
-        private readonly ExtendedObservableCollection<IVirtualTeam> _teams = [];
+        private readonly OptimizedObservableCollection<IVirtualTeam> _teams = [];
 
         public RoundOfMatches(Knockout stage,
                               DateTime date,

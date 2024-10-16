@@ -15,7 +15,6 @@ using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Deferrers;
 using MyNet.UI.Collections;

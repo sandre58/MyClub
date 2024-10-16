@@ -141,8 +141,8 @@ namespace MyClub.Scorer.Application.Services
 
             return matchdays.OrderBy(x => x.Date).Select((x, y) => new MatchdayDto
             {
-                Name = StageNamesFactory.ComputePattern(dto.NamePattern.OrEmpty(), dto.StartIndex + y, x),
-                ShortName = StageNamesFactory.ComputePattern(dto.ShortNamePattern.OrEmpty(), dto.StartIndex + y, x),
+                Name = StageNamesFactory.ComputePattern(dto.NamePattern.OrEmpty(), dto.StartIndex + y, x.Date),
+                ShortName = StageNamesFactory.ComputePattern(dto.ShortNamePattern.OrEmpty(), dto.StartIndex + y, x.Date),
                 Date = x.Date,
                 MatchesToAdd = x.Matches.Select(z => new MatchDto
                 {

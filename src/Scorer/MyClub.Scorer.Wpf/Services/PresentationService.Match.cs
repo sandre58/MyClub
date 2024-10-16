@@ -36,13 +36,14 @@ namespace MyClub.Scorer.Wpf.Services
 
             vm.SetItem(item);
 
-            _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
+            if (!DialogManager.OpenedDialogs?.Contains(vm) ?? true)
+                _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }
 
-        public async Task AddAsync(IMatchesStageViewModel? stage = null)
+        public async Task AddAsync(IMatchParentViewModel parent)
         {
             var vm = _viewModelLocator.Get<MatchEditionViewModel>();
-            vm.New(stage);
+            vm.New(parent);
 
             _ = await DialogManager.ShowDialogAsync(vm).ConfigureAwait(false);
         }

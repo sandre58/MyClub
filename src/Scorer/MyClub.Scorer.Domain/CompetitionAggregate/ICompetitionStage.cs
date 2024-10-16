@@ -5,8 +5,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public interface ICompetitionStage : IStage
     {
-        string Name { get; }
+        string Name { get; set; }
 
-        string ShortName { get; }
+        string ShortName { get; set; }
     }
 }

@@ -26,7 +26,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         private readonly MatchesPlanningFiltersViewModel _filters;
         private readonly CompositeDisposable _disposables = [];
 
-        public MatchesPlanningListParametersProvider(IEnumerable<IStageViewModel> competitionStages,
+        public MatchesPlanningListParametersProvider(IEnumerable<ICompetitionStageViewModel> competitionStages,
                                                      IEnumerable<DateOnly> dates,
                                                      IEnumerable<IVirtualTeamViewModel> teams,
                                                      IEnumerable<StadiumViewModel> stadiums,
@@ -59,14 +59,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public override IGroupingViewModel ProvideGrouping()
             => new ExtendedGroupingViewModel(
             [
-                new GroupingPropertyViewModel(nameof(MyClubResources.Matchday), nameof(MatchViewModel.Stage)),
+                new GroupingPropertyViewModel(nameof(MyClubResources.Stage), nameof(MatchViewModel.Stage)),
                 new GroupingPropertyViewModel(nameof(MyClubResources.Date), nameof(MatchViewModel.DateOfDay))
             ]);
 
         public override ISortingViewModel ProvideSorting()
             => new ExtendedSortingViewModel(new Dictionary<string, string>
             {
-                { nameof(MyClubResources.Matchday), nameof(MatchViewModel.Stage) },
+                { nameof(MyClubResources.Stage), nameof(MatchViewModel.Stage) },
                 { nameof(MyClubResources.Date), nameof(MatchViewModel.Date) },
             }, new[] { nameof(MatchViewModel.Date) });
 

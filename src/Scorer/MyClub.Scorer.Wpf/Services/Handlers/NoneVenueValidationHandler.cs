@@ -8,6 +8,7 @@ using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.Notifications;
 using MyNet.Utilities;
 
@@ -48,7 +49,7 @@ namespace MyClub.Scorer.Wpf.Services.Handlers
             }
             else
             {
-                var notification = new ActionNotification(MyClubResources.NoStadiumWarning.FormatWith($"{match.Home.Team.Name} - {match.Away.Team.Name} ({match.Stage.Name})"), MyClubResources.NoStadiumWarningTitle, NotificationSeverity.Warning, category, false, async x => await _matchPresentationService.EditAsync(match).ConfigureAwait(false));
+                var notification = new ActionNotification(MyClubResources.NoStadiumWarning.FormatWith($"{match.Home.Team.Name} - {match.Away.Team.Name} ({(match.Parent.Stage is not ICompetitionViewModel ? $"{match.Parent.Stage.Name} - {match.Parent.Name}" : match.Parent.Name)})"), MyClubResources.NoStadiumWarningTitle, NotificationSeverity.Warning, category, false, async x => await _matchPresentationService.EditAsync(match).ConfigureAwait(false));
                 Notify(notification);
             }
         }

@@ -2,10 +2,12 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:dial="clr-namespace:MyNet.UI.Dialogs;assembly=MyNet.UI"
                     xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
+                    xmlns:entitiesInterfaces="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces"
                     xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
                     xmlns:filters="clr-namespace:MyClub.Scorer.Wpf.Filters"
                     xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
                     xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:s="clr-namespace:MyClub.Scorer.Wpf.Selectors"
                     xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.MessageBox">
 
     <ResourceDictionary.MergedDictionaries>
@@ -107,7 +109,7 @@
         </Grid>
     </DataTemplate>
 
-    <!-- Misc -->
+    <!-- Stadium -->
     <DataTemplate DataType="{x:Type entities:StadiumWrapper}">
         <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Large}">
             <my:PackIcon Tag="{Binding Availability}">
@@ -155,5 +157,32 @@
             <TextBlock Text="{my:Resource NoneMale}" />
         </my:SimpleStackPanel>
     </DataTemplate>
+
+    <!-- Team -->
+    <DataTemplate x:Key="Scorer.DataTemplates.Team.ComboBox" DataType="{x:Type entities:TeamViewModel}">
+        <DockPanel>
+            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                               Width="17"
+                               Height="17"
+                               Margin="{StaticResource MyNet.Margins.Default.Right}"
+                               DataContext="{Binding}"
+                               DockPanel.Dock="Left" />
+            <TextBlock Text="{Binding Name}" />
+        </DockPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Scorer.DataTemplates.VirtualTeam.ComboBox" DataType="{x:Type entitiesInterfaces:IVirtualTeamViewModel}">
+        <DockPanel>
+            <my:PackIcon Width="17"
+                         Height="17"
+                         Margin="{StaticResource MyNet.Margins.Default.Right}"
+                         DockPanel.Dock="Left"
+                         Kind="Shield"
+                         Opacity="{StaticResource MyNet.Opacity.Overlay}" />
+            <TextBlock Text="{Binding Name}" />
+        </DockPanel>
+    </DataTemplate>
+
+    <s:TeamDataTemplateSelector x:Key="Scorer.DataTemplateSelectors.Team.ComboBox" TeamTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}" VirtualTeamTemplate="{StaticResource Scorer.DataTemplates.VirtualTeam.ComboBox}" />
 
 </ResourceDictionary>

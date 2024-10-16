@@ -6,6 +6,8 @@
              xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:p="clr-namespace:MyClub.Scorer.Wpf.Parameters"
+             xmlns:s="clr-namespace:MyClub.Scorer.Wpf.Selectors"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.HomePage.DashboardContent"
              xmlns:vS="clr-namespace:MyClub.Scorer.Wpf.Views.SchedulePage"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.HomePage.DashboardContent"
@@ -103,7 +105,21 @@
                 <my:SimpleStackPanel Grid.ColumnSpan="5" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
 
                     <!-- Stage -->
-                    <ctrl:CompetitionStageButton VerticalAlignment="Center" Item="{Binding Item.Stage}" Typography.Capitals="AllSmallCaps" />
+                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <ctrl:CompetitionStageButton Margin="0 -4 0 0"
+                                                     VerticalAlignment="Center"
+                                                     Item="{Binding Item.Stage}"
+                                                     Typography.Capitals="AllSmallCaps" />
+                        <StackPanel VerticalAlignment="Center"
+                                    Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                    Orientation="Horizontal"
+                                    TextElement.FontStyle="Italic"
+                                    Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                            <TextBlock Text="(" />
+                            <TextBlock Text="{Binding Item.Parent.ShortName}" />
+                            <TextBlock Text=")" />
+                        </StackPanel>
+                    </my:SimpleStackPanel>
 
                     <!-- Time -->
                     <my:PackIcon Width="14"
@@ -189,7 +205,6 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-
                 <!-- Date -->
                 <ContentControl x:Name="date"
                                 Style="{StaticResource Scorer.Styles.ContentControl.Date.Foreground}"
@@ -200,7 +215,21 @@
                 <my:SimpleStackPanel Grid.ColumnSpan="5" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
 
                     <!-- Stage -->
-                    <ctrl:CompetitionStageButton VerticalAlignment="Center" Item="{Binding Item.Stage}" Typography.Capitals="AllSmallCaps" />
+                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
+                        <ctrl:CompetitionStageButton Margin="0 -4 0 0"
+                                                     VerticalAlignment="Center"
+                                                     Item="{Binding Item.Stage}"
+                                                     Typography.Capitals="AllSmallCaps" />
+                        <StackPanel VerticalAlignment="Center"
+                                    Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                    Orientation="Horizontal"
+                                    TextElement.FontStyle="Italic"
+                                    Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                            <TextBlock Text="(" />
+                            <TextBlock Text="{Binding Item.Parent.ShortName}" />
+                            <TextBlock Text=")" />
+                        </StackPanel>
+                    </my:SimpleStackPanel>
 
                     <!-- Time -->
                     <my:PackIcon Width="14"
@@ -231,10 +260,12 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Home -->
-                    <ContentControl x:Name="home"
-                                    HorizontalAlignment="Center"
-                                    Content="{Binding Item.Home.Team}"
-                                    ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.LargeMedium}" />
+                    <ctrl:TeamControl x:Name="home"
+                                      Style="{StaticResource Scorer.Styles.TeamControl.Vertical}"
+                                      HorizontalAlignment="Center"
+                                      QualificationState="{Binding Item.Home.QualificationState}"
+                                      Team="{Binding Item.Home.Team}"
+                                      TextWrapping="Wrap" />
 
                     <Grid Grid.Column="2" HorizontalAlignment="Center">
                         <Border Background="White" Opacity="0.002" />
@@ -302,11 +333,13 @@
                     </Grid>
 
                     <!-- Away -->
-                    <ContentControl x:Name="away"
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center"
-                                    Content="{Binding Item.Away.Team}"
-                                    ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.LargeMedium}" />
+                    <ctrl:TeamControl x:Name="away"
+                                      Style="{StaticResource Scorer.Styles.TeamControl.Vertical}"
+                                      Grid.Column="4"
+                                      HorizontalAlignment="Center"
+                                      QualificationState="{Binding Item.Away.QualificationState}"
+                                      Team="{Binding Item.Away.Team}"
+                                      TextWrapping="Wrap" />
                 </Grid>
 
                 <!-- Toolbar -->

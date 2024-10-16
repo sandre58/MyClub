@@ -17,8 +17,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public abstract class Knockout : AuditableEntity, IStage
     {
-        private readonly ObservableCollection<IRound> _rounds = [];
-        private readonly ExtendedObservableCollection<IVirtualTeam> _teams = [];
+        private readonly OptimizedObservableCollection<IRound> _rounds = [];
+        private readonly OptimizedObservableCollection<IVirtualTeam> _teams = [];
 
         protected Knockout(Guid? id = null) : base(id)
         {

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -12,9 +13,10 @@ using DynamicData.Binding;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.DynamicData.Extensions;
 using MyNet.Observable;
-using MyNet.UI.Collections;
 using MyNet.UI.Commands;
+using MyNet.UI.Threading;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
@@ -24,9 +26,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private MatchOpponent? _matchOpponent;
         private readonly MatchViewModel _match;
         private readonly MatchPresentationService _matchPresentationService;
-        private readonly UiObservableCollection<GoalViewModel> _goals = [];
-        private readonly UiObservableCollection<PenaltyShootoutViewModel> _shootout = [];
-        private readonly UiObservableCollection<CardViewModel> _cards = [];
+        private readonly ExtendedObservableCollection<GoalViewModel> _goals = [];
+        private readonly ExtendedObservableCollection<PenaltyShootoutViewModel> _shootout = [];
+        private readonly ExtendedObservableCollection<CardViewModel> _cards = [];
         private CompositeDisposable? _opponentDisposables;
 
         public MatchOpponentViewModel(IObservable<(MatchOpponent? opponent, TeamViewModel? team, IVirtualTeamViewModel virtualTeam)> observable,
@@ -53,6 +55,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                     if (Equals(_matchOpponent, x)) return;
 
                     _opponentDisposables?.Dispose();
+
+                    MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(() => {
+                    _cards.Clear();
+                    _goals.Clear();
+                    _shootout.Clear();
+                    });
                     _matchOpponent = x.opponent;
                     IsEnabled = _matchOpponent is not null;
                     Team = x.team ?? x.virtualTeam;
@@ -64,17 +72,20 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                         _matchOpponent.Events.ToObservableChangeSet()
                                              .Filter(x => x is Goal)
                                              .Transform(x => new GoalViewModel((Goal)x, team))
+                                             .ObserveOn(MyNet.UI.Threading.Scheduler.GetUIOrCurrent())
                                              .Bind(_goals)
                                              .DisposeMany()
                                              .Subscribe(),
                         _matchOpponent.Events.ToObservableChangeSet()
                                              .Filter(x => x is Card)
                                              .Transform(x => new CardViewModel((Card)x, team))
+                                             .ObserveOn(MyNet.UI.Threading.Scheduler.GetUIOrCurrent())
                                              .Bind(_cards)
                                              .DisposeMany()
                                              .Subscribe(),
                         _matchOpponent.Shootout.ToObservableChangeSet()
                                                .Transform(x => new PenaltyShootoutViewModel(x, team))
+                                               .ObserveOn(MyNet.UI.Threading.Scheduler.GetUIOrCurrent())
                                                .Bind(_shootout)
                                                .DisposeMany()
                                                .Subscribe(),
@@ -85,6 +96,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 _shootout.ToObservableChangeSet().Subscribe(_ => RaisePropertyChanged(nameof(ShootoutScore))),
                 Observable.FromEventPattern(x => _match.ScoreChanged += x, x => _match.ScoreChanged -= x).Subscribe(x => RaiseScoreProperties())
             ]);
+
+            if (match.Fixture is not null)
+            {
+                ComputeFixtureState();
+                Disposables.Add(match.Fixture.Matches.ToObservableChangeSet().SubscribeMany(x => Observable.FromEventPattern<EventHandler, EventArgs>(y => x.ScoreChanged += y, y => x.ScoreChanged -= y).Subscribe(_ => ComputeFixtureState())).Subscribe());
+            }
         }
 
         public bool IsEnabled { get; private set; }
@@ -103,11 +120,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool IsWithdrawn => _matchOpponent?.IsWithdrawn ?? false;
 
-        public bool HasWon => _match.IsWonBy(Team);
+        public bool HasWon => Team is TeamViewModel team && _match.IsWonBy(team);
 
-        public bool HasWonAfterExtraTime => _match.AfterExtraTime && _match.IsWonBy(Team);
+        public bool HasWonAfterExtraTime => _match.AfterExtraTime && Team is TeamViewModel team && _match.IsWonBy(team);
 
-        public bool HasWonAfterShootouts => _match.AfterShootouts && _match.IsWonBy(Team);
+        public bool HasWonAfterShootouts => _match.AfterShootouts && Team is TeamViewModel team && _match.IsWonBy(team);
+
+        public QualificationState QualificationState { get; private set; }
 
         public ICommand AddGoalCommand { get; }
 
@@ -154,6 +173,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             RaisePropertyChanged(nameof(HasWon));
             RaisePropertyChanged(nameof(HasWonAfterExtraTime));
             RaisePropertyChanged(nameof(HasWonAfterShootouts));
+        }
+
+        private void ComputeFixtureState()
+        {
+            if (_match.Fixture is null || Team is not TeamViewModel team)
+            {
+                QualificationState = QualificationState.Unknown;
+                return;
+            }
+            var isQualified = _match.Fixture.IsWonBy(team);
+            var isEliminated = _match.Fixture.IsLostBy(team);
+            var isTemporary = !_match.Fixture.IsPlayed();
+
+            QualificationState = isQualified && !isTemporary
+                ? QualificationState.IsQualified
+                : isEliminated && !isTemporary
+                ? QualificationState.IsEliminated
+                : isQualified && isTemporary
+                ? QualificationState.IsTemporaryQualified
+                : isEliminated && isTemporary ? QualificationState.IsTemporaryEliminated : QualificationState.Unknown;
         }
 
         protected override void Cleanup()

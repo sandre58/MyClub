@@ -20,7 +20,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     {
         private string _name = string.Empty;
         private string _shortName = string.Empty;
-        private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
+        private readonly OptimizedObservableCollection<Matchday> _matchdays = [];
 
         public ChampionshipStage(IStage stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {

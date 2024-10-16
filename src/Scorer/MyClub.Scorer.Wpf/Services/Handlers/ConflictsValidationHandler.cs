@@ -8,6 +8,7 @@ using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Wpf.Messages;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
+using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.UI.Notifications;
 using MyNet.UI.Toasting;
 using MyNet.Utilities;
@@ -34,7 +35,7 @@ namespace MyClub.Scorer.Wpf.Services.Handlers
             {
                 foreach (var conflict in newConflicts)
                 {
-                    var matchDisplayName = new Func<MatchViewModel, string>(x => $"{x.Home.Team.Name} - {x.Away.Team.Name} ({x.Stage.Name})");
+                    var matchDisplayName = new Func<MatchViewModel, string>(x => $"{x.Home.Team.Name} - {x.Away.Team.Name} ({(x.Parent.Stage is not ICompetitionViewModel ? $"{x.Parent.Stage.Name} - {x.Parent.Name}" : x.Parent.Name)})");
                     var firstMessage = conflict.Item3 is not null
                         ? $"{MyClubResources.ConflictBetweenMatchXAndMatchY.FormatWith(matchDisplayName(conflict.Item2), matchDisplayName(conflict.Item3))}"
                         : $"{MyClubResources.ConflictWithMatchX.FormatWith(matchDisplayName(conflict.Item2))}";

@@ -4,7 +4,6 @@
 using System.Threading.Tasks;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Wpf.ViewModels.SchedulePage;
 using MyNet.UI.Dialogs;
@@ -24,7 +23,7 @@ namespace MyClub.Scorer.Wpf.Services
             return Task.CompletedTask;
         }
 
-        public async Task AddAsync(CupViewModel cup)
+        public async Task AddAsync(IRoundsStageViewModel cup)
         {
             var vm = ViewModelLocator.Get<RoundEditionViewModel>();
             vm.New(cup);

@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using MyClub.Domain;
 using MyClub.Domain.Exceptions;
+using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
@@ -18,9 +19,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class RoundOfFixtures : NameEntity, IRound, IFixtureFormatProvider
     {
-        private readonly ExtendedObservableCollection<IVirtualTeam> _teams = [];
-        private readonly ExtendedObservableCollection<RoundStage> _stages = [];
-        private readonly ExtendedObservableCollection<Fixture> _fixtures = [];
+        private readonly OptimizedObservableCollection<IVirtualTeam> _teams = [];
+        private readonly OptimizedObservableCollection<RoundStage> _stages = [];
+        private readonly OptimizedObservableCollection<Fixture> _fixtures = [];
 
         public RoundOfFixtures(Knockout stage,
                                string name,
@@ -74,10 +75,27 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public bool RemoveMatch(Match item) => _stages.Any(x => x.RemoveMatch(item));
 
+        public MatchFormat ProvideMatchFormat(RoundStage roundStage)
+        {
+            var useExtraTime = FixtureFormat.UseExtraTime switch
+            {
+                NoDrawUsage.OnLastMatch => Stages.IndexOf(roundStage) == Stages.Count - 1,
+                NoDrawUsage.OnAllMatches => true,
+                _ => false
+            };
+            var useShootout = FixtureFormat.UseShootout switch
+            {
+                NoDrawUsage.OnLastMatch => Stages.IndexOf(roundStage) == Stages.Count - 1,
+                NoDrawUsage.OnAllMatches => true,
+                _ => false
+            };
+            return new MatchFormat(FixtureFormat.RegulationTime, useExtraTime ? FixtureFormat.ExtraTime : null, useShootout ? FixtureFormat.NumberOfPenaltyShootouts : null);
+        }
+
         #region Stages
 
-        public RoundStage AddStage(DateTime date, string name, string? shortName = null, MatchFormat? matchFormat = null)
-            => AddStage(new RoundStage(this, date, name, shortName, matchFormat ?? Stage.ProvideFormat()));
+        public RoundStage AddStage(DateTime date, string name, string? shortName = null)
+            => AddStage(new RoundStage(this, date, name, shortName));
 
         public RoundStage AddStage(RoundStage stage)
         {
@@ -104,7 +122,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         #region Fixtures
 
-        protected virtual Fixture AddFixture(Fixture fixture)
+        public virtual Fixture AddFixture(IVirtualTeam team1, IVirtualTeam team2) => AddFixture(new Fixture(this, team1, team2));
+
+        public virtual Fixture AddFixture(Fixture fixture)
         {
             if (!ReferenceEquals(fixture.Stage, this))
                 throw new ArgumentException("Stage is not this round", nameof(fixture));
@@ -117,7 +137,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             return fixture;
         }
 
-        protected virtual bool RemoveFixture(Fixture item)
+        public virtual bool RemoveFixture(Fixture item)
         {
             var matches = item.GetAllMatches().ToList();
             matches.ForEach(x => _stages.ForEach(y => y.RemoveMatch(x)));

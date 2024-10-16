@@ -6,6 +6,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:s="clr-namespace:MyClub.Scorer.Wpf.Selectors"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
              d:DataContext="{d:DesignInstance Type=vm:MatchEditionViewModel}"
@@ -256,7 +257,7 @@
                                       IsChecked="{Binding Scorer, Mode=OneWay, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}"
                                       Opacity="{StaticResource MyNet.Opacity.Secondary}" />
                         <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
-                                 ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                                 ItemsSource="{Binding Tag.ComputedTeam.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
                                  SelectedItem="{Binding Scorer}"
                                  Tag="{x:Static md:PackIconKind.Soccer}" />
                     </DockPanel>
@@ -278,7 +279,7 @@
                                       IsChecked="{Binding Assist, Mode=OneWay, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}"
                                       Opacity="{StaticResource MyNet.Opacity.Secondary}" />
                         <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
-                                 ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                                 ItemsSource="{Binding Tag.ComputedTeam.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
                                  SelectedItem="{Binding Assist}"
                                  Tag="{x:Static md:PackIconKind.ShoeCleat}" />
                     </DockPanel>
@@ -425,7 +426,7 @@
             <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
                      Width="280"
                      my:ItemsControlAssist.SortingProperty="LastName"
-                     ItemsSource="{Binding Team.Players}">
+                     ItemsSource="{Binding ComputedTeam.Players}">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource Scorer.Styles.ListBoxItem.Player}">
                         <Setter Property="my:ListBoxItemAssist.ShowSelection" Value="False" />
@@ -506,7 +507,7 @@
                     </ToolBar>
                 </Grid>
                 <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}"
-                         ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
+                         ItemsSource="{Binding Tag.ComputedTeam.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}"
                          SelectedItem="{Binding Taker}"
                          Tag="{Binding}">
                     <ListBox.ItemContainerStyle>
@@ -706,29 +707,91 @@
                 </Grid.RowDefinitions>
 
                 <!-- Team Name -->
-                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}" HorizontalAlignment="Center" Text="{Binding Team.Name}" />
+                <ContentControl x:Name="team"
+                                HorizontalAlignment="Center"
+                                Content="{Binding Team}"
+                                FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                Tag="{Binding ComputedTeam}">
+                    <ContentControl.ContentTemplateSelector>
+                        <s:TeamDataTemplateSelector>
+                            <s:TeamDataTemplateSelector.TeamTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.TeamTemplate>
+                            <s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="3" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   Text="{Binding Name}"
+                                                   Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.HiddenIfNull}}" />
+                                        <TextBlock Grid.Row="2" HorizontalAlignment="Center" Text="{Binding Tag.Name, ElementName=team}" Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                        <TextBlock HorizontalAlignment="Center" Grid.Row="2" Text="{Binding Name}" Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                        </s:TeamDataTemplateSelector>
+                    </ContentControl.ContentTemplateSelector>
+                </ContentControl>
 
                 <!-- Team Logo -->
-                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                   Grid.Row="2"
-                                   Width="100"
-                                   Height="100"
-                                   DataContext="{Binding Team}"
-                                   Validation.ErrorTemplate="{x:Null}" />
+                <ContentControl Grid.Row="2"
+                                HorizontalAlignment="Center"
+                                Content="{Binding Team}"
+                                Validation.ErrorTemplate="{x:Null}">
+                    <ContentControl.ContentTemplateSelector>
+                        <s:TeamDataTemplateSelector>
+                            <s:TeamDataTemplateSelector.TeamTemplate>
+                                <DataTemplate>
+                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                       Width="100"
+                                                       Height="100"
+                                                       DataContext="{Binding}" />
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.TeamTemplate>
+                            <s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                           Width="100"
+                                                           Height="100"
+                                                           DataContext="{Binding Tag, ElementName=team}"
+                                                           Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                        <my:PackIcon Width="100"
+                                                     Height="100"
+                                                     Kind="Shield"
+                                                     Opacity="{StaticResource MyNet.Opacity.Overlay}"
+                                                     Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                        </s:TeamDataTemplateSelector>
+                    </ContentControl.ContentTemplateSelector>
+                </ContentControl>
 
                 <!-- Withdraw -->
                 <my:SimpleStackPanel Grid.Row="4" HorizontalAlignment="Center" Spacing="{StaticResource MyNet.Margin.Default}">
                     <my:SimpleStackPanel.IsEnabled>
-                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
-                            <Binding.ConverterParameter>
-                                <x:Array Type="{x:Type enums:MatchState}">
-                                    <enums:MatchState>None</enums:MatchState>
-                                    <enums:MatchState>Played</enums:MatchState>
-                                    <enums:MatchState>InProgress</enums:MatchState>
-                                    <enums:MatchState>Suspended</enums:MatchState>
-                                </x:Array>
-                            </Binding.ConverterParameter>
-                        </Binding>
+                        <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
+                            <Binding Path="Data.CanEditScore" Source="{StaticResource Proxy}" />
+                            <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                                <Binding.ConverterParameter>
+                                    <x:Array Type="{x:Type enums:MatchState}">
+                                        <enums:MatchState>None</enums:MatchState>
+                                        <enums:MatchState>Played</enums:MatchState>
+                                        <enums:MatchState>InProgress</enums:MatchState>
+                                        <enums:MatchState>Suspended</enums:MatchState>
+                                    </x:Array>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </MultiBinding>
                     </my:SimpleStackPanel.IsEnabled>
                     <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Filled.Custom}"
                                   HorizontalAlignment="Center"
@@ -741,16 +804,19 @@
                 <!-- Goals -->
                 <DockPanel Grid.Row="6" Visibility="{Binding Data.ShowGoals, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                     <DockPanel.IsEnabled>
-                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
-                            <Binding.ConverterParameter>
-                                <x:Array Type="{x:Type enums:MatchState}">
-                                    <enums:MatchState>None</enums:MatchState>
-                                    <enums:MatchState>Played</enums:MatchState>
-                                    <enums:MatchState>InProgress</enums:MatchState>
-                                    <enums:MatchState>Suspended</enums:MatchState>
-                                </x:Array>
-                            </Binding.ConverterParameter>
-                        </Binding>
+                        <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
+                            <Binding Path="Data.CanEditScore" Source="{StaticResource Proxy}" />
+                            <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                                <Binding.ConverterParameter>
+                                    <x:Array Type="{x:Type enums:MatchState}">
+                                        <enums:MatchState>None</enums:MatchState>
+                                        <enums:MatchState>Played</enums:MatchState>
+                                        <enums:MatchState>InProgress</enums:MatchState>
+                                        <enums:MatchState>Suspended</enums:MatchState>
+                                    </x:Array>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </MultiBinding>
                     </DockPanel.IsEnabled>
                     <my:SplitButton Style="{StaticResource MyNet.Styles.SplitButton.Filled.Custom}"
                                     Margin="{StaticResource MyNet.Margins.Small.Bottom}"
@@ -769,7 +835,7 @@
                                     ToggleButtonWidth="40"
                                     ToggleContent="{my:Resource AddGoal}" />
                     <ItemsControl my:ItemsControlAssist.SortingProperty="Minute"
-                                  my:ThemeAssist.IsCheckedBackground="{Binding Team.HomeColor, Converter={x:Static my:ColorToBrushConverter.Default}}"
+                                  my:ThemeAssist.IsCheckedBackground="{Binding Tag, RelativeSource={RelativeSource AncestorType={x:Type ContentControl}}, Converter={x:Static my:ColorToBrushConverter.Default}}"
                                   ItemTemplate="{StaticResource Scorer.DataTemplates.Goal}"
                                   ItemsSource="{Binding Goals}" />
                 </DockPanel>
@@ -777,16 +843,19 @@
                 <!-- Shoutout -->
                 <DockPanel Grid.Row="6" Visibility="{Binding Data.ShowGoals, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}">
                     <DockPanel.IsEnabled>
-                        <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
-                            <Binding.ConverterParameter>
-                                <x:Array Type="{x:Type enums:MatchState}">
-                                    <enums:MatchState>None</enums:MatchState>
-                                    <enums:MatchState>Played</enums:MatchState>
-                                    <enums:MatchState>InProgress</enums:MatchState>
-                                    <enums:MatchState>Suspended</enums:MatchState>
-                                </x:Array>
-                            </Binding.ConverterParameter>
-                        </Binding>
+                        <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
+                            <Binding Path="Data.CanEditScore" Source="{StaticResource Proxy}" />
+                            <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                                <Binding.ConverterParameter>
+                                    <x:Array Type="{x:Type enums:MatchState}">
+                                        <enums:MatchState>None</enums:MatchState>
+                                        <enums:MatchState>Played</enums:MatchState>
+                                        <enums:MatchState>InProgress</enums:MatchState>
+                                        <enums:MatchState>Suspended</enums:MatchState>
+                                    </x:Array>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </MultiBinding>
                     </DockPanel.IsEnabled>
                     <DockPanel Margin="{StaticResource MyNet.Margins.Small.Bottom}" HorizontalAlignment="Stretch" DockPanel.Dock="Top">
                         <Button Style="{StaticResource MyNet.Styles.Button.Filled}"
@@ -989,7 +1058,8 @@
                                                                                          RelativeSource={RelativeSource Self},
                                                                                          Contrast=True}"
                              Content="{my:Resource MatchStateInProgress}"
-                             DataContext="{x:Static enums:MatchState.InProgress}" />
+                             DataContext="{x:Static enums:MatchState.InProgress}"
+                             IsEnabled="{Binding Data.CanEditScore, Source={StaticResource Proxy}}" />
                 <ListBoxItem Width="125"
                              my:IconAssist.Icon="{my:MediumIcon Kind=ProgressAlert}"
                              my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource Scorer.Brushes.Match.State.Suspended}"
@@ -997,7 +1067,8 @@
                                                                                          RelativeSource={RelativeSource Self},
                                                                                          Contrast=True}"
                              Content="{my:Resource MatchStateSuspended}"
-                             DataContext="{x:Static enums:MatchState.Suspended}" />
+                             DataContext="{x:Static enums:MatchState.Suspended}"
+                             IsEnabled="{Binding Data.CanEditScore, Source={StaticResource Proxy}}" />
                 <ListBoxItem Width="125"
                              my:IconAssist.Icon="{my:MediumIcon Kind=ProgressCheck}"
                              my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Positive}"
@@ -1005,7 +1076,8 @@
                                                                                          RelativeSource={RelativeSource Self},
                                                                                          Contrast=True}"
                              Content="{my:Resource MatchStatePlayed}"
-                             DataContext="{x:Static enums:MatchState.Played}" />
+                             DataContext="{x:Static enums:MatchState.Played}"
+                             IsEnabled="{Binding Data.CanEditScore, Source={StaticResource Proxy}}" />
                 <ListBoxItem Width="125"
                              my:IconAssist.Icon="{my:MediumIcon Kind=ProgressClose}"
                              my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.Negative}"
@@ -1013,7 +1085,8 @@
                                                                                          RelativeSource={RelativeSource Self},
                                                                                          Contrast=True}"
                              Content="{my:Resource MatchStateCancelled}"
-                             DataContext="{x:Static enums:MatchState.Cancelled}" />
+                             DataContext="{x:Static enums:MatchState.Cancelled}"
+                             IsEnabled="{Binding Data.CanCancel, Source={StaticResource Proxy}}" />
             </ListBox>
 
         </my:SimpleStackPanel>
@@ -1026,12 +1099,18 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ContentControl Content="{Binding Home}" ContentTemplate="{StaticResource Scorer.DataTemplates.Opponent}" />
-            <ContentControl Grid.Column="2" Content="{Binding Away}" ContentTemplate="{StaticResource Scorer.DataTemplates.Opponent}" />
+            <ContentControl Content="{Binding Home}" ContentTemplate="{StaticResource Scorer.DataTemplates.Opponent}" Tag="{Binding Home.ComputedTeam.HomeColor}" />
+            <ContentControl Grid.Column="2"
+                            Content="{Binding Away}"
+                            ContentTemplate="{StaticResource Scorer.DataTemplates.Opponent}"
+                            Tag="{Binding Away.ComputedTeam.AwayColor}" />
         </Grid>
 
         <!-- Score -->
-        <Grid Grid.Row="2" Height="182" VerticalAlignment="Top">
+        <Grid Grid.Row="2"
+              Height="182"
+              VerticalAlignment="Top"
+              IsEnabled="{Binding CanEditScore}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />

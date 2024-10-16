@@ -122,14 +122,14 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
             // Scheduler
             var roundsScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
-                ? new AsSoonAsPossibleStageScheduler<RoundOfMatches>()
+                ? new AsSoonAsPossibleStageScheduler<IMatchesStage>()
                 {
                     StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
                     ScheduleVenues = true,
                     AvailableStadiums = project.Stadiums
                 }
-                : (IScheduler<RoundOfMatches>)new DateRulesStageScheduler<RoundOfMatches>()
+                : (IScheduler<IMatchesStage>)new DateRulesStageScheduler<IMatchesStage>()
                 {
                     Interval = project.Competition.SchedulingParameters.Interval,
                     DateRules = [.. project.Competition.SchedulingParameters.DateRules],
@@ -142,20 +142,24 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                 Rules = [.. project.Competition.SchedulingParameters.VenueRules],
             };
 
-            // Algorithm
-            var numberOfMatchesBetweenTeams = RandomGenerator.Int(1, 2);
-            var algorithms = new List<IRoundsAlgorithm>
+            // Builders
+            var builders = new List<IRoundsBuilder>
             {
-                new KnockoutAlgorithm()
+                //new RoundsWithMatchesBuilder(roundsScheduler, venueScheduler),
+                //new RoundsWithNumberOfWinsBuilder(roundsScheduler, venueScheduler) { NumberOfWins = RandomGenerator.Int(2, 4), InvertTeamsByStage = 4.Range().Select(x => x.IsEven()).ToArray() },
+                //new RoundsWithReplayBuilder(roundsScheduler, venueScheduler),
+                new RoundsWithTwoLegsBuilder(roundsScheduler, venueScheduler) { OneLegForFirstRound = RandomGenerator.Bool(), OneLegForLastRound = RandomGenerator.Bool()},
             };
 
-            var rounds = new RoundOfMatchesBuilder(roundsScheduler, venueScheduler).Build(project.Competition, RandomGenerator.ListItem(algorithms));
+            var rounds = RandomGenerator.ListItem(builders).Build(project.Competition, KnockoutAlgorithm.Default);
 
             rounds.ForEach(x =>
             {
                 x.GetAllMatches().ForEach(match =>
                 {
                     match.ComputeOpponents();
+                    if (match.UseHomeVenue() && match.Home?.Team is Team homeTeam)
+                        match.Stadium = homeTeam.Stadium;
                     if (match.Date.IsInPast())
                         match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
                     match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
@@ -211,7 +215,7 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                         {
                             AwayColor = RandomGenerator.Color(),
                             HomeColor = RandomGenerator.Color(),
-                            Stadium = CreateStadium(),
+                            Stadium = project.Competition.SchedulingParameters.UseHomeVenue ? CreateStadium() : null,
                             Country = RandomGenerator.ListItem(Enumeration.GetAll<Country>().ToList()),
                             Logo = RandomProvider.GetTeamLogo()
                         };
@@ -248,22 +252,15 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                         return team;
                     }).ToList();
 
-                    teams.ForEach(x =>
-                    {
-                        project.AddTeam(x);
-
-                        if (x.Stadium is not null)
-                        {
-                            x.Stadium.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
-                            project.AddStadium(x.Stadium);
-                        }
-                    });
+                    teams.ForEach(x => project.AddTeam(x));
                 }
 
                 // Stadiums
                 using (_progresser.Start(new ProgressMessage(string.Empty)))
                 {
-                    if (!project.Competition.SchedulingParameters.UseHomeVenue)
+                    if (project.Competition.SchedulingParameters.UseHomeVenue)
+                        project.Teams.Select(x => x.Stadium).NotNull().ForEach(x => project.AddStadium(x));
+                    else
                     {
                         var countStadiums = project.Competition.SchedulingParameters.AsSoonAsPossible ? RandomGenerator.Int(2, project.Teams.Count / 2) : RandomGenerator.Int(project.Teams.Count / 2, project.Teams.Count);
                         countStadiums.Range().Select(x => CreateStadium()).ForEach(x => project.AddStadium(x));

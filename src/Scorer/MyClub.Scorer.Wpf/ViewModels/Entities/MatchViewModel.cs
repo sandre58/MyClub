@@ -10,16 +10,16 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using DynamicData;
 using DynamicData.Binding;
-using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.DynamicData.Extensions;
 using MyNet.Observable;
-using MyNet.Observable.Attributes;
 using MyNet.UI.Collections;
 using MyNet.UI.Commands;
 using MyNet.Utilities;
@@ -32,23 +32,30 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
     {
         private readonly MatchPresentationService _matchPresentationService;
         private readonly StadiumsProvider _stadiumsProvider;
+        private readonly TeamsProvider _teamsProvider;
         private readonly UiObservableCollection<MatchViewModel> _matchesInConflicts = [];
         private readonly UiObservableCollection<MatchConflict> _conflicts = [];
 
         public MatchViewModel(Match item,
-                              IMatchesStageViewModel stage,
+                              IMatchParentViewModel parent,
                               MatchPresentationService matchPresentationService,
                               StadiumsProvider stadiumsProvider,
                               TeamsProvider teamsProvider) : base(item)
         {
             _matchPresentationService = matchPresentationService;
             _stadiumsProvider = stadiumsProvider;
+            _teamsProvider = teamsProvider;
 
             MatchesInConflicts = new(_matchesInConflicts);
             Conflicts = new(_conflicts);
-            Stage = stage;
+            Parent = parent;
+            Stage = parent.Stage is ICompetitionStageViewModel stage ? stage : parent;
+            ShowParent = parent.Stage is ICompetitionStageViewModel;
             WinnerTeam = new WinnerOfMatchTeamViewModel(item.GetWinnerTeam(), this);
             LooserTeam = new LooserOfMatchTeamViewModel(item.GetLooserTeam(), this);
+
+            if (Parent.Stage is RoundOfFixturesViewModel round && item is MatchOfFixture matchOfFixture)
+                Fixture = round.Fixtures.GetById(matchOfFixture.Fixture.Id);
 
             Home = new(item.WhenChanged(x => x.Home, (x, y) => (y, x.Home is not null ? teamsProvider.Get(x.Home.Team.Id) : null, teamsProvider.GetVirtualTeam(x.HomeTeam))), this, _matchPresentationService);
             Away = new(item.WhenChanged(x => x.Away, (x, y) => (y, x.Away is not null ? teamsProvider.Get(x.Away.Team.Id) : null, teamsProvider.GetVirtualTeam(x.AwayTeam))), this, _matchPresentationService);
@@ -106,21 +113,19 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             ]);
         }
 
+        public FixtureViewModel? Fixture { get; }
+
         public event EventHandler? ScoreChanged;
 
-        public IMatchesStageViewModel Stage { get; set; }
+        public IMatchParentViewModel Parent { get; set; }
 
-        [UpdateOnCultureChanged]
-        public string Name => (Stage.Matches.IndexOf(this) + 1).ToString(MyClubResources.MatchX);
+        public ICompetitionStageViewModel Stage { get; }
 
-        [UpdateOnCultureChanged]
-        public string ShortName => (Stage.Matches.IndexOf(this) + 1).ToString(MyClubResources.MatchXAbbr);
+        public bool ShowParent { get; }
 
-        [UpdateOnCultureChanged]
-        public string DisplayName => $"{Stage.Name} {Name}";
+        public string? DisplayName { get; set; }
 
-        [UpdateOnCultureChanged]
-        public string DisplayShortName => $"{Stage.ShortName}{ShortName}";
+        public string? DisplayShortName { get; set; }
 
         public WinnerOfMatchTeamViewModel WinnerTeam { get; }
 
@@ -140,7 +145,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool AfterExtraTime => Item.Format.ExtraTimeIsEnabled && Item.AfterExtraTime;
 
-        public bool AfterShootouts => Item.Format.ShootoutIsEnabled && Item.IsDraw() && (Home.ShootoutScore > 0 || Away.ShootoutScore > 0);
+        public bool AfterShootouts => Item.Format.ShootoutIsEnabled && (Home.ShootoutScore > 0 || Away.ShootoutScore > 0);
 
         public DateOnly DateOfDay => Date.ToDate();
 
@@ -204,11 +209,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             => state switch
             {
                 MatchState.None => true,
-                MatchState.InProgress => State is MatchState.None or MatchState.Suspended or MatchState.Postponed,
-                MatchState.Suspended => State is MatchState.InProgress,
-                MatchState.Played => State is MatchState.None or MatchState.Suspended or MatchState.Postponed or MatchState.InProgress,
+                MatchState.InProgress => Item.Home is not null && Item.Away is not null && State is MatchState.None or MatchState.Suspended or MatchState.Postponed,
+                MatchState.Suspended => Item.Home is not null && Item.Away is not null && State is MatchState.InProgress,
+                MatchState.Played => Item.Home is not null && Item.Away is not null && State is MatchState.None or MatchState.Suspended or MatchState.Postponed or MatchState.InProgress or MatchState.Played,
                 MatchState.Postponed => State is MatchState.None or MatchState.Suspended,
-                MatchState.Cancelled => State is MatchState.None or MatchState.Postponed && Stage.CanCancelMatch(),
+                MatchState.Cancelled => State is MatchState.None or MatchState.Postponed && Parent.CanCancelMatch(),
                 _ => false,
             };
 
@@ -218,35 +223,35 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public bool CanRescheduleAutomaticStadium() => CanReschedule() && Item.CanAutomaticRescheduleVenue();
 
-        public bool CanRandomize() => State is MatchState.None or MatchState.InProgress or MatchState.Played or MatchState.Suspended or MatchState.Postponed;
+        public bool CanRandomize() => Item.Home is not null && Item.Away is not null && State is MatchState.None or MatchState.InProgress or MatchState.Played or MatchState.Suspended or MatchState.Postponed;
 
         public bool CanInvertTeams() => State is MatchState.None;
 
-        public bool CanDoWithdraw() => State is MatchState.None or MatchState.InProgress or MatchState.Suspended;
+        public bool CanDoWithdraw() => Item.Home is not null && Item.Away is not null && State is MatchState.None or MatchState.InProgress or MatchState.Suspended;
 
         public bool Participate(IVirtualTeamViewModel team) => Item.Participate(team.Id);
 
         public bool Participate(Guid teamId) => Item.Participate(teamId);
 
-        public IVirtualTeamViewModel? GetOpponentOf(IVirtualTeamViewModel team) => Home.Team == team ? Away.Team : Away.Team == team ? Home.Team : null;
+        public IVirtualTeamViewModel? GetOpponentOf(IVirtualTeamViewModel team) => Equals(Item.HomeTeam.Id, team.Id) || Equals(Item.Home?.Team.Id, team.Id) ? Away.Team : Equals(Item.AwayTeam.Id, team.Id) || Equals(Item.Away?.Team.Id, team.Id) ? Home.Team : null;
 
-        public Result GetResultOf(IVirtualTeamViewModel team) => Item.GetResultOf(team.Id);
+        public Result GetResultOf(TeamViewModel team) => Item.GetResultOf(team.Id);
 
-        public ExtendedResult GetDetailledResultOf(IVirtualTeamViewModel team) => Item.GetExtendedResultOf(team.Id);
+        public ExtendedResult GetDetailledResultOf(TeamViewModel team) => Item.GetExtendedResultOf(team.Id);
 
-        public IVirtualTeamViewModel? GetWinner() => GetResultOf(Home.Team) == Result.Won ? Home.Team : GetResultOf(Away.Team) == Result.Won ? Away.Team : null;
+        public TeamViewModel? GetWinner() => Item.GetWinner() is Team team ? _teamsProvider.Get(team.Id) : null;
 
-        public IVirtualTeamViewModel? GetLooser() => GetResultOf(Home.Team) == Result.Lost ? Home.Team : GetResultOf(Away.Team) == Result.Lost ? Away.Team : null;
+        public TeamViewModel? GetLooser() => Item.GetLooser() is Team team ? _teamsProvider.Get(team.Id) : null;
 
-        public bool IsWonBy(IVirtualTeamViewModel team) => Item.IsWonBy(team.Id);
+        public bool IsWonBy(TeamViewModel team) => Item.IsWonBy(team.Id);
 
-        public bool IsLostBy(IVirtualTeamViewModel team) => Item.IsLostBy(team.Id);
+        public bool IsLostBy(TeamViewModel team) => Item.IsLostBy(team.Id);
 
-        public int GoalsFor(IVirtualTeamViewModel team) => Item.GoalsFor(team.Id);
+        public int GoalsFor(TeamViewModel team) => Item.GoalsFor(team.Id);
 
-        public int GoalsAgainst(IVirtualTeamViewModel team) => Item.GoalsAgainst(team.Id);
+        public int GoalsAgainst(TeamViewModel team) => Item.GoalsAgainst(team.Id);
 
-        public bool IsWithdrawn(IVirtualTeamViewModel team) => Item.IsWithdrawn(team.Id);
+        public bool IsWithdrawn(TeamViewModel team) => Item.IsWithdrawn(team.Id);
 
         public TimeSpan GetTotalTime() => Item.Format.RegulationTime.Duration * Item.Format.RegulationTime.Number + 15.Minutes();
 

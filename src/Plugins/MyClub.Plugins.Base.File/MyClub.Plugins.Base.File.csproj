@@ -9,10 +9,10 @@
     <PackageReference Include="MyNet.CsvHelper.Extensions" Version="1.1.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Utilities" Version="5.2.1-pre.4">
+    <PackageReference Include="MyNet.Utilities" Version="5.2.1-pre.6">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="MyNet.Wpf" Version="6.0.6-pre.41">
+    <PackageReference Include="MyNet.Wpf" Version="6.0.6-pre.48">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

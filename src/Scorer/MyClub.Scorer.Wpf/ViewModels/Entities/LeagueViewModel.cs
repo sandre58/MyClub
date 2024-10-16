@@ -14,27 +14,25 @@ using DynamicData.Binding;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Extensions;
-using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable.Deferrers;
-using MyNet.UI.Collections;
 using MyNet.UI.Services;
+using MyNet.UI.Threading;
 using MyNet.Utilities;
 using MyNet.Utilities.Logging;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class LeagueViewModel : EntityViewModelBase<League>, ICompetitionViewModel
+    internal class LeagueViewModel : EntityViewModelBase<League>, ICompetitionViewModel, IMatchdaysStageViewModel
     {
         private readonly LeagueService _leagueService;
         private readonly TeamsProvider _teamsProvider;
-        private readonly UiObservableCollection<MatchdayViewModel> _matchdays = [];
-        private readonly UiObservableCollection<MatchViewModel> _matches = [];
+        private readonly ExtendedObservableCollection<MatchdayViewModel> _matchdays = [];
+        private readonly ExtendedObservableCollection<MatchViewModel> _matches = [];
         private readonly SingleTaskDeferrer _refreshRankingsDeferrer;
         private readonly Subject<bool> _rankingChangedSubject = new();
 
@@ -49,6 +47,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             _leagueService = leagueService;
             _teamsProvider = teamsProvider;
             Matchdays = new(_matchdays);
+            Matches = new(_matches);
             SchedulingParameters = new SchedulingParametersViewModel(observableSchedulingParameters);
             _refreshRankingsDeferrer = new(async x => await RefreshRankingsAsync(x).ConfigureAwait(false), throttle: 100);
 
@@ -62,11 +61,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                 item.WhenPropertyChanged(x => x.RankingRules, false).Subscribe(_ => _refreshRankingsDeferrer.AskRefresh()),
                 item.Matchdays.ToObservableChangeSet()
                               .Transform(x => new MatchdayViewModel(x, this, matchdayPresentationService, matchPresentationService, stadiumsProvider, teamsProvider))
+                              .ObserveOn(Scheduler.GetUIOrCurrent())
                               .Bind(_matchdays)
                               .DisposeMany()
                               .Subscribe(),
                 _matchdays.ToObservableChangeSet()
                           .MergeManyEx(x => x.Matches.ToObservableChangeSet())
+                          .ObserveOn(Scheduler.GetUIOrCurrent())
                           .Bind(_matches)
                           .Subscribe(),
                 _matches.ToObservableChangeSet().WhereReasonsAre(ListChangeReason.Add, ListChangeReason.Remove, ListChangeReason.RemoveRange, ListChangeReason.AddRange, ListChangeReason.Clear).Subscribe(_ => _refreshRankingsDeferrer.AskRefresh()),
@@ -78,12 +79,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public ReadOnlyObservableCollection<MatchdayViewModel> Matchdays { get; }
 
-        public MatchFormat MatchFormat => Item.MatchFormat;
-
-        public MatchRules MatchRules => Item.MatchRules;
-
-        public RankingRules RankingRules => Item.RankingRules;
-
         public RankingViewModel Ranking { get; }
 
         public RankingViewModel LiveRanking { get; }
@@ -92,13 +87,25 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public RankingViewModel AwayRanking { get; }
 
+        public ReadOnlyObservableCollection<MatchViewModel> Matches { get; }
+
+        public string Name => string.Empty;
+
+        public string ShortName => string.Empty;
+
+        public DateOnly ProvideStartDate() => Item.SchedulingParameters.StartDate;
+
+        public DateOnly ProvideEndDate() => Item.SchedulingParameters.EndDate;
+
+        public TimeOnly ProvideStartTime() => Item.SchedulingParameters.StartTime;
+
         public bool CanAutomaticReschedule() => Item.SchedulingParameters.CanAutomaticReschedule();
 
         public bool CanAutomaticRescheduleVenue() => Item.SchedulingParameters.CanAutomaticRescheduleVenue();
 
-        public IEnumerable<TeamViewModel> GetAvailableTeams() => _teamsProvider.Items;
+        public bool UseHomeVenue() => Item.SchedulingParameters.UseHomeVenue;
 
-        public IObservable<IChangeSet<MatchViewModel>> ProvideMatches() => _matches.ToObservableChangeSet();
+        public IEnumerable<IVirtualTeamViewModel> GetAvailableTeams() => _teamsProvider.Items;
 
         public IDisposable WhenRankingChanged(Action action)
             => !_rankingChangedSubject.IsDisposed ? _rankingChangedSubject.Subscribe(_ => action()) : Disposable.Empty;

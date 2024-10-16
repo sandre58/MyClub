@@ -21,8 +21,10 @@ namespace MyClub.Scorer.Domain.MatchAggregate
     public class Match : AuditableEntity, IFixture, ISchedulable
     {
         public static readonly AcceptableValueRange<int> AcceptableRangeScore = new(0, int.MaxValue);
-        private readonly WinnerTeam<Match> _winnerTeam;
-        private readonly LooserTeam<Match> _looserTeam;
+        private readonly WinnerOfMatchTeam _winnerTeam;
+        private readonly LooserOfMatchTeam _looserTeam;
+        private MatchOpponent? _home;
+        private MatchOpponent? _away;
 
         public Match(DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam, MatchFormat? matchFormat = null, MatchRules? matchRules = null, Guid? id = null) : base(id)
         {
@@ -55,9 +57,9 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public IVirtualTeam AwayTeam { get; private set; }
 
-        public MatchOpponent? Home { get; private set; }
+        public MatchOpponent? Home => _home;
 
-        public MatchOpponent? Away { get; private set; }
+        public MatchOpponent? Away => _away;
 
         public bool IsNeutralStadium { get; set; }
 
@@ -69,16 +71,21 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public IVirtualTeam GetLooserTeam() => _looserTeam;
 
-        public void ComputeOpponents()
-        {
-            Home = CreateMatchOpponent(HomeTeam, Home);
-            Away = CreateMatchOpponent(AwayTeam, Away);
-        }
+        public bool ComputeOpponents() => ComputeOpponent(HomeTeam, ref _home, nameof(Home)) | ComputeOpponent(AwayTeam, ref _away, nameof(Away));
 
-        private static MatchOpponent? CreateMatchOpponent(IVirtualTeam virtualTeam, MatchOpponent? currentOpponent)
+        private bool ComputeOpponent(IVirtualTeam virtualTeam, ref MatchOpponent? currentOpponent, string propertyName)
         {
             var team = virtualTeam.GetTeam();
-            return team is not null && (currentOpponent is null || currentOpponent.Team != team) ? new MatchOpponent(team) : currentOpponent;
+
+            if (!Equals(currentOpponent?.Team, team))
+            {
+                currentOpponent = team is not null ? new MatchOpponent(team) : null;
+
+                RaisePropertyChanged(propertyName);
+                return true;
+            }
+
+            return false;
         }
 
         public void Schedule(DateTime date)
@@ -127,7 +134,10 @@ namespace MyClub.Scorer.Domain.MatchAggregate
         public void Invert()
         {
             (HomeTeam, AwayTeam) = (AwayTeam, HomeTeam);
-            (Home, Away) = (Away, Home);
+            (_home, _away) = (_away, _home);
+
+            RaisePropertyChanged(nameof(Away));
+            RaisePropertyChanged(nameof(Home));
         }
 
         public bool HasResult() => Home is not null && Away is not null && State is MatchState.Played or MatchState.InProgress or MatchState.Suspended;
@@ -159,19 +169,15 @@ namespace MyClub.Scorer.Domain.MatchAggregate
         private ExtendedResult GetScoreResultOf(Guid teamId, bool withShootout = true)
             => !HasResult(teamId)
                 ? ExtendedResult.None
-                : Home!.GetScore() > Away!.GetScore() && Home.Team.Id == teamId ? ExtendedResult.Won
-                : Home.GetScore() < Away.GetScore() && Home.Team.Id == teamId ? ExtendedResult.Lost
-                : Away!.GetScore() > Home!.GetScore() && Away.Team.Id == teamId ? ExtendedResult.Won
-                : Away.GetScore() < Home.GetScore() && Away.Team.Id == teamId ? ExtendedResult.Lost
+                : GoalsFor(teamId) > GoalsAgainst(teamId) ? ExtendedResult.Won
+                : GoalsAgainst(teamId) > GoalsFor(teamId) ? ExtendedResult.Lost
                 : Format.ShootoutIsEnabled && withShootout ? GetShootoutResultOf(teamId) : ExtendedResult.Drawn;
 
         private ExtendedResult GetShootoutResultOf(Guid teamId)
             => !HasResult(teamId)
                 ? ExtendedResult.None
-                : Home!.GetShootoutScore() > Away!.GetShootoutScore() && Home.Team.Id == teamId ? ExtendedResult.WonAfterShootouts
-                : Home!.GetShootoutScore() < Away!.GetShootoutScore() && Home.Team.Id == teamId ? ExtendedResult.LostAfterShootouts
-                : Away!.GetShootoutScore() > Home!.GetShootoutScore() && Away.Team.Id == teamId ? ExtendedResult.WonAfterShootouts
-                : Away!.GetShootoutScore() < Home!.GetShootoutScore() && Away.Team.Id == teamId ? ExtendedResult.LostAfterShootouts
+                : ShootoutFor(teamId) > ShootoutAgainst(teamId) ? ExtendedResult.WonAfterShootouts
+                : ShootoutAgainst(teamId) > ShootoutFor(teamId) ? ExtendedResult.LostAfterShootouts
                 : ExtendedResult.Drawn;
 
         public Team? GetWinner()
@@ -200,6 +206,10 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public int GoalsAgainst(Guid teamId) => GetOpponentAgainst(teamId)?.GetScore() ?? 0;
 
+        public int ShootoutFor(Guid teamId) => GetOpponent(teamId)?.GetShootoutScore() ?? 0;
+
+        public int ShootoutAgainst(Guid teamId) => GetOpponentAgainst(teamId)?.GetShootoutScore() ?? 0;
+
         public bool Participate(Guid teamId) => GetTeams().Select(x => x.Id).Contains(teamId);
 
         public bool Participate(IVirtualTeam team) => Participate(team.Id);
@@ -210,7 +220,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public MatchOpponent? GetOpponentAgainst(Guid teamId) => GetOpponent(teamId) is MatchOpponent opponent ? GetOpponents().Values.FirstOrDefault(x => x.Team.Id != opponent.Team.Id) : null;
 
-        private IEnumerable<IVirtualTeam> GetTeams() => new List<IVirtualTeam?>() { HomeTeam, AwayTeam, Home?.Team, Away?.Team }.NotNull().Distinct();
+        private IEnumerable<IVirtualTeam> GetTeams() => new List<IVirtualTeam?>() { HomeTeam, AwayTeam, Home?.Team, Away?.Team, _winnerTeam, _looserTeam }.NotNull().Distinct();
 
         private Dictionary<Guid, MatchOpponent> GetOpponents() => new List<MatchOpponent?>() { Home, Away }.NotNull().ToDictionary(x => x.Team.Id, x => x);
 

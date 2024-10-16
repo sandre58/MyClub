@@ -79,6 +79,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             ValidateResultsCommand = CommandsManager.Create(async () => await ValidateResultsAsync().ConfigureAwait(false), () => Mode == ScreenMode.Edition);
             CancelResultsCommand = CommandsManager.Create(CancelResults, () => Mode == ScreenMode.Edition);
             SelectConflictsCommand = CommandsManager.CreateNotNull<MatchViewModel>(SelectConflicts, x => x.MatchesInConflicts.Count > 0);
+            SelectFixtureMatchesCommand = CommandsManager.CreateNotNull<MatchViewModel>(SelectFixtureMatches, x => x.Fixture?.Matches.Count > 0);
 
             Disposables.AddRange(
             [
@@ -111,6 +112,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public ICommand EditResultsCommand { get; }
 
         public ICommand SelectConflictsCommand { get; }
+
+        public ICommand SelectFixtureMatchesCommand { get; }
 
         private async Task OpenSchedulingAssistantAsync()
         {
@@ -174,6 +177,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
         private void SelectConflicts(MatchViewModel match) => SelectItems(match.MatchesInConflicts.Select(x => x.Id).ToList());
 
+        private void SelectFixtureMatches(MatchViewModel match) => match.Fixture.IfNotNull(x => SelectItems(x.Matches.Select(x => x.Id).ToList()));
+
         private void StartEditResults()
         {
             UnselectAll();
@@ -227,7 +232,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
     internal class MatchesCollection : SelectableCollection<MatchViewModel>
     {
-        public MatchesCollection(ISourceProvider<MatchViewModel> matchesSourceProvider) : base(matchesSourceProvider.Connect(), scheduler: Scheduler.UI, createWrapper: x => new EditableMatch(x)) { }
+        public MatchesCollection(ISourceProvider<MatchViewModel> matchesSourceProvider) : base(matchesSourceProvider, scheduler: Scheduler.UI, createWrapper: x => new EditableMatch(x)) { }
     }
 
     [CanSetIsModified(false)]
@@ -238,8 +243,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         {
             Reset();
 
-            UpCommand = CommandsManager.CreateNotNull<AcceptableValue<int>>(x => x.Value.IfNotNull(_ => x.Value += 1, () => x.Value = 1), x => !x.HasValue || x.Value < x.Max);
-            DownCommand = CommandsManager.CreateNotNull<AcceptableValue<int>>(x => x.Value.IfNotNull(_ => x.Value -= 1, () => x.Value = 0), x => !x.HasValue || x > x.Min);
+            UpCommand = CommandsManager.CreateNotNull<AcceptableValue<int>>(x => x.Value.IfNotNull(_ => x.Value += 1, () => x.Value = 1), x => Item.CanBe(MatchState.Played) && (!x.HasValue || x.Value < x.Max));
+            DownCommand = CommandsManager.CreateNotNull<AcceptableValue<int>>(x => x.Value.IfNotNull(_ => x.Value -= 1, () => x.Value = 0), x => Item.CanBe(MatchState.Played) && (!x.HasValue || x > x.Min));
 
             Disposables.AddRange(
             [
@@ -283,6 +288,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         [CanSetIsModified(false)]
         public bool CanEditExtraTimeOrShootout => (Item.Format.ExtraTimeIsEnabled || Item.Format.ShootoutIsEnabled) && HasDraw;
 
+        [CanBeValidated(false)]
+        [CanSetIsModified(false)]
+        public bool CanEdit => Item.CanBe(MatchState.Played);
+
         public ICommand UpCommand { get; }
 
         public ICommand DownCommand { get; }
@@ -294,6 +303,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
             RaisePropertyChanged(nameof(HasDraw));
             RaisePropertyChanged(nameof(CanEditExtraTimeOrShootout));
+            RaisePropertyChanged(nameof(CanEdit));
             if (HasDraw)
                 AfterExtraTime = false;
         }

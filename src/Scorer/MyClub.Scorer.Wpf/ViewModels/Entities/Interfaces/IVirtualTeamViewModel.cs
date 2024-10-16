@@ -3,6 +3,7 @@
 
 using System;
 using System.ComponentModel;
+using MyNet.UI.Commands;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
@@ -12,5 +13,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
         string Name { get; }
 
         string ShortName { get; }
+
+        ICommand OpenCommand { get; }
+
+        TeamViewModel? ProvideTeam();
     }
 }

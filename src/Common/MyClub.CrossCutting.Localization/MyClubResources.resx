@@ -1481,9 +1481,6 @@ Veuillez consolider ou modifier l'ordre des éléments.</value>
   <data name="Settings" xml:space="preserve">
     <value>Paramètres</value>
   </data>
-  <data name="RoundX" xml:space="preserve">
-    <value>Tour #</value>
-  </data>
   <data name="IndividualInstructions" xml:space="preserve">
     <value>Consignes individuelles</value>
   </data>
@@ -2408,13 +2405,10 @@ Cliquer sur cette notification pour éditer le match.</value>
     <value>Afficher la séance de tirs au but</value>
   </data>
   <data name="RoundNamePattern" xml:space="preserve">
-    <value>Tour {index}</value>
+    <value>{index:R} tour</value>
   </data>
   <data name="RoundShortNamePattern" xml:space="preserve">
     <value>T{index}</value>
-  </data>
-  <data name="RoundXAbbr" xml:space="preserve">
-    <value>T#</value>
   </data>
   <data name="PromotionAbbr" xml:space="preserve">
     <value>PRO</value>
@@ -2440,43 +2434,85 @@ Cliquer sur cette notification pour éditer le match.</value>
   <data name="LooserXAbbr" xml:space="preserve">
     <value>P{0}</value>
   </data>
-  <data name="RoundOf1" xml:space="preserve">
+  <data name="Round1" xml:space="preserve">
     <value>Finale</value>
   </data>
-  <data name="RoundOf2" xml:space="preserve">
+  <data name="Round2" xml:space="preserve">
     <value>Demi-finales</value>
   </data>
-  <data name="RoundOf4" xml:space="preserve">
+  <data name="Round3" xml:space="preserve">
     <value>Quarts de finale</value>
   </data>
-  <data name="RoundOf8" xml:space="preserve">
+  <data name="Round4" xml:space="preserve">
     <value>8ème de finale</value>
   </data>
-  <data name="RoundOf16" xml:space="preserve">
+  <data name="Round5" xml:space="preserve">
     <value>16ème de finale</value>
   </data>
-  <data name="RoundOf32" xml:space="preserve">
+  <data name="Round6" xml:space="preserve">
     <value>32ème de finale</value>
   </data>
-  <data name="RoundOf1Abbr" xml:space="preserve">
+  <data name="Round1Abbr" xml:space="preserve">
     <value>F</value>
   </data>
-  <data name="RoundOf2Abbr" xml:space="preserve">
+  <data name="Round2Abbr" xml:space="preserve">
     <value>1/2</value>
   </data>
-  <data name="RoundOf4Abbr" xml:space="preserve">
+  <data name="Round3Abbr" xml:space="preserve">
     <value>1/4</value>
   </data>
-  <data name="RoundOf8Abbr" xml:space="preserve">
+  <data name="Round4Abbr" xml:space="preserve">
     <value>1/8</value>
   </data>
-  <data name="RoundOf16Abbr" xml:space="preserve">
+  <data name="Round5Abbr" xml:space="preserve">
     <value>1/16</value>
   </data>
-  <data name="RoundOf32Abbr" xml:space="preserve">
+  <data name="Round6Abbr" xml:space="preserve">
     <value>1/32</value>
   </data>
   <data name="Stage" xml:space="preserve">
     <value>Phase</value>
+  </data>
+  <data name="FirstLeg" xml:space="preserve">
+    <value>Phase Aller</value>
+  </data>
+  <data name="SecondLeg" xml:space="preserve">
+    <value>Phase Retour</value>
+  </data>
+  <data name="FirstLegAbbr" xml:space="preserve">
+    <value>All.</value>
+  </data>
+  <data name="SecondLegAbbr" xml:space="preserve">
+    <value>Ret.</value>
+  </data>
+  <data name="MainStage" xml:space="preserve">
+    <value>Phase principale</value>
+  </data>
+  <data name="RoundStageNamePattern" xml:space="preserve">
+    <value>Match {index}</value>
+  </data>
+  <data name="RoundStageShortNamePattern" xml:space="preserve">
+    <value>M{index}</value>
+  </data>
+  <data name="MainStageAbbr" xml:space="preserve">
+    <value>Ph.</value>
+  </data>
+  <data name="ReplayStage" xml:space="preserve">
+    <value>Match d'appui</value>
+  </data>
+  <data name="ReplayStageAbbr" xml:space="preserve">
+    <value>App.</value>
+  </data>
+  <data name="SeeMatch" xml:space="preserve">
+    <value>Voir le match</value>
+  </data>
+  <data name="SelectFixtureMatches" xml:space="preserve">
+    <value>Sélectionner les matchs de la rencontre</value>
+  </data>
+  <data name="Qualified" xml:space="preserve">
+    <value>Qualifié</value>
+  </data>
+  <data name="TemporaryQualified" xml:space="preserve">
+    <value>Temporairement qualifié</value>
   </data>
 </root>

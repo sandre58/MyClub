@@ -27,5 +27,14 @@ namespace MyClub.Scorer.Wpf.Views.SchedulePage
             get => (ICommand)GetValue(SelectConflictsCommandProperty);
             set => SetValue(SelectConflictsCommandProperty, value);
         }
+
+        public static readonly DependencyProperty SelectFixtureMatchesCommandProperty
+    = DependencyProperty.RegisterAttached(nameof(SelectFixtureMatchesCommand), typeof(ICommand), typeof(MatchToolBar), new PropertyMetadata(null));
+
+        public ICommand SelectFixtureMatchesCommand
+        {
+            get => (ICommand)GetValue(SelectFixtureMatchesCommandProperty);
+            set => SetValue(SelectFixtureMatchesCommandProperty, value);
+        }
     }
 }

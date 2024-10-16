@@ -23,11 +23,16 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Orientation="Horizontal">
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
-                </StackPanel>
+                <my:SimpleStackPanel Grid.Row="0" Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Item.Stage.Name}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="-" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="{Binding Item.DisplayName}" />
+                </my:SimpleStackPanel>
                 <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}"
                                    Grid.Row="2"
                                    Match="{Binding Item}"
@@ -188,6 +193,7 @@
                                                                             DataContext="{Binding Item}"
                                                                             RescheduleConflictsCommand="{Binding Data.RescheduleConflictsCommand, Source={StaticResource Proxy}}"
                                                                             SelectConflictsCommand="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
+                                                                            SelectFixtureMatchesCommand="{Binding Data.SelectFixtureMatchesCommand, Source={StaticResource Proxy}}"
                                                                             Visibility="Hidden" />
                                                         </Grid>
 

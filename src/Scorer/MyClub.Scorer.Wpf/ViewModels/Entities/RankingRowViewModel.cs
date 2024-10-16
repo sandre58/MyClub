@@ -11,6 +11,7 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Domain.RankingAggregate;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
+using MyNet.DynamicData.Extensions;
 using MyNet.Observable;
 using MyNet.UI.Collections;
 using MyNet.Utilities;
@@ -150,10 +151,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             Match = match;
             Team = team;
             Opponent = match.GetOpponentOf(team);
-            GoalsFor = match.GoalsFor(team);
-            GoalsAgainst = match.GoalsAgainst(team);
-            Result = match.GetResultOf(team);
-            ResultDetailled = match.GetDetailledResultOf(team);
+            GoalsFor = team is TeamViewModel t ? match.GoalsFor(t) : 0;
+            GoalsAgainst = team is TeamViewModel t1 ? match.GoalsAgainst(t1) : 0;
+            Result = team is TeamViewModel t2 ? match.GetResultOf(t2) : Result.None;
+            ResultDetailled = team is TeamViewModel t3 ? match.GetDetailledResultOf(t3) : ExtendedResult.None;
         }
     }
 }

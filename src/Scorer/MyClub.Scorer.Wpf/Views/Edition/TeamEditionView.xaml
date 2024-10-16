@@ -61,7 +61,7 @@
                             Height="80"
                             Margin="{StaticResource MyNet.Margins.Medium}"
                             VerticalContentAlignment="Bottom"
-                            my:IconAssist.Icon="{my:Icon Kind=Shield,
+                            my:IconAssist.Icon="{my:Icon Kind=ShieldFavorite,
                                                          Size=70}"
                             FontSize="{StaticResource MyNet.Font.Size.Title}"
                             SelectedImage="{Binding Logo, Converter={x:Static my:BytesToImageConverter.Default}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />

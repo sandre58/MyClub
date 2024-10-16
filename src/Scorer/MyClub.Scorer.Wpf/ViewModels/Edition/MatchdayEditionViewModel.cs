@@ -50,7 +50,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public LeagueViewModel? Stage { get; private set; }
+        public IMatchdaysStageViewModel? Stage { get; private set; }
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
@@ -105,7 +105,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         private void AddMatch()
         {
-            var item = new EditableMatchViewModel(Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue());
+            var item = new EditableMatchViewModel(Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.UseHomeVenue()).IsTrue());
 
             item.CurrentDate.Date = CurrentDate.Date;
             item.CurrentDate.Time = CurrentDate.Time;
@@ -119,7 +119,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             DuplicatedMatchday = matchday;
             Matches.Set(matchday.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue());
+                var result = new EditableMatchViewModel(Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.UseHomeVenue()).IsTrue());
 
                 if (CurrentDate.HasValue)
                     result.CurrentDate.Load(CurrentDate.DateTime.GetValueOrDefault());
@@ -137,7 +137,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             Matches.Clear();
         }
 
-        public void New(LeagueViewModel stage, DateTime? date = null)
+        public void New(IMatchdaysStageViewModel stage, DateTime? date = null)
         {
             DuplicatedMatchday = null;
             Stage = stage;
@@ -228,7 +228,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             PostponedState = !PostponedDateTime.HasValue && !item.IsPostponed ? PostponedState.None : PostponedDateTime.HasValue ? PostponedState.SpecifiedDate : PostponedState.UnknownDate;
             Matches.Set(item.Matches.OrderBy(x => x.Date).Select(x =>
             {
-                var result = new EditableMatchViewModel(x.Id, Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue());
+                var result = new EditableMatchViewModel(x.Id, Stage?.GetAvailableTeams() ?? [], _stadiumsProvider, (Stage?.UseHomeVenue()).IsTrue());
                 result.CurrentDate.Load(x.Date);
                 result.HomeTeam = result.AvailableTeams.GetById(x.HomeTeam.Id);
                 result.AwayTeam = result.AvailableTeams.GetById(x.AwayTeam.Id);

@@ -13,6 +13,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         ReadOnlyObservableCollection<IVirtualTeam> Teams { get; }
 
+        IVirtualTeam AddTeam(IVirtualTeam team);
+
         bool RemoveTeam(IVirtualTeam team);
     }
 }

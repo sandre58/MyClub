@@ -1481,9 +1481,6 @@ Please consolidate or change the order of the items.</value>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
-  <data name="RoundX" xml:space="preserve">
-    <value>Round #</value>
-  </data>
   <data name="IndividualInstructions" xml:space="preserve">
     <value>Individual instructions</value>
   </data>
@@ -2406,13 +2403,10 @@ Click on this notification to edit the match.</value>
     <value>Show shootout</value>
   </data>
   <data name="RoundNamePattern" xml:space="preserve">
-    <value>Round {index}</value>
+    <value>{index:R} round</value>
   </data>
   <data name="RoundShortNamePattern" xml:space="preserve">
     <value>R{index}</value>
-  </data>
-  <data name="RoundXAbbr" xml:space="preserve">
-    <value>R#</value>
   </data>
   <data name="PromotionAbbr" xml:space="preserve">
     <value>PRO</value>
@@ -2438,43 +2432,85 @@ Click on this notification to edit the match.</value>
   <data name="LooserXAbbr" xml:space="preserve">
     <value>L{0}</value>
   </data>
-  <data name="RoundOf1" xml:space="preserve">
+  <data name="Round1" xml:space="preserve">
     <value>Final</value>
   </data>
-  <data name="RoundOf2" xml:space="preserve">
+  <data name="Round2" xml:space="preserve">
     <value>Semi-Finals</value>
   </data>
-  <data name="RoundOf4" xml:space="preserve">
+  <data name="Round3" xml:space="preserve">
     <value>Quarter-Finals</value>
   </data>
-  <data name="RoundOf8" xml:space="preserve">
+  <data name="Round4" xml:space="preserve">
     <value>Round of 16</value>
   </data>
-  <data name="RoundOf16" xml:space="preserve">
+  <data name="Round5" xml:space="preserve">
     <value>Round of 32</value>
   </data>
-  <data name="RoundOf32" xml:space="preserve">
+  <data name="Round6" xml:space="preserve">
     <value>Round of 64</value>
   </data>
-  <data name="RoundOf1Abbr" xml:space="preserve">
+  <data name="Round1Abbr" xml:space="preserve">
     <value>F</value>
   </data>
-  <data name="RoundOf2Abbr" xml:space="preserve">
+  <data name="Round2Abbr" xml:space="preserve">
     <value>1/2</value>
   </data>
-  <data name="RoundOf4Abbr" xml:space="preserve">
+  <data name="Round3Abbr" xml:space="preserve">
     <value>1/4</value>
   </data>
-  <data name="RoundOf8Abbr" xml:space="preserve">
+  <data name="Round4Abbr" xml:space="preserve">
     <value>1/8</value>
   </data>
-  <data name="RoundOf16Abbr" xml:space="preserve">
+  <data name="Round5Abbr" xml:space="preserve">
     <value>1/16</value>
   </data>
-  <data name="RoundOf32Abbr" xml:space="preserve">
+  <data name="Round6Abbr" xml:space="preserve">
     <value>1/32</value>
   </data>
   <data name="Stage" xml:space="preserve">
     <value>Stage</value>
+  </data>
+  <data name="FirstLeg" xml:space="preserve">
+    <value>First Leg</value>
+  </data>
+  <data name="SecondLeg" xml:space="preserve">
+    <value>Second Leg</value>
+  </data>
+  <data name="FirstLegAbbr" xml:space="preserve">
+    <value>Frt.</value>
+  </data>
+  <data name="SecondLegAbbr" xml:space="preserve">
+    <value>Snd.</value>
+  </data>
+  <data name="RoundStageNamePattern" xml:space="preserve">
+    <value>Match {index}</value>
+  </data>
+  <data name="RoundStageShortNamePattern" xml:space="preserve">
+    <value>M{index}</value>
+  </data>
+  <data name="MainStage" xml:space="preserve">
+    <value>Main stage</value>
+  </data>
+  <data name="MainStageAbbr" xml:space="preserve">
+    <value>St.</value>
+  </data>
+  <data name="ReplayStage" xml:space="preserve">
+    <value>Replay match</value>
+  </data>
+  <data name="ReplayStageAbbr" xml:space="preserve">
+    <value>Rep.</value>
+  </data>
+  <data name="SeeMatch" xml:space="preserve">
+    <value>See match</value>
+  </data>
+  <data name="SelectFixtureMatches" xml:space="preserve">
+    <value>Select fixture matches</value>
+  </data>
+  <data name="Qualified" xml:space="preserve">
+    <value>Qualified</value>
+  </data>
+  <data name="TemporaryQualified" xml:space="preserve">
+    <value>Temporary qualified</value>
   </data>
 </root>

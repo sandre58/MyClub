@@ -40,7 +40,11 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Home -->
-                                <ContentControl Content="{Binding Home.Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Home}" ToolTip="{Binding Home.Team.Name}" />
+                                <ctrl:TeamControl x:Name="home"
+                                                  Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                  ShowShortName="True"
+                                                  Team="{Binding Home.Team}"
+                                                  ToolTip="{Binding Home.Team.Name}" />
 
                                 <!-- Score -->
                                 <Grid x:Name="score" Grid.Column="2" Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
@@ -66,10 +70,13 @@
                                            Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
 
                                 <!-- Away -->
-                                <ContentControl Grid.Column="4"
-                                                Content="{Binding Away.Team}"
-                                                ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Home}"
-                                                ToolTip="{Binding Away.Team.Name}" />
+                                <ctrl:TeamControl x:Name="away"
+                                                  Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                  Grid.Column="4"
+                                                  IsAway="True"
+                                                  ShowShortName="True"
+                                                  Team="{Binding Away.Team}"
+                                                  ToolTip="{Binding Away.Team.Name}" />
 
                             </Grid>
                         </Grid>

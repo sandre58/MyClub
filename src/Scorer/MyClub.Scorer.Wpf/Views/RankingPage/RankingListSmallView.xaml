@@ -4,7 +4,7 @@
           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
           xmlns:my="http://mynet.com/xaml/themes"
-          xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.RankingPage"
+          xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.RankingPage" xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
           Style="{StaticResource Scorer.Styles.ListView.Ranking.Small}"
           d:DataContext="{d:DesignInstance Type=vm:RankingListViewModel}"
           x:Shared="False"
@@ -95,7 +95,7 @@
                     </GridViewColumn.HeaderTemplate>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <ContentControl Content="{Binding Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Away}" />
+                            <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}" IsAway="True" Team="{Binding Team}" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>

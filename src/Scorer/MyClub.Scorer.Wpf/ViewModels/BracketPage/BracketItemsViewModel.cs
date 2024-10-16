@@ -20,7 +20,7 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
 {
-    internal abstract class BracketItemsViewModel<T> : SelectionListViewModel<T> where T : IStageViewModel
+    internal abstract class BracketItemsViewModel<T> : SelectionListViewModel<T> where T : ICompetitionStageViewModel
     {
         protected BracketItemsViewModel(ISourceProvider<T> matchStagesProvider, ListParametersProvider listParametersProvider)
             : base(collection: new BracketItemsCollection<T>(matchStagesProvider), parametersProvider: listParametersProvider) => Mode = ScreenMode.Read;
@@ -49,13 +49,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
     }
 
     internal class BracketItemsCollection<T>(ISourceProvider<T> matchStagesSourceProvider)
-        : SelectableCollection<T>(matchStagesSourceProvider.Connect(), scheduler: Scheduler.UI, createWrapper: x => new BracketItemWrapper<T>(x)) where T : IStageViewModel
+        : SelectableCollection<T>(matchStagesSourceProvider.Connect(), scheduler: Scheduler.UI, createWrapper: x => new BracketItemWrapper<T>(x)) where T : ICompetitionStageViewModel
     {
     }
 
     [CanSetIsModified(false)]
     [CanBeValidated(false)]
-    internal class BracketItemWrapper<T> : SelectedWrapper<T>, IAppointment where T : IStageViewModel
+    internal class BracketItemWrapper<T> : SelectedWrapper<T>, IAppointment where T : ICompetitionStageViewModel
     {
         public BracketItemWrapper(T item) : base(item)
             => Disposables.AddRange(

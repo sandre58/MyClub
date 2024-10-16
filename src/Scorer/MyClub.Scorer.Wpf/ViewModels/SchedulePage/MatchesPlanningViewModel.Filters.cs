@@ -38,7 +38,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
         public MatchesPlanningFiltersViewModel(IEnumerable<IVirtualTeamViewModel> teams,
                                                IEnumerable<StadiumViewModel> stadiums,
                                                IEnumerable<DateOnly> dates,
-                                               IEnumerable<IStageViewModel> stages,
+                                               IEnumerable<ICompetitionStageViewModel> stages,
                                                SchedulingParametersViewModel schedulingParameters)
         {
             SpeedFilters = new MatchesPlanningSpeedFiltersViewModel(teams, stadiums, schedulingParameters);

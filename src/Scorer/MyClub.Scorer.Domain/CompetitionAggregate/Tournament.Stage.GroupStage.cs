@@ -21,9 +21,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     {
         private string _name = string.Empty;
         private string _shortName = string.Empty;
-        private readonly ExtendedObservableCollection<IVirtualTeam> _teams = [];
-        private readonly ExtendedObservableCollection<Group> _groups = [];
-        private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
+        private readonly OptimizedObservableCollection<IVirtualTeam> _teams = [];
+        private readonly OptimizedObservableCollection<Group> _groups = [];
+        private readonly OptimizedObservableCollection<Matchday> _matchdays = [];
 
         public GroupStage(IStage stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {

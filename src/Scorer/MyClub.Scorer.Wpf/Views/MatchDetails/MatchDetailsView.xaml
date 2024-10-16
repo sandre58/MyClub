@@ -8,6 +8,7 @@
                   xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:my="http://mynet.com/xaml/themes"
+                  xmlns:s="clr-namespace:MyClub.Scorer.Wpf.Selectors"
                   xmlns:sys="clr-namespace:System;assembly=mscorlib"
                   xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.MatchDetails"
                   Style="{StaticResource MyNet.Styles.ContentDialog}"
@@ -24,6 +25,118 @@
                   mc:Ignorable="d">
     <my:ContentDialog.Resources>
         <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Team.Home">
+            <ContentControl Content="{Binding}">
+                <ContentControl.ContentTemplateSelector>
+                    <s:TeamDataTemplateSelector>
+                        <s:TeamDataTemplateSelector.TeamTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <my:Card x:Name="card"
+                                             Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                                             Padding="120 10 20 10"
+                                             VerticalAlignment="Top"
+                                             Content="{Binding Name}"
+                                             FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                             FontWeight="DemiBold"
+                                             Typography.Capitals="AllSmallCaps" />
+                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                       Width="100"
+                                                       Height="100"
+                                                       Margin="10 -40 0 0"
+                                                       HorizontalAlignment="Left"
+                                                       DataContext="{Binding}"
+                                                       Foreground="{DynamicResource MyNet.Brushes.None}" />
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding HomeColor, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" Value="False">
+                                        <Setter TargetName="card" Property="Background" Value="{Binding HomeColor, Converter={x:Static my:BrushConverter.Default}}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </s:TeamDataTemplateSelector.TeamTemplate>
+                        <s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation}"
+                                             Padding="120 10 20 10"
+                                             VerticalAlignment="Top"
+                                             Content="{Binding Name}"
+                                             FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                             FontStyle="Italic"
+                                             FontWeight="DemiBold"
+                                             Typography.Capitals="AllSmallCaps" />
+                                    <my:PackIcon Width="100"
+                                                 Height="100"
+                                                 Margin="10 -40 0 0"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="{DynamicResource MyNet.Brushes.None}"
+                                                 Kind="Shield" />
+                                </Grid>
+                            </DataTemplate>
+                        </s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                    </s:TeamDataTemplateSelector>
+                </ContentControl.ContentTemplateSelector>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Scorer.DataTemplates.Team.Away">
+            <ContentControl Content="{Binding}">
+                <ContentControl.ContentTemplateSelector>
+                    <s:TeamDataTemplateSelector>
+                        <s:TeamDataTemplateSelector.TeamTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <my:Card x:Name="card"
+                                             Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
+                                             Padding="20 10 120 10"
+                                             VerticalAlignment="Top"
+                                             HorizontalContentAlignment="Right"
+                                             Content="{Binding Name}"
+                                             FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                             FontWeight="DemiBold"
+                                             Typography.Capitals="AllSmallCaps" />
+                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                       Width="100"
+                                                       Height="100"
+                                                       Margin="0 -40 10 0"
+                                                       HorizontalAlignment="Right"
+                                                       DataContext="{Binding}"
+                                                       Foreground="{DynamicResource MyNet.Brushes.None}" />
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding AwayColor, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" Value="False">
+                                        <Setter TargetName="card" Property="Background" Value="{Binding AwayColor, Converter={x:Static my:BrushConverter.Default}}" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </s:TeamDataTemplateSelector.TeamTemplate>
+                        <s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation}"
+                                             Padding="20 10 120 10"
+                                             VerticalAlignment="Top"
+                                             HorizontalContentAlignment="Right"
+                                             Content="{Binding Name}"
+                                             FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                             FontStyle="Italic"
+                                             FontWeight="DemiBold"
+                                             Typography.Capitals="AllSmallCaps" />
+                                    <my:PackIcon Width="100"
+                                                 Height="100"
+                                                 Margin="0 -40 10 0"
+                                                 HorizontalAlignment="Right"
+                                                 Foreground="{DynamicResource MyNet.Brushes.None}"
+                                                 Kind="Shield" />
+                                </Grid>
+                            </DataTemplate>
+                        </s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                    </s:TeamDataTemplateSelector>
+                </ContentControl.ContentTemplateSelector>
+            </ContentControl>
+        </DataTemplate>
 
         <DataTemplate DataType="{x:Type entities:CardViewModel}">
             <Grid>
@@ -245,6 +358,76 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="Scorer.Styles.ItemsControl.Shootout" TargetType="{x:Type ItemsControl}" BasedOn="{StaticResource MyNet.Styles.ItemsControl.Scrollable}">
+            <Setter Property="ItemTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="col1" Width="25" />
+                                <ColumnDefinition x:Name="col2" Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Icon -->
+                            <my:PackIcon x:Name="result"
+                                         Grid.Column="0"
+                                         Width="14"
+                                         Height="14"
+                                         HorizontalAlignment="Left"
+                                         Kind="RegistrationMark" />
+
+                            <!-- Ghost -->
+                            <TextBlock x:Name="ghost"
+                                       Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                       Grid.Column="2"
+                                       HorizontalAlignment="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                       FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                       Text="{my:Resource NoTaker}"
+                                       Visibility="{Binding Taker, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+
+                            <!-- Taker -->
+                            <TextBlock x:Name="taker"
+                                       Grid.Column="2"
+                                       HorizontalAlignment="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                       FontSize="{StaticResource MyNet.Font.Size.Secondary}"
+                                       Text="{Binding Taker.FullName}"
+                                       Visibility="{Binding Taker, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                        </Grid>
+
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" Value="Right">
+                                <Setter TargetName="col1" Property="Width" Value="*" />
+                                <Setter TargetName="col2" Property="Width" Value="25" />
+                                <Setter TargetName="ghost" Property="Grid.Column" Value="0" />
+                                <Setter TargetName="result" Property="Grid.Column" Value="1" />
+                                <Setter TargetName="result" Property="HorizontalAlignment" Value="Right" />
+                                <Setter TargetName="taker" Property="Grid.Column" Value="0" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.None}">
+                                <Setter TargetName="result" Property="Kind" Value="ProgressClock" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Failed}">
+                                <Setter TargetName="result" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
+                                <Setter TargetName="result" Property="Kind" Value="CloseCircle" />
+                                <Setter TargetName="taker" Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Result}" Value="{x:Static enums:PenaltyShootoutResult.Succeeded}">
+                                <Setter TargetName="result" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
+                                <Setter TargetName="result" Property="Kind" Value="CheckCircle" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </my:ContentDialog.Resources>
 
     <Grid>
@@ -253,6 +436,7 @@
             <RowDefinition Height="30" />
             <RowDefinition Height="100" />
             <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="20" />
             <RowDefinition Height="Auto" />
@@ -360,41 +544,10 @@
             </Grid.ColumnDefinitions>
 
             <!-- Home -->
-            <Grid>
-                <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
-                         Padding="120 10 20 10"
-                         VerticalAlignment="Top"
-                         Background="{Binding Item.Home.Team.HomeColor, Converter={x:Static my:BrushConverter.Default}}"
-                         Content="{Binding Item.Home.Team.Name}"
-                         FontSize="{StaticResource MyNet.Font.Size.Title}"
-                         FontWeight="DemiBold"
-                         Typography.Capitals="AllSmallCaps" />
-                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                   Width="100"
-                                   Height="100"
-                                   Margin="10 -40 0 0"
-                                   HorizontalAlignment="Left"
-                                   DataContext="{Binding Item.Home.Team}" />
-            </Grid>
+            <ContentControl Content="{Binding Item.Home.Team}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Home}" />
 
             <!-- Away -->
-            <Grid Grid.Column="2">
-                <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Custom}"
-                         Padding="20 10 120 10"
-                         VerticalAlignment="Top"
-                         HorizontalContentAlignment="Right"
-                         Background="{Binding Item.Away.Team.AwayColor, Converter={x:Static my:BrushConverter.Default}}"
-                         Content="{Binding Item.Away.Team.Name}"
-                         FontSize="{StaticResource MyNet.Font.Size.Title}"
-                         FontWeight="DemiBold"
-                         Typography.Capitals="AllSmallCaps" />
-                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                   Width="100"
-                                   Height="100"
-                                   Margin="0 -40 10 0"
-                                   HorizontalAlignment="Right"
-                                   DataContext="{Binding Item.Away.Team}" />
-            </Grid>
+            <ContentControl Grid.Column="2" Content="{Binding Item.Away.Team}" ContentTemplate="{StaticResource Scorer.DataTemplates.Team.Away}" />
 
             <!-- Time -->
             <Grid Grid.Column="1" Margin="-30 -20 -30 0">
@@ -437,6 +590,22 @@
             </Grid>
         </Grid>
 
+        <!-- Stage -->
+        <DockPanel Grid.Row="2"
+                   Margin="0 -10 0 0"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top">
+            <TextBlock FontSize="{StaticResource MyNet.Font.Size.Caption}" Text="{Binding Item.Stage.Name}" Typography.Capitals="AllSmallCaps" />
+            <my:SimpleStackPanel Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                                 VerticalAlignment="Center"
+                                 Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                 Orientation="Horizontal"
+                                 TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
+                <TextBlock Text="-" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <TextBlock Text="{Binding Item.Parent.Name}" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+            </my:SimpleStackPanel>
+        </DockPanel>
+
         <!-- Summary -->
         <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
@@ -448,6 +617,10 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="120" />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
             <!-- Home Cards -->
             <ItemsControl Style="{StaticResource Scorer.Styles.ItemsControl.Cards}" Grid.Column="1" ItemsSource="{Binding HomeCards}" />
@@ -462,8 +635,16 @@
                    ToolTip="{my:Resource Withdraw}"
                    Visibility="{Binding Item.Home.IsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
+            <!-- Home Shootout -->
+            <ItemsControl Style="{StaticResource Scorer.Styles.ItemsControl.Shootout}"
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          MaxHeight="150"
+                          Margin="{StaticResource MyNet.Margins.Large.Top}"
+                          ItemsSource="{Binding Item.Home.Shootouts}" />
+
             <!-- Score -->
-            <Grid x:Name="score" Grid.Column="3">
+            <Grid x:Name="score" Grid.RowSpan="2" Grid.Column="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="20" />
@@ -531,10 +712,56 @@
                    FontSize="{StaticResource MyNet.Font.Size.Caption}"
                    ToolTip="{my:Resource Withdraw}"
                    Visibility="{Binding Item.Away.IsWithdrawn, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+
+            <!-- Away Shootout -->
+            <ItemsControl Style="{StaticResource Scorer.Styles.ItemsControl.Shootout}"
+                          Grid.Row="1"
+                          Grid.Column="5"
+                          MaxHeight="150"
+                          Margin="{StaticResource MyNet.Margins.Large.Top}"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Top"
+                          ItemsSource="{Binding Item.Away.Shootouts}" />
+
         </Grid>
 
+        <!-- Fixture Matches -->
+        <my:Card Style="{StaticResource MyNet.Styles.Card.Outlined}"
+                 Grid.Row="5"
+                 Margin="{StaticResource MyNet.Margins.Default.Top}"
+                 Padding="0"
+                 Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                 Visibility="{Binding FixtureMatches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
+            <ItemsControl my:ItemsControlAssist.SortingProperty="Item.Date" Grid.IsSharedSizeScope="True" ItemsSource="{Binding FixtureMatches}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Default}">
+                            <Grid HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="col_1" />
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="*" SharedSizeGroup="col_4" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Parent -->
+                                <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Parent.Name}" />
+
+                                <!-- Match -->
+                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" Grid.Column="2" Match="{Binding}" />
+                            </Grid>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </my:Card>
+
         <!-- Timeline -->
-        <Grid Grid.Row="6" Height="70">
+        <Grid Grid.Row="7" Height="70">
             <Grid.Visibility>
                 <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
                     <Binding Path="Item.HasResult" />
@@ -555,7 +782,7 @@
         </Grid>
 
         <!-- Events -->
-        <my:DynamicScrollViewer Grid.Row="8" HorizontalScrollBarVisibility="Disabled">
+        <my:DynamicScrollViewer Grid.Row="9" HorizontalScrollBarVisibility="Disabled">
             <my:DynamicScrollViewer.Visibility>
                 <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
                     <Binding Path="Item.HasResult" />

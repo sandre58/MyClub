@@ -17,8 +17,8 @@ namespace MyClub.Scorer.Domain.TeamAggregate
 {
     public class Team : NameEntity, IAggregateRoot, IVirtualTeam
     {
-        private readonly ExtendedObservableCollection<Player> _players = [];
-        private readonly ExtendedObservableCollection<Manager> _staff = [];
+        private readonly OptimizedObservableCollection<Player> _players = [];
+        private readonly OptimizedObservableCollection<Manager> _staff = [];
 
         public Team(string name, string? shortName = null, Guid? id = null) : base(name, shortName ?? name.GetInitials(), id)
         {

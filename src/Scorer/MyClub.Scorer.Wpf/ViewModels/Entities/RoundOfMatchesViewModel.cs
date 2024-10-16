@@ -16,12 +16,12 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal class RoundOfMatchesViewModel : RoundViewModel<RoundOfMatches>, IMatchesStageViewModel
+    internal class RoundOfMatchesViewModel : RoundViewModel<RoundOfMatches>, IMatchParentViewModel
     {
         private readonly MatchPresentationService _matchPresentationService;
 
         public RoundOfMatchesViewModel(RoundOfMatches item,
-                                       CupViewModel stage,
+                                       IRoundsStageViewModel stage,
                                        IObservable<SchedulingParameters?> observableSchedulingParameters,
                                        RoundPresentationService roundPresentationService,
                                        MatchPresentationService matchPresentationService,
@@ -54,9 +54,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             ]);
         }
 
+        IStageViewModel IMatchParentViewModel.Stage => Stage;
+
         protected override IObservable<IChangeSet<MatchViewModel>> ConnectMatches(MatchPresentationService matchPresentationService, StadiumsProvider stadiumsProvider, TeamsProvider teamsProvider)
             => Item.Matches.ToObservableChangeSet().Transform(x => new MatchViewModel(x, this, matchPresentationService, stadiumsProvider, teamsProvider)).DisposeMany();
 
         public async Task AddMatchAsync() => await _matchPresentationService.AddAsync(this).ConfigureAwait(false);
+        public bool CanCancelMatch() => throw new NotImplementedException();
     }
 }

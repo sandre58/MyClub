@@ -27,9 +27,10 @@ namespace MyClub.Scorer.Domain.Scheduling
         public virtual void Schedule(IEnumerable<T> items)
         {
             var scheduledMatches = new List<Match>(_scheduledItems.Except(items).SelectMany(x => x.GetAllMatches()));
+            var previousDate = StartDate;
             items.ForEach(x =>
             {
-                var scheduler = new AsSoonAsPossibleMatchesScheduler(scheduledMatches) { StartDate = StartDate, ScheduleVenues = ScheduleVenues, AvailableStadiums = AvailableStadiums, Rules = Rules };
+                var scheduler = new AsSoonAsPossibleMatchesScheduler(scheduledMatches) { StartDate = previousDate, ScheduleVenues = ScheduleVenues, AvailableStadiums = AvailableStadiums, Rules = Rules };
                 var matches = x.GetAllMatches().ToList();
                 scheduler.Schedule(matches);
 
@@ -37,6 +38,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                 var dateOfMatchday = matches.MinOrDefault(x => x.Date, x.Date);
 
                 x.Schedule(dateOfMatchday);
+                previousDate = scheduledMatches.MaxOrDefault(x => x.GetPeriod().End, x.Date);
             });
         }
     }

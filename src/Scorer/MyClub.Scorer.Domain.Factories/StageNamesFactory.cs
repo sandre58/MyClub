@@ -3,10 +3,7 @@
 
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Text.RegularExpressions;
-using MyClub.CrossCutting.Localization;
-using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyNet.Humanizer;
 using MyNet.Utilities;
 
@@ -18,11 +15,9 @@ namespace MyClub.Scorer.Domain.Factories
         private const string OptionsRegexKeyword = "options";
         private const string IndexVariableName = "index";
         private const string DateVariableName = "date";
-        private const string RoundVariableName = "round";
-        private const string RoundAbbrVariableName = "roundAbbr";
         private const string OrdinalizeOptionName = "R";
 
-        public static string ComputePattern(string pattern, int index, IMatchesStage matchesStage)
+        public static string ComputePattern(string pattern, int index, DateTime date)
         {
             if (string.IsNullOrEmpty(pattern)) return string.Empty;
 
@@ -37,9 +32,7 @@ namespace MyClub.Scorer.Domain.Factories
                     return variable switch
                     {
                         IndexVariableName => options == OrdinalizeOptionName ? index.Ordinalize().OrEmpty() : index.ToString(options).OrEmpty(),
-                        DateVariableName => matchesStage.Date.ToString(options, CultureInfo.CurrentCulture),
-                        RoundVariableName => MyClubResources.ResourceManager.GetString($"RoundOf{matchesStage.GetAllMatches().Count()}") ?? index.ToString(MyClubResources.RoundX),
-                        RoundAbbrVariableName => MyClubResources.ResourceManager.GetString($"RoundOf{matchesStage.GetAllMatches().Count()}Abbr") ?? index.ToString(MyClubResources.RoundXAbbr),
+                        DateVariableName => date.ToString(options, CultureInfo.CurrentCulture),
                         _ => string.Empty,
                     };
                 });

@@ -25,14 +25,14 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Name  -->
+        <!-- Name -->
         <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Title}"
                    HorizontalAlignment="Center"
                    Text="{Binding Item.Name}"
                    TextAlignment="Center"
                    TextWrapping="Wrap" />
 
-        <!--  Ground  -->
+        <!-- Ground -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
                   Grid.Row="2"
                   Padding="0"
@@ -44,7 +44,7 @@
                                ToolTip="{my:Translation Item.Ground}" />
         </GroupBox>
 
-        <!--  Address  -->
+        <!-- Address -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
                   Grid.Row="4"
                   my:HeaderAssist.HorizontalAlignment="Left"
@@ -74,14 +74,19 @@
             </DockPanel>
         </GroupBox>
 
-        <!--  Teams  -->
+        <!-- Teams -->
         <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Clean.Caption}"
                   Grid.Row="6"
                   my:HeaderAssist.HorizontalAlignment="Left"
                   my:IconAssist.Icon="{my:MediumIcon Kind=Shield}"
                   Header="{my:Resource Teams}">
             <my:GhostControl ShowGhost="{Binding Teams.Count, Converter={x:Static my:CountToBooleanConverter.NotAny}}">
-                <ItemsControl ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}" ItemsSource="{Binding Teams}">
+                <ItemsControl ItemsSource="{Binding Teams}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ctrl:TeamControl IsAway="True" Team="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />

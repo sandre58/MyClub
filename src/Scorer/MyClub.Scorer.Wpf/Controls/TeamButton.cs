@@ -11,5 +11,17 @@ namespace MyClub.Scorer.Wpf.Controls
         static TeamButton() => DefaultStyleKeyProperty.OverrideMetadata(typeof(TeamButton), new FrameworkPropertyMetadata(typeof(TeamButton)));
 
         public TeamButton() { }
+
+        #region ShowShortName
+
+        public static readonly DependencyProperty ShowShortNameProperty = DependencyProperty.Register(nameof(ShowShortName), typeof(bool), typeof(TeamButton), new PropertyMetadata(false));
+
+        public bool ShowShortName
+        {
+            get => (bool)GetValue(ShowShortNameProperty);
+            set => SetValue(ShowShortNameProperty, value);
+        }
+
+        #endregion
     }
 }

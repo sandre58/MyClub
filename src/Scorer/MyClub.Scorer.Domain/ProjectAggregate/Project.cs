@@ -40,8 +40,8 @@ namespace MyClub.Scorer.Domain.ProjectAggregate
     public abstract class Project : AuditableEntity
     {
         private string _name = string.Empty;
-        private readonly ExtendedObservableCollection<Stadium> _stadiums = [];
-        private readonly ExtendedObservableCollection<Team> _teams = [];
+        private readonly OptimizedObservableCollection<Stadium> _stadiums = [];
+        private readonly OptimizedObservableCollection<Team> _teams = [];
 
         protected Project(CompetitionType type, string name, byte[]? image = null, Guid? id = null) : base(id)
         {

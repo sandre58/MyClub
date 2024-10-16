@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.PastPositionsPage"
-             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.PastPositionsPage"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.PastPositionsPage" xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
              d:DataContext="{d:DesignInstance Type=vm:PastPositionsPageViewModel}"
              my:InputAssist.PropagateInWindow="True"
              my:ViewModelAssist.AutoWire="True"
@@ -38,7 +38,7 @@
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <ContentControl Margin="12 0 5 0" Content="{Binding Item}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}" />
+                                    <ctrl:TeamControl Margin="12 0 5 0" IsAway="True" Team="{Binding Item}" />
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

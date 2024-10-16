@@ -51,13 +51,13 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public bool UseEndDate { get; set; }
 
-        public void Reset(LeagueViewModel stage)
+        public void Reset(IMatchdaysStageViewModel stage)
         {
             UseEndDate = false;
             StartDate = DateTime.Today.ToDate();
-            EndDate = stage.SchedulingParameters.EndDate;
-            StartDisplayDate = stage.SchedulingParameters.StartDate;
-            EndDisplayDate = stage.SchedulingParameters.EndDate;
+            EndDate = stage.ProvideEndDate();
+            StartDisplayDate = stage.ProvideStartDate();
+            EndDisplayDate = stage.ProvideEndDate();
             CountMatchdays = 1;
             DateRules.Rules.Clear();
             TimeRules.Rules.Clear();

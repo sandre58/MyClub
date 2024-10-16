@@ -13,7 +13,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class Tournament : AuditableEntity, ICompetition
     {
-        private readonly ExtendedObservableCollection<ITournamentStage> _stages = [];
+        private readonly OptimizedObservableCollection<ITournamentStage> _stages = [];
 
         public Tournament() : this(SchedulingParameters.Default) { }
 

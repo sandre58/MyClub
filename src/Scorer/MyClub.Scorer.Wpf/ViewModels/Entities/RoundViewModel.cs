@@ -11,27 +11,25 @@ using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Extensions;
-using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyNet.UI.Collections;
+using MyNet.DynamicData.Extensions;
 using MyNet.UI.Commands;
 using MyNet.UI.Threading;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
-    internal abstract class RoundViewModel<T> : EntityViewModelBase<T>, IRoundViewModel
-        where T : IRound
+    internal abstract class RoundViewModel<T> : EntityViewModelBase<T>, IRoundViewModel where T : IRound
     {
         private readonly RoundPresentationService _roundPresentationService;
-        private readonly ReadOnlyObservableCollection<IVirtualTeamViewModel> _teams;
-        private readonly UiObservableCollection<MatchViewModel> _matches = [];
+        private readonly ExtendedObservableCollection<IVirtualTeamViewModel> _teams = [];
+        private readonly ExtendedObservableCollection<MatchViewModel> _matches = [];
 
         protected RoundViewModel(T item,
-                                 CupViewModel stage,
+                                 IRoundsStageViewModel stage,
                                  IObservable<SchedulingParameters?> observableSchedulingParameters,
                                  RoundPresentationService roundPresentationService,
                                  MatchPresentationService matchPresentationService,
@@ -41,25 +39,26 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             _roundPresentationService = roundPresentationService;
             Stage = stage;
             Matches = new(_matches);
+            Teams = new(_teams);
             SchedulingParameters = new SchedulingParametersViewModel(observableSchedulingParameters);
 
             OpenCommand = CommandsManager.Create(async () => await OpenAsync().ConfigureAwait(false));
 
             Disposables.AddRange(
             [
-                ConnectMatches(matchPresentationService, stadiumsProvider, teamsProvider).ObserveOn(Scheduler.UI).Bind(_matches).Subscribe(),
+                ConnectMatches(matchPresentationService, stadiumsProvider, teamsProvider).ObserveOn(Scheduler.GetUIOrCurrent()).Bind(_matches).Subscribe(),
                 item.Teams.ToObservableChangeSet()
                           .Transform(teamsProvider.GetVirtualTeam)
-                          .Bind(out _teams)
+                          .ObserveOn(Scheduler.GetUIOrCurrent())
+                          .Bind(_teams)
                           .Subscribe(),
                 _matches.ToObservableChangeSet()
                         .WhenPropertyChanged(x => x.Date)
                         .Subscribe(_ =>
                         {
                             Date = Matches.MinOrDefault(m => m.Date);
-                            MatchTime = Date.ToTime();
-                            StartDate = Matches.MinOrDefault(m => m.Date.BeginningOfDay());
-                            EndDate = Matches.MaxOrDefault(m => m.Date.EndOfDay());
+                            StartDate = Matches.MinOrDefault(m => m.StartDate);
+                            EndDate = Matches.MaxOrDefault(m => m.EndDate);
                         }),
                 _matches.ToObservableChangeSet()
                         .WhenPropertyChanged(x => x.State)
@@ -67,7 +66,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             ]);
         }
 
-        public CupViewModel Stage { get; }
+        public IRoundsStageViewModel Stage { get; }
 
         public SchedulingParametersViewModel SchedulingParameters { get; }
 
@@ -81,13 +80,11 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public DateTime EndDate { get; private set; }
 
-        public TimeOnly MatchTime { get; set; }
-
         public bool IsPostponed { get; set; }
 
         public ReadOnlyObservableCollection<MatchViewModel> Matches { get; }
 
-        public ReadOnlyObservableCollection<IVirtualTeamViewModel> Teams => _teams;
+        public ReadOnlyObservableCollection<IVirtualTeamViewModel> Teams { get; }
 
         public ICommand OpenCommand { get; }
 
@@ -98,12 +95,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public bool CanAutomaticRescheduleVenue() => Item.ProvideSchedulingParameters().CanAutomaticRescheduleVenue();
 
         public bool CanBePostponed() => !IsPostponed;
-
-        public bool CanCancelMatch() => true;
-
-        public bool CanEditMatchFormat() => true;
-
-        public bool CanEditMatchRules() => true;
 
         public IEnumerable<IVirtualTeamViewModel> GetAvailableTeams() => Teams;
 

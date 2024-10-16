@@ -51,8 +51,8 @@ namespace MyClub.Scorer.Domain.Factories
             // Update names
             matchdays.OrderBy(x => x.Date).ForEach((x, y) =>
             {
-                x.Name = StageNamesFactory.ComputePattern(NamePattern, y + 1, x);
-                x.ShortName = StageNamesFactory.ComputePattern(ShortNamePattern, y + 1, x);
+                x.Name = StageNamesFactory.ComputePattern(NamePattern, y + 1, x.Date);
+                x.ShortName = StageNamesFactory.ComputePattern(ShortNamePattern, y + 1, x.Date);
             });
 
             return matchdays;

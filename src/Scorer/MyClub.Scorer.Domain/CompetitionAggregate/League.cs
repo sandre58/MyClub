@@ -18,7 +18,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public class League : Championship, IMatchdaysStage, ICompetition
     {
-        private readonly ExtendedObservableCollection<Matchday> _matchdays = [];
+        private readonly OptimizedObservableCollection<Matchday> _matchdays = [];
 
         public League() : this(RankingRules.Default, MatchFormat.Default, MatchRules.Default, SchedulingParameters.Default) { }
 

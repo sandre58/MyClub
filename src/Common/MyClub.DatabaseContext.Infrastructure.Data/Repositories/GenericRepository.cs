@@ -88,7 +88,7 @@ namespace MyClub.DatabaseContext.Infrastructure.Data.Repositories
             if (predicate != null)
                 query = query.Where(predicate);
 
-            return orderBy != null ? [.. orderBy(query)] : (IEnumerable<TEntity>)[.. query];
+            return orderBy != null ? [.. orderBy(query)] : ([.. query]);
         }
 
         #endregion

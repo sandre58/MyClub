@@ -16,8 +16,8 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 {
     public class MatchOpponent : Entity
     {
-        private readonly ExtendedObservableCollection<MatchEvent> _events = [];
-        private readonly ExtendedObservableCollection<PenaltyShootout> _shootout = [];
+        private readonly OptimizedObservableCollection<MatchEvent> _events = [];
+        private readonly OptimizedObservableCollection<PenaltyShootout> _shootout = [];
 
         public MatchOpponent(Team team)
         {

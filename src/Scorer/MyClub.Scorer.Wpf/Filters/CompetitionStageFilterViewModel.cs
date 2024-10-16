@@ -14,16 +14,16 @@ using DynamicData;
 
 namespace MyClub.Scorer.Wpf.Filters
 {
-    internal class CompetitionStageFilterViewModel : SelectedValueFilterViewModel<IStageViewModel, IStageViewModel>
+    internal class CompetitionStageFilterViewModel : SelectedValueFilterViewModel<ICompetitionStageViewModel, ICompetitionStageViewModel>
     {
-        public CompetitionStageFilterViewModel(string propertyName, IEnumerable<IStageViewModel> allowedValues) : base(propertyName, allowedValues)
+        public CompetitionStageFilterViewModel(string propertyName, IEnumerable<ICompetitionStageViewModel> allowedValues) : base(propertyName, allowedValues)
         {
             PreviousStageCommand = CommandsManager.Create(() => Value = GetPreviousStage(Value), () => GetPreviousStage(Value) is not null);
             NextStageCommand = CommandsManager.Create(() => Value = GetNextStage(Value), () => GetNextStage(Value) is not null);
-            NextFixturesCommand = CommandsManager.Create(() => Value = GetNextFixtures(), () => GetNextFixtures() is IStageViewModel matchStage && matchStage != Value);
-            LatestResultsCommand = CommandsManager.Create(() => Value = GetLatestResults(), () => GetLatestResults() is IStageViewModel matchStage && matchStage != Value);
+            NextFixturesCommand = CommandsManager.Create(() => Value = GetNextFixtures(), () => GetNextFixtures() is ICompetitionStageViewModel matchStage && matchStage != Value);
+            LatestResultsCommand = CommandsManager.Create(() => Value = GetLatestResults(), () => GetLatestResults() is ICompetitionStageViewModel matchStage && matchStage != Value);
 
-            if (allowedValues is ReadOnlyObservableCollection<IStageViewModel> collection)
+            if (allowedValues is ReadOnlyObservableCollection<ICompetitionStageViewModel> collection)
             {
                 collection.ToObservableChangeSet().OnItemAdded(x => Value.IfNull(Reset))
                                                   .OnItemRemoved(x => (Value == x).IfTrue(Reset))
@@ -39,15 +39,15 @@ namespace MyClub.Scorer.Wpf.Filters
 
         public ICommand LatestResultsCommand { get; private set; }
 
-        private IStageViewModel? GetPreviousStage(IStageViewModel? stage)
+        private ICompetitionStageViewModel? GetPreviousStage(ICompetitionStageViewModel? stage)
             => AvailableValues?.Except([stage]).OrderBy(x => x!.StartDate).LastOrDefault(x => stage is null || x!.StartDate.IsBefore(stage.StartDate.Add(1.Milliseconds())));
 
-        private IStageViewModel? GetNextStage(IStageViewModel? stage)
+        private ICompetitionStageViewModel? GetNextStage(ICompetitionStageViewModel? stage)
             => AvailableValues?.Except([stage]).OrderBy(x => x!.StartDate).FirstOrDefault(x => stage is null || x!.StartDate.IsAfter(stage.StartDate.Subtract(1.Milliseconds())));
 
-        private IStageViewModel? GetNextFixtures() => AvailableValues?.OrderBy(x => x.StartDate).FirstOrDefault(x => x.StartDate.IsAfter(DateTime.Now));
+        private ICompetitionStageViewModel? GetNextFixtures() => AvailableValues?.OrderBy(x => x.StartDate).FirstOrDefault(x => x.StartDate.IsAfter(DateTime.Now));
 
-        private IStageViewModel? GetLatestResults() => AvailableValues?.OrderBy(x => x.StartDate).LastOrDefault(x => x.StartDate.IsBefore(DateTime.Now));
+        private ICompetitionStageViewModel? GetLatestResults() => AvailableValues?.OrderBy(x => x.StartDate).LastOrDefault(x => x.StartDate.IsBefore(DateTime.Now));
 
         public override void Reset() => Value = GetNextFixtures() ?? GetLatestResults();
 

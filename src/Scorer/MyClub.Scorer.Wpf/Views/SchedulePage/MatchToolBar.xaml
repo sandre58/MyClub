@@ -1,6 +1,7 @@
 ﻿<ToolBar x:Class="MyClub.Scorer.Wpf.Views.SchedulePage.MatchToolBar"
          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
          xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -135,6 +136,27 @@
                 <MenuItem Command="{Binding Home.DoWithdrawCommand}" Header="{my:Resource HomeTeam}" Icon="{my:ToolIcon Kind=Home}" />
                 <MenuItem Command="{Binding Away.DoWithdrawCommand}" Header="{my:Resource AwayTeam}" Icon="{my:ToolIcon Kind=Plane}" />
             </MenuItem>
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}">
+                <Separator.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Data.SelectFixtureMatchesCommand" Source="{StaticResource LocalProxy}" />
+                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Fixture" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.Any}" Path="Fixture.Matches.Count" />
+                    </MultiBinding>
+                </Separator.Visibility>
+            </Separator>
+            <MenuItem Command="{Binding Data.SelectFixtureMatchesCommand, Source={StaticResource LocalProxy}}"
+                      CommandParameter="{Binding}"
+                      Header="{my:Resource SelectFixtureMatches}"
+                      Icon="{my:ToolIcon Kind=CheckAll}">
+                <MenuItem.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Data.SelectFixtureMatchesCommand" Source="{StaticResource LocalProxy}" />
+                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Fixture" />
+                        <Binding Converter="{x:Static my:CountToBooleanConverter.Any}" Path="Fixture.Matches.Count" />
+                    </MultiBinding>
+                </MenuItem.Visibility>
+            </MenuItem>
             <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding MatchesInConflicts.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
             <MenuItem Background="{DynamicResource MyNet.Brushes.Warning}"
                       Foreground="{my:BrushBinding Background,
@@ -164,12 +186,18 @@
                                                 <ColumnDefinition Width="5" />
                                                 <ColumnDefinition Width="60" />
                                             </Grid.ColumnDefinitions>
-                                            <ContentControl Content="{Binding Home.Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Home}" IsEnabled="False" />
+                                            <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                              Grid.Column="0"
+                                                              IsEnabled="False"
+                                                              ShowShortName="True"
+                                                              Team="{Binding Home.Team}" />
                                             <TextBlock Grid.Column="2" Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource VersusAbbr}" />
-                                            <ContentControl Grid.Column="4"
-                                                            Content="{Binding Away.Team}"
-                                                            ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ShortName.Away}"
-                                                            IsEnabled="False" />
+                                            <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                              Grid.Column="4"
+                                                              IsAway="True"
+                                                              IsEnabled="False"
+                                                              ShowShortName="True"
+                                                              Team="{Binding Away.Team}" />
                                         </Grid>
                                     </DataTemplate>
                                 </Setter.Value>
@@ -178,7 +206,7 @@
                         </Style>
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
-                <Separator Visibility="{Binding Data.SelectConflictsCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding Data.SelectConflictsCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
                 <MenuItem Command="{Binding Data.SelectConflictsCommand, Source={StaticResource LocalProxy}}"
                           CommandParameter="{Binding}"
                           Header="{my:Resource SelectConflicts}"

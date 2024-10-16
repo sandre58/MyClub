@@ -21,7 +21,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public CupViewModel? Stage { get; private set; }
+        public IRoundsStageViewModel? Stage { get; private set; }
 
         [IsRequired]
         [Display(Name = nameof(Name), ResourceType = typeof(MyClubResources))]
@@ -32,7 +32,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public virtual string ShortName { get; set; } = string.Empty;
 
-        public void New(CupViewModel stage)
+        public void New(IRoundsStageViewModel stage)
         {
             Stage = stage;
             New();

@@ -49,7 +49,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.StatisticsPage
                     token.ThrowIfCancellationRequested();
                     var statistics = _matchStatisticsService.GetPlayerStatistics();
                     _scorers.Set(statistics.Where(x => x.Goals > 0).Select(x => new PlayerStatisticsViewModel(_teamsProvider.Items.OfType<TeamViewModel>().SelectMany(y => y.Players).GetById(x.PlayerId),
-                                                                                                              (TeamViewModel)_teamsProvider.GetOrThrow(x.TeamId),
+                                                                                                              _teamsProvider.GetOrThrow(x.TeamId),
                                                                                                               x.Goals)));
                 }
                 catch (OperationCanceledException)

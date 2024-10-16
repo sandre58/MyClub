@@ -122,7 +122,7 @@
                     </GridViewColumn.HeaderTemplate>
                     <GridViewColumn.CellTemplate>
                         <DataTemplate>
-                            <ContentControl Content="{Binding Team}" ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}" />
+                            <ctrl:TeamControl IsAway="True" Team="{Binding Team}" />
                         </DataTemplate>
                     </GridViewColumn.CellTemplate>
                 </GridViewColumn>

@@ -3,8 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="clr-namespace:MyClub.Scorer.Wpf.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:s="clr-namespace:MyClub.Scorer.Wpf.Selectors"
              xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
              xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
              d:DataContext="{d:DesignInstance Type=vm:MatchEditionViewModel}"
@@ -168,7 +170,7 @@
                                   FontStyle="Italic"
                                   IsChecked="{Binding Player, Mode=OneWay, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}"
                                   Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-                    <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}" ItemsSource="{Binding Tag.Team.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}" SelectedItem="{Binding Player}" />
+                    <ListBox Style="{StaticResource Scorer.Styles.ListBox.Players}" ItemsSource="{Binding Tag.ComputedTeam.Players, RelativeSource={RelativeSource AncestorType={x:Type my:DropDownButton}}}" SelectedItem="{Binding Player}" />
                 </DockPanel>
             </Grid>
         </DataTemplate>
@@ -249,19 +251,100 @@
                     <RowDefinition Height="20" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                
+
                 <!-- Team Name -->
-                <TextBlock Text="{Binding Team.Name}" HorizontalAlignment="Center" Style="{StaticResource MyNet.Styles.TextBlock.Title}" />
+                <ContentControl x:Name="team"
+                                HorizontalAlignment="Center"
+                                Content="{Binding Team}"
+                                FontSize="{StaticResource MyNet.Font.Size.Title}"
+                                Tag="{Binding ComputedTeam}">
+                    <ContentControl.ContentTemplateSelector>
+                        <s:TeamDataTemplateSelector>
+                            <s:TeamDataTemplateSelector.TeamTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.TeamTemplate>
+                            <s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="3" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   Text="{Binding Name}"
+                                                   Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.HiddenIfNull}}" />
+                                        <TextBlock Grid.Row="2"
+                                                   HorizontalAlignment="Center"
+                                                   Text="{Binding Tag.Name, ElementName=team}"
+                                                   Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                        <TextBlock Grid.Row="2"
+                                                   HorizontalAlignment="Center"
+                                                   Text="{Binding Name}"
+                                                   Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                        </s:TeamDataTemplateSelector>
+                    </ContentControl.ContentTemplateSelector>
+                </ContentControl>
 
                 <!-- Team Logo -->
-                <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}" Grid.Row="2"
-                                   Width="100"
-                                   Height="100"
-                                   DataContext="{Binding Team}"
-                                   Validation.ErrorTemplate="{x:Null}" />
+                <ContentControl Grid.Row="2"
+                                HorizontalAlignment="Center"
+                                Content="{Binding Team}"
+                                Validation.ErrorTemplate="{x:Null}">
+                    <ContentControl.ContentTemplateSelector>
+                        <s:TeamDataTemplateSelector>
+                            <s:TeamDataTemplateSelector.TeamTemplate>
+                                <DataTemplate>
+                                    <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                       Width="100"
+                                                       Height="100"
+                                                       DataContext="{Binding}" />
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.TeamTemplate>
+                            <s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                                                           Width="100"
+                                                           Height="100"
+                                                           DataContext="{Binding Tag, ElementName=team}"
+                                                           Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                        <my:PackIcon Width="100"
+                                                     Height="100"
+                                                     Kind="Shield"
+                                                     Opacity="{StaticResource MyNet.Opacity.Overlay}"
+                                                     Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </s:TeamDataTemplateSelector.VirtualTeamTemplate>
+                        </s:TeamDataTemplateSelector>
+                    </ContentControl.ContentTemplateSelector>
+                </ContentControl>
 
                 <!-- Cards -->
                 <DockPanel Grid.Row="4">
+                    <DockPanel.IsEnabled>
+                        <MultiBinding Converter="{x:Static my:MultipleBooleanConverter.And}">
+                            <Binding Path="Data.CanEditScore" Source="{StaticResource Proxy}" />
+                            <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="Data.State" Source="{StaticResource Proxy}">
+                                <Binding.ConverterParameter>
+                                    <x:Array Type="{x:Type enums:MatchState}">
+                                        <enums:MatchState>None</enums:MatchState>
+                                        <enums:MatchState>Played</enums:MatchState>
+                                        <enums:MatchState>InProgress</enums:MatchState>
+                                        <enums:MatchState>Suspended</enums:MatchState>
+                                    </x:Array>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </MultiBinding>
+                    </DockPanel.IsEnabled>
                     <DockPanel Margin="{StaticResource MyNet.Margins.Small.Bottom}" DockPanel.Dock="Top">
                         <my:DropDownButton Style="{StaticResource MyNet.Styles.DropDownButton.Filled}"
                                            HorizontalContentAlignment="Stretch"

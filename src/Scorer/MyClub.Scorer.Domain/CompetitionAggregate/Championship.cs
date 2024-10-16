@@ -19,7 +19,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public abstract class Championship : AuditableEntity, IMatchesProvider, ITeamsProvider
     {
-        private readonly ExtendedObservableCollection<IVirtualTeam> _teams = [];
+        private readonly OptimizedObservableCollection<IVirtualTeam> _teams = [];
         private readonly Dictionary<IVirtualTeam, int> _penaltyPoints = [];
 
         protected Championship(Guid? id = null) : base(id) => Teams = new(_teams);

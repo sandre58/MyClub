@@ -4,27 +4,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public class RoundStage : MatchesStage<MatchOfRound>
+    public class RoundStage : MatchesStage<MatchOfFixture>
     {
-        private readonly MatchFormat _matchFormat;
-
-        public RoundStage(RoundOfFixtures stage, DateTime date, string name, string? shortName = null, MatchFormat? matchFormat = null, Guid? id = null) : base(date, name, shortName, id)
-        {
-            _matchFormat = matchFormat ?? stage.FixtureFormat;
-            Stage = stage;
-        }
+        public RoundStage(RoundOfFixtures stage, DateTime date, string name, string? shortName = null, Guid? id = null) : base(date, name, shortName, id) => Stage = stage;
 
         public RoundOfFixtures Stage { get; }
 
-        protected override MatchOfRound Create(DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam) => new(Stage, date, homeTeam, awayTeam);
+        protected override MatchOfFixture Create(DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam)
+            => new(Stage.Fixtures.Find(homeTeam, awayTeam) ?? throw new InvalidOperationException("No fixture found with these teams"), date, ProvideFormat());
 
-        public override MatchFormat ProvideFormat() => _matchFormat;
+        public override MatchFormat ProvideFormat() => Stage.ProvideMatchFormat(this);
 
         public override MatchRules ProvideRules() => Stage.MatchRules;
 
@@ -32,8 +28,10 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public override IEnumerable<IVirtualTeam> ProvideTeams() => Stage.Teams.AsEnumerable();
 
-        public override MatchOfRound AddMatch(MatchOfRound match) => !ReferenceEquals(match.Stage, this)
-                ? throw new ArgumentException("Match stage is not this round stage", nameof(match))
+        public MatchOfFixture AddMatch(Fixture fixture, bool invertTeams = false) => AddMatch(new MatchOfFixture(fixture, Date, ProvideFormat(), invertTeams));
+
+        public override MatchOfFixture AddMatch(MatchOfFixture match) => !ReferenceEquals(match.Stage, Stage)
+                ? throw new ArgumentException("Match stage is not this round", nameof(match))
                 : base.AddMatch(match);
     }
 }

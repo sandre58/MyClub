@@ -10,7 +10,6 @@ using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Plugins.Contracts;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyClub.Scorer.Wpf.ViewModels.Export;
 using MyClub.Scorer.Wpf.ViewModels.Import;
 using MyClub.Scorer.Wpf.ViewModels.MessageBox;
@@ -42,8 +41,6 @@ namespace MyClub.Scorer.Wpf.Services
         private readonly PluginsService _pluginsService = pluginsService;
 
         public async Task AddAsync(string name) => await AppBusyManager.WaitAsync(() => Service.Add(name)).ConfigureAwait(false);
-
-        public async Task OpenAsync(TeamViewModel item) => await EditAsync(item).ConfigureAwait(false);
 
         public async Task<PlayerViewModel?> AddPlayerAsync(TeamViewModel item)
         {

@@ -56,7 +56,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.TeamsPage
         {
             base.OnSelectionChanged();
 
-            DetailsViewModel.SetItem((TeamViewModel?)SelectedItem);
+            DetailsViewModel.SetItem(SelectedItem);
         }
     }
 }

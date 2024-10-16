@@ -12,7 +12,6 @@ using MyClub.Domain.Enums;
 using MyClub.Scorer.Wpf.Services;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Attributes;
-using MyNet.Observable.Collections.Filters;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Commands;
 using MyNet.UI.Selection;
@@ -119,6 +118,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 
             return null;
         }
+
+        protected override async void OpenCore(MatchViewModel item, int? selectedTab = null) => await item.OpenAsync().ConfigureAwait(false);
 
         public async Task StartSelectedItemsAsync() => await _matchPresentationService.StartAsync(SelectedItems).ConfigureAwait(false);
 

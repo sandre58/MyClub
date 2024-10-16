@@ -2,11 +2,12 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
                     xmlns:enums="clr-namespace:MyClub.Domain.Enums;assembly=MyClub.Domain"
-                    xmlns:my="http://mynet.com/xaml/themes">
+                    xmlns:my="http://mynet.com/xaml/themes"
+                    xmlns:p="clr-namespace:MyClub.Scorer.Wpf.Parameters">
 
     <ResourceDictionary.MergedDictionaries>
         <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
-        <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Styles/Scorer.Team.xaml" />
+        <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Styles/Scorer.Controls.TeamControl.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="Scorer.Styles.Label.Score.Small" TargetType="{x:Type Label}" BasedOn="{StaticResource MyNet.Styles.Label.Elevation.Custom}">
@@ -54,11 +55,12 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Home -->
-                        <ContentControl x:Name="home"
-                                        Grid.Column="0"
-                                        HorizontalAlignment="Right"
-                                        Content="{Binding Match.Home.Team, RelativeSource={RelativeSource TemplatedParent}}"
-                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Home}" />
+                        <ctrl:TeamControl x:Name="home"
+                                          Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                          Grid.Column="0"
+                                          HorizontalAlignment="Right"
+                                          QualificationState="{Binding Match.Home.QualificationState, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Team="{Binding Match.Home.Team, RelativeSource={RelativeSource TemplatedParent}}" />
 
                         <!-- Home is withdrawn -->
                         <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
@@ -124,11 +126,13 @@
                                Visibility="{Binding Match.Away.IsWithdrawn, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                         <!-- Away -->
-                        <ContentControl x:Name="away"
-                                        Grid.Column="6"
-                                        HorizontalAlignment="Left"
-                                        Content="{Binding Match.Away.Team, RelativeSource={RelativeSource TemplatedParent}}"
-                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Away}" />
+                        <ctrl:TeamControl x:Name="away"
+                                          Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                          Grid.Column="6"
+                                          HorizontalAlignment="Left"
+                                          IsAway="True"
+                                          QualificationState="{Binding Match.Away.QualificationState, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Team="{Binding Match.Away.Team, RelativeSource={RelativeSource TemplatedParent}}" />
                     </Grid>
 
                     <ControlTemplate.Triggers>
@@ -160,11 +164,12 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Home -->
-                        <ContentControl x:Name="home"
-                                        Grid.Column="0"
-                                        HorizontalAlignment="Right"
-                                        Content="{Binding Match.Home.Team, RelativeSource={RelativeSource TemplatedParent}}"
-                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Home}" />
+                        <ctrl:TeamControl x:Name="home"
+                                          Grid.Column="0"
+                                          HorizontalAlignment="Right"
+                                          QualificationState="{Binding Match.Home.QualificationState, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Team="{Binding Match.Home.Team, RelativeSource={RelativeSource TemplatedParent}}"
+                                          TextWrapping="Wrap" />
 
                         <!-- Home is withdrawn -->
                         <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Custom}"
@@ -322,11 +327,13 @@
                                Visibility="{Binding Match.Away.IsWithdrawn, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
                         <!-- Away -->
-                        <ContentControl x:Name="away"
-                                        Grid.Column="6"
-                                        HorizontalAlignment="Left"
-                                        Content="{Binding Match.Away.Team, RelativeSource={RelativeSource TemplatedParent}}"
-                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Medium.Away}" />
+                        <ctrl:TeamControl x:Name="away"
+                                          Grid.Column="6"
+                                          HorizontalAlignment="Left"
+                                          IsAway="True"
+                                          QualificationState="{Binding Match.Away.QualificationState, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Team="{Binding Match.Away.Team, RelativeSource={RelativeSource TemplatedParent}}"
+                                          TextWrapping="Wrap" />
                     </Grid>
 
                     <ControlTemplate.Triggers>
@@ -366,11 +373,13 @@
                         </my:SimpleStackPanel>
 
                         <!-- Home -->
-                        <ContentControl x:Name="home"
-                                        Grid.Row="2"
-                                        HorizontalAlignment="Center"
-                                        Content="{Binding Match.Home.Team, RelativeSource={RelativeSource TemplatedParent}}"
-                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Large}" />
+                        <ctrl:TeamControl x:Name="home"
+                                          Style="{StaticResource Scorer.Styles.TeamControl.Vertical.Large}"
+                                          Grid.Row="2"
+                                          HorizontalAlignment="Center"
+                                          QualificationState="{Binding Match.Home.QualificationState, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Team="{Binding Match.Home.Team, RelativeSource={RelativeSource TemplatedParent}}"
+                                          TextWrapping="Wrap" />
 
                         <ctrl:MatchButton x:Name="button"
                                           Grid.Row="2"
@@ -538,12 +547,14 @@
                         </ctrl:MatchButton>
 
                         <!-- Away -->
-                        <ContentControl x:Name="away"
-                                        Grid.Row="2"
-                                        Grid.Column="4"
-                                        HorizontalAlignment="Center"
-                                        Content="{Binding Match.Away.Team, RelativeSource={RelativeSource TemplatedParent}}"
-                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Large}" />
+                        <ctrl:TeamControl x:Name="away"
+                                          Style="{StaticResource Scorer.Styles.TeamControl.Vertical.Large}"
+                                          Grid.Row="2"
+                                          Grid.Column="4"
+                                          HorizontalAlignment="Center"
+                                          QualificationState="{Binding Match.Away.QualificationState, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Team="{Binding Match.Away.Team, RelativeSource={RelativeSource TemplatedParent}}"
+                                          TextWrapping="Wrap" />
                     </Grid>
 
                     <ControlTemplate.Triggers>

@@ -19,7 +19,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
     public abstract class MatchesStage<T> : NameEntity, IMatchesStage where T : Match
     {
         private DateTime? _postponedDate;
-        private readonly ExtendedObservableCollection<T> _matches = [];
+        private readonly OptimizedObservableCollection<T> _matches = [];
 
         public MatchesStage(DateTime date, string name, string? shortName = null, Guid? id = null) : base(name, shortName, id)
         {

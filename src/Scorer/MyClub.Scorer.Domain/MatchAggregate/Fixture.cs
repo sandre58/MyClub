@@ -14,8 +14,8 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 {
     public class Fixture : AuditableEntity, IMatchesProvider, IFixture
     {
-        private readonly WinnerTeam<Fixture> _winnerTeam;
-        private readonly LooserTeam<Fixture> _looserTeam;
+        private readonly WinnerOfFixtureTeam _winnerTeam;
+        private readonly LooserOfFixtureTeam _looserTeam;
 
         public Fixture(RoundOfFixtures stage, IVirtualTeam team1, IVirtualTeam team2, Guid? id = null) : base(id)
         {
@@ -34,33 +34,55 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public bool IsPlayed() => GetAllMatches().All(x => x.State is MatchState.Played or MatchState.Cancelled);
 
-        public ExtendedResult GetExtendedResultOf(Guid teamId) => Stage.ResultStrategy.GetExtendedResultOf(this, teamId);
+        public bool HasResult() => GetAllMatches().Where(x => x.State is not MatchState.Cancelled).All(x => x.HasResult());
 
-        public Result GetResultOf(Guid teamId) => Stage.ResultStrategy.GetResultOf(this, teamId);
+        public ExtendedResult GetExtendedResultOf(Guid teamId)
+        {
+            var team1 = Team1.GetTeam();
+            var team2 = Team2.GetTeam();
+
+            return team1 is null || team2 is null
+                ? ExtendedResult.None
+                : team1.Id == teamId ? Stage.ResultStrategy.GetExtendedResultOf(GetAllMatches(), team1, team2)
+                : team2.Id == teamId ? Stage.ResultStrategy.GetExtendedResultOf(GetAllMatches(), team2, team1)
+                : ExtendedResult.None;
+        }
+
+        public Result GetResultOf(Guid teamId)
+        {
+            var team1 = Team1.GetTeam();
+            var team2 = Team2.GetTeam();
+
+            return team1 is null || team2 is null
+                ? Result.None
+                : team1.Id == teamId ? Stage.ResultStrategy.GetResultOf(GetAllMatches(), team1, team2)
+                : team2.Id == teamId ? Stage.ResultStrategy.GetResultOf(GetAllMatches(), team2, team1)
+                : Result.None;
+        }
 
         public Team? GetWinner()
-            => Team1.GetTeam() is not Team team1 || Team2.GetTeam() is not Team team2
-                ? null
-                : GetResultOf(team1.Id) switch
+            => Team1.GetTeam() is Team team1 && Team2.GetTeam() is Team team2
+                ? Stage.ResultStrategy.GetResultOf(GetAllMatches(), team1, team2) switch
                 {
                     Result.Won => team1,
                     Result.Lost => team2,
                     _ => null,
-                };
+                }
+                : null;
 
         public Team? GetLooser()
-            => Team1.GetTeam() is not Team team1 || Team2.GetTeam() is not Team team2
-                ? null
-                : GetResultOf(team1.Id) switch
+            => Team1.GetTeam() is Team team1 && Team2.GetTeam() is Team team2
+                ? Stage.ResultStrategy.GetResultOf(GetAllMatches(), team1, team2) switch
                 {
                     Result.Won => team2,
                     Result.Lost => team1,
                     _ => null,
-                };
+                }
+                : null;
 
         public bool Participate(Guid teamId) => GetTeams().Select(x => x.Id).Contains(teamId);
 
-        private IEnumerable<IVirtualTeam> GetTeams() => new List<IVirtualTeam?>() { Team1, Team2, Team1.GetTeam(), Team2.GetTeam() }.NotNull().Distinct();
+        private IEnumerable<IVirtualTeam> GetTeams() => new List<IVirtualTeam?>() { Team1, Team2, Team1.GetTeam(), Team2.GetTeam(), _winnerTeam, _looserTeam }.NotNull().Distinct();
 
         public IEnumerable<Match> GetAllMatches() => Stage.GetAllMatches().Where(x => x.Participate(Team1.Id) && x.Participate(Team2.Id));
 

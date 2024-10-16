@@ -92,7 +92,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             }).ToList()
         };
 
-        public void Reset(LeagueViewModel stage)
+        public void Reset(IMatchdaysStageViewModel stage)
         {
             Matchdays.Clear();
             MatchesToAdd = 1;
@@ -102,7 +102,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             ScheduleStadiumsAutomatic = false;
         }
 
-        public void Refresh(LeagueViewModel stage)
+        public void Refresh(IMatchdaysStageViewModel stage)
         {
             CanScheduleAutomatic = stage.CanAutomaticReschedule();
             CanScheduleStadiumsAutomatic = stage.CanAutomaticRescheduleVenue();

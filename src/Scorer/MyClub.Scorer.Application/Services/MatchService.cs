@@ -469,7 +469,17 @@ namespace MyClub.Scorer.Application.Services
         protected override void OnCollectionChanged()
         {
             base.OnCollectionChanged();
-            GetAll().ForEach(x => x.ComputeOpponents());
+            GetAll().OrderBy(x => x.OriginDate).ToList().ForEach(x =>
+            {
+                var homeTeam = x.Home?.Team;
+                var hasChanged = x.ComputeOpponents();
+
+                if (hasChanged)
+                    x.Reset();
+
+                if (!Equals(homeTeam, x.Home?.Team) && x.UseHomeVenue())
+                    x.Stadium = x.Home?.Team.Stadium;
+            });
         }
     }
 }

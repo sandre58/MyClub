@@ -62,7 +62,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         [CanSetIsModified(false)]
         [CanBeValidated(false)]
-        public LeagueViewModel? Stage { get; private set; }
+        public IMatchdaysStageViewModel? Stage { get; private set; }
 
         public ICommand GenerateCommand { get; }
 
@@ -79,7 +79,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 new ItemsSourceProvider<MatchdayViewModel>(Stage?.Matchdays.ToList() ?? []),
                 _stadiumsProvider,
                 teamsProvider,
-                (Stage?.SchedulingParameters.UseHomeVenue).IsTrue())
+                (Stage?.UseHomeVenue()).IsTrue())
             {
                 Name = matchdayDto.Name,
                 ShortName = matchdayDto.ShortName
@@ -87,7 +87,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             matchday.CurrentDate.Load(matchdayDto.Date);
             matchday.Matches.AddRange(matchdayDto.MatchesToAdd?.Select(x =>
             {
-                var match = new EditableMatchViewModel(teamsProvider, _stadiumsProvider, (Stage?.SchedulingParameters.UseHomeVenue).IsTrue())
+                var match = new EditableMatchViewModel(teamsProvider, _stadiumsProvider, (Stage?.UseHomeVenue()).IsTrue())
                 {
                     HomeTeam = teamsProvider.Source.GetById(x.HomeTeamId),
                     AwayTeam = teamsProvider.Source.GetById(x.AwayTeamId),
@@ -101,7 +101,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             return new(matchday);
         }
 
-        public void Load(LeagueViewModel stage)
+        public void Load(IMatchdaysStageViewModel stage)
         {
             if (!ReferenceEquals(stage, Stage))
             {

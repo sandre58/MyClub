@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.Scheduling;
@@ -121,6 +122,19 @@ namespace MyClub.Scorer.Domain.Extensions
 
         public static void Randomize(this Match match, bool isFinished = true)
         {
+            if (match is MatchOfFixture matchOfFixture)
+            {
+                if (matchOfFixture.Fixture.Stage.FixtureFormat.UseShootout == Enums.NoDrawUsage.OnLastMatch || matchOfFixture.Fixture.Stage.FixtureFormat.UseExtraTime == Enums.NoDrawUsage.OnLastMatch)
+                    RandomizeMatch(matchOfFixture, isFinished);
+                else
+                    RandomizeMatch(match, isFinished);
+            }
+            else
+                RandomizeMatch(match, isFinished);
+        }
+
+        private static void RandomizeMatch(this Match match, bool isFinished = true)
+        {
             if (match.Home is null || match.Away is null) return;
 
             match.Home.Reset();
@@ -142,8 +156,13 @@ namespace MyClub.Scorer.Domain.Extensions
             EnumerableHelper.Iteration(homeCards, _ => match.Home.AddCard(RandomizeCard(match.Format, match.Rules, match.Home.Team, false)));
             EnumerableHelper.Iteration(awayCards, _ => match.Away.AddCard(RandomizeCard(match.Format, match.Rules, match.Away.Team, false)));
 
+            if (isFinished)
+                match.Played();
+            else
+                match.Start();
+
             // Set score in extra time
-            match.AfterExtraTime = match.Format.ExtraTimeIsEnabled && match.IsDraw();
+            match.AfterExtraTime = match.UseExtraTime();
             if (match.AfterExtraTime)
             {
                 var totalGoalsInExtraTime = TotalGoalsInExtraTime.Random();
@@ -163,12 +182,12 @@ namespace MyClub.Scorer.Domain.Extensions
             }
 
             // Set score in shootout
-            if (match.Format.ShootoutIsEnabled && match.IsDraw())
+            if (match.UseShootout())
             {
                 match.AfterExtraTime = false;
 
-                EnumerableHelper.Iteration(match.Format.NumberOfPenaltyShootouts ?? 0, _ => match.Home.AddPenaltyShootout(RandomGenerator.Enum<PenaltyShootoutResult>()));
-                EnumerableHelper.Iteration(match.Format.NumberOfPenaltyShootouts ?? 0, _ => match.Away.AddPenaltyShootout(RandomGenerator.Enum<PenaltyShootoutResult>()));
+                EnumerableHelper.Iteration(match.Format.NumberOfPenaltyShootouts ?? 0, _ => match.Home.AddPenaltyShootout(RandomizePenaltyShootout(match.Home.Team)));
+                EnumerableHelper.Iteration(match.Format.NumberOfPenaltyShootouts ?? 0, _ => match.Away.AddPenaltyShootout(RandomizePenaltyShootout(match.Away.Team)));
 
                 while (match.Home.GetShootoutScore() == match.Away.GetShootoutScore())
                 {
@@ -176,12 +195,29 @@ namespace MyClub.Scorer.Domain.Extensions
                     match.Away.AddPenaltyShootout(RandomizePenaltyShootout(match.Away.Team));
                 }
             }
-
-            if (isFinished)
-                match.Played();
-            else
-                match.Start();
         }
+
+        private static bool UseExtraTime(this Match match)
+            => match.Format.ExtraTimeIsEnabled
+                && (match is MatchOfFixture matchOfFixture
+                    ? matchOfFixture.Fixture.Stage.FixtureFormat.UseExtraTime switch
+                    {
+                        NoDrawUsage.OnAllMatches => match.IsDraw(),
+                        NoDrawUsage.OnLastMatch => (matchOfFixture.Fixture.Stage.Stages.LastOrDefault()?.Matches.Contains(match)).IsTrue() && matchOfFixture.Fixture.GetWinner() is null,
+                        _ => false,
+                    }
+                    : match.IsDraw());
+
+        private static bool UseShootout(this Match match)
+            => match.Format.ShootoutIsEnabled
+                && (match is MatchOfFixture matchOfFixture
+                    ? matchOfFixture.Fixture.Stage.FixtureFormat.UseShootout switch
+                    {
+                        NoDrawUsage.OnAllMatches => match.IsDraw(),
+                        NoDrawUsage.OnLastMatch => (matchOfFixture.Fixture.Stage.Stages.LastOrDefault()?.Matches.Contains(match)).IsTrue() && matchOfFixture.Fixture.GetWinner() is null,
+                        _ => false,
+                    }
+                    : match.IsDraw());
 
         private static Goal RandomizeGoal(MatchFormat format, Team team, bool inExtraTime)
         {

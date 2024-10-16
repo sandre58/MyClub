@@ -64,6 +64,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public IVirtualTeamViewModel? Team { get; set; }
 
+        public TeamViewModel? ComputedTeam { get; private set; }
+
         [Display(Name = nameof(IsWithdrawn), ResourceType = typeof(MyClubResources))]
         public bool IsWithdrawn { get; set; }
 
@@ -144,6 +146,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             if (withTeam)
                 Team = null;
+            ComputeTeam();
             ResetScore();
             Cards.Clear();
         }
@@ -152,26 +155,27 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
         {
             var hasScore = state is MatchState.InProgress or MatchState.Suspended or MatchState.Played;
             Team = team;
+            ComputeTeam();
             IsWithdrawn = opponent?.IsWithdrawn ?? false;
             Goals.Set(hasScore ? opponent?.GetGoals().Select(x => new EditableGoalViewModel
             {
                 Type = x.Type,
-                Assist = x.Assist is not null ? (Team as TeamViewModel)?.Players.GetByIdOrDefault(x.Assist.Id) : null,
-                Scorer = x.Scorer is not null ? (Team as TeamViewModel)?.Players.GetByIdOrDefault(x.Scorer.Id) : null,
+                Assist = x.Assist is not null ? ComputedTeam?.Players.GetByIdOrDefault(x.Assist.Id) : null,
+                Scorer = x.Scorer is not null ? ComputedTeam?.Players.GetByIdOrDefault(x.Scorer.Id) : null,
                 Minute = x.Minute ?? 1,
                 MinuteIsEnabled = x.Minute.HasValue
             }).OrderBy(x => x.Minute) : []);
             Shootout.Set(hasScore ? opponent?.Shootout.Select(x => new EditablePenaltyShootoutViewModel
             {
                 Result = x.Result,
-                Taker = x.Taker is not null ? (Team as TeamViewModel)?.Players.GetByIdOrDefault(x.Taker.Id) : null,
+                Taker = x.Taker is not null ? ComputedTeam?.Players.GetByIdOrDefault(x.Taker.Id) : null,
             }) : []);
             Cards.Set(hasScore ? opponent?.GetCards().Select(x => new EditableCardViewModel
             {
                 Color = x.Color,
                 Infraction = x.Infraction,
                 Description = x.Description,
-                Player = x.Player is not null ? (Team as TeamViewModel)?.Players.GetByIdOrDefault(x.Player.Id) : null,
+                Player = x.Player is not null ? ComputedTeam?.Players.GetByIdOrDefault(x.Player.Id) : null,
                 Minute = x.Minute ?? 1,
                 MinuteIsEnabled = x.Minute.HasValue
             }) : []);
@@ -188,5 +192,12 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             ResetScore();
             3.Iteration(_ => AddGoal());
         }
+
+        private void ComputeTeam()
+            => ComputedTeam = Team is null
+                ? null
+                : Team is TeamViewModel team
+                ? team
+                : Team.ProvideTeam();
     }
 }

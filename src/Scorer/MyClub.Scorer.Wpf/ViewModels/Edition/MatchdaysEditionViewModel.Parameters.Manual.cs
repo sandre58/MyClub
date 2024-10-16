@@ -44,10 +44,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public ICommand ClearCommand { get; }
 
-        public void Reset(LeagueViewModel stage)
+        public void Reset(IMatchdaysStageViewModel stage)
         {
-            StartDisplayDate = stage.SchedulingParameters.StartDate;
-            EndDisplayDate = stage.SchedulingParameters.EndDate;
+            StartDisplayDate = stage.ProvideStartDate();
+            EndDisplayDate = stage.ProvideEndDate();
             Dates.Clear();
         }
 

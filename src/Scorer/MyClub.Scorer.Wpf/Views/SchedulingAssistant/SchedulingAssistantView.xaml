@@ -1,6 +1,7 @@
 ﻿<my:ContentDialog x:Class="MyClub.Scorer.Wpf.Views.SchedulingAssistant.SchedulingAssistantView"
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:dd="urn:gong-wpf-dragdrop"
                   xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
@@ -227,11 +228,11 @@
                                                                         <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
 
                                                                         <!-- Home -->
-                                                                        <ContentControl Grid.Column="2"
-                                                                                        Margin="{StaticResource MyNet.Margins.Small}"
-                                                                                        Content="{Binding Item.Home.Team}"
-                                                                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Home}"
-                                                                                        IsEnabled="False" />
+                                                                        <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                                                          Grid.Column="2"
+                                                                                          Margin="{StaticResource MyNet.Margins.Small}"
+                                                                                          IsEnabled="False"
+                                                                                          Team="{Binding Item.Home.Team}" />
 
                                                                         <TextBlock Grid.Column="4"
                                                                                    Margin="{StaticResource MyNet.Margins.Small}"
@@ -240,11 +241,12 @@
                                                                                    Typography.Capitals="AllSmallCaps" />
 
                                                                         <!-- Away -->
-                                                                        <ContentControl Grid.Column="6"
-                                                                                        Margin="{StaticResource MyNet.Margins.Small}"
-                                                                                        Content="{Binding Item.Away.Team}"
-                                                                                        ContentTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.Small.Away}"
-                                                                                        IsEnabled="False" />
+                                                                        <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                                                          Grid.Column="6"
+                                                                                          Margin="{StaticResource MyNet.Margins.Small}"
+                                                                                          IsAway="True"
+                                                                                          IsEnabled="False"
+                                                                                          Team="{Binding Item.Away.Team}" />
                                                                     </Grid>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>

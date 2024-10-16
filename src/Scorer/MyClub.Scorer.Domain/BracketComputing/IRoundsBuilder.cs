@@ -3,12 +3,11 @@
 
 using System.Collections.Generic;
 using MyClub.Scorer.Domain.CompetitionAggregate;
-using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.BracketComputing
 {
-    public interface IKnockoutBuilder
+    public interface IRoundsBuilder
     {
-        IEnumerable<IRound> Build<T>(T stage, IRoundsAlgorithm algorithm) where T : Knockout, ITeamsProvider;
+        IEnumerable<IRound> Build(Knockout stage, IRoundsAlgorithm algorithm);
     }
 }

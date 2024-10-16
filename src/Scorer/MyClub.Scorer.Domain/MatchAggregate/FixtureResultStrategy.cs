@@ -2,8 +2,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
@@ -11,42 +13,36 @@ namespace MyClub.Scorer.Domain.MatchAggregate
     {
         public static readonly FixtureResultStrategy Default = new();
 
-        public ExtendedResult GetExtendedResultOf(Fixture fixture, Guid teamId)
+        public ExtendedResult GetExtendedResultOf(IEnumerable<Match> matches, Team team, Team against)
         {
-            if (!fixture.IsPlayed()) return ExtendedResult.None;
+            var availableMatches = matches.Where(x => x.State is not MatchState.Cancelled).ToList();
+            if (availableMatches.Any(x => !x.HasResult())) return ExtendedResult.None;
 
-            var team1 = fixture.Team1.GetTeam();
-            var team2 = fixture.Team2.GetTeam();
-
-            if (team1 is null || team2 is null) return ExtendedResult.None;
-
-            var matches = fixture.GetAllMatches().ToList();
-            var result1 = matches.Select(x => x.GetExtendedResultOf(team1.Id));
-            var result2 = matches.Select(x => x.GetExtendedResultOf(team2.Id));
+            var result1 = availableMatches.Select(x => x.GetExtendedResultOf(team.Id));
+            var result2 = availableMatches.Select(x => x.GetExtendedResultOf(against.Id));
             var wonByTeam1 = result1.Count(x => x == ExtendedResult.Won);
             var wonByTeam2 = result2.Count(x => x == ExtendedResult.Won);
             var wonAfterShootoutByTeam1 = result1.Count(x => x == ExtendedResult.WonAfterShootouts);
             var wonAfterShootoutByTeam2 = result2.Count(x => x == ExtendedResult.WonAfterShootouts);
-            var score1 = matches.Sum(x => x.Home!.GetScore());
-            var score2 = matches.Sum(x => x.Away!.GetScore());
+            var score1 = matches.Sum(x => x.GoalsFor(team.Id));
+            var score2 = matches.Sum(x => x.GoalsFor(against.Id));
+            var shootout1 = matches.Sum(x => x.ShootoutFor(team.Id));
+            var shootout2 = matches.Sum(x => x.ShootoutFor(against.Id));
 
-            return wonByTeam1 > wonByTeam2 && team1.Id == teamId ? ExtendedResult.Won
-                 : wonByTeam1 < wonByTeam2 && team1.Id == teamId ? ExtendedResult.Lost
-                 : wonByTeam2 > wonByTeam1 && team2.Id == teamId ? ExtendedResult.Won
-                 : wonByTeam2 < wonByTeam1 && team2.Id == teamId ? ExtendedResult.Lost
-                 : score1 > score2 && team1.Id == teamId ? ExtendedResult.Won
-                 : score1 < score2 && team1.Id == teamId ? ExtendedResult.Lost
-                 : score2 > score1 && team2.Id == teamId ? ExtendedResult.Won
-                 : score2 < score1 && team2.Id == teamId ? ExtendedResult.Lost
-                 : wonAfterShootoutByTeam1 > wonAfterShootoutByTeam2 && team1.Id == teamId ? ExtendedResult.WonAfterShootouts
-                 : wonAfterShootoutByTeam1 < wonAfterShootoutByTeam2 && team1.Id == teamId ? ExtendedResult.LostAfterShootouts
-                 : wonAfterShootoutByTeam2 > wonAfterShootoutByTeam1 && team2.Id == teamId ? ExtendedResult.WonAfterShootouts
-                 : wonAfterShootoutByTeam2 < wonAfterShootoutByTeam1 && team2.Id == teamId ? ExtendedResult.LostAfterShootouts
+            return wonByTeam1 > wonByTeam2 ? ExtendedResult.Won
+                 : wonByTeam1 < wonByTeam2 ? ExtendedResult.Lost
+                 : score1 > score2 ? ExtendedResult.Won
+                 : score1 < score2 ? ExtendedResult.Lost
+                 : wonAfterShootoutByTeam1 > wonAfterShootoutByTeam2 ? ExtendedResult.WonAfterShootouts
+                 : wonAfterShootoutByTeam1 < wonAfterShootoutByTeam2 ? ExtendedResult.LostAfterShootouts
+                 : shootout1 > shootout2 ? ExtendedResult.WonAfterShootouts
+                 : shootout1 < shootout2 ? ExtendedResult.LostAfterShootouts
                  : ExtendedResult.Drawn;
 
         }
-        public Result GetResultOf(Fixture fixture, Guid teamId)
-            => GetExtendedResultOf(fixture, teamId) switch
+
+        public Result GetResultOf(IEnumerable<Match> matches, Team team, Team against)
+            => GetExtendedResultOf(matches, team, against) switch
             {
                 ExtendedResult.Won or ExtendedResult.WonAfterShootouts => Result.Won,
                 ExtendedResult.Drawn => Result.Drawn,

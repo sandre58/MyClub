@@ -16,31 +16,35 @@ namespace MyClub.Scorer.Domain.BracketComputing
 
         public IEnumerable<BracketRound> Compute(IEnumerable<IVirtualTeam> teams)
         {
+            var numberOfTeams = teams.Count();
+
+            if (numberOfTeams <= 1) return [];
+
+            var numberOfRounds = NumberOfRounds(numberOfTeams);
+            var numberOfFixturesForFirstRound = numberOfTeams - Math.Pow(2, numberOfRounds - 1);
+            var remainingTeams = new Stack<BracketTeam>(teams.Select(x => new BracketTeam(x)));
             var result = new List<BracketRound>();
-            var teamsForCurrentRound = teams.Select(x => new BracketTeam(x)).ToList();
 
-            while (teamsForCurrentRound.Count > 1)
+            for (var roundIndex = numberOfRounds; roundIndex >= 1; roundIndex--)
             {
-                var teamsForNextRound = new List<BracketTeam>();
                 var fixtures = new List<BracketFixture>();
-                for (var i = 0; i < teamsForCurrentRound.Count; i += 2)
-                {
-                    if (i + 1 < teamsForCurrentRound.Count)
-                    {
-                        var fixture = new BracketFixture(teamsForCurrentRound[i], teamsForCurrentRound[i + 1]);
-                        fixtures.Add(fixture);
-                        teamsForNextRound.Add(new(fixture, true));
-                    }
-                    else
-                    {
-                        // Handle the case where there is an odd number of teams
-                        // The last team automatically advances to the next round
-                        teamsForNextRound.Add(teamsForCurrentRound[i]);
-                    }
-                }
-                result.Add(new(fixtures, teamsForCurrentRound.ToList()));
+                var teamsForNextRound = new List<BracketTeam>();
+                var teamsForCurrentRound = remainingTeams.ToList();
+                var numberOfFixtures = roundIndex == numberOfRounds ? numberOfFixturesForFirstRound : Math.Pow(2, roundIndex - 1);
 
-                teamsForCurrentRound = [.. teamsForNextRound];
+                for (var fixtureIndex = 0; fixtureIndex < numberOfFixtures; fixtureIndex++)
+                {
+                    var team1 = remainingTeams.Pop();
+                    var team2 = remainingTeams.Pop();
+                    var fixture = new BracketFixture(team1, team2);
+                    fixtures.Add(fixture);
+                    teamsForNextRound.Add(new(fixture, true));
+                }
+                teamsForNextRound.InsertRange(0, remainingTeams);
+
+                result.Add(new(fixtures, teamsForCurrentRound));
+
+                remainingTeams = new(teamsForNextRound);
             }
 
             return result;

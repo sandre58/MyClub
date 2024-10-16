@@ -96,6 +96,11 @@
                     </Grid>
 
                     <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Color, Converter={x:Static my:NullToBooleanConverter.TrueIfNull}}" Value="True">
+                            <Setter TargetName="minute" Property="Background" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                            <Setter TargetName="marker" Property="Fill" Value="{DynamicResource MyNet.Brushes.Control.Background}" />
+                            <Setter TargetName="label" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Application.Foreground}" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding IsHome}" Value="False">
                             <Setter TargetName="event" Property="Margin" Value="-12 17 0 0" />
                             <Setter TargetName="label" Property="Margin" Value="10 7 0 0" />

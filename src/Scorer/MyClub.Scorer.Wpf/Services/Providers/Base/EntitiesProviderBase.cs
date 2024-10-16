@@ -6,14 +6,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.Scorer.Domain.ProjectAggregate;
+using MyNet.DynamicData.Extensions;
 using MyNet.Observable.Collections.Providers;
 using MyNet.Observable.Deferrers;
-using MyNet.UI.Collections;
 using MyNet.Utilities;
 using MyNet.Utilities.Deferring;
 using MyNet.Utilities.Logging;
@@ -25,7 +26,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
     {
         private readonly ProjectInfoProvider _projectInfoProvider;
         private IProject? _currentProject;
-        private readonly UiObservableCollection<TViewModel> _source = [];
+        private readonly ExtendedObservableCollection<TViewModel> _source = [];
         private readonly IObservable<IChangeSet<TViewModel>> _observable;
         private readonly IObservable<IChangeSet<TViewModel, Guid>> _observableById;
         private readonly CompositeDisposable _disposables = [];
@@ -41,6 +42,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
 
                 SourceSubscriptions = new(
                     source
+                    .ObserveOn(MyNet.UI.Threading.Scheduler.GetUIOrCurrent())
                     .Bind(_source)
                     .DisposeMany()
                     .Subscribe(z => LoadRunner?.IsRunning.IfTrue(() => y.OnNext(x)))
@@ -51,7 +53,7 @@ namespace MyClub.Scorer.Wpf.Services.Providers.Base
             UnloadRunner = new(() =>
             {
                 SourceSubscriptions?.Dispose();
-                _source.Clear();
+                MyNet.UI.Threading.Scheduler.GetUIOrCurrent().Schedule(_ => _source.Clear());
             });
 
             Items = new(_source);

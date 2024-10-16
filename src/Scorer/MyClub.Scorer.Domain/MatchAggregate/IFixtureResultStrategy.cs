@@ -1,15 +1,16 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
+using System.Collections.Generic;
 using MyClub.Domain.Enums;
+using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.MatchAggregate
 {
     public interface IFixtureResultStrategy
     {
-        Result GetResultOf(Fixture fixture, Guid teamId);
+        Result GetResultOf(IEnumerable<Match> matches, Team team, Team against);
 
-        ExtendedResult GetExtendedResultOf(Fixture fixture, Guid teamId);
+        ExtendedResult GetExtendedResultOf(IEnumerable<Match> matches, Team team, Team against);
     }
 }

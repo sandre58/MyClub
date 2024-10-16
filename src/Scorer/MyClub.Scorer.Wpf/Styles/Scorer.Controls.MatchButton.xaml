@@ -7,7 +7,6 @@
 
     <ResourceDictionary.MergedDictionaries>
         <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
-        <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Styles/Scorer.Team.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <sys:Int32 x:Key="One">1</sys:Int32>
@@ -28,8 +27,8 @@
 
                         <!-- IsCancelled -->
                         <my:PackIcon x:Name="cancel"
-                                     Width="18"
-                                     Height="18"
+                                     Width="20"
+                                     Height="20"
                                      Foreground="{DynamicResource MyNet.Brushes.Negative}"
                                      Kind="ProgressClose"
                                      ToolTip="{my:Resource Cancelled}"
@@ -37,12 +36,21 @@
 
                         <!-- IsPostponed -->
                         <my:PackIcon x:Name="postponed"
-                                     Width="18"
-                                     Height="18"
+                                     Width="20"
+                                     Height="20"
                                      Foreground="{DynamicResource MyNet.Brushes.Warning}"
                                      Kind="ProgressQuestion"
                                      ToolTip="{my:Resource Postponed}"
                                      Visibility="Collapsed" />
+
+                        <!-- None -->
+                        <my:PackIcon x:Name="versus"
+                                     Width="20"
+                                     Height="20"
+                                     Kind="ProgressClock"
+                                     Opacity="{StaticResource MyNet.Opacity.Overlay}"
+                                     Visibility="Collapsed" />
+
 
                         <!-- DateTime -->
                         <Grid x:Name="date" Visibility="Collapsed">
@@ -63,11 +71,6 @@
                                 </TextBlock.Visibility>
                             </TextBlock>
                         </Grid>
-
-                        <!-- Versus -->
-                        <TextBlock x:Name="versus"
-                                   Text="{my:Resource VersusAbbr}"
-                                   Visibility="Collapsed" />
 
                         <!-- Score -->
                         <Grid x:Name="score" Visibility="Collapsed">

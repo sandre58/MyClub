@@ -1,33 +1,79 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ctrl="clr-namespace:MyClub.Scorer.Wpf.Controls"
+                    xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
                     xmlns:my="http://mynet.com/xaml/themes">
 
     <ResourceDictionary.MergedDictionaries>
         <my:SharedResourceDictionary Source="pack://application:,,,/MyNet.Wpf;component/Themes/MyNet.Styles.xaml" />
-        <my:SharedResourceDictionary Source="pack://application:,,,/Scorer;component/Styles/Scorer.Team.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="Scorer.Styles.TeamButton" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}" TargetType="{x:Type ctrl:TeamButton}">
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
-        <Setter Property="ToolTip" Value="{my:Resource SeeItem}" />
-        <Setter Property="Orientation" Value="Vertical" />
-        <Setter Property="Padding" Value="3 0 3 1" />
+    <Style x:Key="Scorer.Styles.TeamButton" TargetType="{x:Type ctrl:TeamButton}" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}">
+        <Setter Property="Command" Value="{Binding Item.EditCommand, RelativeSource={RelativeSource Self}}" />
         <Setter Property="Content" Value="{Binding Item, RelativeSource={RelativeSource Self}}" />
         <Setter Property="ContentTemplate">
             <Setter.Value>
                 <DataTemplate>
-                    <TextBlock TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamButton}}}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock x:Name="text" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamButton}}}" />
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding ShowShortName, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamButton}}}" Value="True">
+                            <Setter TargetName="text" Property="Text" Value="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamButton}}}" Value="Center">
+                            <Setter TargetName="text" Property="TextAlignment" Value="Center" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </Setter.Value>
         </Setter>
+        <Setter Property="FontWeight" Value="{Binding Path=(TextElement.FontWeight), RelativeSource={RelativeSource AncestorType={x:Type FrameworkElement}}}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="Padding" Value="3 0 3 1" />
+        <Setter Property="ToolTip" Value="{my:Resource Edit}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
         <Style.Triggers>
             <Trigger Property="IsEnabled" Value="false">
                 <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <Style x:Key="Scorer.Styles.VirtualTeamButton" TargetType="{x:Type ctrl:VirtualTeamButton}" BasedOn="{StaticResource MyNet.Styles.Button.HyperLink.Foreground}">
+        <Setter Property="Command" Value="{Binding Item.OpenCommand, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="Content" Value="{Binding Item, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock x:Name="text"
+                               Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                               Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                               TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:VirtualTeamButton}}}" />
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding ShowShortName, RelativeSource={RelativeSource AncestorType={x:Type ctrl:VirtualTeamButton}}}" Value="True">
+                            <Setter TargetName="text" Property="Text" Value="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType={x:Type ctrl:VirtualTeamButton}}}" Value="Center">
+                            <Setter TargetName="text" Property="TextAlignment" Value="Center" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FontStyle" Value="Italic" />
+        <Setter Property="FontWeight" Value="{Binding Path=(TextElement.FontWeight), RelativeSource={RelativeSource AncestorType={x:Type FrameworkElement}}}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="Padding" Value="3 0 3 1" />
+        <Setter Property="ToolTip" Value="{my:Resource SeeMatch}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="false">
+                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Default}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>
