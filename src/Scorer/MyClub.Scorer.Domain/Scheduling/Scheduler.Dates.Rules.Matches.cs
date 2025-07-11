@@ -4,30 +4,32 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class DateRulesMatchesScheduler : DateRulesScheduler<Match>, IMatchesScheduler
+    public class DateRulesMatchesScheduler : DateRulesScheduler<Match>
     {
+        private DateOnly _fromDate;
+
+        public DateRulesMatchesScheduler(DateOnly fromDate) : base(fromDate) => _fromDate = fromDate;
+
         public bool ScheduleByStage { get; set; }
 
         public override void Schedule(IEnumerable<Match> items)
         {
-            var startDate = StartDate;
             if (!ScheduleByStage)
             {
                 DateOnly? previousDate = null;
                 items.ForEach(item =>
                 {
                     var matchIndex = item.GetStage().GetAllMatches().OrderBy(x => x.Date).ToList().IndexOf(item);
-                    var newDate = ScheduleItem(item, startDate, previousDate, matchIndex);
+                    var newDate = ScheduleItem(item, _fromDate, previousDate, matchIndex);
 
                     previousDate = newDate.ToDate();
-                    startDate = newDate.BeginningOfDay().Add(Interval).ToDate();
+                    _fromDate = newDate.BeginningOfDay().Add(Interval).ToDate();
                 });
             }
             else
@@ -36,7 +38,7 @@ namespace MyClub.Scorer.Domain.Scheduling
                 DateOnly? previousDate = null;
                 itemsGroupByStages.ForEach(item =>
                 {
-                    var newDate = ComputeNextDate(startDate, previousDate);
+                    var newDate = ComputeNextDate(_fromDate, previousDate);
 
                     item.OrderBy(x => x.Date).ToList().ForEach(match =>
                     {
@@ -47,10 +49,14 @@ namespace MyClub.Scorer.Domain.Scheduling
                     });
 
                     previousDate = newDate;
-                    startDate = newDate.BeginningOfDay().Add(Interval).ToDate();
+                    _fromDate = newDate.BeginningOfDay().Add(Interval).ToDate();
                 });
             }
         }
+
+        public override DateTime GetFromDate() => _fromDate.BeginningOfDay();
+
+        public override void Reset(DateTime fromDate, IEnumerable<Match>? scheduledItems = null) => _fromDate = fromDate.ToDate();
     }
 }
 

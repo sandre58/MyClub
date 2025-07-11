@@ -10,16 +10,16 @@ using MyClub.Scorer.Domain.ProjectAggregate;
 
 namespace MyClub.Scorer.Infrastructure.Repositories
 {
-    public class RoundRepository(IProjectRepository projectRepository, IAuditService auditService) : EntitiesRepositoryBase<IRound>(projectRepository, auditService), IRoundRepository
+    public class RoundRepository(IProjectRepository projectRepository, IAuditService auditService) : EntitiesRepositoryBase<Round>(projectRepository, auditService), IRoundRepository
     {
-        public override IEnumerable<IRound> GetAll() => CurrentProject.Competition.GetStages<IRound>();
+        public override IEnumerable<Round> GetAll() => CurrentProject.Competition.GetStages<Round>();
 
-        protected override IRound AddCore(IRound item) => item;
+        protected override Round AddCore(Round item) => item;
 
-        protected override IEnumerable<IRound> AddRangeCore(IEnumerable<IRound> items) => items.Select(AddCore);
+        protected override IEnumerable<Round> AddRangeCore(IEnumerable<Round> items) => items.Select(AddCore);
 
-        protected override bool RemoveCore(IRound item) => item.Stage.RemoveRound(item);
+        protected override bool RemoveCore(Round item) => item.Stage.RemoveRound(item);
 
-        protected override int RemoveRangeCore(IEnumerable<IRound> items) => items.Count(RemoveCore);
+        protected override int RemoveRangeCore(IEnumerable<Round> items) => items.Count(RemoveCore);
     }
 }

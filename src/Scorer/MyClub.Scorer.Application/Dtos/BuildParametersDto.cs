@@ -2,10 +2,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
-using MyNet.Utilities.Units;
 
 namespace MyClub.Scorer.Application.Dtos
 {
@@ -24,8 +22,6 @@ namespace MyClub.Scorer.Application.Dtos
 
     public class BuildBracketParametersDto
     {
-        public BuildAlgorithmParametersDto? AlgorithmParameters { get; set; }
-
         public BuildDatesParametersDto? BuildDatesParameters { get; set; }
 
         public string? NamePattern { get; set; }
@@ -45,49 +41,11 @@ namespace MyClub.Scorer.Application.Dtos
 
     public class BuildMatchdaysParametersDto : BuildBracketParametersDto
     {
+        public MatchdaysAlgorithmDto? AlgorithmParameters { get; set; }
     }
 
-    public abstract class BuildAlgorithmParametersDto
+    public class BuildRoundsParametersDto : BuildBracketParametersDto
     {
-        public int NumberOfTeams { get; set; }
-    }
-
-    public class RoundRobinParametersDto : BuildAlgorithmParametersDto
-    {
-        public bool[]? MatchesBetweenTeams { get; set; }
-    }
-
-    public class SwissSystemParametersDto : BuildAlgorithmParametersDto
-    {
-        public int NumberOfMatchesByTeam { get; set; }
-    }
-
-    public abstract class BuildDatesParametersDto { }
-
-    public class BuildAsSoonAsPossibleDatesParametersDto : BuildDatesParametersDto
-    {
-        public DateTime? StartDate { get; set; }
-
-        public List<IAvailableDateSchedulingRule>? Rules { get; set; }
-    }
-
-    public class BuildAutomaticDatesParametersDto : BuildDatesParametersDto
-    {
-        public DateOnly? StartDate { get; set; }
-
-        public TimeOnly? DefaultTime { get; set; }
-
-        public int IntervalValue { get; set; }
-
-        public TimeUnit IntervalUnit { get; set; }
-
-        public List<IDateSchedulingRule>? DateRules { get; set; }
-
-        public List<ITimeSchedulingRule>? TimeRules { get; set; }
-    }
-
-    public class BuildManualDatesParametersDto : BuildDatesParametersDto
-    {
-        public List<(DateTime date, IEnumerable<DateTime> datesOfMatches)>? Dates { get; set; }
+        public RoundsAlgorithmDto? AlgorithmParameters { get; set; }
     }
 }

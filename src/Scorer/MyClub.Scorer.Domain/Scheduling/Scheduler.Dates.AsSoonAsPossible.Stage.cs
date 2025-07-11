@@ -4,19 +4,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.StadiumAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class AsSoonAsPossibleStageScheduler<T> : IScheduler<T> where T : ISchedulable, IMatchesProvider
+    public class AsSoonAsPossibleStageScheduler : IDateScheduler<IMatchesStage>
     {
-        private readonly IEnumerable<T> _scheduledItems;
+        private readonly List<Match> _scheduledItems = [];
+        private DateTime _fromDate;
 
-        public AsSoonAsPossibleStageScheduler(IEnumerable<T>? scheduledItems = null) => _scheduledItems = scheduledItems ?? [];
-
-        public DateTime StartDate { get; set; } = DateTime.UtcNow;
+        public AsSoonAsPossibleStageScheduler(DateTime fromDate, IEnumerable<IMatchesStage>? scheduledItems = null)
+        {
+            _fromDate = fromDate;
+            _scheduledItems = new(scheduledItems?.SelectMany(x => x.GetAllMatches()) ?? []);
+        }
 
         public bool ScheduleVenues { get; set; } = true;
 
@@ -24,22 +28,30 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public ICollection<Stadium> AvailableStadiums { get; set; } = [];
 
-        public virtual void Schedule(IEnumerable<T> items)
+        public virtual void Schedule(IEnumerable<IMatchesStage> items)
         {
-            var scheduledMatches = new List<Match>(_scheduledItems.Except(items).SelectMany(x => x.GetAllMatches()));
-            var previousDate = StartDate;
+            items.SelectMany(x => x.GetAllMatches()).ToList().ForEach(x => _scheduledItems.Remove(x));
+
             items.ForEach(x =>
             {
-                var scheduler = new AsSoonAsPossibleMatchesScheduler(scheduledMatches) { StartDate = previousDate, ScheduleVenues = ScheduleVenues, AvailableStadiums = AvailableStadiums, Rules = Rules };
+                var scheduler = new AsSoonAsPossibleMatchesScheduler(_fromDate, _scheduledItems) { ScheduleVenues = ScheduleVenues, AvailableStadiums = AvailableStadiums, Rules = Rules };
                 var matches = x.GetAllMatches().ToList();
                 scheduler.Schedule(matches);
 
-                scheduledMatches.AddRange(matches);
+                _scheduledItems.AddRange(matches);
                 var dateOfMatchday = matches.MinOrDefault(x => x.Date, x.Date);
 
                 x.Schedule(dateOfMatchday);
-                previousDate = scheduledMatches.MaxOrDefault(x => x.GetPeriod().End, x.Date);
+                _fromDate = _scheduledItems.MaxOrDefault(x => x.GetPeriod().End, x.Date);
             });
+        }
+
+        public DateTime GetFromDate() => _fromDate;
+
+        public void Reset(DateTime fromDate, IEnumerable<IMatchesStage>? scheduledItems = null)
+        {
+            _scheduledItems.Set(scheduledItems?.SelectMany(x => x.GetAllMatches()) ?? []);
+            _fromDate = fromDate;
         }
     }
 }

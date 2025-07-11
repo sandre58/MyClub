@@ -65,22 +65,20 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
             // Scheduler
             var matchdaysScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
-                ? new AsSoonAsPossibleStageScheduler<Matchday>()
+                ? (IDateScheduler<IMatchesStage>)new AsSoonAsPossibleStageScheduler(project.Competition.SchedulingParameters.Start())
                 {
-                    StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
                     ScheduleVenues = true,
                     AvailableStadiums = project.Stadiums
                 }
-                : (IScheduler<Matchday>)new DateRulesStageScheduler<Matchday>()
+                : new DateRulesStageScheduler(project.Competition.SchedulingParameters.StartDate)
                 {
                     Interval = project.Competition.SchedulingParameters.Interval,
                     DateRules = [.. project.Competition.SchedulingParameters.DateRules],
                     TimeRules = [.. project.Competition.SchedulingParameters.TimeRules],
                     DefaultTime = project.Competition.SchedulingParameters.StartTime,
-                    StartDate = project.Competition.SchedulingParameters.StartDate,
                 };
-            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IMatchesScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
+            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IVenueScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
             {
                 Rules = [.. project.Competition.SchedulingParameters.VenueRules],
             };
@@ -98,12 +96,7 @@ namespace MyClub.Scorer.Mocks.Factory.Database
 
             matchdays.ForEach(x =>
             {
-                x.Matches.ForEach(match =>
-                {
-                    if (match.Date.IsInPast())
-                        match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
-                    match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
-                });
+                RandomizeMatches(x.Matches);
                 x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
 
                 project.Competition.AddMatchday(x);
@@ -113,14 +106,86 @@ namespace MyClub.Scorer.Mocks.Factory.Database
         }
 
         public async Task<CupProject> CreateCupAsync(CancellationToken cancellationToken = default)
-            => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (name, image, matchFormat, matchRules, schedulingParameters) =>
+        {
+            var project = await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (name, image, matchFormat, matchRules, schedulingParameters) =>
             {
                 var competition = new CupProject(name, image);
                 competition.Competition.SchedulingParameters = schedulingParameters;
                 competition.Competition.MatchFormat = matchFormat;
                 competition.Competition.MatchRules = matchRules;
                 return competition;
-            }, false, 16, 32, cancellationToken).ConfigureAwait(false);
+            }, false, 16, 128, cancellationToken).ConfigureAwait(false);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Scheduler
+            var roundsScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
+                ? new AsSoonAsPossibleStageScheduler(project.Competition.SchedulingParameters.Start())
+                {
+                    Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
+                    ScheduleVenues = true,
+                    AvailableStadiums = project.Stadiums
+                }
+                : (IDateScheduler<IMatchesStage>)new DateRulesStageScheduler(project.Competition.SchedulingParameters.StartDate)
+                {
+                    Interval = project.Competition.SchedulingParameters.Interval,
+                    DateRules = [.. project.Competition.SchedulingParameters.DateRules],
+                    TimeRules = [.. project.Competition.SchedulingParameters.TimeRules],
+                    DefaultTime = project.Competition.SchedulingParameters.StartTime,
+                };
+            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IVenueScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
+            {
+                Rules = [.. project.Competition.SchedulingParameters.VenueRules],
+            };
+
+            // Builders
+            var algorythm = RandomGenerator.ListItem(new List<IRoundsAlgorithm>
+            {
+                ByeTeamAlgorithm.Default,
+                PreliminaryRoundAlgorithm.Default
+            });
+            var addConsolationParameters = RandomGenerator.ListItem(new List<AddConsolationParameters>
+            {
+                AddConsolationParameters.None,
+                AddConsolationParameters.OneConsolationBracket,
+                AddConsolationParameters.All,
+                AddConsolationParameters.ThirdPlace(algorythm.NumberOfRounds(project.Competition.Teams.Count))
+            });
+            var builder = RandomGenerator.ListItem(new List<IRoundsBuilder>
+            {
+                new OneLegRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters },
+                new NumberOfWinsRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters, NumberOfWins = RandomGenerator.Int(2, 4), InvertTeamsByStage = 4.Range().Select(x => x.IsEven()).ToArray() },
+                new ReplayRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters },
+                new TwoLegsRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters, OneLegForFirstRound = RandomGenerator.Bool(), OneLegForLastRound = RandomGenerator.Bool()},
+            });
+
+            var rounds = builder.Build(project.Competition, algorythm);
+
+            roundsScheduler.Reset(project.Competition.SchedulingParameters.Start());
+            rounds.ForEach(x =>
+            {
+                foreach (var item in x.Stages.ToList())
+                {
+                    item.Matches.ForEach(x => x.ComputeOpponents());
+                    roundsScheduler.Schedule(new[] { item });
+                    venueScheduler?.Schedule(item.Matches);
+                    RandomizeMatches(item.Matches, x.Format.AllowDraw());
+
+                    // Add new matches for fixtures without results
+                    var nextStage = item.GetNextStage();
+                    if (nextStage is not null)
+                        x.Fixtures.ForEach(y => x.Format.CanAddFixtureInStage(nextStage, y).IfTrue(() => nextStage.AddMatch(y, invertTeams: x.Format.InvertTeams(nextStage))));
+                }
+                x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+
+                project.Competition.AddRound(x);
+            });
+
+            // Remove empty rounds
+            rounds.ForEach(x => x.Stages.Where(x => x.Matches.Count == 0).ToList().ForEach(y => x.RemoveStage(y)));
+
+            return project;
+        }
 
         public async Task<TournamentProject> CreateTournamentAsync(CancellationToken cancellationToken = default)
             => await CreateAsync(DatabaseContext.Domain.CompetitionAggregate.Competition.Cup, (name, image, matchFormat, matchRules, schedulingParameters) =>
@@ -263,6 +328,17 @@ namespace MyClub.Scorer.Mocks.Factory.Database
                                             [],
                                             !useHomeVenue && !asSoonAsPossible ? [new FirstAvailableStadiumRule(UseRotationTime.YesOrOtherwiseNo)] : []);
         }
+
+        private static void RandomizeMatches(IEnumerable<Match> matches, bool allowDraw = true) => matches.ForEach(match =>
+        {
+            if (match.UseHomeVenue() && match.Home?.Team is Team homeTeam)
+                match.Stadium = homeTeam.Stadium;
+            if (match.Date.IsInPast())
+            {
+                match.Randomize(allowDraw, isFinished: !match.GetPeriod().Contains(DateTime.UtcNow));
+            }
+            match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+        });
 
         private static List<DatabaseContext.Domain.ClubAggregate.Team> GetTeams(IEnumerable<DatabaseContext.Domain.ClubAggregate.Team> allTeams,
                                                                                 bool isNational,

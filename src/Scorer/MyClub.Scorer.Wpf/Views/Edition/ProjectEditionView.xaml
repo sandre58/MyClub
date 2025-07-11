@@ -37,7 +37,7 @@
             <!-- Name -->
             <TextBox Style="{StaticResource MyNet.Styles.TextBox.Edition}"
                      Grid.Column="1"
-                     Width="215"
+                     Width="400"
                      Margin="{StaticResource MyNet.Margins.Large.Horizontal}"
                      my:FocusAssist.IsDefault="True"
                      my:HintAssist.FloatingScale="0.4"

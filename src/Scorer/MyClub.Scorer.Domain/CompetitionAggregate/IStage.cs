@@ -4,14 +4,12 @@
 using System.Collections.Generic;
 using MyClub.Domain;
 using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface IStage : IEntity, ISchedulingParametersProvider, IMatchFormatProvider, IMatchRulesProvider, IMatchesProvider, ITeamsProvider
+    public interface IStage : IEntity, IMatchesProvider
     {
-        IEnumerable<T> GetStages<T>() where T : ICompetitionStage;
+        IEnumerable<T> GetStages<T>() where T : IStage;
 
         bool RemoveMatch(Match item);
     }

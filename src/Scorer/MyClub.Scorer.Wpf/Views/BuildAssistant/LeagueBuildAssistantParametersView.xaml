@@ -82,7 +82,9 @@
                               Visibility="{Binding Algorythm, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static enums:ChampionshipAlgorithm.RoundRobin}}">
                         <my:SimpleStackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource MyNet.Styles.Button.Icon}" Command="{Binding RemoveMatchBetweenTeamsCommand}" Content="{my:ToolIcon Kind=Minus}" />
-                            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                            <TextBlock Width="15" Text="{Binding MatchesBetweenTeams.Count}" TextAlignment="Center" />
+                            <Button Style="{StaticResource MyNet.Styles.Button.Icon}" Command="{Binding AddMatchBetweenTeamsCommand}" Content="{my:ToolIcon Kind=Plus}" />
+                            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Icon}"
                                      my:ListBoxAssist.IsToggle="True"
                                      ItemsSource="{Binding MatchesBetweenTeams}"
                                      SelectionMode="Multiple">
@@ -90,32 +92,35 @@
                                     <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource MyNet.Styles.ListBoxItem.Toggle}">
                                         <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
                                         <Setter Property="IsSelected" Value="{Binding IsSelected}" />
-                                        <Setter Property="ToolTip" Value="{my:Translation Item, Format='MatchX'}" />
-                                        <Setter Property="Width" Value="40" />
+                                        <Setter Property="Margin" Value="{StaticResource MyNet.Margins.Small.Horizontal}" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                    <ToggleButton x:Name="toggle"
+                                                                  Width="20"
+                                                                  Height="20"
+                                                                  Padding="0"
+                                                                  my:ToggleButtonAssist.OnContent="{my:SmallIcon Kind=HomeSwap}"
+                                                                  Content="{my:SmallIcon Kind=Home}"
+                                                                  IsChecked="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}">
+                                                        <ToggleButton.Style>
+                                                            <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Action}">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsChecked" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource MyNet.Brushes.Primary}" />
+                                                                        <Setter Property="Foreground" Value="{DynamicResource MyNet.Brushes.Primary.Foreground}" />
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ToggleButton.Style>
+                                                    </ToggleButton>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="ToolTip" Value="{my:Resource InvertTeams}" />
                                     </Style>
                                 </ListBox.ItemContainerStyle>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <TextBlock Text="{my:Translation Item, Format='MatchXAbbr'}" />
-                                            <Label Style="{StaticResource MyNet.Styles.Label.Elevation.Foreground}"
-                                                   Width="13"
-                                                   Height="13"
-                                                   Margin="0 0 -10 -4"
-                                                   Padding="0"
-                                                   HorizontalAlignment="Right"
-                                                   VerticalAlignment="Bottom"
-                                                   my:ThemeAssist.UniformCornerRadius="25"
-                                                   Content="{my:Icon Kind=SwapHorizontalBold,
-                                                                     Size=12}"
-                                                   Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                                   ToolTip="{my:Resource InvertTeams}"
-                                                   Visibility="{Binding IsSelected, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Style="{StaticResource MyNet.Styles.Button.Icon}" Command="{Binding AddMatchBetweenTeamsCommand}" Content="{my:ToolIcon Kind=Plus}" />
                         </my:SimpleStackPanel>
                     </GroupBox>
                     <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"

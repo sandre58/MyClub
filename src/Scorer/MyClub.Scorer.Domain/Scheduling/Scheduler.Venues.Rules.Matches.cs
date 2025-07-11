@@ -9,7 +9,7 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class VenueRulesMatchesScheduler : IMatchesScheduler
+    public class VenueRulesMatchesScheduler : IVenueScheduler
     {
         private readonly IEnumerable<Match> _scheduledMatches;
 

@@ -19,25 +19,17 @@ namespace MyClub.Scorer.Infrastructure.Repositories
 
         public Cup GetCurrentOrThrow() => _projectRepository.GetCompetition().CastIn<Cup>() ?? throw new InvalidOperationException($"Current competition is not cup");
 
-        public IRound InsertRoundOfMatches(DateTime date, string name, string? shortName = null)
-        {
-            var added = GetCurrentOrThrow().AddRoundOfMatches(date, name, shortName);
+        //public Round InsertRound(IRoundFormat format, DateTime[] dates, string name, string? shortName = null)
+        //{
+        //    var cup = GetCurrentOrThrow();
+        //    var added = cup.AddRound(new Round(cup, format, dates, name, shortName));
 
-            _auditService.New(added);
+        //    _auditService.New(added);
 
-            return added;
-        }
+        //    return added;
+        //}
 
-        public IRound InsertRoundOfFixtures(string name, string? shortName = null)
-        {
-            var added = GetCurrentOrThrow().AddRoundOfFixtures(name, shortName);
-
-            _auditService.New(added);
-
-            return added;
-        }
-
-        public void Fill(IEnumerable<IRound> rounds)
+        public void Fill(IEnumerable<Round> rounds)
         {
             var cup = GetCurrentOrThrow();
             cup.Clear();

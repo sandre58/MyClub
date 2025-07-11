@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MyClub.Domain.Enums;
-using MyClub.Scorer.Domain.Enums;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.PersonAggregate;
 using MyClub.Scorer.Domain.Scheduling;
@@ -108,32 +107,7 @@ namespace MyClub.Scorer.Domain.Extensions
             { CardColor.White, 0.3 },
         };
 
-        public static ExtendedResult GetExtendedResultOf(this Match match, Team team) => match.GetExtendedResultOf(team.Id);
-
-        public static bool IsWithdrawn(this Match match, Team team) => match.IsWithdrawn(team.Id);
-
-        public static int GoalsFor(this Match match, Team team) => match.GoalsFor(team.Id);
-
-        public static int GoalsAgainst(this Match match, Team team) => match.GoalsAgainst(team.Id);
-
-        public static MatchOpponent? GetOpponent(this Match match, Team team) => match.GetOpponent(team.Id);
-
-        public static MatchOpponent? GetOpponentAgainst(this Match match, Team team) => match.GetOpponentAgainst(team.Id);
-
-        public static void Randomize(this Match match, bool isFinished = true)
-        {
-            if (match is MatchOfFixture matchOfFixture)
-            {
-                if (matchOfFixture.Fixture.Stage.FixtureFormat.UseShootout == Enums.NoDrawUsage.OnLastMatch || matchOfFixture.Fixture.Stage.FixtureFormat.UseExtraTime == Enums.NoDrawUsage.OnLastMatch)
-                    RandomizeMatch(matchOfFixture, isFinished);
-                else
-                    RandomizeMatch(match, isFinished);
-            }
-            else
-                RandomizeMatch(match, isFinished);
-        }
-
-        private static void RandomizeMatch(this Match match, bool isFinished = true)
+        public static void Randomize(this Match match, bool allowDraw = false, bool isFinished = true)
         {
             if (match.Home is null || match.Away is null) return;
 
@@ -181,6 +155,12 @@ namespace MyClub.Scorer.Domain.Extensions
                 EnumerableHelper.Iteration(awayCardsinExtraTime, _ => match.Away.AddCard(RandomizeCard(match.Format, match.Rules, match.Away.Team, true)));
             }
 
+            if (!allowDraw && match.IsDraw())
+            {
+                var opponent = RandomGenerator.Bool() ? match.Home : match.Away;
+                opponent.AddGoal(RandomizeGoal(match.Format, opponent.Team, match.AfterExtraTime));
+            }
+
             // Set score in shootout
             if (match.UseShootout())
             {
@@ -196,28 +176,6 @@ namespace MyClub.Scorer.Domain.Extensions
                 }
             }
         }
-
-        private static bool UseExtraTime(this Match match)
-            => match.Format.ExtraTimeIsEnabled
-                && (match is MatchOfFixture matchOfFixture
-                    ? matchOfFixture.Fixture.Stage.FixtureFormat.UseExtraTime switch
-                    {
-                        NoDrawUsage.OnAllMatches => match.IsDraw(),
-                        NoDrawUsage.OnLastMatch => (matchOfFixture.Fixture.Stage.Stages.LastOrDefault()?.Matches.Contains(match)).IsTrue() && matchOfFixture.Fixture.GetWinner() is null,
-                        _ => false,
-                    }
-                    : match.IsDraw());
-
-        private static bool UseShootout(this Match match)
-            => match.Format.ShootoutIsEnabled
-                && (match is MatchOfFixture matchOfFixture
-                    ? matchOfFixture.Fixture.Stage.FixtureFormat.UseShootout switch
-                    {
-                        NoDrawUsage.OnAllMatches => match.IsDraw(),
-                        NoDrawUsage.OnLastMatch => (matchOfFixture.Fixture.Stage.Stages.LastOrDefault()?.Matches.Contains(match)).IsTrue() && matchOfFixture.Fixture.GetWinner() is null,
-                        _ => false,
-                    }
-                    : match.IsDraw());
 
         private static Goal RandomizeGoal(MatchFormat format, Team team, bool inExtraTime)
         {
@@ -255,7 +213,7 @@ namespace MyClub.Scorer.Domain.Extensions
             => match switch
             {
                 MatchOfMatchday matchOfMatchday => matchOfMatchday.Stage,
-                MatchOfRound matchOfFixture => matchOfFixture.Stage,
+                MatchOfFixture matchOfFixture => matchOfFixture.Stage,
                 _ => throw new InvalidOperationException("No stage defined for this match"),
             };
 
@@ -263,7 +221,7 @@ namespace MyClub.Scorer.Domain.Extensions
             => match switch
             {
                 MatchOfMatchday matchOfMatchday => matchOfMatchday.Stage.ProvideSchedulingParameters(),
-                MatchOfRound matchOfFixture => matchOfFixture.Stage.ProvideSchedulingParameters(),
+                MatchOfFixture matchOfFixture => matchOfFixture.Stage.ProvideSchedulingParameters(),
                 _ => throw new InvalidOperationException("No stage defined for this match"),
             };
 

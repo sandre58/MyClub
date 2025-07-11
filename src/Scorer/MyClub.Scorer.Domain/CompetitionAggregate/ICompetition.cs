@@ -16,7 +16,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         SchedulingParameters SchedulingParameters { get; set; }
 
-        IEnumerable<T> GetStages<T>() where T : ICompetitionStage;
+        IEnumerable<T> GetStages<T>() where T : IStage;
 
         bool RemoveMatch(Match item);
     }

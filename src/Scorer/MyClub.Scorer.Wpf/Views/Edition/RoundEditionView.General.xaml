@@ -1,0 +1,296 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.Edition.RoundEditionGeneralView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             d:DataContext="{d:DesignInstance Type=vm:RoundEditionViewModel}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Short name -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}" Header="{my:MediumIcon Kind=Information}">
+            <TextBox Width="{StaticResource MyNet.Widths.Control.Medium}" my:HintAssist.Hint="{my:Resource ShortName}" Text="{Binding ShortName, UpdateSourceTrigger=PropertyChanged}" />
+        </GroupBox>
+
+        <!-- Fixtures -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                  Grid.Row="2"
+                  my:HeaderAssist.FontSize="{StaticResource MyNet.Font.Size.Title}"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=Bracket}"
+                  Header="{my:Resource Fixtures}" />
+
+        <!-- Stages -->
+        <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Bordered}"
+                  Grid.Row="4"
+                  my:HeaderAssist.FontSize="{StaticResource MyNet.Font.Size.Title}"
+                  my:IconAssist.Icon="{my:MediumIcon Kind=Bracket}"
+                  Header="{my:Resource Stages}">
+            <my:GroupBoxAssist.MoreContent>
+                <Button Command="{Binding AddRoundStageCommand}" Content="{my:MediumIcon Kind=Plus}" ToolTip="{my:Resource Add}" />
+            </my:GroupBoxAssist.MoreContent>
+            <ItemsControl Style="{StaticResource MyNet.Styles.ItemsControl.Scrollable}" ItemsSource="{Binding RoundStages}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Small}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <my:Card x:Name="base"
+                                 Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"
+                                 Margin="{StaticResource MyNet.Margins.Small}"
+                                 Padding="{StaticResource MyNet.Margins.Default}"
+                                 my:ElevationAssist.Elevation="Dp0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="5" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Name -->
+                                    <my:SimpleStackPanel VerticalAlignment="Center" Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Default}">
+                                        <TextBlock FontWeight="DemiBold" Text="{Binding Name}" />
+                                        <StackPanel Opacity="{StaticResource MyNet.Opacity.Secondary}" Orientation="Horizontal">
+                                            <TextBlock Text="(" />
+                                            <TextBlock Text="{Binding ShortName}" />
+                                            <TextBlock Text=")" />
+                                        </StackPanel>
+                                    </my:SimpleStackPanel>
+
+                                    <!-- Date -->
+                                    <my:SimpleStackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
+                                            <my:SimpleStackPanel.Style>
+                                                <Style TargetType="{x:Type my:SimpleStackPanel}" BasedOn="{StaticResource MyNet.Styles.SimpleStackPanel}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding PostponedState}" Value="{x:Static vm:PostponedState.SpecifiedDate}">
+                                                            <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Medium}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </my:SimpleStackPanel.Style>
+                                            <DatePicker Width="90" my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{my:DateTime CurrentDate.Date}" />
+                                            <my:TimePicker Width="80" my:HintAssist.Hint="{my:Resource Time}" SelectedTime="{my:Time CurrentDate.Time}" />
+                                        </my:SimpleStackPanel>
+                                        <ToggleButton Style="{StaticResource MyNet.Styles.ToggleButton.Switch}" IsChecked="{Binding ScheduleAutomatic}" IsEnabled="{Binding CanScheduleAutomatic}">
+                                            <TextBlock Text="{my:Resource Automatic}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource MyNet.Styles.TextBlock}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ScheduleAutomatic}" Value="False">
+                                                                <Setter Property="Opacity" Value="{StaticResource MyNet.Opacity.Secondary}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </ToggleButton>
+                                    </my:SimpleStackPanel>
+
+                                    <!-- IsPostponed -->
+                                    <GroupBox Style="{StaticResource MyNet.Styles.GroupBox.Edition}"
+                                              Grid.Row="2"
+                                              Grid.ColumnSpan="4"
+                                              my:HeaderAssist.HorizontalAlignment="Left"
+                                              my:HeaderAssist.Size="60"
+                                              Header="{my:Resource Postponed}">
+                                        <my:SimpleStackPanel IsEnabled="{Binding ScheduleAutomatic, Converter={x:Static my:NotBooleanConverter.Default}}" Orientation="Horizontal">
+                                            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}" SelectedValue="{Binding PostponedState}" SelectedValuePath="DataContext">
+                                                <ListBoxItem Padding="15 7"
+                                                             my:ListBoxItemAssist.IsSelectedBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
+                                                                                                                         Opacity={StaticResource MyNet.Opacity.Checked}}"
+                                                             Content="{my:Resource No}"
+                                                             DataContext="{x:Static vm:PostponedState.None}" />
+                                                <ListBoxItem Padding="15 7" Content="{my:Resource AtUnknownDate}" DataContext="{x:Static vm:PostponedState.UnknownDate}" />
+                                                <ListBoxItem Padding="15 7" Content="{my:Resource AtFollowingDate}" DataContext="{x:Static vm:PostponedState.SpecifiedDate}" />
+                                            </ListBox>
+
+                                            <!-- Postponed Date -->
+                                            <my:SimpleStackPanel Orientation="Horizontal" Visibility="{Binding PostponedState, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:PostponedState.SpecifiedDate}}">
+                                                <DatePicker my:HintAssist.Hint="{my:Resource PostponedDate}" my:HintAssist.IsFloating="False" SelectedDate="{my:DateTime PostponedDateTime.Date}" />
+                                                <my:TimePicker Width="80"
+                                                               my:HintAssist.Hint="{my:Resource Time}"
+                                                               my:HintAssist.IsFloating="False"
+                                                               SelectedTime="{my:Time PostponedDateTime.Time}" />
+                                            </my:SimpleStackPanel>
+                                        </my:SimpleStackPanel>
+                                    </GroupBox>
+
+                                    <!-- Remove -->
+                                    <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                            Grid.Column="3"
+                                            Command="{Binding Data.RemoveRoundStageCommand, Source={StaticResource Proxy}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{my:ToolIcon Kind=Trash}"
+                                            ToolTip="{my:Resource Remove}" />
+                                </Grid>
+
+                                <my:ContentExpander Grid.Row="2"
+                                                    Margin="0 -18 0 0"
+                                                    CollapsedSize="18"
+                                                    IsExpanded="False">
+                                    <my:ContentExpander.ToggleButtontyle>
+                                        <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource MyNet.Styles.ToggleButton.Embedded.Expander.Vertical}">
+                                            <Setter Property="Margin" Value="0 -3 -3 0" />
+                                            <Setter Property="VerticalAlignment" Value="Top" />
+                                        </Style>
+                                    </my:ContentExpander.ToggleButtontyle>
+                                    <my:ContentExpander.Header>
+                                        <DockPanel>
+                                            <!--<my:SimpleStackPanel Margin="0 0 30 0"
+                                                                 VerticalAlignment="Center"
+                                                                 DockPanel.Dock="Right"
+                                                                 Orientation="Horizontal">
+                                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                        Command="{Binding Item.InvertTeamsCommand}"
+                                                        Content="{my:MediumIcon Kind=SwapHorizontal}"
+                                                        ToolTip="{my:Resource InvertTeams}" />
+                                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                        Command="{Binding Item.ClearMatchesCommand}"
+                                                        Content="{my:Icon Kind=CloseCircleMultiple,
+                                                                          Size=18}"
+                                                        ToolTip="{my:Resource ClearData}" />
+                                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                        Command="{Binding Item.AddMatchCommand}"
+                                                        Content="{my:MediumIcon Kind=Plus}"
+                                                        ToolTip="{my:Resource Add}" />
+                                            </my:SimpleStackPanel>
+                                            <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Margin="{StaticResource MyNet.Margins.Medium.Left}" Text="{my:Translation Item.Matches.Count, Format=XMatches, Pluralize=True}" />-->
+                                        </DockPanel>
+                                    </my:ContentExpander.Header>
+
+                                    <!-- Matches -->
+                                    <ItemsControl Margin="{StaticResource MyNet.Margins.VeryLarge.Top}" AlternationCount="2">
+                                        <i:Interaction.Behaviors>
+                                            <my:ItemsControlAsyncBehavior Items="{Binding Matches, Mode=OneWay}" />
+                                        </i:Interaction.Behaviors>
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <my:SimpleStackPanel IsItemsHost="True" Spacing="{StaticResource MyNet.Margin.Default}" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border x:Name="border" Padding="2 5">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="90" />
+                                                            <ColumnDefinition Width="10" />
+                                                            <ColumnDefinition Width="80" />
+                                                            <ColumnDefinition Width="10" />
+                                                            <ColumnDefinition Width="130" />
+                                                            <ColumnDefinition Width="10" />
+                                                            <ColumnDefinition Width="130" />
+                                                            <ColumnDefinition Width="10" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="10" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <DatePicker HorizontalAlignment="Stretch"
+                                                                    my:HintAssist.Hint="{my:Resource Date}"
+                                                                    my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
+                                                                    IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                                                    SelectedDate="{my:DateTime CurrentDate.Date}" />
+                                                        <my:TimePicker Grid.Column="2"
+                                                                       HorizontalAlignment="Stretch"
+                                                                       my:HintAssist.Hint="{my:Resource Time}"
+                                                                       my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
+                                                                       IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                                                       SelectedTime="{my:Time CurrentDate.Time}" />
+                                                        <ComboBox Grid.Column="4"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                                                  my:HintAssist.Hint="{my:Resource HomeTeam}"
+                                                                  my:ItemsControlAssist.SortingProperty="Name"
+                                                                  IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                                                  IsReadOnly="{Binding IsReadOnly}"
+                                                                  ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
+                                                                  ItemsSource="{Binding AvailableTeams}"
+                                                                  SelectedItem="{Binding HomeTeam}" />
+                                                        <ComboBox x:Name="comboBox"
+                                                                  Grid.Column="6"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                                                  my:HintAssist.Hint="{my:Resource AwayTeam}"
+                                                                  my:ItemsControlAssist.SortingProperty="Name"
+                                                                  IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                                                                  IsReadOnly="{Binding IsReadOnly}"
+                                                                  ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
+                                                                  ItemsSource="{Binding AvailableTeams}"
+                                                                  SelectedItem="{Binding AwayTeam}" />
+                                                        <Grid Grid.Column="8" IsEnabled="{Binding DataContext.ScheduleStadiumsAutomatic, ElementName=base, Converter={x:Static my:NotBooleanConverter.Default}}">
+                                                            <v:StadiumSelectionView HorizontalAlignment="Stretch"
+                                                                                    my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly, ElementName=comboBox}"
+                                                                                    DataContext="{Binding StadiumSelection}"
+                                                                                    IsEnabled="{Binding IsReadOnly, ElementName=comboBox, Converter={x:Static my:NotBooleanConverter.Default}}" />
+                                                        </Grid>
+                                                        <!--<Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                        Grid.Column="10"
+                                                        Command="{Binding Data.RemoveMatchCommand, Source={StaticResource Proxy}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{my:ToolIcon Kind=Trash}"
+                                                        ToolTip="{my:Resource Remove}"
+                                                        Visibility="{Binding IsDeleting, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
+                                                <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
+                                                        Grid.Column="10"
+                                                        Command="{Binding Data.CancelRemoveMatchCommand, Source={StaticResource Proxy}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{my:ToolIcon Kind=Undo}"
+                                                        ToolTip="{my:Resource Cancel}"
+                                                        Visibility="{Binding IsDeleting, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />-->
+
+                                                        <Border x:Name="line"
+                                                                Grid.ColumnSpan="9"
+                                                                Height="1"
+                                                                Background="{DynamicResource MyNet.Brushes.Control.Border}"
+                                                                Visibility="Collapsed" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <DataTemplate.Triggers>
+                                                    <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                                                        <Setter TargetName="border" Property="Background" Value="{my:BrushBinding InheritPath=(TextElement.Foreground), Opacity=0.03}" />
+                                                    </Trigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </my:ContentExpander>
+                            </Grid>
+                        </my:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </GroupBox>
+    </Grid>
+</UserControl>

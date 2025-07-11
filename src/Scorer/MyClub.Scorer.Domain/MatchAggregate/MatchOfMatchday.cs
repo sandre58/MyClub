@@ -13,5 +13,9 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             : base(date, homeTeam, awayTeam, stage.ProvideFormat(), stage.ProvideRules(), id) => Stage = stage;
 
         public Matchday Stage { get; }
+
+        public override MatchFormat Format => Stage.ProvideFormat();
+
+        public override MatchRules Rules => Stage.ProvideRules();
     }
 }

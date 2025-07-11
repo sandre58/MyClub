@@ -22,15 +22,15 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         private string _shortName = string.Empty;
         private readonly OptimizedObservableCollection<Matchday> _matchdays = [];
 
-        public ChampionshipStage(IStage stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
+        public ChampionshipStage(Tournament stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {
             Stage = stage;
             Name = name;
             ShortName = shortName ?? name.GetInitials();
             RankingRules = rankingRules ?? RankingRules.Default;
-            MatchFormat = matchFormat ?? stage.ProvideFormat();
-            MatchRules = matchRules ?? stage.ProvideRules();
-            SchedulingParameters = schedulingParameters ?? stage.ProvideSchedulingParameters();
+            MatchFormat = matchFormat ?? stage.MatchFormat;
+            MatchRules = matchRules ?? stage.MatchRules;
+            SchedulingParameters = schedulingParameters ?? stage.SchedulingParameters;
             Matchdays = new(_matchdays);
         }
 
@@ -46,7 +46,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             set => _shortName = value.IsRequiredOrThrow();
         }
 
-        public IStage Stage { get; }
+        public Tournament Stage { get; }
 
         public RankingRules RankingRules { get; set; }
 
@@ -67,7 +67,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
 
         public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.Matches);
-        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Matchdays.OfType<T>();
+
+        public IEnumerable<T> GetStages<T>() where T : IStage => Matchdays.OfType<T>();
 
         public override bool RemoveTeam(IVirtualTeam team)
         {

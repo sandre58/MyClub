@@ -38,14 +38,14 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             AddSubWorkspaces(
             [
                 General,
-                Preferences,
-                MatchRules,
                 Stadiums,
                 Teams,
                 MatchFormat,
                 SchedulingParameters,
                 LeagueBuildAssistantParameters,
-                RankingRules
+                RankingRules,
+                MatchRules,
+                Preferences
             ]);
 
             NavigationService.Navigating += OnSubWorkspaceNavigating;

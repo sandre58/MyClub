@@ -249,10 +249,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
             return true;
         }
 
-        public BuildAlgorithmParametersDto ToAlgorithmParameters() => Algorythm switch
+        public MatchdaysAlgorithmDto ToAlgorithmParameters() => Algorythm switch
         {
-            ChampionshipAlgorithm.RoundRobin => new RoundRobinParametersDto { NumberOfTeams = NumberOfTeams, MatchesBetweenTeams = MatchesBetweenTeams.Select(x => x.IsSelected).ToArray() },
-            ChampionshipAlgorithm.SwissSystem => new SwissSystemParametersDto { NumberOfTeams = NumberOfTeams, NumberOfMatchesByTeam = NumberOfMatchesByTeam },
+            ChampionshipAlgorithm.RoundRobin => new RoundRobinDto { NumberOfTeams = NumberOfTeams, MatchesBetweenTeams = MatchesBetweenTeams.Select(x => x.IsSelected).ToArray() },
+            ChampionshipAlgorithm.SwissSystem => new SwissSystemDto { NumberOfTeams = NumberOfTeams, NumberOfMatchesByTeam = NumberOfMatchesByTeam },
             _ => throw new InvalidOperationException("Algorithm is invalid")
         };
 

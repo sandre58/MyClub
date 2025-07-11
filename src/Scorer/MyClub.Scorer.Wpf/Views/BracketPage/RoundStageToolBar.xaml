@@ -1,0 +1,41 @@
+﻿<ToolBar x:Class="MyClub.Scorer.Wpf.Views.BracketPage.RoundStageToolBar"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:entities="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Entities"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:my="http://mynet.com/xaml/themes"
+         x:Name="local"
+         Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+         d:DataContext="{d:DesignInstance Type=entities:RoundStageViewModel}"
+         d:DesignHeight="450"
+         d:DesignWidth="800"
+         mc:Ignorable="d">
+    <ToolBar.Resources>
+        <my:BindingProxy x:Key="RoundStageProxy" Data="{Binding}" />
+        <my:BindingProxy x:Key="LocalProxy" Data="{Binding ElementName=local}" />
+    </ToolBar.Resources>
+
+    <Button Command="{Binding OpenCommand}" Content="{my:ToolIcon Kind=Eye}" ToolTip="{my:Resource SeeItem}" />
+    <Button Command="{Binding EditCommand}" Content="{my:ToolIcon Kind=Edit}" ToolTip="{my:Resource Edit}" />
+    <my:DropDownButton x:Name="DropDownButton"
+                       Padding="0"
+                       PopupPadding="0"
+                       ShowDropDownButton="False"
+                       ToggleContent="{my:ToolIcon Kind=DotsVertical}">
+        <my:Submenu>
+            <!--<MenuItem Command="{Binding AddMatchCommand}" Header="{my:Resource AddMatch}" Icon="{my:ToolIcon Kind=PlusCircle}" />-->
+            <!--<MenuItem Command="{Binding DuplicateCommand}" Header="{my:Resource Duplicate}" Icon="{my:ToolIcon Kind=ContentDuplicate}" />-->
+            <MenuItem Command="{Binding PostponeCommand}" Header="{my:Resource Postpone}" Icon="{my:ToolIcon Kind=ProgressQuestion}" />
+            <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" IsEnabled="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" />
+            <MenuItem my:ThemeAssist.IsMouseOverBackground="{DynamicResource MyNet.Brushes.Negative}"
+                      my:ThemeAssist.IsMouseOverForeground="{my:BrushBinding Path=(my:ThemeAssist.IsMouseOverBackground),
+                                                                             RelativeSource={RelativeSource Self},
+                                                                             Contrast=True}"
+                      Command="{Binding Data.RemoveCommand, Source={StaticResource LocalProxy}}"
+                      CommandParameter="{Binding}"
+                      Header="{my:Resource Remove}"
+                      Icon="{my:ToolIcon Kind=Trash}" />
+        </my:Submenu>
+    </my:DropDownButton>
+</ToolBar>

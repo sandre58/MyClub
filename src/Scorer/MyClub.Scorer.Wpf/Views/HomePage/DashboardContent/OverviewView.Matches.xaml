@@ -44,8 +44,11 @@
                         <Setter Property="ContextMenu">
                             <Setter.Value>
                                 <ContextMenu>
-                                    <MenuItem Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}" Header="{my:Resource Edit}" Icon="{my:ToolIcon Kind=Edit}" />
-                                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />
+                                    <MenuItem Command="{Binding Data.EditSelectedItemCommand, Source={StaticResource Proxy}}"
+                                              Header="{my:Resource Edit}"
+                                              Icon="{my:ToolIcon Kind=Edit}"
+                                              Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                                    <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" Visibility="{Binding Data.SelectedWrappers.Count, Source={StaticResource Proxy}, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotOne}}" />
                                     <MenuItem Header="{my:Resource Reschedule}" Icon="{my:ToolIcon Kind=ClockPlus}" IsEnabled="{Binding Data.CanRescheduleSelectedItems, Source={StaticResource Proxy}}">
                                         <MenuItem Command="{Binding Data.RescheduleAutomaticCommand, Source={StaticResource Proxy}}" Header="{my:Resource Automatic}" Icon="{my:ToolIcon Kind=Magic}" />
                                         <MenuItem Command="{Binding Data.RescheduleXMinutesCommand, Source={StaticResource Proxy}}" CommandParameter="{StaticResource Five}" Header="{my:Translation Source={StaticResource Five}, Format=TimeSpanMinute, Pluralize=True}">
@@ -126,13 +129,21 @@
                                                 </Grid>
                                             </MenuItem.Icon>
                                         </MenuItem>
-                                        <MenuItem Height="50"
+                                        <MenuItem Height="40"
                                                   my:RippleAssist.Feedback="Transparent"
                                                   my:ThemeAssist.IsMouseOverBackground="Transparent"
                                                   Header="{Binding Data.RescheduleCommand, Source={StaticResource Proxy}}"
-                                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
-                                                  Icon="{my:ToolIcon Kind=ClockEdit}"
+                                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule.Unit}"
+                                                  Icon="{my:ToolIcon Kind=ClockPlus}"
                                                   StaysOpenOnClick="True" />
+                                        <MenuItem Header="{my:Resource NewDateAndTime}" Icon="{my:ToolIcon Kind=CalendarEdit}">
+                                            <MenuItem Height="320"
+                                                      my:RippleAssist.Feedback="Transparent"
+                                                      my:ThemeAssist.IsMouseOverBackground="Transparent"
+                                                      Header="{Binding Data.RescheduleOnDateCommand, Source={StaticResource Proxy}}"
+                                                      HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule.Date}"
+                                                      StaysOpenOnClick="True" />
+                                        </MenuItem>
                                     </MenuItem>
                                     <MenuItem Command="{Binding Data.InvertTeamsSelectedItemsCommand, Source={StaticResource Proxy}}" Header="{my:Resource InvertTeams}" Icon="{my:ToolIcon Kind=SwapHorizontal}" />
                                     <Separator Style="{StaticResource MyNet.Styles.Separator.Horizontal}" />

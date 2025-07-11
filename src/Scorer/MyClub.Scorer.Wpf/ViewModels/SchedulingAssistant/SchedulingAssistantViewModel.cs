@@ -14,7 +14,6 @@ using MyClub.Scorer.Application.Dtos;
 using MyClub.Scorer.Application.Services;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
-using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Deferrers;

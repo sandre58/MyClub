@@ -101,7 +101,18 @@
                                     </s:TeamDataTemplateSelector.TeamTemplate>
                                     <s:TeamDataTemplateSelector.VirtualTeamTemplate>
                                         <DataTemplate>
-                                            <ctrl:VirtualTeamButton Item="{Binding}" ShowShortName="{Binding ShowShortName, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" />
+                                            <TextBlock x:Name="name"
+                                                       Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                       Text="{Binding Name}"
+                                                       TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" />
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding ShowShortName, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" Value="True">
+                                                    <Setter TargetName="name" Property="Text" Value="{Binding ShortName}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding HorizontalAlignment, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" Value="Center">
+                                                    <Setter TargetName="name" Property="TextAlignment" Value="Center" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </s:TeamDataTemplateSelector.VirtualTeamTemplate>
                                 </s:TeamDataTemplateSelector>
@@ -205,11 +216,15 @@
                                         </s:TeamDataTemplateSelector.TeamTemplate>
                                         <s:TeamDataTemplateSelector.VirtualTeamTemplate>
                                             <DataTemplate>
-                                                <ctrl:VirtualTeamButton HorizontalAlignment="Center"
-                                                                        Item="{Binding}"
-                                                                        ShowShortName="{Binding ShowShortName, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}"
-                                                                        TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}"
-                                                                        Typography.Capitals="AllSmallCaps" />
+                                                <TextBlock x:Name="name" HorizontalAlignment="Center" TextAlignment="Center"
+                                                       Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                       Text="{Binding Name}" Typography.Capitals="AllSmallCaps"
+                                                       TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" />
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding ShowShortName, RelativeSource={RelativeSource AncestorType={x:Type ctrl:TeamControl}}}" Value="True">
+                                                        <Setter TargetName="name" Property="Text" Value="{Binding ShortName}" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
                                             </DataTemplate>
                                         </s:TeamDataTemplateSelector.VirtualTeamTemplate>
                                     </s:TeamDataTemplateSelector>

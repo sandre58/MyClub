@@ -33,7 +33,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public IEnumerable<Match> GetAllMatches() => Stages.SelectMany(x => x.GetAllMatches());
 
-        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Stages.OfType<T>().Union(Stages.SelectMany(x => x.GetStages<T>()));
+        public IEnumerable<T> GetStages<T>() where T : IStage => Stages.OfType<T>().Union(Stages.SelectMany(x => x.GetStages<T>()));
 
         public bool RemoveMatch(Match item) => _stages.Any(x => x.RemoveMatch(item));
     }

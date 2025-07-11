@@ -14,7 +14,7 @@ namespace MyClub.Scorer.Domain.Extensions
     {
         public static T? GetStage<T>(this ICompetition competition, Guid id) where T : ICompetitionStage => competition.GetStages<T>().GetByIdOrDefault(id);
 
-        public static T? GetStage<T>(this ICompetition competition, Guid? id) where T : IStage => id.HasValue ? competition.GetStage<T>(id) : (T)competition;
+        public static T? GetStage<T>(this ICompetition competition, Guid? id) where T : IStage => id.HasValue ? (T?)competition.GetStages<IStage>().GetByIdOrDefault(id.Value) : (T)competition;
 
         public static T? GetStage<T>(this IStage stage, Guid id) where T : ICompetitionStage => stage.GetStages<T>().GetByIdOrDefault(id);
 

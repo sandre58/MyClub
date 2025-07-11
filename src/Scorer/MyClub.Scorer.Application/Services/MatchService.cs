@@ -79,9 +79,6 @@ namespace MyClub.Scorer.Application.Services
                 UpdateStadium(entity, dto.Stadium);
             }
 
-            if (dto.Format is not null)
-                entity.Format = dto.Format;
-
             switch (dto.State)
             {
                 case MatchState.None:
@@ -112,14 +109,6 @@ namespace MyClub.Scorer.Application.Services
                     entity.Cancel();
                     break;
             }
-        }
-
-        public void UpdateRules(Guid id, MatchRules rules) => Update(id, x => x.Rules = rules);
-
-        public void UpdateRules(IEnumerable<Guid> matchIds, MatchRules rules)
-        {
-            using (CollectionChangedDeferrer.Defer())
-                matchIds.ForEach(x => UpdateRules(x, rules));
         }
 
         public void SaveScore(MatchDto dto) => Update(dto.Id!.Value, x => UpdateScore(x, dto));
@@ -176,6 +165,14 @@ namespace MyClub.Scorer.Application.Services
         {
             using (CollectionChangedDeferrer.Defer())
                 matchIds.ForEach(x => Reschedule(x, date));
+        }
+
+        public void Reschedule(Guid id, DateOnly? date = null, TimeOnly? time = null) => Update(id, x => x.Schedule((date ?? x.Date.ToDate()).ToDateTime(time ?? x.Date.TimeOfDay.ToTime())));
+
+        public void Reschedule(IEnumerable<Guid> matchIds, DateOnly? date = null, TimeOnly? time = null)
+        {
+            using (CollectionChangedDeferrer.Defer())
+                matchIds.ForEach(x => Reschedule(x, date, time));
         }
 
         public void Reschedule(MatchDto match) => match.Id.HasValue.IfTrue(() => Update(match.Id!.Value, x =>
@@ -404,6 +401,13 @@ namespace MyClub.Scorer.Application.Services
 
         public IEnumerable<(ConflictType, Guid, Guid?)> GetAllConflicts()
             => _availibilityCheckingDomainService.GetAllConflicts().Select(x => (x.Item1, x.Item2.Id, x.Item3?.Id));
+
+
+        public bool VenueIsValid(Guid id) => VenueIsValid(GetById(id).OrThrow());
+
+        public IEnumerable<Guid> GetMatchIdsWithInvalidVenues() => GetAll().Where(x => !VenueIsValid(x)).Select(x => x.Id);
+
+        private static bool VenueIsValid(Match match) => (match.UseHomeVenue() && match.Home is null) || match.Stadium is not null;
 
         private void UpdateStadium(Match entity, StadiumDto? newStadiumDto)
         {

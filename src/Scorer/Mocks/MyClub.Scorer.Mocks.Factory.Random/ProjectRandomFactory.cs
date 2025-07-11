@@ -60,22 +60,20 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
             // Scheduler
             var matchdaysScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
-                ? new AsSoonAsPossibleStageScheduler<Matchday>()
+                ? (IDateScheduler<IMatchesStage>)new AsSoonAsPossibleStageScheduler(project.Competition.SchedulingParameters.Start())
                 {
-                    StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
                     ScheduleVenues = true,
                     AvailableStadiums = project.Stadiums
                 }
-                : (IScheduler<Matchday>)new DateRulesStageScheduler<Matchday>()
+                : new DateRulesStageScheduler(project.Competition.SchedulingParameters.StartDate)
                 {
                     Interval = project.Competition.SchedulingParameters.Interval,
                     DateRules = [.. project.Competition.SchedulingParameters.DateRules],
                     TimeRules = [.. project.Competition.SchedulingParameters.TimeRules],
                     DefaultTime = project.Competition.SchedulingParameters.StartTime,
-                    StartDate = project.Competition.SchedulingParameters.StartDate
                 };
-            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IMatchesScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
+            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IVenueScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
             {
                 Rules = [.. project.Competition.SchedulingParameters.VenueRules],
             };
@@ -96,7 +94,7 @@ namespace MyClub.Scorer.Mocks.Factory.Random
                 x.Matches.ForEach(match =>
                 {
                     if (match.Date.IsInPast())
-                        match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
+                        match.Randomize(isFinished: !match.GetPeriod().Contains(DateTime.UtcNow));
                     match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
                 });
                 x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
@@ -122,52 +120,70 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
             // Scheduler
             var roundsScheduler = project.Competition.SchedulingParameters.AsSoonAsPossible
-                ? new AsSoonAsPossibleStageScheduler<IMatchesStage>()
+                ? new AsSoonAsPossibleStageScheduler(project.Competition.SchedulingParameters.Start())
                 {
-                    StartDate = project.Competition.SchedulingParameters.Start(),
                     Rules = [.. project.Competition.SchedulingParameters.AsSoonAsPossibleRules],
                     ScheduleVenues = true,
                     AvailableStadiums = project.Stadiums
                 }
-                : (IScheduler<IMatchesStage>)new DateRulesStageScheduler<IMatchesStage>()
+                : (IDateScheduler<IMatchesStage>)new DateRulesStageScheduler(project.Competition.SchedulingParameters.StartDate)
                 {
                     Interval = project.Competition.SchedulingParameters.Interval,
                     DateRules = [.. project.Competition.SchedulingParameters.DateRules],
                     TimeRules = [.. project.Competition.SchedulingParameters.TimeRules],
                     DefaultTime = project.Competition.SchedulingParameters.StartTime,
-                    StartDate = project.Competition.SchedulingParameters.StartDate
                 };
-            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IMatchesScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
+            var venueScheduler = project.Competition.SchedulingParameters.UseHomeVenue ? (IVenueScheduler)new HomeTeamVenueMatchesScheduler() : project.Competition.SchedulingParameters.AsSoonAsPossible ? null : new VenueRulesMatchesScheduler(project.Stadiums)
             {
                 Rules = [.. project.Competition.SchedulingParameters.VenueRules],
             };
 
             // Builders
-            var builders = new List<IRoundsBuilder>
+            var algorythm = RandomGenerator.ListItem(new List<IRoundsAlgorithm>
             {
-                //new RoundsWithMatchesBuilder(roundsScheduler, venueScheduler),
-                //new RoundsWithNumberOfWinsBuilder(roundsScheduler, venueScheduler) { NumberOfWins = RandomGenerator.Int(2, 4), InvertTeamsByStage = 4.Range().Select(x => x.IsEven()).ToArray() },
-                //new RoundsWithReplayBuilder(roundsScheduler, venueScheduler),
-                new RoundsWithTwoLegsBuilder(roundsScheduler, venueScheduler) { OneLegForFirstRound = RandomGenerator.Bool(), OneLegForLastRound = RandomGenerator.Bool()},
-            };
+                ByeTeamAlgorithm.Default,
+                PreliminaryRoundAlgorithm.Default
+            });
+            var addConsolationParameters = RandomGenerator.ListItem(new List<AddConsolationParameters>
+            {
+                AddConsolationParameters.None,
+                AddConsolationParameters.OneConsolationBracket,
+                AddConsolationParameters.All,
+                AddConsolationParameters.ThirdPlace(algorythm.NumberOfRounds(project.Competition.Teams.Count))
+            });
+            var builder = RandomGenerator.ListItem(new List<IRoundsBuilder>
+            {
+                new OneLegRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters },
+                new NumberOfWinsRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters, NumberOfWins = RandomGenerator.Int(2, 4), InvertTeamsByStage = 4.Range().Select(x => x.IsEven()).ToArray() },
+                new ReplayRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters },
+                new TwoLegsRoundsBuilder(roundsScheduler) { AddConsolationParameters = addConsolationParameters, OneLegForFirstRound = RandomGenerator.Bool(), OneLegForLastRound = RandomGenerator.Bool()},
+            });
 
-            var rounds = RandomGenerator.ListItem(builders).Build(project.Competition, KnockoutAlgorithm.Default);
+            roundsScheduler.Reset(project.Competition.SchedulingParameters.Start());
+
+            var rounds = builder.Build(project.Competition, algorythm);
 
             rounds.ForEach(x =>
             {
-                x.GetAllMatches().ForEach(match =>
+                foreach (var item in x.Stages.ToList())
                 {
-                    match.ComputeOpponents();
-                    if (match.UseHomeVenue() && match.Home?.Team is Team homeTeam)
-                        match.Stadium = homeTeam.Stadium;
-                    if (match.Date.IsInPast())
-                        match.Randomize(!match.GetPeriod().Contains(DateTime.UtcNow));
-                    match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
-                });
+                    item.Matches.ForEach(x => x.ComputeOpponents());
+                    roundsScheduler.Schedule(new[] { item });
+                    venueScheduler?.Schedule(item.Matches);
+                    RandomizeMatches(item.Matches, x.Format.AllowDraw());
+
+                    // Add new matches for fixtures without results
+                    var nextStage = item.GetNextStage();
+                    if (nextStage is not null)
+                        x.Fixtures.ForEach(y => x.Format.CanAddFixtureInStage(nextStage, y).IfTrue(() => nextStage.AddMatch(y, invertTeams: x.Format.InvertTeams(nextStage))));
+                }
                 x.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
 
                 project.Competition.AddRound(x);
             });
+
+            // Remove empty rounds
+            rounds.ForEach(x => x.Stages.Where(x => x.Matches.Count == 0).ToList().ForEach(y => x.RemoveStage(y)));
             return project;
         }
 
@@ -315,5 +331,16 @@ namespace MyClub.Scorer.Mocks.Factory.Random
 
             return item;
         }
+
+        private static void RandomizeMatches(IEnumerable<Match> matches, bool allowDraw = true) => matches.ForEach(match =>
+        {
+            if (match.UseHomeVenue() && match.Home?.Team is Team homeTeam)
+                match.Stadium = homeTeam.Stadium;
+            if (match.Date.IsInPast())
+            {
+                match.Randomize(allowDraw, isFinished: !match.GetPeriod().Contains(DateTime.UtcNow));
+            }
+            match.MarkedAsCreated(DateTime.UtcNow, MyClubResources.System);
+        });
     }
 }

@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
@@ -12,7 +11,6 @@ using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
-using MyClub.Scorer.Wpf.ViewModels.TeamsPage;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;
 using MyNet.Observable.Collections.Providers;

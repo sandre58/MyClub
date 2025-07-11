@@ -33,7 +33,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
     internal class MatchdayEditionViewModel : EntityEditionViewModel<Matchday, MatchdayDto, MatchdayService>
     {
-        //private readonly ISourceProvider<ITeamViewModel> _teamsProvider;
         private readonly ISourceProvider<StadiumViewModel> _stadiumsProvider;
 
         public MatchdayEditionViewModel(MatchdayService matchdayService,

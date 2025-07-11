@@ -1,0 +1,20 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.BuildAssistant.CupBuildAssistantRoundsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:edition="clr-namespace:MyClub.Scorer.Wpf.Views.Edition"
+             xmlns:editionVm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.Edition"
+             xmlns:enums="clr-namespace:MyClub.Scorer.Domain.Enums;assembly=MyClub.Scorer.Domain"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:units="clr-namespace:MyNet.Utilities.Units;assembly=MyNet.Utilities"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.BuildAssistant"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BuildAssistant"
+             d:DataContext="{d:DesignInstance Type=vm:CupBuildAssistantRoundsViewModel}"
+             Validation.ErrorTemplate="{x:Null}"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+</UserControl>

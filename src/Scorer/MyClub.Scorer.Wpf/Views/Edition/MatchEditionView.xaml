@@ -111,7 +111,8 @@
                         </s:TeamDataTemplateSelector>
                     </ContentControl.ContentTemplateSelector>
                 </ContentControl>
-                <ComboBox my:HintAssist.Hint="{my:Resource HomeTeam}"
+                <ComboBox Width="{StaticResource MyNet.Widths.Control.Large}"
+                          my:HintAssist.Hint="{my:Resource HomeTeam}"
                           my:HintAssist.IsFloating="False"
                           my:ItemsControlAssist.SortingProperty="Name"
                           ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
@@ -170,6 +171,7 @@
                     </ContentControl.ContentTemplateSelector>
                 </ContentControl>
                 <ComboBox Grid.Column="4"
+                          Width="{StaticResource MyNet.Widths.Control.Large}"
                           my:HintAssist.Hint="{my:Resource AwayTeam}"
                           my:HintAssist.IsFloating="False"
                           my:ItemsControlAssist.SortingProperty="Name"

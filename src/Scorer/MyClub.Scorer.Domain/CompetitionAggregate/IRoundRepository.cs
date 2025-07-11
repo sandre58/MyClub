@@ -5,7 +5,7 @@ using MyClub.Domain;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface IRoundRepository : IRepository<IRound>
+    public interface IRoundRepository : IRepository<Round>
     {
     }
 }

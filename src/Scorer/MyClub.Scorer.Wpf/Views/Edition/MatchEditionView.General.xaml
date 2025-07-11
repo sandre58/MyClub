@@ -732,8 +732,14 @@
                                                    HorizontalAlignment="Center"
                                                    Text="{Binding Name}"
                                                    Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.HiddenIfNull}}" />
-                                        <TextBlock Grid.Row="2" HorizontalAlignment="Center" Text="{Binding Tag.Name, ElementName=team}" Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
-                                        <TextBlock HorizontalAlignment="Center" Grid.Row="2" Text="{Binding Name}" Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                                        <TextBlock Grid.Row="2"
+                                                   HorizontalAlignment="Center"
+                                                   Text="{Binding Tag.Name, ElementName=team}"
+                                                   Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                                        <TextBlock Grid.Row="2"
+                                                   HorizontalAlignment="Center"
+                                                   Text="{Binding Name}"
+                                                   Visibility="{Binding Tag, ElementName=team, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
                                     </Grid>
                                 </DataTemplate>
                             </s:TeamDataTemplateSelector.VirtualTeamTemplate>
@@ -1030,6 +1036,12 @@
                      HorizontalAlignment="Center"
                      SelectedValue="{Binding State}"
                      SelectedValuePath="DataContext">
+                <ListBox.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Home.Team" />
+                        <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Away.Team" />
+                    </MultiBinding>
+                </ListBox.Visibility>
                 <ListBox.IsEnabled>
                     <Binding Converter="{x:Static my:EnumToBooleanConverter.Any}" Path="State">
                         <Binding.ConverterParameter>
@@ -1093,6 +1105,12 @@
 
         <!-- Opponents -->
         <Grid Grid.Row="2" Margin="{StaticResource MyNet.Margins.Medium.Top}">
+            <Grid.Visibility>
+                <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                    <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Home.Team" />
+                    <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Away.Team" />
+                </MultiBinding>
+            </Grid.Visibility>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="10" />
@@ -1111,9 +1129,18 @@
               Height="182"
               VerticalAlignment="Top"
               IsEnabled="{Binding CanEditScore}">
+            <Grid.Visibility>
+                <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                    <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Home.Team" />
+                    <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Away.Team" />
+                </MultiBinding>
+            </Grid.Visibility>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -1150,25 +1177,40 @@
                 </Grid>
             </RadioButton>
 
-            <!-- ExraTime -->
-            <ToggleButton Grid.Row="2"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          my:ToggleButtonAssist.OnContent="{my:Resource AfterExtraTimeAbbr,
-                                                                        Casing=Title}"
-                          IsChecked="{Binding AfterExtraTime}"
-                          ToolTip="{my:Resource AfterExtraTime}"
-                          Visibility="{Binding Data.CanEditExtraTime, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
-                <TextBlock Opacity="{StaticResource MyNet.Opacity.Disabled}" Text="{my:Resource AfterExtraTimeAbbr, Casing=Title}" />
-            </ToggleButton>
+            <!-- Draw management -->
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     Grid.Row="3"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     SelectedValue="{Binding DrawManagement}"
+                     SelectedValuePath="DataContext">
+                <ListBox.Visibility>
+                    <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.OrCollapse}">
+                        <Binding Path="MatchFormat.ExtraTimeIsEnabled" />
+                        <Binding Path="MatchFormat.ShootoutsIsEnabled" />
+                    </MultiBinding>
+                </ListBox.Visibility>
+                <ListBoxItem my:ListBoxItemAssist.IsSelectedBackground="{DynamicResource MyNet.Brushes.None}"
+                             my:ListBoxItemAssist.IsSelectedForeground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                             Content="{my:ToolIcon Kind=CircleOffOutline}"
+                             DataContext="{x:Static vm:DrawManagement.None}"
+                             Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                <ListBoxItem Content="{my:ToolIcon Kind=TimerPlus}"
+                             DataContext="{x:Static vm:DrawManagement.ExtraTime}"
+                             ToolTip="{my:Resource AfterExtraTime}"
+                             Visibility="{Binding Data.MatchFormat.ExtraTimeIsEnabled, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <ListBoxItem Content="{my:ToolIcon Kind=Target}"
+                             DataContext="{x:Static vm:DrawManagement.Shootout}"
+                             ToolTip="{my:Resource Shootouts}"
+                             Visibility="{Binding Data.MatchFormat.ShootoutsIsEnabled, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+            </ListBox>
 
             <!-- Shootout -->
             <RadioButton Style="{StaticResource Scorer.Styles.RadioButton.Score}"
-                         Grid.Row="2"
-                         Margin="{StaticResource MyNet.Margins.Medium.Top}"
+                         Grid.Row="5"
                          HorizontalAlignment="Center"
                          IsChecked="{Binding ShowGoals, Converter={x:Static my:NotBooleanConverter.Default}}"
-                         Visibility="{Binding Data.CanEditShootout, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                         Visibility="{Binding DrawManagement, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:DrawManagement.Shootout}}">
                 <Grid>
                     <Border Background="White" Opacity="0.001" />
                     <my:SimpleStackPanel Orientation="Horizontal">
@@ -1185,11 +1227,11 @@
             </RadioButton>
 
             <!-- Show Goals -->
-            <my:SimpleStackPanel Grid.Row="3"
+            <my:SimpleStackPanel Grid.Row="6"
                                  Margin="{StaticResource MyNet.Margins.Medium.Top}"
                                  HorizontalAlignment="Center"
                                  Orientation="Horizontal"
-                                 Visibility="{Binding Data.CanEditShootout, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}">
+                                 Visibility="{Binding DrawManagement, Converter={x:Static my:EnumToVisibilityConverter.HiddenIfNotAny}, ConverterParameter={x:Static vm:DrawManagement.Shootout}}">
                 <RadioButton Style="{StaticResource MyNet.Styles.ToggleButton.Icon.Foreground}"
                              Content="{my:ToolIcon Kind=Soccer}"
                              IsChecked="{Binding ShowGoals}"

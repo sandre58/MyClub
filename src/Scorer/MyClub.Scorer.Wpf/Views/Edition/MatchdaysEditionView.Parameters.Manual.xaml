@@ -57,7 +57,7 @@
                                            HorizontalAlignment="Right"
                                            VerticalAlignment="Bottom"
                                            my:ThemeAssist.UniformCornerRadius="20"
-                                           Content="{Binding Appointments.Count, RelativeSource={RelativeSource TemplatedParent}}"
+                                           Content="{Binding Appointments.Count, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource TemplatedParent}}"
                                            FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                            Visibility="{Binding Appointments.Count, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}" />
                                 </Grid>
@@ -132,6 +132,7 @@
                                     VerticalAlignment="Stretch"
                                     my:HeaderAssist.Background="Transparent"
                                     my:HeaderAssist.Height="25"
+                                    AppointmentsDisplayMode="Cell"
                                     AddCommand="{Binding AddToDateCommand}"
                                     Appointments="{Binding Dates}"
                                     Background="{DynamicResource MyNet.Brushes.Application.Background}"

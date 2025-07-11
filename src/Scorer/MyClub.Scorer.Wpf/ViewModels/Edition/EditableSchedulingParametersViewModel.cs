@@ -156,5 +156,9 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
             else
                 VenueRules.Rules.Clear();
         }
+
+        public bool CanScheduleAutomatic() => AsSoonAsPossible || DateRules.Rules.Count > 0;
+
+        public bool CanScheduleVenuesAutomatic() => UseHomeVenue || VenueRules.Rules.Count > 0;
     }
 }

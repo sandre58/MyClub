@@ -11,7 +11,7 @@
     </PackageReference>
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Update="xunit" Version="2.9.2" />
-    <PackageReference Update="xunit.runner.visualstudio" Version="3.0.0-pre.35">
+    <PackageReference Update="xunit.runner.visualstudio" Version="3.0.0-pre.42">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

@@ -14,24 +14,25 @@ namespace MyClub.Scorer.Wpf.ViewModels.BracketPage
         private readonly CompetitionInfoProvider _competitionInfoProvider;
         public BracketPageViewModel(CompetitionInfoProvider competitionInfoProvider,
                                     MatchdayPresentationService matchdayPresentationService,
-                                    RoundPresentationService roundPresentationService)
+                                    RoundPresentationService roundPresentationService,
+                                    CompetitionCommandsService competitionCommandsService)
         {
             _competitionInfoProvider = competitionInfoProvider;
-            competitionInfoProvider.LoadRunner.RegisterOnEnd(this, x => MatchStagesViewModel = x switch
+            competitionInfoProvider.LoadRunner.RegisterOnEnd(this, x => StagesViewModel = x switch
             {
-                LeagueViewModel league => new MatchdaysViewModel(league, matchdayPresentationService),
-                CupViewModel cup => new RoundsViewModel(cup, roundPresentationService),
+                LeagueViewModel league => new MatchdaysViewModel(league, matchdayPresentationService, competitionCommandsService),
+                CupViewModel cup => new RoundsViewModel(cup, roundPresentationService, competitionCommandsService),
                 _ => throw new NotImplementedException(),
             });
 
             competitionInfoProvider.UnloadRunner.RegisterOnStart(this, () =>
             {
-                MatchStagesViewModel?.Dispose();
-                MatchStagesViewModel = null;
+                StagesViewModel?.Dispose();
+                StagesViewModel = null;
             });
         }
 
-        public IListViewModel? MatchStagesViewModel { get; private set; }
+        public IListViewModel? StagesViewModel { get; private set; }
 
         protected override void Cleanup()
         {

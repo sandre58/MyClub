@@ -3,14 +3,18 @@
 
 using System;
 using System.Linq;
-using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class DateRulesStageScheduler<T> : DateRulesScheduler<T> where T : ISchedulable, IMatchesProvider
+    public class DateRulesStageScheduler : DateRulesScheduler<IMatchesStage>
     {
-        protected override TimeOnly ComputeTime(T item, DateOnly date, int index)
+        public DateRulesStageScheduler(DateOnly fromDate) : base(fromDate)
+        {
+        }
+
+        protected override TimeOnly ComputeTime(IMatchesStage item, DateOnly date, int index)
         {
             TimeOnly time;
             var matches = item.GetAllMatches().OrderBy(x => x.Date).ToList();

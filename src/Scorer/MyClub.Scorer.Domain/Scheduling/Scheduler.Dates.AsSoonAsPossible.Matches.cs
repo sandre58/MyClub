@@ -16,13 +16,16 @@ using MyNet.Utilities.Helpers;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class AsSoonAsPossibleMatchesScheduler : IMatchesScheduler
+    public class AsSoonAsPossibleMatchesScheduler : IDateScheduler<Match>, IVenueScheduler
     {
-        private readonly IEnumerable<Match> _scheduledMatches;
+        private DateTime _fromDate;
+        private readonly List<Match> _scheduledItems;
 
-        public AsSoonAsPossibleMatchesScheduler(IEnumerable<Match>? scheduledMatches = null) => _scheduledMatches = scheduledMatches ?? [];
-
-        public DateTime StartDate { get; set; } = DateTime.UtcNow;
+        public AsSoonAsPossibleMatchesScheduler(DateTime fromDate, IEnumerable<Match>? scheduledItems = null)
+        {
+            _fromDate = fromDate;
+            _scheduledItems = new(scheduledItems ?? []);
+        }
 
         public List<IAvailableDateSchedulingRule> Rules { get; set; } = [];
 
@@ -32,18 +35,18 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public void Schedule(IEnumerable<Match> matches)
         {
-            var newScheduledMatches = new List<Match>(_scheduledMatches.Except(matches));
+            matches.ToList().ForEach(x => _scheduledItems.Remove(x));
             matches.ForEach(x =>
             {
                 // 1 - Create available date ranges
-                var homeTeamAvailabilities = GetTeamAvailabilities(x.HomeTeam, newScheduledMatches);
-                var awayTeamAvailabilities = GetTeamAvailabilities(x.AwayTeam, newScheduledMatches);
+                var homeTeamAvailabilities = GetTeamAvailabilities(x.HomeTeam, _scheduledItems);
+                var awayTeamAvailabilities = GetTeamAvailabilities(x.AwayTeam, _scheduledItems);
                 var stadiumsAvailabilities = ScheduleVenues switch
                 {
-                    true => AvailableStadiums.ToDictionary(y => y, y => GetStadiumAvailabilities(y, newScheduledMatches)),
+                    true => AvailableStadiums.ToDictionary(y => y, y => GetStadiumAvailabilities(y, _scheduledItems)),
                     false => x.Stadium is not null ? new Dictionary<Stadium, Availabilities>
                     {
-                        { x.Stadium,  GetStadiumAvailabilities(x.Stadium, newScheduledMatches)}
+                        { x.Stadium,  GetStadiumAvailabilities(x.Stadium, _scheduledItems)}
                     } : [],
                 };
 
@@ -72,8 +75,17 @@ namespace MyClub.Scorer.Domain.Scheduling
                         ApplyAvailability(x, commonTeamsAvailabilities.LastDate);
                     }
                 }
-                newScheduledMatches.Add(x);
+                _scheduledItems.Add(x);
             });
+        }
+
+
+        public DateTime GetFromDate() => _fromDate;
+
+        public void Reset(DateTime fromDate, IEnumerable<Match>? scheduledItems = null)
+        {
+            _scheduledItems.Set(scheduledItems ?? []);
+            _fromDate = fromDate;
         }
 
         private void ApplyAvailability(Match match, DateTime date, Stadium? stadium = null)
@@ -129,7 +141,7 @@ namespace MyClub.Scorer.Domain.Scheduling
         {
             var result = new List<Period>();
 
-            var endPreviousUnavailableDate = StartDate;
+            var endPreviousUnavailableDate = _fromDate;
 
             foreach (var match in matches.OrderBy(x => x.Date).ToList())
             {

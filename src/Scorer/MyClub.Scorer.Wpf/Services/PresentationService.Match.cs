@@ -21,6 +21,7 @@ using MyNet.UI.Resources;
 using MyNet.UI.Services;
 using MyNet.Utilities;
 using MyNet.Utilities.Units;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MyClub.Scorer.Wpf.Services
 {
@@ -108,6 +109,17 @@ namespace MyClub.Scorer.Wpf.Services
             if (idsList.Count == 0) return;
 
             await AppBusyManager.WaitAsync(() => _matchService.Reschedule(idsList, offset, timeUnit)).ConfigureAwait(false);
+        }
+
+        public async Task RescheduleAsync(MatchViewModel item, DateOnly? date = null, TimeOnly? time = null) => await RescheduleAsync([item], date, time).ConfigureAwait(false);
+
+        public async Task RescheduleAsync(IEnumerable<MatchViewModel> items, DateOnly? date = null, TimeOnly? time = null)
+        {
+            var idsList = items.Select(x => x.Id).ToList();
+
+            if (idsList.Count == 0) return;
+
+            await AppBusyManager.WaitAsync(() => _matchService.Reschedule(idsList, date, time)).ConfigureAwait(false);
         }
 
         public async Task RescheduleAsync(IEnumerable<MatchViewModel> items, DateTime date)
@@ -206,7 +218,7 @@ namespace MyClub.Scorer.Wpf.Services
 
         public async Task RandomizeAsync(IEnumerable<MatchViewModel> items)
         {
-            var idsList = items.Select(x => x.Id).ToList();
+            var idsList = items.OrderBy(x => x.Date).Select(x => x.Id).ToList();
 
             if (idsList.Count == 0) return;
 

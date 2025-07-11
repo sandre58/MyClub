@@ -25,19 +25,21 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         private readonly OptimizedObservableCollection<Group> _groups = [];
         private readonly OptimizedObservableCollection<Matchday> _matchdays = [];
 
-        public GroupStage(IStage stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
+        public GroupStage(Tournament stage, string name, string? shortName = null, RankingRules? rankingRules = null, MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {
             Stage = stage;
             Name = name;
             ShortName = shortName ?? name.GetInitials();
             RankingRules = rankingRules ?? RankingRules.Default;
-            MatchFormat = matchFormat ?? stage.ProvideFormat();
-            MatchRules = matchRules ?? stage.ProvideRules();
-            SchedulingParameters = schedulingParameters ?? stage.ProvideSchedulingParameters();
+            MatchFormat = matchFormat ?? stage.MatchFormat;
+            MatchRules = matchRules ?? stage.MatchRules;
+            SchedulingParameters = schedulingParameters ?? stage.SchedulingParameters;
             Teams = new(_teams);
             Groups = new(_groups);
             Matchdays = new(_matchdays);
         }
+
+        public Tournament Stage { get; }
 
         public string Name
         {
@@ -65,8 +67,6 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public ReadOnlyObservableCollection<Matchday> Matchdays { get; }
 
-        public IStage Stage { get; }
-
         MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
 
         MatchRules IMatchRulesProvider.ProvideRules() => MatchRules;
@@ -76,7 +76,9 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         IEnumerable<IVirtualTeam> ITeamsProvider.ProvideTeams() => Teams.AsEnumerable();
 
         public IEnumerable<Match> GetAllMatches() => Groups.SelectMany(x => x.GetAllMatches());
-        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Matchdays.OfType<T>();
+
+        public IEnumerable<T> GetStages<T>() where T : IStage => Matchdays.OfType<T>();
+
         public bool RemoveMatch(Match item) => _matchdays.Any(x => x.RemoveMatch(item));
 
         public Match? AddMatch(Guid stageId, DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam) => _matchdays.GetByIdOrDefault(stageId)?.AddMatch(date, homeTeam, awayTeam);
@@ -100,6 +102,8 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public void Clear() => _matchdays.Clear();
 
         #endregion
+
+        public override string ToString() => Name;
     }
 }
 

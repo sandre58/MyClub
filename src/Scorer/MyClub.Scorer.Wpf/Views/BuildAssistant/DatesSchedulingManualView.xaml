@@ -10,7 +10,7 @@
              Validation.ErrorTemplate="{x:Null}"
              mc:Ignorable="d">
     <UserControl.Resources>
-        <my:BindingProxy x:Key="ProxyManual" Data="{Binding}" />
+        <my:BindingProxy x:Key="ProxySchedulingManual" Data="{Binding}" />
 
         <Style x:Key="Scorer.Styles.CalendarItem" TargetType="{x:Type my:CalendarItem}" BasedOn="{StaticResource MyNet.Styles.CalendarItem.DaysByMonth}">
             <Setter Property="Template">
@@ -38,7 +38,7 @@
                                              Visibility="Hidden">
                                         <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                                 Margin="0"
-                                                Command="{Binding Data.RemoveFromDateCommand, Source={StaticResource ProxyManual}}"
+                                                Command="{Binding Data.RemoveFromDateCommand, Source={StaticResource ProxySchedulingManual}}"
                                                 CommandParameter="{Binding Date, RelativeSource={RelativeSource TemplatedParent}}"
                                                 Content="{my:ToolIcon Kind=Minus}"
                                                 ToolTip="{my:Resource Remove}"
@@ -127,6 +127,7 @@
                                         my:HeaderAssist.Height="25"
                                         AddCommand="{Binding AddToDateCommand}"
                                         Appointments="{Binding Dates}"
+                                        AppointmentsDisplayMode="Cell"
                                         Background="Transparent"
                                         BorderThickness="0"
                                         CalendarItemStyle="{StaticResource Scorer.Styles.CalendarItem}"
@@ -252,9 +253,9 @@
                                                    my:HintAssist.Hint="{my:Resource Time}"
                                                    my:HintAssist.IsFloating="False"
                                                    SelectedTime="{my:Time Time}"
-                                                   Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatchday}}" />
+                                                   Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxySchedulingManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatchday}}" />
 
-                                    <ItemsControl Grid.Column="6" ItemsSource="{Binding Times}" Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatch}}">
+                                    <ItemsControl Grid.Column="6" ItemsSource="{Binding Times}" Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxySchedulingManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatch}}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid Margin="{StaticResource MyNet.Margins.Default.Horizontal}">
@@ -292,7 +293,7 @@
 
                                     <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                             Grid.Column="8"
-                                            Command="{Binding Data.RemoveCommand, Source={StaticResource ProxyManual}}"
+                                            Command="{Binding Data.RemoveCommand, Source={StaticResource ProxySchedulingManual}}"
                                             CommandParameter="{Binding}"
                                             Content="{my:ToolIcon Kind=Trash}"
                                             ToolTip="{my:Resource Remove}" />
@@ -307,7 +308,7 @@
                               Width="200"
                               Margin="{StaticResource MyNet.Margins.Medium.Left}"
                               ItemsSource="{Binding MatchTimes}"
-                              Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxyManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatches}}">
+                              Visibility="{Binding Data.TimeSelectionMethod, Source={StaticResource ProxySchedulingManual}, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static vm:TimeSelectionMethod.UseUniqueTimeByMatches}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <my:Card Style="{StaticResource MyNet.Styles.Card.Elevation.Application}"

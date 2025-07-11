@@ -1,0 +1,118 @@
+﻿<UserControl x:Class="MyClub.Scorer.Wpf.Views.BracketPage.RoundStagesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:display="clr-namespace:MyNet.UI.ViewModels.Display;assembly=MyNet.UI"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:my="http://mynet.com/xaml/themes"
+             xmlns:v="clr-namespace:MyClub.Scorer.Wpf.Views.BracketPage"
+             xmlns:vm="clr-namespace:MyClub.Scorer.Wpf.ViewModels.BracketPage"
+             d:DataContext="{d:DesignInstance Type=vm:RoundStagesViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             my:InputAssist.PropagateInWindow="True"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <my:BindingProxy x:Key="Proxy" Data="{Binding}" />
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <!-- ToolBar -->
+        <my:CommandsBar Margin="0 0 150 10" DockPanel.Dock="Top">
+
+            <my:CommandsBar.LeftCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <Button my:IconAssist.Icon="{my:Icon Kind=DesktopClassic}"
+                            Command="{Binding OpenBuildAssistantCommand}"
+                            Content="{my:Resource Build}"
+                            ToolTip="Ctrl+B" />
+                </ToolBar>
+            </my:CommandsBar.LeftCommands>
+
+            <my:SelectionCommandsBar Style="{StaticResource MyNet.Styles.SelectionCommandsBar}" SelectedCount="{Binding SelectedWrappers.Count}" UnselectAllCommand="{Binding ClearSelectionCommand}">
+                <Button my:ToolTipAssist.Content="{my:ShortcutResource Edit, ShortcutKey=Ctrl+E}" Command="{Binding EditSelectedItemCommand}" Content="{my:MediumIcon Kind=Edit}" />
+                <!--<Button my:ThemeAssist.IsMouseOverBackground="{DynamicResource MyNet.Brushes.Negative}"
+                        my:ThemeAssist.IsMouseOverForeground="{DynamicResource MyNet.Brushes.White}"
+                        my:ToolTipAssist.Content="{my:ShortcutResource Remove,
+                                                                       ShortcutKey=InputDelete}"
+                        Command="{Binding RemoveSelectedItemsCommand}"
+                        Content="{my:MediumIcon Kind=Trash}" />-->
+            </my:SelectionCommandsBar>
+
+            <my:CommandsBar.RightCommands>
+                <ToolBar Style="{StaticResource MyNet.Styles.ToolBar.Transparent}">
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Scorer.DataTemplates.List.Count.Selectable}" />
+                    <ContentControl Margin="10 0">
+                        <ContentControl.Style>
+                            <Style TargetType="{x:Type ContentControl}" BasedOn="{StaticResource MyNet.Styles.ContentControl}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeMonth">
+                                        <Setter Property="Content">
+                                            <Setter.Value>
+                                                <Grid>
+                                                    <my:MonthPicker Style="{StaticResource MyNet.Styles.MonthPicker.DropDown.Filled}"
+                                                                    Width="210"
+                                                                    VerticalAlignment="Stretch"
+                                                                    FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                                                    FontWeight="SemiBold"
+                                                                    SelectedMonth="{my:DateTime Display.Mode.DisplayDate}"
+                                                                    SelectedMonthFormat="Y" />
+                                                </Grid>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeYear">
+                                        <Setter Property="Content">
+                                            <Setter.Value>
+                                                <my:NumericUpDown Style="{StaticResource MyNet.Styles.NumericUpDown.DropDown.Filled}"
+                                                                  Width="210"
+                                                                  my:HintAssist.HelperTextForeground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                                                                  FontSize="{StaticResource MyNet.Font.Size.Caption}"
+                                                                  FontWeight="SemiBold"
+                                                                  Foreground="{DynamicResource MyNet.Brushes.Application.Foreground}"
+                                                                  Value="{my:DateTime Display.Mode.DisplayDate,
+                                                                                      Converter={x:Static my:DateToYearConverter.Default}}" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+                    <Separator />
+                    <my:DisplayView DataContext="{Binding Display}" />
+                </ToolBar>
+            </my:CommandsBar.RightCommands>
+
+        </my:CommandsBar>
+
+        <!-- Content -->
+        <my:TransitioningContent Content="{Binding}" TriggerObject="{Binding Display.Mode}">
+            <my:TransitioningContent.Style>
+                <Style TargetType="{x:Type my:TransitioningContent}" BasedOn="{StaticResource MyNet.Styles.TransitioningContent}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeMonth">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <v:StagesMonthView />
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Display.Mode.Key}" Value="DisplayModeYear">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <v:StagesYearView />
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </my:TransitioningContent.Style>
+        </my:TransitioningContent>
+    </DockPanel>
+</UserControl>

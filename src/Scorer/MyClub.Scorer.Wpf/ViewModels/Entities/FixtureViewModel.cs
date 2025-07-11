@@ -7,15 +7,12 @@ using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
-using MyClub.CrossCutting.Localization;
 using MyClub.Domain.Enums;
-using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.TeamAggregate;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.DynamicData.Extensions;
-using MyNet.Observable.Attributes;
 using MyNet.UI.Threading;
 
 namespace MyClub.Scorer.Wpf.ViewModels.Entities
@@ -25,7 +22,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         private readonly TeamsProvider _teamsProvider;
         private readonly ExtendedObservableCollection<MatchViewModel> _matches = [];
 
-        public FixtureViewModel(Fixture item, RoundOfFixturesViewModel stage, TeamsProvider teamsProvider) : base(item)
+        public FixtureViewModel(Fixture item, RoundViewModel stage, TeamsProvider teamsProvider) : base(item)
         {
             _teamsProvider = teamsProvider;
             Matches = new(_matches);
@@ -38,7 +35,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             Disposables.Add(stage.Matches.ToObservableChangeSet().Filter(x => item.GetAllMatches().Select(y => y.Id).Contains(x.Id)).ObserveOn(Scheduler.GetUIOrCurrent()).Bind(_matches).Subscribe());
         }
 
-        public RoundOfFixturesViewModel Stage { get; }
+        public RoundViewModel Stage { get; }
 
         public IVirtualTeamViewModel Team1 { get; }
 
@@ -50,23 +47,15 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public ReadOnlyObservableCollection<MatchViewModel> Matches { get; }
 
-        [UpdateOnCultureChanged]
-        public string Name => (Stage.Fixtures.IndexOf(this) + 1).ToString(MyClubResources.FixtureX);
+        public string? DisplayName { get; set; }
 
-        [UpdateOnCultureChanged]
-        public string ShortName => (Stage.Fixtures.IndexOf(this) + 1).ToString(MyClubResources.FixtureXAbbr);
-
-        [UpdateOnCultureChanged]
-        public string DisplayName => $"{Stage.Name}{Name}";
-
-        [UpdateOnCultureChanged]
-        public string DisplayShortName => $"{Stage.ShortName}{ShortName}";
+        public string? DisplayShortName { get; set; }
 
         public bool Participate(IVirtualTeamViewModel team) => Item.Participate(team.Id);
 
         public Result GetResultOf(TeamViewModel team) => Item.GetResultOf(team.Id);
 
-        public ExtendedResult GetDetailledResultOf(TeamViewModel team) => Item.GetExtendedResultOf(team.Id);
+        public ExtendedResult GetExtendedResultOf(TeamViewModel team) => Item.GetExtendedResultOf(team.Id);
 
         public TeamViewModel? GetWinner() => Item.GetWinner() is Team team ? _teamsProvider.Get(team.Id) : null;
 

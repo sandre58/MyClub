@@ -19,8 +19,9 @@ namespace MyClub.Scorer.Application.Services
         public void UpdateMatchRules(MatchRules matchRules, bool applyMatchRulesOnExistingMatches)
         {
             _parametersRepository.UpdateMatchRules(matchRules);
-            if (applyMatchRulesOnExistingMatches)
-                _matchService.UpdateRules(_matchService.GetAll().Select(x => x.Id).ToList(), matchRules);
+            // TODO
+            //if (applyMatchRulesOnExistingMatches)
+            //    _matchService.UpdateRules(_matchService.GetAll().Select(x => x.Id).ToList(), matchRules);
         }
 
         public void UpdateSchedulingParameters(SchedulingParameters schedulingParameters) => _parametersRepository.UpdateSchedulingParameters(schedulingParameters);

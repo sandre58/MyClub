@@ -10,6 +10,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
     {
         IStageViewModel Stage { get; }
 
+        DateTime Date { get; }
+
+        public bool ShowName { get; }
+
         bool CanCancelMatch();
 
         bool CanAutomaticReschedule();
@@ -17,7 +21,5 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces
         bool CanAutomaticRescheduleVenue();
 
         IEnumerable<IVirtualTeamViewModel> GetAvailableTeams();
-
-        DateTime Date { get; }
     }
 }

@@ -11,6 +11,7 @@ namespace MyClub.Scorer.Domain.TeamAggregate
         where T : IFixture
     {
         private readonly Result _matchResult;
+        private Team? _team;
 
         public ResultTeam(T fixture, Result matchResult)
         {
@@ -20,15 +21,15 @@ namespace MyClub.Scorer.Domain.TeamAggregate
 
         public T Fixture { get; }
 
-        public Team? GetTeam()
-            => !Fixture.IsPlayed()
-                ? null
-                : _matchResult switch
-                {
-                    Result.Won => Fixture.GetWinner(),
-                    Result.Lost => Fixture.GetLooser(),
-                    _ => null,
-                };
+        public Team? GetTeam() => _team;
+
+        public void Compute()
+            => _team = _matchResult switch
+            {
+                Result.Won => Fixture.GetWinner(),
+                Result.Lost => Fixture.GetLooser(),
+                _ => null,
+            };
 
         public bool IsSimilar(object? obj) => obj is ResultTeam<T> winnerOfMatchTeam && Equals(winnerOfMatchTeam.Fixture, Fixture) && winnerOfMatchTeam._matchResult == _matchResult;
 

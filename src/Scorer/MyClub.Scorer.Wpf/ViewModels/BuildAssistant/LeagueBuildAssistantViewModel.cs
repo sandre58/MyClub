@@ -9,9 +9,11 @@ using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Wpf.Services.Managers;
 using MyClub.Scorer.Wpf.Services.Providers;
 using MyClub.Scorer.Wpf.ViewModels.Edition;
+using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyNet.Observable.Collections.Providers;
 using MyNet.UI.Dialogs;
 using MyNet.UI.ViewModels.Edition;
+using MyNet.Utilities;
 
 namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
 {
@@ -39,7 +41,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
             BuildParameters = new(new ObservableSourceProvider<IEditableStadiumViewModel>(stadiumsProvider.Items.ToObservableChangeSet().Transform(x => (IEditableStadiumViewModel)x)));
 
             Reset();
-            _competitionInfoProvider.LoadRunner.RegisterOnEnd(this, _ => Reset());
+
+            _competitionInfoProvider.LoadRunner.RegisterOnEnd(this, x => x.IfIs<LeagueViewModel>(_ => Reset()));
         }
 
         public LeagueBuildAssistantParametersViewModel BuildParameters { get; }

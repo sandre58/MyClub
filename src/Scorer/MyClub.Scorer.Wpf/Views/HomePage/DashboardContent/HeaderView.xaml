@@ -63,21 +63,23 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <my:PictureControl Style="{StaticResource MyNet.Styles.PictureControl}"
-                                   Grid.RowSpan="2"
-                                   Grid.Column="1"
-                                   Width="170"
-                                   Height="170"
-                                   Margin="0 0 0 -25"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Bottom"
-                                   Content="{my:Icon Kind=ShieldCrown,
-                                                                Size=150}"
-                                   my:ThemeAssist.IsMouseOverBackground="{my:BrushBinding InheritPath=(TextElement.Foreground),
-                                                                                          Opacity={StaticResource MyNet.Opacity.Hovered}}"
-                                   Background="Transparent"
-                                   Foreground="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
-                                   Image="{Binding Image, Mode=OneWay, Converter={x:Static my:BytesToImageConverter.Default}}" />
+                <Grid Grid.RowSpan="2"
+                      Grid.Column="1"
+                      Width="170"
+                      Height="170"
+                      Margin="0 0 0 -25"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Bottom">
+                    <my:PackIcon Width="170"
+                                 Height="170"
+                                 Kind="ShieldCrown"
+                                 Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
+                    <Image HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch"
+                           Source="{Binding Image, Converter={x:Static my:BytesToImageConverter.Default}}"
+                           Stretch="Uniform"
+                           Visibility="{Binding Image, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                </Grid>
 
                 <my:SimpleStackPanel Grid.Column="3" Margin="{StaticResource MyNet.Margins.Large}" VerticalAlignment="Top">
 

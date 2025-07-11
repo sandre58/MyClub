@@ -16,6 +16,9 @@
         <DataTemplate DataType="{x:Type vm:MatchdaysViewModel}">
             <v:MatchdaysView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:RoundsViewModel}">
+            <v:RoundsView />
+        </DataTemplate>
     </UserControl.Resources>
-    <ContentControl Margin="{StaticResource MyNet.Margins.Medium}" Content="{Binding MatchStagesViewModel}" />
+    <ContentControl Margin="{StaticResource MyNet.Margins.Medium}" Content="{Binding StagesViewModel}" />
 </UserControl>

@@ -6,7 +6,7 @@ using MyClub.Scorer.Domain.MatchAggregate;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class HomeTeamVenueMatchesScheduler : IMatchesScheduler
+    public class HomeTeamVenueMatchesScheduler : IVenueScheduler
     {
         public static readonly HomeTeamVenueMatchesScheduler Default = new();
 

@@ -23,8 +23,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
 
         public bool OpenIsVisible => ContentIsVisible<OpenViewModel>();
 
-        public bool NewIsVisible => ContentIsVisible<NewViewModel>();
-
         public bool AboutIsVisible => ContentIsVisible<AboutViewModel>();
 
         public bool PropertiesIsVisible => ContentIsVisible<PropertiesViewModel>();
@@ -54,8 +52,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
                         new AboutViewModel(),
                         new PreferencesViewModel(persistentPreferencesService, autoSaveService),
                         new OpenViewModel(recentFilesViewModel, projectCommandsService),
-                        new PropertiesViewModel(projectInfoProvider),
-                        new NewViewModel(projectCommandsService)
+                        new PropertiesViewModel(projectInfoProvider)
                    ], appCommandsService)
         {
             NewLeagueCommand = CommandsManager.Create(async () => await projectCommandsService.NewAsync(CompetitionType.League).ConfigureAwait(false), projectCommandsService.IsEnabled);
@@ -71,7 +68,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         protected override void OnContentChanged()
         {
             RaisePropertyChanged(nameof(PreferencesIsVisible));
-            RaisePropertyChanged(nameof(NewIsVisible));
             RaisePropertyChanged(nameof(OpenIsVisible));
             RaisePropertyChanged(nameof(AboutIsVisible));
             RaisePropertyChanged(nameof(PropertiesIsVisible));

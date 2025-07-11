@@ -30,53 +30,23 @@
 
                             <TextBlock Text="{my:DisplayDateTime Date, Format=t}" />
 
-                            <Grid Grid.Row="2">
+                            <Grid Grid.Row="2" HorizontalAlignment="Left">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="5" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="5" />
-                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Home -->
-                                <ctrl:TeamControl x:Name="home"
-                                                  Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
-                                                  ShowShortName="True"
-                                                  Team="{Binding Home.Team}"
-                                                  ToolTip="{Binding Home.Team.Name}" />
-
-                                <!-- Score -->
-                                <Grid x:Name="score" Grid.Column="2" Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="4" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Label x:Name="homeScore"
-                                           Style="{StaticResource Scorer.Styles.Label.Score.Small}"
-                                           Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
-                                           Content="{Binding Home.Score}" />
-                                    <Label x:Name="awayScore"
-                                           Style="{StaticResource Scorer.Styles.Label.Score.Small}"
-                                           Grid.Column="2"
-                                           Background="{my:BrushBinding InheritPath=(TextElement.Foreground)}"
-                                           Content="{Binding Away.Score}" />
-                                </Grid>
-                                <TextBlock Grid.Column="2"
+                                <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}" Team="{Binding Home.Team}" />
+                                <TextBlock Grid.Column="1"
+                                           Margin="{StaticResource MyNet.Margins.Default.Horizontal}"
                                            Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                            Text="{my:Resource VersusAbbr}"
-                                           Visibility="{Binding IsPlayed, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfTrue}}" />
-
-                                <!-- Away -->
-                                <ctrl:TeamControl x:Name="away"
-                                                  Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
-                                                  Grid.Column="4"
+                                           Typography.Capitals="AllSmallCaps" />
+                                <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}"
+                                                  Grid.Column="2"
                                                   IsAway="True"
-                                                  ShowShortName="True"
-                                                  Team="{Binding Away.Team}"
-                                                  ToolTip="{Binding Away.Team.Name}" />
+                                                  Team="{Binding Away.Team}" />
 
                             </Grid>
                         </Grid>

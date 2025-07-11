@@ -21,23 +21,42 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="5" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <my:SimpleStackPanel Grid.Row="0" Orientation="Horizontal">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
-                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
-                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
-                    </StackPanel>
+                <!-- Time -->
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime StartDate, Format=t}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text=" - " />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:DisplayDateTime EndDate, Format=t}" />
+                </StackPanel>
+
+                <!-- Stage -->
+                <my:SimpleStackPanel Grid.Row="2"
+                                     VerticalAlignment="Center"
+                                     Orientation="Horizontal"
+                                     Spacing="{StaticResource MyNet.Margin.Default}">
                     <TextBlock Text="{Binding Item.Stage.Name}" />
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding Item.Parent.ShowName, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="(" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Item.Parent.Name}" />
+                        <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text=")" />
+                    </StackPanel>
                     <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="-" />
-                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="{Binding Item.DisplayName}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="{Binding Item.Fixture.DisplayName}" Visibility="{Binding Item.Fixture, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}" />
+                    <TextBlock Opacity="{StaticResource MyNet.Opacity.Overlay}" Text="{Binding Item.DisplayName}" Visibility="{Binding Item.Fixture, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNotNull}}" />
                 </my:SimpleStackPanel>
+
+                <!-- Match -->
                 <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}"
-                                   Grid.Row="2"
+                                   Grid.Row="4"
+                                   HorizontalAlignment="Left"
                                    Match="{Binding Item}"
                                    ShowTime="False" />
-                <DockPanel Grid.Row="4" Visibility="{Binding Item.Stadium, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
+
+                <!-- Stadium -->
+                <DockPanel Grid.Row="6" Visibility="{Binding Item.Stadium, Converter={x:Static my:NullToVisibilityConverter.CollapsedIfNull}}">
                     <my:PackIcon Width="12"
                                  Height="12"
                                  Margin="{StaticResource MyNet.Margins.Default.Right}"
@@ -62,6 +81,17 @@
                              VerticalAlignment="Center"
                              DockPanel.Dock="Top"
                              Orientation="Horizontal">
+
+            <!-- Display Details -->
+            <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{my:Resource Show}" Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}" />
+            <ListBox x:Name="display"
+                     Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     VerticalAlignment="Stretch"
+                     SelectedIndex="0"
+                     Visibility="{Binding Mode, Converter={x:Static my:EnumToVisibilityConverter.CollapsedIfNotAny}, ConverterParameter={x:Static contracts:ScreenMode.Read}}">
+                <ListBoxItem Width="80" Content="{my:Resource Teams}" />
+                <ListBoxItem Width="80" Content="{my:Resource Stages}" />
+            </ListBox>
 
             <!-- Period -->
             <DatePicker Style="{StaticResource MyNet.Styles.DatePicker.DropDown.Filled}"
@@ -131,96 +161,111 @@
                                                 <Setter.Value>
                                                     <DataTemplate>
                                                         <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="*" />
+                                                                <RowDefinition Height="Auto" />
+                                                            </Grid.RowDefinitions>
 
-                                                            <my:SimpleStackPanel>
+                                                            <ContentControl x:Name="content" Content="{Binding Item}">
 
-                                                                <!-- Header -->
-                                                                <my:SimpleStackPanel Orientation="Horizontal">
+                                                                <!-- Stage -->
+                                                                <ContentControl.ContentTemplate>
+                                                                    <DataTemplate>
+                                                                        <TextBlock VerticalAlignment="Top" TextWrapping="Wrap">
+                                                                            <Run x:Name="stage" Text="{Binding Stage.Name, Mode=OneWay}" />
+                                                                            <Run x:Name="parenthesisStart" Text="(">
+                                                                                <Run.Foreground>
+                                                                                    <SolidColorBrush Opacity="{StaticResource MyNet.Opacity.Secondary}" Color="{DynamicResource MyNet.Colors.Application.Foreground}" />
+                                                                                </Run.Foreground>
+                                                                            </Run><Run x:Name="parent" Text="{Binding Parent.Name, Mode=OneWay}">
+                                                                                <Run.Foreground>
+                                                                                    <SolidColorBrush Opacity="{StaticResource MyNet.Opacity.Secondary}" Color="{DynamicResource MyNet.Colors.Application.Foreground}" />
+                                                                                </Run.Foreground>
+                                                                            </Run><Run x:Name="parenthesisEnd" Text=")">
+                                                                                <Run.Foreground>
+                                                                                    <SolidColorBrush Opacity="{StaticResource MyNet.Opacity.Secondary}" Color="{DynamicResource MyNet.Colors.Application.Foreground}" />
+                                                                                </Run.Foreground>
+                                                                            </Run>
+                                                                            <Run Text="-">
+                                                                                <Run.Foreground>
+                                                                                    <SolidColorBrush Opacity="{StaticResource MyNet.Opacity.Overlay}" Color="{DynamicResource MyNet.Colors.Application.Foreground}" />
+                                                                                </Run.Foreground>
+                                                                            </Run>
+                                                                            <Run x:Name="name" Text="{Binding DisplayName, Mode=OneWay}">
+                                                                                <Run.Foreground>
+                                                                                    <SolidColorBrush Opacity="{StaticResource MyNet.Opacity.Overlay}" Color="{DynamicResource MyNet.Colors.Application.Foreground}" />
+                                                                                </Run.Foreground>
+                                                                            </Run><Run x:Name="fixture" Text="{Binding Fixture.DisplayName, Mode=OneWay}">
+                                                                                <Run.Foreground>
+                                                                                    <SolidColorBrush Opacity="{StaticResource MyNet.Opacity.Overlay}" Color="{DynamicResource MyNet.Colors.Application.Foreground}" />
+                                                                                </Run.Foreground>
+                                                                            </Run>
+                                                                        </TextBlock>
+                                                                        <DataTemplate.Triggers>
+                                                                            <DataTrigger Binding="{Binding Parent.ShowName}" Value="False">
+                                                                                <Setter TargetName="parent" Property="Text" Value="" />
+                                                                                <Setter TargetName="parenthesisEnd" Property="Text" Value="" />
+                                                                                <Setter TargetName="parenthesisStart" Property="Text" Value="" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Fixture, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" Value="False">
+                                                                                <Setter TargetName="fixture" Property="Text" Value="" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Fixture, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}" Value="True">
+                                                                                <Setter TargetName="name" Property="Text" Value="" />
+                                                                            </DataTrigger>
+                                                                        </DataTemplate.Triggers>
+                                                                    </DataTemplate>
+                                                                </ContentControl.ContentTemplate>
+                                                            </ContentControl>
 
-                                                                    <!-- Selection -->
-                                                                    <Grid>
-                                                                        <CheckBox x:Name="Selection"
-                                                                                  Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
-                                                                                  BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
-                                                                                                                Opacity={StaticResource MyNet.Opacity.Secondary}}"
-                                                                                  Focusable="False"
-                                                                                  IsChecked="{Binding IsSelected}"
-                                                                                  IsTabStop="False"
-                                                                                  Visibility="Hidden" />
-                                                                        <my:PackIcon x:Name="Icon"
-                                                                                     Width="18"
-                                                                                     Height="18"
-                                                                                     HorizontalAlignment="Center"
-                                                                                     VerticalAlignment="Center"
-                                                                                     Foreground="{DynamicResource MyNet.Brushes.None}"
-                                                                                     Kind="ProgressClock" />
-                                                                    </Grid>
-
-                                                                    <!-- Teams -->
-                                                                    <my:SimpleStackPanel Orientation="Horizontal" Spacing="{StaticResource MyNet.Margin.Small}">
-                                                                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                                                                           Width="19"
-                                                                                           Height="19"
-                                                                                           DataContext="{Binding Item.Home.Team}"
-                                                                                           ToolTip="{Binding Name}" />
-                                                                        <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
-                                                                                   Opacity="{StaticResource MyNet.Opacity.Secondary}"
-                                                                                   Text="{my:Resource VersusAbbr}"
-                                                                                   Typography.Capitals="AllSmallCaps" />
-                                                                        <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                                                                                           Width="19"
-                                                                                           Height="19"
-                                                                                           DataContext="{Binding Item.Away.Team}"
-                                                                                           ToolTip="{Binding Name}" />
-
-                                                                    </my:SimpleStackPanel>
-                                                                </my:SimpleStackPanel>
-
-                                                                <!-- Details -->
-                                                                <ContentControl x:Name="Details"
-                                                                                Content="{Binding}"
-                                                                                ContentTemplate="{StaticResource Scorer.DataTemplates.MatchDetails}"
-                                                                                Grid.IsSharedSizeScope="True"
+                                                            <!-- Toolbar -->
+                                                            <StackPanel x:Name="options"
+                                                                        HorizontalAlignment="Right"
+                                                                        VerticalAlignment="Bottom"
+                                                                        Orientation="Horizontal">
+                                                                <v:MatchToolBar x:Name="ToolBar"
+                                                                                Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
+                                                                                Padding="0"
+                                                                                VerticalAlignment="Bottom"
+                                                                                DataContext="{Binding Item}"
+                                                                                RescheduleConflictsCommand="{Binding Data.RescheduleConflictsCommand, Source={StaticResource Proxy}}"
+                                                                                SelectConflictsCommand="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
+                                                                                SelectFixtureMatchesCommand="{Binding Data.SelectFixtureMatchesCommand, Source={StaticResource Proxy}}"
                                                                                 Visibility="Collapsed" />
-                                                            </my:SimpleStackPanel>
-
-                                                            <v:MatchToolBar x:Name="ToolBar"
-                                                                            Style="{StaticResource MyNet.Styles.ToolBar.Tools}"
-                                                                            Margin="{StaticResource MyNet.Margins.Default.Bottom}"
-                                                                            Padding="0"
-                                                                            HorizontalAlignment="Right"
-                                                                            VerticalAlignment="Bottom"
-                                                                            DataContext="{Binding Item}"
-                                                                            RescheduleConflictsCommand="{Binding Data.RescheduleConflictsCommand, Source={StaticResource Proxy}}"
-                                                                            SelectConflictsCommand="{Binding Data.SelectConflictsCommand, Source={StaticResource Proxy}}"
-                                                                            SelectFixtureMatchesCommand="{Binding Data.SelectFixtureMatchesCommand, Source={StaticResource Proxy}}"
-                                                                            Visibility="Hidden" />
+                                                                <CheckBox x:Name="Selection"
+                                                                          Style="{StaticResource MyNet.Styles.CheckBox.Circle}"
+                                                                          VerticalAlignment="Bottom" Margin="0 0 0 2"
+                                                                          BorderBrush="{my:BrushBinding SelfPath=(TextElement.Foreground),
+                                                                                                        Opacity={StaticResource MyNet.Opacity.Secondary}}"
+                                                                          Focusable="False"
+                                                                          IsChecked="{Binding IsSelected}"
+                                                                          IsTabStop="False"
+                                                                          Visibility="Collapsed" />
+                                                            </StackPanel>
                                                         </Grid>
 
                                                         <DataTemplate.Triggers>
-                                                            <DataTrigger Binding="{Binding Item.State}" Value="Played">
-                                                                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Positive}" />
-                                                                <Setter TargetName="Icon" Property="Kind" Value="ProgressCheck" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Item.State}" Value="InProgress">
-                                                                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Information}" />
-                                                                <Setter TargetName="Icon" Property="Kind" Value="ProgressHelper" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Item.State}" Value="Suspended">
-                                                                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource Scorer.Brushes.Match.State.Suspended}" />
-                                                                <Setter TargetName="Icon" Property="Kind" Value="ProgressAlert" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Item.State}" Value="Cancelled">
-                                                                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Negative}" />
-                                                                <Setter TargetName="Icon" Property="Kind" Value="ProgressClose" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Item.State}" Value="Postponed">
-                                                                <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource MyNet.Brushes.Warning}" />
-                                                                <Setter TargetName="Icon" Property="Kind" Value="ProgressQuestion" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
-                                                                <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
-                                                                <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                                                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=display}" Value="0">
+                                                                <Setter TargetName="content" Property="ContentTemplate">
+                                                                    <Setter.Value>
+
+                                                                        <!-- Teams -->
+                                                                        <DataTemplate>
+                                                                            <WrapPanel>
+                                                                                <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}" Team="{Binding Home.Team}" />
+                                                                                <TextBlock Margin="{StaticResource MyNet.Margins.Small}"
+                                                                                           Opacity="{StaticResource MyNet.Opacity.Secondary}"
+                                                                                           Text="{my:Resource VersusAbbr}"
+                                                                                           Typography.Capitals="AllSmallCaps" />
+                                                                                <ctrl:TeamControl Style="{StaticResource Scorer.Styles.TeamControl.Horizontal.Small}" IsAway="True" Team="{Binding Away.Team}" />
+                                                                            </WrapPanel>
+                                                                        </DataTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
                                                             </DataTrigger>
                                                             <MultiDataTrigger>
                                                                 <MultiDataTrigger.Conditions>
@@ -229,18 +274,27 @@
                                                                 </MultiDataTrigger.Conditions>
                                                                 <Setter TargetName="ToolBar" Property="Visibility" Value="Visible" />
                                                             </MultiDataTrigger>
-
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=95}" Value="True" />
-                                                                    <Condition Binding="{Binding ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=190}" Value="True" />
-                                                                </MultiDataTrigger.Conditions>
-                                                                <Setter TargetName="Details" Property="Visibility" Value="Visible" />
-                                                            </MultiDataTrigger>
-                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                <Setter TargetName="Icon" Property="Visibility" Value="Hidden" />
+                                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" Value="True">
                                                                 <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter TargetName="Selection" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=100}" Value="True">
+                                                                <Setter TargetName="options" Property="Grid.Column" Value="1" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsGreaterThan}, ConverterParameter=45}" Value="True">
+                                                                <Setter TargetName="options" Property="Grid.Column" Value="0" />
+                                                                <Setter TargetName="options" Property="Grid.Row" Value="1" />
+                                                            </DataTrigger>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter=46}" Value="True" />
+                                                                    <Condition Binding="{Binding ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}, Converter={x:Static my:ComparaisonToBooleanConverter.IsLessThan}, ConverterParameter=101}" Value="True" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter TargetName="options" Property="Grid.Column" Value="1" />
+                                                                <Setter TargetName="options" Property="Grid.Row" Value="1" />
+                                                            </MultiDataTrigger>
                                                         </DataTemplate.Triggers>
                                                     </DataTemplate>
                                                 </Setter.Value>

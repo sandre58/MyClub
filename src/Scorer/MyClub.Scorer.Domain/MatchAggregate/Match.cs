@@ -39,9 +39,9 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             ComputeOpponents();
         }
 
-        public MatchFormat Format { get; set; }
+        public virtual MatchFormat Format { get; }
 
-        public MatchRules Rules { get; set; }
+        public virtual MatchRules Rules { get; }
 
         [AlsoNotifyFor(nameof(Date))]
         public DateTime OriginDate { get; set; }
@@ -67,6 +67,10 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public bool AfterExtraTime { get; set; }
 
+        public virtual bool UseExtraTime() => Format.ExtraTimeIsEnabled && IsDraw();
+
+        public virtual bool UseShootout() => Format.ShootoutIsEnabled && IsDraw();
+
         public IVirtualTeam GetWinnerTeam() => _winnerTeam;
 
         public IVirtualTeam GetLooserTeam() => _looserTeam;
@@ -75,6 +79,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         private bool ComputeOpponent(IVirtualTeam virtualTeam, ref MatchOpponent? currentOpponent, string propertyName)
         {
+            virtualTeam.Compute();
             var team = virtualTeam.GetTeam();
 
             if (!Equals(currentOpponent?.Team, team))
@@ -131,6 +136,8 @@ namespace MyClub.Scorer.Domain.MatchAggregate
             State = state;
         }
 
+        public Period GetPeriod() => new(Date, Date.AddFluentTimeSpan(Format.GetFullTime()));
+
         public void Invert()
         {
             (HomeTeam, AwayTeam) = (AwayTeam, HomeTeam);
@@ -142,23 +149,23 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         public bool HasResult() => Home is not null && Away is not null && State is MatchState.Played or MatchState.InProgress or MatchState.Suspended;
 
-        public bool HasResult(Guid teamId) => HasResult() && Participate(teamId);
+        public bool HasResult(IVirtualTeam team) => HasResult() && Participate(team);
 
         public bool IsPlayed() => State == MatchState.Played;
 
         public bool IsDraw() => Home is not null && Away is not null && Home.GetScore() == Away.GetScore();
 
-        public ExtendedResult GetExtendedResultOf(Guid teamId)
-            => !HasResult(teamId)
+        public ExtendedResult GetExtendedResultOf(IVirtualTeam team)
+            => !HasResult(team)
                 ? ExtendedResult.None
-                : GetOpponent(teamId)!.IsWithdrawn
+                : GetOpponent(team)!.IsWithdrawn
                 ? ExtendedResult.Withdrawn
-                : GetOpponentAgainst(teamId)!.IsWithdrawn
+                : GetOpponentAgainst(team)!.IsWithdrawn
                 ? ExtendedResult.Won
-                : GetScoreResultOf(teamId, true);
+                : GetScoreResultOf(team, true);
 
-        public Result GetResultOf(Guid teamId)
-            => GetExtendedResultOf(teamId) switch
+        public Result GetResultOf(IVirtualTeam team)
+            => GetExtendedResultOf(team) switch
             {
                 ExtendedResult.Won or ExtendedResult.WonAfterShootouts => Result.Won,
                 ExtendedResult.Drawn => Result.Drawn,
@@ -166,24 +173,28 @@ namespace MyClub.Scorer.Domain.MatchAggregate
                 _ => Result.None,
             };
 
-        private ExtendedResult GetScoreResultOf(Guid teamId, bool withShootout = true)
-            => !HasResult(teamId)
-                ? ExtendedResult.None
-                : GoalsFor(teamId) > GoalsAgainst(teamId) ? ExtendedResult.Won
-                : GoalsAgainst(teamId) > GoalsFor(teamId) ? ExtendedResult.Lost
-                : Format.ShootoutIsEnabled && withShootout ? GetShootoutResultOf(teamId) : ExtendedResult.Drawn;
+        public Result GetResultOf(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetResultOf(team) : Result.None;
 
-        private ExtendedResult GetShootoutResultOf(Guid teamId)
-            => !HasResult(teamId)
+        private ExtendedResult GetScoreResultOf(IVirtualTeam team, bool withShootout = true)
+            => !HasResult(team)
                 ? ExtendedResult.None
-                : ShootoutFor(teamId) > ShootoutAgainst(teamId) ? ExtendedResult.WonAfterShootouts
-                : ShootoutAgainst(teamId) > ShootoutFor(teamId) ? ExtendedResult.LostAfterShootouts
+                : GoalsFor(team) > GoalsAgainst(team) ? ExtendedResult.Won
+                : GoalsAgainst(team) > GoalsFor(team) ? ExtendedResult.Lost
+                : Format.ShootoutIsEnabled && withShootout ? GetShootoutResultOf(team) : ExtendedResult.Drawn;
+
+        private ExtendedResult GetShootoutResultOf(IVirtualTeam team)
+            => !HasResult(team)
+                ? ExtendedResult.None
+                : ShootoutFor(team) > ShootoutAgainst(team) ? ExtendedResult.WonAfterShootouts
+                : ShootoutAgainst(team) > ShootoutFor(team) ? ExtendedResult.LostAfterShootouts
                 : ExtendedResult.Drawn;
+
+        public ExtendedResult GetExtendedResultOf(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetExtendedResultOf(team) : ExtendedResult.None;
 
         public Team? GetWinner()
             => Home is null || Away is null
                 ? null
-                : GetResultOf(Home.Team.Id) switch
+                : GetResultOf(Home.Team) switch
                 {
                     Result.Won => Home.Team,
                     Result.Lost => Away.Team,
@@ -193,36 +204,72 @@ namespace MyClub.Scorer.Domain.MatchAggregate
         public Team? GetLooser()
             => Home is null || Away is null
                 ? null
-                : GetResultOf(Home.Team.Id) switch
+                : GetResultOf(Home.Team) switch
                 {
                     Result.Won => Away.Team,
                     Result.Lost => Home.Team,
                     _ => null,
                 };
 
-        public bool IsWithdrawn(Guid teamId) => GetOpponent(teamId)?.IsWithdrawn ?? false;
+        public bool IsWonBy(IVirtualTeam team) => GetResultOf(team) == Result.Won;
 
-        public int GoalsFor(Guid teamId) => GetOpponent(teamId)?.GetScore() ?? 0;
+        public bool IsWonBy(Guid teamId) => GetTeam(teamId) is IVirtualTeam team && GetResultOf(team) == Result.Won;
 
-        public int GoalsAgainst(Guid teamId) => GetOpponentAgainst(teamId)?.GetScore() ?? 0;
+        public bool IsLostBy(IVirtualTeam team) => GetResultOf(team) == Result.Lost;
 
-        public int ShootoutFor(Guid teamId) => GetOpponent(teamId)?.GetShootoutScore() ?? 0;
+        public bool IsLostBy(Guid teamId) => GetTeam(teamId) is IVirtualTeam team && GetResultOf(team) == Result.Lost;
 
-        public int ShootoutAgainst(Guid teamId) => GetOpponentAgainst(teamId)?.GetShootoutScore() ?? 0;
+        public bool IsWithdrawn(IVirtualTeam team) => GetOpponent(team)?.IsWithdrawn ?? false;
+
+        public bool IsWithdrawn(Guid teamId) => GetTeam(teamId) is IVirtualTeam team && IsWithdrawn(team);
+
+        public int GoalsFor(IVirtualTeam team) => GetOpponent(team)?.GetScore() ?? 0;
+
+        public int GoalsFor(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GoalsFor(team) : 0;
+
+        public int GoalsAgainst(IVirtualTeam team) => GetOpponentAgainst(team)?.GetScore() ?? 0;
+
+        public int GoalsAgainst(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GoalsAgainst(team) : 0;
+
+        public int ShootoutFor(IVirtualTeam team) => GetOpponent(team)?.GetShootoutScore() ?? 0;
+
+        public int ShootoutAgainst(IVirtualTeam team) => GetOpponentAgainst(team)?.GetShootoutScore() ?? 0;
+
+        public bool Participate(IVirtualTeam team)
+        {
+            var teams = GetTeams().ToList();
+            return teams.Contains(team) || (team.GetTeam() is Team t && teams.Contains(t));
+        }
 
         public bool Participate(Guid teamId) => GetTeams().Select(x => x.Id).Contains(teamId);
 
-        public bool Participate(IVirtualTeam team) => Participate(team.Id);
+        public bool IsHomeTeam(IVirtualTeam team)
+        {
+            var teams = GetHomeTeams().ToList();
+            return teams.Contains(team) || (team.GetTeam() is Team t && teams.Contains(t));
+        }
 
-        public Period GetPeriod() => new(Date, Date.AddFluentTimeSpan(Format.GetFullTime()));
+        public bool IsAwayTeam(IVirtualTeam team)
+        {
+            var teams = GetAwayTeams().ToList();
+            return teams.Contains(team) || (team.GetTeam() is Team t && teams.Contains(t));
+        }
 
-        public MatchOpponent? GetOpponent(Guid teamId) => GetOpponents().GetOrDefault(teamId);
+        public MatchOpponent? GetOpponent(IVirtualTeam team) => IsHomeTeam(team) ? Home : IsAwayTeam(team) ? Away : null;
 
-        public MatchOpponent? GetOpponentAgainst(Guid teamId) => GetOpponent(teamId) is MatchOpponent opponent ? GetOpponents().Values.FirstOrDefault(x => x.Team.Id != opponent.Team.Id) : null;
+        public MatchOpponent? GetOpponent(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetOpponent(team) : null;
 
-        private IEnumerable<IVirtualTeam> GetTeams() => new List<IVirtualTeam?>() { HomeTeam, AwayTeam, Home?.Team, Away?.Team, _winnerTeam, _looserTeam }.NotNull().Distinct();
+        public MatchOpponent? GetOpponentAgainst(IVirtualTeam team) => IsHomeTeam(team) ? Away : IsAwayTeam(team) ? Home : null;
 
-        private Dictionary<Guid, MatchOpponent> GetOpponents() => new List<MatchOpponent?>() { Home, Away }.NotNull().ToDictionary(x => x.Team.Id, x => x);
+        public MatchOpponent? GetOpponentAgainst(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetOpponentAgainst(team) : null;
+
+        private IEnumerable<IVirtualTeam> GetHomeTeams() => new List<IVirtualTeam?>() { HomeTeam, HomeTeam.GetTeam(), Home?.Team }.NotNull().Distinct();
+
+        private IEnumerable<IVirtualTeam> GetAwayTeams() => new List<IVirtualTeam?>() { AwayTeam, AwayTeam.GetTeam(), Away?.Team }.NotNull().Distinct();
+
+        private IEnumerable<IVirtualTeam> GetTeams() => GetHomeTeams().Union(GetAwayTeams()).Union([_winnerTeam, _looserTeam]).Distinct();
+
+        private IVirtualTeam? GetTeam(Guid teamId) => GetTeams().GetById(teamId);
 
         public void SetScore(int homeScore, int awayScore, bool afterExtraTime = false, int? homeShootoutScore = null, int? awayShootoutScore = null)
         {

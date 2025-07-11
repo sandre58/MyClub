@@ -404,6 +404,12 @@
     </UserControl.Resources>
 
     <Grid Grid.Row="2">
+        <Grid.Visibility>
+            <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndCollapse}">
+                <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Home.Team" />
+                <Binding Converter="{x:Static my:NullToBooleanConverter.FalseIfNull}" Path="Away.Team" />
+            </MultiBinding>
+        </Grid.Visibility>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="10" />

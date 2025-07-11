@@ -8,7 +8,7 @@ using MyClub.Scorer.Domain.TeamAggregate;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public interface IMatchesStage : ICompetitionStage, ISchedulable
+    public interface IMatchesStage : IStage, ISchedulable, IMatchFormatProvider, IMatchRulesProvider
     {
         void ScheduleAll(DateTime date);
 

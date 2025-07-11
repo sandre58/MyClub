@@ -7,19 +7,49 @@ using System.Linq;
 using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.BracketComputing;
 using MyClub.Scorer.Domain.CompetitionAggregate;
+using MyClub.Scorer.Domain.Extensions;
 using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Domain.TeamAggregate;
+using MyNet.Humanizer;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Factories
 {
+    public readonly struct AddConsolationParameters
+    {
+        public static readonly AddConsolationParameters None = new(null, null, -1);
+
+        public static readonly AddConsolationParameters All = From(1, int.MaxValue);
+
+        public static readonly AddConsolationParameters OneConsolationBracket = For(1, 1);
+
+        public static AddConsolationParameters ThirdPlace(int numberOfRounds) => For(numberOfRounds - 1, 1);
+
+        public static AddConsolationParameters From(int fromRound, int maximumLevel = int.MaxValue) => new(null, fromRound, maximumLevel);
+
+        public static AddConsolationParameters For(int forRound, int maximumLevel = int.MaxValue) => new(forRound, null, maximumLevel);
+
+        private AddConsolationParameters(int? forRound, int? fromRound, int maximumLevel)
+        {
+            ForRound = forRound;
+            FromRound = fromRound;
+            MaximumLevel = maximumLevel;
+        }
+
+        public int? ForRound { get; }
+
+        public int? FromRound { get; }
+
+        public int MaximumLevel { get; }
+    }
+
     public abstract class RoundsBuilder : IRoundsBuilder
     {
         private readonly IScheduler<IMatchesStage> _scheduler;
-        private readonly IMatchesScheduler? _venuesScheduler;
+        private readonly IVenueScheduler? _venuesScheduler;
 
-        public RoundsBuilder(IScheduler<IMatchesStage> scheduler, IMatchesScheduler? venuesScheduler = null)
+        public RoundsBuilder(IScheduler<IMatchesStage> scheduler, IVenueScheduler? venuesScheduler = null)
         {
             _scheduler = scheduler;
             _venuesScheduler = venuesScheduler;
@@ -33,93 +63,147 @@ namespace MyClub.Scorer.Domain.Factories
 
         public bool ScheduleVenuesBeforeDates { get; set; } = false;
 
-        public virtual IEnumerable<IRound> Build(Knockout stage, IRoundsAlgorithm algorithm)
+        public AddConsolationParameters? AddConsolationParameters { get; set; }
+
+        public virtual IEnumerable<Round> Build(Knockout stage, IRoundsAlgorithm algorithm)
         {
             // Create rounds and fixtures
-            var rounds = BuildRounds(stage, algorithm.Compute(stage.Teams).ToList()).ToList();
+            var fixturesAssociations = new Dictionary<BracketFixture, IFixture>();
+            var rounds = BuildRounds(stage, null, stage.Teams, algorithm.Compute(stage.Teams), fixturesAssociations, BracketType.Winner, -1);
+
+            var orderedRounds = rounds.OrderBy(x => x.index).Select(x => (x.index, x.round)).ToList();
 
             // Schedule stages
-            ScheduleRounds(rounds, _scheduler, _venuesScheduler);
+            ScheduleRounds(orderedRounds.Select(x => x.round).ToList(), _scheduler, _venuesScheduler);
 
             // Update names
-            RenameRounds(rounds);
+            RenameRounds(orderedRounds);
 
-            return rounds.OfType<IRound>();
+            return orderedRounds.Select(x => x.round);
         }
 
-        protected virtual void ScheduleRounds(ICollection<IRound> rounds, IScheduler<IMatchesStage> scheduler, IMatchesScheduler? venuesScheduler = null)
+        protected virtual void ScheduleRounds(ICollection<Round> rounds, IScheduler<IMatchesStage> scheduler, IVenueScheduler? venuesScheduler = null)
         {
             void scheduleVenues() => venuesScheduler?.Schedule(rounds.SelectMany(x => x.GetAllMatches()).ToList());
             ScheduleVenuesBeforeDates.IfTrue(scheduleVenues);
-            scheduler.Schedule(ProvideMatchesStages(rounds).ToList());
+            scheduler.Schedule(rounds.SelectMany(x => x.Stages).ToList());
             ScheduleVenuesBeforeDates.IfFalse(scheduleVenues);
         }
 
-        protected virtual IEnumerable<IRound> BuildRounds(Knockout stage, ICollection<BracketRound> computedRounds)
+        private List<(int index, Round round)> BuildRounds(Knockout stage,
+                                                           Round? ancestor,
+                                                           IEnumerable<IVirtualTeam> teams,
+                                                           BracketRound tree,
+                                                           Dictionary<BracketFixture, IFixture> fixturesAssociations,
+                                                           BracketType bracketType,
+                                                           int previousIndex)
         {
-            var fixturesAssociations = new Dictionary<BracketFixture, IFixture>();
+            var currentIndex = previousIndex + 1;
+            var rounds = new List<(int index, Round round)>();
+            var winnerChildren = tree.Children.GetOrDefault(BracketType.Winner);
+            var looserChildren = tree.Children.GetOrDefault(BracketType.Looser);
 
-            return computedRounds.Select((x, y) =>
-                                  {
-                                      var teams = x.Teams.Select(convertToTeam).ToList();
-                                      var fixtures = x.Fixtures.ToList();
-                                      var round = ComputeRound(stage, teams, fixtures, y, computedRounds.Count);
-                                      fixtures.ForEach(x => fixturesAssociations.Add(x, AddFixture(round, convertToTeam(x.Team1), convertToTeam(x.Team2))));
+            var currentRound = BuildRound(stage, ancestor, teams, fixturesAssociations, tree.Fixtures, bracketType, currentIndex, !tree.Children.Any());
+            rounds.Add((currentIndex, currentRound));
 
-                                      return round;
-                                  });
+            var addLooserRound = AddConsolationParameters.HasValue
+                                && ((AddConsolationParameters.Value.ForRound.HasValue && currentIndex == AddConsolationParameters.Value.ForRound - 1)
+                                    || (AddConsolationParameters.Value.FromRound.HasValue && currentIndex >= AddConsolationParameters.Value.FromRound - 1))
+                                && currentRound.GetConsolationLevel() < AddConsolationParameters.Value.MaximumLevel;
 
-            IVirtualTeam convertToTeam(BracketTeam team)
-                => team.Type switch
-                {
-                    BracketTeamType.Team => team.Team!,
-                    BracketTeamType.Winner => fixturesAssociations[team.Fixture!].GetWinnerTeam(),
-                    BracketTeamType.Looser => fixturesAssociations[team.Fixture!].GetLooserTeam(),
-                    _ => throw new NotImplementedException(),
-                };
+            if (addLooserRound && looserChildren is not null)
+                rounds.AddRange(BuildRounds(stage, currentRound, [], looserChildren, fixturesAssociations, BracketType.Looser, currentIndex));
+
+            if (winnerChildren is not null)
+                rounds.AddRange(BuildRounds(stage, currentRound, [], winnerChildren, fixturesAssociations, BracketType.Winner, currentIndex));
+
+            return rounds;
         }
 
-        protected virtual IRound ComputeRound(Knockout stage, ICollection<IVirtualTeam> teams, ICollection<BracketFixture> fixtures, int index, int numberOfRounds)
+        private Round BuildRound(Knockout stage,
+                                 Round? ancestor,
+                                 IEnumerable<IVirtualTeam> teams,
+                                 Dictionary<BracketFixture, IFixture> fixturesAssociations,
+                                 ICollection<BracketFixture> fixtures,
+                                 BracketType bracketType,
+                                 int index,
+                                 bool isLastRound)
         {
-            var round = CreateRound(stage, teams, fixtures, index, numberOfRounds);
+            var round = CreateRound(stage, ancestor, bracketType, index, isLastRound);
             teams.ForEach(x => round.AddTeam(x));
+            var rank = isLastRound ? round.GetConsolationLevel() * 2 + 1 : (int?)null;
+            fixtures.ForEach(x => fixturesAssociations.Add(x, AddFixture(round, convertToTeam(x.Team1), convertToTeam(x.Team2), rank)));
+            var remainingTeams = round.Fixtures.SelectMany(x => new[] { x.Team1, x.Team2 }).Except(round.ProvideTeams()).ToList();
+            remainingTeams.ForEach(x => round.AddTeam(x));
+
+            IVirtualTeam convertToTeam(BracketTeam team)
+            => team.Type switch
+            {
+                BracketTeamType.Team => team.Team!,
+                BracketTeamType.Winner => fixturesAssociations[team.Fixture!].GetWinnerTeam(),
+                BracketTeamType.Looser => fixturesAssociations[team.Fixture!].GetLooserTeam(),
+                _ => throw new NotImplementedException(),
+            };
 
             return round;
         }
 
-        protected abstract IRound CreateRound(Knockout stage, ICollection<IVirtualTeam> teams, ICollection<BracketFixture> fixtures, int index, int numberOfRounds);
+        protected abstract Round CreateRound(Knockout stage, Round? ancestor, BracketType bracketType, int index, bool isLastRound);
 
-        protected virtual IFixture AddFixture(IRound round, IVirtualTeam team1, IVirtualTeam team2) => round switch
+        protected virtual IFixture AddFixture(Round round, IVirtualTeam team1, IVirtualTeam team2, int? rank = null) => round.AddFixture(team1, team2, rank);
+
+        protected virtual DateTime ProvideDate(Round round) => round.Stages.MinOrDefault(x => x.Date);
+
+        protected virtual void RenameRounds(ICollection<(int index, Round round)> rounds) => rounds.ForEach(x =>
         {
-            RoundOfFixtures roundOfFixtures => roundOfFixtures.AddFixture(team1, team2),
-            RoundOfMatches roundOfMatches => roundOfMatches.AddMatch(team1, team2),
-            _ => throw new NotImplementedException(),
-        };
+            var round = x.round;
+            var roundNumber = x.index + 1;
+            var roundInverseNumber = rounds.MaxOrDefault(y => y.index) - x.index + 1;
+            var date = ProvideDate(x.round);
 
-        protected virtual DateTime ProvideDate(IRound round) => round switch
-        {
-            RoundOfFixtures roundOfFixtures => roundOfFixtures.Stages.MinOrDefault(x => x.Date),
-            RoundOfMatches roundOfMatches => roundOfMatches.Date,
-            _ => throw new NotImplementedException(),
-        };
+            if (!UsePredefinedNames)
+            {
+                x.round.Name = StageNamesFactory.ComputePattern(NamePattern, roundNumber, date);
+                x.round.ShortName = StageNamesFactory.ComputePattern(ShortNamePattern, roundNumber, date);
+            }
+            else
+            {
+                var matchesWithRank = round.Fixtures.Where(x => x.Rank.HasValue).ToList();
 
-        protected virtual IEnumerable<IMatchesStage> ProvideMatchesStages(ICollection<IRound> rounds) => rounds.SelectMany(x => x switch
-        {
-            RoundOfFixtures roundOfFixtures => roundOfFixtures.Stages.OfType<IMatchesStage>(),
-            RoundOfMatches roundOfMatches => [roundOfMatches],
-            _ => throw new NotImplementedException(),
-        });
+                if (matchesWithRank.Count > 1)
+                {
+                    x.round.Name = MyClubResources.RankingMatches;
+                    x.round.ShortName = MyClubResources.RankingMatchesAbbr;
+                }
+                else if (matchesWithRank.Count == 1 && matchesWithRank.First().Rank > 1)
+                {
+                    x.round.Name = MyClubResources.MatchForXPlace.FormatWith(matchesWithRank.First().Rank!.Value.Ordinalize());
+                    x.round.ShortName = MyClubResources.MatchForXPlaceAbbr.FormatWith(matchesWithRank.First().Rank!.Value.Ordinalize());
+                }
+                else
+                {
+                    var consolationLevel = round.GetConsolationLevel();
+                    var name = MyClubResources.ResourceManager.GetString($"Round{roundInverseNumber}");
+                    var shortName = MyClubResources.ResourceManager.GetString($"Round{roundInverseNumber}Abbr");
 
-        protected virtual void RenameRounds(ICollection<IRound> rounds) => rounds.ForEach((x, y) =>
-        {
-            var roundNumber = y + 1;
-            var roundInverseNumber = rounds.Count - roundNumber + 1;
-            var name = MyClubResources.ResourceManager.GetString($"Round{roundInverseNumber}");
-            var shortName = MyClubResources.ResourceManager.GetString($"Round{roundInverseNumber}Abbr");
-            var date = ProvideDate(x);
+                    var consolationSuffix = consolationLevel switch
+                    {
+                        < 1 => string.Empty,
+                        < 2 => $" - {MyClubResources.Consolation}",
+                        _ => $" - {MyClubResources.Consolation} ({MyClubResources.LevelXAbbr.FormatWith(consolationLevel)})",
+                    };
 
-            x.Name = UsePredefinedNames && !string.IsNullOrEmpty(name) ? name : StageNamesFactory.ComputePattern(NamePattern, y + 1, date);
-            x.ShortName = UsePredefinedNames && !string.IsNullOrEmpty(shortName) ? shortName : StageNamesFactory.ComputePattern(ShortNamePattern, y + 1, ProvideDate(x));
+                    var consolationPrefix = consolationLevel switch
+                    {
+                        < 1 => string.Empty,
+                        < 2 => $"{MyClubResources.ConsolationAbbr}",
+                        _ => $"{MyClubResources.ConsolationAbbr}{consolationLevel}",
+                    };
+
+                    x.round.Name = (!string.IsNullOrEmpty(name) ? name : StageNamesFactory.ComputePattern(NamePattern, roundNumber, date)) + consolationSuffix;
+                    x.round.ShortName = consolationPrefix + (!string.IsNullOrEmpty(shortName) ? shortName : StageNamesFactory.ComputePattern(ShortNamePattern, roundNumber, date));
+                }
+            }
         });
     }
 }

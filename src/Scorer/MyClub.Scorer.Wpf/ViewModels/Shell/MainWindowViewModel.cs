@@ -67,7 +67,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
             GoBackCommand = CommandsManager.Create(() => NavigationService.GoBack(), () => NavigationService.CanGoBack() && !DialogManager.HasOpenedDialogs);
             GoForwardCommand = CommandsManager.Create(() => NavigationService.GoForward(), () => NavigationService.CanGoForward() && !DialogManager.HasOpenedDialogs);
             ToggleOpenCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(OpenViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
-            ToggleNewCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(NewViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
             TogglePropertiesCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PropertiesViewModel), VisibilityAction.Toggle)), () => ProjectIsLoaded && !DialogManager.HasOpenedDialogs);
             ToggleAboutCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(AboutViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
             TogglePreferencesCommand = CommandsManager.Create(() => Messenger.Default.Send(new UpdateFileMenuContentVisibilityRequestedMessage(typeof(PreferencesViewModel), VisibilityAction.Toggle)), () => !DialogManager.HasOpenedDialogs);
@@ -143,8 +142,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Shell
         public ICommand GoForwardCommand { get; }
 
         public ICommand ToggleOpenCommand { get; }
-
-        public ICommand ToggleNewCommand { get; }
 
         public ICommand TogglePropertiesCommand { get; }
 

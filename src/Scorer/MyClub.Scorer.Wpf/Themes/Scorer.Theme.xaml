@@ -71,43 +71,32 @@
         </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- Filters -->
-    <DataTemplate DataType="{x:Type filters:MatchTeamFilterViewModel}">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
-                      Grid.Column="0"
-                      Width="Auto"
-                      HorizontalAlignment="Stretch"
-                      my:HintAssist.Hint="{my:Resource Team}"
-                      my:HintAssist.IsFloating="True"
-                      my:ItemsControlAssist.SortingProperty="Name"
-                      my:TextFieldAssist.HasClearButton="True"
-                      IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                      IsReadOnly="{Binding IsReadOnly}"
-                      ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
-                      ItemsSource="{Binding AvailableValues}"
-                      SelectedValue="{Binding Value, Mode=TwoWay}" />
-
-            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
-                     Grid.Column="2"
-                     Margin="{StaticResource MyNet.Margins.Medium.Left}"
-                     VerticalAlignment="Stretch"
-                     IsEnabled="{Binding Value, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}"
-                     SelectedValue="{Binding VenueFilter.Value}"
-                     SelectedValuePath="DataContext"
-                     SelectionMode="Single"
-                     Visibility="{Binding ShowVenueFilter, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
-                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:VenueContext.Home}" ToolTip="{my:Resource LocationHome}" />
-                <ListBoxItem Content="{my:MediumIcon Kind=NullOff}" DataContext="{x:Null}" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
-                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:VenueContext.Away}" ToolTip="{my:Resource LocationAway}" />
-            </ListBox>
-        </Grid>
+    <!-- Team -->
+    <DataTemplate x:Key="Scorer.DataTemplates.Team.ComboBox" DataType="{x:Type entities:TeamViewModel}">
+        <DockPanel>
+            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
+                               Width="17"
+                               Height="17"
+                               Margin="{StaticResource MyNet.Margins.Default.Right}"
+                               DataContext="{Binding}"
+                               DockPanel.Dock="Left" />
+            <TextBlock Text="{Binding Name}" />
+        </DockPanel>
     </DataTemplate>
+
+    <DataTemplate x:Key="Scorer.DataTemplates.VirtualTeam.ComboBox" DataType="{x:Type entitiesInterfaces:IVirtualTeamViewModel}">
+        <DockPanel>
+            <my:PackIcon Width="17"
+                         Height="17"
+                         Margin="{StaticResource MyNet.Margins.Default.Right}"
+                         DockPanel.Dock="Left"
+                         Kind="Shield"
+                         Opacity="{StaticResource MyNet.Opacity.Overlay}" />
+            <TextBlock Text="{Binding Name}" />
+        </DockPanel>
+    </DataTemplate>
+
+    <s:TeamDataTemplateSelector x:Key="Scorer.DataTemplateSelectors.Team.ComboBox" TeamTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}" VirtualTeamTemplate="{StaticResource Scorer.DataTemplates.VirtualTeam.ComboBox}" />
 
     <!-- Stadium -->
     <DataTemplate DataType="{x:Type entities:StadiumWrapper}">
@@ -157,32 +146,43 @@
             <TextBlock Text="{my:Resource NoneMale}" />
         </my:SimpleStackPanel>
     </DataTemplate>
+    
+    <!-- Filters -->
+    <DataTemplate DataType="{x:Type filters:MatchTeamFilterViewModel}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-    <!-- Team -->
-    <DataTemplate x:Key="Scorer.DataTemplates.Team.ComboBox" DataType="{x:Type entities:TeamViewModel}">
-        <DockPanel>
-            <my:PictureControl Style="{StaticResource Scorer.Styles.PictureControl.Team}"
-                               Width="17"
-                               Height="17"
-                               Margin="{StaticResource MyNet.Margins.Default.Right}"
-                               DataContext="{Binding}"
-                               DockPanel.Dock="Left" />
-            <TextBlock Text="{Binding Name}" />
-        </DockPanel>
+            <ComboBox Style="{StaticResource MyNet.Styles.ComboBox.Filled}"
+                      Grid.Column="0"
+                      Width="Auto"
+                      HorizontalAlignment="Stretch"
+                      my:HintAssist.Hint="{my:Resource Team}"
+                      my:HintAssist.IsFloating="True"
+                      my:ItemsControlAssist.SortingProperty="Name"
+                      my:TextFieldAssist.HasClearButton="True"
+                      IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
+                      IsReadOnly="{Binding IsReadOnly}"
+                      ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
+                      ItemsSource="{Binding AvailableValues}"
+                      SelectedValue="{Binding Value, Mode=TwoWay}" />
+
+            <ListBox Style="{StaticResource MyNet.Styles.ListBox.Toggle}"
+                     Grid.Column="2"
+                     Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                     VerticalAlignment="Stretch"
+                     IsEnabled="{Binding Value, Converter={x:Static my:NullToBooleanConverter.FalseIfNull}}"
+                     SelectedValue="{Binding VenueFilter.Value}"
+                     SelectedValuePath="DataContext"
+                     SelectionMode="Single"
+                     Visibility="{Binding ShowVenueFilter, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                <ListBoxItem Content="{my:MediumIcon Kind=Home}" DataContext="{x:Static enums:VenueContext.Home}" ToolTip="{my:Resource LocationHome}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=NullOff}" DataContext="{x:Null}" Opacity="{StaticResource MyNet.Opacity.Secondary}" />
+                <ListBoxItem Content="{my:MediumIcon Kind=Plane}" DataContext="{x:Static enums:VenueContext.Away}" ToolTip="{my:Resource LocationAway}" />
+            </ListBox>
+        </Grid>
     </DataTemplate>
-
-    <DataTemplate x:Key="Scorer.DataTemplates.VirtualTeam.ComboBox" DataType="{x:Type entitiesInterfaces:IVirtualTeamViewModel}">
-        <DockPanel>
-            <my:PackIcon Width="17"
-                         Height="17"
-                         Margin="{StaticResource MyNet.Margins.Default.Right}"
-                         DockPanel.Dock="Left"
-                         Kind="Shield"
-                         Opacity="{StaticResource MyNet.Opacity.Overlay}" />
-            <TextBlock Text="{Binding Name}" />
-        </DockPanel>
-    </DataTemplate>
-
-    <s:TeamDataTemplateSelector x:Key="Scorer.DataTemplateSelectors.Team.ComboBox" TeamTemplate="{StaticResource Scorer.DataTemplates.Team.ComboBox}" VirtualTeamTemplate="{StaticResource Scorer.DataTemplates.VirtualTeam.ComboBox}" />
 
 </ResourceDictionary>

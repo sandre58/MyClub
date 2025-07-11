@@ -213,17 +213,39 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Text="{my:Resource Automatic}">
+                                    <TextBlock.Visibility>
+                                        <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndHidden}">
+                                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="IsReadOnly" />
+                                            <Binding Path="Data.ScheduleAutomatic" Source="{StaticResource Proxy}" />
+                                        </MultiBinding>
+                                    </TextBlock.Visibility>
+                                </TextBlock>
                                 <DatePicker HorizontalAlignment="Stretch"
                                             my:HintAssist.Hint="{my:Resource Date}"
                                             my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
                                             IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                            SelectedDate="{my:DateTime CurrentDate.Date}" />
+                                            SelectedDate="{my:DateTime CurrentDate.Date}">
+                                    <DatePicker.Visibility>
+                                        <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.OrHidden}">
+                                            <Binding Path="IsReadOnly" />
+                                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="Data.ScheduleAutomatic" Source="{StaticResource Proxy}" />
+                                        </MultiBinding>
+                                    </DatePicker.Visibility>
+                                </DatePicker>
                                 <my:TimePicker Grid.Column="2"
                                                HorizontalAlignment="Stretch"
                                                my:HintAssist.Hint="{my:Resource Time}"
                                                my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly}"
                                                IsEnabled="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                               SelectedTime="{my:Time CurrentDate.Time}" />
+                                               SelectedTime="{my:Time CurrentDate.Time}">
+                                    <my:TimePicker.Visibility>
+                                        <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.OrHidden}">
+                                            <Binding Path="IsReadOnly" />
+                                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="Data.ScheduleAutomatic" Source="{StaticResource Proxy}" />
+                                        </MultiBinding>
+                                    </my:TimePicker.Visibility>
+                                </my:TimePicker>
                                 <ComboBox Grid.Column="4"
                                           HorizontalAlignment="Stretch"
                                           my:ComboBoxAssist.ShowDropDownPopup="{Binding IsReadOnly, Converter={x:Static my:NotBooleanConverter.Default}}"
@@ -245,11 +267,26 @@
                                           ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                                           ItemsSource="{Binding AvailableTeams}"
                                           SelectedItem="{Binding AwayTeam}" />
+                                <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}" Grid.Column="8" Text="{my:Resource Automatic}">
+                                    <TextBlock.Visibility>
+                                        <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.AndHidden}">
+                                            <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="IsReadOnly" />
+                                            <Binding Path="Data.ScheduleStadiumsAutomatic" Source="{StaticResource Proxy}" />
+                                        </MultiBinding>
+                                    </TextBlock.Visibility>
+                                </TextBlock>
                                 <Grid Grid.Column="8" IsEnabled="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}">
                                     <v:StadiumSelectionView HorizontalAlignment="Stretch"
                                                             my:TextFieldAssist.IsReadOnly="{Binding IsReadOnly, ElementName=comboBox}"
                                                             DataContext="{Binding StadiumSelection}"
-                                                            IsEnabled="{Binding IsReadOnly, ElementName=comboBox, Converter={x:Static my:NotBooleanConverter.Default}}" />
+                                                            IsEnabled="{Binding IsReadOnly, ElementName=comboBox, Converter={x:Static my:NotBooleanConverter.Default}}">
+                                        <v:StadiumSelectionView.Visibility>
+                                            <MultiBinding Converter="{x:Static my:MultipleBooleanToVisibilityConverter.OrHidden}">
+                                                <Binding ElementName="comboBox" Path="IsReadOnly" />
+                                                <Binding Converter="{x:Static my:NotBooleanConverter.Default}" Path="Data.ScheduleStadiumsAutomatic" Source="{StaticResource Proxy}" />
+                                            </MultiBinding>
+                                        </v:StadiumSelectionView.Visibility>
+                                    </v:StadiumSelectionView>
                                 </Grid>
                                 <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                         Grid.Column="10"

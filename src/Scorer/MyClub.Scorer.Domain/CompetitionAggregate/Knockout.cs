@@ -17,39 +17,37 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
     public abstract class Knockout : AuditableEntity, IStage
     {
-        private readonly OptimizedObservableCollection<IRound> _rounds = [];
+        private readonly OptimizedObservableCollection<Round> _rounds = [];
         private readonly OptimizedObservableCollection<IVirtualTeam> _teams = [];
 
-        protected Knockout(Guid? id = null) : base(id)
+        protected Knockout(MatchFormat? matchFormat = null, MatchRules? matchRules = null, SchedulingParameters? schedulingParameters = null, Guid? id = null) : base(id)
         {
             Rounds = new(_rounds);
             Teams = new(_teams);
+            MatchRules = matchRules ?? MatchRules.Default;
+            MatchFormat = matchFormat ?? MatchFormat.NoDraw;
+            SchedulingParameters = schedulingParameters ?? SchedulingParameters.Default;
         }
 
-        public ReadOnlyObservableCollection<IRound> Rounds { get; }
+        public MatchFormat MatchFormat { get; set; }
+
+        public MatchRules MatchRules { get; set; }
+
+        public SchedulingParameters SchedulingParameters { get; set; }
+
+        public ReadOnlyObservableCollection<Round> Rounds { get; }
 
         public ReadOnlyObservableCollection<IVirtualTeam> Teams { get; }
 
-        public abstract MatchRules ProvideRules();
-
-        public abstract MatchFormat ProvideFormat();
-
-        public abstract SchedulingParameters ProvideSchedulingParameters();
-
-        IEnumerable<IVirtualTeam> ITeamsProvider.ProvideTeams() => Teams.AsEnumerable();
-
         public IEnumerable<Match> GetAllMatches() => Rounds.SelectMany(x => x.GetAllMatches());
-        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Rounds.OfType<T>().Union(Rounds.SelectMany(x => x.GetStages<T>()));
+
+        public IEnumerable<T> GetStages<T>() where T : IStage => Rounds.OfType<T>().Union(Rounds.SelectMany(x => x.GetStages<T>()));
 
         public bool RemoveMatch(Match item) => _rounds.Any(x => x.RemoveMatch(item));
 
         #region Rounds
 
-        public IRound AddRoundOfFixtures(string name, string? shortName = null) => AddRound(new RoundOfFixtures(this, name, shortName));
-
-        public IRound AddRoundOfMatches(DateTime date, string name, string? shortName = null) => AddRound(new RoundOfMatches(this, date, name, shortName));
-
-        public IRound AddRound(IRound round)
+        public Round AddRound(Round round)
         {
             if (Rounds.Contains(round))
                 throw new AlreadyExistsException(nameof(Rounds), round);
@@ -59,7 +57,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
             return round;
         }
 
-        public bool RemoveRound(IRound item) => _rounds.Remove(item);
+        public bool RemoveRound(Round item) => _rounds.Remove(item);
 
         public void Clear() => _rounds.Clear();
 

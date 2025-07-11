@@ -215,15 +215,6 @@
 
                     <my:NavigationViewItemSeparator Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
 
-                    <!-- Build -->
-                    <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding OpenBuildAssistantCommand}"
-                                           my:ToolTipAssist.Content="{my:ShortcutResource Build,
-                                                                                          ShortcutKey=Ctrl+B}"
-                                           Header="{my:Resource Build}"
-                                           Icon="{my:MediumIcon Kind=DesktopClassic}"
-                                           IsEnabled="{Binding CountTeams, Converter={x:Static my:CountToBooleanConverter.Any}}"
-                                           Visibility="{Binding ProjectIsLoaded, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-
                     <!-- Ranking Rules -->
                     <my:NavigationViewItem my:CommandsAssist.ClickCommand="{Binding EditRankingRulesCommand}"
                                            my:ToolTipAssist.Content="{my:ShortcutResource RankingRules,

@@ -2206,10 +2206,10 @@ The rules are not cumulative. The assigned venue is the first venue returned by 
     <value>If this option is enabled, venues will be calculated before dates. Following the rules for calculating stadiums, this allows you to be more precise when assigning a stadium or calculating a date.</value>
   </data>
   <data name="AutomaticStadiums" xml:space="preserve">
-    <value>Reschedule stadiums automatically</value>
+    <value>Schedule stadiums automatically</value>
   </data>
   <data name="AutomaticDateTimes" xml:space="preserve">
-    <value>Reschedule dates automatically</value>
+    <value>Schedule dates automatically</value>
   </data>
   <data name="UpdateParameters" xml:space="preserve">
     <value>Update parameters</value>
@@ -2421,10 +2421,10 @@ Click on this notification to edit the match.</value>
     <value>Looser of {0}</value>
   </data>
   <data name="FixtureXAbbr" xml:space="preserve">
-    <value>M#</value>
+    <value>F#</value>
   </data>
   <data name="FixtureX" xml:space="preserve">
-    <value>Match#</value>
+    <value>Fixture #</value>
   </data>
   <data name="WinnerOfXAbbr" xml:space="preserve">
     <value>W{0}</value>
@@ -2512,5 +2512,67 @@ Click on this notification to edit the match.</value>
   </data>
   <data name="TemporaryQualified" xml:space="preserve">
     <value>Temporary qualified</value>
+  </data>
+  <data name="UseDefaultParameters" xml:space="preserve">
+    <value>Use default parameters</value>
+  </data>
+  <data name="Stages" xml:space="preserve">
+    <value>Stages</value>
+  </data>
+  <data name="NewStage" xml:space="preserve">
+    <value>New stage</value>
+  </data>
+  <data name="Consolation" xml:space="preserve">
+    <value>Consolation</value>
+  </data>
+  <data name="MatchForXPlace" xml:space="preserve">
+    <value>Match for {0} rank</value>
+  </data>
+  <data name="RankingMatches" xml:space="preserve">
+    <value>Ranking matches</value>
+  </data>
+  <data name="RankingMatchesAbbr" xml:space="preserve">
+    <value>Rkg</value>
+  </data>
+  <data name="MatchForXPlaceAbbr" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="ConsolationAbbr" xml:space="preserve">
+    <value>C</value>
+  </data>
+  <data name="LevelXAbbr" xml:space="preserve">
+    <value>L{0}</value>
+  </data>
+  <data name="KnockoutAlgorithmPreliminaryRound" xml:space="preserve">
+    <value>Preliminary round</value>
+  </data>
+  <data name="KnockoutAlgorithmByeTeam" xml:space="preserve">
+    <value>Bye team</value>
+  </data>
+  <data name="ByeTeamDescription" xml:space="preserve">
+    <value>The bye team algorithm is a system where as many teams as possible compete in each round.
+If a round has an odd number of teams, one team is exempt and is directly qualified for the next round. This until the final.</value>
+  </data>
+  <data name="PreliminaryRoundDescription" xml:space="preserve">
+    <value>The preliminary round algorithm allows you to define a preliminary round at the start of the competition to have a number of teams allowing you to not have an exempt team until the final.
+All teams not participating in the preliminary round are qualified for the next round.</value>
+  </data>
+  <data name="CannotSelectRoundsAlgorithm" xml:space="preserve">
+    <value>The number of teams does not need to define an algorithm to create the competition.</value>
+  </data>
+  <data name="BuildCup" xml:space="preserve">
+    <value>Build cup</value>
+  </data>
+  <data name="NewDateAndTime" xml:space="preserve">
+    <value>New date and/or time</value>
+  </data>
+  <data name="KeepTime" xml:space="preserve">
+    <value>(Keep time)</value>
+  </data>
+  <data name="KeepDate" xml:space="preserve">
+    <value>(Keep date)</value>
+  </data>
+  <data name="ShowCalendar" xml:space="preserve">
+    <value>Show calendar</value>
   </data>
 </root>

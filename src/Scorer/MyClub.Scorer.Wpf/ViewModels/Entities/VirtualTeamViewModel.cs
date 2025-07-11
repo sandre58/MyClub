@@ -84,13 +84,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
     internal class WinnerOfFixtureTeamViewModel : VirtualTeamViewModel<IVirtualTeam>
     {
-        public WinnerOfFixtureTeamViewModel(IVirtualTeam item, FixtureViewModel fixture) : base(item) => Fixture = fixture;
+        public WinnerOfFixtureTeamViewModel(IVirtualTeam item, FixtureViewModel fixture) : base(item)
+        {
+            Fixture = fixture;
+            Disposables.AddRange(
+             [
+                fixture.WhenPropertyChanged(x => x.DisplayName).Subscribe(_ => RaisePropertyChanged(nameof(Name))),
+                fixture.WhenPropertyChanged(x => x.DisplayShortName).Subscribe(_ => RaisePropertyChanged(nameof(ShortName)))
+             ]);
+        }
 
         public FixtureViewModel Fixture { get; }
 
-        protected override string GetDisplayName() => MyClubResources.WinnerOfX.FormatWith(Fixture.ShortName);
+        protected override string GetDisplayName() => MyClubResources.WinnerOfX.FormatWith(Fixture.DisplayShortName);
 
-        protected override string GetDisplayShortName() => MyClubResources.WinnerOfXAbbr.FormatWith(Fixture.ShortName);
+        protected override string GetDisplayShortName() => MyClubResources.WinnerOfXAbbr.FormatWith(Fixture.DisplayShortName);
 
         protected override void Open() { }
 
@@ -99,13 +107,21 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
     internal class LooserOfFixtureTeamViewModel : VirtualTeamViewModel<IVirtualTeam>
     {
-        public LooserOfFixtureTeamViewModel(IVirtualTeam item, FixtureViewModel fixture) : base(item) => Fixture = fixture;
+        public LooserOfFixtureTeamViewModel(IVirtualTeam item, FixtureViewModel fixture) : base(item)
+        {
+            Fixture = fixture;
+            Disposables.AddRange(
+             [
+                fixture.WhenPropertyChanged(x => x.DisplayName).Subscribe(_ => RaisePropertyChanged(nameof(Name))),
+                fixture.WhenPropertyChanged(x => x.DisplayShortName).Subscribe(_ => RaisePropertyChanged(nameof(ShortName)))
+             ]);
+        }
 
         public FixtureViewModel Fixture { get; }
 
-        protected override string GetDisplayName() => MyClubResources.LooserOfX.FormatWith(Fixture.ShortName);
+        protected override string GetDisplayName() => MyClubResources.LooserOfX.FormatWith(Fixture.DisplayShortName);
 
-        protected override string GetDisplayShortName() => MyClubResources.LooserXAbbr.FormatWith(Fixture.ShortName);
+        protected override string GetDisplayShortName() => MyClubResources.LooserXAbbr.FormatWith(Fixture.DisplayShortName);
 
         protected override void Open() { }
 

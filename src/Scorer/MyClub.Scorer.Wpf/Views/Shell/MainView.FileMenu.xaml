@@ -42,12 +42,16 @@
 
                 <my:DynamicScrollViewer Margin="{StaticResource MyNet.Margins.Large.Top}" DockPanel.Dock="Top" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <ToggleButton my:IconAssist.Icon="{my:MediumIcon Kind=FileEdit}"
-                                      Command="{Binding ToggleFileMenuContentCommand}"
-                                      CommandParameter="{x:Type vm:NewViewModel}"
-                                      Content="{my:Resource New}"
-                                      IsChecked="{Binding NewIsVisible, Mode=OneWay}"
-                                      ToolTip="Ctrl+Maj+N" />
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=Podium}"
+                                Command="{Binding NewLeagueCommand}"
+                                Background="{DynamicResource Scorer.Brushes.League}"
+                                Content="{my:Resource NewLeague}"
+                                ToolTip="Ctrl+Maj+L" />
+                        <Button my:IconAssist.Icon="{my:MediumIcon Kind=Bracket}"
+                                Command="{Binding NewCupCommand}"
+                                Background="{DynamicResource Scorer.Brushes.Cup}"
+                                Content="{my:Resource NewCup}"
+                                ToolTip="Ctrl+Maj+C" />
                         <Button my:IconAssist.Icon="{my:MediumIcon Kind=EditCircle}"
                                 Command="{Binding CreateCommand}"
                                 Content="{my:Resource Create}"

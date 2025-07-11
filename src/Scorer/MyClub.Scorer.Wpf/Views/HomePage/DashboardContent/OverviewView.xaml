@@ -87,7 +87,7 @@
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10" />
-                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -114,7 +114,7 @@
                                     Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                     Orientation="Horizontal"
                                     TextElement.FontStyle="Italic"
-                                    Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                                    Visibility="{Binding Item.Parent.ShowName, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                             <TextBlock Text="(" />
                             <TextBlock Text="{Binding Item.Parent.ShortName}" />
                             <TextBlock Text=")" />
@@ -197,7 +197,7 @@
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10" />
-                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -224,7 +224,7 @@
                                     Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                     Orientation="Horizontal"
                                     TextElement.FontStyle="Italic"
-                                    Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
+                                    Visibility="{Binding Item.Parent.ShowName, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}">
                             <TextBlock Text="(" />
                             <TextBlock Text="{Binding Item.Parent.ShortName}" />
                             <TextBlock Text=")" />
@@ -599,7 +599,7 @@
                                                     <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
                                                            Width="16"
                                                            Height="16"
-                                                           Padding="0"
+                                                           Padding="0 2 0 0"
                                                            Content="{StaticResource Five}"
                                                            FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                                            FontWeight="Bold" />
@@ -612,7 +612,7 @@
                                                     <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
                                                            Width="16"
                                                            Height="16"
-                                                           Padding="0"
+                                                           Padding="0 2 0 0"
                                                            Content="{StaticResource Ten}"
                                                            FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                                            FontWeight="Bold" />
@@ -638,7 +638,7 @@
                                                     <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
                                                            Width="16"
                                                            Height="16"
-                                                           Padding="0"
+                                                           Padding="0 2 0 0"
                                                            Content="{StaticResource Thirty}"
                                                            FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                                            FontWeight="Bold" />
@@ -651,7 +651,7 @@
                                                     <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
                                                            Width="16"
                                                            Height="16"
-                                                           Padding="0"
+                                                           Padding="0 2 0 0"
                                                            Content="{StaticResource One}"
                                                            FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                                            FontWeight="Bold" />
@@ -664,19 +664,27 @@
                                                     <Label Style="{StaticResource MyNet.Styles.Label.Rounded.Elevation.Foreground}"
                                                            Width="16"
                                                            Height="16"
-                                                           Padding="0"
+                                                           Padding="0 2 0 0"
                                                            Content="{StaticResource Two}"
                                                            FontSize="{StaticResource MyNet.Font.Size.Secondary}"
                                                            FontWeight="Bold" />
                                                 </Grid>
                                             </MenuItem.Icon>
                                         </MenuItem>
-                                        <MenuItem Height="50"
+                                        <MenuItem Height="40"
                                                   my:RippleAssist.Feedback="Transparent"
                                                   my:ThemeAssist.IsMouseOverBackground="Transparent"
                                                   Header="{Binding Item.RescheduleCommand}"
-                                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule}"
-                                                  Icon="{my:ToolIcon Kind=ClockEdit}" />
+                                                  HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule.Unit}"
+                                                  Icon="{my:ToolIcon Kind=ClockPlus}" />
+                                        <MenuItem Header="{my:Resource NewDateAndTime}" Icon="{my:ToolIcon Kind=CalendarEdit}">
+                                            <MenuItem Height="320"
+                                                      my:RippleAssist.Feedback="Transparent"
+                                                      my:ThemeAssist.IsMouseOverBackground="Transparent"
+                                                      Header="{Binding Item.RescheduleOnDateCommand}"
+                                                      HeaderTemplate="{StaticResource Scorer.DataTemplates.Reschedule.Date}"
+                                                      StaysOpenOnClick="True" />
+                                        </MenuItem>
                                     </my:Submenu>
                                 </my:DropDownButton>
                             </Grid>

@@ -46,7 +46,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.BuildAssistant
         public DatesSchedulingManualViewModel()
         {
             AddToDateCommand = CommandsManager.CreateNotNull<DateTime>(x => AddToDate(x.ToDate()), x => Dates.Count < _countMatchdays);
-            RemoveFromDateCommand = CommandsManager.CreateNotNull<DateOnly>(x => Remove(Dates.LastOrDefault(y => y.Date == x)), x => Dates.Any(y => y.Date == x));
+            RemoveFromDateCommand = CommandsManager.CreateNotNull<DateTime>(x => Remove(Dates.LastOrDefault(y => y.Date == x.ToDate())), x => Dates.Any(y => y.Date == x.ToDate()));
             RemoveCommand = CommandsManager.CreateNotNull<EditableDateOfMatchdayWrapper>(Remove);
 
             Disposables.AddRange(

@@ -8,6 +8,8 @@ namespace MyClub.Scorer.Domain.TeamAggregate
 {
     public interface IVirtualTeam : IEntity, ISimilar
     {
+        void Compute();
+
         Team? GetTeam();
     }
 }

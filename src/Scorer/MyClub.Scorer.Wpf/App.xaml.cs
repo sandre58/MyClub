@@ -193,6 +193,7 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<MatchService>()
                 .AddScoped<MatchStatisticsService>()
                 .AddScoped<LeagueService>()
+                .AddScoped<CupService>()
                 .AddScoped<ParametersService>()
                 .AddScoped<AvailibilityCheckingService>()
 
@@ -217,6 +218,7 @@ namespace MyClub.Scorer.Wpf
                 .AddScoped<RoundPresentationService>()
                 .AddScoped<MatchPresentationService>()
                 .AddScoped<LeaguePresentationService>()
+                .AddScoped<CupPresentationService>()
 
                 // Managers
                 .AddSingleton<ConflictsManager>()
@@ -263,6 +265,7 @@ namespace MyClub.Scorer.Wpf
                 .AddSingleton<ProjectEditionViewModel>()
                 .AddSingleton<SchedulingAssistantViewModel>()
                 .AddSingleton<LeagueBuildAssistantViewModel>()
+                .AddSingleton<CupBuildAssistantViewModel>()
                 .AddSingleton<ProjectCreationViewModel>()
                 // ViewModels - Item dialogs
                 .AddSingleton<MatchDetailsViewModel>()

@@ -9,7 +9,6 @@
 
     <Style BasedOn="{StaticResource Scorer.Styles.TeamButton}" TargetType="{x:Type ctrl:TeamButton}" />
     <Style BasedOn="{StaticResource Scorer.Styles.TeamControl.Horizontal}" TargetType="{x:Type ctrl:TeamControl}" />
-    <Style BasedOn="{StaticResource Scorer.Styles.VirtualTeamButton}" TargetType="{x:Type ctrl:VirtualTeamButton}" />
     <Style BasedOn="{StaticResource Scorer.Styles.StadiumButton}" TargetType="{x:Type ctrl:StadiumButton}" />
     <Style BasedOn="{StaticResource Scorer.Styles.TeamButton}" TargetType="{x:Type ctrl:PlayerButton}" />
     <Style BasedOn="{StaticResource Scorer.Styles.MatchButton}" TargetType="{x:Type ctrl:MatchButton}" />

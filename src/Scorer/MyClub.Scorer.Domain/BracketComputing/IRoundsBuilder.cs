@@ -8,6 +8,6 @@ namespace MyClub.Scorer.Domain.BracketComputing
 {
     public interface IRoundsBuilder
     {
-        IEnumerable<IRound> Build(Knockout stage, IRoundsAlgorithm algorithm);
+        IEnumerable<Round> Build(Knockout stage, IRoundsAlgorithm algorithm);
     }
 }

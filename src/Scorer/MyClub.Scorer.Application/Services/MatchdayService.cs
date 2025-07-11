@@ -32,7 +32,7 @@ namespace MyClub.Scorer.Application.Services
 
         protected override Matchday CreateEntity(MatchdayDto dto)
         {
-            var entity = !dto.StageId.HasValue ? _leagueRepository.InsertMatchday(dto.Date, dto.Name.OrEmpty(), dto.ShortName) : throw new NotImplementedException();
+            var entity = dto.StageId.HasValue ? _leagueRepository.InsertMatchday(dto.Date, dto.Name.OrEmpty(), dto.ShortName) : throw new NotImplementedException();
 
             UpdateEntity(entity, dto);
 
@@ -80,7 +80,7 @@ namespace MyClub.Scorer.Application.Services
 
         public virtual IList<MatchdayDto> New(NewMatchdaysDto dto)
         {
-            var stage = _projectRepository.GetCompetition().GetStage<IMatchdaysStage>(dto.StageId) ?? throw new InvalidOperationException($"Matchday stage '{dto.StageId}' not found");
+            var stage = GetStageOrLeague(dto.StageId);
             var currentMatchdays = stage.GetStages<Matchday>().OrderBy(x => x.Date).ToList();
 
             // Build Matchdays
@@ -119,14 +119,13 @@ namespace MyClub.Scorer.Application.Services
             var stadiums = _stadiumRepository.GetAll().ToList();
             var matchdaysScheduler = dto.DatesParameters switch
             {
-                AddMatchdaysManualDatesParametersDto manualParametersDto => (IScheduler<Matchday>)new ByDatesStageScheduler<Matchday>().SetDates(manualParametersDto.Dates?.Select(x => x.At(schedulingParameters.StartTime)).ToList() ?? [], schedulingParameters.StartTime),
-                AddMatchdaysAutomaticDatesParametersDto automaticParametersDto => new DateRulesStageScheduler<Matchday>()
+                AddMatchdaysManualDatesParametersDto manualParametersDto => (IDateScheduler<IMatchesStage>)new ByDatesStageScheduler().SetDates(manualParametersDto.Dates?.Select(x => x.At(schedulingParameters.StartTime)).ToList() ?? [], schedulingParameters.StartTime),
+                AddMatchdaysAutomaticDatesParametersDto automaticParametersDto => new DateRulesStageScheduler(automaticParametersDto.StartDate)
                 {
                     DefaultTime = dto.StartTime,
                     Interval = 1.Days(),
                     DateRules = automaticParametersDto.DateRules ?? [],
                     TimeRules = automaticParametersDto.TimeRules ?? [],
-                    StartDate = automaticParametersDto.StartDate
                 },
                 _ => throw new InvalidOperationException("No scheduler found with these parameters"),
             };
@@ -182,7 +181,7 @@ namespace MyClub.Scorer.Application.Services
 
         public MatchdayDto New(Guid? stageId = null)
         {
-            var stage = _projectRepository.GetCompetition().GetStage<IMatchdaysStage>(stageId) ?? throw new InvalidOperationException($"Matchday stage '{stageId}' not found");
+            var stage = GetStageOrLeague(stageId);
 
             var name = MyClubResources.Matchday.Increment(stage.GetStages<Matchday>().Select(x => x.Name), format: " #");
             var time = stage.ProvideSchedulingParameters().StartTime;
@@ -201,7 +200,7 @@ namespace MyClub.Scorer.Application.Services
         {
             if (dto.Matchdays is null) return 0;
 
-            var stage = _projectRepository.GetCompetition().GetStage<IMatchdaysStage>(dto.StageId) ?? throw new InvalidOperationException($"Matchday stage '{dto.StageId}' not found");
+            var stage = GetStageOrLeague(dto.StageId);
 
             var scheduledMatchdays = stage.GetStages<Matchday>().ToList();
             var schedulingParameters = stage.ProvideSchedulingParameters();
@@ -211,7 +210,7 @@ namespace MyClub.Scorer.Application.Services
             if (dto.ScheduleAutomatic)
             {
                 var startDate = scheduledMatchdays.Where(x => x.Date < dto.StartDate).MaxOrDefault(x => x.Date);
-                schedulingParameters.Schedule(matchdays, startDate, scheduledMatchdays);
+                schedulingParameters.Schedule(matchdays, startDate != DateTime.MinValue ? startDate : null, scheduledMatchdays);
             }
 
             if (dto.ScheduleStadiumsAutomatic)
@@ -219,5 +218,9 @@ namespace MyClub.Scorer.Application.Services
 
             return matchdays.Count;
         }
+
+        private IMatchdaysStage GetStageOrLeague(Guid? stageId) => _projectRepository.GetCompetition() is not League competition
+                ? throw new InvalidOperationException("Competition is not a league")
+                : (stageId.HasValue && stageId != competition.Id ? competition.GetStage<IMatchdaysStage>(stageId) : competition) ?? throw new InvalidOperationException($"Matchday stage '{stageId}' not found");
     }
 }

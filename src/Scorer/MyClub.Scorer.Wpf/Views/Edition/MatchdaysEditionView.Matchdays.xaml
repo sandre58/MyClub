@@ -99,7 +99,7 @@
             </my:SimpleStackPanel>
 
             <!-- Matchdays -->
-            <ItemsControl my:ItemsControlAssist.SortingProperty="Item.Date">
+            <ItemsControl my:ItemsControlAssist.SortingProperty="Item.CurrentDate.Date">
                 <i:Interaction.Behaviors>
                     <my:ItemsControlAsyncBehavior Items="{Binding Matchdays, Mode=OneWay}" />
                 </i:Interaction.Behaviors>
@@ -131,12 +131,17 @@
                                         <ColumnDefinition Width="10" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <DatePicker my:HintAssist.Hint="{my:Resource Date}" IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}" SelectedDate="{my:DateTime Item.Date}" />
+
+                                    <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                               Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                                               Text="{my:Resource Automatic}"
+                                               Visibility="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
+                                    <DatePicker my:HintAssist.Hint="{my:Resource Date}" SelectedDate="{my:DateTime Item.CurrentDate.Date}" Visibility="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfTrue}}" />
                                     <my:TimePicker Grid.Column="2"
                                                    Width="80"
                                                    my:HintAssist.Hint="{my:Resource Time}"
-                                                   IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                                   SelectedTime="{my:Time Item.Time}" />
+                                                   SelectedTime="{my:Time Item.CurrentDate.Time}"
+                                                   Visibility="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfTrue}}" />
                                     <TextBox Grid.Column="4"
                                              HorizontalAlignment="Stretch"
                                              my:HintAssist.Hint="{my:Resource Name}"
@@ -241,15 +246,19 @@
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
 
+                                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                                   Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                                                                   Text="{my:Resource Automatic}"
+                                                                   Visibility="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
                                                         <DatePicker HorizontalAlignment="Stretch"
                                                                     my:HintAssist.Hint="{my:Resource Date}"
-                                                                    IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                                                    SelectedDate="{my:DateTime Date}" />
+                                                                    SelectedDate="{my:DateTime CurrentDate.Date}"
+                                                                    Visibility="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfTrue}}" />
                                                         <my:TimePicker Grid.Column="2"
                                                                        HorizontalAlignment="Stretch"
                                                                        my:HintAssist.Hint="{my:Resource Time}"
-                                                                       IsEnabled="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}"
-                                                                       SelectedTime="{my:Time Time}" />
+                                                                       SelectedTime="{my:Time CurrentDate.Time}"
+                                                                       Visibility="{Binding Data.ScheduleAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfTrue}}" />
                                                         <ComboBox Grid.Column="4"
                                                                   HorizontalAlignment="Stretch"
                                                                   my:HintAssist.Hint="{my:Resource HomeTeam}"
@@ -265,10 +274,15 @@
                                                                   ItemTemplateSelector="{StaticResource Scorer.DataTemplateSelectors.Team.ComboBox}"
                                                                   ItemsSource="{Binding AvailableTeams}"
                                                                   SelectedItem="{Binding AwayTeam}" />
+                                                        <TextBlock Style="{StaticResource MyNet.Styles.TextBlock.Ghost}"
+                                                                   Grid.Column="8"
+                                                                   Margin="{StaticResource MyNet.Margins.Medium.Left}"
+                                                                   Text="{my:Resource Automatic}"
+                                                                   Visibility="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfFalse}}" />
                                                         <v:StadiumSelectionView Grid.Column="8"
                                                                                 HorizontalAlignment="Stretch"
                                                                                 DataContext="{Binding StadiumSelection}"
-                                                                                IsEnabled="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:NotBooleanConverter.Default}}" />
+                                                                                Visibility="{Binding Data.ScheduleStadiumsAutomatic, Source={StaticResource Proxy}, Converter={x:Static my:BooleanToVisibilityConverter.HiddenIfTrue}}" />
                                                         <Button Style="{StaticResource MyNet.Styles.Button.Icon.Tool}"
                                                                 Grid.Column="10"
                                                                 Command="{Binding DataContext.Item.RemoveMatchCommand, RelativeSource={RelativeSource AncestorType={x:Type my:ContentExpander}}}"

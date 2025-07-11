@@ -8,9 +8,11 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class ByDayOfWeekScheduler<T> : IScheduler<T> where T : ISchedulable
+    public class ByDayOfWeekScheduler<T> : IDateScheduler<T> where T : ISchedulable
     {
-        public DateOnly StartDate { get; set; } = DateTime.UtcNow.ToDate();
+        private DateOnly _fromDate;
+
+        public ByDayOfWeekScheduler(DateOnly fromDate) => _fromDate = fromDate.PreviousDay();
 
         public TimeOnly Time { get; set; } = new(15, 0, 0);
 
@@ -18,16 +20,7 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public IEnumerable<DayOfWeek> DayOfWeeks { get; set; } = [DayOfWeek.Sunday];
 
-        public void Schedule(IEnumerable<T> items)
-        {
-            var previousDate = StartDate.PreviousDay();
-            items.ForEach(x =>
-            {
-                var newDate = ScheduleItem(x, previousDate, Time);
-
-                previousDate = newDate.ToDate();
-            });
-        }
+        public void Schedule(IEnumerable<T> items) => items.ForEach(x => _fromDate = ScheduleItem(x, _fromDate, Time).ToDate());
 
         protected virtual DateTime ScheduleItem(T item, DateOnly previousDate, TimeOnly time)
         {
@@ -36,6 +29,10 @@ namespace MyClub.Scorer.Domain.Scheduling
 
             return item.Date;
         }
+
+        public DateTime GetFromDate() => _fromDate.BeginningOfDay();
+
+        public void Reset(DateTime fromDate, IEnumerable<T>? scheduledItems = null) => _fromDate = fromDate.PreviousDay().ToDate();
     }
 }
 

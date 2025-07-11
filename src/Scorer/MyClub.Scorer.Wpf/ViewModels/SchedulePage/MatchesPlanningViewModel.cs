@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Wordprocessing;
 using DynamicData;
 using DynamicData.Binding;
 using MyClub.CrossCutting.Localization;
@@ -37,6 +38,7 @@ using MyNet.UI.ViewModels.List.Filtering;
 using MyNet.Utilities;
 using MyNet.Utilities.Localization;
 using PropertyChanged;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
 {
@@ -171,9 +173,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.SchedulePage
             foreach (var item in Stadiums.Items.OfType<StadiumWrapper>())
                 item.Availability = CheckStadiumAvaibility(item.Stadium.Id, matches);
         }
-
         private AvailabilityCheck CheckStadiumAvaibility(Guid stadiumId, IEnumerable<MatchViewModel> matches)
-            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, x.GetPeriod(), matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
+            => matches.MaxOrDefault(x => _availibilityCheckingService.GetStadiumAvaibility(stadiumId, new(x.Date.ToUniversalTime(), x.EndDate.ToUniversalTime()), matches.Select(x => x.Id).ToList()), AvailabilityCheck.Unknown);
 
         private void SelectConflicts(MatchViewModel match) => SelectItems(match.MatchesInConflicts.Select(x => x.Id).ToList());
 

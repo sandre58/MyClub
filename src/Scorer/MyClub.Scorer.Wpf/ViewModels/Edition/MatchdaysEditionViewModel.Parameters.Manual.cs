@@ -4,7 +4,6 @@
 using System;
 using System.Linq;
 using MyClub.Scorer.Application.Dtos;
-using MyClub.Scorer.Wpf.ViewModels.Entities;
 using MyClub.Scorer.Wpf.ViewModels.Entities.Interfaces;
 using MyNet.Observable;
 using MyNet.Observable.Attributes;

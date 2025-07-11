@@ -68,6 +68,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         IStageViewModel IMatchParentViewModel.Stage => Stage;
 
+        public bool ShowName => false;
+
         public string Name => Item.Name;
 
         public string ShortName => Item.ShortName;

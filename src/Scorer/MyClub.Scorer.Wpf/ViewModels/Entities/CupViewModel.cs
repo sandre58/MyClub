@@ -4,9 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
+using MyClub.CrossCutting.Localization;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.Scheduling;
 using MyClub.Scorer.Wpf.Services;
@@ -20,7 +22,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 {
     internal class CupViewModel : EntityViewModelBase<Cup>, ICompetitionViewModel, IRoundsStageViewModel
     {
-        private readonly ExtendedObservableCollection<IRoundViewModel> _rounds = [];
+        private readonly ExtendedObservableCollection<RoundViewModel> _rounds = [];
         private readonly ExtendedObservableCollection<MatchViewModel> _matches = [];
 
         public CupViewModel(Cup item,
@@ -37,11 +39,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             Disposables.AddRange(
             [
                 item.Rounds.ToObservableChangeSet()
-                           .Transform(x => x switch {
-                               RoundOfMatches roundOfMatches => (IRoundViewModel)new RoundOfMatchesViewModel(roundOfMatches, this, observableSchedulingParameters, roundPresentationService, matchPresentationService, stadiumsProvider, teamsProvider),
-                               RoundOfFixtures roundOfFixtures => new RoundOfFixturesViewModel(roundOfFixtures, this, observableSchedulingParameters, roundPresentationService, matchPresentationService, stadiumsProvider, teamsProvider),
-                               _ => throw new NotSupportedException()
-                           })
+                           .Transform(x => new RoundViewModel(x, this, observableSchedulingParameters, roundPresentationService, matchPresentationService, teamsProvider, stadiumsProvider))
                            .ObserveOn(Scheduler.GetUIOrCurrent())
                            .Bind(_rounds)
                            .DisposeMany()
@@ -51,17 +49,31 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
                        .ObserveOn(Scheduler.GetUIOrCurrent())
                        .Bind(_matches)
                        .Subscribe(),
+
+                _rounds.ToObservableChangeSet().Subscribe(_ => UpdateDisplayNames())
             ]);
         }
 
         public SchedulingParametersViewModel SchedulingParameters { get; private set; }
 
-        public ReadOnlyObservableCollection<IRoundViewModel> Rounds { get; }
+        public ReadOnlyObservableCollection<RoundViewModel> Rounds { get; }
 
         public ReadOnlyObservableCollection<MatchViewModel> Matches { get; }
 
         public string Name => string.Empty;
 
         public string ShortName => string.Empty;
+
+        private void UpdateDisplayNames() => _rounds.SelectMany(x => x.Fixtures).ForEach((x, y) =>
+        {
+            x.DisplayName = (y + 1).ToString(MyClubResources.FixtureX);
+            x.DisplayShortName = (y + 1).ToString(MyClubResources.FixtureXAbbr);
+        });
+
+        protected override void OnCultureChanged()
+        {
+            UpdateDisplayNames();
+            base.OnCultureChanged();
+        }
     }
 }

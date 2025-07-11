@@ -2208,10 +2208,10 @@ Les règles ne se cumulent pas. Le stade assigné est le premier stade renvoyé 
     <value>Si cette option est activée, les stades seront calculés avant les dates. Suivant les règles de calcul des stades, ça permet d'être plus précis sur l'affectation d'un stade ou le calcul d'une date.</value>
   </data>
   <data name="AutomaticStadiums" xml:space="preserve">
-    <value>Replanifier les stades automatiquement</value>
+    <value>Planifier les stades automatiquement</value>
   </data>
   <data name="AutomaticDateTimes" xml:space="preserve">
-    <value>Replanifier les dates automatiquement</value>
+    <value>Planifier les dates automatiquement</value>
   </data>
   <data name="UpdateParameters" xml:space="preserve">
     <value>Modifier les paramètres</value>
@@ -2423,10 +2423,10 @@ Cliquer sur cette notification pour éditer le match.</value>
     <value>Perdant de {0}</value>
   </data>
   <data name="FixtureXAbbr" xml:space="preserve">
-    <value>M#</value>
+    <value>R#</value>
   </data>
   <data name="FixtureX" xml:space="preserve">
-    <value>Match#</value>
+    <value>Rencontre #</value>
   </data>
   <data name="WinnerOfXAbbr" xml:space="preserve">
     <value>V{0}</value>
@@ -2514,5 +2514,67 @@ Cliquer sur cette notification pour éditer le match.</value>
   </data>
   <data name="TemporaryQualified" xml:space="preserve">
     <value>Temporairement qualifié</value>
+  </data>
+  <data name="UseDefaultParameters" xml:space="preserve">
+    <value>Utiliser les paramètres par défaut</value>
+  </data>
+  <data name="Stages" xml:space="preserve">
+    <value>Phases</value>
+  </data>
+  <data name="NewStage" xml:space="preserve">
+    <value>Nouvelle phase</value>
+  </data>
+  <data name="Consolation" xml:space="preserve">
+    <value>Consolante</value>
+  </data>
+  <data name="MatchForXPlace" xml:space="preserve">
+    <value>Match pour la {0} place</value>
+  </data>
+  <data name="RankingMatches" xml:space="preserve">
+    <value>Matchs de classement</value>
+  </data>
+  <data name="RankingMatchesAbbr" xml:space="preserve">
+    <value>Cls</value>
+  </data>
+  <data name="MatchForXPlaceAbbr" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="ConsolationAbbr" xml:space="preserve">
+    <value>C</value>
+  </data>
+  <data name="LevelXAbbr" xml:space="preserve">
+    <value>N{0}</value>
+  </data>
+  <data name="KnockoutAlgorithmByeTeam" xml:space="preserve">
+    <value>Equipe exempte</value>
+  </data>
+  <data name="ByeTeamDescription" xml:space="preserve">
+    <value>L'algorithme de l'équipe exempte est un système où le maximum d'équipe s'affrontent à chaque tour.
+Si un tour comporte un nombre impair d'équipe, une équipe est exempte et est directement qualifiée pour le tour suivant. Ceci jusqu'à la finale.</value>
+  </data>
+  <data name="KnockoutAlgorithmPreliminaryRound" xml:space="preserve">
+    <value>Tour de cadrage</value>
+  </data>
+  <data name="PreliminaryRoundDescription" xml:space="preserve">
+    <value>L'algorithme du tour de cadrage permet de définir un tour de cadrage au début de la compétition pour avoir un nombre d'équipe permettant de ne pas avoir d'équipe exempte jusqu'à la finale.
+Toutes les équipes ne participant pas au tour de cadrage, sont qualifiées pour le tour suivant.</value>
+  </data>
+  <data name="CannotSelectRoundsAlgorithm" xml:space="preserve">
+    <value>Le nombre d'équipe n'a pas besoin de définir un algorithme pour créer la compétition.</value>
+  </data>
+  <data name="BuildCup" xml:space="preserve">
+    <value>Construire la coupe</value>
+  </data>
+  <data name="KeepDate" xml:space="preserve">
+    <value>(Garder la date)</value>
+  </data>
+  <data name="KeepTime" xml:space="preserve">
+    <value>(Garder l'heure)</value>
+  </data>
+  <data name="NewDateAndTime" xml:space="preserve">
+    <value>Nouvelle date et/ou heure</value>
+  </data>
+  <data name="ShowCalendar" xml:space="preserve">
+    <value>Voir le calendrier</value>
   </data>
 </root>

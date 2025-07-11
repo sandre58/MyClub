@@ -8,9 +8,11 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class DateRulesScheduler<T> : IScheduler<T> where T : ISchedulable
+    public class DateRulesScheduler<T> : IDateScheduler<T> where T : ISchedulable
     {
-        public DateOnly StartDate { get; set; } = DateTime.UtcNow.ToDate();
+        private DateOnly _fromDate;
+
+        public DateRulesScheduler(DateOnly fromDate) => _fromDate = fromDate;
 
         public TimeOnly? DefaultTime { get; set; }
 
@@ -24,14 +26,13 @@ namespace MyClub.Scorer.Domain.Scheduling
 
         public virtual void Schedule(IEnumerable<T> items)
         {
-            var startDate = StartDate;
             DateOnly? previousDate = null;
             items.ForEach((item, index) =>
             {
-                var newDate = ScheduleItem(item, startDate, previousDate, index);
+                var newDate = ScheduleItem(item, _fromDate, previousDate, index);
 
                 previousDate = newDate.ToDate();
-                startDate = newDate.BeginningOfDay().Add(Interval).ToDate();
+                _fromDate = newDate.BeginningOfDay().Add(Interval).ToDate();
             });
         }
 
@@ -61,6 +62,10 @@ namespace MyClub.Scorer.Domain.Scheduling
         }
 
         protected virtual TimeOnly ComputeTime(T item, DateOnly date, int index) => TimeRules.Select(x => x.ProvideTime(date, index)).FirstOrDefault(x => x is not null) ?? DefaultTime ?? item.Date.ToTime();
+
+        public virtual DateTime GetFromDate() => _fromDate.BeginningOfDay();
+
+        public virtual void Reset(DateTime fromDate, IEnumerable<T>? scheduledItems = null) => _fromDate = fromDate.ToDate();
     }
 }
 

@@ -2,14 +2,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using MyClub.Scorer.Domain.MatchAggregate;
+using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class ByDayOfWeekStageScheduler<T> : ByDayOfWeekScheduler<T> where T : ISchedulable, IMatchesProvider
+    public class ByDayOfWeekStageScheduler : ByDayOfWeekScheduler<IMatchesStage>
     {
-        protected override DateTime ScheduleItem(T item, DateOnly previousDate, TimeOnly time)
+        public ByDayOfWeekStageScheduler(DateOnly fromDate) : base(fromDate)
+        {
+        }
+
+        protected override DateTime ScheduleItem(IMatchesStage item, DateOnly previousDate, TimeOnly time)
         {
             var newDate = base.ScheduleItem(item, previousDate, time);
 

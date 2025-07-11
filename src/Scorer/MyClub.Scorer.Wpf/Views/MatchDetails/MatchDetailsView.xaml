@@ -601,8 +601,8 @@
                                  Opacity="{StaticResource MyNet.Opacity.Secondary}"
                                  Orientation="Horizontal"
                                  TextElement.FontSize="{StaticResource MyNet.Font.Size.Caption}">
-                <TextBlock Text="-" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
-                <TextBlock Text="{Binding Item.Parent.Name}" Visibility="{Binding Item.ShowParent, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <TextBlock Text="-" Visibility="{Binding Item.Parent.ShowName, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
+                <TextBlock Text="{Binding Item.Parent.Name}" Visibility="{Binding Item.Parent.ShowName, Converter={x:Static my:BooleanToVisibilityConverter.CollapsedIfFalse}}" />
             </my:SimpleStackPanel>
         </DockPanel>
 
@@ -732,22 +732,22 @@
                  Padding="0"
                  Opacity="{StaticResource MyNet.Opacity.Secondary}"
                  Visibility="{Binding FixtureMatches.Count, Converter={x:Static my:CountToVisibilityConverter.CollapsedIfNotAny}}">
-            <ItemsControl my:ItemsControlAssist.SortingProperty="Item.Date" Grid.IsSharedSizeScope="True" ItemsSource="{Binding FixtureMatches}">
+            <ItemsControl my:ItemsControlAssist.SortingProperty="Date" ItemsSource="{Binding FixtureMatches}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border x:Name="border" Padding="{StaticResource MyNet.Margins.Default}">
-                            <Grid HorizontalAlignment="Center">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="col_1" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="*" SharedSizeGroup="col_4" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="100" />
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Parent -->
                                 <TextBlock Opacity="{StaticResource MyNet.Opacity.Secondary}" Text="{Binding Parent.Name}" />
 
                                 <!-- Match -->
-                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" Grid.Column="2" Match="{Binding}" />
+                                <ctrl:MatchControl Style="{StaticResource Scorer.Styles.MatchControl.Small}" Grid.Column="1" Match="{Binding}" Grid.IsSharedSizeScope="True" />
                             </Grid>
                         </Border>
                         <DataTemplate.Triggers>

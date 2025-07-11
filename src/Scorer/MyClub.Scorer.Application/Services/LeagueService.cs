@@ -107,9 +107,9 @@ namespace MyClub.Scorer.Application.Services
             return matchdays;
         }
 
-        public static int GetNumberOfMatchays(BuildAlgorithmParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchdays(dto.NumberOfTeams);
+        public static int GetNumberOfMatchays(MatchdaysAlgorithmDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchdays(dto.NumberOfTeams);
 
-        public static int GetNumberOfMatchesByMatchday(BuildAlgorithmParametersDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchesByMatchday(dto.NumberOfTeams);
+        public static int GetNumberOfMatchesByMatchday(MatchdaysAlgorithmDto dto) => GetMatchdaysAlgorithm(dto).NumberOfMatchesByMatchday(dto.NumberOfTeams);
 
         public static IList<Matchday> ComputeMatchdays(League league, BuildMatchdaysParametersDto dto, ICollection<Stadium> availableStadiums)
         {
@@ -118,26 +118,24 @@ namespace MyClub.Scorer.Application.Services
             // Build Matchdays
             var matchdaysScheduler = dto.BuildDatesParameters switch
             {
-                BuildManualDatesParametersDto buildManualParametersDto => (IScheduler<Matchday>)new ByDatesStageScheduler<Matchday>().SetDates(buildManualParametersDto.Dates ?? []),
-                BuildAutomaticDatesParametersDto buildAutomaticParametersDto => new DateRulesStageScheduler<Matchday>()
+                BuildManualDatesParametersDto buildManualParametersDto => (IDateScheduler<IMatchesStage>)new ByDatesStageScheduler().SetDates(buildManualParametersDto.Dates ?? []),
+                BuildAutomaticDatesParametersDto buildAutomaticParametersDto => new DateRulesStageScheduler(buildAutomaticParametersDto.StartDate.GetValueOrDefault())
                 {
                     DefaultTime = buildAutomaticParametersDto.DefaultTime,
                     Interval = buildAutomaticParametersDto.IntervalValue.ToTimeSpan(buildAutomaticParametersDto.IntervalUnit),
                     DateRules = buildAutomaticParametersDto.DateRules ?? [],
                     TimeRules = buildAutomaticParametersDto.TimeRules ?? [],
-                    StartDate = buildAutomaticParametersDto.StartDate.GetValueOrDefault()
                 },
-                BuildAsSoonAsPossibleDatesParametersDto buildAsSoonAsPossibleParametersDto => new AsSoonAsPossibleStageScheduler<Matchday>()
+                BuildAsSoonAsPossibleDatesParametersDto buildAsSoonAsPossibleParametersDto => new AsSoonAsPossibleStageScheduler(buildAsSoonAsPossibleParametersDto.StartDate.GetValueOrDefault(DateTime.Today))
                 {
                     Rules = buildAsSoonAsPossibleParametersDto.Rules ?? [],
                     ScheduleVenues = dto.ScheduleVenues && dto.AsSoonAsPossibleVenues,
                     AvailableStadiums = availableStadiums,
-                    StartDate = buildAsSoonAsPossibleParametersDto.StartDate.GetValueOrDefault(DateTime.Today)
                 },
                 _ => throw new InvalidOperationException("No scheduler found with these parameters"),
             };
 
-            IMatchesScheduler? venuesScheduler = null;
+            IVenueScheduler? venuesScheduler = null;
             if (dto.ScheduleVenues)
             {
                 if (dto.UseHomeVenue)
@@ -160,14 +158,14 @@ namespace MyClub.Scorer.Application.Services
             return matchdays;
         }
 
-        private static IMatchdaysAlgorithm GetMatchdaysAlgorithm(BuildAlgorithmParametersDto dto) => dto switch
+        private static IMatchdaysAlgorithm GetMatchdaysAlgorithm(MatchdaysAlgorithmDto dto) => dto switch
         {
-            RoundRobinParametersDto roundRobinParametersDto => new RoundRobinAlgorithm()
+            RoundRobinDto roundRobinParametersDto => new RoundRobinAlgorithm()
             {
                 NumberOfMatchesBetweenTeams = roundRobinParametersDto.MatchesBetweenTeams?.Length ?? 2,
                 InvertTeamsByStage = roundRobinParametersDto.MatchesBetweenTeams ?? []
             },
-            SwissSystemParametersDto swissSystemParametersDto => new SwissSystemAlgorithm()
+            SwissSystemDto swissSystemParametersDto => new SwissSystemAlgorithm()
             {
                 NumberOfMatchesByTeams = swissSystemParametersDto.NumberOfMatchesByTeam,
             },

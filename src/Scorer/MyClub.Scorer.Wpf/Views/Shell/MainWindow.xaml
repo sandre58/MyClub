@@ -124,7 +124,6 @@
         <KeyBinding Modifiers="Ctrl" Key="Space" Command="{Binding ToggleNotificationsCommand}" />
         <KeyBinding Modifiers="Alt" Key="F" Command="{Binding ToggleFileMenuCommand}" />
         <KeyBinding Modifiers="Ctrl" Key="O" Command="{Binding ToggleOpenCommand}" />
-        <KeyBinding Modifiers="Ctrl+Shift" Key="N" Command="{Binding ToggleNewCommand}" />
         <KeyBinding Modifiers="Ctrl" Key="P" Command="{Binding TogglePropertiesCommand}" />
         <KeyBinding Key="F1" Command="{Binding ToggleAboutCommand}" />
         <KeyBinding Key="F2" Command="{Binding TogglePreferencesCommand}" />

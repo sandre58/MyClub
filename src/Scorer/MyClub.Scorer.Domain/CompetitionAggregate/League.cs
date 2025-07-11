@@ -51,7 +51,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.GetAllMatches());
 
-        public IEnumerable<T> GetStages<T>() where T : ICompetitionStage => Matchdays.OfType<T>();
+        public IEnumerable<T> GetStages<T>() where T : IStage => Matchdays.OfType<T>();
 
         public Ranking GetRanking(Matchday matchday)
         {

@@ -13,10 +13,7 @@ namespace MyClub.Scorer.Domain.MatchAggregate
     {
         public static readonly MatchRules Default = new([CardColor.Red, CardColor.Yellow]);
 
-        public MatchRules(IEnumerable<CardColor> allowedCards)
-        {
-            AllowedCards = allowedCards.ToList().AsReadOnly();
-        }
+        public MatchRules(IEnumerable<CardColor> allowedCards) => AllowedCards = allowedCards.ToList().AsReadOnly();
 
         public IReadOnlyCollection<CardColor> AllowedCards { get; }
 

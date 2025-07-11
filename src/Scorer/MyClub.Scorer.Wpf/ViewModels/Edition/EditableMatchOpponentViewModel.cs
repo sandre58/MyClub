@@ -135,8 +135,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
 
         public void ResetScore()
         {
-            Goals.Clear();
-            Shootout.Clear();
+            if (Goals.Count > 0)
+                Goals.Clear();
+            if (Shootout.Count > 0)
+                Shootout.Clear();
             IsWithdrawn = false;
         }
 
@@ -148,7 +150,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Edition
                 Team = null;
             ComputeTeam();
             ResetScore();
-            Cards.Clear();
+            if (Cards.Count > 0)
+                Cards.Clear();
         }
 
         public void Load(IVirtualTeamViewModel team, MatchState state, MatchOpponent? opponent)

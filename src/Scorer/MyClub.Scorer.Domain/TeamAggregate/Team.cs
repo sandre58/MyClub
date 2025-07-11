@@ -42,6 +42,8 @@ namespace MyClub.Scorer.Domain.TeamAggregate
 
         Team? IVirtualTeam.GetTeam() => this;
 
+        void IVirtualTeam.Compute() { }
+
         #region Players
 
         public Player AddPlayer(string firstName, string lastName) => AddPlayer(new Player(this, firstName, lastName));

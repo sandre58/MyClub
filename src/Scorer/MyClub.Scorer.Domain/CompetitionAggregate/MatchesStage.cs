@@ -16,12 +16,12 @@ using PropertyChanged;
 
 namespace MyClub.Scorer.Domain.CompetitionAggregate
 {
-    public abstract class MatchesStage<T> : NameEntity, IMatchesStage where T : Match
+    public abstract class MatchesStage<T> : AuditableEntity, IMatchesStage where T : Match
     {
         private DateTime? _postponedDate;
         private readonly OptimizedObservableCollection<T> _matches = [];
 
-        public MatchesStage(DateTime date, string name, string? shortName = null, Guid? id = null) : base(name, shortName, id)
+        public MatchesStage(DateTime date, Guid? id = null) : base(id)
         {
             OriginDate = date;
             Matches = new(_matches);
@@ -39,8 +39,12 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
         public void Postpone(DateTime? date = null, bool propagateToMatches = true)
         {
             IsPostponed = true;
+
+            var oldDate = Date;
             _postponedDate = date;
-            RaisePropertyChanged(nameof(Date));
+
+            if (oldDate != Date)
+                RaisePropertyChanged(nameof(Date));
 
             if (propagateToMatches)
                 Matches.Where(x => x.State is MatchState.None or MatchState.Postponed).ToList().ForEach(x => x.Postpone(date));
@@ -66,7 +70,7 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public IEnumerable<Match> GetAllMatches() => _matches.AsEnumerable();
 
-        public IEnumerable<T1> GetStages<T1>() where T1 : ICompetitionStage => [];
+        public IEnumerable<T1> GetStages<T1>() where T1 : IStage => [];
 
         public T AddMatch(IVirtualTeam homeTeam, IVirtualTeam awayTeam) => AddMatch(Date, homeTeam, awayTeam);
 
@@ -96,10 +100,6 @@ namespace MyClub.Scorer.Domain.CompetitionAggregate
 
         public abstract SchedulingParameters ProvideSchedulingParameters();
 
-        public abstract IEnumerable<IVirtualTeam> ProvideTeams();
-
         public override int CompareTo(object? obj) => obj is MatchesStage<T> other ? OriginDate.CompareTo(other.OriginDate) : 1;
-
-        public override string ToString() => Name;
     }
 }

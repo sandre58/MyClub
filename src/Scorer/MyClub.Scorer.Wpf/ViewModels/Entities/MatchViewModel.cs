@@ -50,11 +50,10 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             Conflicts = new(_conflicts);
             Parent = parent;
             Stage = parent.Stage is ICompetitionStageViewModel stage ? stage : parent;
-            ShowParent = parent.Stage is ICompetitionStageViewModel;
             WinnerTeam = new WinnerOfMatchTeamViewModel(item.GetWinnerTeam(), this);
             LooserTeam = new LooserOfMatchTeamViewModel(item.GetLooserTeam(), this);
 
-            if (Parent.Stage is RoundOfFixturesViewModel round && item is MatchOfFixture matchOfFixture)
+            if (Parent.Stage is RoundViewModel round && item is MatchOfFixture matchOfFixture)
                 Fixture = round.Fixtures.GetById(matchOfFixture.Fixture.Id);
 
             Home = new(item.WhenChanged(x => x.Home, (x, y) => (y, x.Home is not null ? teamsProvider.Get(x.Home.Team.Id) : null, teamsProvider.GetVirtualTeam(x.HomeTeam))), this, _matchPresentationService);
@@ -74,6 +73,7 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
             RescheduleXMinutesCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleAsync(x, TimeUnit.Minute).ConfigureAwait(false), x => CanReschedule());
             RescheduleXHoursCommand = CommandsManager.CreateNotNull<int>(async x => await RescheduleAsync(x, TimeUnit.Hour).ConfigureAwait(false), x => CanReschedule());
             RescheduleCommand = CommandsManager.CreateNotNull<object[]>(async x => await RescheduleAsync(Convert.ToInt32(x[0]), (TimeUnit)x[1]).ConfigureAwait(false), x => x.Length == 2 && x[0] is double && x[1] is TimeUnit && CanReschedule());
+            RescheduleOnDateCommand = CommandsManager.CreateNotNull<object[]>(async x => await RescheduleAsync(((DateTime?)x[0])?.ToDate(), ((DateTime?)x[1])?.ToTime()).ConfigureAwait(false), x => x.Length == 2 && (x[0] is DateTime? || x[1] is DateTime?) && CanReschedule());
             RescheduleAutomaticCommand = CommandsManager.Create(async () => await RescheduleAutomaticAsync().ConfigureAwait(false), CanRescheduleAutomatic);
             RescheduleAutomaticStadiumCommand = CommandsManager.Create(async () => await RescheduleAutomaticStadiumAsync().ConfigureAwait(false), CanRescheduleAutomaticStadium);
 
@@ -120,8 +120,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public IMatchParentViewModel Parent { get; set; }
 
         public ICompetitionStageViewModel Stage { get; }
-
-        public bool ShowParent { get; }
 
         public string? DisplayName { get; set; }
 
@@ -205,6 +203,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public ICommand RescheduleCommand { get; }
 
+        public ICommand RescheduleOnDateCommand { get; }
+
         public bool CanBe(MatchState state)
             => state switch
             {
@@ -255,8 +255,6 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
 
         public TimeSpan GetTotalTime() => Item.Format.RegulationTime.Duration * Item.Format.RegulationTime.Number + 15.Minutes();
 
-        public Period GetPeriod() => new(Date, EndDate);
-
         public async Task OpenAsync() => await _matchPresentationService.OpenAsync(this).ConfigureAwait(false);
 
         public async Task EditAsync() => await _matchPresentationService.EditAsync(this).ConfigureAwait(false);
@@ -274,6 +272,8 @@ namespace MyClub.Scorer.Wpf.ViewModels.Entities
         public async Task FinishAsync() => await _matchPresentationService.FinishAsync(this).ConfigureAwait(false);
 
         public async Task RescheduleAsync(int offset, TimeUnit timeUnit) => await _matchPresentationService.RescheduleAsync(this, offset, timeUnit).ConfigureAwait(false);
+
+        public async Task RescheduleAsync(DateOnly? date, TimeOnly? time) => await _matchPresentationService.RescheduleAsync(this, date, time).ConfigureAwait(false);
 
         public async Task RescheduleAutomaticAsync() => await _matchPresentationService.RescheduleAutomaticAsync(this).ConfigureAwait(false);
 

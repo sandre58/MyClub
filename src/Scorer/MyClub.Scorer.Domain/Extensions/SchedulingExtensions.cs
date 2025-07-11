@@ -27,7 +27,7 @@ namespace MyClub.Scorer.Domain.Extensions
         public static void ScheduleVenues(this SchedulingParameters parameters, IEnumerable<Match> matches, IEnumerable<Stadium> stadiums, IEnumerable<Match>? scheduledMatches = null)
             => parameters.GetVenuesScheduler(stadiums, scheduledMatches)?.Schedule(matches.ToList());
 
-        public static IMatchesScheduler? GetVenuesScheduler(this SchedulingParameters parameters, IEnumerable<Stadium> stadiums, IEnumerable<Match>? scheduledMatches = null)
+        public static IVenueScheduler? GetVenuesScheduler(this SchedulingParameters parameters, IEnumerable<Stadium> stadiums, IEnumerable<Match>? scheduledMatches = null)
         {
             if (parameters.UseHomeVenue)
                 return new HomeTeamVenueMatchesScheduler();
@@ -48,51 +48,48 @@ namespace MyClub.Scorer.Domain.Extensions
         public static void Schedule(this SchedulingParameters parameters, IEnumerable<Match> matches, DateTime? startDate = null, IEnumerable<Match>? scheduledMatches = null)
             => parameters.GetMatchesScheduler(startDate, scheduledMatches)?.Schedule(matches.ToList());
 
-        public static void Schedule(this SchedulingParameters parameters, IEnumerable<Matchday> matchdays, DateTime? startDate = null, IEnumerable<Matchday>? scheduledMatchdays = null)
-            => parameters.GetMatchdaysScheduler(startDate, scheduledMatchdays)?.Schedule(matchdays.ToList());
+        public static void Schedule(this SchedulingParameters parameters, IEnumerable<IMatchesStage> stages, DateTime? startDate = null, IEnumerable<IMatchesStage>? scheduledStages = null)
+            => parameters.GetScheduler(startDate, scheduledStages)?.Schedule(stages.ToList());
 
-        public static IMatchesScheduler? GetMatchesScheduler(this SchedulingParameters parameters, DateTime? startDate = null, IEnumerable<Match>? scheduledMatches = null)
+        public static IScheduler<Match>? GetMatchesScheduler(this SchedulingParameters parameters, DateTime? startDate = null, IEnumerable<Match>? scheduledMatches = null)
         {
             if (parameters.AsSoonAsPossible)
-                return new AsSoonAsPossibleMatchesScheduler(scheduledMatches)
+                return new AsSoonAsPossibleMatchesScheduler(startDate ?? parameters.Start(), scheduledMatches)
                 {
-                    StartDate = startDate ?? parameters.Start(),
                     Rules = [.. parameters.AsSoonAsPossibleRules],
                     ScheduleVenues = false
                 };
             else if (parameters.DateRules.Count > 0)
             {
-                return new DateRulesMatchesScheduler()
+                return new DateRulesMatchesScheduler((startDate?.ToDate() ?? parameters.StartDate).BeginningOfDay().Add(parameters.Interval).ToDate())
                 {
                     ScheduleByStage = parameters.ScheduleByStage,
                     Interval = parameters.Interval,
                     DateRules = [.. parameters.DateRules],
                     TimeRules = [.. parameters.TimeRules],
                     DefaultTime = parameters.StartTime,
-                    StartDate = (startDate?.ToDate() ?? parameters.StartDate).BeginningOfDay().Add(parameters.Interval).ToDate(),
+
                 };
             }
 
             return null;
         }
 
-        public static IScheduler<Matchday>? GetMatchdaysScheduler(this SchedulingParameters parameters, DateTime? startDate = null, IEnumerable<Matchday>? scheduledMatchdays = null)
+        public static IDateScheduler<IMatchesStage>? GetScheduler(this SchedulingParameters parameters, DateTime? startDate = null, IEnumerable<IMatchesStage>? scheduledItems = null)
         {
             if (parameters.AsSoonAsPossible)
-                return new AsSoonAsPossibleStageScheduler<Matchday>(scheduledMatchdays)
+                return new AsSoonAsPossibleStageScheduler(startDate ?? parameters.Start(), scheduledItems)
                 {
-                    StartDate = startDate ?? parameters.Start(),
                     Rules = [.. parameters.AsSoonAsPossibleRules],
                     ScheduleVenues = false
                 };
             else if (parameters.DateRules.Count > 0)
-                return new DateRulesStageScheduler<Matchday>()
+                return new DateRulesStageScheduler(startDate?.ToDate() ?? parameters.StartDate)
                 {
                     Interval = parameters.Interval,
                     DateRules = [.. parameters.DateRules],
                     TimeRules = [.. parameters.TimeRules],
                     DefaultTime = parameters.StartTime,
-                    StartDate = startDate?.ToDate() ?? parameters.StartDate,
                 };
 
             return null;

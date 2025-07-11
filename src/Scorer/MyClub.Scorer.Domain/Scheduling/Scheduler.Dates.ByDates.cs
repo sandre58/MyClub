@@ -8,9 +8,9 @@ using MyNet.Utilities;
 
 namespace MyClub.Scorer.Domain.Scheduling
 {
-    public class ByDatesScheduler<T> : IScheduler<T> where T : ISchedulable
+    public class ByDatesScheduler<T> : IDateScheduler<T> where T : ISchedulable
     {
-        private IList<DateTime> _dates = [];
+        private List<DateTime> _dates = [];
 
         public ByDatesScheduler<T> SetDates(IEnumerable<DateOnly> dates, TimeOnly time)
         {
@@ -25,6 +25,9 @@ namespace MyClub.Scorer.Domain.Scheduling
         }
 
         public void Schedule(IEnumerable<T> items) => items.ForEach((item, index) => item.Schedule(_dates.GetByIndex(index)));
+
+        public DateTime GetFromDate() => _dates.LastOrDefault();
+
+        public void Reset(DateTime fromDate, IEnumerable<T>? scheduledItems = null) => _dates.Clear();
     }
 }
-

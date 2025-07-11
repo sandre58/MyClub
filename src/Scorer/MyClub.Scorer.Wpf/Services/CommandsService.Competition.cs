@@ -8,9 +8,11 @@ using MyClub.Scorer.Wpf.Services.Providers;
 namespace MyClub.Scorer.Wpf.Services
 {
     internal class CompetitionCommandsService(LeaguePresentationService leaguePresentationService,
+                                              CupPresentationService cupPresentationService,
                                               CompetitionInfoProvider competitionInfoProvider)
     {
         private readonly LeaguePresentationService _leaguePresentationService = leaguePresentationService;
+        private readonly CupPresentationService _cupPresentationService = cupPresentationService;
         private readonly CompetitionInfoProvider _competitionInfoProvider = competitionInfoProvider;
 
         public async Task OpenBuildAssistantAsync()
@@ -18,6 +20,10 @@ namespace MyClub.Scorer.Wpf.Services
             if (_competitionInfoProvider.Type == CompetitionType.League)
             {
                 await _leaguePresentationService.OpenBuildAssistantAsync().ConfigureAwait(false);
+            }
+            else if (_competitionInfoProvider.Type == CompetitionType.Cup)
+            {
+                await _cupPresentationService.OpenBuildAssistantAsync().ConfigureAwait(false);
             }
         }
 

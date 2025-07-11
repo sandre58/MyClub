@@ -14,10 +14,10 @@ namespace MyClub.Scorer.Domain.Factories
 {
     public class MatchdaysBuilder : IMatchdaysBuilder
     {
-        private readonly IScheduler<Matchday> _scheduler;
-        private readonly IMatchesScheduler? _venuesScheduler;
+        private readonly IScheduler<IMatchesStage> _scheduler;
+        private readonly IVenueScheduler? _venuesScheduler;
 
-        public MatchdaysBuilder(IScheduler<Matchday> scheduler, IMatchesScheduler? venuesScheduler = null)
+        public MatchdaysBuilder(IDateScheduler<IMatchesStage> scheduler, IVenueScheduler? venuesScheduler = null)
         {
             _scheduler = scheduler;
             _venuesScheduler = venuesScheduler;

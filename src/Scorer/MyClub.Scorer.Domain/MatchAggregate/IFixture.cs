@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using MyClub.Domain.Enums;
 using MyClub.Scorer.Domain.TeamAggregate;
 
@@ -11,7 +10,9 @@ namespace MyClub.Scorer.Domain.MatchAggregate
     {
         bool IsPlayed();
 
-        Result GetResultOf(Guid teamId);
+        bool IsDraw();
+
+        Result GetResultOf(IVirtualTeam team);
 
         Team? GetWinner();
 
@@ -21,6 +22,6 @@ namespace MyClub.Scorer.Domain.MatchAggregate
 
         IVirtualTeam GetLooserTeam();
 
-        bool Participate(Guid teamId);
+        bool Participate(IVirtualTeam team);
     }
 }
