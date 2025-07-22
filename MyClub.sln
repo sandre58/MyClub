@@ -1,0 +1,190 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{5D1BCDF4-BE5F-488D-BF24-64F497C5F1B7}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		config\.stylecop.json = config\.stylecop.json
+		config\AnalysisProperties.targets = config\AnalysisProperties.targets
+		Directory.build.props = Directory.build.props
+		Directory.build.targets = Directory.build.targets
+		config\Settings.XamlStyler = config\Settings.XamlStyler
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".doc", ".doc", "{EA1558C3-CFA0-44ED-954B-C773044EB6F9}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		LICENSE = LICENSE
+		.github\PULL_REQUEST_TEMPLATE.md = .github\PULL_REQUEST_TEMPLATE.md
+		README.md = README.md
+		docs\summary_for_IA.md = docs\summary_for_IA.md
+		docs\todo.md = docs\todo.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{E1FDB1EB-FB63-409E-8962-2929AD1EE63C}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\ci.yml = ..\.github\workflows\ci.yml
+		..\.github\workflows\create_release _plugins.yml = ..\.github\workflows\create_release _plugins.yml
+		..\.github\workflows\create_release.yml = ..\.github\workflows\create_release.yml
+		..\.github\GitVersion.yml = ..\.github\GitVersion.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{26E28C00-5829-4A4A-98C9-6A2DC164207F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Shared.Application", "src\Shared\MyClub.Shared.Application\MyClub.Shared.Application.csproj", "{790069DC-0D63-4F69-82EA-83A3ACF9C8CA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Localization", "src\Shared\MyClub.Localization\MyClub.Localization.csproj", "{0BD41556-4228-40B8-A64F-87174B8B4A61}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Shared.Domain", "src\Shared\MyClub.Shared.Domain\MyClub.Shared.Domain.csproj", "{F1568D49-AD16-48DC-8F61-39151538EA49}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scorer", "Scorer", "{69E66F50-06AB-43EF-8A9F-D675AB29E157}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{8AF88CB5-9F8A-4268-A153-047974B5BC6A}"
+	ProjectSection(SolutionItems) = preProject
+		src\Scorer\Directory.build.props = src\Scorer\Directory.build.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Scorer.Application", "src\Scorer\MyClub.Scorer.Application\MyClub.Scorer.Application.csproj", "{2FB2277F-60FB-4E30-85C0-80C732F762D8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyClub.Scorer.Domain", "src\Scorer\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj", "{010AE7A5-40A5-4C05-A5A6-6C051374E962}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{C02591AA-7AFA-4398-B7B6-4A1F59CDB244}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{A81FDA06-002F-498B-B3FE-90458B7A75C7}"
+	ProjectSection(SolutionItems) = preProject
+		tests\Directory.build.props = tests\Directory.build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".assets", ".assets", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		assets\myclub-logo.png = assets\myclub-logo.png
+		assets\scorer-logo.png = assets\scorer-logo.png
+		assets\teamup-logo.png = assets\teamup-logo.png
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.CrossCutting", "src\Shared\MyClub.CrossCutting\MyClub.CrossCutting.csproj", "{902F0F03-50B2-43ED-8574-3BE256012852}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Shared.Kernel", "src\Shared\MyClub.Shared.Kernel\MyClub.Shared.Kernel.csproj", "{8F4B82FF-3960-45C1-9944-B125C8DE4DFB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Referential", "Referential", "{50472F00-95C6-4190-8D57-2F08DD689718}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Referential.Domain", "src\Referential\MyClub.Referential.Domain\MyClub.Referential.Domain.csproj", "{1B5EBC03-0F6C-4D2C-B183-85394CF8EDC0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Scorer.Domain.Tests", "tests\MyClub.Scorer.Domain.Tests\MyClub.Scorer.Domain.Tests.csproj", "{C651BEC9-F098-4D2B-A106-B16868B1D263}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Shared.Tests", "tests\MyClub.Shared.Tests\MyClub.Shared.Tests.csproj", "{E7FB6C05-DE01-47EB-A5FE-9289971938A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Tests.Common", "tests\MyClub.Tests.Common\MyClub.Tests.Common.csproj", "{5E02A70C-4217-4BDA-AA96-D40E792DE3F1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".doc", ".doc", "{788B43A1-C6AC-4146-93A5-8200AD2CF9FD}"
+	ProjectSection(SolutionItems) = preProject
+		src\Scorer\README.md = src\Scorer\README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Scorer.Infrastructure.Persistence", "src\Scorer\MyClub.Scorer.Infrastructure.Persistence\MyClub.Scorer.Infrastructure.Persistence.csproj", "{372C01A5-3382-413E-857F-373B727475F6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Scorer.Infrastructure.Migrations.Sqlite", "src\Scorer\MyClub.Scorer.Infrastructure.Migrations.Sqlite\MyClub.Scorer.Infrastructure.Migrations.Sqlite.csproj", "{A19E2519-ABE2-410A-AC8B-7D574FD60F7B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Migrations", "Migrations", "{68BC1DCD-5643-4981-8F5C-C274F340266A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyClub.Scorer.Infrastructure.Migrations.SqlServer", "src\Scorer\MyClub.Scorer.Infrastructure.Migrations.SqlServer\MyClub.Scorer.Infrastructure.Migrations.SqlServer.csproj", "{3367A9FB-00C6-45FC-A0C1-89EEA7E9B30B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{790069DC-0D63-4F69-82EA-83A3ACF9C8CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{790069DC-0D63-4F69-82EA-83A3ACF9C8CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{790069DC-0D63-4F69-82EA-83A3ACF9C8CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{790069DC-0D63-4F69-82EA-83A3ACF9C8CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BD41556-4228-40B8-A64F-87174B8B4A61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BD41556-4228-40B8-A64F-87174B8B4A61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BD41556-4228-40B8-A64F-87174B8B4A61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BD41556-4228-40B8-A64F-87174B8B4A61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1568D49-AD16-48DC-8F61-39151538EA49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1568D49-AD16-48DC-8F61-39151538EA49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1568D49-AD16-48DC-8F61-39151538EA49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1568D49-AD16-48DC-8F61-39151538EA49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FB2277F-60FB-4E30-85C0-80C732F762D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FB2277F-60FB-4E30-85C0-80C732F762D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FB2277F-60FB-4E30-85C0-80C732F762D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FB2277F-60FB-4E30-85C0-80C732F762D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{010AE7A5-40A5-4C05-A5A6-6C051374E962}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{010AE7A5-40A5-4C05-A5A6-6C051374E962}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{010AE7A5-40A5-4C05-A5A6-6C051374E962}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{010AE7A5-40A5-4C05-A5A6-6C051374E962}.Release|Any CPU.Build.0 = Release|Any CPU
+		{902F0F03-50B2-43ED-8574-3BE256012852}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{902F0F03-50B2-43ED-8574-3BE256012852}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{902F0F03-50B2-43ED-8574-3BE256012852}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{902F0F03-50B2-43ED-8574-3BE256012852}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F4B82FF-3960-45C1-9944-B125C8DE4DFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F4B82FF-3960-45C1-9944-B125C8DE4DFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F4B82FF-3960-45C1-9944-B125C8DE4DFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F4B82FF-3960-45C1-9944-B125C8DE4DFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B5EBC03-0F6C-4D2C-B183-85394CF8EDC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B5EBC03-0F6C-4D2C-B183-85394CF8EDC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B5EBC03-0F6C-4D2C-B183-85394CF8EDC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B5EBC03-0F6C-4D2C-B183-85394CF8EDC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C651BEC9-F098-4D2B-A106-B16868B1D263}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C651BEC9-F098-4D2B-A106-B16868B1D263}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C651BEC9-F098-4D2B-A106-B16868B1D263}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C651BEC9-F098-4D2B-A106-B16868B1D263}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7FB6C05-DE01-47EB-A5FE-9289971938A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7FB6C05-DE01-47EB-A5FE-9289971938A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7FB6C05-DE01-47EB-A5FE-9289971938A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7FB6C05-DE01-47EB-A5FE-9289971938A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E02A70C-4217-4BDA-AA96-D40E792DE3F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E02A70C-4217-4BDA-AA96-D40E792DE3F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E02A70C-4217-4BDA-AA96-D40E792DE3F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E02A70C-4217-4BDA-AA96-D40E792DE3F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{372C01A5-3382-413E-857F-373B727475F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{372C01A5-3382-413E-857F-373B727475F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{372C01A5-3382-413E-857F-373B727475F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{372C01A5-3382-413E-857F-373B727475F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A19E2519-ABE2-410A-AC8B-7D574FD60F7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A19E2519-ABE2-410A-AC8B-7D574FD60F7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A19E2519-ABE2-410A-AC8B-7D574FD60F7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A19E2519-ABE2-410A-AC8B-7D574FD60F7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3367A9FB-00C6-45FC-A0C1-89EEA7E9B30B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3367A9FB-00C6-45FC-A0C1-89EEA7E9B30B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3367A9FB-00C6-45FC-A0C1-89EEA7E9B30B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3367A9FB-00C6-45FC-A0C1-89EEA7E9B30B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{790069DC-0D63-4F69-82EA-83A3ACF9C8CA} = {26E28C00-5829-4A4A-98C9-6A2DC164207F}
+		{0BD41556-4228-40B8-A64F-87174B8B4A61} = {26E28C00-5829-4A4A-98C9-6A2DC164207F}
+		{F1568D49-AD16-48DC-8F61-39151538EA49} = {26E28C00-5829-4A4A-98C9-6A2DC164207F}
+		{8AF88CB5-9F8A-4268-A153-047974B5BC6A} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{2FB2277F-60FB-4E30-85C0-80C732F762D8} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{010AE7A5-40A5-4C05-A5A6-6C051374E962} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{A81FDA06-002F-498B-B3FE-90458B7A75C7} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
+		{902F0F03-50B2-43ED-8574-3BE256012852} = {26E28C00-5829-4A4A-98C9-6A2DC164207F}
+		{8F4B82FF-3960-45C1-9944-B125C8DE4DFB} = {26E28C00-5829-4A4A-98C9-6A2DC164207F}
+		{1B5EBC03-0F6C-4D2C-B183-85394CF8EDC0} = {50472F00-95C6-4190-8D57-2F08DD689718}
+		{C651BEC9-F098-4D2B-A106-B16868B1D263} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
+		{E7FB6C05-DE01-47EB-A5FE-9289971938A1} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
+		{5E02A70C-4217-4BDA-AA96-D40E792DE3F1} = {C02591AA-7AFA-4398-B7B6-4A1F59CDB244}
+		{788B43A1-C6AC-4146-93A5-8200AD2CF9FD} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{372C01A5-3382-413E-857F-373B727475F6} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{A19E2519-ABE2-410A-AC8B-7D574FD60F7B} = {68BC1DCD-5643-4981-8F5C-C274F340266A}
+		{68BC1DCD-5643-4981-8F5C-C274F340266A} = {69E66F50-06AB-43EF-8A9F-D675AB29E157}
+		{3367A9FB-00C6-45FC-A0C1-89EEA7E9B30B} = {68BC1DCD-5643-4981-8F5C-C274F340266A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		RESX_ConfirmAddLanguageFile = True
+		RESX_AutoCreateNewLanguageFiles = True
+		RESX_NeutralResourcesLanguage = fr-FR
+		SolutionGuid = {4C2A7472-FBCC-4D2C-B21D-0C83E4ADAA1A}
+		RESX_CodeReferences = {"Items":[{"Expression":"\\W($File.$Key)\\W","Extensions":".cs,.xaml,.cshtml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($File.$Key)\\W","Extensions":".vbhtml","IsCaseSensitive":false,"SingleLineComment":null},{"Expression":"ResourceManager.GetString\\(\"($Key)\"\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+\"($Key)\"|\"($Key)\".+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\W($Key)\\W","Extensions":".vb","IsCaseSensitive":false,"SingleLineComment":"'"},{"Expression":"\\W($File::$Key)\\W","Extensions":".cpp,.c,.hxx,.h","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"&lt;%\\$\\s+Resources:\\s*($File)\\s*,\\s*($Key)\\s*%&gt;","Extensions":".aspx,.ascx,.master","IsCaseSensitive":true,"SingleLineComment":null},{"Expression":"StringResourceKey\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"\\.($Key)","Extensions":".ts,.html","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"typeof\\((\\w+\\.)*($File)\\).+nameof\\(($Key)\\)|nameof\\(($Key)\\).+typeof\\((\\w+\\.)*($File)\\)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{me:Translation .*Format=$Key.*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:Resource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"Format=($Key)","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":"{my:ShortcutResource (Key=)?($Key).*","Extensions":".xaml","IsCaseSensitive":true,"SingleLineComment":"\/\/"},{"Expression":".*Resources\\.($Key)","Extensions":".cs","IsCaseSensitive":true,"SingleLineComment":"\/\/"}]}
+		RESX_ShowErrorsInErrorList = False
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,17 @@
+﻿// -----------------------------------------------------------------------
+// <copyright file="IStandingCalculator.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using System.Collections.Generic;
+using MyClub.Shared.Domain.Matchs;
+using MyClub.Shared.Domain.Standings.Rules;
+using MyClub.Shared.Domain.Teams;
+
+namespace MyClub.Shared.Domain.Standings.Services;
+
+public interface IStandingCalculator
+{
+    Standing Calculate(IEnumerable<TeamReference> teams, IEnumerable<IMatch> matches, StandingRuleSet rules, IReadOnlyDictionary<TeamReference, int>? penaltyPoints = null);
+}

@@ -1,93 +1,75 @@
-﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
-// See the LICENSE file in the project root for more information.
+﻿// -----------------------------------------------------------------------
+// <copyright file="League.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using MyClub.Domain.Enums;
-using MyClub.Domain.Exceptions;
-using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.RankingAggregate;
-using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Domain.TeamAggregate;
+using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
+using MyClub.Scorer.Domain.MatchdayAggregate;
+using MyClub.Scorer.Domain.Primitives;
+using MyClub.Shared.Domain.Standings.Rules;
+using MyClub.Shared.Domain.Teams;
+using MyClub.Shared.Kernel.Results;
 using MyNet.Utilities;
-using MyNet.Utilities.Collections;
 
-namespace MyClub.Scorer.Domain.CompetitionAggregate
+namespace MyClub.Scorer.Domain.CompetitionAggregate;
+
+public class League : Competition, IChampionship
 {
-    public class League : Championship, IMatchdaysStage, ICompetition
+    private readonly List<MatchdayId> _matchdays = [];
+    private readonly Dictionary<TeamId, int> _penaltyPoints = [];
+
+    // <remarks>Used by EF Core</remarks>
+    private League()
+        : base()
     {
-        private readonly OptimizedObservableCollection<Matchday> _matchdays = [];
-
-        public League() : this(RankingRules.Default, MatchFormat.Default, MatchRules.Default, SchedulingParameters.Default) { }
-
-        public League(RankingRules rankingRules, MatchFormat matchFormat, MatchRules matchRules, SchedulingParameters schedulingParameters)
-        {
-            RankingRules = rankingRules;
-            MatchFormat = matchFormat;
-            MatchRules = matchRules;
-            SchedulingParameters = schedulingParameters;
-            Matchdays = new(_matchdays);
-        }
-
-        public RankingRules RankingRules { get; set; }
-
-        public MatchFormat MatchFormat { get; set; }
-
-        public MatchRules MatchRules { get; set; }
-
-        public SchedulingParameters SchedulingParameters { get; set; }
-
-        public ReadOnlyObservableCollection<Matchday> Matchdays { get; }
-
-        public override RankingRules GetRankingRules() => RankingRules;
-
-        MatchFormat IMatchFormatProvider.ProvideFormat() => MatchFormat;
-
-        MatchRules IMatchRulesProvider.ProvideRules() => MatchRules;
-
-        SchedulingParameters ISchedulingParametersProvider.ProvideSchedulingParameters() => SchedulingParameters;
-
-        public override IEnumerable<Match> GetAllMatches() => Matchdays.SelectMany(x => x.GetAllMatches());
-
-        public IEnumerable<T> GetStages<T>() where T : IStage => Matchdays.OfType<T>();
-
-        public Ranking GetRanking(Matchday matchday)
-        {
-            var matches = Matchdays.Where(x => x.OriginDate.IsBefore(matchday.OriginDate)).Union([matchday]).SelectMany(x => x.Matches);
-            return new Ranking(Teams, matches, GetRankingRules(), GetPenaltyPoints(), Labels, (x, y) => x.State == MatchState.Played);
-        }
-
-        public override bool RemoveTeam(IVirtualTeam team)
-        {
-            _matchdays.ForEach(x => x.Matches.Where(x => x.Participate(team)).ToList().ForEach(y => x.RemoveMatch(y)));
-            return base.RemoveTeam(team);
-        }
-
-        public bool RemoveMatch(Match item) => _matchdays.Any(x => x.RemoveMatch(item));
-
-        #region Matchdays
-
-        public Matchday AddMatchday(DateTime date, string name, string? shortName = null) => AddMatchday(new Matchday(this, date, name, shortName));
-
-        public Matchday AddMatchday(Matchday matchday)
-        {
-            if (!ReferenceEquals(matchday.Stage, this))
-                throw new ArgumentException("Matchday stage is not this league", nameof(matchday));
-
-            if (Matchdays.Contains(matchday))
-                throw new AlreadyExistsException(nameof(Matchdays), matchday);
-
-            _matchdays.Add(matchday);
-
-            return matchday;
-        }
-
-        public bool RemoveMatchday(Matchday item) => _matchdays.Remove(item);
-
-        public void Clear() => _matchdays.Clear();
-
-        #endregion
+        StandingRules = null!;
+        StandingRankStatuses = null!;
     }
+
+    private League(CompetitionId id, string name, string? shortName, MatchFormat format, MatchRules rules, StandingRuleSet standingRules, StandingRankStatuses standingRankStatuses)
+        : base(id, name, shortName, format, rules)
+    {
+        StandingRules = standingRules;
+        StandingRankStatuses = standingRankStatuses;
+    }
+
+    public static League Create(string name, string? shortName = null, MatchFormat? format = null, MatchRules? rules = null, StandingRuleSet? standingRules = null, StandingRankStatuses? standingRankStatuses = null)
+        => new(CompetitionId.New(), name, shortName, format ?? MatchFormat.Default, rules ?? MatchRules.Default, standingRules ?? StandingRuleSet.Default, standingRankStatuses ?? []);
+
+    public IReadOnlyCollection<MatchdayId> Matchdays => _matchdays.AsReadOnly();
+
+    public StandingRuleSet StandingRules { get; set; }
+
+    public StandingRankStatuses StandingRankStatuses { get; set; }
+
+    public override CompetitionType Type => CompetitionType.League;
+
+    #region Matchdays
+
+    public Result<MatchdayId> AddMatchday(MatchdayId matchdayId)
+    {
+        _matchdays.Add(matchdayId);
+
+        return Result.Success(matchdayId);
+    }
+
+    public bool RemoveMatchday(MatchdayId matchdayId) => _matchdays.Remove(matchdayId);
+
+    public void Clear() => _matchdays.Clear();
+
+    #endregion
+
+    #region Penalty
+
+    public virtual IReadOnlyDictionary<TeamId, int> GetPenaltyPoints() => _penaltyPoints;
+
+    public virtual void AddPenalty(TeamId teamId, int points) => _ = _penaltyPoints.AddOrUpdate(teamId, points);
+
+    public virtual bool RemovePenalty(TeamId team) => _penaltyPoints.Remove(team);
+
+    public virtual void ClearPenaltyPoints() => _penaltyPoints.Clear();
+
+    #endregion
 }

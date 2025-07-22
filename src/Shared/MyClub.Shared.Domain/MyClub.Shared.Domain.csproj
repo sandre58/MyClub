@@ -1,0 +1,5 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+      <ProjectReference Include="..\MyClub.Shared.Kernel\MyClub.Shared.Kernel.csproj" />
+    </ItemGroup>
+</Project>

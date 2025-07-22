@@ -1,5 +1,18 @@
 {
-    "version": 1,
-    "isRoot": true,
-    "tools": {}
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-format": {
+      "version": "7.0.250901",
+      "commands": [ "dotnet-format" ]
+    },
+    "dotnet-ef": {
+      "version": "7.0.5",
+      "commands": [ "dotnet-ef" ]
+    },
+    "reportgenerator": {
+      "version": "5.1.21",
+      "commands": [ "reportgenerator" ]
+    }
+  }
 }

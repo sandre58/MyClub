@@ -1,0 +1,22 @@
+﻿// -----------------------------------------------------------------------
+// <copyright file="MatchStatus.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace MyClub.Shared.Domain.Enums;
+
+public enum MatchStatus
+{
+    None,
+
+    InProgress,
+
+    Suspended,
+
+    Played,
+
+    Postponed,
+
+    Cancelled
+}

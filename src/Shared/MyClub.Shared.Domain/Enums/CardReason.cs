@@ -1,0 +1,16 @@
+﻿// -----------------------------------------------------------------------
+// <copyright file="CardReason.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace MyClub.Shared.Domain.Enums;
+
+public enum CardReason
+{
+    Unknown,
+
+    UnsportsmanlikeBehavior,
+
+    Protests
+}

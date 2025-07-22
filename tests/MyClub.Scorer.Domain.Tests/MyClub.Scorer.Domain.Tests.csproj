@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Scorer\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj" />
+    <ProjectReference Include="..\MyClub.Tests.Common\MyClub.Tests.Common.csproj" />
+  </ItemGroup>
+</Project>

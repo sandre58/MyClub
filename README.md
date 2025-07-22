@@ -1,75 +1,141 @@
 <div id="top"></div>
 
-<!-- PROJECT INFO -->
-<br />
-<div align="center">
-  <a href="https://github.com/sandre58/MyClub">
-    <img src="images/logo.png" width="256" height="256">
-  </a>
+<!-- Logo -->
+<p align="center">
+  <img src="assets/myclub-logo.png" alt="MyClub logo" width="200"/>
+</p>
 
-<h1 align="center">My Club</h1>
+<!-- Title -->
+<h1 align="center">MyClub</h1>
+<p align="center"><em>Modular Software Suite for Football Clubs</em></p>
 
+[![Build][build-shield]][build-url]
 [![Downloads][downloads-shield]][downloads-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 
-  <p align="center">
-    <br />
-    Welcome to the Club Management WPF Applications repository! This repository contains a suite of WPF applications designed to manage various aspects of club life. From handling player rosters and scheduling training sessions to tracking team results and league standings, these applications provide comprehensive tools to efficiently run and organize a sports club. Whether you're a coach, manager, or club administrator, these applications help streamline operations, improve communication, and enhance overall club performance.
-  </p>
+**MyClub** is a modular software suitedesigned to fully digitalize the managementof football clubs. From handling playerrosters and scheduling training sessions totracking team results and league standings,these applications provide comprehensivetools to efficiently run and organize asports club. Whether you're a coach,manager, or club administrator, theseapplications help streamline operations,improve communication, and enhance overallclub performance.
 
-[![Language][language-shield]][language-url]
-[![Build][build-shield]][build-url]
+---
 
-</div>
+## 🔧 Technical Architecture
 
-## Features
+![Framework1][framework1-shield]
+![Framework2][framework2-shield]
+![Framework3][framework3-shield]
+![Language][language-shield]
 
-- **Roster Management**: Easily manage player rosters, including adding, updating, and removing player information.
-- **Training Management**: Schedule training sessions, track attendance, and assign exercises to players.
-- **Match Results**: Record and track the results of matches played by the club's teams.
-- **League Standings**: Monitor and update league standings to keep track of the team's performance.
-- **Communication**: Facilitate communication with players through integrated messaging features.
+MyClub is built with a robust, scalable, and modular architecture designed to support both **offline-first usage** and **cloud-based integration**, while following modern software engineering principles like **Domain-Driven Design (DDD)**, **Clean Architecture**, and **CQRS**.
 
-## Applications included
+### 🧱 Architectural Layers
 
-### Team'up
+The solution is structured around several clear layers to ensure separation of concerns:
 
-<div align="center">
-<img src="images/teamup.png" width="100" height="100">
-<br />
+- **Domain Layer** (per module):  
+  Contains the pure domain model—entities, value objects, aggregates, business rules, and domain events.  
+  This layer has no dependencies on any external library or infrastructure. It reflects the *business logic* of each module (e.g., `Scorer`, `TeamUp`) and ensures domain integrity.
 
-[![Framework][framework-shield]][framework-url]
-[![Version][teamup-version-shield]][teamup-version-url]
+- **Application Layer**:  
+  Contains use cases, commands, queries, handlers, validators, and interfaces for repositories or services.  
+  This layer orchestrates domain logic and handles the flow of data between the UI and domain.  
+  It follows the **CQRS** pattern to separate reads and writes.
 
-</div>
+- **Infrastructure Layer**:  
+  Implements the interfaces defined in the application layer.  
+  It handles data persistence (with EF Core), file storage, networking, and external services.  
+  This layer is plug-and-play and can easily be swapped for another provider (e.g., switch from SQLite to PostgreSQL).
 
-Experience comprehensive football team management with this application designed to streamline every aspect of team organization. From scheduling and tracking training sessions to managing player rosters and facilitating communication, this tool empowers coaches and managers to efficiently oversee their football teams. With features for monitoring player attendance, assigning drills, accessing player profiles, and communicating important updates, this application simplifies the complexities of team management, enabling coaches to focus on maximizing team performance and fostering a cohesive and successful football program.
+- **Presentation Layer**:  
+  - **Desktop Client**: Built with **Avalonia UI**, it offers a rich, cross-platform experience with full offline capabilities.  
+    The embedded backend allows local data persistence and interaction without requiring a connection.
+  - **Web Client**: Developed using **Blazor WebAssembly**, it provides a lightweight interface primarily for visualization and consultation of competitions, standings, and results.
 
-### Scor'er
+---
 
-<div align="center">
-<img src="images/scorer.png" width="100" height="100">
-<br />
+### ☁️ Backend & Offline Capabilities
 
-[![Framework][framework-shield]][framework-url]
-[![Version][scorer-version-shield]][scorer-version-url]
+The backend is built using **ASP.NET Core** and exposes a set of RESTful APIs for the web clients.  
+For desktop users, the same logic is embedded into the Avalonia app using a self-hosted, lightweight in-process backend.  
+This allows the application to be used fully offline, with local persistence through **EF Core (SQLite)**.
 
-</div>
+A synchronization mechanism (planned) will allow syncing local data with the central server once a connection is available.  
+This ensures data consistency and enables seamless collaboration between online and offline users.
 
-Introducing a versatile tournament management application that empowers users to create and oversee customized sports tournaments effortlessly. With intuitive features for scheduling matches, managing participant registrations, and tracking scores, this application caters to a wide range of sporting events and formats. Whether organizing local leagues, friendly competitions, or large-scale tournaments, users can tailor the experience to suit their specific needs, ensuring seamless and enjoyable sporting experiences for all participants.
+---
 
-## Installation
+### 📦 Shared Core
 
-To use the applications in this repository, clone the repository to your local machine and build the projects using Visual Studio.
+A shared `Core` project is used across all modules. It contains:
 
-## License
+- Shared interfaces and abstractions (`IEntity`, `IAggregateRoot`, `IRepository<T>`, etc.)
+- Domain primitives (e.g., strongly typed IDs, enums, value objects)
+- Common exceptions and base classes
 
-Copyright © Stéphane ANDRE.
+This ensures consistency and eliminates duplication across modules while allowing each module to evolve independently.
 
-My Club is provided as-is under the MIT license. For more information see [LICENSE](./LICENSE).
+---
+
+### 🧪 Testing & Tooling
+
+All business logic is covered by **unit tests** using:
+
+- **xUnit** as the test framework  
+- **Moq** and **AutoFixture** for mocking and auto-generation of data  
+- **FluentAssertions** for expressive assertions  
+
+Tests are organized per module and reflect the domain boundaries.
+
+---
+
+### 🛠 Tooling & Best Practices
+
+- **AutoMapper** is used to transform domain models to DTOs or view models, ensuring clean separation.
+- **FluentValidation** is used for input validation in the application layer.
+- **Strongly Typed IDs** (value objects) prevent mixing domain concepts (e.g., `TeamId` vs `MatchId`) and improve type safety.
+
+The architecture is built for **extensibility**, **testability**, and **modularity**, making it easy to introduce new modules (e.g., Training, Scouting, Licensing) without impacting the existing system.
+
+---
+
+## 🧩 Functional Modules
+
+| Module     | Description                                                |
+|------------|------------------------------------------------------------|
+| [`Scor'er`](./src/Scorer/README.md)   | Competition creation & management (leagues, cups, tournaments) |
+| `Team'up` _(planned)_   | Squad and staff management (players, coaches, teams)           |
+| `Training` _(planned)_ | Training session builder and exercise planning         |
+| `Licensing` _(planned)_ | Administrative tools and regulatory tracking            |
+
+---
+
+## 🔭 Roadmap Highlights
+
+- 🔄 Data synchronization between offline and online apps
+- 📊 Player and team performance analytics
+- 📅 Training and planning tools
+- 📱 Native mobile app (MAUI or Flutter)
+- 🌍 Multi-club and federation mode
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License – see [LICENSE](./LICENSE) for details.
+
+---
+
+## 🤝 Contributing
+
+Coming soon – contribution guidelines, code style, and branching model.
+
+---
+
+## 📬 Contact
+
+Developed by [Stéphane ANDRE].  
+For questions or collaborations: `andre.cs2i@gmail.com`
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
@@ -83,13 +149,10 @@ My Club is provided as-is under the MIT license. For more information see [LICEN
 [issues-url]: https://github.com/sandre58/MyClub/issues
 [license-shield]: https://img.shields.io/github/license/sandre58/MyClub?style=for-the-badge
 [license-url]: https://github.com/sandre58/MyClub/blob/main/LICENSE
-[build-shield]: https://img.shields.io/github/actions/workflow/status/sandre58/MyClub/ci.yml?logo=github&label=CI
+[build-shield]: https://img.shields.io/github/actions/workflow/status/sandre58/MyClub/ci.yml?logo=github&label=CI&style=for-the-badge
 [build-url]: https://github.com/sandre58/MyClub/actions
 [downloads-shield]: https://img.shields.io/github/downloads/sandre58/MyClub/total?style=for-the-badge
 [downloads-url]: https://github.com/sandre58/MyClub/releases
-[framework-shield]: https://img.shields.io/badge/.NET-8.0-purple
-[framework-url]: https://github.com/sandre58/MyClub/tree/main/src/Teamup/MyClub.Teamup.Wpf
-[teamup-version-shield]: https://img.shields.io/badge/version-1.0.0-blue
-[teamup-version-url]: https://github.com/sandre58/MyClub/releases
-[scorer-version-shield]: https://img.shields.io/badge/version-1.0.0-blue
-[scorer-version-url]: https://github.com/sandre58/MyClub/releases
+[framework1-shield]: https://img.shields.io/badge/.NET-8.0-purple
+[framework2-shield]: https://img.shields.io/badge/.NET-9.0-purple
+[framework3-shield]: https://img.shields.io/badge/.NET-10.0-purple

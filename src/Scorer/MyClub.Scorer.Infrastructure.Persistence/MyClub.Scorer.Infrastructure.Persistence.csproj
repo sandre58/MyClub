@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Folder Include="Configurations\" />
+    <Folder Include="Converters\" />
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.6.25358.103" />
+    </ItemGroup>
+    
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj" />
+  </ItemGroup>
+</Project>

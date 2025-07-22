@@ -1,41 +1,46 @@
-﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
-// See the LICENSE file in the project root for more information.
+﻿// -----------------------------------------------------------------------
+// <copyright file="Tournament.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using MyClub.Domain;
-using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.Scheduling;
-using MyNet.Utilities.Collections;
+using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
+using MyClub.Scorer.Domain.RoundAggregate;
+using MyClub.Shared.Kernel.Results;
 
-namespace MyClub.Scorer.Domain.CompetitionAggregate
+namespace MyClub.Scorer.Domain.CompetitionAggregate;
+
+public class Tournament : Competition
 {
-    public class Tournament : AuditableEntity, ICompetition
+    private readonly List<RoundId> _rounds = [];
+
+    // <remarks>Used by EF Core</remarks>
+    private Tournament()
+        : base() { }
+
+    private Tournament(CompetitionId id, string name, string? shortName, MatchFormat format, MatchRules rules)
+        : base(id, name, shortName, format, rules) { }
+
+    public static Tournament Create(string name, string? shortName = null, MatchFormat? format = null, MatchRules? rules = null)
+        => new(CompetitionId.New(), name, shortName, format ?? MatchFormat.Default, rules ?? MatchRules.Default);
+
+    public IReadOnlyCollection<RoundId> Rounds => _rounds.AsReadOnly();
+
+    public override CompetitionType Type => CompetitionType.Cup;
+
+    #region Rounds
+
+    public Result<RoundId> AddRound(RoundId roundId)
     {
-        private readonly OptimizedObservableCollection<ITournamentStage> _stages = [];
+        _rounds.Add(roundId);
 
-        public Tournament() : this(SchedulingParameters.Default) { }
-
-        public Tournament(SchedulingParameters schedulingParameters)
-        {
-            Stages = new(_stages);
-            SchedulingParameters = schedulingParameters;
-        }
-
-        public ReadOnlyObservableCollection<ITournamentStage> Stages { get; }
-
-        public MatchFormat MatchFormat { get; set; } = MatchFormat.NoDraw;
-
-        public MatchRules MatchRules { get; set; } = MatchRules.Default;
-
-        public SchedulingParameters SchedulingParameters { get; set; }
-
-        public IEnumerable<Match> GetAllMatches() => Stages.SelectMany(x => x.GetAllMatches());
-
-        public IEnumerable<T> GetStages<T>() where T : IStage => Stages.OfType<T>().Union(Stages.SelectMany(x => x.GetStages<T>()));
-
-        public bool RemoveMatch(Match item) => _stages.Any(x => x.RemoveMatch(item));
+        return Result.Success(roundId);
     }
-}
 
+    public bool RemoveRound(RoundId roundId) => _rounds.Remove(roundId);
+
+    public void Clear() => _rounds.Clear();
+
+    #endregion
+}

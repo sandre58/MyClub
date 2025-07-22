@@ -1,326 +1,278 @@
-﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
-// See the LICENSE file in the project root for more information.
+﻿// -----------------------------------------------------------------------
+// <copyright file="Match.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
-using MyClub.Domain;
-using MyClub.Domain.Enums;
-using MyClub.Scorer.Domain.Scheduling;
-using MyClub.Scorer.Domain.StadiumAggregate;
-using MyClub.Scorer.Domain.TeamAggregate;
+using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
+using MyClub.Scorer.Domain.MatchAggregate.MatchEvents;
+using MyClub.Shared.Domain.Enums;
+using MyClub.Shared.Domain.Matchs;
+using MyClub.Shared.Domain.Stadiums;
+using MyClub.Shared.Domain.Teams;
+using MyClub.Shared.Kernel.Primitives;
 using MyNet.Utilities;
 using MyNet.Utilities.DateTimes;
 using MyNet.Utilities.Sequences;
 using MyNet.Utilities.Units;
-using PropertyChanged;
 
-namespace MyClub.Scorer.Domain.MatchAggregate
+namespace MyClub.Scorer.Domain.MatchAggregate;
+
+public class Match : AuditableEntity<MatchId>, IMatch, IAggregateRoot
 {
-    public class Match : AuditableEntity, IFixture, ISchedulable
+    public static readonly AcceptableValueRange<int> AcceptableRangeScore = new(0, int.MaxValue);
+
+    // <remarks>Used by EF Core</remarks>
+    private Match()
+        : base()
     {
-        public static readonly AcceptableValueRange<int> AcceptableRangeScore = new(0, int.MaxValue);
-        private readonly WinnerOfMatchTeam _winnerTeam;
-        private readonly LooserOfMatchTeam _looserTeam;
-        private MatchOpponent? _home;
-        private MatchOpponent? _away;
+        Home = null!;
+        Away = null!;
+        Format = null!;
+        Rules = null!;
+    }
 
-        public Match(DateTime date, IVirtualTeam homeTeam, IVirtualTeam awayTeam, MatchFormat? matchFormat = null, MatchRules? matchRules = null, Guid? id = null) : base(id)
-        {
-            HomeTeam = homeTeam;
-            AwayTeam = awayTeam;
-            Format = matchFormat ?? MatchFormat.Default;
-            Rules = matchRules ?? MatchRules.Default;
-            OriginDate = date;
-            _winnerTeam = new(this);
-            _looserTeam = new(this);
+    private Match(MatchId id, DateTime date, TeamReference homeTeam, TeamReference awayTeam, MatchFormat matchFormat, MatchRules matchRules)
+        : base(id)
+    {
+        Format = matchFormat;
+        Rules = matchRules;
+        OriginDate = date;
 
-            ComputeOpponents();
-        }
+        Home = new(homeTeam);
+        Away = new(awayTeam);
+    }
 
-        public virtual MatchFormat Format { get; }
+    public static Match Create(DateTime date, TeamReference homeTeam, TeamReference awayTeam, MatchFormat? matchFormat = null, MatchRules? matchRules = null)
+        => new(MatchId.New(), date, homeTeam, awayTeam, matchFormat ?? MatchFormat.Default, matchRules ?? MatchRules.Default);
 
-        public virtual MatchRules Rules { get; }
+    public virtual MatchFormat Format { get; }
 
-        [AlsoNotifyFor(nameof(Date))]
-        public DateTime OriginDate { get; set; }
+    public virtual MatchRules Rules { get; }
 
-        [AlsoNotifyFor(nameof(Date))]
-        public DateTime? PostponedDate { get; set; }
+    public DateTime OriginDate { get; set; }
 
-        public DateTime Date => PostponedDate ?? OriginDate;
+    public DateTime? PostponedDate { get; set; }
 
-        public MatchState State { get; private set; }
+    public DateTime Date => PostponedDate ?? OriginDate;
 
-        public IVirtualTeam HomeTeam { get; private set; }
+    public MatchStatus Status { get; private set; }
 
-        public IVirtualTeam AwayTeam { get; private set; }
+    public MatchOpponent Home { get; private set; }
 
-        public MatchOpponent? Home => _home;
+    public MatchOpponent Away { get; private set; }
 
-        public MatchOpponent? Away => _away;
+    public TeamReference HomeTeamReference => Home.Team;
 
-        public bool IsNeutralStadium { get; set; }
+    public TeamReference AwayTeamReference => Away.Team;
 
-        public Stadium? Stadium { get; set; }
+    public bool IsNeutralStadium { get; set; }
 
-        public bool AfterExtraTime { get; set; }
+    public StadiumId? StadiumId { get; set; }
 
-        public virtual bool UseExtraTime() => Format.ExtraTimeIsEnabled && IsDraw();
+    public bool AfterExtraTime { get; set; }
 
-        public virtual bool UseShootout() => Format.ShootoutIsEnabled && IsDraw();
+    public virtual bool UseExtraTime() => Format.ExtraTimeIsEnabled && IsDraw();
 
-        public IVirtualTeam GetWinnerTeam() => _winnerTeam;
+    public virtual bool UseShootout() => Format.ShootoutIsEnabled && IsDraw();
 
-        public IVirtualTeam GetLooserTeam() => _looserTeam;
-
-        public bool ComputeOpponents() => ComputeOpponent(HomeTeam, ref _home, nameof(Home)) | ComputeOpponent(AwayTeam, ref _away, nameof(Away));
-
-        private bool ComputeOpponent(IVirtualTeam virtualTeam, ref MatchOpponent? currentOpponent, string propertyName)
-        {
-            virtualTeam.Compute();
-            var team = virtualTeam.GetTeam();
-
-            if (!Equals(currentOpponent?.Team, team))
-            {
-                currentOpponent = team is not null ? new MatchOpponent(team) : null;
-
-                RaisePropertyChanged(propertyName);
-                return true;
-            }
-
-            return false;
-        }
-
-        public void Schedule(DateTime date)
-        {
-            if (State == MatchState.Postponed && PostponedDate.HasValue)
-                PostponedDate = date;
-            else
-                OriginDate = date;
-        }
-
-        public void Schedule(int offset, TimeUnit timeUnit)
-        {
-            if (offset == 0) return;
-
-            if (State == MatchState.Postponed && PostponedDate.HasValue)
-                PostponedDate = PostponedDate.Value.AddFluentTimeSpan(offset.Unit(timeUnit));
-            else
-                OriginDate = OriginDate.AddFluentTimeSpan(offset.Unit(timeUnit));
-        }
-
-        public void Reset() => Reset(MatchState.None);
-
-        public void Cancel() => Reset(MatchState.Cancelled);
-
-        public void Postpone(DateTime? date = null)
-        {
-            Reset(MatchState.Postponed);
+    public void Schedule(DateTime date)
+    {
+        if (Status == MatchStatus.Postponed && PostponedDate.HasValue)
             PostponedDate = date;
-            RaisePropertyChanged(nameof(Date));
-        }
+        else
+            OriginDate = date;
+    }
 
-        public void Start() => State = MatchState.InProgress;
+    public void Schedule(int offset, TimeUnit timeUnit)
+    {
+        if (offset == 0) return;
 
-        public void Suspend() => State = MatchState.Suspended;
+        if (Status == MatchStatus.Postponed && PostponedDate.HasValue)
+            PostponedDate = PostponedDate.Value.AddFluentTimeSpan(offset.Unit(timeUnit));
+        else
+            OriginDate = OriginDate.AddFluentTimeSpan(offset.Unit(timeUnit));
+    }
 
-        public void Played() => State = MatchState.Played;
+    public void Reset() => Reset(MatchStatus.None);
 
-        private void Reset(MatchState state)
+    public void Cancel() => Reset(MatchStatus.Cancelled);
+
+    public void Postpone(DateTime? date = null)
+    {
+        Reset(MatchStatus.Postponed);
+        PostponedDate = date;
+    }
+
+    public void Start() => Status = MatchStatus.InProgress;
+
+    public void Suspend() => Status = MatchStatus.Suspended;
+
+    public void Played() => Status = MatchStatus.Played;
+
+    private void Reset(MatchStatus status)
+    {
+        Home?.Reset();
+        Away?.Reset();
+        AfterExtraTime = false;
+        Status = status;
+    }
+
+    public Period GetPeriod() => new(Date, Date.AddFluentTimeSpan(Format.GetFullTime()));
+
+    public void Invert() => (Home, Away) = (Away, Home);
+
+    public bool HasResult() => Home is not null && Away is not null && Status is MatchStatus.Played or MatchStatus.InProgress or MatchStatus.Suspended;
+
+    public bool HasResult(TeamReference team) => HasResult() && Participate(team);
+
+    public bool IsPlayed() => Status == MatchStatus.Played;
+
+    public bool IsDraw() => Home is not null && Away is not null && Home.GetScore() == Away.GetScore();
+
+    public MatchResultType GetResultOf(TeamReference team)
+        => !HasResult(team)
+            ? MatchResultType.None
+            : GetOpponent(team)!.IsWithdrawn
+            ? MatchResultType.Withdraw
+            : GetOpponentAgainst(team)!.IsWithdrawn
+            ? MatchResultType.Win
+            : GetResultTypeOf(team, true);
+
+    public MatchOutcome GetOutcomeOf(TeamReference team)
+        => GetResultOf(team) switch
         {
-            Home?.Reset();
-            Away?.Reset();
-            AfterExtraTime = false;
-            State = state;
-        }
+            MatchResultType.Win or MatchResultType.WinAfterShootouts => MatchOutcome.Win,
+            MatchResultType.Draw => MatchOutcome.Draw,
+            MatchResultType.Loss or MatchResultType.Withdraw or MatchResultType.LossAfterShootouts => MatchOutcome.Loss,
+            MatchResultType.None => MatchOutcome.None,
+            _ => throw new InvalidOperationException()
+        };
 
-        public Period GetPeriod() => new(Date, Date.AddFluentTimeSpan(Format.GetFullTime()));
+    private MatchResultType GetResultTypeOf(TeamReference team, bool withShootout = true)
+        => !HasResult(team)
+            ? MatchResultType.None
+            : GoalsFor(team) > GoalsAgainst(team) ? MatchResultType.Win
+            : GoalsAgainst(team) > GoalsFor(team) ? MatchResultType.Loss
+            : Format.ShootoutIsEnabled && withShootout ? GetShootoutResultOf(team) : MatchResultType.Draw;
 
-        public void Invert()
-        {
-            (HomeTeam, AwayTeam) = (AwayTeam, HomeTeam);
-            (_home, _away) = (_away, _home);
+    private MatchResultType GetShootoutResultOf(TeamReference team)
+        => !HasResult(team)
+            ? MatchResultType.None
+            : ShootoutFor(team) > ShootoutAgainst(team) ? MatchResultType.WinAfterShootouts
+            : ShootoutAgainst(team) > ShootoutFor(team) ? MatchResultType.LossAfterShootouts
+            : MatchResultType.Draw;
 
-            RaisePropertyChanged(nameof(Away));
-            RaisePropertyChanged(nameof(Home));
-        }
-
-        public bool HasResult() => Home is not null && Away is not null && State is MatchState.Played or MatchState.InProgress or MatchState.Suspended;
-
-        public bool HasResult(IVirtualTeam team) => HasResult() && Participate(team);
-
-        public bool IsPlayed() => State == MatchState.Played;
-
-        public bool IsDraw() => Home is not null && Away is not null && Home.GetScore() == Away.GetScore();
-
-        public ExtendedResult GetExtendedResultOf(IVirtualTeam team)
-            => !HasResult(team)
-                ? ExtendedResult.None
-                : GetOpponent(team)!.IsWithdrawn
-                ? ExtendedResult.Withdrawn
-                : GetOpponentAgainst(team)!.IsWithdrawn
-                ? ExtendedResult.Won
-                : GetScoreResultOf(team, true);
-
-        public Result GetResultOf(IVirtualTeam team)
-            => GetExtendedResultOf(team) switch
+    public TeamReference? GetWinner()
+        => Home is null || Away is null
+            ? null
+            : GetOutcomeOf(Home.Team) switch
             {
-                ExtendedResult.Won or ExtendedResult.WonAfterShootouts => Result.Won,
-                ExtendedResult.Drawn => Result.Drawn,
-                ExtendedResult.Lost or ExtendedResult.Withdrawn or ExtendedResult.LostAfterShootouts => Result.Lost,
-                _ => Result.None,
+                MatchOutcome.Win => Home.Team,
+                MatchOutcome.Loss => Away.Team,
+                MatchOutcome.None => null,
+                MatchOutcome.Draw => null,
+                _ => throw new InvalidOperationException()
             };
 
-        public Result GetResultOf(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetResultOf(team) : Result.None;
-
-        private ExtendedResult GetScoreResultOf(IVirtualTeam team, bool withShootout = true)
-            => !HasResult(team)
-                ? ExtendedResult.None
-                : GoalsFor(team) > GoalsAgainst(team) ? ExtendedResult.Won
-                : GoalsAgainst(team) > GoalsFor(team) ? ExtendedResult.Lost
-                : Format.ShootoutIsEnabled && withShootout ? GetShootoutResultOf(team) : ExtendedResult.Drawn;
-
-        private ExtendedResult GetShootoutResultOf(IVirtualTeam team)
-            => !HasResult(team)
-                ? ExtendedResult.None
-                : ShootoutFor(team) > ShootoutAgainst(team) ? ExtendedResult.WonAfterShootouts
-                : ShootoutAgainst(team) > ShootoutFor(team) ? ExtendedResult.LostAfterShootouts
-                : ExtendedResult.Drawn;
-
-        public ExtendedResult GetExtendedResultOf(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetExtendedResultOf(team) : ExtendedResult.None;
-
-        public Team? GetWinner()
-            => Home is null || Away is null
-                ? null
-                : GetResultOf(Home.Team) switch
-                {
-                    Result.Won => Home.Team,
-                    Result.Lost => Away.Team,
-                    _ => null,
-                };
-
-        public Team? GetLooser()
-            => Home is null || Away is null
-                ? null
-                : GetResultOf(Home.Team) switch
-                {
-                    Result.Won => Away.Team,
-                    Result.Lost => Home.Team,
-                    _ => null,
-                };
-
-        public bool IsWonBy(IVirtualTeam team) => GetResultOf(team) == Result.Won;
-
-        public bool IsWonBy(Guid teamId) => GetTeam(teamId) is IVirtualTeam team && GetResultOf(team) == Result.Won;
-
-        public bool IsLostBy(IVirtualTeam team) => GetResultOf(team) == Result.Lost;
-
-        public bool IsLostBy(Guid teamId) => GetTeam(teamId) is IVirtualTeam team && GetResultOf(team) == Result.Lost;
-
-        public bool IsWithdrawn(IVirtualTeam team) => GetOpponent(team)?.IsWithdrawn ?? false;
-
-        public bool IsWithdrawn(Guid teamId) => GetTeam(teamId) is IVirtualTeam team && IsWithdrawn(team);
-
-        public int GoalsFor(IVirtualTeam team) => GetOpponent(team)?.GetScore() ?? 0;
-
-        public int GoalsFor(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GoalsFor(team) : 0;
-
-        public int GoalsAgainst(IVirtualTeam team) => GetOpponentAgainst(team)?.GetScore() ?? 0;
-
-        public int GoalsAgainst(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GoalsAgainst(team) : 0;
-
-        public int ShootoutFor(IVirtualTeam team) => GetOpponent(team)?.GetShootoutScore() ?? 0;
-
-        public int ShootoutAgainst(IVirtualTeam team) => GetOpponentAgainst(team)?.GetShootoutScore() ?? 0;
-
-        public bool Participate(IVirtualTeam team)
-        {
-            var teams = GetTeams().ToList();
-            return teams.Contains(team) || (team.GetTeam() is Team t && teams.Contains(t));
-        }
-
-        public bool Participate(Guid teamId) => GetTeams().Select(x => x.Id).Contains(teamId);
-
-        public bool IsHomeTeam(IVirtualTeam team)
-        {
-            var teams = GetHomeTeams().ToList();
-            return teams.Contains(team) || (team.GetTeam() is Team t && teams.Contains(t));
-        }
-
-        public bool IsAwayTeam(IVirtualTeam team)
-        {
-            var teams = GetAwayTeams().ToList();
-            return teams.Contains(team) || (team.GetTeam() is Team t && teams.Contains(t));
-        }
-
-        public MatchOpponent? GetOpponent(IVirtualTeam team) => IsHomeTeam(team) ? Home : IsAwayTeam(team) ? Away : null;
-
-        public MatchOpponent? GetOpponent(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetOpponent(team) : null;
-
-        public MatchOpponent? GetOpponentAgainst(IVirtualTeam team) => IsHomeTeam(team) ? Away : IsAwayTeam(team) ? Home : null;
-
-        public MatchOpponent? GetOpponentAgainst(Guid teamId) => GetTeam(teamId) is IVirtualTeam team ? GetOpponentAgainst(team) : null;
-
-        private IEnumerable<IVirtualTeam> GetHomeTeams() => new List<IVirtualTeam?>() { HomeTeam, HomeTeam.GetTeam(), Home?.Team }.NotNull().Distinct();
-
-        private IEnumerable<IVirtualTeam> GetAwayTeams() => new List<IVirtualTeam?>() { AwayTeam, AwayTeam.GetTeam(), Away?.Team }.NotNull().Distinct();
-
-        private IEnumerable<IVirtualTeam> GetTeams() => GetHomeTeams().Union(GetAwayTeams()).Union([_winnerTeam, _looserTeam]).Distinct();
-
-        private IVirtualTeam? GetTeam(Guid teamId) => GetTeams().GetById(teamId);
-
-        public void SetScore(int homeScore, int awayScore, bool afterExtraTime = false, int? homeShootoutScore = null, int? awayShootoutScore = null)
-        {
-            if (Home is null || Away is null) return;
-
-            var hasWithdraw = Home.IsWithdrawn || Away.IsWithdrawn;
-
-            AfterExtraTime = Format.ExtraTimeIsEnabled && !hasWithdraw && afterExtraTime;
-
-            Home.SetScore(homeScore, Format.ShootoutIsEnabled && !hasWithdraw ? homeShootoutScore : null);
-            Away.SetScore(awayScore, Format.ShootoutIsEnabled && !hasWithdraw ? awayShootoutScore : null);
-        }
-
-        public void SetScore(IEnumerable<Goal> homeGoals, IEnumerable<Goal> awayGoals, bool afterExtraTime = false, IEnumerable<PenaltyShootout>? homeShootouts = null, IEnumerable<PenaltyShootout>? awayShootouts = null)
-        {
-            if (Home is null || Away is null) return;
-            var hasWithdraw = Home.IsWithdrawn || Away.IsWithdrawn;
-
-            AfterExtraTime = Format.ExtraTimeIsEnabled && !hasWithdraw && afterExtraTime;
-
-            Home.SetScore(homeGoals, Format.ShootoutIsEnabled && !hasWithdraw ? homeShootouts : null);
-            Away.SetScore(awayGoals, Format.ShootoutIsEnabled && !hasWithdraw ? awayShootouts : null);
-        }
-
-        public override string ToString()
-        {
-            var str = new StringBuilder($"{Date:G} | {HomeTeam} vs {AwayTeam}");
-
-            if (Home is not null && Away is not null && (State == MatchState.Played || State == MatchState.InProgress || State == MatchState.Suspended))
+    public TeamReference? GetLooser()
+        => Home is null || Away is null
+            ? null
+            : GetOutcomeOf(Home.Team) switch
             {
-                if (Home.IsWithdrawn)
-                    str.Append($"{Home.Team} is withdrawn");
-                else if (Away.IsWithdrawn)
-                    str.Append($"{Away.Team} is withdrawn");
-                else
-                {
-                    str.Append($" : {Home.GetScore()}-{Away.GetScore()}");
+                MatchOutcome.Win => Away.Team,
+                MatchOutcome.Loss => Home.Team,
+                MatchOutcome.None => null,
+                MatchOutcome.Draw => null,
+                _ => throw new InvalidOperationException()
+            };
 
-                    if (Home.GetScore() == Away.GetScore())
+    public bool IsWonBy(TeamReference team) => GetOutcomeOf(team) == MatchOutcome.Win;
+
+    public bool IsLostBy(TeamReference team) => GetOutcomeOf(team) == MatchOutcome.Loss;
+
+    public bool IsWithdrawn(TeamReference team) => GetOpponent(team)?.IsWithdrawn ?? false;
+
+    public int GoalsFor(TeamReference team) => GetOpponent(team)?.GetScore() ?? 0;
+
+    public int GoalsAgainst(TeamReference team) => GetOpponentAgainst(team)?.GetScore() ?? 0;
+
+    public int ShootoutFor(TeamReference team) => GetOpponent(team)?.GetShootoutScore() ?? 0;
+
+    public int ShootoutAgainst(TeamReference team) => GetOpponentAgainst(team)?.GetShootoutScore() ?? 0;
+
+    public bool Participate(TeamReference team) => GetTeams().Contains(team);
+
+    public bool IsHomeTeam(TeamReference team) => team == Home.Team;
+
+    public bool IsAwayTeam(TeamReference team) => team == Away.Team;
+
+    public MatchOpponent? GetOpponent(TeamReference team) => IsHomeTeam(team) ? Home : IsAwayTeam(team) ? Away : null;
+
+    public MatchOpponent? GetOpponentAgainst(TeamReference team) => IsHomeTeam(team) ? Away : IsAwayTeam(team) ? Home : null;
+
+    public IReadOnlyCollection<TeamReference> GetTeams() => new List<TeamReference>() { Home.Team, Away.Team }.AsReadOnly();
+
+    public void SetScore(int homeScore, int awayScore, bool afterExtraTime = false, int? homeShootoutScore = null, int? awayShootoutScore = null)
+    {
+        if (Home is null || Away is null) return;
+
+        var hasWithdraw = Home.IsWithdrawn || Away.IsWithdrawn;
+
+        AfterExtraTime = Format.ExtraTimeIsEnabled && !hasWithdraw && afterExtraTime;
+
+        Home.SetScore(homeScore, Format.ShootoutIsEnabled && !hasWithdraw ? homeShootoutScore : null);
+        Away.SetScore(awayScore, Format.ShootoutIsEnabled && !hasWithdraw ? awayShootoutScore : null);
+    }
+
+    public void SetScore(IEnumerable<Goal> homeGoals, IEnumerable<Goal> awayGoals, bool afterExtraTime = false, IEnumerable<PenaltyShootout>? homeShootouts = null, IEnumerable<PenaltyShootout>? awayShootouts = null)
+    {
+        if (Home is null || Away is null) return;
+        var hasWithdraw = Home.IsWithdrawn || Away.IsWithdrawn;
+
+        AfterExtraTime = Format.ExtraTimeIsEnabled && !hasWithdraw && afterExtraTime;
+
+        Home.SetScore(homeGoals, Format.ShootoutIsEnabled && !hasWithdraw ? homeShootouts : null);
+        Away.SetScore(awayGoals, Format.ShootoutIsEnabled && !hasWithdraw ? awayShootouts : null);
+    }
+
+    public override string ToString()
+    {
+        var str = new StringBuilder($"{Date:G} | {Home.Team} vs {Away.Team}");
+
+        if (Home is not null && Away is not null && (Status == MatchStatus.Played || Status == MatchStatus.InProgress || Status == MatchStatus.Suspended))
+        {
+            if (Home.IsWithdrawn)
+            {
+                _ = str.Append(CultureInfo.CurrentCulture, $"{Home.Team} is withdrawn");
+            }
+            else if (Away.IsWithdrawn)
+            {
+                _ = str.Append(CultureInfo.CurrentCulture, $"{Away.Team} is withdrawn");
+            }
+            else
+            {
+                _ = str.Append(CultureInfo.CurrentCulture, $" : {Home.GetScore()}-{Away.GetScore()}");
+
+                if (Home.GetScore() == Away.GetScore())
+                {
+                    if (Format.ShootoutIsEnabled)
                     {
-                        if (Format.ShootoutIsEnabled)
-                        {
-                            str.Append($" ({Home.GetShootoutScore()}-{Away.GetShootoutScore()})");
-                        }
+                        _ = str.Append(CultureInfo.CurrentCulture, $" ({Home.GetShootoutScore()}-{Away.GetShootoutScore()})");
                     }
-                    else if (AfterExtraTime && Format.ExtraTimeIsEnabled)
-                        str.Append(" e");
+                }
+                else if (AfterExtraTime && Format.ExtraTimeIsEnabled)
+                {
+                    _ = str.Append(" e");
                 }
             }
-
-            return str.ToString();
         }
+
+        return str.ToString();
     }
 }

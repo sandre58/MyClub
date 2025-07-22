@@ -1,0 +1,32 @@
+<Project>
+    <!-- Reference: https://docs.microsoft.com/en-us/visualstudio/msbuild/customize-your-build?view=vs-2017 -->
+
+    <!-- Informations -->
+    <PropertyGroup>
+        <Product>My Club</Product>
+        <Company>My Club</Company>
+        <Authors>Stéphane ANDRE</Authors>
+        <Owners>Stéphane ANDRE</Owners>
+        <Copyright>Copyright © 2016-$([System.DateTime]::Now.ToString(yyyy)) - Stéphane ANDRE. All Rights Reserved.</Copyright>
+        <Version>1.0.0-alpha</Version>
+    </PropertyGroup>
+
+    <!-- Configuration -->
+    <PropertyGroup>
+        <TargetFrameworks>net10.0</TargetFrameworks>
+        <BaseOutputPath>bin</BaseOutputPath>
+        <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+        <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+        <Configurations>Debug;Release</Configurations>
+        <NeutralLanguage>fr</NeutralLanguage>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <Deterministic>True</Deterministic>
+        <DeterministicSourcePaths>true</DeterministicSourcePaths>
+        <IsTestProject>$(MSBuildProjectName.EndsWith('Tests'))</IsTestProject>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- Code analysis -->
+    <Import Project="$(MSBuildThisFileDirectory)\config\AnalysisProperties.targets" />
+</Project>

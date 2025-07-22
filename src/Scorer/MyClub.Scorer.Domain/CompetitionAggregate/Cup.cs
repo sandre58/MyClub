@@ -1,18 +1,46 @@
-﻿// Copyright (c) Stéphane ANDRE. All Right Reserved.
-// See the LICENSE file in the project root for more information.
+﻿// -----------------------------------------------------------------------
+// <copyright file="Cup.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
 
-using System;
-using MyClub.Scorer.Domain.MatchAggregate;
-using MyClub.Scorer.Domain.Scheduling;
+using System.Collections.Generic;
+using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
+using MyClub.Scorer.Domain.RoundAggregate;
+using MyClub.Shared.Kernel.Results;
 
-namespace MyClub.Scorer.Domain.CompetitionAggregate
+namespace MyClub.Scorer.Domain.CompetitionAggregate;
+
+public class Cup : Competition
 {
-    public class Cup : Knockout, ICompetition
+    private readonly List<RoundId> _rounds = [];
+
+    // <remarks>Used by EF Core</remarks>
+    private Cup()
+        : base() { }
+
+    private Cup(CompetitionId id, string name, string? shortName, MatchFormat format, MatchRules rules)
+        : base(id, name, shortName, format, rules) { }
+
+    public static Cup Create(string name, string? shortName = null, MatchFormat? format = null, MatchRules? rules = null)
+        => new(CompetitionId.New(), name, shortName, format ?? MatchFormat.Default, rules ?? MatchRules.Default);
+
+    public IReadOnlyCollection<RoundId> Rounds => _rounds.AsReadOnly();
+
+    public override CompetitionType Type => CompetitionType.Cup;
+
+    #region Rounds
+
+    public Result<RoundId> AddRound(RoundId roundId)
     {
-        public Cup() : this(MatchFormat.Default, MatchRules.Default, SchedulingParameters.Default) { }
+        _rounds.Add(roundId);
 
-        public Cup(MatchFormat matchFormat, MatchRules matchRules, SchedulingParameters schedulingParameters, Guid? id = null)
-            : base(matchFormat, matchRules, schedulingParameters, id) { }
+        return Result.Success(roundId);
     }
-}
 
+    public bool RemoveRound(RoundId roundId) => _rounds.Remove(roundId);
+
+    public void Clear() => _rounds.Clear();
+
+    #endregion
+}
