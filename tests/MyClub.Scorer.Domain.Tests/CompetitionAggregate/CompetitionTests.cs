@@ -1,9 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="CompetitionTests.cs" company="Stéphane ANDRE">
-// Copyright (c) Stéphane ANDRE. All rights reserved.
+// <copyright file="CompetitionTests.cs" company="StÃ©phane ANDRE">
+// Copyright (c) StÃ©phane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
+using AutoFixture;
 using FluentAssertions;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
@@ -11,21 +12,20 @@ using MyClub.Scorer.Domain.CompetitionAggregate.Stadiums;
 using MyClub.Scorer.Domain.CompetitionAggregate.Teams;
 using MyClub.Shared.Domain.Enums;
 using MyClub.Shared.Domain.Stadiums;
-using MyClub.Tests.Common;
 using Xunit;
 
 namespace MyClub.Scorer.Domain.Tests.CompetitionAggregate;
 
-public class CompetitionTests : TestBase
+public class CompetitionTests
 {
-    private string RandomName() => Create<string>();
+    private static string RandomName() => new Fixture().Create<string>();
 
     [Fact]
     public void Constructor_ShouldSetProperties()
     {
         var id = CompetitionId.New();
         var name = RandomName();
-        var shortName = Create<string>();
+        var shortName = new Fixture().Create<string>();
         var format = MatchFormat.Default;
         var rules = MatchRules.Default;
 

@@ -4,4 +4,8 @@
         <ProjectReference Include="..\..\Shared\MyClub.Shared.Domain\MyClub.Shared.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
+    </ItemGroup>
+
 </Project>

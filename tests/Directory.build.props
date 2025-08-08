@@ -1,7 +1,15 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <ItemGroup>
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildProjectDirectory)/TestResults/coverage.xml</CoverletOutput>
+  </PropertyGroup>
+
+  <!-- Configuration conditionnelle : exclure MyClub.Tests.Common des packages de test -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <PackageReference Include="GitHubActionsTestLogger" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

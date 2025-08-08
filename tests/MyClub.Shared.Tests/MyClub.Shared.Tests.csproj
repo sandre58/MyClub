@@ -3,6 +3,5 @@
     <ProjectReference Include="..\..\src\Shared\MyClub.Shared.Application\MyClub.Shared.Application.csproj" />
     <ProjectReference Include="..\..\src\Shared\MyClub.Shared.Domain\MyClub.Shared.Domain.csproj" />
     <ProjectReference Include="..\..\src\Shared\MyClub.Shared.Kernel\MyClub.Shared.Kernel.csproj" />
-    <ProjectReference Include="..\MyClub.Tests.Common\MyClub.Tests.Common.csproj" />
   </ItemGroup>
 </Project>

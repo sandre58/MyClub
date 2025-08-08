@@ -11,26 +11,26 @@ using MyClub.Scorer.Domain.RoundAggregate;
 using MyClub.Scorer.Domain.RoundAggregate.Format;
 using MyClub.Shared.Domain.Enums;
 using MyClub.Shared.Domain.Teams;
-using MyClub.Tests.Common;
 using Xunit;
+using Fixture = AutoFixture.Fixture;
 
 namespace MyClub.Scorer.Domain.Tests.RoundAggregate;
 
-public class RoundTests : TestBase
+public class RoundTests
 {
     [Fact]
     public void Create_ShouldInitializeRoundWithCorrectValues()
     {
-        var format = Fixture.Create<SingleFormat>();
-        var name = "Quarter Finals";
-        var shortName = "QF";
+        var format = new Fixture().Create<SingleFormat>();
+        const string name = "Quarter Finals";
+        const string shortName = "QF";
         var rules = new MatchRules([CardColor.Red, CardColor.Yellow]);
         var round = Round.Create(null, format, name, shortName, rules, true);
 
         round.DisplayName.Name.Should().Be(name);
         round.DisplayName.ShortName.Should().Be(shortName);
         round.Format.Should().Be(format);
-        round.CustomMatchRules.Should().Be(rules);
+        round.Rules.Should().Be(rules);
         round.IsConsolation.Should().BeTrue();
         round.Teams.Should().BeEmpty();
         round.Fixtures.Should().BeEmpty();
@@ -40,7 +40,7 @@ public class RoundTests : TestBase
     [Fact]
     public void AddTeam_ShouldAddTeam_WhenNotExists()
     {
-        var format = Fixture.Create<SingleFormat>();
+        var format = new Fixture().Create<SingleFormat>();
         var round = Round.Create(null, format, "R", "R");
         var team = TeamId.New().ToReference();
 
@@ -53,7 +53,7 @@ public class RoundTests : TestBase
     [Fact]
     public void AddTeam_ShouldFail_WhenTeamAlreadyExists()
     {
-        var format = Fixture.Create<SingleFormat>();
+        var format = new Fixture().Create<SingleFormat>();
         var round = Round.Create(null, format, "R", "R");
         var team = TeamId.New().ToReference();
         round.AddTeam(team);
@@ -67,7 +67,7 @@ public class RoundTests : TestBase
     [Fact]
     public void RemoveTeam_ShouldRemoveTeamAndRelatedFixtures()
     {
-        var format = Fixture.Create<SingleFormat>();
+        var format = new Fixture().Create<SingleFormat>();
         var round = Round.Create(null, format, "R", "R");
         var team1 = TeamId.New().ToReference();
         var team2 = TeamId.New().ToReference();
@@ -85,7 +85,7 @@ public class RoundTests : TestBase
     [Fact]
     public void AddFixture_ShouldAddFixture_WhenNotExists()
     {
-        var format = Fixture.Create<SingleFormat>();
+        var format = new Fixture().Create<SingleFormat>();
         var round = Round.Create(null, format, "R", "R");
         var team1 = TeamId.New().ToReference();
         var team2 = TeamId.New().ToReference();
@@ -99,7 +99,7 @@ public class RoundTests : TestBase
     [Fact]
     public void AddFixture_ShouldFail_WhenFixtureAlreadyExists()
     {
-        var format = Fixture.Create<SingleFormat>();
+        var format = new Fixture().Create<SingleFormat>();
         var round = Round.Create(null, format, "R", "R");
         var team1 = TeamId.New().ToReference();
         var team2 = TeamId.New().ToReference();
@@ -114,7 +114,7 @@ public class RoundTests : TestBase
     [Fact]
     public void RemoveFixture_ShouldRemoveFixture()
     {
-        var format = Fixture.Create<SingleFormat>();
+        var format = new Fixture().Create<SingleFormat>();
         var round = Round.Create(null, format, "R", "R");
         var team1 = TeamId.New().ToReference();
         var team2 = TeamId.New().ToReference();

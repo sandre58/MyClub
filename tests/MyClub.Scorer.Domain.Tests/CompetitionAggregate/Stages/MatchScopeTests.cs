@@ -1,25 +1,25 @@
 // -----------------------------------------------------------------------
-// <copyright file="MatchScopeTests.cs" company="Stéphane ANDRE">
-// Copyright (c) Stéphane ANDRE. All rights reserved.
+// <copyright file="MatchScopeTests.cs" company="StÃ©phane ANDRE">
+// Copyright (c) StÃ©phane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
 using System;
+using AutoFixture;
 using FluentAssertions;
 using MyClub.Scorer.Domain.MatchdayAggregate;
 using MyClub.Scorer.Domain.Primitives;
-using MyClub.Shared.Domain.Matchs;
-using MyClub.Tests.Common;
+using MyClub.Shared.Domain.Matches;
 using Xunit;
 
 namespace MyClub.Scorer.Domain.Tests.CompetitionAggregate.Stages;
 
-public class MatchScopeTests : TestBase
+public class MatchScopeTests
 {
     [Fact]
     public void Constructor_ShouldSetOriginDate()
     {
-        var date = Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var id = MatchdayId.New();
         var container = new DummyMatchScope(id, date);
 
@@ -31,7 +31,7 @@ public class MatchScopeTests : TestBase
     [Fact]
     public void Postpone_ShouldSetIsPostponedAndChangeDate()
     {
-        var date = Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var id = MatchdayId.New();
         var container = new DummyMatchScope(id, date);
         var postponedDate = date.AddDays(2);
@@ -45,7 +45,7 @@ public class MatchScopeTests : TestBase
     [Fact]
     public void Schedule_ShouldResetPostponedAndSetOriginDate()
     {
-        var date = Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var id = MatchdayId.New();
         var container = new DummyMatchScope(id, date);
         var newDate = date.AddDays(5);
@@ -61,7 +61,7 @@ public class MatchScopeTests : TestBase
     [Fact]
     public void AddMatch_ShouldAddMatchId()
     {
-        var date = Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var id = MatchdayId.New();
         var container = new DummyMatchScope(id, date);
         var matchId = MatchId.New();
@@ -75,7 +75,7 @@ public class MatchScopeTests : TestBase
     [Fact]
     public void AddMatch_ShouldNotAddDuplicateMatchId()
     {
-        var date = Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var id = MatchdayId.New();
         var container = new DummyMatchScope(id, date);
         var matchId = MatchId.New();
@@ -90,7 +90,7 @@ public class MatchScopeTests : TestBase
     [Fact]
     public void RemoveMatch_ShouldRemoveMatchId()
     {
-        var date = Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var id = MatchdayId.New();
         var container = new DummyMatchScope(id, date);
         var matchId = MatchId.New();
@@ -105,7 +105,7 @@ public class MatchScopeTests : TestBase
     [Fact]
     public void CompareTo_ShouldCompareByOriginDate()
     {
-        var date1 = Create<DateTime>();
+        var date1 = new Fixture().Create<DateTime>();
         var date2 = date1.AddDays(1);
         var id1 = MatchdayId.New();
         var id2 = MatchdayId.New();

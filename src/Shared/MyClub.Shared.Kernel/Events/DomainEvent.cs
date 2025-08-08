@@ -5,11 +5,20 @@
 // -----------------------------------------------------------------------
 
 using System;
-using MyClub.Shared.Kernel.Primitives;
 
 namespace MyClub.Shared.Kernel.Events;
 
-public abstract class DomainEvent : IDomainEvent
+/// <summary>
+/// Base record for domain events that provides a default implementation of IDomainEvent.
+/// Domain events represent something significant that happened in the business domain.
+/// This base class automatically sets the OccurredOn timestamp when the event is created.
+/// Use this as a base for your concrete domain event implementations.
+/// </summary>
+public abstract record DomainEvent : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    /// <summary>
+    /// Gets the timestamp when this domain event occurred.
+    /// This value is automatically set to the current UTC time when the event is created.
+    /// </summary>
+    public DateTimeOffset OccurredOn { get; } = DateTime.UtcNow;
 }

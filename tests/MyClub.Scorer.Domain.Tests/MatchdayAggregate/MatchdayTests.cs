@@ -5,21 +5,21 @@
 // -----------------------------------------------------------------------
 
 using System;
+using AutoFixture;
 using FluentAssertions;
 using MyClub.Scorer.Domain.MatchdayAggregate;
-using MyClub.Tests.Common;
 using Xunit;
 
 namespace MyClub.Scorer.Domain.Tests.MatchdayAggregate;
 
-public class MatchdayTests : TestBase
+public class MatchdayTests
 {
     [Fact]
     public void Create_ShouldInitializeMatchdayWithCorrectValues()
     {
-        var date = Create<DateTime>();
-        var name = Create<string>();
-        var shortName = Create<string>();
+        var date = new Fixture().Create<DateTime>();
+        var name = new Fixture().Create<string>();
+        var shortName = new Fixture().Create<string>();
 
         var matchday = Matchday.Create(date, name, shortName);
 
@@ -31,8 +31,8 @@ public class MatchdayTests : TestBase
     [Fact]
     public void Create_ShouldSetShortNameToInitialsIfNull()
     {
-        var date = Create<DateTime>();
-        var name = Create<string>();
+        var date = new Fixture().Create<DateTime>();
+        var name = new Fixture().Create<string>();
 
         var matchday = Matchday.Create(date, name);
 
@@ -44,9 +44,9 @@ public class MatchdayTests : TestBase
     [Fact]
     public void ToString_ShouldReturnDisplayName()
     {
-        var date = Create<DateTime>();
-        var name = Create<string>();
-        var shortName = Create<string>();
+        var date = new Fixture().Create<DateTime>();
+        var name = new Fixture().Create<string>();
+        var shortName = new Fixture().Create<string>();
 
         var matchday = Matchday.Create(date, name, shortName);
 

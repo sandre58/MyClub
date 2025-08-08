@@ -9,4 +9,9 @@ using MyClub.Shared.Kernel.Primitives;
 
 namespace MyClub.Scorer.Domain.RoundAggregate;
 
+/// <summary>
+/// Represents a strongly-typed identifier for Round entities.
+/// This ensures type safety and prevents mixing of different entity identifiers.
+/// </summary>
+/// <param name="Value">The underlying GUID value for the round identifier.</param>
 public sealed record RoundId(Guid Value) : EntityId<RoundId>(Value);

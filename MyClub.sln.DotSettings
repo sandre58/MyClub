@@ -1,0 +1,12 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<!-- Dictionary personnalisé -->
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=scor_0027er/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=team_0027up/@EntryIndexedValue">True</s:Boolean>
+	
+	<!-- Configuration couverture de code pour Rider -->
+	<s:String x:Key="/Default/Environment/UnitTesting/VSTest/SettingsFile/@EntryValue">MyClub.runsettings</s:String>
+	<s:Boolean x:Key="/Default/Environment/UnitTesting/VSTest/UseSettingsFile/@EntryValue">True</s:Boolean>
+	
+	<!-- Filtres de couverture Rider -->
+	<s:String x:Key="/Default/FilterSettingsManager/CoverageFilterXml/@EntryValue">&lt;data&gt;&lt;IncludeFilters&gt;&lt;Filter ModuleMask="MyClub.Scorer.Domain" ModuleVersionMask="*" /&gt;&lt;Filter ModuleMask="MyClub.Scorer.Application" ModuleVersionMask="*" /&gt;&lt;Filter ModuleMask="MyClub.Scorer.Infrastructure.Persistence" ModuleVersionMask="*" /&gt;&lt;Filter ModuleMask="MyClub.Shared.*" ModuleVersionMask="*" /&gt;&lt;Filter ModuleMask="MyClub.Referential.*" ModuleVersionMask="*" /&gt;&lt;/IncludeFilters&gt;&lt;ExcludeFilters&gt;&lt;Filter ModuleMask="*Tests*" ModuleVersionMask="*" /&gt;&lt;Filter ModuleMask="*Migrations*" ModuleVersionMask="*" /&gt;&lt;/ExcludeFilters&gt;&lt;/data&gt;</s:String>
+</wpf:ResourceDictionary>

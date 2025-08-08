@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- Optimized configuration for Rider and VS Code -->
+  <RunConfiguration>
+    <MaxCpuCount>0</MaxCpuCount>
+    <ResultsDirectory>.\TestResults</ResultsDirectory>
+    <TestSessionTimeout>300000</TestSessionTimeout>
+  </RunConfiguration>
+
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0" assemblyQualifiedName="Microsoft.VisualStudio.Coverage.DynamicCoverageDataCollector, Microsoft.VisualStudio.TraceCollector, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+        <Configuration>
+          <CodeCoverage>
+            
+            <!-- 🔽 Exclude non-relevant code from coverage -->
+            <ModulePaths>
+              <Exclude>
+                <!-- Exclude all test projects -->
+                <ModulePath>.*Tests\.dll$</ModulePath>
+                <ModulePath>.*Tests\..*\.dll$</ModulePath>
+                
+                <!-- Exclude EF Core Migrations (auto-generated) -->
+                <ModulePath>.*\.Migrations\..*\.dll$</ModulePath>
+                <ModulePath>.*Migrations\.Sqlite\.dll$</ModulePath>
+                <ModulePath>.*Migrations\.SqlServer\.dll$</ModulePath>
+              </Exclude>
+              
+              <!-- ✅ Include relevant application code only -->
+              <Include>
+                <!-- Include only main MyClub application modules -->
+                <ModulePath>.*MyClub\.Scorer\.Domain\.dll$</ModulePath>
+                <ModulePath>.*MyClub\.Scorer\.Application\.dll$</ModulePath>
+                <ModulePath>.*MyClub\.Scorer\.Infrastructure\.Persistence\.dll$</ModulePath>
+                <ModulePath>.*MyClub\.Shared\..*\.dll$</ModulePath>
+                <ModulePath>.*MyClub\.Referential\..*\.dll$</ModulePath>
+                <ModulePath>.*MyClub\.CrossCutting\.dll$</ModulePath>
+                <ModulePath>.*MyClub\.Localization\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
+
+            <!-- 🔽 Exclude specific source files -->
+            <Sources>
+              <Exclude>
+                <!-- Exclude EF Core generated files -->
+                <Source>.*\\Migrations\\.*</Source>
+                <Source>.*\\.*\.Designer\.cs$</Source>
+                <Source>.*\\.*ModelSnapshot\.cs$</Source>
+                <Source>.*\\MyClubDbContextFactory\.cs$</Source>
+                
+                <!-- Exclude generated files -->
+                <Source>.*\\.*\.g\.cs$</Source>
+                <Source>.*\\.*\.g\.i\.cs$</Source>
+                
+                <!-- Exclude hosting/startup files -->
+                <Source>.*\\Program\.cs$</Source>
+                <Source>.*\\Startup\.cs$</Source>
+              </Exclude>
+            </Sources>
+
+            <!-- 🏷️ Exclude by attribute -->
+            <Attributes>
+              <Exclude>
+                <!-- Compiler- or tool-generated code -->
+                <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+                <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
+                
+                <!-- Explicit exclusion markers -->
+                <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
+              </Exclude>
+            </Attributes>
+
+            <!-- Performance and behavior settings -->
+            <UseVerifiableInstrumentation>True</UseVerifiableInstrumentation>
+            <AllowLowIntegrityProcesses>True</AllowLowIntegrityProcesses>
+            <CollectFromChildProcesses>True</CollectFromChildProcesses>
+            <CollectAspDotNet>False</CollectAspDotNet>
+            
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

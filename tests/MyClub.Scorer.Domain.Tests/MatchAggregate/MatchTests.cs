@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// <copyright file="MatchTests.cs" company="Stéphane ANDRE">
-// Copyright (c) Stéphane ANDRE. All rights reserved.
+// <copyright file="MatchTests.cs" company="StÃ©phane ANDRE">
+// Copyright (c) StÃ©phane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
@@ -10,17 +10,16 @@ using FluentAssertions;
 using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
 using MyClub.Shared.Domain.Enums;
 using MyClub.Shared.Domain.Teams;
-using MyClub.Tests.Common;
 using Xunit;
 using Match = MyClub.Scorer.Domain.MatchAggregate.Match;
 
 namespace MyClub.Scorer.Domain.Tests.MatchAggregate;
 
-public class MatchTests : TestBase
+public class MatchTests
 {
-    private Match CreateDefaultMatch()
+    private static Match CreateDefaultMatch()
     {
-        var date = Fixture.Create<DateTime>();
+        var date = new Fixture().Create<DateTime>();
         var homeId = TeamId.New().ToReference();
         var awayId = TeamId.New().ToReference();
         return Match.Create(date, homeId, awayId);
@@ -112,8 +111,8 @@ public class MatchTests : TestBase
         match.Reset();
 
         match.Status.Should().Be(MatchStatus.None);
-        match.Home.GetScore().Should().Be(0);
-        match.Away.GetScore().Should().Be(0);
+        match.Home.Score.Should().Be(0);
+        match.Away.Score.Should().Be(0);
     }
 
     [Fact]
@@ -143,8 +142,9 @@ public class MatchTests : TestBase
         var match = Match.Create(DateTime.Now, TeamId.New().ToReference(), TeamId.New().ToReference(), MatchFormat.NoDraw);
         match.SetScore(2, 1, true, 3, 2);
 
-        match.Home.GetScore().Should().Be(2);
-        match.Away.GetScore().Should().Be(1);
+        match.Home.
+        Score.Should().Be(2);
+        match.Away.Score.Should().Be(1);
         match.Home.GetShootoutScore().Should().Be(3);
         match.Away.GetShootoutScore().Should().Be(2);
         match.AfterExtraTime.Should().BeTrue();

@@ -76,18 +76,15 @@ public class RoundRobinStrategyTests
         foreach (var matchday in schedule)
         {
             matchday.Fixtures.Should().HaveCount(2); // 4 teams => 2 matches per matchday
-            var allTeams = matchday.Fixtures.SelectMany(f => new[] { f.HomeTeam, f.AwayTeam }).ToList();
+            var allTeams = matchday.Fixtures.SelectMany(static f => new[] { f.HomeTeam, f.AwayTeam }).ToList();
             allTeams.Should().OnlyHaveUniqueItems();
         }
 
         // Check that all pairs are present twice (home/away)
         var pairs = new HashSet<(TeamReference, TeamReference)>();
-        foreach (var matchday in schedule)
+        foreach (var fixture in schedule.SelectMany(static matchday => matchday.Fixtures))
         {
-            foreach (var fixture in matchday.Fixtures)
-            {
-                pairs.Add((fixture.HomeTeam, fixture.AwayTeam));
-            }
+            pairs.Add((fixture.HomeTeam, fixture.AwayTeam));
         }
 
         // There should be 12 unique matches (each pair played twice)

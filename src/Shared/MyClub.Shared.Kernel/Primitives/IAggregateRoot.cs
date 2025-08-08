@@ -7,6 +7,4 @@
 namespace MyClub.Shared.Kernel.Primitives;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1040:Avoid empty interfaces", Justification = "Represents an aggregate root.")]
-public interface IAggregateRoot
-{
-}
+public interface IAggregateRoot;

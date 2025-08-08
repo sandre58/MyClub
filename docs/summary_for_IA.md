@@ -1,161 +1,204 @@
-﻿# MyClub — Suite logicielle pour clubs de sport (Football)
+﻿# MyClub — Suite logicielle enterprise pour clubs de sport (Football)
 
-## Présentation
+## 🏆 Présentation
 
-**MyClub** est une suite logicielle modulaire dédiée à la gestion complète des clubs de football.  
-Chaque module est indépendant et s’appuie sur un noyau commun pour garantir la cohérence et la réutilisabilité.
+**MyClub** est une suite logicielle modulaire **enterprise-grade** dédiée à la gestion complète des clubs de football. Chaque module est indépendant et s'appuie sur une infrastructure partagée robuste pour garantir la cohérence, la réutilisabilité, et la fiabilité en production.
 
----
-
-## Modules
-
-- **Scor'er** : Création de compétitions entièrement personnalisables
-- **Team'up** : Gestion d’effectif (joueurs, staff, etc.)
-- **À venir** : Création d’entraînements, autres modules spécialisés
+Le projet suit les principes de **Domain-Driven Design (DDD)**, **Clean Architecture**, et **CQRS** avec des patterns de résilience enterprise pour assurer une haute disponibilité et des performances optimales.
 
 ---
 
-## Stack Technique
+## 🚀 Architecture Enterprise
 
-| Couche      | Technologies principales                                      |
-|-------------|--------------------------------------------------------------|
-| **Frontend**| - Avalonia (client lourd, gestion, offline)<br>- Blazor WebAssembly (visualisation web) |
-| **Backend** | - ASP.NET Core (C#)<br>- API REST<br>- EF Core (persistence BDD)<br>- Backend embarqué pour Avalonia (offline) |
+### **Couches Architecturales Principales**
 
----
+| Couche | Technologies / Patterns | Caractéristiques |
+|--------|-------------------------|-------------------|
+| **Domain** | DDD, Strongly-Typed IDs, Aggregates | Pure business logic, aucune dépendance externe |
+| **Application** | CQRS, MediatR, FluentValidation, AutoMapper | Orchestration avec behaviors avancés (logging, caching, performance) |
+| **Infrastructure** | EF Core, Circuit Breaker, Error Handling, Resilience | Patterns enterprise avec gestion d'erreurs et monitoring |
+| **Presentation** | Avalonia (desktop), Blazor WebAssembly (web) | Support offline-first et cloud-based |
 
-## Architecture
+### **🛡️ Fonctionnalités Enterprise Nouvelles**
 
-- **Domain-Driven Design (DDD)**
-- **Clean Architecture**
-- **CQRS**
-- **FluentValidation**
-- **AutoMapper**
-- **Tests unitaires** : xUnit, FluentAssertions, Moq, AutoFixture
-- **Bonnes pratiques** : modules indépendants, core partagé (`IEntity`, `IEntityId`, `IRepository`, etc.), Strongly Typed Id
-
----
-
-## Spécificités
-
-- Modules totalement indépendants
-- Entités partagées : `Team`, `Stadium`, `Player`, etc.
-- Noyau commun pour les abstractions et primitives
+- **Circuit Breaker Pattern** : Détection automatique des pannes avec états (Closed/Open/HalfOpen)
+- **Connection Resilience** : Monitoring de santé des connexions en temps réel
+- **Retry Policies** : Exponential backoff intelligent avec détection transient failures
+- **High-Performance Logging** : LoggerMessage delegates pour logging zero-allocation
+- **Error Handling Centralisé** : Stratégies configurables avec monitoring détaillé
+- **Performance Monitoring** : Tracking des opérations et détection des goulots d'étranglement
 
 ---
 
-## Domaine Scor'er
+## 📦 Infrastructure Partagée
 
-### 🏆 Competition (Agrégat racine)
+### **Projets Core Partagés (17 projets totaux)**
 
-Une compétition peut être de 3 types :
+```
+MyClub/
+├── src/Shared/                          # Infrastructure partagée enterprise
+│   ├── MyClub.Shared.Kernel/           # Primitives domain, abstractions
+│   ├── MyClub.Shared.Domain/           # Entités partagées avec audit
+│   ├── MyClub.Shared.Application/      # CQRS, MediatR behaviors
+│   ├── MyClub.Shared.Infrastructure.Persistence/  # Patterns enterprise + resilience
+│   ├── MyClub.Shared.Infrastructure.Events/       # Domain events avec MediatR
+│   └── MyClub.Localization/            # Support international
+├── src/Referential/                     # Données de référence
+│   └── MyClub.Referential.Domain/      # Teams, Players, Stadiums, Managers
+├── src/Scorer/                          # Module compétitions (PRODUCTION READY)
+│   ├── MyClub.Scorer.Domain/           # Modèle domain riche
+│   ├── MyClub.Scorer.Application/      # Handlers CQRS
+│   ├── MyClub.Scorer.Infrastructure.Persistence/     # EF Core + enterprise
+│   ├── MyClub.Scorer.Infrastructure.Migrations.Sqlite/    # Migrations dev
+│   └── MyClub.Scorer.Infrastructure.Migrations.SqlServer/ # Migrations prod
+└── tests/                               # Suite de tests complète
+    ├── MyClub.Shared.Tests/
+    ├── MyClub.Scorer.Domain.Tests/
+    └── MyClub.Scorer.Infrastructure.Persistence.Tests/
+```
 
-| Type        | Description                                                                 |
-|-------------|-----------------------------------------------------------------------------|
-| **League**      | Championnat (ex : Ligue 1) avec journées (`Matchday`) et classement      |
-| **Cup**         | Coupe à élimination directe (ex : Coupe de France), avec tours (`Round`) |
-| **Tournament**  | Compétition multi-phases : groupes, ligue, élimination directe           |
+### **Patterns Enterprise Implémentés**
 
-#### Données de base d’une compétition
-
-- Nom
-- Logo
-- Format des matchs par défaut
-- Règles des matchs par défaut
-- Liste des équipes réelles (ex: PSG, Lyon, etc...)
-- Liste des stades
+```
+┌─────────────────────────────────────────┐
+│           SHARED INFRASTRUCTURE         │
+│  ┌─────────────┐ ┌────────────────────┐ │
+│  │ Error       │ │  Connection        │ │
+│  │ Handling    │ │  Resilience        │ │
+│  └─────────────┘ └────────────────────┘ │
+│  ┌─────────────┐ ┌────────────────────┐ │
+│  │ CQRS        │ │  Performance       │ │
+│  │ Patterns    │ │  Monitoring        │ │
+│  └─────────────┘ └────────────────────┘ │
+│  ┌─────────────┐ ┌────────────────────┐ │
+│  │ Domain      │ │  EF Core           │ │
+│  │ Events      │ │  Extensions        │ │
+│  └─────────────┘ └────────────────────┘ │
+└─────────────────────────────────────────┘
+```
 
 ---
 
-### Détails des entités principales
+## 🧩 Modules Fonctionnels
 
-#### League
+| Module | Description | Status | Fonctionnalités Clés |
+|--------|-------------|--------|----------------------|
+| **Scor'er** | Gestion de compétitions | ✅ **Production Ready** | Multi-formats, brackets complexes, resilience enterprise |
+| **Team'up** | Gestion effectifs | 🚧 **Planifié** | Joueurs, staff, équipes |
+| **Training** | Planification entraînements | 🚧 **Planifié** | Sessions, exercices |
+| **Licensing** | Outils administratifs | 🚧 **Planifié** | Régulation, licences |
 
-- Liste de journées (`Matchday`)
-- Règle de classement
-- Classement
-- Points de pénalité
-- Statuts des rangs de classement (ex: "Champion", "Relégué", etc.)
+---
 
-#### Cup
+## 🏆 Domaine Scor'er (Module Production)
 
-- Liste de tours (`Round`)
-- Règle de qualification
+### **Competition (Agrégat racine)**
 
-#### Tournament
+Trois types de compétitions avec gestion enterprise :
 
-- Liste de phases (`Stage`)
+| Type | Description | Fonctionnalités Enterprise |
+|------|-------------|----------------------------|
+| **League** | Championnat avec journées (`Matchday`) et classement | Circuit breaker pour calculs standings |
+| **Cup** | Coupe à élimination directe avec tours (`Round`) | Retry policies pour brackets complexes |
+| **Tournament** | Multi-phases : groupes, ligue, élimination directe | Health monitoring pour opérations critiques |
 
-#### Teams
+### **Entités Principales avec Patterns Enterprise**
 
-- Nom
-- Logo
-- Stade
-- Liste de joueurs
-- Coachs
-
-#### Stadiums
-
-- Nom
-- Surface
-- Adresse
-
-#### Matchday
-
-- Représente une journée (ex : "Journée 3")
-- Liste de matchs
-- Date
-- Heure par défaut
-
-#### Round
-
-- Liste des équipes (réelles ou virtuelles (ex: Vaiqueur du Match A, Perdant du match B, 3ème du Groupe A, etc...))
-- Liste de fixtures
-- Liste de RoundStage (Phase Aller, Match1, Match2, etc...)
-- Format de match personnalisé (hérité du parent si null)
-- Format (Match Aller-Retour, Meilleur des 5 matchs, Replay match, etc.)
-
-#### Stage
-
-- Liste de teams (réelles ou virtuelles (ex: Vaiqueur du Match A, Perdant du match B, 3ème du Groupe A, etc...))
-- Format et règles personnalisés
-- Types possibles : `GroupStage`, `Knockout`, `Championship`
-
-#### Match (Agrégat)
-
-- Date
-- Règles
-- Format
-- État
+#### **Match (Agrégat)**
+- Date, Règles, Format, État
 - MatchOpponent (score, équipe)
+- **Enterprise** : Error handling pour événements match, logging haute performance
 
-#### Fixture
+#### **Teams & TeamReference**
+- Support équipes réelles et virtuelles (ex: "Vainqueur du Match A")
+- **Enterprise** : Converters JSON polymorphes, gestion resilience
 
-- Regroupe les matchs d'un tour (les matchs de tous les roundStage) entre 2 équipes (`TeamAId`, `TeamBId`)
+#### **Standing & Ranking**
+- Calcul incrémental ou global
+- Rules head-to-head, penalty points
+- **Enterprise** : Performance monitoring, circuit breaker protection
 
-#### GroupStage
+#### **Fixtures & Scheduling**
+- Organisation matchs par round/stage
+- **Enterprise** : Retry policies pour génération brackets
 
-- Liste d’équipes
-- Liste des groupes
-
-#### Knockout
-
-- Identique à `Round`
-
-#### Championship
-
-- Identique à `League`
-
-#### Standing
-
-- Classement des équipes
-- Liste de standingRow
-- Ordre de tri (points, différence de buts, etc.) établi par la règle de classement
-- Nombre de points par victoire, match nul, défaite établi par la règle de classement
-- Les équipes peuvent être triées par head-to-head aussi
-- Les équipes peuvent avoir des points de pénalité
-- On peut calculer de manière incrémentale à chaque match joué ou de manière globale à n'importe quel moment
 ---
 
-> **Remarque** :  
-> Cette structure est conçue pour évoluer facilement avec de nouveaux modules et de nouveaux types de compétitions.
+## 🛠 Stack Technique Enterprise
+
+### **Core Technologies (.NET 10)**
+- **Entity Framework Core 10.0** : ORM avancé avec patterns enterprise
+- **MediatR 13.0** : CQRS et mediator pattern
+- **FluentValidation 12.0** : Validation comprehensive
+- **AutoMapper** : Mapping object-to-object optimisé
+
+### **Enterprise Infrastructure**
+- **Microsoft.Extensions.Logging** : Logging structuré haute performance
+- **Microsoft.Extensions.HealthChecks** : Monitoring santé application
+- **MyNet.Humanizer 5.0** : Manipulation strings et formatage
+
+### **Resilience & Performance**
+- **Circuit Breaker Pattern** : Protection contre pannes en cascade
+- **LoggerMessage Delegates** : Logging zero-allocation production
+- **Connection Health Monitoring** : Surveillance connectivité temps réel
+- **Multi-Database Support** : SQLite (dev), SQL Server, PostgreSQL (prod)
+
+### **Testing & Quality (xUnit, Moq, FluentAssertions)**
+- **Unit Tests** : Logic domain avec mocking avancé
+- **Integration Tests** : Repositories avec bases in-memory
+- **Performance Tests** : Circuit breaker, retry policies, error handling
+- **Architecture Tests** : Validation règles dépendances
+
+---
+
+## 🚀 Capacités Enterprise
+
+### **🛡️ Fiabilité Production**
+- **Circuit Breaker** : États managés pour prévention pannes cascade
+- **Intelligent Retry** : Exponential backoff avec détection transient failures
+- **Health Monitoring** : Surveillance connectivité base de données temps réel
+- **Error Recovery** : Stratégies configurables par environnement
+
+### **📊 Performance & Observabilité**
+- **High-Performance Logging** : Zero-allocation avec LoggerMessage delegates
+- **Performance Metrics** : Timing opérations et tracking taux succès
+- **Health Check Integration** : Endpoints ASP.NET Core pour monitoring
+- **Query Optimization** : Includes EF Core et indexes optimisés domain football
+
+### **⚙️ Flexibilité Déploiement**
+- **Multi-Database** : SQLite, SQL Server, PostgreSQL, MySQL
+- **Configuration Environnement** : Settings dev/staging/production
+- **Connection Pooling** : Gestion connexions optimisée
+- **Migration Management** : Évolution schéma automatisée avec rollback
+
+---
+
+## 🔍 Spécificités Techniques pour IA
+
+### **Patterns Architecturaux Clés**
+- **Strongly Typed IDs** : `CompetitionId`, `TeamId`, `MatchId` pour sécurité types
+- **Value Converters EF** : JSON polymorphe pour TeamReference, RoundFormat
+- **Join Entities** : Relations many-to-many explicites (`CompetitionTeam`, `StageTeam`)
+- **Domain Events** : Publishing événements avec MediatR pour découplage
+- **Result Pattern** : Gestion erreurs fonctionnelle sans exceptions
+
+### **Conventions Base de Données**
+- **Snake Case** : Noms colonnes automatiques (ex: `team_id`, `match_date`)
+- **Pluralization** : Noms tables automatiques (ex: `Competitions`, `Matches`)
+- **FK Naming** : Conventions foreign keys cohérentes
+
+### **Gestion Erreurs Enterprise**
+- **Transient Failure Detection** : Identification automatique erreurs retry-ables
+- **Exponential Backoff** : Délais retry intelligents avec jitter
+- **Circuit Breaker States** : Closed → Open → HalfOpen avec timeouts configurables
+- **Structured Logging** : EventId organisés pour monitoring et alerting
+
+---
+
+> **Notes pour IA** : 
+> - Architecture enterprise mature avec 17 projets organisés
+> - Module Scorer prêt production avec resilience patterns
+> - Infrastructure partagée robuste pour extension futures modules
+> - Patterns DDD/CQRS/Clean Architecture strictement appliqués
+> - Support multi-databases avec migrations provider-specific
+> - Testing comprehensive couvrant toutes couches architecturales

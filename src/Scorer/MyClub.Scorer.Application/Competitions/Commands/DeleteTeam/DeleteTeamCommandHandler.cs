@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using MediatR;
 using MyClub.Scorer.Domain.CompetitionAggregate;
 using MyClub.Scorer.Domain.CompetitionAggregate.Repositories;
-using MyClub.Shared.Application.Persistence;
+using MyClub.Shared.Kernel.Persistence;
 using MyClub.Shared.Kernel.Primitives;
 using MyClub.Shared.Kernel.Results;
 

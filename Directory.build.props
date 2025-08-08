@@ -13,13 +13,13 @@
 
     <!-- Configuration -->
     <PropertyGroup>
-        <TargetFrameworks>net10.0</TargetFrameworks>
+        <TargetFrameworks>net10.0;</TargetFrameworks>
+        <LangVersion>preview</LangVersion>
         <BaseOutputPath>bin</BaseOutputPath>
         <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
         <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
         <Configurations>Debug;Release</Configurations>
         <NeutralLanguage>fr</NeutralLanguage>
-        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <Deterministic>True</Deterministic>
         <DeterministicSourcePaths>true</DeterministicSourcePaths>

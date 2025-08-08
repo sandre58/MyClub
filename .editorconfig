@@ -220,11 +220,6 @@ dotnet_naming_rule.members_should_be_pascal_case.style = non_private_static_fiel
 
 dotnet_naming_symbols.all_members.applicable_kinds = *
 
-# Resharper
-resharper_arrange_object_creation_when_type_not_evident_highlighting=none
-resharper_non_readonly_member_in_get_hash_code_highlighting=none
-resharper_virtual_member_call_in_constructor_highlighting=none
-
 # Disable C# IDE warnings
 dotnet_diagnostic.IDE0058.severity = none
 
@@ -267,3 +262,7 @@ dotnet_diagnostic.SA1413.severity = none
 dotnet_diagnostic.SA1501.severity = none
 dotnet_diagnostic.SA1502.severity = none
 dotnet_diagnostic.SA1503.severity = none
+
+# Do not apply code styles to generated migration files
+[**/Migrations/*.cs]
+generated_code = true

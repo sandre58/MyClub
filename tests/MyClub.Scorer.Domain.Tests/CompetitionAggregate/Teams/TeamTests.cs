@@ -1,23 +1,23 @@
 // -----------------------------------------------------------------------
-// <copyright file="TeamTests.cs" company="Stéphane ANDRE">
-// Copyright (c) Stéphane ANDRE. All rights reserved.
+// <copyright file="TeamTests.cs" company="StÃ©phane ANDRE">
+// Copyright (c) StÃ©phane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
+using AutoFixture;
 using FluentAssertions;
 using MyClub.Scorer.Domain.CompetitionAggregate.Teams;
-using MyClub.Tests.Common;
 using Xunit;
 
 namespace MyClub.Scorer.Domain.Tests.CompetitionAggregate.Teams;
 
-public class TeamTests : TestBase
+public class TeamTests
 {
     [Fact]
     public void Create_ShouldInitializeTeamWithNameAndShortName()
     {
-        var name = Create<string>();
-        var shortName = Create<string>();
+        var name = new Fixture().Create<string>();
+        var shortName = new Fixture().Create<string>();
 
         var team = Team.Create(name, shortName);
 
@@ -60,7 +60,7 @@ public class TeamTests : TestBase
         var result = team.AddPlayer("Jane", "Smith");
 
         result.IsSuccess.Should().BeTrue();
-        team.Players.Should().ContainSingle(p => p.FirstName == "Jane" && p.LastName == "Smith");
+        team.Players.Should().ContainSingle(static p => p.FirstName == "Jane" && p.LastName == "Smith");
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class TeamTests : TestBase
         var result = team.AddManager("Coach", "Two");
 
         result.IsSuccess.Should().BeTrue();
-        team.Staff.Should().ContainSingle(m => m.FirstName == "Coach" && m.LastName == "Two");
+        team.Staff.Should().ContainSingle(static m => m.FirstName == "Coach" && m.LastName == "Two");
     }
 
     [Fact]

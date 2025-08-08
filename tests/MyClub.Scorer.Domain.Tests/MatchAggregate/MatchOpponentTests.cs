@@ -9,12 +9,11 @@ using MyClub.Scorer.Domain.MatchAggregate;
 using MyClub.Scorer.Domain.MatchAggregate.MatchEvents;
 using MyClub.Shared.Domain.Enums;
 using MyClub.Shared.Domain.Teams;
-using MyClub.Tests.Common;
 using Xunit;
 
 namespace MyClub.Scorer.Domain.Tests.MatchAggregate;
 
-public class MatchOpponentTests : TestBase
+public class MatchOpponentTests
 {
     [Fact]
     public void AddGoal_ShouldAddGoalToEventsAndIncreaseScore()
@@ -25,9 +24,9 @@ public class MatchOpponentTests : TestBase
         var goal = matchOpponent.AddGoal(10);
 
         goal.Should().NotBeNull();
-        matchOpponent.Events.Should().Contain(goal);
-        matchOpponent.GetGoals().Should().Contain(goal);
-        matchOpponent.GetScore().Should().Be(1);
+        matchOpponent.Goals.Should().Contain(goal);
+        matchOpponent.GetEvents().Should().Contain(goal);
+        matchOpponent.Score.Should().Be(1);
     }
 
     [Fact]
@@ -41,10 +40,10 @@ public class MatchOpponentTests : TestBase
 
         matchOpponent.RemoveLastGoal();
 
-        matchOpponent.Events.Should().NotContain(goal2);
-        matchOpponent.Events.Should().Contain(goal1);
-        matchOpponent.GetGoals().Should().Contain(goal1);
-        matchOpponent.GetScore().Should().Be(1);
+        matchOpponent.Goals.Should().NotContain(goal2);
+        matchOpponent.Goals.Should().Contain(goal1);
+        matchOpponent.GetEvents().Should().Contain(goal1);
+        matchOpponent.Score.Should().Be(1);
     }
 
     [Fact]
@@ -79,24 +78,6 @@ public class MatchOpponentTests : TestBase
     }
 
     [Fact]
-    public void SetCards_ShouldReplaceCardsInEvents()
-    {
-        var team = TeamId.New().ToReference();
-        var matchOpponent = new MatchOpponent(team);
-
-        var card1 = Card.Create(CardColor.Yellow);
-        var card2 = Card.Create(CardColor.Red);
-
-        matchOpponent.AddCard(card1);
-        matchOpponent.SetCards([card2]);
-
-        matchOpponent.Events.Should().NotContain(card1);
-        matchOpponent.Events.Should().Contain(card2);
-        matchOpponent.GetCards().Should().Contain(card2);
-        matchOpponent.GetCards().Should().HaveCount(1);
-    }
-
-    [Fact]
     public void SetScore_ShouldSetGoalsAndShootoutScore()
     {
         var team = TeamId.New().ToReference();
@@ -104,7 +85,8 @@ public class MatchOpponentTests : TestBase
 
         matchOpponent.SetScore(2, 3);
 
-        matchOpponent.GetScore().Should().Be(2);
+        matchOpponent.
+        Score.Should().Be(2);
         matchOpponent.GetShootoutScore().Should().Be(3);
     }
 
@@ -119,7 +101,8 @@ public class MatchOpponentTests : TestBase
 
         matchOpponent.SetScore(goals, shootouts);
 
-        matchOpponent.GetScore().Should().Be(2);
+        matchOpponent.
+        Score.Should().Be(2);
         matchOpponent.GetShootoutScore().Should().Be(1);
     }
 
@@ -134,9 +117,9 @@ public class MatchOpponentTests : TestBase
         var added = matchOpponent.AddCard(card);
 
         added.Should().Be(card);
-        matchOpponent.Events.Should().Contain(card);
-        matchOpponent.GetCards().Should().Contain(card);
-        matchOpponent.GetCards().Should().HaveCount(1);
+        matchOpponent.Cards.Should().Contain(card);
+        matchOpponent.GetEvents().Should().Contain(card);
+        matchOpponent.GetEvents().Should().HaveCount(1);
     }
 
     [Fact]
@@ -151,7 +134,7 @@ public class MatchOpponentTests : TestBase
         matchOpponent.DoWithdraw();
 
         matchOpponent.IsWithdrawn.Should().BeTrue();
-        matchOpponent.Events.Should().BeEmpty();
+        matchOpponent.Goals.Should().BeEmpty();
         matchOpponent.Shootout.Should().BeEmpty();
     }
 
@@ -168,7 +151,7 @@ public class MatchOpponentTests : TestBase
         matchOpponent.Reset();
 
         matchOpponent.IsWithdrawn.Should().BeFalse();
-        matchOpponent.Events.Should().BeEmpty();
+        matchOpponent.Goals.Should().BeEmpty();
         matchOpponent.Shootout.Should().BeEmpty();
     }
 

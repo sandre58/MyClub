@@ -9,4 +9,9 @@ using MyClub.Shared.Kernel.Primitives;
 
 namespace MyClub.Scorer.Domain.StageAggregate;
 
+/// <summary>
+/// Represents a strongly-typed identifier for Group entities.
+/// This ensures type safety and prevents mixing of different entity identifiers.
+/// </summary>
+/// <param name="Value">The underlying GUID value for the group identifier.</param>
 public sealed record GroupId(Guid Value) : EntityId<GroupId>(Value);

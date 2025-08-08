@@ -11,33 +11,32 @@ using MyClub.Scorer.Domain.CompetitionAggregate.Configurations;
 using MyClub.Scorer.Domain.MatchdayAggregate;
 using MyClub.Shared.Domain.Standings.Rules;
 using MyClub.Shared.Domain.Teams;
-using MyClub.Tests.Common;
 using Xunit;
 
 namespace MyClub.Scorer.Domain.Tests.CompetitionAggregate;
 
-public class LeagueTests : TestBase
+public class LeagueTests
 {
     [Fact]
     public void Create_ShouldInitializeLeagueWithDefaultValues()
     {
-        var name = "Ligue 1";
+        const string name = "League 1";
         var league = League.Create(name);
 
         league.DisplayName.Name.Should().Be(name);
         league.MatchFormat.Should().Be(MatchFormat.Default);
         league.MatchRules.Should().Be(MatchRules.Default);
         league.StandingRules.Should().Be(StandingRuleSet.Default);
-        league.StandingRankStatuses.Should().HaveCount(0);
+        league.Labels.Should().HaveCount(0);
         league.Type.Should().Be(CompetitionType.League);
         league.Matchdays.Should().BeEmpty();
-        league.GetPenaltyPoints().Should().BeEmpty();
+        league.PenaltyPoints.Should().BeEmpty();
     }
 
     [Fact]
     public void RemoveMatchday_ShouldRemoveMatchday()
     {
-        var league = League.Create("Ligue 1");
+        var league = League.Create("League 1");
         var matchdayId = MatchdayId.New();
 
         league.AddMatchday(matchdayId);
@@ -67,12 +66,12 @@ public class LeagueTests : TestBase
 
         league.AddPenalty(teamId, 3);
 
-        league.GetPenaltyPoints().Should().ContainKey(teamId);
-        league.GetPenaltyPoints()[teamId].Should().Be(3);
+        league.PenaltyPoints.Should().ContainKey(teamId);
+        league.PenaltyPoints[teamId].Should().Be(3);
 
         league.AddPenalty(teamId, 5);
 
-        league.GetPenaltyPoints()[teamId].Should().Be(5);
+        league.PenaltyPoints[teamId].Should().Be(5);
     }
 
     [Fact]
@@ -85,7 +84,7 @@ public class LeagueTests : TestBase
         var removed = league.RemovePenalty(teamId);
 
         removed.Should().BeTrue();
-        league.GetPenaltyPoints().Should().NotContainKey(teamId);
+        league.PenaltyPoints.Should().NotContainKey(teamId);
     }
 
     [Fact]
@@ -100,6 +99,6 @@ public class LeagueTests : TestBase
 
         league.ClearPenaltyPoints();
 
-        league.GetPenaltyPoints().Should().BeEmpty();
+        league.PenaltyPoints.Should().BeEmpty();
     }
 }
