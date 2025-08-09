@@ -7,9 +7,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using MyClub.Scorer.Infrastructure.Persistence.Converters;
 using MyClub.Shared.Domain.Enums;
 using MyClub.Shared.Domain.Teams;
+using MyClub.Shared.Infrastructure.Persistence.Converters;
 using Xunit;
 using Xunit.Abstractions;
 
