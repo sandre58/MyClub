@@ -8,7 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.RetryPolicy;
+namespace MyClub.Shared.Application.Abstractions.ErrorHandling;
 
 /// <summary>
 /// Defines the contract for database retry policies that determine when and how

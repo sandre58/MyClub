@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 
 namespace MyClub.Shared.Application.Behaviors;
 
@@ -23,9 +24,11 @@ namespace MyClub.Shared.Application.Behaviors;
 /// <typeparam name="TResponse">The type of response being cached.</typeparam>
 /// <param name="cache">The memory cache instance for storing responses.</param>
 /// <param name="logger">The logger instance for cache-related log entries.</param>
+/// <param name="metrics">The persistence metrics instance for recording cache operations.</param>
 public sealed class CachingBehavior<TRequest, TResponse>(
     IMemoryCache cache,
-    ILogger<CachingBehavior<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
+    ILogger<CachingBehavior<TRequest, TResponse>> logger,
+    IPersistenceMetrics metrics) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private static readonly TimeSpan DefaultCacheExpiration = TimeSpan.FromMinutes(5);
@@ -71,6 +74,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
         if (cache.TryGetValue(cacheKey, out TResponse? cachedResponse))
         {
             LogCacheHit(logger, cacheKey, null);
+            metrics.RecordOperationDuration($"CacheHit:{cacheKey}", TimeSpan.Zero, true);
             return cachedResponse!;
         }
 
@@ -89,6 +93,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
         cache.Set(cacheKey, response, cacheEntryOptions);
 
         LogResponseCached(logger, cacheKey, expiration, null);
+        metrics.RecordOperationDuration($"CacheSet:{cacheKey}", TimeSpan.Zero, true);
 
         return response;
     }

@@ -7,6 +7,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 using MyClub.Shared.Kernel.Primitives;
 
 namespace MyClub.Shared.Kernel.Repositories;
@@ -23,30 +25,34 @@ public interface IReadOnlyRepository<TEntity, in TId>
     where TId : EntityId<TId>
 {
     /// <summary>
-    /// Retrieves an entity by its unique identifier.
+    /// Retrieves an entity by its unique identifier asynchronously.
     /// </summary>
     /// <param name="id">The unique identifier of the entity to retrieve.</param>
-    /// <returns>The entity if found; otherwise, null.</returns>
-    TEntity? GetById(TId id);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the entity if found; otherwise, null.</returns>
+    Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves all entities, optionally filtered by a predicate.
+    /// Retrieves all entities asynchronously, optionally filtered by a predicate.
     /// </summary>
     /// <param name="predicate">An optional filter predicate to apply to the entities. If null, all entities are returned.</param>
-    /// <returns>A read-only list of entities matching the specified criteria.</returns>
-    IReadOnlyList<TEntity> GetAll(Expression<Func<TEntity, bool>>? predicate = null);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a read-only list of entities matching the specified criteria.</returns>
+    Task<IReadOnlyList<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Determines whether an entity with the specified identifier exists.
+    /// Determines whether an entity with the specified identifier exists asynchronously.
     /// </summary>
     /// <param name="id">The unique identifier to check for existence.</param>
-    /// <returns>true if an entity with the specified identifier exists; otherwise, false.</returns>
-    bool Exists(TId id);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains true if an entity with the specified identifier exists; otherwise, false.</returns>
+    Task<bool> ExistsAsync(TId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the number of entities, optionally filtered by a predicate.
+    /// Gets the number of entities asynchronously, optionally filtered by a predicate.
     /// </summary>
     /// <param name="predicate">An optional filter predicate to apply to the entities. If null, counts all entities.</param>
-    /// <returns>The number of entities matching the specified criteria.</returns>
-    int Count(Expression<Func<TEntity, bool>>? predicate = null);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of entities matching the specified criteria.</returns>
+    Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default);
 }

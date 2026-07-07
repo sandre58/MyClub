@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 
 namespace MyClub.Shared.Application.Behaviors;
 
@@ -22,7 +23,8 @@ namespace MyClub.Shared.Application.Behaviors;
 /// <typeparam name="TRequest">The type of request being processed.</typeparam>
 /// <typeparam name="TResponse">The type of response being returned.</typeparam>
 /// <param name="logger">The logger instance for writing log entries.</param>
-public sealed class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
+/// <param name="metrics">The metrics instance for recording persistence operation statistics.</param>
+public sealed class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TRequest, TResponse>> logger, IPersistenceMetrics metrics) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private static readonly Action<ILogger, string, Guid, string, Exception?> LogProcessingRequest =
@@ -68,6 +70,7 @@ public sealed class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior
 
             // Log successful response using LoggerMessage delegate
             LogRequestCompleted(logger, requestName, requestId, stopwatch.ElapsedMilliseconds, JsonSerializer.Serialize(response), null);
+            metrics.RecordOperationDuration(requestName, stopwatch.Elapsed, true);
 
             return response;
         }
@@ -77,6 +80,8 @@ public sealed class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior
 
             // Log exception using LoggerMessage delegate
             LogRequestFailed(logger, requestName, requestId, stopwatch.ElapsedMilliseconds, ex.Message, ex);
+            metrics.RecordOperationDuration(requestName, stopwatch.Elapsed, false);
+            metrics.RecordDatabaseError(requestName, ex.GetType().Name, false);
 
             throw;
         }

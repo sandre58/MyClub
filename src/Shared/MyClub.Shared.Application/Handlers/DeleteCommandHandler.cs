@@ -46,7 +46,7 @@ public abstract class DeleteCommandHandler<TRepository, TEntity, TId, TDeleteCom
     /// <returns>A Result indicating success or failure of the delete operation.</returns>
     public async Task<Result> Handle(TDeleteCommand command, CancellationToken cancellationToken)
     {
-        var result = Delete(command);
+        var result = await DeleteAsync(command, cancellationToken).ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
@@ -62,10 +62,11 @@ public abstract class DeleteCommandHandler<TRepository, TEntity, TId, TDeleteCom
     /// such as implementing soft deletes or checking business rules before deletion.
     /// </summary>
     /// <param name="command">The delete command containing the ID of the entity to delete.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>A Result indicating success or failure of the delete operation.</returns>
-    protected virtual Result Delete(TDeleteCommand command)
+    protected virtual async Task<Result> DeleteAsync(TDeleteCommand command, CancellationToken cancellationToken = default)
     {
-        repository.Delete(EntityId.From<TId>(command.Id));
+        await repository.DeleteAsync(EntityId.From<TId>(command.Id), cancellationToken).ConfigureAwait(false);
 
         return Result.Success();
     }

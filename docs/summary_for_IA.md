@@ -1,5 +1,48 @@
 ﻿# MyClub — Suite logicielle enterprise pour clubs de sport (Football)
 
+## MyClub – Résumé Métier & Technique
+
+### Partie métier
+MyClub est une plateforme de gestion de clubs et de compétitions sportives. Elle permet aux organisations de gérer :
+- Les clubs et équipes
+- Les joueurs et le staff
+- La planification et le suivi des matchs et compétitions
+- Le calcul et l’affichage des scores, classements et statistiques
+- La gestion multi-compétitions (championnats, tournois, coupes)
+
+La solution s’adresse aux clubs, fédérations et associations sportives recherchant un outil robuste, évolutif et maintenable pour la gestion quotidienne et stratégique.
+
+### Partie technique
+MyClub repose sur une architecture modulaire et de niveau entreprise, développée en .NET (C#). Les points techniques clés sont :
+- **Architecture modulaire** : chaque domaine métier (Scorer, Referential, Shared, CrossCutting) est isolé pour garantir la maintenabilité et l’évolutivité.
+- **Domain-Driven Design (DDD)** : les agrégats, entités et services de domaine sont organisés par domaine pour une séparation claire des responsabilités.
+- **CQRS** : séparation des commandes et des requêtes pour la scalabilité et la clarté du code.
+- **Patterns enterprise** : implémentation de circuit breakers, politiques de retry, gestion centralisée des erreurs et monitoring des performances.
+- **Sécurité & performance** : authentification, autorisation, protection des données sensibles, cache, patterns asynchrones et métriques.
+- **Tests automatisés d’architecture** : plus de 100 tests valident les règles d’architecture, les frontières de modules, la gestion des dépendances et les patterns enterprise.
+
+#### Modules principaux
+- **Scorer** : gestion des compétitions, matchs et logique de score
+- **Referential** : gestion des équipes, joueurs et données de référence club
+- **Shared Infrastructure** : composants d’infrastructure réutilisables (persistance, unit of work, gestion des erreurs)
+- **CrossCutting** : utilitaires et services transverses (localisation, événements)
+
+#### Stack technique
+- .NET (C#)
+- Entity Framework Core pour la persistance
+- xUnit pour les tests
+- NetArchTest pour la validation d’architecture
+
+#### Validation d’architecture
+Les tests automatisés garantissent :
+- Absence de dépendances circulaires entre modules
+- Séparation correcte des assemblies de migration
+- Réutilisabilité et découplage des modules partagés
+- Respect des patterns modulaires d’infrastructure
+- Respect des frontières de modules
+
+---
+MyClub est conçu pour la scalabilité, la maintenabilité et la robustesse, avec une documentation vivante grâce aux tests d’architecture. Il offre aux organisations sportives une plateforme fiable et extensible pour tous les aspects de la gestion de club et de compétition.
 ## 🏆 Présentation
 
 **MyClub** est une suite logicielle modulaire **enterprise-grade** dédiée à la gestion complète des clubs de football. Chaque module est indépendant et s'appuie sur une infrastructure partagée robuste pour garantir la cohérence, la réutilisabilité, et la fiabilité en production.

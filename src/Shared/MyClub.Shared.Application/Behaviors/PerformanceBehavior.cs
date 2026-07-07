@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 
 namespace MyClub.Shared.Application.Behaviors;
 
@@ -23,8 +24,10 @@ namespace MyClub.Shared.Application.Behaviors;
 /// <param name="logger">The logger instance for writing performance log entries.</param>
 /// <param name="warningThresholdMs">The threshold in milliseconds above which a warning is logged (default: 500ms).</param>
 /// <param name="errorThresholdMs">The threshold in milliseconds above which an error is logged (default: 2000ms).</param>
+/// <param name="metrics">The metrics instance for recording persistence operation statistics.</param>
 public sealed class PerformanceBehavior<TRequest, TResponse>(
     ILogger<PerformanceBehavior<TRequest, TResponse>> logger,
+    IPersistenceMetrics metrics,
     int warningThresholdMs = 500,
     int errorThresholdMs = 2000) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
@@ -59,24 +62,23 @@ public sealed class PerformanceBehavior<TRequest, TResponse>(
     {
         var requestName = typeof(TRequest).Name;
         var stopwatch = Stopwatch.StartNew();
-
         var response = await next(cancellationToken).ConfigureAwait(false);
-
         stopwatch.Stop();
         var elapsedMs = stopwatch.ElapsedMilliseconds;
-
-        // Log performance metrics based on thresholds using LoggerMessage delegates
         if (elapsedMs >= errorThresholdMs)
         {
             LogPerformanceCritical(logger, requestName, elapsedMs, errorThresholdMs, null);
+            metrics.RecordOperationDuration(requestName, stopwatch.Elapsed, false);
         }
         else if (elapsedMs >= warningThresholdMs)
         {
             LogPerformanceWarning(logger, requestName, elapsedMs, warningThresholdMs, null);
+            metrics.RecordOperationDuration(requestName, stopwatch.Elapsed, true);
         }
         else
         {
             LogRequestCompleted(logger, requestName, elapsedMs, null);
+            metrics.RecordOperationDuration(requestName, stopwatch.Elapsed, true);
         }
 
         return response;

@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\MyClub.Shared.Application.Abstractions\MyClub.Shared.Application.Abstractions.csproj" />
     <ProjectReference Include="..\MyClub.Shared.Domain\MyClub.Shared.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>

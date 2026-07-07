@@ -24,7 +24,7 @@ public class UpdateTeamCommandHandler(ICompetitionRepository competitionReposito
     public async Task<Result> Handle(UpdateTeamCommand command, CancellationToken cancellationToken)
     {
         var competitionId = EntityId.From<CompetitionId>(command.CompetitionId);
-        var competition = competitionRepository.GetById(competitionId);
+        var competition = await competitionRepository.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false);
 
         if (competition is null)
             return Failures.NotFound<Guid>(command.CompetitionId.ToString());

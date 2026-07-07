@@ -10,7 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.RetryPolicy;
+using MyClub.Shared.Application.Abstractions.ErrorHandling;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 
 namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceError;
 
@@ -24,11 +25,15 @@ namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceErro
 /// <param name="options">Configuration options for error handling behavior.</param>
 /// <param name="logger">Logger for error tracking and diagnostics.</param>
 /// <param name="retryPolicy">Retry policy for transient failure handling.</param>
+/// <param name="metrics">Metrics recorder for persistence operations.</param>
 public sealed partial class PersistenceErrorHandler(
     PersistenceErrorHandlingOptions options,
     ILogger<PersistenceErrorHandler> logger,
-    IDatabaseRetryPolicy retryPolicy) : IPersistenceErrorHandler
+    IDatabaseRetryPolicy retryPolicy,
+    IPersistenceMetrics metrics) : IPersistenceErrorHandler
 {
+    private readonly IPersistenceMetrics _metrics = metrics;
+
     #region LoggerMessage Definitions
 
     [LoggerMessage(
@@ -135,27 +140,40 @@ public sealed partial class PersistenceErrorHandler(
 
         while (attemptCount < maxAttempts)
         {
+            var start = DateTime.UtcNow;
             try
             {
-                return await operation().ConfigureAwait(false);
+                _metrics.IncrementActiveConnections();
+                var result = await operation().ConfigureAwait(false);
+                _metrics.RecordOperationDuration(operationName, DateTime.UtcNow - start, true);
+                _metrics.RecordConnectionSuccess(DateTime.UtcNow - start);
+                retryPolicy.ResetRetryState(operationName); // Reset retry state after success
+                return result;
             }
             catch (Exception ex) when (attemptCount < maxAttempts - 1)
             {
                 attemptCount++;
+
+                // Use ShouldRetry to decide if we should retry
+                if (!retryPolicy.ShouldRetry(ex, attemptCount))
+                    throw;
 
                 var errorResult = await HandleExceptionAsync(ex, operationName, cancellationToken).ConfigureAwait(false);
 
                 if (!errorResult.ShouldRetry)
                     throw errorResult.ProcessedException;
 
-                // Log retry attempt using LoggerMessage delegate
                 LogRetryAttempt(logger, operationName, attemptCount, maxAttempts - 1, errorResult.RetryDelay.TotalMilliseconds, ex.Message);
-
-                // Execute custom retry logic if configured
+                _metrics.RecordRetryAttempt(operationName, attemptCount, errorResult.RetryDelay);
                 options.OnRetryAttempt?.Invoke(ex, attemptCount, errorResult.RetryDelay);
-
-                // Wait before retrying
                 await Task.Delay(errorResult.RetryDelay, cancellationToken).ConfigureAwait(false);
+                _metrics.RecordOperationDuration(operationName, DateTime.UtcNow - start, false);
+                _metrics.RecordDatabaseError(operationName, ex.GetType().Name, IsTransientFailure(ex));
+                _metrics.RecordConnectionFailure(ex.Message, DateTime.UtcNow - start);
+            }
+            finally
+            {
+                _metrics.DecrementActiveConnections();
             }
         }
 

@@ -21,12 +21,12 @@ public class DeleteTeamCommandHandler(ICompetitionRepository competitionReposito
     public async Task<Result> Handle(DeleteTeamCommand command, CancellationToken cancellationToken)
     {
         var competitionId = EntityId.From<CompetitionId>(command.CompetitionId);
-        var competition = competitionRepository.GetById(competitionId);
+        var competition = await competitionRepository.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false);
 
         if (competition is null)
             return Failures.NotFound<Guid>(command.CompetitionId.ToString());
 
-        competitionRepository.Delete(competitionId);
+        await competitionRepository.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false);
 
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
 

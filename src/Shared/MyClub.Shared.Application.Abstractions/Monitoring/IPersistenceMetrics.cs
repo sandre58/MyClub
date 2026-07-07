@@ -6,7 +6,7 @@
 
 using System;
 
-namespace MyClub.Shared.Infrastructure.Persistence.Monitoring;
+namespace MyClub.Shared.Application.Abstractions.Monitoring;
 
 /// <summary>
 /// Defines the contract for persistence infrastructure metrics collection.

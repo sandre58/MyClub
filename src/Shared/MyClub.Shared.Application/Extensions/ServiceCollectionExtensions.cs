@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ApplicationServiceCollectionExtensions.cs" company="Stéphane ANDRE">
+// <copyright file="ServiceCollectionExtensions.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -18,7 +18,7 @@ namespace MyClub.Shared.Application.Extensions;
 /// Extension methods for configuring application services in the dependency injection container.
 /// Provides convenient methods to register MediatR, behaviors, validation, and other application layer services.
 /// </summary>
-public static class ApplicationServiceCollectionExtensions
+public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Adds all shared application services to the dependency injection container.

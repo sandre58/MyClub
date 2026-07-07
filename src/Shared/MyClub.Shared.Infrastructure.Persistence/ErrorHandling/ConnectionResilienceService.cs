@@ -9,7 +9,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceError;
+using MyClub.Shared.Application.Abstractions.ErrorHandling;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 
 namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
 
@@ -22,10 +23,13 @@ namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
 /// </remarks>
 /// <param name="options">Configuration options for connection resilience behavior.</param>
 /// <param name="logger">Logger for monitoring and diagnostics.</param>
+/// <param name="metrics">Metrics recorder for persistence monitoring.</param>
 public sealed partial class ConnectionResilienceService(
     PersistenceErrorHandlingOptions options,
-    ILogger<ConnectionResilienceService> logger) : IConnectionResilienceService
+    ILogger<ConnectionResilienceService> logger,
+    IPersistenceMetrics metrics) : IConnectionResilienceService
 {
+    private readonly IPersistenceMetrics _metrics = metrics;
     private readonly Lock _lockObject = new();
 
     private int _consecutiveFailures;
@@ -150,7 +154,7 @@ public sealed partial class ConnectionResilienceService(
         await ExecuteWithCircuitBreakerAsync(async () =>
             {
                 await operation().ConfigureAwait(false);
-                return true; // Return dummy value for generic method compatibility
+                return true;
             },
             operationName,
             cancellationToken).ConfigureAwait(false);
@@ -163,31 +167,28 @@ public sealed partial class ConnectionResilienceService(
     public async Task<ConnectionHealthResult> CheckConnectionHealthAsync(CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-
         try
         {
-            // In a real implementation, this would perform an actual database connectivity test
-            // For now, we'll simulate a health check
-            await Task.Delay(100, cancellationToken).ConfigureAwait(false); // Simulate health check latency
-
+            _metrics.IncrementActiveConnections();
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             stopwatch.Stop();
-
             var result = new ConnectionHealthResult
             {
                 IsHealthy = CircuitBreakerState != CircuitBreakerState.Open,
                 ResponseTime = stopwatch.Elapsed,
                 DiagnosticInfo = $"Circuit breaker state: {CircuitBreakerState}, Consecutive failures: {_consecutiveFailures}"
             };
-
-            // Use LoggerMessage delegate for better performance
             LogHealthCheckCompleted(logger, result.IsHealthy, result.ResponseTime.TotalMilliseconds);
-
+            _metrics.RecordHealthCheck(result.IsHealthy, result.ResponseTime, "database");
+            if (result.IsHealthy)
+                _metrics.RecordConnectionSuccess(result.ResponseTime);
+            else
+                _metrics.RecordConnectionFailure("Health check failed", result.ResponseTime);
             return result;
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-
             var result = new ConnectionHealthResult
             {
                 IsHealthy = false,
@@ -195,11 +196,14 @@ public sealed partial class ConnectionResilienceService(
                 ErrorMessage = ex.Message,
                 DiagnosticInfo = $"Health check failed: {ex.GetType().Name}"
             };
-
-            // Use LoggerMessage delegate for better performance
             LogHealthCheckFailed(logger, ex, result.ResponseTime.TotalMilliseconds);
-
-            return result;
+            _metrics.RecordHealthCheck(false, result.ResponseTime, "database");
+            _metrics.RecordConnectionFailure(ex.Message, result.ResponseTime);
+            throw;
+        }
+        finally
+        {
+            _metrics.DecrementActiveConnections();
         }
     }
 
@@ -211,12 +215,12 @@ public sealed partial class ConnectionResilienceService(
     {
         lock (_lockObject)
         {
+            var previousState = CircuitBreakerState.ToString();
             CircuitBreakerState = CircuitBreakerState.Open;
             _circuitOpenTime = DateTime.UtcNow;
             _circuitBreakerReason = reason;
-
-            // Use LoggerMessage delegate for better performance
             LogCircuitBreakerManuallyOpened(logger, reason);
+            _metrics.RecordCircuitBreakerStateChange(previousState, CircuitBreakerState.ToString(), reason);
         }
     }
 
@@ -227,12 +231,12 @@ public sealed partial class ConnectionResilienceService(
     {
         lock (_lockObject)
         {
+            var previousState = CircuitBreakerState.ToString();
             CircuitBreakerState = CircuitBreakerState.Closed;
             _consecutiveFailures = 0;
             _circuitBreakerReason = string.Empty;
-
-            // Use LoggerMessage delegate for better performance
             LogCircuitBreakerManuallyClosed(logger);
+            _metrics.RecordCircuitBreakerStateChange(previousState, CircuitBreakerState.ToString(), "Manual close");
         }
     }
 
@@ -243,13 +247,13 @@ public sealed partial class ConnectionResilienceService(
     {
         lock (_lockObject)
         {
+            var previousState = CircuitBreakerState.ToString();
             CircuitBreakerState = CircuitBreakerState.Closed;
             _consecutiveFailures = 0;
             _circuitOpenTime = DateTime.MinValue;
             _circuitBreakerReason = string.Empty;
-
-            // Use LoggerMessage delegate for better performance
             LogConnectionStateReset(logger);
+            _metrics.RecordCircuitBreakerStateChange(previousState, CircuitBreakerState.ToString(), "Reset");
         }
     }
 

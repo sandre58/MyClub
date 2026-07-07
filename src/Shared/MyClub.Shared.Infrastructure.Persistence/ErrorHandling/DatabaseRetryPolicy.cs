@@ -7,10 +7,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceError;
+using MyClub.Shared.Application.Abstractions.ErrorHandling;
 using MyNet.Utilities.Generator;
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.RetryPolicy;
+namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling;
 
 /// <summary>
 /// Implements an exponential backoff retry policy with jitter for database operations,

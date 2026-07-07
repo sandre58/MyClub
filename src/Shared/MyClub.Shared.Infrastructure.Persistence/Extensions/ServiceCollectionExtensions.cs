@@ -8,9 +8,11 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using MyClub.Shared.Application.Abstractions.ErrorHandling;
+using MyClub.Shared.Application.Abstractions.Monitoring;
+using MyClub.Shared.Infrastructure.Persistence.ErrorHandling;
 using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
 using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceError;
-using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.RetryPolicy;
 using MyClub.Shared.Infrastructure.Persistence.Monitoring;
 
 namespace MyClub.Shared.Infrastructure.Persistence.Extensions;

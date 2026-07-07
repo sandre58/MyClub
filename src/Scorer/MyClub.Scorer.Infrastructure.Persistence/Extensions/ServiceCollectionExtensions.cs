@@ -14,9 +14,10 @@ using MyClub.Scorer.Domain.RoundAggregate.Repositories;
 using MyClub.Scorer.Domain.StageAggregate.Repositories;
 using MyClub.Scorer.Infrastructure.Persistence.DbContexts;
 using MyClub.Scorer.Infrastructure.Persistence.Repositories;
+using MyClub.Shared.Application.Abstractions.ErrorHandling;
+using MyClub.Shared.Infrastructure.Persistence.ErrorHandling;
 using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
 using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceError;
-using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.RetryPolicy;
 using MyClub.Shared.Kernel.Persistence;
 
 namespace MyClub.Scorer.Infrastructure.Persistence.Extensions;

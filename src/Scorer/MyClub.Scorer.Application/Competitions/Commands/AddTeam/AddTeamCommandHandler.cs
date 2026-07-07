@@ -41,7 +41,7 @@ public class AddTeamCommandHandler(ICompetitionRepository competitionRepository,
     {
         // Step 1: Load the target competition aggregate
         var competitionId = EntityId.From<CompetitionId>(command.CompetitionId);
-        var competition = competitionRepository.GetById(competitionId);
+        var competition = await competitionRepository.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false);
 
         // Step 2: Validate competition existence
         if (competition is null)
@@ -68,7 +68,7 @@ public class AddTeamCommandHandler(ICompetitionRepository competitionRepository,
             return Result.Fail<Guid>(result);
 
         // Step 7: Persist changes
-        competitionRepository.Update(competition);
+        await competitionRepository.UpdateAsync(competition, cancellationToken).ConfigureAwait(false);
         await unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
 
         // Step 8: Return success with new team ID

@@ -58,7 +58,7 @@ public class DomainRulesTests(ITestOutputHelper output)
         }
 
         _output.WriteLine("\nOther types (value objects, IDs, configurations):", StringComparison.InvariantCulture);
-        foreach (var other in otherTypes.Take(10)) // Limit output
+        foreach (var other in otherTypes.Take(10))
         {
             _output.WriteLine($"  - {other.Name} ({getTypeCategory(other)})");
         }

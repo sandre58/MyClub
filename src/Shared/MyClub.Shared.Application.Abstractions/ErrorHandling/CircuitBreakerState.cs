@@ -4,7 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
+namespace MyClub.Shared.Application.Abstractions.ErrorHandling;
 
 /// <summary>
 /// Represents the possible states of a circuit breaker for database connections.

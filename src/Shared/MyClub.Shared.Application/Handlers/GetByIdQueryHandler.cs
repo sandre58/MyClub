@@ -59,7 +59,7 @@ public abstract class GetByIdQueryHandler<TRepository, TEntity, TId, TResponse, 
     /// <returns>A Result containing the mapped response DTO, or error information if the entity was not found.</returns>
     protected virtual async Task<Result<TResponse>> GetByIdAsync(TQuery query, CancellationToken cancellationToken)
     {
-        var entity = await Task.Run(() => repository.GetById(EntityId.From<TId>(query.Id)), cancellationToken).ConfigureAwait(false);
+        var entity = await repository.GetByIdAsync(EntityId.From<TId>(query.Id), cancellationToken).ConfigureAwait(false);
 
         if (entity is null)
             return Failures.NotFound<TResponse>(query.Id.ToString());

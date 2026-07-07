@@ -62,7 +62,7 @@ public abstract class GetAllQueryHandler<TRepository, TEntity, TId, TResponse, T
     /// <returns>A Result containing the collection of mapped response DTOs, or error information if the operation failed.</returns>
     protected virtual async Task<Result<IEnumerable<TResponse>>> GetAllAsync(TQuery query, CancellationToken cancellationToken)
     {
-        var entities = await Task.Run(() => repository.GetAll(), cancellationToken).ConfigureAwait(false);
+        var entities = await repository.GetAllAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         var responses = Map(entities);
 
         return Result.Success(responses);

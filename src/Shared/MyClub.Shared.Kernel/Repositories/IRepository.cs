@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MyClub.Shared.Kernel.Primitives;
 
 namespace MyClub.Shared.Kernel.Repositories;
@@ -21,46 +23,56 @@ public interface IRepository<TEntity, in TId> : IReadOnlyRepository<TEntity, TId
     where TId : EntityId<TId>
 {
     /// <summary>
-    /// Adds a new entity to the repository.
+    /// Adds a new entity to the repository asynchronously.
     /// The entity will be persisted when the unit of work is committed.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
-    void Add(TEntity entity);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous add operation.</returns>
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds multiple entities to the repository in a single operation.
+    /// Adds multiple entities to the repository asynchronously in a single operation.
     /// All entities will be persisted when the unit of work is committed.
     /// </summary>
     /// <param name="entities">The collection of entities to add.</param>
-    void AddRange(IEnumerable<TEntity> entities);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous add range operation.</returns>
+    Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates an existing entity in the repository.
+    /// Updates an existing entity in the repository asynchronously.
     /// The changes will be persisted when the unit of work is committed.
     /// </summary>
     /// <param name="entity">The entity to update.</param>
-    void Update(TEntity entity);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates multiple entities in the repository in a single operation.
+    /// Updates multiple entities in the repository asynchronously in a single operation.
     /// All changes will be persisted when the unit of work is committed.
     /// </summary>
     /// <param name="entities">The collection of entities to update.</param>
-    void Update(IEnumerable<TEntity> entities);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous update range operation.</returns>
+    Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes an entity by its identifier.
+    /// Deletes an entity by its identifier asynchronously.
     /// The deletion will be persisted when the unit of work is committed.
     /// </summary>
     /// <param name="id">The identifier of the entity to delete.</param>
-    /// <returns>The number of entities deleted (typically 1 or 0).</returns>
-    int Delete(TId id);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous delete operation.</returns>
+    Task<int> DeleteAsync(TId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes multiple entities by their identifiers in a single operation.
+    /// Deletes multiple entities by their identifiers asynchronously in a single operation.
     /// All deletions will be persisted when the unit of work is committed.
     /// </summary>
     /// <param name="ids">The collection of identifiers for the entities to delete.</param>
-    /// <returns>The number of entities deleted.</returns>
-    int DeleteRange(IEnumerable<TId> ids);
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous delete range operation.</returns>
+    Task<int> DeleteRangeAsync(IEnumerable<TId> ids, CancellationToken cancellationToken = default);
 }

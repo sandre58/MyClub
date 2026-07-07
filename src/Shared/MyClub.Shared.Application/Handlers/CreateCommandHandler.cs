@@ -49,7 +49,7 @@ public abstract class CreateCommandHandler<TRepository, TEntity, TId, TCreateCom
     /// <returns>A Result containing the GUID of the created entity, or error information if the operation failed.</returns>
     public async Task<Result<Guid>> Handle(TCreateCommand command, CancellationToken cancellationToken)
     {
-        var result = Add(command);
+        var result = await AddAsync(command, cancellationToken).ConfigureAwait(false);
 
         if (result.IsFailure)
             return Result.Fail<Guid>(result);
@@ -64,11 +64,13 @@ public abstract class CreateCommandHandler<TRepository, TEntity, TId, TCreateCom
     /// This method can be overridden by derived classes to customize the creation logic.
     /// </summary>
     /// <param name="command">The create command containing the entity data.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>A Result containing the strongly-typed entity ID, or error information if the operation failed.</returns>
-    protected virtual Result<TId> Add(TCreateCommand command)
+    protected virtual async Task<Result<TId>> AddAsync(TCreateCommand command, CancellationToken cancellationToken = default)
     {
         var entity = Map(command);
-        repository.Add(entity);
+
+        await repository.AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
         return Result.Success(entity.Id);
     }

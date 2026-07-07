@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyClub.Shared.Kernel.Primitives;
 using MyClub.Shared.Kernel.Repositories;
@@ -32,57 +34,61 @@ public abstract class ReadOnlyRepository<TEntity, TId, TDbContext>(TDbContext co
     #region Read Operations
 
     /// <summary>
-    /// Gets an entity by its identifier.
+    /// Gets an entity by its identifier asynchronously.
     /// </summary>
     /// <param name="id">The entity identifier.</param>
-    /// <returns>The entity if found, otherwise null.</returns>
-    public virtual TEntity? GetById(TId id)
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the entity if found, otherwise null.</returns>
+    public virtual async Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
 
         var query = ConfigureQuery(DbSet.AsQueryable());
-        return query.FirstOrDefault(e => e.Id.Equals(id));
-    }
 
+        return await query.FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken).ConfigureAwait(false);
+    }
     /// <summary>
-    /// Gets all entities that match the specified predicate.
+    /// Gets all entities that match the specified predicate asynchronously.
     /// </summary>
     /// <param name="predicate">Optional filter predicate.</param>
-    /// <returns>A read-only list of matching entities.</returns>
-    public virtual IReadOnlyList<TEntity> GetAll(Expression<Func<TEntity, bool>>? predicate = null)
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a read-only list of matching entities.</returns>
+    public virtual async Task<IReadOnlyList<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default)
     {
         var query = ConfigureQuery(DbSet.AsQueryable());
 
         if (predicate is not null)
             query = query.Where(predicate);
 
-        return query.ToList().AsReadOnly();
+        return (await query.ToListAsync(cancellationToken).ConfigureAwait(false)).AsReadOnly();
     }
 
     /// <summary>
-    /// Checks if an entity exists with the specified identifier.
+    /// Checks if an entity exists with the specified identifier asynchronously.
     /// </summary>
     /// <param name="id">The entity identifier.</param>
-    /// <returns>True if the entity exists, otherwise false.</returns>
-    public virtual bool Exists(TId id)
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains true if the entity exists, otherwise false.</returns>
+    public virtual async Task<bool> ExistsAsync(TId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
-        return DbSet.Any(e => e.Id.Equals(id));
+        return await DbSet.AnyAsync(e => e.Id.Equals(id), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Counts entities that match the specified predicate.
+    /// Counts entities that match the specified predicate asynchronously.
     /// </summary>
     /// <param name="predicate">Optional filter predicate.</param>
-    /// <returns>The number of matching entities.</returns>
-    public virtual int Count(Expression<Func<TEntity, bool>>? predicate = null)
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the number of matching entities.</returns>
+    public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default)
     {
         var query = DbSet.AsQueryable();
 
         if (predicate is not null)
             query = query.Where(predicate);
 
-        return query.Count();
+        return await query.CountAsync(cancellationToken).ConfigureAwait(false);
     }
 
     #endregion

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 
 namespace MyClub.Shared.Infrastructure.Persistence.Monitoring;
 

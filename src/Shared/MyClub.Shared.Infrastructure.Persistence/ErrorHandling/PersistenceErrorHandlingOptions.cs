@@ -6,7 +6,7 @@
 
 using System;
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.PersistenceError;
+namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling;
 
 /// <summary>
 /// Configuration options for persistence layer error handling, providing fine-grained control

@@ -8,7 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
+namespace MyClub.Shared.Application.Abstractions.ErrorHandling;
 
 /// <summary>
 /// Defines the contract for connection resilience services that monitor and manage

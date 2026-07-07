@@ -6,7 +6,7 @@
 
 using System;
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
+namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling;
 
 /// <summary>
 /// Exception thrown when the circuit breaker is open and database operations are blocked.

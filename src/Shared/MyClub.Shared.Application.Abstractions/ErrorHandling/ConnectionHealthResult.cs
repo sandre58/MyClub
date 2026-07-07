@@ -6,7 +6,7 @@
 
 using System;
 
-namespace MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
+namespace MyClub.Shared.Application.Abstractions.ErrorHandling;
 
 /// <summary>
 /// Represents the result of a database connection health check.

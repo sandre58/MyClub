@@ -48,7 +48,7 @@ public abstract class UpdateCommandHandler<TRepository, TEntity, TId, TUpdateCom
     /// <returns>A Result indicating success or failure of the update operation.</returns>
     public async Task<Result> Handle(TUpdateCommand command, CancellationToken cancellationToken)
     {
-        var result = Update(command);
+        var result = await UpdateAsync(command, cancellationToken).ConfigureAwait(false);
 
         if (result.IsFailure)
             return result;
@@ -64,17 +64,18 @@ public abstract class UpdateCommandHandler<TRepository, TEntity, TId, TUpdateCom
     /// This method can be overridden by derived classes to customize the update logic.
     /// </summary>
     /// <param name="command">The update command containing the entity ID and data to update.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>A Result indicating success or failure of the update operation.</returns>
-    protected virtual Result Update(TUpdateCommand command)
+    protected virtual async Task<Result> UpdateAsync(TUpdateCommand command, CancellationToken cancellationToken = default)
     {
-        var entity = repository.GetById(EntityId.From<TId>(command.Id));
+        var entity = await repository.GetByIdAsync(EntityId.From<TId>(command.Id), cancellationToken).ConfigureAwait(false);
 
         if (entity is null)
             return Failures.NotFound(command.Id.ToString());
 
         Map(command, entity);
 
-        repository.Update(entity);
+        await repository.UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
 
         return Result.Success();
     }

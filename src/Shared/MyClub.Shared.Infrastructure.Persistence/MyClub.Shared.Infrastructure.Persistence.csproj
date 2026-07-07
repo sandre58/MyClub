@@ -6,6 +6,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\MyClub.Shared.Application.Abstractions\MyClub.Shared.Application.Abstractions.csproj" />
         <ProjectReference Include="..\MyClub.Shared.Kernel\MyClub.Shared.Kernel.csproj" />
     </ItemGroup>
 </Project>

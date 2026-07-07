@@ -7,6 +7,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyClub.Shared.Kernel.Primitives;
 using MyClub.Shared.Kernel.Repositories;
@@ -30,95 +32,93 @@ public abstract class Repository<TEntity, TId, TDbContext>(TDbContext context) :
     #region Write Operations
 
     /// <summary>
-    /// Adds a new entity to the repository.
+    /// Adds a new entity to the repository asynchronously.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
-    public virtual void Add(TEntity entity)
+    /// <param name="cancellationToken">A cancellation token to cancel the operation (optional).</param>
+    public virtual async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
         OnAdding(entity);
-        DbSet.Add(entity);
+        await DbSet.AddAsync(entity, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Adds multiple entities to the repository.
+    /// Adds multiple entities to the repository asynchronously.
     /// </summary>
     /// <param name="entities">The entities to add.</param>
-    public virtual void AddRange(IEnumerable<TEntity> entities)
+    /// <param name="cancellationToken">A cancellation token to cancel the operation (optional).</param>
+    public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
         var entityList = entities.ToList();
-
         foreach (var entity in entityList)
             OnAdding(entity);
-
-        DbSet.AddRange(entityList);
+        await DbSet.AddRangeAsync(entityList, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Updates an existing entity in the repository.
+    /// Updates an existing entity in the repository asynchronously.
     /// </summary>
     /// <param name="entity">The entity to update.</param>
-    public virtual void Update(TEntity entity)
+    /// <param name="cancellationToken">A cancellation token to cancel the operation (optional).</param>
+    public virtual async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
         OnUpdating(entity);
         DbSet.Update(entity);
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Updates multiple entities in the repository.
+    /// Updates multiple entities in the repository asynchronously.
     /// </summary>
     /// <param name="entities">The entities to update.</param>
-    public virtual void Update(IEnumerable<TEntity> entities)
+    /// <param name="cancellationToken">A cancellation token to cancel the operation (optional).</param>
+    public virtual async Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
         var entityList = entities.ToList();
-
         foreach (var entity in entityList)
             OnUpdating(entity);
-
         DbSet.UpdateRange(entityList);
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Deletes an entity by its identifier.
+    /// Deletes an entity by its identifier asynchronously.
     /// </summary>
     /// <param name="id">The identifier of the entity to delete.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation (optional).</param>
     /// <returns>The number of entities deleted (0 or 1).</returns>
-    public virtual int Delete(TId id)
+    public virtual async Task<int> DeleteAsync(TId id, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(id);
-
-        var entity = GetById(id);
+        var entity = await GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
         if (entity is null)
             return 0;
-
         OnDeleting(entity);
         DbSet.Remove(entity);
         return 1;
     }
 
     /// <summary>
-    /// Deletes multiple entities by their identifiers.
+    /// Deletes multiple entities by their identifiers asynchronously.
     /// </summary>
     /// <param name="ids">The identifiers of the entities to delete.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation (optional).</param>
     /// <returns>The number of entities deleted.</returns>
-    public virtual int DeleteRange(IEnumerable<TId> ids)
+    public virtual async Task<int> DeleteRangeAsync(IEnumerable<TId> ids, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(ids);
-
         var idsList = ids.ToList();
         if (idsList.Count == 0)
             return 0;
-
-        var entities = DbSet.Where(e => idsList.Contains(e.Id)).ToList();
+        var entities = await DbSet.Where(e => idsList.Contains(e.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
         if (entities.Count == 0)
             return 0;
-
         foreach (var entity in entities)
             OnDeleting(entity);
-
         DbSet.RemoveRange(entities);
         return entities.Count;
     }

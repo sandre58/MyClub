@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using FluentAssertions;
+using MyClub.Shared.Application.Abstractions.Monitoring;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -364,7 +365,7 @@ public class PerformanceArchitectureTests(ITestOutputHelper output)
     public void Performance_Monitoring_Should_Be_Implemented()
     {
         // Force loading of shared infrastructure assembly
-        var forceLoad = typeof(Shared.Infrastructure.Persistence.Monitoring.IPersistenceMetrics);
+        var forceLoad = typeof(IPersistenceMetrics);
 
         // Arrange & Act
         var metricsTypes = AllAssemblies

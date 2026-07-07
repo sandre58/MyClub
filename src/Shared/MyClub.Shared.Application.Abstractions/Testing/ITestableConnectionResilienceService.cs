@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.Shared.Infrastructure.Persistence.ErrorHandling.Connection;
+using MyClub.Shared.Application.Abstractions.ErrorHandling;
 
-namespace MyClub.Shared.Infrastructure.Persistence.Testing;
+namespace MyClub.Shared.Application.Abstractions.Testing;
 
 /// <summary>
 /// Extended interface for connection resilience service that provides additional methods
