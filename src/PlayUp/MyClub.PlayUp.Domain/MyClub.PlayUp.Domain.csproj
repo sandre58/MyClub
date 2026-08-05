@@ -2,6 +2,17 @@
 
   <PropertyGroup>
     <Description>Play'up competition domain model (aggregates, value objects, domain services).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <!-- Physical folders under Common organize files; they must not append namespace segments (convention B / Rider). -->
+  <ItemGroup>
+    <Folder Include="Common\Ids">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Common\Enums">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+  </ItemGroup>
 
 </Project>

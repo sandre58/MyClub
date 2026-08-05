@@ -243,6 +243,8 @@ dotnet_diagnostic.CA1861.severity = none
 dotnet_diagnostic.CA2000.severity = none
 dotnet_diagnostic.CA1031.severity = none
 dotnet_diagnostic.CA1819.severity = none
+dotnet_diagnostic.CA1032.severity = none
+dotnet_diagnostic.RCS1194.severity = none
 dotnet_code_quality.CA1826.exclude_ordefault_methods = true
 
 # Disable SonarAnalyzer rules
@@ -263,6 +265,19 @@ dotnet_diagnostic.SA1413.severity = none
 dotnet_diagnostic.SA1501.severity = none
 dotnet_diagnostic.SA1502.severity = none
 dotnet_diagnostic.SA1503.severity = none
+
+# Play'up Domain: flat namespace Common with physical Ids/Enums folders (convention B)
+[src/PlayUp/**/*.cs]
+dotnet_diagnostic.IDE0130.severity = none
+resharper_check_namespace_highlighting = none
+
+# Play'up Domain: require XML docs on public API (CS1591)
+[src/PlayUp/**/MyClub.PlayUp.Domain/**/*.cs]
+dotnet_diagnostic.CS1591.severity = warning
+
+# Test projects: no XML doc file — silence SA0001
+[tests/**/*.cs]
+dotnet_diagnostic.SA0001.severity = none
 
 # Do not apply code styles to generated migration files
 [**/Migrations/*.cs]
