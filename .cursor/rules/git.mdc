@@ -1,0 +1,19 @@
+---
+description: Git and pull request conventions
+alwaysApply: true
+---
+
+# Git
+
+- Keep commits focused and meaningful.
+- Do not mix unrelated changes.
+- Prefer [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `ci:`, `chore:`, …
+- Common scopes: `repo`, `ci`, `deps`, `docs`, `build`, `test`.
+- Avoid committing generated files unless required.
+- Do not rewrite history unless explicitly requested.
+
+# Pull requests
+
+- One concern per PR when possible.
+- Fill the PR template.
+- Ensure `dotnet build` and `dotnet test` pass locally before pushing.

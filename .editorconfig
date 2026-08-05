@@ -243,6 +243,7 @@ dotnet_diagnostic.CA1861.severity = none
 dotnet_diagnostic.CA2000.severity = none
 dotnet_diagnostic.CA1031.severity = none
 dotnet_diagnostic.CA1819.severity = none
+dotnet_code_quality.CA1826.exclude_ordefault_methods = true
 
 # Disable SonarAnalyzer rules
 dotnet_diagnostic.S1075.severity = none

@@ -1,0 +1,29 @@
+---
+description: Architecture principles for .NET projects in this ecosystem
+alwaysApply: true
+---
+
+# Architecture
+
+- Respect separation of concerns.
+- Keep responsibilities clearly defined.
+- Prefer composition over inheritance when appropriate.
+- Keep business logic independent from infrastructure concerns when building applications.
+- Dependencies must point toward abstractions when abstractions earn their keep.
+- Avoid unnecessary coupling between modules.
+- Design components to be testable.
+
+## Applications
+
+Default style for **applications**: **Modular Monolith** with Domain / Application / Infrastructure / Host layers unless the project decides otherwise (document the exception in the Notion **Décisions** database).
+
+## Libraries
+
+**NuGet / shared libraries** are not required to use D/A/I/Host. Prefer a clear public API surface, minimal dependencies, and package-focused cohesion. Do not invent application layers in a utility library.
+
+Before introducing a new architectural pattern:
+- Explain the problem it solves.
+- Evaluate whether the existing architecture can handle the requirement.
+- Prefer consistency with the existing codebase and with Forge conventions.
+
+Do not introduce microservices, shared "kitchen-sink" libraries, or premature Platform layers without a real trigger.

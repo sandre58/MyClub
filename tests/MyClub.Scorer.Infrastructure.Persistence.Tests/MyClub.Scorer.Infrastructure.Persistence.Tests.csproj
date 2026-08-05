@@ -1,8 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Scorer\MyClub.Scorer.Infrastructure.Persistence.Design\MyClub.Scorer.Infrastructure.Persistence.Design.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-preview.6.25358.103" />
-  </ItemGroup>
-</Project>

@@ -1,0 +1,7 @@
+<Project>
+  <!--
+    Copy this file to Directory.Build.local.props (gitignored) for local-only overrides.
+    Example: emit 0.0.0-local packages on every build for a local NuGet feed.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)build/local-nuget-pack.props" />
+</Project>

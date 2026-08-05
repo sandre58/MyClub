@@ -1,7 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Shared\MyClub.Shared.Application\MyClub.Shared.Application.csproj" />
-    <ProjectReference Include="..\..\src\Shared\MyClub.Shared.Domain\MyClub.Shared.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Shared\MyClub.Shared.Kernel\MyClub.Shared.Kernel.csproj" />
-  </ItemGroup>
-</Project>

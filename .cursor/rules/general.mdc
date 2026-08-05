@@ -1,0 +1,43 @@
+---
+description: General development principles for this ecosystem
+alwaysApply: true
+---
+
+# General principles
+
+- Understand the existing architecture before making changes.
+- Preserve existing conventions and patterns unless there is a clear improvement.
+- Prefer simple and maintainable solutions over complex abstractions.
+- Avoid unnecessary code duplication.
+- Do not introduce new dependencies without a clear justification.
+- Keep changes focused and avoid unrelated modifications.
+- Do not rewrite existing code unless there is a clear improvement.
+
+# AI assistant behavior
+
+- Analyze before modifying.
+- Ask for clarification when requirements are ambiguous.
+- Explain important technical choices.
+- Mention potential risks before major changes.
+- Follow existing project conventions.
+- Do not create new patterns without justification.
+- Do not generate unnecessary files.
+- Keep modifications minimal.
+
+# Documentation
+
+Document:
+- important architectural decisions (Notion **Décisions** database for the project — never ADR Markdown in Git);
+- complex business rules;
+- non-obvious technical choices;
+- project-specific conventions.
+
+Do not duplicate information already maintained elsewhere (Git history, generated API docs, README, source). Prefer links to canonical sources.
+
+# Dependencies
+
+Before adding a dependency:
+- Check if the functionality already exists.
+- Evaluate maintenance status and long-term impact.
+- Prefer lightweight and well-maintained libraries.
+- Add versions in `Directory.Packages.props` (CPM); do not pin versions in `.csproj` without justification.

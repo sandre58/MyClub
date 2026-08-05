@@ -1,0 +1,49 @@
+---
+description: C# / .NET coding conventions
+globs: "**/*.{cs,csproj,props,targets}"
+alwaysApply: false
+---
+
+# C# / .NET
+
+## Naming
+
+- PascalCase for types, methods, and public members.
+- camelCase for locals; `_camelCase` for private fields.
+- Prefix interfaces with `I`.
+- Prefer meaningful names over abbreviations.
+- Async methods end with `Async`.
+
+## Language
+
+- Prefer file-scoped namespaces.
+- Prefer `var` when the type is obvious.
+- Prefer expression-bodied members when they improve clarity.
+- Use modern C# features when they improve readability, safety, or performance.
+- Nullable reference types are enabled — honor nullability.
+
+## Async
+
+- Use async/await for asynchronous operations.
+- Avoid `.Result` and `.Wait()`.
+- Do not wrap async APIs in sync wrappers without a valid reason.
+
+## Dependency injection
+
+- Prefer constructor injection over static dependencies.
+- Keep dependencies explicit.
+- Avoid service locator patterns.
+
+## Exceptions
+
+- Do not silently catch exceptions.
+- Add useful context when rethrowing.
+- Use custom exceptions only when they provide meaningful value.
+
+## Quality
+
+- Write readable, self-explanatory code.
+- Avoid premature optimization and clever solutions that hurt maintainability.
+- Keep methods and classes focused on one responsibility.
+- Remove dead code instead of commenting it out.
+- Comments explain *why*, complex rules, or non-obvious decisions — not obvious code.

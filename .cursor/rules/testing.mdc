@@ -1,0 +1,24 @@
+---
+description: Testing conventions
+globs: "**/*Tests*/**/*.{cs,csproj}"
+alwaysApply: false
+---
+
+# Testing
+
+- Add tests for important business logic and regressions.
+- Prefer tests that validate behavior rather than implementation details.
+- Keep tests readable and maintainable.
+- Use meaningful test names that describe scenario, expectation, and rule.
+
+## Stack (default)
+
+- xUnit, FluentAssertions, Moq, AutoFixture — injected via `build/dependencies.props` for `*Tests` projects.
+- Coverage via `.runsettings` (Coverlet) when `CollectCoverage=true`.
+
+## Refactoring
+
+Before refactoring:
+- Understand current behavior and regression risk.
+- Keep changes incremental.
+- Prefer not mixing refactoring and feature changes in the same commit when avoidable.

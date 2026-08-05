@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+
+    <RunConfiguration>
+        <DisableParallelization>false</DisableParallelization>
+        <TestSessionTimeout>600000</TestSessionTimeout>
+        <ResultsDirectory>TestResults</ResultsDirectory>
+    </RunConfiguration>
+
+    <xUnit>
+        <DiagnosticMessages>true</DiagnosticMessages>
+        <MethodDisplay>ClassAndMethod</MethodDisplay>
+        <ParallelizeTestCollections>true</ParallelizeTestCollections>
+    </xUnit>
+
+    <DataCollectionRunSettings>
+        <DataCollectors>
+            <DataCollector friendlyName="XPlat Code Coverage">
+                <Configuration>
+                    <Format>cobertura</Format>
+                    <Include>[*]*</Include>
+                    <Exclude>[*.Tests]*,[*.UnitTests]*,[*.Demos]*,[*.Demo*]*,[xunit.*]*,[Microsoft.*]*,[System.*]*</Exclude>
+                    <ExcludeByFile>**/Migrations/**,**/obj/**,**/bin/**</ExcludeByFile>
+                    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverage</ExcludeByAttribute>
+                    <SkipAutoProps>true</SkipAutoProps>
+                    <UseSourceLink>true</UseSourceLink>
+                    <SingleHit>false</SingleHit>
+                    <IncludeTestAssembly>false</IncludeTestAssembly>
+                </Configuration>
+            </DataCollector>
+        </DataCollectors>
+    </DataCollectionRunSettings>
+</RunSettings>

@@ -1,0 +1,64 @@
+<Project>
+
+    <!-- Override per project: PackageIcon, Description, PackageTags -->
+    <!-- RepositoryUrl comes from build/repo.props when present -->
+    <PropertyGroup>
+        <PackageIcon Condition="'$(PackageIcon)' == ''">icon.png</PackageIcon>
+        <Description Condition="'$(Description)' == ''"></Description>
+        <PackageTags Condition="'$(PackageTags)' == ''">dotnet</PackageTags>
+        <RepositoryUrl Condition="'$(RepositoryUrl)' == ''">https://github.com/sandre58/Forge</RepositoryUrl>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageVersion Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</PackageVersion>
+        <PackageVersion Condition="'$(VersionSuffix)' == ''">$(Version)</PackageVersion>
+        <PackageOutputPath>$(MSBuildThisFileDirectory)..\packages</PackageOutputPath>
+        <PackageProjectUrl Condition="'$(PackageProjectUrl)' == ''">$(RepositoryUrl)</PackageProjectUrl>
+        <PackageReleaseNotes Condition="'$(PackageReleaseNotes)' == ''">$(RepositoryUrl)/releases</PackageReleaseNotes>
+        <PackageIconUrl>$(PackageIcon)</PackageIconUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile Condition="Exists('$(MSBuildProjectDirectory)\README.md')">README.md</PackageReadmeFile>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryBranch>main</RepositoryBranch>
+
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <DebugType>portable</DebugType>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true' Or '$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)..\LICENSE" Pack="true" PackagePath="">
+            <Link>_package/LICENSE</Link>
+        </None>
+        <None Include="$(MSBuildThisFileDirectory)..\assets\$(PackageIcon)" Pack="true" PackagePath="" Condition="Exists('$(MSBuildThisFileDirectory)..\assets\$(PackageIcon)')">
+            <Link>_package/$(PackageIcon)</Link>
+        </None>
+        <None Include="README.md" Condition="Exists('$(MSBuildProjectDirectory)\README.md')" />
+    </ItemGroup>
+
+    <Target Name="_PreparePackageReadmeForPack"
+            BeforeTargets="_GetPackageFiles"
+            Condition="'$(IsPackable)' == 'true' And Exists('$(MSBuildProjectDirectory)\README.md')">
+        <PropertyGroup>
+            <PackageReadmePackPath>$(IntermediateOutputPath)README.md</PackageReadmePackPath>
+            <_ReadmeSource>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\README.md'))</_ReadmeSource>
+            <_ReadmeForPack>$(_ReadmeSource.Replace('../../assets/', ''))</_ReadmeForPack>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(PackageReadmePackPath)"
+                          Lines="$(_ReadmeForPack)"
+                          Overwrite="true"
+                          Encoding="UTF-8" />
+        <ItemGroup>
+            <None Include="$(PackageReadmePackPath)" Pack="true" PackagePath="">
+                <Link>_package/README.md</Link>
+            </None>
+        </ItemGroup>
+    </Target>
+
+</Project>

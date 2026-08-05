@@ -1,0 +1,54 @@
+# Central Package Management: versions live in Directory.Packages.props at repo root.
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - nuget
+    groups:
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+      microsoft-build:
+        patterns:
+          - "Microsoft.CodeAnalysis.*"
+          - "Microsoft.NET.Test.Sdk"
+          - "Microsoft.SourceLink.*"
+      test-stack:
+        patterns:
+          - "xunit*"
+          - "FluentAssertions"
+          - "Moq"
+          - "AutoFixture*"
+          - "coverlet.*"
+          - "GitHubActionsTestLogger"
+      analyzers:
+        patterns:
+          - "StyleCop.*"
+          - "Roslynator.*"
+          - "Microsoft.CodeAnalysis.NetAnalyzers"
+
+  - package-ecosystem: dotnet-sdk
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - dotnet-sdk
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - github-actions

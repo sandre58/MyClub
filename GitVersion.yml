@@ -1,0 +1,28 @@
+# GitVersion configuration (Forge template).
+# Default: https://github.com/sandre58/MyWorkflows/blob/main/defaults/GitVersion.yml
+# CI applies these values via GitVersion → MSBuild properties in Directory.Build.props.
+
+mode: ContinuousDeployment
+tag-prefix: 'v'
+
+# Configuration for Conventional Commits
+commit-message-incrementing: Enabled
+major-version-bump-message: '^(breaking|BREAKING CHANGE:|feat!:|fix!:)'
+minor-version-bump-message: '^(feat:|feature:)'
+patch-version-bump-message: '^(fix:|chore:|docs:|style:|refactor:|perf:|test:)'
+no-bump-message: '\+semver:\s?(none|skip)'
+
+branches:
+  main:
+    regex: ^main$|^master$
+    tag: 'alpha'
+    increment: Inherit
+    prevent-increment-of-merged-branch-version: true
+    is-mainline: true
+
+  feature:
+    regex: ^features?[/-]
+    tag: 'beta'
+    increment: Inherit
+    source-branches: ['main']
+    is-release-branch: false
