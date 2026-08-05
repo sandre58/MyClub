@@ -1,4 +1,4 @@
-# GitVersion configuration (Forge template).
+# GitVersion configuration.
 # Default: https://github.com/sandre58/MyWorkflows/blob/main/defaults/GitVersion.yml
 # CI applies these values via GitVersion → MSBuild properties in Directory.Build.props.
 

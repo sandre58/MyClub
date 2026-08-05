@@ -24,6 +24,6 @@ Default style for **applications**: **Modular Monolith** with Domain / Applicati
 Before introducing a new architectural pattern:
 - Explain the problem it solves.
 - Evaluate whether the existing architecture can handle the requirement.
-- Prefer consistency with the existing codebase and with Forge conventions.
+- Prefer consistency with the existing codebase and ecosystem conventions.
 
 Do not introduce microservices, shared "kitchen-sink" libraries, or premature Platform layers without a real trigger.

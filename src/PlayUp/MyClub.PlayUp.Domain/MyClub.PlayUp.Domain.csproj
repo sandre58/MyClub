@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Play'up competition domain model (aggregates, value objects, domain services).</Description>
+  </PropertyGroup>
+
+</Project>

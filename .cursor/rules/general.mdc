@@ -34,6 +34,11 @@ Document:
 
 Do not duplicate information already maintained elsewhere (Git history, generated API docs, README, source). Prefer links to canonical sources.
 
+## Language
+
+- Public GitHub documentation (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`, contributor-facing `docs/**`) must be written in **English**.
+- Product vision, architecture narratives, and decisions may live in Notion in French; do not duplicate them as ADR Markdown in Git.
+
 # Dependencies
 
 Before adding a dependency:

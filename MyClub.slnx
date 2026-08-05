@@ -1,8 +1,56 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/MyClub/MyClub.csproj" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/PlayUp/">
+    <Project Path="src/PlayUp/MyClub.PlayUp.Domain/MyClub.PlayUp.Domain.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/MyClub.Tests/MyClub.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.Domain.Tests/MyClub.PlayUp.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/build/">
+    <File Path=".editorconfig" />
+    <File Path=".runsettings" />
+    <File Path="Directory.Build.local.props.example" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="GitVersion.yml" />
+    <File Path="NuGet.config" />
+    <File Path="build/code-analysis.props" />
+    <File Path="build/dependencies.props" />
+    <File Path="build/local-nuget-pack.props" />
+    <File Path="build/package.props" />
+    <File Path="build/repo.props" />
+    <File Path="global.json" />
+    <File Path="stylecop.json" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="CONTRIBUTING.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="SECURITY.md" />
+  </Folder>
+  <Folder Name="/docs/guides/">
+    <File Path="docs/guides/README.md" />
+  </Folder>
+  <Folder Name="/github/">
+    <File Path=".github/CODEOWNERS" />
+    <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
+    <File Path=".github/dependabot.yml" />
+  </Folder>
+  <Folder Name="/github/workflows/">
+    <File Path=".github/workflows/ci.yml" />
+  </Folder>
+  <Folder Name="/github/ISSUE_TEMPLATE/">
+    <File Path=".github/ISSUE_TEMPLATE/bug.yml" />
+    <File Path=".github/ISSUE_TEMPLATE/config.yml" />
+    <File Path=".github/ISSUE_TEMPLATE/feature.yml" />
+  </Folder>
+  <Folder Name="/cursor/" />
+  <Folder Name="/cursor/rules/">
+    <File Path=".cursor/rules/architecture.mdc" />
+    <File Path=".cursor/rules/csharp.mdc" />
+    <File Path=".cursor/rules/general.mdc" />
+    <File Path=".cursor/rules/git.mdc" />
+    <File Path=".cursor/rules/testing.mdc" />
   </Folder>
 </Solution>

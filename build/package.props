@@ -6,7 +6,8 @@
         <PackageIcon Condition="'$(PackageIcon)' == ''">icon.png</PackageIcon>
         <Description Condition="'$(Description)' == ''"></Description>
         <PackageTags Condition="'$(PackageTags)' == ''">dotnet</PackageTags>
-        <RepositoryUrl Condition="'$(RepositoryUrl)' == ''">https://github.com/sandre58/Forge</RepositoryUrl>
+        <!-- RepositoryUrl is provided by build/repo.props (written at project bootstrap) -->
+        <RepositoryUrl Condition="'$(RepositoryUrl)' == ''"></RepositoryUrl>
     </PropertyGroup>
 
     <PropertyGroup>

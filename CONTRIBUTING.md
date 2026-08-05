@@ -54,6 +54,7 @@ Central Package Management via [`Directory.Packages.props`](Directory.Packages.p
 ## Testing
 
 - Place tests in `tests/` with project names ending in `Tests`.
+- Domain tests live in `tests/MyClub.PlayUp.Domain.Tests` and reference `MyClub.PlayUp.Domain` only.
 
 ## Security
 
