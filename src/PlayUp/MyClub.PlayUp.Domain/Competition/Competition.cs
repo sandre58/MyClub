@@ -256,7 +256,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         DemoteToDraftIfReady();
         _stageIds.Clear();
         _stageIds.AddRange(orderedStageIds);
-        Raise(new CompetitionStageOrderChanged(Id, _stageIds.ToList(), clock));
+        Raise(new CompetitionStageOrderChanged(Id, [.._stageIds], clock));
     }
 
     /// <summary>
@@ -384,7 +384,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
             return;
         }
 
-        if (allowAfterStart && Status is (CompetitionStatus.Running or CompetitionStatus.Suspended))
+        if (allowAfterStart && Status is CompetitionStatus.Running or CompetitionStatus.Suspended)
         {
             return;
         }

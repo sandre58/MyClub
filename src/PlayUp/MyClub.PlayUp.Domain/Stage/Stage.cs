@@ -1,0 +1,585 @@
+// -----------------------------------------------------------------------
+// <copyright file="Stage.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using System.Diagnostics;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stage.Events;
+
+namespace MyClub.PlayUp.Domain.Stage;
+
+/// <summary>
+/// Aggregate root for a competition phase: lifecycle and structure (groups, rounds, matchdays).
+/// </summary>
+[DebuggerDisplay("{Name} ({Status})")]
+public sealed class Stage : AggregateRoot<StageId>
+{
+    private readonly List<Group> _groups = [];
+    private readonly List<Round> _rounds = [];
+    private readonly List<Matchday> _matchdays = [];
+
+    private Stage(StageId id, CompetitionId competitionId, StageName name)
+        : base(id)
+    {
+        CompetitionId = competitionId;
+        Name = name;
+        Status = StageStatus.Draft;
+    }
+
+    /// <summary>
+    /// Gets the owning competition identity (immutable).
+    /// </summary>
+    public CompetitionId CompetitionId { get; }
+
+    /// <summary>
+    /// Gets the stage name.
+    /// </summary>
+    public StageName Name { get; private set; }
+
+    /// <summary>
+    /// Gets the stage lifecycle status.
+    /// </summary>
+    public StageStatus Status { get; private set; }
+
+    /// <summary>
+    /// Gets the groups in this stage.
+    /// </summary>
+    public IReadOnlyList<Group> Groups => _groups.AsReadOnly();
+
+    /// <summary>
+    /// Gets the rounds in this stage.
+    /// </summary>
+    public IReadOnlyList<Round> Rounds => _rounds.AsReadOnly();
+
+    /// <summary>
+    /// Gets the matchdays in this stage.
+    /// </summary>
+    public IReadOnlyList<Matchday> Matchdays => _matchdays.AsReadOnly();
+
+    private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
+
+    /// <summary>
+    /// Creates a new stage in Draft status.
+    /// </summary>
+    /// <param name="competitionId">The owning competition identity.</param>
+    /// <param name="name">The stage name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created stage.</returns>
+    public static Stage Create(CompetitionId competitionId, StageName name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var stage = new Stage(StageId.New(), competitionId, name);
+        stage.Raise(new StageCreated(stage.Id, competitionId, name.Value, clock));
+        return stage;
+    }
+
+    /// <summary>
+    /// Gets a group by identity.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <returns>The group.</returns>
+    public Group GetGroup(GroupId groupId) =>
+        _groups.FirstOrDefault(g => g.Id.Equals(groupId))
+        ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+
+    /// <summary>
+    /// Finds a group by identity, if any.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <returns>The group, or <see langword="null"/>.</returns>
+    public Group? FindGroup(GroupId groupId) =>
+        _groups.FirstOrDefault(g => g.Id.Equals(groupId));
+
+    /// <summary>
+    /// Determines whether a group is present.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasGroup(GroupId groupId) => FindGroup(groupId) is not null;
+
+    /// <summary>
+    /// Determines whether a round is present.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasRound(RoundId roundId) => _rounds.Any(r => r.Id.Equals(roundId));
+
+    /// <summary>
+    /// Determines whether a matchday is present.
+    /// </summary>
+    /// <param name="matchdayId">The matchday identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasMatchday(MatchdayId matchdayId) => _matchdays.Any(m => m.Id.Equals(matchdayId));
+
+    /// <summary>
+    /// Renames the stage. No-op when the normalized name is unchanged.
+    /// </summary>
+    /// <param name="name">The new name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Rename(StageName name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (Name.Equals(name))
+        {
+            return;
+        }
+
+        Name = name;
+    }
+
+    /// <summary>
+    /// Adds a group to the stage.
+    /// </summary>
+    /// <param name="name">The group name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created group.</returns>
+    public Group AddGroup(string name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsureCanAddGroup();
+
+        DemoteToDraftIfReady();
+        var group = new Group(GroupId.New(), name);
+        _groups.Add(group);
+        Raise(new StageGroupAdded(Id, group.Id, clock));
+        return group;
+    }
+
+    /// <summary>
+    /// Removes a group from the stage.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveGroup(GroupId groupId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var group = GetGroup(groupId);
+        DemoteToDraftIfReady();
+        _groups.Remove(group);
+        Raise(new StageGroupRemoved(Id, groupId, clock));
+    }
+
+    /// <summary>
+    /// Renames a group. No-op when the normalized name is unchanged.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="name">The new name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RenameGroup(GroupId groupId, string name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        GetGroup(groupId).Rename(name);
+    }
+
+    /// <summary>
+    /// Assigns an entry to a group. Application validates that the entry belongs to the competition.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryId">The entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AssignEntryToGroup(GroupId groupId, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
+        if (owningGroup is not null)
+        {
+            if (owningGroup.Id.Equals(groupId))
+            {
+                return;
+            }
+
+            throw new DomainException(
+                $"Entry '{entryId}' is already assigned to another group.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        var group = GetGroup(groupId);
+        DemoteToDraftIfReady();
+        group.Assign(entryId);
+    }
+
+    /// <summary>
+    /// Removes an entry from a group.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryId">The entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveEntryFromGroup(GroupId groupId, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var group = GetGroup(groupId);
+        if (!group.Contains(entryId))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' was not found in group '{groupId}'.",
+                StageErrorCodes.EntryNotFound);
+        }
+
+        DemoteToDraftIfReady();
+        group.Remove(entryId);
+    }
+
+    /// <summary>
+    /// Arranges groups in the given order. No-op when the order is unchanged.
+    /// </summary>
+    /// <param name="orderedGroupIds">A permutation of current group identities.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ArrangeGroups(IReadOnlyList<GroupId> orderedGroupIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(orderedGroupIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsurePermutation(orderedGroupIds, _groups.ConvertAll(g => g.Id));
+
+        if (_groups.Select(g => g.Id).SequenceEqual(orderedGroupIds))
+        {
+            return;
+        }
+
+        DemoteToDraftIfReady();
+        var map = _groups.ToDictionary(g => g.Id);
+        _groups.Clear();
+        foreach (var id in orderedGroupIds)
+        {
+            _groups.Add(map[id]);
+        }
+    }
+
+    /// <summary>
+    /// Adds a round to the stage.
+    /// </summary>
+    /// <param name="name">The round name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created round.</returns>
+    public Round AddRound(string name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsureCanAddRound();
+
+        DemoteToDraftIfReady();
+        var round = new Round(RoundId.New(), name);
+        _rounds.Add(round);
+        Raise(new StageRoundAdded(Id, round.Id, clock));
+        return round;
+    }
+
+    /// <summary>
+    /// Removes a round from the stage.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveRound(RoundId roundId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+
+        DemoteToDraftIfReady();
+        _rounds.Remove(round);
+        Raise(new StageRoundRemoved(Id, roundId, clock));
+    }
+
+    /// <summary>
+    /// Renames a round. No-op when the normalized name is unchanged.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="name">The new name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RenameRound(RoundId roundId, string name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+        round.Rename(name);
+    }
+
+    /// <summary>
+    /// Arranges rounds in the given order. No-op when the order is unchanged.
+    /// </summary>
+    /// <param name="orderedRoundIds">A permutation of current round identities.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ArrangeRounds(IReadOnlyList<RoundId> orderedRoundIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(orderedRoundIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsurePermutation(orderedRoundIds, _rounds.ConvertAll(r => r.Id));
+
+        if (_rounds.Select(r => r.Id).SequenceEqual(orderedRoundIds))
+        {
+            return;
+        }
+
+        DemoteToDraftIfReady();
+        var map = _rounds.ToDictionary(r => r.Id);
+        _rounds.Clear();
+        foreach (var id in orderedRoundIds)
+        {
+            _rounds.Add(map[id]);
+        }
+    }
+
+    /// <summary>
+    /// Adds a matchday to the stage.
+    /// </summary>
+    /// <param name="number">The 1-based matchday number.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created matchday.</returns>
+    public Matchday AddMatchday(int number, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsureCanAddMatchday();
+
+        DemoteToDraftIfReady();
+        var matchday = new Matchday(MatchdayId.New(), number);
+        _matchdays.Add(matchday);
+        Raise(new StageMatchdayAdded(Id, matchday.Id, clock));
+        return matchday;
+    }
+
+    /// <summary>
+    /// Removes a matchday from the stage.
+    /// </summary>
+    /// <param name="matchdayId">The matchday identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveMatchday(MatchdayId matchdayId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
+            ?? throw new DomainException(
+                $"Matchday '{matchdayId}' was not found.",
+                StageErrorCodes.MatchdayNotFound);
+
+        DemoteToDraftIfReady();
+        _matchdays.Remove(matchday);
+        Raise(new StageMatchdayRemoved(Id, matchdayId, clock));
+    }
+
+    /// <summary>
+    /// Arranges matchdays in the given order. No-op when the order is unchanged.
+    /// </summary>
+    /// <param name="orderedMatchdayIds">A permutation of current matchday identities.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ArrangeMatchdays(IReadOnlyList<MatchdayId> orderedMatchdayIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(orderedMatchdayIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsurePermutation(orderedMatchdayIds, _matchdays.ConvertAll(m => m.Id));
+
+        if (_matchdays.Select(m => m.Id).SequenceEqual(orderedMatchdayIds))
+        {
+            return;
+        }
+
+        DemoteToDraftIfReady();
+        var map = _matchdays.ToDictionary(m => m.Id);
+        _matchdays.Clear();
+        foreach (var id in orderedMatchdayIds)
+        {
+            _matchdays.Add(map[id]);
+        }
+    }
+
+    /// <summary>
+    /// Prepares the stage for its current abstraction level (Draft to Ready).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Prepare(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Draft, "Stage can only be prepared from Draft.");
+
+        if (!HasStructure)
+        {
+            throw new DomainException(
+                "Stage requires structure before Prepare.",
+                StageErrorCodes.NotReady);
+        }
+
+        // Elimination (Phase 3.5): ≥1 Round is enough; fixtures deferred.
+        // Championship: Matchdays only. Poules: Groups + Matchdays + ≥1 entry.
+        if (_rounds.Count == 0 && _groups.Count > 0)
+        {
+            if (_matchdays.Count == 0)
+            {
+                throw new DomainException(
+                    "Poule stage requires at least one matchday before Prepare.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            if (_groups.All(g => g.EntryIds.Count == 0))
+            {
+                throw new DomainException(
+                    "Poule stage requires at least one group with an entry before Prepare.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+        }
+
+        Status = StageStatus.Ready;
+        Raise(new StagePrepared(Id, clock));
+    }
+
+    /// <summary>
+    /// Starts the stage (Ready to Running).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Start(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Ready, "Stage can only be started from Ready.");
+        Status = StageStatus.Running;
+        Raise(new StageStarted(Id, clock));
+    }
+
+    /// <summary>
+    /// Suspends a running stage.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Suspend(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Running, "Stage can only be suspended from Running.");
+        Status = StageStatus.Suspended;
+        Raise(new StageSuspended(Id, clock));
+    }
+
+    /// <summary>
+    /// Resumes a suspended stage.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Resume(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Suspended, "Stage can only be resumed from Suspended.");
+        Status = StageStatus.Running;
+        Raise(new StageResumed(Id, clock));
+    }
+
+    /// <summary>
+    /// Completes the stage.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Complete(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status is not (StageStatus.Running or StageStatus.Suspended))
+        {
+            throw new DomainException(
+                $"Stage cannot be completed from '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+
+        Status = StageStatus.Completed;
+        Raise(new StageCompleted(Id, clock));
+    }
+
+    private static void EnsurePermutation<TId>(IReadOnlyList<TId> ordered, IReadOnlyList<TId> current)
+        where TId : notnull
+    {
+        if (ordered.Count != current.Count
+            || ordered.Distinct().Count() != ordered.Count
+            || ordered.Any(id => !current.Contains(id)))
+        {
+            throw new DomainException(
+                "Order must be a permutation of the current identities.",
+                StageErrorCodes.InvalidOrder);
+        }
+    }
+
+    private void DemoteToDraftIfReady()
+    {
+        if (Status == StageStatus.Ready)
+        {
+            Status = StageStatus.Draft;
+        }
+    }
+
+    private void EnsureDraftOrReady()
+    {
+        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            throw new DomainException(
+                $"Operation is not allowed when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureStructureMutable()
+    {
+        if (Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Structure cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+    }
+
+    private void EnsureCanAddGroup()
+    {
+        if (_rounds.Count > 0)
+        {
+            throw new DomainException(
+                "Groups cannot be combined with rounds.",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureCanAddRound()
+    {
+        if (_groups.Count > 0)
+        {
+            throw new DomainException(
+                "Rounds cannot be combined with groups.",
+                StageErrorCodes.InvalidComposition);
+        }
+
+        if (_matchdays.Count > 0)
+        {
+            throw new DomainException(
+                "Rounds cannot be combined with matchdays.",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureCanAddMatchday()
+    {
+        if (_rounds.Count > 0)
+        {
+            throw new DomainException(
+                "Matchdays cannot be combined with rounds.",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureStatus(StageStatus expected, string message)
+    {
+        if (Status != expected)
+        {
+            throw new DomainException(message, StageErrorCodes.InvalidTransition);
+        }
+    }
+}

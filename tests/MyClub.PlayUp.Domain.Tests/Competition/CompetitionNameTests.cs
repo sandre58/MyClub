@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competition;
 using Xunit;
 
-namespace MyClub.PlayUp.Domain.Tests.Competitions;
+namespace MyClub.PlayUp.Domain.Tests.Competition;
 
 public sealed class CompetitionNameTests
 {
