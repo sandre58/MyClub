@@ -10,11 +10,13 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// A matchday (journée) within a stage. Placement at Stage level is provisional until Match.
+/// A matchday (journée) within a stage, holding fixtures for championship or poule calendars.
 /// </summary>
 [DebuggerDisplay("Matchday {Number}")]
 public sealed class Matchday : Entity<MatchdayId>
 {
+    private readonly List<Fixture> _fixtures = [];
+
     internal Matchday(MatchdayId id, int number)
         : base(id)
     {
@@ -32,4 +34,26 @@ public sealed class Matchday : Entity<MatchdayId>
     /// Gets the matchday number (1-based).
     /// </summary>
     public int Number { get; }
+
+    /// <summary>
+    /// Gets the fixtures belonging to this matchday.
+    /// </summary>
+    public IReadOnlyList<Fixture> Fixtures => _fixtures.AsReadOnly();
+
+    internal void AddFixture(Fixture fixture) => _fixtures.Add(fixture);
+
+    internal bool RemoveFixture(FixtureId fixtureId)
+    {
+        var index = _fixtures.FindIndex(f => f.Id.Equals(fixtureId));
+        if (index < 0)
+        {
+            return false;
+        }
+
+        _fixtures.RemoveAt(index);
+        return true;
+    }
+
+    internal Fixture? FindFixture(FixtureId fixtureId) =>
+        _fixtures.FirstOrDefault(f => f.Id.Equals(fixtureId));
 }

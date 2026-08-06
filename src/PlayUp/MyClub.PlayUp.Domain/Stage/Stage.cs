@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stage.Events;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Aggregate root for a competition phase: lifecycle and structure (groups, rounds, matchdays).
+/// Aggregate root for a competition phase: lifecycle and structure (groups, rounds, matchdays, fixtures).
 /// </summary>
 [DebuggerDisplay("{Name} ({Status})")]
 public sealed class Stage : AggregateRoot<StageId>
@@ -114,6 +114,40 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="matchdayId">The matchday identity.</param>
     /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
     public bool HasMatchday(MatchdayId matchdayId) => _matchdays.Any(m => m.Id.Equals(matchdayId));
+
+    /// <summary>
+    /// Gets a fixture by identity.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <returns>The fixture.</returns>
+    public Fixture GetFixture(FixtureId fixtureId) =>
+        FindFixture(fixtureId)
+        ?? throw new DomainException($"Fixture '{fixtureId}' was not found.", StageErrorCodes.FixtureNotFound);
+
+    /// <summary>
+    /// Finds a fixture by identity, if any.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <returns>The fixture, or <see langword="null"/>.</returns>
+    public Fixture? FindFixture(FixtureId fixtureId) =>
+        _rounds.Select(r => r.FindFixture(fixtureId)).FirstOrDefault(f => f is not null)
+        ?? _matchdays.Select(m => m.FindFixture(fixtureId)).FirstOrDefault(f => f is not null);
+
+    /// <summary>
+    /// Determines whether a fixture is present.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasFixture(FixtureId fixtureId) => FindFixture(fixtureId) is not null;
+
+    /// <summary>
+    /// Determines whether a match identity is attached to any fixture in this stage.
+    /// </summary>
+    /// <param name="matchId">The match identity.</param>
+    /// <returns><see langword="true"/> if attached; otherwise, <see langword="false"/>.</returns>
+    public bool HasMatch(MatchId matchId) =>
+        _rounds.SelectMany(r => r.Fixtures).Any(f => f.Contains(matchId))
+        || _matchdays.SelectMany(m => m.Fixtures).Any(f => f.Contains(matchId));
 
     /// <summary>
     /// Renames the stage. No-op when the normalized name is unchanged.
@@ -405,6 +439,126 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Adds a fixture under a round.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created fixture.</returns>
+    public Fixture AddFixture(RoundId roundId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+
+        DemoteToDraftIfReady();
+        var fixture = new Fixture(FixtureId.New());
+        round.AddFixture(fixture);
+        Raise(new StageFixtureAdded(Id, fixture.Id, clock));
+        return fixture;
+    }
+
+    /// <summary>
+    /// Adds a fixture under a matchday.
+    /// </summary>
+    /// <param name="matchdayId">The matchday identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created fixture.</returns>
+    public Fixture AddFixture(MatchdayId matchdayId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
+            ?? throw new DomainException(
+                $"Matchday '{matchdayId}' was not found.",
+                StageErrorCodes.MatchdayNotFound);
+
+        DemoteToDraftIfReady();
+        var fixture = new Fixture(FixtureId.New());
+        matchday.AddFixture(fixture);
+        Raise(new StageFixtureAdded(Id, fixture.Id, clock));
+        return fixture;
+    }
+
+    /// <summary>
+    /// Removes a fixture from the stage.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveFixture(FixtureId fixtureId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        _ = GetFixture(fixtureId);
+
+        DemoteToDraftIfReady();
+        if (_rounds.Any(round => round.RemoveFixture(fixtureId)))
+        {
+            Raise(new StageFixtureRemoved(Id, fixtureId, clock));
+            return;
+        }
+
+        if (!_matchdays.Any(matchday => matchday.RemoveFixture(fixtureId))) return;
+        Raise(new StageFixtureRemoved(Id, fixtureId, clock));
+    }
+
+    /// <summary>
+    /// Attaches a match identity to a fixture. No-op when already on that fixture.
+    /// Application validates that the match belongs to this stage (<c>Match.StageId</c>).
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="matchId">The match identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AttachMatch(FixtureId fixtureId, MatchId matchId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var fixture = GetFixture(fixtureId);
+        if (fixture.Contains(matchId))
+        {
+            return;
+        }
+
+        if (HasMatch(matchId))
+        {
+            throw new DomainException(
+                $"Match '{matchId}' is already attached to another fixture.",
+                StageErrorCodes.MatchAlreadyAttached);
+        }
+
+        DemoteToDraftIfReady();
+        fixture.AttachMatch(matchId);
+        Raise(new StageMatchAttached(Id, fixtureId, matchId, clock));
+    }
+
+    /// <summary>
+    /// Detaches a match identity from a fixture.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="matchId">The match identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void DetachMatch(FixtureId fixtureId, MatchId matchId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var fixture = GetFixture(fixtureId);
+        if (!fixture.Contains(matchId))
+        {
+            throw new DomainException(
+                $"Match '{matchId}' is not attached to fixture '{fixtureId}'.",
+                StageErrorCodes.MatchNotAttached);
+        }
+
+        DemoteToDraftIfReady();
+        fixture.DetachMatch(matchId);
+        Raise(new StageMatchDetached(Id, fixtureId, matchId, clock));
+    }
+
+    /// <summary>
     /// Prepares the stage for its current abstraction level (Draft to Ready).
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
@@ -420,7 +574,7 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.NotReady);
         }
 
-        // Elimination (Phase 3.5): ≥1 Round is enough; fixtures deferred.
+        // Elimination (Phase 5.5): ≥1 Round is enough; fixtures optional for Prepare.
         // Championship: Matchdays only. Poules: Groups + Matchdays + ≥1 entry.
         if (_rounds.Count == 0 && _groups.Count > 0)
         {

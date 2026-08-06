@@ -75,4 +75,19 @@ public static class StageErrorCodes
     /// Gets the code when a group or round name is invalid.
     /// </summary>
     public const string InvalidDisplayName = "Stage.InvalidDisplayName";
+
+    /// <summary>
+    /// Gets the code when a fixture cannot be found.
+    /// </summary>
+    public const string FixtureNotFound = "Stage.FixtureNotFound";
+
+    /// <summary>
+    /// Gets the code when a match identity is already attached to a fixture in the stage.
+    /// </summary>
+    public const string MatchAlreadyAttached = "Stage.MatchAlreadyAttached";
+
+    /// <summary>
+    /// Gets the code when a match identity is not attached to the target fixture.
+    /// </summary>
+    public const string MatchNotAttached = "Stage.MatchNotAttached";
 }

@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// An elimination round within a stage (without fixtures in Phase 3.5).
+/// An elimination round within a stage.
 /// </summary>
 [DebuggerDisplay("{Name}")]
 public sealed class Round : Entity<RoundId>
@@ -20,6 +20,8 @@ public sealed class Round : Entity<RoundId>
     /// </summary>
     public const int NameMaxLength = 100;
 
+    private readonly List<Fixture> _fixtures = [];
+
     internal Round(RoundId id, string name)
         : base(id) =>
         Name = NormalizeName(name);
@@ -28,6 +30,11 @@ public sealed class Round : Entity<RoundId>
     /// Gets the round display name.
     /// </summary>
     public string Name { get; private set; }
+
+    /// <summary>
+    /// Gets the fixtures belonging to this round.
+    /// </summary>
+    public IReadOnlyList<Fixture> Fixtures => _fixtures.AsReadOnly();
 
     internal void Rename(string name)
     {
@@ -39,6 +46,23 @@ public sealed class Round : Entity<RoundId>
 
         Name = normalized;
     }
+
+    internal void AddFixture(Fixture fixture) => _fixtures.Add(fixture);
+
+    internal bool RemoveFixture(FixtureId fixtureId)
+    {
+        var index = _fixtures.FindIndex(f => f.Id.Equals(fixtureId));
+        if (index < 0)
+        {
+            return false;
+        }
+
+        _fixtures.RemoveAt(index);
+        return true;
+    }
+
+    internal Fixture? FindFixture(FixtureId fixtureId) =>
+        _fixtures.FirstOrDefault(f => f.Id.Equals(fixtureId));
 
     private static string NormalizeName(string name)
     {
