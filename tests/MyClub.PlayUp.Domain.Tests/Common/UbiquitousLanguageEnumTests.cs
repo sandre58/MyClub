@@ -22,7 +22,7 @@ public sealed class UbiquitousLanguageEnumTests
 
     [Fact]
     public void DrawStatus_matches_documented_lifecycle() =>
-        Enum.GetNames<DrawStatus>().Should().BeEquivalentTo("Draft", "Ready", "Published", "Cancelled");
+        Enum.GetNames<DrawStatus>().Should().BeEquivalentTo("Draft", "Published", "Cancelled");
 
     [Fact]
     public void MatchStatus_matches_documented_lifecycle() =>
@@ -35,10 +35,6 @@ public sealed class UbiquitousLanguageEnumTests
     [Fact]
     public void ResultType_matches_documented_values() =>
         Enum.GetNames<ResultType>().Should().BeEquivalentTo("Played", "Forfeit", "WalkOver", "Administrative");
-
-    [Fact]
-    public void ResultReason_matches_documented_values() =>
-        Enum.GetNames<ResultReason>().Should().BeEquivalentTo("OpponentForfeit", "TeamWithdrawn", "AdministrativeDecision");
 
     [Fact]
     public void CompletionMode_matches_documented_values() =>

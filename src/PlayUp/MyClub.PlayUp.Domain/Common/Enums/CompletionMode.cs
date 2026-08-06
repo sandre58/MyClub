@@ -17,12 +17,12 @@ public enum CompletionMode
     Normal = 0,
 
     /// <summary>
-    /// Competition completed by administrative decision.
+    /// Organizer closed the competition with an official outcome.
     /// </summary>
     Administrative = 1,
 
     /// <summary>
-    /// Competition was abandoned.
+    /// Competition was stopped without a sporting conclusion.
     /// </summary>
     Abandoned = 2
 }
