@@ -30,6 +30,7 @@ public sealed class CompetitionRegulationTests
 
         // Assert
         competition.Regulation.Should().Be(regulation);
+        ReferenceEquals(competition.Regulation, regulation).Should().BeFalse();
         competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionCreated>();
     }
 

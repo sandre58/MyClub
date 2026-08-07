@@ -141,6 +141,51 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Replaces draw rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    /// <param name="drawRules">The new draw rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceDrawRules(DrawRules? drawRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        Regulation = Regulation.WithDrawRules(drawRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces qualification rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceQualificationRules(QualificationRules? qualificationRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        Regulation = Regulation.WithQualificationRules(qualificationRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces the default stage tie format (source for new rounds). Allowed in Draft or Ready.
+    /// </summary>
+    /// <param name="tieFormat">The new default tie format, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceDefaultTieFormat(TieFormat? tieFormat, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        Regulation = Regulation.WithTieFormat(tieFormat);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
     /// Gets a group by identity.
     /// </summary>
     /// <param name="groupId">The group identity.</param>

@@ -71,7 +71,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var competition = new Competition(CompetitionId.New(), name, regulation);
+        var competition = new Competition(CompetitionId.New(), name, regulation.Copy());
         competition.Raise(new CompetitionCreated(competition.Id, name.Value, clock));
         return competition;
     }
@@ -89,7 +89,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         EnsureDraftOrReady();
         DemoteToDraftIfReady();
 
-        Regulation = regulation;
+        Regulation = regulation.Copy();
         Raise(new CompetitionRegulationReplaced(Id, clock));
     }
 

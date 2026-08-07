@@ -43,4 +43,38 @@ public sealed record Regulation
     /// Gets the standing rules.
     /// </summary>
     public StandingRules StandingRules { get; }
+
+    /// <summary>
+    /// Returns an independent copy (new nested value-object instances).
+    /// </summary>
+    /// <returns>A deep copy of this regulation.</returns>
+    public Regulation Copy() =>
+        new(
+            new EntryRules(EntryRules.MinimumTeams, EntryRules.MaximumTeams),
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(StandingRules));
+
+    private static MatchRules CloneMatchRules(MatchRules source)
+    {
+        var duration = new MatchDuration(
+            source.Duration.DurationPerPeriod,
+            source.Duration.NumberOfPeriods,
+            source.Duration.HalfTimeDuration);
+        var administrative = new AdministrativeResultPolicy(
+            source.AdministrativeResultPolicy.ForfeitWinnerGoals,
+            source.AdministrativeResultPolicy.ForfeitLoserGoals);
+        ExtraTimePolicy? extraTime = source.ExtraTimePolicy is { } et
+            ? new ExtraTimePolicy(et.DurationPerPeriod, et.NumberOfPeriods)
+            : null;
+        PenaltyShootoutPolicy? shootout = source.PenaltyShootoutPolicy is { } ps
+            ? new PenaltyShootoutPolicy(ps.InitialKicksPerTeam)
+            : null;
+
+        return new MatchRules(duration, administrative, extraTime, shootout);
+    }
+
+    private static StandingRules CloneStandingRules(StandingRules source) =>
+        new(
+            new PointsPolicy(source.Points.WinPoints, source.Points.DrawPoints, source.Points.LossPoints),
+            [..source.RankingCriteria]);
 }
