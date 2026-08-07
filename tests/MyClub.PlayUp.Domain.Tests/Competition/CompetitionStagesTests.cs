@@ -39,7 +39,7 @@ public sealed class CompetitionStagesTests
     public void AddStage_rejects_duplicate()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var stageId = StageId.New();
         competition.AddStage(stageId, _clock);
 
@@ -71,7 +71,7 @@ public sealed class CompetitionStagesTests
     public void RemoveStage_missing_throws()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => competition.RemoveStage(StageId.New(), _clock);
@@ -84,7 +84,7 @@ public sealed class CompetitionStagesTests
     public void SetStageOrder_permutation_demotes_Ready_and_raises_event()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         var first = StageId.New();
         var second = StageId.New();
@@ -137,7 +137,7 @@ public sealed class CompetitionStagesTests
     public void SetStageOrder_event_payload_is_immutable_snapshot()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         var first = StageId.New();
         var second = StageId.New();
@@ -187,7 +187,7 @@ public sealed class CompetitionStagesTests
 
     private CompetitionAggregate CreateReady()
     {
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.AddStage(StageId.New(), _clock);
         competition.Prepare(_clock);

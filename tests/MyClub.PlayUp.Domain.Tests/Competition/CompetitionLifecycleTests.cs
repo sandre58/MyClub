@@ -22,11 +22,12 @@ public sealed class CompetitionLifecycleTests
     public void Create_starts_in_Draft_and_raises_CompetitionCreated()
     {
         // Arrange & Act
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Assert
         competition.Status.Should().Be(CompetitionStatus.Draft);
         competition.CompletionMode.Should().BeNull();
+        competition.Regulation.Should().Be(SampleRegulations.Standard());
         competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionCreated>();
     }
 
@@ -34,7 +35,7 @@ public sealed class CompetitionLifecycleTests
     public void Prepare_requires_active_entry_and_stage()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => competition.Prepare(_clock);
@@ -77,7 +78,7 @@ public sealed class CompetitionLifecycleTests
     public void Start_from_Draft_is_rejected()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => competition.Start(_clock);
@@ -212,7 +213,7 @@ public sealed class CompetitionLifecycleTests
     public void Complete_from_Draft_is_rejected()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => competition.Complete(CompletionMode.Normal, _clock);
@@ -252,7 +253,7 @@ public sealed class CompetitionLifecycleTests
 
     private CompetitionAggregate CreatePreparedCandidate()
     {
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.AddStage(StageId.New(), _clock);
         return competition;

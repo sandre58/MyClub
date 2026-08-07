@@ -7,11 +7,12 @@
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competition.Events;
+using MyClub.PlayUp.Domain.Rules;
 
 namespace MyClub.PlayUp.Domain.Competition;
 
 /// <summary>
-/// Aggregate root for a competition: lifecycle, entries, and ordered stage references.
+/// Aggregate root for a competition: lifecycle, entries, ordered stage references, and regulation.
 /// </summary>
 [DebuggerDisplay("{Name} ({Status})")]
 public sealed class Competition : AggregateRoot<CompetitionId>
@@ -19,10 +20,11 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     private readonly List<CompetitionEntry> _entries = [];
     private readonly List<StageId> _stageIds = [];
 
-    private Competition(CompetitionId id, CompetitionName name)
+    private Competition(CompetitionId id, CompetitionName name, Regulation regulation)
         : base(id)
     {
         Name = name;
+        Regulation = regulation;
         Status = CompetitionStatus.Draft;
     }
 
@@ -30,6 +32,11 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     /// Gets the competition name.
     /// </summary>
     public CompetitionName Name { get; private set; }
+
+    /// <summary>
+    /// Gets the competition regulation (entry, match, and standing rules).
+    /// </summary>
+    public Regulation Regulation { get; private set; }
 
     /// <summary>
     /// Gets the competition lifecycle status.
@@ -55,16 +62,35 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     /// Creates a new competition in Draft status.
     /// </summary>
     /// <param name="name">The competition name.</param>
+    /// <param name="regulation">The competition regulation.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created competition.</returns>
-    public static Competition Create(CompetitionName name, IClock clock)
+    public static Competition Create(CompetitionName name, Regulation regulation, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var competition = new Competition(CompetitionId.New(), name);
+        var competition = new Competition(CompetitionId.New(), name, regulation);
         competition.Raise(new CompetitionCreated(competition.Id, name.Value, clock));
         return competition;
+    }
+
+    /// <summary>
+    /// Replaces the competition regulation as a whole.
+    /// Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    /// <param name="regulation">The new regulation.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceRegulation(Regulation regulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(regulation);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        Regulation = regulation;
+        Raise(new CompetitionRegulationReplaced(Id, clock));
     }
 
     /// <summary>

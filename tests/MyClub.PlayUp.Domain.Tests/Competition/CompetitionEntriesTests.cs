@@ -39,7 +39,7 @@ public sealed class CompetitionEntriesTests
     public void AddEntry_rejects_duplicate_occupying_team()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var teamId = TeamId.New();
         competition.AddEntry(teamId, "Team A", _clock);
 
@@ -54,7 +54,7 @@ public sealed class CompetitionEntriesTests
     public void AddEntry_allows_reentry_after_Withdraw()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var teamId = TeamId.New();
         var first = competition.AddEntry(teamId, "Team A", _clock);
         competition.WithdrawEntry(first.Id, _clock);
@@ -135,7 +135,7 @@ public sealed class CompetitionEntriesTests
     public void ExcludeEntry_on_Draft_sets_Excluded()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.ClearDomainEvents();
 
@@ -181,7 +181,7 @@ public sealed class CompetitionEntriesTests
     public void AddEntry_allows_reentry_after_Exclude()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var teamId = TeamId.New();
         var first = competition.AddEntry(teamId, "Team A", _clock);
         competition.ExcludeEntry(first.Id, _clock);
@@ -198,7 +198,7 @@ public sealed class CompetitionEntriesTests
     public void WithdrawEntry_rejects_non_active_entry()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.WithdrawEntry(entry.Id, _clock);
 
@@ -213,7 +213,7 @@ public sealed class CompetitionEntriesTests
     public void AddEntry_rejects_invalid_display_name()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => competition.AddEntry(TeamId.New(), "   ", _clock);
@@ -240,7 +240,7 @@ public sealed class CompetitionEntriesTests
     public void GetEntry_throws_when_missing()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => competition.GetEntry(EntryId.New());
@@ -251,7 +251,7 @@ public sealed class CompetitionEntriesTests
 
     private CompetitionAggregate CreateReady()
     {
-        var competition = CompetitionAggregate.Create(new CompetitionName("League"), _clock);
+        var competition = CompetitionAggregate.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.AddStage(StageId.New(), _clock);
         competition.Prepare(_clock);
