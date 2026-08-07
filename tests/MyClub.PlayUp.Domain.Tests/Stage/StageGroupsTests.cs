@@ -23,7 +23,7 @@ public sealed class StageGroupsTests
     public void AssignEntryToGroup_adds_entry_to_group()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
         stage.ClearDomainEvents();
@@ -40,7 +40,7 @@ public sealed class StageGroupsTests
     public void AssignEntryToGroup_same_group_twice_is_noop()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
         stage.AssignEntryToGroup(group.Id, entryId, _clock);
@@ -61,7 +61,7 @@ public sealed class StageGroupsTests
     public void AssignEntryToGroup_cross_group_duplicate_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var groupA = stage.AddGroup("A", _clock);
         var groupB = stage.AddGroup("B", _clock);
         var entryId = EntryId.New();
@@ -94,7 +94,7 @@ public sealed class StageGroupsTests
     public void RemoveEntryFromGroup_removes_entry_and_demotes_Ready()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
         stage.AssignEntryToGroup(group.Id, entryId, _clock);
@@ -115,7 +115,7 @@ public sealed class StageGroupsTests
     public void RemoveEntryFromGroup_missing_entry_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
 
         // Act
@@ -129,7 +129,7 @@ public sealed class StageGroupsTests
     public void ArrangeGroups_permutation_reorders_and_demotes_Ready()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
         var b = stage.AddGroup("B", _clock);
         stage.AssignEntryToGroup(a.Id, EntryId.New(), _clock);
@@ -166,7 +166,7 @@ public sealed class StageGroupsTests
     public void ArrangeGroups_invalid_permutation_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
 
         // Act
@@ -180,7 +180,7 @@ public sealed class StageGroupsTests
     public void GetGroup_unknown_id_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => stage.GetGroup(GroupId.New());
@@ -193,7 +193,7 @@ public sealed class StageGroupsTests
     public void Events_order_Create_then_AddGroup_then_Prepare()
     {
         // Arrange & Act
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
         stage.AddMatchday(1, _clock);
@@ -211,7 +211,7 @@ public sealed class StageGroupsTests
     public void ArrangeRounds_and_Matchdays_follow_same_rules()
     {
         // Arrange — rounds
-        var cup = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var cup = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var r1 = cup.AddRound("QF", _clock);
         var r2 = cup.AddRound("SF", _clock);
         cup.Prepare(_clock);
@@ -222,7 +222,7 @@ public sealed class StageGroupsTests
         cup.Status.Should().Be(StageStatus.Draft);
 
         // Arrange — matchdays
-        var league = StageAggregate.Create(_competitionId, new StageName("League"), _clock);
+        var league = StageAggregate.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         var m1 = league.AddMatchday(1, _clock);
         var m2 = league.AddMatchday(2, _clock);
         league.Prepare(_clock);
@@ -236,7 +236,7 @@ public sealed class StageGroupsTests
 
     private StageAggregate CreateReadyPoules()
     {
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
         stage.AddMatchday(1, _clock);

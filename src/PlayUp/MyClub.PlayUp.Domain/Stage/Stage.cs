@@ -6,12 +6,13 @@
 
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stage.Events;
 
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Aggregate root for a competition phase: lifecycle and structure (groups, rounds, matchdays, fixtures).
+/// Aggregate root for a competition phase: lifecycle, structure, and materialized regulation.
 /// </summary>
 [DebuggerDisplay("{Name} ({Status})")]
 public sealed class Stage : AggregateRoot<StageId>
@@ -20,11 +21,12 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Round> _rounds = [];
     private readonly List<Matchday> _matchdays = [];
 
-    private Stage(StageId id, CompetitionId competitionId, StageName name)
+    private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
         : base(id)
     {
         CompetitionId = competitionId;
         Name = name;
+        Regulation = regulation;
         Status = StageStatus.Draft;
     }
 
@@ -37,6 +39,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the stage name.
     /// </summary>
     public StageName Name { get; private set; }
+
+    /// <summary>
+    /// Gets the materialized stage regulation (independent from the competition regulation).
+    /// </summary>
+    public StageRegulation Regulation { get; private set; }
 
     /// <summary>
     /// Gets the stage lifecycle status.
@@ -61,20 +68,76 @@ public sealed class Stage : AggregateRoot<StageId>
     private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
 
     /// <summary>
-    /// Creates a new stage in Draft status.
+    /// Creates a new stage in Draft status with a regulation materialized from the competition.
     /// </summary>
     /// <param name="competitionId">The owning competition identity.</param>
     /// <param name="name">The stage name.</param>
+    /// <param name="competitionRegulation">The competition regulation to materialize from.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created stage.</returns>
-    public static Stage Create(CompetitionId competitionId, StageName name, IClock clock)
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        Regulation competitionRegulation,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        return Create(competitionId, name, StageRegulation.MaterializeFrom(competitionRegulation), clock);
+    }
+
+    /// <summary>
+    /// Creates a new stage in Draft status with an independent copy of the given stage regulation.
+    /// </summary>
+    /// <param name="competitionId">The owning competition identity.</param>
+    /// <param name="name">The stage name.</param>
+    /// <param name="regulation">The stage regulation (cloned on create).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created stage.</returns>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        IClock clock)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var stage = new Stage(StageId.New(), competitionId, name);
+        var stage = new Stage(StageId.New(), competitionId, name, regulation.Copy());
         stage.Raise(new StageCreated(stage.Id, competitionId, name.Value, clock));
         return stage;
+    }
+
+    /// <summary>
+    /// Replaces the stage regulation as a whole (including match rules).
+    /// Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    /// <param name="regulation">The new stage regulation.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceRegulation(StageRegulation regulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(regulation);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        Regulation = regulation.Copy();
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces standing rules only. Allowed after Start (calculation ≠ structure).
+    /// </summary>
+    /// <param name="standingRules">The new standing rules.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceStandingRules(StandingRules standingRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(standingRules);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStandingRulesMutable();
+
+        Regulation = Regulation.WithStandingRules(standingRules);
+        Raise(new StageStandingRulesReplaced(Id, clock));
     }
 
     /// <summary>
@@ -678,6 +741,16 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Operation is not allowed when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureStandingRulesMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Standing rules cannot be modified when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
         }
     }

@@ -23,11 +23,13 @@ public sealed class StageLifecycleTests
     public void Create_starts_in_Draft_and_raises_StageCreated()
     {
         // Arrange & Act
-        var stage = StageAggregate.Create(_competitionId, new StageName("Groups"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
 
         // Assert
         stage.Status.Should().Be(StageStatus.Draft);
         stage.CompetitionId.Should().Be(_competitionId);
+        stage.Regulation.Should().NotBeNull();
+        stage.Regulation.MatchRules.Should().Be(SampleRegulations.Standard().MatchRules);
         var created = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageCreated>().Subject;
         created.CompetitionId.Should().Be(_competitionId);
         created.Name.Should().Be("Groups");
@@ -38,7 +40,7 @@ public sealed class StageLifecycleTests
     public void Create_rejects_invalid_name()
     {
         // Arrange & Act
-        var act = () => StageAggregate.Create(_competitionId, new StageName(" "), _clock);
+        var act = () => StageAggregate.Create(_competitionId, new StageName(" "), SampleRegulations.Standard(), _clock);
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.NameInvalid);
@@ -48,7 +50,7 @@ public sealed class StageLifecycleTests
     public void Prepare_without_structure_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Empty"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Empty"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => stage.Prepare(_clock);
@@ -76,7 +78,7 @@ public sealed class StageLifecycleTests
     public void Prepare_elimination_with_one_round_is_ready()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         stage.AddRound("Round of 16", _clock);
         stage.ClearDomainEvents();
 
@@ -92,7 +94,7 @@ public sealed class StageLifecycleTests
     public void Prepare_poules_requires_group_with_entry_and_matchday()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         stage.AddMatchday(1, _clock);
 
@@ -117,7 +119,7 @@ public sealed class StageLifecycleTests
     public void Prepare_poules_without_matchday_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
 
@@ -147,7 +149,7 @@ public sealed class StageLifecycleTests
     public void Start_from_Draft_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("X"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("X"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => stage.Start(_clock);
@@ -225,7 +227,7 @@ public sealed class StageLifecycleTests
     public void Complete_from_Draft_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("X"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("X"), SampleRegulations.Standard(), _clock);
 
         // Act
         var act = () => stage.Complete(_clock);
@@ -238,7 +240,7 @@ public sealed class StageLifecycleTests
     public void Rename_same_name_is_noop()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Groups"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         stage.ClearDomainEvents();
 
         // Act
@@ -324,7 +326,7 @@ public sealed class StageLifecycleTests
     public void CompetitionId_is_immutable_after_Create()
     {
         // Arrange & Act
-        var stage = StageAggregate.Create(_competitionId, new StageName("X"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("X"), SampleRegulations.Standard(), _clock);
 
         // Assert — no public setter; identity fixed at creation
         stage.CompetitionId.Should().Be(_competitionId);
@@ -333,7 +335,7 @@ public sealed class StageLifecycleTests
 
     private StageAggregate CreateChampionshipCandidate()
     {
-        var stage = StageAggregate.Create(_competitionId, new StageName("League"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
         return stage;
     }

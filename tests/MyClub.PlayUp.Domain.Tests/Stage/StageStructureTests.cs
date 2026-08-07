@@ -55,7 +55,7 @@ public sealed class StageStructureTests
     public void RemoveGroup_demotes_Ready_and_raises_StageGroupRemoved()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
         var b = stage.AddGroup("B", _clock);
         stage.AssignEntryToGroup(a.Id, EntryId.New(), _clock);
@@ -75,7 +75,7 @@ public sealed class StageStructureTests
     public void RenameRound_real_change_keeps_Ready_without_event()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("QF", _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
@@ -93,7 +93,7 @@ public sealed class StageStructureTests
     public void RenameRound_same_name_is_noop()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
@@ -110,7 +110,7 @@ public sealed class StageStructureTests
     public void RemoveMatchday_raises_StageMatchdayRemoved_and_demotes_Ready()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("League"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         var first = stage.AddMatchday(1, _clock);
         stage.AddMatchday(2, _clock);
         stage.Prepare(_clock);
@@ -129,7 +129,7 @@ public sealed class StageStructureTests
     public void AddGroup_with_rounds_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         stage.AddRound("QF", _clock);
 
         // Act
@@ -143,7 +143,7 @@ public sealed class StageStructureTests
     public void AddRound_with_matchdays_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Mixed"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Mixed"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
 
         // Act
@@ -157,7 +157,7 @@ public sealed class StageStructureTests
     public void AddRound_with_groups_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Mixed"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Mixed"), SampleRegulations.Standard(), _clock);
         stage.AddGroup("A", _clock);
 
         // Act
@@ -171,7 +171,7 @@ public sealed class StageStructureTests
     public void AddMatchday_with_rounds_is_rejected()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         stage.AddRound("SF", _clock);
 
         // Act
@@ -185,7 +185,7 @@ public sealed class StageStructureTests
     public void RemoveGroup_raises_StageGroupRemoved()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         stage.ClearDomainEvents();
 
@@ -201,7 +201,7 @@ public sealed class StageStructureTests
     public void RemoveRound_raises_StageRoundRemoved()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("QF", _clock);
         stage.ClearDomainEvents();
 
@@ -217,7 +217,7 @@ public sealed class StageStructureTests
     public void AddRound_raises_StageRoundAdded()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         stage.ClearDomainEvents();
 
         // Act
@@ -233,7 +233,7 @@ public sealed class StageStructureTests
     public void AddGroup_raises_StageGroupAdded()
     {
         // Arrange
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         stage.ClearDomainEvents();
 
         // Act
@@ -279,7 +279,7 @@ public sealed class StageStructureTests
 
     private StageAggregate CreateReadyChampionship()
     {
-        var stage = StageAggregate.Create(_competitionId, new StageName("League"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         return stage;
@@ -287,7 +287,7 @@ public sealed class StageStructureTests
 
     private StageAggregate CreateReadyPoules()
     {
-        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
         stage.AddMatchday(1, _clock);

@@ -397,14 +397,14 @@ public sealed class StageFixtureTests
 
     private StageAggregate CreateCupWithRound(out Round round)
     {
-        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         round = stage.AddRound("QF", _clock);
         return stage;
     }
 
     private StageAggregate CreateChampionshipWithMatchday(out Matchday matchday)
     {
-        var stage = StageAggregate.Create(_competitionId, new StageName("League"), _clock);
+        var stage = StageAggregate.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         matchday = stage.AddMatchday(1, _clock);
         return stage;
     }
