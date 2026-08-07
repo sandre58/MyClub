@@ -94,19 +94,21 @@ public sealed class QualificationRulesTests
         // Arrange
         var groupId = GroupId.New();
         var stageId = StageId.New();
-        QualificationPath CreatePath() => new(
-            1,
-            QualificationSource.FromGroup(groupId),
-            new QualificationSelection(SelectionMode.Position, 1),
-            new QualificationDestination(stageId, "Semi1"));
 
         // Act
-        var left = new QualificationRules([CreatePath()]);
-        var right = new QualificationRules([CreatePath()]);
+        var left = new QualificationRules([createPath()]);
+        var right = new QualificationRules([createPath()]);
 
         // Assert
         left.Should().Be(right);
         left.GetHashCode().Should().Be(right.GetHashCode());
+        return;
+
+        QualificationPath createPath() => new(
+            1,
+            QualificationSource.FromGroup(groupId),
+            new QualificationSelection(SelectionMode.Position, 1),
+            new QualificationDestination(stageId, "Semi1"));
     }
 
     [Fact]

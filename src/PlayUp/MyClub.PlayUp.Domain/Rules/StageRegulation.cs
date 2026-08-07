@@ -153,10 +153,10 @@ public sealed record StageRegulation
         var administrative = new AdministrativeResultPolicy(
             source.AdministrativeResultPolicy.ForfeitWinnerGoals,
             source.AdministrativeResultPolicy.ForfeitLoserGoals);
-        ExtraTimePolicy? extraTime = source.ExtraTimePolicy is { } et
+        var extraTime = source.ExtraTimePolicy is { } et
             ? new ExtraTimePolicy(et.DurationPerPeriod, et.NumberOfPeriods)
             : null;
-        PenaltyShootoutPolicy? shootout = source.PenaltyShootoutPolicy is { } ps
+        var shootout = source.PenaltyShootoutPolicy is { } ps
             ? new PenaltyShootoutPolicy(ps.InitialKicksPerTeam)
             : null;
 

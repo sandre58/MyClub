@@ -23,31 +23,17 @@ public sealed record QualificationSource
     /// <param name="groupId">Group identity when selecting from a specific group; otherwise <see langword="null"/>.</param>
     public QualificationSource(RankingScope? scope = null, GroupId? groupId = null)
     {
-        if (scope is { } definedScope && !Enum.IsDefined(definedScope))
+        scope = scope switch
         {
-            throw new DomainException(
-                "Ranking scope is unknown.",
-                RulesErrorCodes.QualificationRulesInvalid);
-        }
-
-        if (scope == RankingScope.Group && groupId is null)
-        {
-            throw new DomainException(
-                "Group ranking scope requires a group identity.",
-                RulesErrorCodes.QualificationRulesInvalid);
-        }
-
-        if (scope == RankingScope.Overall && groupId is not null)
-        {
-            throw new DomainException(
-                "Overall ranking scope cannot target a specific group.",
-                RulesErrorCodes.QualificationRulesInvalid);
-        }
-
-        if (scope is null && groupId is not null)
-        {
-            scope = RankingScope.Group;
-        }
+            { } definedScope when !Enum.IsDefined(definedScope) => throw new DomainException(
+                "Ranking scope is unknown.", RulesErrorCodes.QualificationRulesInvalid),
+            RankingScope.Group when groupId is null => throw new DomainException(
+                "Group ranking scope requires a group identity.", RulesErrorCodes.QualificationRulesInvalid),
+            RankingScope.Overall when groupId is not null => throw new DomainException(
+                "Overall ranking scope cannot target a specific group.", RulesErrorCodes.QualificationRulesInvalid),
+            null when groupId is not null => RankingScope.Group,
+            _ => scope
+        };
 
         Scope = scope;
         GroupId = groupId;

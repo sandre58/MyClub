@@ -41,13 +41,6 @@ public sealed record DrawRules
         SeedingRules = seedingRules;
         PotRules = potRules;
         _constraints = constraints is null ? [] : [..constraints];
-
-        if (_constraints.Any(static c => c is null))
-        {
-            throw new DomainException(
-                "Draw constraints cannot contain null entries.",
-                RulesErrorCodes.DrawRulesInvalid);
-        }
     }
 
     /// <summary>

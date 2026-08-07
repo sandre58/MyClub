@@ -31,13 +31,6 @@ public sealed record QualificationRules
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
-        if (paths.Any(static p => p is null))
-        {
-            throw new DomainException(
-                "Qualification paths cannot contain null entries.",
-                RulesErrorCodes.QualificationRulesInvalid);
-        }
-
         if (paths.Select(p => p.Order).Distinct().Count() != paths.Count)
         {
             throw new DomainException(
