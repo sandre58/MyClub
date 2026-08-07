@@ -6,11 +6,12 @@
 
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
 
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// An elimination round within a stage.
+/// An elimination round within a stage. Carries <see cref="TieFormat"/> only (no MatchRules).
 /// </summary>
 [DebuggerDisplay("{Name}")]
 public sealed class Round : Entity<RoundId>
@@ -22,14 +23,22 @@ public sealed class Round : Entity<RoundId>
 
     private readonly List<Fixture> _fixtures = [];
 
-    internal Round(RoundId id, string name)
-        : base(id) =>
+    internal Round(RoundId id, string name, TieFormat? tieFormat)
+        : base(id)
+    {
         Name = NormalizeName(name);
+        TieFormat = tieFormat;
+    }
 
     /// <summary>
     /// Gets the round display name.
     /// </summary>
     public string Name { get; private set; }
+
+    /// <summary>
+    /// Gets the tie format for confrontations in this round, if any.
+    /// </summary>
+    public TieFormat? TieFormat { get; private set; }
 
     /// <summary>
     /// Gets the fixtures belonging to this round.
@@ -46,6 +55,8 @@ public sealed class Round : Entity<RoundId>
 
         Name = normalized;
     }
+
+    internal void ReplaceTieFormat(TieFormat? tieFormat) => TieFormat = tieFormat;
 
     internal void AddFixture(Fixture fixture) => _fixtures.Add(fixture);
 

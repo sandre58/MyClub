@@ -358,22 +358,51 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Adds a round to the stage.
+    /// Adds a round to the stage, materializing <see cref="StageRegulation.TieFormat"/> when present.
     /// </summary>
     /// <param name="name">The round name.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created round.</returns>
-    public Round AddRound(string name, IClock clock)
+    public Round AddRound(string name, IClock clock) =>
+        AddRound(name, Regulation.TieFormat, clock);
+
+    /// <summary>
+    /// Adds a round with an explicit tie format (or <see langword="null"/> to omit one).
+    /// </summary>
+    /// <param name="name">The round name.</param>
+    /// <param name="tieFormat">The tie format to materialize, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created round.</returns>
+    public Round AddRound(string name, TieFormat? tieFormat, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
         EnsureCanAddRound();
 
         DemoteToDraftIfReady();
-        var round = new Round(RoundId.New(), name);
+        var round = new Round(RoundId.New(), name, tieFormat?.Copy());
         _rounds.Add(round);
         Raise(new StageRoundAdded(Id, round.Id, clock));
         return round;
+    }
+
+    /// <summary>
+    /// Replaces the tie format of a round. Allowed before the stage structure is locked.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="tieFormat">The new tie format, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceRoundTieFormat(RoundId roundId, TieFormat? tieFormat, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+
+        DemoteToDraftIfReady();
+        round.ReplaceTieFormat(tieFormat?.Copy());
+        Raise(new StageRoundTieFormatReplaced(Id, roundId, clock));
     }
 
     /// <summary>

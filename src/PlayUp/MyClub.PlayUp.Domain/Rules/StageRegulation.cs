@@ -8,7 +8,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Stage regulation value object: materialized phase rules (independent from <see cref="Regulation"/>).
-/// V1 active families: match and standing rules. Draw / qualification / tie-format arrive in later phases.
+/// Active families: match, standing, optional draw / qualification rules and default <see cref="TieFormat"/>.
 /// </summary>
 public sealed record StageRegulation
 {
@@ -17,13 +17,24 @@ public sealed record StageRegulation
     /// </summary>
     /// <param name="matchRules">How an individual match is played in this stage.</param>
     /// <param name="standingRules">How standings are calculated in this stage.</param>
-    public StageRegulation(MatchRules matchRules, StandingRules standingRules)
+    /// <param name="tieFormat">Default tie format copied to rounds on add; <see langword="null"/> when absent.</param>
+    /// <param name="drawRules">Draw parameters when the stage uses a draw; <see langword="null"/> when absent.</param>
+    /// <param name="qualificationRules">Routing rules when participants leave this stage; <see langword="null"/> when absent.</param>
+    public StageRegulation(
+        MatchRules matchRules,
+        StandingRules standingRules,
+        TieFormat? tieFormat = null,
+        DrawRules? drawRules = null,
+        QualificationRules? qualificationRules = null)
     {
         ArgumentNullException.ThrowIfNull(matchRules);
         ArgumentNullException.ThrowIfNull(standingRules);
 
         MatchRules = matchRules;
         StandingRules = standingRules;
+        TieFormat = tieFormat;
+        DrawRules = drawRules;
+        QualificationRules = qualificationRules;
     }
 
     /// <summary>
@@ -37,8 +48,23 @@ public sealed record StageRegulation
     public StandingRules StandingRules { get; }
 
     /// <summary>
+    /// Gets the default tie format for rounds when present; otherwise <see langword="null"/>.
+    /// </summary>
+    public TieFormat? TieFormat { get; }
+
+    /// <summary>
+    /// Gets the draw rules when present; otherwise <see langword="null"/>.
+    /// </summary>
+    public DrawRules? DrawRules { get; }
+
+    /// <summary>
+    /// Gets the qualification rules when present; otherwise <see langword="null"/>.
+    /// </summary>
+    public QualificationRules? QualificationRules { get; }
+
+    /// <summary>
     /// Materializes an independent stage regulation from a competition regulation.
-    /// Copies match and standing rules by value (new instances); does not copy entry rules.
+    /// Copies match and standing rules by value; optional families default to <see langword="null"/>.
     /// </summary>
     /// <param name="competitionRegulation">The source competition regulation.</param>
     /// <returns>A new stage regulation with no shared nested references.</returns>
@@ -56,7 +82,12 @@ public sealed record StageRegulation
     /// </summary>
     /// <returns>An independent copy.</returns>
     public StageRegulation Copy() =>
-        new(CloneMatchRules(MatchRules), CloneStandingRules(StandingRules));
+        new(
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(StandingRules),
+            TieFormat?.Copy(),
+            DrawRules?.Copy(),
+            QualificationRules?.Copy());
 
     /// <summary>
     /// Returns a copy with replaced standing rules (new nested instances for standing only).
@@ -66,8 +97,52 @@ public sealed record StageRegulation
     public StageRegulation WithStandingRules(StandingRules standingRules)
     {
         ArgumentNullException.ThrowIfNull(standingRules);
-        return new StageRegulation(CloneMatchRules(MatchRules), CloneStandingRules(standingRules));
+        return new StageRegulation(
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(standingRules),
+            TieFormat?.Copy(),
+            DrawRules?.Copy(),
+            QualificationRules?.Copy());
     }
+
+    /// <summary>
+    /// Returns a copy with replaced default tie format.
+    /// </summary>
+    /// <param name="tieFormat">The new default tie format, or <see langword="null"/>.</param>
+    /// <returns>A new stage regulation.</returns>
+    public StageRegulation WithTieFormat(TieFormat? tieFormat) =>
+        new(
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(StandingRules),
+            tieFormat?.Copy(),
+            DrawRules?.Copy(),
+            QualificationRules?.Copy());
+
+    /// <summary>
+    /// Returns a copy with replaced draw rules.
+    /// </summary>
+    /// <param name="drawRules">The new draw rules, or <see langword="null"/>.</param>
+    /// <returns>A new stage regulation.</returns>
+    public StageRegulation WithDrawRules(DrawRules? drawRules) =>
+        new(
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(StandingRules),
+            TieFormat?.Copy(),
+            drawRules?.Copy(),
+            QualificationRules?.Copy());
+
+    /// <summary>
+    /// Returns a copy with replaced qualification rules.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <returns>A new stage regulation.</returns>
+    public StageRegulation WithQualificationRules(QualificationRules? qualificationRules) =>
+        new(
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(StandingRules),
+            TieFormat?.Copy(),
+            DrawRules?.Copy(),
+            qualificationRules?.Copy());
 
     private static MatchRules CloneMatchRules(MatchRules source)
     {
