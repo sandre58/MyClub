@@ -5,12 +5,30 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <!-- Physical folders under Common organize files; they must not append namespace segments (convention B / Rider). -->
+  <!-- Physical folders under Common / Rules organize files; they must not append namespace segments (convention B / Rider). -->
   <ItemGroup>
     <Folder Include="Common\Ids">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
     <Folder Include="Common\Enums">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Entry">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Match">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Standing">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\TieFormat">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Draw">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Qualification">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
   </ItemGroup>
