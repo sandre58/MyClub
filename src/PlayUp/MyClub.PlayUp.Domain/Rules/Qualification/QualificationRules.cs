@@ -51,7 +51,7 @@ public sealed record QualificationRules
     /// </summary>
     /// <returns>A deep copy of these qualification rules.</returns>
     public QualificationRules Copy() =>
-        new(_paths.Select(p => p.Copy()).ToArray());
+        new([.._paths.Select(p => p.Copy())]);
 
     /// <inheritdoc />
     public bool Equals(QualificationRules? other) =>

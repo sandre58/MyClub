@@ -20,6 +20,8 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Group> _groups = [];
     private readonly List<Round> _rounds = [];
     private readonly List<Matchday> _matchdays = [];
+    private readonly List<Slot> _slots = [];
+    private readonly List<DirectAssignment> _directAssignments = [];
 
     private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
         : base(id)
@@ -64,6 +66,16 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the matchdays in this stage.
     /// </summary>
     public IReadOnlyList<Matchday> Matchdays => _matchdays.AsReadOnly();
+
+    /// <summary>
+    /// Gets the positional slots in this stage.
+    /// </summary>
+    public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
+
+    /// <summary>
+    /// Gets the direct slot assignments (configuration feeds).
+    /// </summary>
+    public IReadOnlyList<DirectAssignment> DirectAssignments => _directAssignments.AsReadOnly();
 
     private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
 
@@ -167,6 +179,51 @@ public sealed class Stage : AggregateRoot<StageId>
         DemoteToDraftIfReady();
 
         Regulation = Regulation.WithQualificationRules(qualificationRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Each path fixture must belong to this stage.
+    /// </summary>
+    /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceProgressionRules(ProgressionRules? progressionRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (progressionRules is not null)
+        {
+            foreach (var path in progressionRules.Paths)
+            {
+                if (!HasFixture(path.SourceFixtureId))
+                {
+                    throw new DomainException(
+                        $"Fixture '{path.SourceFixtureId}' was not found.",
+                        StageErrorCodes.FixtureNotFound);
+                }
+
+                if (!path.Destination.StageId.Equals(Id)) continue;
+                if (FindSlot(path.Destination.SlotKey) is null)
+                {
+                    throw new DomainException(
+                        $"Slot '{path.Destination.SlotKey}' was not found.",
+                        StageErrorCodes.SlotNotFound);
+                }
+
+                if (_directAssignments.Any(a =>
+                        string.Equals(a.SlotKey, path.Destination.SlotKey, StringComparison.Ordinal)))
+                {
+                    throw new DomainException(
+                        $"Slot '{path.Destination.SlotKey}' already has a direct assignment feed.",
+                        StageErrorCodes.SlotFeedConflict);
+                }
+            }
+        }
+
+        DemoteToDraftIfReady();
+        Regulation = Regulation.WithProgressionRules(progressionRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
 
@@ -377,6 +434,146 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Adds a positional slot. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    /// <param name="slotKey">Business slot key unique within the stage.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created slot.</returns>
+    public Slot AddSlot(string slotKey, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        if (_slots.Any(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot key '{key}' already exists.",
+                StageErrorCodes.DuplicateSlotKey);
+        }
+
+        DemoteToDraftIfReady();
+        var slot = new Slot(key);
+        _slots.Add(slot);
+        return slot;
+    }
+
+    /// <summary>
+    /// Removes a slot when it is not referenced by direct assignment, local progression, or fixture slots.
+    /// </summary>
+    /// <param name="slotKey">The slot key to remove.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveSlot(string slotKey, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_directAssignments.Any(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is referenced by a direct assignment.",
+                StageErrorCodes.SlotReferenced);
+        }
+
+        if (IsSlotReferencedByLocalProgression(key) || IsSlotReferencedByFixture(key))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is still referenced.",
+                StageErrorCodes.SlotReferenced);
+        }
+
+        DemoteToDraftIfReady();
+        _slots.Remove(slot);
+    }
+
+    /// <summary>
+    /// Assigns an entry directly to a slot (configuration + synchronized resolution).
+    /// </summary>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="entryId">Entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AssignEntryToSlot(string slotKey, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (IsSlotFedByLocalProgression(key))
+        {
+            throw new DomainException(
+                $"Slot '{key}' already has a declarative progression feed.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        var occupyingSlot = _slots.FirstOrDefault(s => s.EntryId is { } occupied && occupied.Equals(entryId));
+        if (occupyingSlot is not null && !string.Equals(occupyingSlot.SlotKey, key, StringComparison.Ordinal))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' already occupies slot '{occupyingSlot.SlotKey}'.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        DemoteToDraftIfReady();
+
+        var existingIndex = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
+        var assignment = new DirectAssignment(key, entryId);
+        if (existingIndex >= 0)
+        {
+            _directAssignments[existingIndex] = assignment;
+        }
+        else
+        {
+            _directAssignments.Add(assignment);
+        }
+
+        slot.SetEntry(entryId);
+    }
+
+    /// <summary>
+    /// Clears a direct assignment and the slot's resolved entry.
+    /// </summary>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearSlotAssignment(string slotKey, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        var index = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
+        if (index < 0)
+        {
+            // Direct clear only — do not wipe EntryId resolved by future Appliers / Draw.
+            return;
+        }
+
+        DemoteToDraftIfReady();
+        _directAssignments.RemoveAt(index);
+        slot.ClearEntry();
+    }
+
+    /// <summary>
+    /// Finds a slot by key.
+    /// </summary>
+    /// <param name="slotKey">The slot key.</param>
+    /// <returns>The slot, or <see langword="null"/>.</returns>
+    public Slot? FindSlot(string slotKey)
+    {
+        var key = Slot.NormalizeKey(slotKey);
+        return _slots.FirstOrDefault(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// Arranges groups in the given order. No-op when the order is unchanged.
     /// </summary>
     /// <param name="orderedGroupIds">A permutation of current group identities.</param>
@@ -580,8 +777,10 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="roundId">The round identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="slotAKey">Optional bracket slot A.</param>
+    /// <param name="slotBKey">Optional bracket slot B.</param>
     /// <returns>The created fixture.</returns>
-    public Fixture AddFixture(RoundId roundId, IClock clock)
+    public Fixture AddFixture(RoundId roundId, IClock clock, string? slotAKey = null, string? slotBKey = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
@@ -589,8 +788,9 @@ public sealed class Stage : AggregateRoot<StageId>
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
             ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
+        EnsureSlotKeysExist(slotAKey, slotBKey);
         DemoteToDraftIfReady();
-        var fixture = new Fixture(FixtureId.New());
+        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey);
         round.AddFixture(fixture);
         Raise(new StageFixtureAdded(Id, fixture.Id, clock));
         return fixture;
@@ -601,8 +801,10 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="matchdayId">The matchday identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="slotAKey">Optional bracket slot A.</param>
+    /// <param name="slotBKey">Optional bracket slot B.</param>
     /// <returns>The created fixture.</returns>
-    public Fixture AddFixture(MatchdayId matchdayId, IClock clock)
+    public Fixture AddFixture(MatchdayId matchdayId, IClock clock, string? slotAKey = null, string? slotBKey = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
@@ -612,11 +814,30 @@ public sealed class Stage : AggregateRoot<StageId>
                 $"Matchday '{matchdayId}' was not found.",
                 StageErrorCodes.MatchdayNotFound);
 
+        EnsureSlotKeysExist(slotAKey, slotBKey);
         DemoteToDraftIfReady();
-        var fixture = new Fixture(FixtureId.New());
+        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey);
         matchday.AddFixture(fixture);
         Raise(new StageFixtureAdded(Id, fixture.Id, clock));
         return fixture;
+    }
+
+    /// <summary>
+    /// Binds or clears bracket slot keys on a fixture.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="slotAKey">Optional bracket slot A.</param>
+    /// <param name="slotBKey">Optional bracket slot B.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceFixtureSlots(FixtureId fixtureId, string? slotAKey, string? slotBKey, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var fixture = GetFixture(fixtureId);
+        EnsureSlotKeysExist(slotAKey, slotBKey);
+        DemoteToDraftIfReady();
+        fixture.BindSlots(slotAKey, slotBKey);
     }
 
     /// <summary>
@@ -730,6 +951,8 @@ public sealed class Stage : AggregateRoot<StageId>
             }
         }
 
+        EnsureLocalSlotConfigurationForPrepare();
+
         Status = StageStatus.Ready;
         Raise(new StagePrepared(Id, clock));
     }
@@ -742,6 +965,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStatus(StageStatus.Ready, "Stage can only be started from Ready.");
+        EnsureInitialRoundPlayableWhenPositional();
         Status = StageStatus.Running;
         Raise(new StageStarted(Id, clock));
     }
@@ -882,5 +1106,161 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(message, StageErrorCodes.InvalidTransition);
         }
+    }
+
+    private bool IsSlotFedByLocalProgression(string slotKey) =>
+        Regulation.ProgressionRules?.Paths.Any(p =>
+            p.Destination.StageId.Equals(Id)
+            && string.Equals(p.Destination.SlotKey, slotKey, StringComparison.Ordinal))
+        == true;
+
+    private bool IsSlotReferencedByLocalProgression(string slotKey) =>
+        IsSlotFedByLocalProgression(slotKey);
+
+    private bool IsSlotReferencedByFixture(string slotKey) =>
+        EnumerateFixtures().Any(f =>
+            string.Equals(f.SlotAKey, slotKey, StringComparison.Ordinal)
+            || string.Equals(f.SlotBKey, slotKey, StringComparison.Ordinal));
+
+    private IEnumerable<Fixture> EnumerateFixtures() =>
+        _rounds.SelectMany(r => r.Fixtures).Concat(_matchdays.SelectMany(m => m.Fixtures));
+
+    private void EnsureSlotKeysExist(string? slotAKey, string? slotBKey)
+    {
+        if (slotAKey is not null && FindSlot(slotAKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{Slot.NormalizeKey(slotAKey)}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+
+        if (slotBKey is not null && FindSlot(slotBKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{Slot.NormalizeKey(slotBKey)}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+    }
+
+    /// <summary>
+    /// Validates local slot/fixture/direct/progression consistency for Prepare.
+    /// Does not require a global feed (inbound Qualification may exist outside this aggregate).
+    /// Rejects multiple local feeds on the same slot.
+    /// </summary>
+    private void EnsureLocalSlotConfigurationForPrepare()
+    {
+        if (_slots.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var assignment in _directAssignments
+                     .Select(assignment => new
+                     {
+                         assignment,
+                         slot = FindSlot(assignment.SlotKey) ??
+                                throw new DomainException($"Slot '{assignment.SlotKey}' was not found.",
+                                    StageErrorCodes.SlotNotFound)
+                     })
+                     .Where(t => t.slot.EntryId?.Equals(t.assignment.EntryId) != true)
+                     .Select(t => t.assignment))
+        {
+            throw new DomainException(
+                $"Direct assignment for slot '{assignment.SlotKey}' is out of sync with slot entry.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        foreach (var fixture in EnumerateFixtures())
+        {
+            if (fixture.SlotAKey is not null && FindSlot(fixture.SlotAKey) is null)
+            {
+                throw new DomainException(
+                    $"Slot '{fixture.SlotAKey}' was not found.",
+                    StageErrorCodes.SlotNotFound);
+            }
+
+            if (fixture.SlotBKey is not null && FindSlot(fixture.SlotBKey) is null)
+            {
+                throw new DomainException(
+                    $"Slot '{fixture.SlotBKey}' was not found.",
+                    StageErrorCodes.SlotNotFound);
+            }
+        }
+
+        if (Regulation.ProgressionRules is { } progression)
+        {
+            foreach (var path in progression.Paths)
+            {
+                if (!HasFixture(path.SourceFixtureId))
+                {
+                    throw new DomainException(
+                        $"Fixture '{path.SourceFixtureId}' was not found.",
+                        StageErrorCodes.FixtureNotFound);
+                }
+
+                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey) is null)
+                {
+                    throw new DomainException(
+                        $"Slot '{path.Destination.SlotKey}' was not found.",
+                        StageErrorCodes.SlotNotFound);
+                }
+            }
+        }
+
+        foreach (var slot in _slots)
+        {
+            var localFeedCount = 0;
+            if (_directAssignments.Any(a => string.Equals(a.SlotKey, slot.SlotKey, StringComparison.Ordinal)))
+            {
+                localFeedCount++;
+            }
+
+            if (IsSlotFedByLocalProgression(slot.SlotKey))
+            {
+                localFeedCount++;
+            }
+
+            if (localFeedCount > 1)
+            {
+                throw new DomainException(
+                    $"Slot '{slot.SlotKey}' has multiple local feeds.",
+                    StageErrorCodes.MultipleFeeds);
+            }
+        }
+    }
+
+    private void EnsureInitialRoundPlayableWhenPositional()
+    {
+        if (_rounds.Count == 0)
+        {
+            return;
+        }
+
+        var hasSlottedFixtures = EnumerateFixtures().Any(f => f.SlotAKey is not null || f.SlotBKey is not null);
+        if (!hasSlottedFixtures)
+        {
+            return;
+        }
+
+        var initialRound = _rounds[0];
+        var playable = initialRound.Fixtures.Any(IsFixturePlayable);
+        if (!playable)
+        {
+            throw new DomainException(
+                "Positional knockout requires at least one playable fixture in the initial round before Start.",
+                StageErrorCodes.NotReady);
+        }
+    }
+
+    private bool IsFixturePlayable(Fixture fixture)
+    {
+        if (fixture.SlotAKey is null || fixture.SlotBKey is null)
+        {
+            return false;
+        }
+
+        var slotA = FindSlot(fixture.SlotAKey);
+        var slotB = FindSlot(fixture.SlotBKey);
+        return slotA?.EntryId is not null && slotB?.EntryId is not null;
     }
 }

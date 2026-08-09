@@ -90,4 +90,34 @@ public static class StageErrorCodes
     /// Gets the code when a match identity is not attached to the target fixture.
     /// </summary>
     public const string MatchNotAttached = "Stage.MatchNotAttached";
+
+    /// <summary>
+    /// Gets the code when a slot key is empty or too long.
+    /// </summary>
+    public const string SlotKeyInvalid = "Stage.SlotKeyInvalid";
+
+    /// <summary>
+    /// Gets the code when a slot key already exists in the stage.
+    /// </summary>
+    public const string DuplicateSlotKey = "Stage.DuplicateSlotKey";
+
+    /// <summary>
+    /// Gets the code when a slot cannot be found.
+    /// </summary>
+    public const string SlotNotFound = "Stage.SlotNotFound";
+
+    /// <summary>
+    /// Gets the code when a slot cannot be removed because it is still referenced.
+    /// </summary>
+    public const string SlotReferenced = "Stage.SlotReferenced";
+
+    /// <summary>
+    /// Gets the code when a direct assignment conflicts with a declarative feed.
+    /// </summary>
+    public const string SlotFeedConflict = "Stage.SlotFeedConflict";
+
+    /// <summary>
+    /// Gets the code when a slot has more than one local feed (Direct and/or Progression).
+    /// </summary>
+    public const string MultipleFeeds = "Stage.MultipleFeeds";
 }

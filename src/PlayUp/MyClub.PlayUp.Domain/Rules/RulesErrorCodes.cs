@@ -55,4 +55,9 @@ public static class RulesErrorCodes
     /// Gets the code when qualification rules are invalid.
     /// </summary>
     public const string QualificationRulesInvalid = "Rules.QualificationRulesInvalid";
+
+    /// <summary>
+    /// Gets the code when progression rules are invalid.
+    /// </summary>
+    public const string ProgressionRulesInvalid = "Rules.ProgressionRulesInvalid";
 }

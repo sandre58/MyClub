@@ -72,7 +72,7 @@ public sealed record DrawRules
             Mode,
             SeedingRules is null ? null : new SeedingRules(SeedingRules.NumberOfSeeds),
             PotRules is null ? null : new PotRules(PotRules.NumberOfPots),
-            _constraints.Select(c => new DrawConstraint(c.ConstraintType, c.Enforcement)).ToArray());
+            [.._constraints.Select(c => new DrawConstraint(c.ConstraintType, c.Enforcement))]);
 
     /// <inheritdoc />
     public bool Equals(DrawRules? other) =>

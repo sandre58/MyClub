@@ -8,7 +8,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Stage regulation value object: materialized phase rules (independent from <see cref="Regulation"/>).
-/// Active families: match, standing, optional draw / qualification rules and default <see cref="TieFormat"/>.
+/// Active families: match, standing, optional draw / qualification / progression rules and default <see cref="TieFormat"/>.
 /// </summary>
 public sealed record StageRegulation
 {
@@ -19,13 +19,15 @@ public sealed record StageRegulation
     /// <param name="standingRules">How standings are calculated in this stage.</param>
     /// <param name="tieFormat">Default tie format copied to rounds on add; <see langword="null"/> when absent.</param>
     /// <param name="drawRules">Draw parameters when the stage uses a draw; <see langword="null"/> when absent.</param>
-    /// <param name="qualificationRules">Routing rules when participants leave this stage; <see langword="null"/> when absent.</param>
+    /// <param name="qualificationRules">Ranking-based routing when participants leave this stage; <see langword="null"/> when absent.</param>
+    /// <param name="progressionRules">Fixture/Tie outcome routing; <see langword="null"/> when absent.</param>
     public StageRegulation(
         MatchRules matchRules,
         StandingRules standingRules,
         TieFormat? tieFormat = null,
         DrawRules? drawRules = null,
-        QualificationRules? qualificationRules = null)
+        QualificationRules? qualificationRules = null,
+        ProgressionRules? progressionRules = null)
     {
         ArgumentNullException.ThrowIfNull(matchRules);
         ArgumentNullException.ThrowIfNull(standingRules);
@@ -35,6 +37,7 @@ public sealed record StageRegulation
         TieFormat = tieFormat;
         DrawRules = drawRules;
         QualificationRules = qualificationRules;
+        ProgressionRules = progressionRules;
     }
 
     /// <summary>
@@ -63,6 +66,11 @@ public sealed record StageRegulation
     public QualificationRules? QualificationRules { get; }
 
     /// <summary>
+    /// Gets the progression rules when present; otherwise <see langword="null"/>.
+    /// </summary>
+    public ProgressionRules? ProgressionRules { get; }
+
+    /// <summary>
     /// Materializes an independent stage regulation from a competition regulation.
     /// Copies match and standing rules by value; optional families default to <see langword="null"/>.
     /// </summary>
@@ -87,7 +95,8 @@ public sealed record StageRegulation
             CloneStandingRules(StandingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
-            QualificationRules?.Copy());
+            QualificationRules?.Copy(),
+            ProgressionRules?.Copy());
 
     /// <summary>
     /// Returns a copy with replaced standing rules (new nested instances for standing only).
@@ -102,7 +111,8 @@ public sealed record StageRegulation
             CloneStandingRules(standingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
-            QualificationRules?.Copy());
+            QualificationRules?.Copy(),
+            ProgressionRules?.Copy());
     }
 
     /// <summary>
@@ -116,7 +126,8 @@ public sealed record StageRegulation
             CloneStandingRules(StandingRules),
             tieFormat?.Copy(),
             DrawRules?.Copy(),
-            QualificationRules?.Copy());
+            QualificationRules?.Copy(),
+            ProgressionRules?.Copy());
 
     /// <summary>
     /// Returns a copy with replaced draw rules.
@@ -129,7 +140,8 @@ public sealed record StageRegulation
             CloneStandingRules(StandingRules),
             TieFormat?.Copy(),
             drawRules?.Copy(),
-            QualificationRules?.Copy());
+            QualificationRules?.Copy(),
+            ProgressionRules?.Copy());
 
     /// <summary>
     /// Returns a copy with replaced qualification rules.
@@ -142,7 +154,22 @@ public sealed record StageRegulation
             CloneStandingRules(StandingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
-            qualificationRules?.Copy());
+            qualificationRules?.Copy(),
+            ProgressionRules?.Copy());
+
+    /// <summary>
+    /// Returns a copy with replaced progression rules.
+    /// </summary>
+    /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
+    /// <returns>A new stage regulation.</returns>
+    public StageRegulation WithProgressionRules(ProgressionRules? progressionRules) =>
+        new(
+            CloneMatchRules(MatchRules),
+            CloneStandingRules(StandingRules),
+            TieFormat?.Copy(),
+            DrawRules?.Copy(),
+            QualificationRules?.Copy(),
+            progressionRules?.Copy());
 
     private static MatchRules CloneMatchRules(MatchRules source)
     {

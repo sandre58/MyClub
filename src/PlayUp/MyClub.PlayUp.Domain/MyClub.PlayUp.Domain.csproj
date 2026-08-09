@@ -31,6 +31,9 @@
     <Folder Include="Rules\Qualification">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
+    <Folder Include="Rules\Progression">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
   </ItemGroup>
 
 </Project>
