@@ -34,6 +34,9 @@
     <Folder Include="Rules\Progression">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
+    <Folder Include="Stage\Feed">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
   </ItemGroup>
 
 </Project>

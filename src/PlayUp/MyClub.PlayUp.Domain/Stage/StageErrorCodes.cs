@@ -120,4 +120,9 @@ public static class StageErrorCodes
     /// Gets the code when a slot has more than one local feed (Direct and/or Progression).
     /// </summary>
     public const string MultipleFeeds = "Stage.MultipleFeeds";
+
+    /// <summary>
+    /// Gets the code when a WhoFeeds snapshot is structurally invalid.
+    /// </summary>
+    public const string FeedSnapshotInvalid = "Stage.FeedSnapshotInvalid";
 }

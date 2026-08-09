@@ -67,14 +67,16 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain-first — only `MyClub.PlayUp.Domain` (+ unit tests) is present. Application, Infrastructure, and Host will follow as use cases land.
+**Current codebase:** Domain + Application (WhoFeeds / PrepareStage) for Play'up. Infrastructure and Host will follow as persistence and APIs land.
 
 ```text
 src/
 └── PlayUp/
-    └── MyClub.PlayUp.Domain/     # Competition · Stage · Match · Common
+    ├── MyClub.PlayUp.Domain/        # Competition · Stage · Match · Common · Rules
+    └── MyClub.PlayUp.Application/   # Use cases (e.g. PrepareStage, SlotFeedSnapshotAssembler)
 tests/
-└── MyClub.PlayUp.Domain.Tests/
+├── MyClub.PlayUp.Domain.Tests/
+└── MyClub.PlayUp.Application.Tests/
 ```
 
 **Intended dependency flow (target):**

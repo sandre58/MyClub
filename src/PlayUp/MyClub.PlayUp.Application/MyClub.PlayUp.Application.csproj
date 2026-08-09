@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Play'up application use cases (orchestration over domain aggregates).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
