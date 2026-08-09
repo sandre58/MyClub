@@ -125,4 +125,19 @@ public static class StageErrorCodes
     /// Gets the code when a WhoFeeds snapshot is structurally invalid.
     /// </summary>
     public const string FeedSnapshotInvalid = "Stage.FeedSnapshotInvalid";
+
+    /// <summary>
+    /// Gets the code when a fixture outcome cannot be decided (e.g. draw score).
+    /// </summary>
+    public const string FixtureOutcomeUndecided = "Stage.FixtureOutcomeUndecided";
+
+    /// <summary>
+    /// Gets the code when the match in a fixture outcome snapshot is not finished.
+    /// </summary>
+    public const string FixtureOutcomeNotFinished = "Stage.FixtureOutcomeNotFinished";
+
+    /// <summary>
+    /// Gets the code when a fixture outcome snapshot is invalid for resolution.
+    /// </summary>
+    public const string FixtureOutcomeInvalid = "Stage.FixtureOutcomeInvalid";
 }

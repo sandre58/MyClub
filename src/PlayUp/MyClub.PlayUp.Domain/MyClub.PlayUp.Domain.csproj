@@ -37,6 +37,9 @@
     <Folder Include="Stage\Feed">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
+    <Folder Include="Stage\Outcome">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
   </ItemGroup>
 
 </Project>

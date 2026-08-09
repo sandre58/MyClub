@@ -563,6 +563,51 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Resolves a slot occupant dynamically without creating or modifying a <see cref="DirectAssignment"/>.
+    /// </summary>
+    /// <remarks>
+    /// Resolution mutation (not structure): allowed in Draft, Ready, Running, and Suspended; forbidden when Completed.
+    /// Does not demote Ready to Draft. A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
+    /// When the entry already occupies another slot of this stage, it is moved (previous slot cleared without a separate event).
+    /// </remarks>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="entryId">Resolved entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ApplyResolvedEntry(string slotKey, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_directAssignments.Exists(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is owned by a direct assignment and cannot receive a dynamic resolution.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        if (slot.EntryId is { } current && current.Equals(entryId))
+        {
+            return;
+        }
+
+        foreach (var other in _slots.Where(other => !ReferenceEquals(other, slot)))
+        {
+            if (other.EntryId is { } occupied && occupied.Equals(entryId))
+            {
+                other.ClearEntry();
+            }
+        }
+
+        var previousEntryId = slot.EntryId;
+        slot.SetEntry(entryId);
+        Raise(new StageSlotOccupantChanged(Id, key, previousEntryId, entryId, clock));
+    }
+
+    /// <summary>
     /// Finds a slot by key.
     /// </summary>
     /// <param name="slotKey">The slot key.</param>
@@ -1049,6 +1094,16 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Standing rules cannot be modified when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureResolutionMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Slot occupant cannot be resolved when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
         }
     }
