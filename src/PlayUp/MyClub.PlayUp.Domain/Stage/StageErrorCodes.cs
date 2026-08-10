@@ -140,4 +140,9 @@ public static class StageErrorCodes
     /// Gets the code when a fixture outcome snapshot is invalid for resolution.
     /// </summary>
     public const string FixtureOutcomeInvalid = "Stage.FixtureOutcomeInvalid";
+
+    /// <summary>
+    /// Gets the code when a progression path source fixture does not match the supplied fixture identity.
+    /// </summary>
+    public const string ProgressionApplyFixtureMismatch = "Stage.ProgressionApplyFixtureMismatch";
 }

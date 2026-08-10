@@ -25,4 +25,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when WhoFeeds validation fails before Prepare.
     /// </summary>
     public const string SlotFeedsInvalid = "Application.SlotFeedsInvalid";
+
+    /// <summary>
+    /// Gets the code when Fixture↔Match coherence fails for V1 progression (e.g. not exactly one match).
+    /// </summary>
+    public const string FixtureInvalid = "Application.FixtureInvalid";
 }
