@@ -83,6 +83,18 @@ public sealed class QualificationApplierTests
     }
 
     [Fact]
+    public void SelectEntries_worst_is_not_supported()
+    {
+        var standing = BuildStanding();
+
+        var act = () => QualificationApplier.SelectEntries(
+            standing,
+            new QualificationSelection(SelectionMode.Worst, 2));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(QualificationErrorCodes.SelectionNotSupported);
+    }
+
+    [Fact]
     public void Apply_position_returns_instruction()
     {
         var standing = BuildStanding();

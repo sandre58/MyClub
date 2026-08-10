@@ -18,14 +18,17 @@ namespace MyClub.PlayUp.Application.Stage;
 /// <remarks>
 /// Preflights destination stages/slots before any mutation.
 /// Replace local only — no cascade. V1: one path → one entry → one slot.
+/// V1 accepts a single overall standing; group-scoped paths (<see cref="Domain.Rules.QualificationSource.FromGroup"/>)
+/// require multi-standing orchestration (caller selects the standing per group) and are rejected here.
+/// <see cref="QualificationApplier"/> stays pure: Standing + Path → instruction; it does not load groups.
 /// </remarks>
 public static class ApplyQualification
 {
     /// <summary>
-    /// Applies all qualification paths of the source stage using an already-calculated standing.
+    /// Applies all qualification paths of the source stage using an already-calculated overall standing.
     /// </summary>
     /// <param name="sourceStage">Stage that owns <see cref="Domain.Rules.QualificationRules"/>.</param>
-    /// <param name="standing">Standing calculated for the path sources.</param>
+    /// <param name="standing">Overall standing for paths with overall (or implied overall) source.</param>
     /// <param name="competitionStages">All competition stages (canonical instances for mutations).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <returns>Applied slot assignment instructions; empty when no qualification rules.</returns>
@@ -45,6 +48,13 @@ public static class ApplyQualification
         if (paths.Length == 0)
         {
             return [];
+        }
+
+        if (paths.Any(IsGroupScoped))
+        {
+            throw new ApplicationFailureException(
+                "ApplyQualification V1 supports overall standing only. Group-scoped qualification paths require multi-standing orchestration (per-group Standing → Path).",
+                ApplicationErrorCodes.QualificationSourceNotSupported);
         }
 
         var instructions = paths
@@ -85,4 +95,7 @@ public static class ApplyQualification
                 $"Stage '{stageId}' is not part of the competition stages list.",
                 ApplicationErrorCodes.StageNotInCompetition);
     }
+
+    private static bool IsGroupScoped(Domain.Rules.QualificationPath path) =>
+        path.Source.GroupId is not null || path.Source.Scope == Domain.Rules.RankingScope.Group;
 }

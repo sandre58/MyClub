@@ -11,6 +11,7 @@ namespace MyClub.PlayUp.Domain.Standing;
 
 /// <summary>
 /// Pure standing calculation from participants, finished match snapshots, rules, and match filter.
+/// Head-to-head ranking uses the same <see cref="MatchFilter"/> as global statistics.
 /// </summary>
 public static class StandingCalculator
 {
@@ -69,7 +70,7 @@ public static class StandingCalculator
             })
             .ToList();
 
-        var ordered = Rank(rows, rules.RankingCriteria, matches, participantSet, rules.Points);
+        var ordered = Rank(rows, rules.RankingCriteria, matches, rules.Points, filter);
         var result = new StandingRow[ordered.Count];
         for (var i = 0; i < ordered.Count; i++)
         {
@@ -140,8 +141,8 @@ public static class StandingCalculator
         List<RankableRow> rows,
         IReadOnlyList<RankingCriterion> criteria,
         IReadOnlyList<StandingMatch> matches,
-        HashSet<EntryId> participants,
-        PointsPolicy points)
+        PointsPolicy points,
+        MatchFilter filter)
     {
         var groups = new List<List<RankableRow>> { rows };
         foreach (var criterion in criteria)
@@ -157,7 +158,7 @@ public static class StandingCalculator
 
                 nextGroups.AddRange(
                     criterion == RankingCriterion.HeadToHead
-                        ? PartitionByHeadToHead(group, matches, participants, points)
+                        ? PartitionByHeadToHead(group, matches, points, filter)
                         : PartitionByGlobalCriterion(group, criterion));
             }
 
@@ -193,8 +194,8 @@ public static class StandingCalculator
     private static List<List<RankableRow>> PartitionByHeadToHead(
         List<RankableRow> group,
         IReadOnlyList<StandingMatch> matches,
-        HashSet<EntryId> participants,
-        PointsPolicy points)
+        PointsPolicy points,
+        MatchFilter filter)
     {
         var tiedIds = group.Select(r => r.EntryId).ToHashSet();
         var miniStats = group.ToDictionary(r => r.EntryId, _ => new MutableStats());
@@ -206,13 +207,8 @@ public static class StandingCalculator
                 continue;
             }
 
-            if (!participants.Contains(match.HomeEntryId) || !participants.Contains(match.AwayEntryId))
-            {
-                continue;
-            }
-
-            ApplySide(miniStats[match.HomeEntryId], match.HomeGoals, match.AwayGoals, points);
-            ApplySide(miniStats[match.AwayEntryId], match.AwayGoals, match.HomeGoals, points);
+            // Same MatchFilter as global stats: H2H is an internal ranking step on filtered matches.
+            ApplyMatch(miniStats, tiedIds, match, filter, points);
         }
 
         var ordered = group

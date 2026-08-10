@@ -11,6 +11,7 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Match;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stage;
 using MyClub.PlayUp.Domain.Standing;
 using Xunit;
 using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
@@ -122,6 +123,57 @@ public sealed class ApplyQualificationTests
     }
 
     [Fact]
+    public void Ucl_style_positions_25_to_36_have_no_qualification_path()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "LeaguePhase");
+        var ko = CreateSlotStage(competitionId, "KO", ["KO1"]);
+        var entries = CreateEntries(36);
+        var matches = BuildRoundRobin(league, [..entries.Take(4)]);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+
+        league.ReplaceQualificationRules(
+            new QualificationRules([Path(1, SelectionMode.Position, 1, ko.Id, "KO1")]),
+            _clock);
+
+        ApplyQualification.Execute(league, standing, [league, ko], _clock);
+
+        ko.FindSlot("KO1")!.EntryId.Should().Be(standing.EntryAt(1));
+        for (var i = 25; i <= 36; i++)
+        {
+            standing.EntryAt(i).Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public void Execute_rejects_group_scoped_paths_until_multi_standing_orchestration()
+    {
+        var competitionId = CompetitionId.New();
+        var groupId = GroupId.New();
+        var league = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["A1"]);
+        var entries = CreateEntries(2);
+        var matches = BuildRoundRobin(league, entries);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+
+        league.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(groupId),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(terminal.Id, "A1"))
+            ]),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.QualificationSourceNotSupported);
+    }
+
+    [Fact]
     public void CalculateStanding_home_filter_differs_from_all()
     {
         var competitionId = CompetitionId.New();
@@ -185,11 +237,11 @@ public sealed class ApplyQualificationTests
     [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private StageAggregate CreateLeagueStage(CompetitionId competitionId, string name) =>
-        StageAggregate.Create(competitionId, new Domain.Stage.StageName(name), SampleRegulations.Standard(), _clock);
+        StageAggregate.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
 
     private StageAggregate CreateSlotStage(CompetitionId competitionId, string name, string[] slotKeys)
     {
-        var stage = StageAggregate.Create(competitionId, new Domain.Stage.StageName(name), SampleRegulations.Standard(), _clock);
+        var stage = StageAggregate.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
         foreach (var key in slotKeys)
         {
             stage.AddSlot(key, _clock);

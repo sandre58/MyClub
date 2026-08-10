@@ -14,6 +14,7 @@ namespace MyClub.PlayUp.Domain.Qualification;
 /// <summary>
 /// Pure qualification helper: selects entries from a standing and maps a path to a slot instruction.
 /// Does not mutate aggregates or calculate standings.
+/// V1 does not execute <see cref="SelectionMode.Best"/> or <see cref="SelectionMode.Worst"/>.
 /// </summary>
 public static class QualificationApplier
 {

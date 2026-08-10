@@ -30,4 +30,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when Fixture↔Match coherence fails for V1 progression (e.g. not exactly one match).
     /// </summary>
     public const string FixtureInvalid = "Application.FixtureInvalid";
+
+    /// <summary>
+    /// Gets the code when qualification paths require per-group standings not yet orchestrated by V1.
+    /// </summary>
+    public const string QualificationSourceNotSupported = "Application.QualificationSourceNotSupported";
 }

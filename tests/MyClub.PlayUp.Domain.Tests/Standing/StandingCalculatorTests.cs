@@ -40,23 +40,45 @@ public sealed class StandingCalculatorTests
     [Fact]
     public void Calculate_uses_head_to_head_when_points_tied()
     {
-        var rules = Rules(RankingCriterion.Points, RankingCriterion.HeadToHead, RankingCriterion.GoalDifference);
+        // A and B both on 4 points; B has better global GD (+2 vs -3) but A wins the H2H mini-table.
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.HeadToHead);
         var matches = new[]
         {
+            new StandingMatch(_a, _c, 1, 5),
+            new StandingMatch(_b, _c, 3, 0),
             new StandingMatch(_a, _b, 1, 0),
-            new StandingMatch(_a, _c, 0, 0),
-            new StandingMatch(_b, _c, 2, 0),
-            new StandingMatch(_b, _a, 0, 0),
-            new StandingMatch(_c, _a, 1, 0),
-            new StandingMatch(_c, _b, 0, 0)
+            new StandingMatch(_b, _a, 0, 0)
         };
 
         var standing = StandingCalculator.Calculate([_a, _b, _c], matches, rules);
 
-        standing.Find(_a)!.Points.Should().Be(standing.Find(_b)!.Points);
-        standing.Find(_a)!.Points.Should().Be(standing.Find(_c)!.Points);
-        standing.EntryAt(1).Should().NotBeNull();
-        standing.Rows.Should().HaveCount(3);
+        standing.Find(_a)!.Points.Should().Be(4);
+        standing.Find(_b)!.Points.Should().Be(4);
+        standing.Find(_a)!.GoalDifference.Should().BeLessThan(standing.Find(_b)!.GoalDifference);
+        standing.Rows.Select(r => r.EntryId).Should().Equal(_a, _b, _c);
+    }
+
+    [Fact]
+    public void Calculate_all_filter_counts_both_sides_of_each_match()
+    {
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.GoalDifference);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 2, 1),
+            new StandingMatch(_b, _a, 0, 0)
+        };
+
+        var standing = StandingCalculator.Calculate([_a, _b], matches, rules);
+
+        standing.Find(_a)!.Played.Should().Be(2);
+        standing.Find(_a)!.Points.Should().Be(4);
+        standing.Find(_a)!.GoalsFor.Should().Be(2);
+        standing.Find(_a)!.GoalsAgainst.Should().Be(1);
+        standing.Find(_b)!.Played.Should().Be(2);
+        standing.Find(_b)!.Points.Should().Be(1);
+        standing.Find(_b)!.GoalsFor.Should().Be(1);
+        standing.Find(_b)!.GoalsAgainst.Should().Be(2);
+        standing.Rows.Select(r => r.EntryId).Should().Equal(_a, _b);
     }
 
     [Fact]
@@ -95,6 +117,50 @@ public sealed class StandingCalculatorTests
         standing.Find(_a)!.Points.Should().Be(1);
         standing.Find(_b)!.Played.Should().Be(1);
         standing.Find(_b)!.Points.Should().Be(0);
+    }
+
+    [Fact]
+    public void Calculate_home_filter_head_to_head_uses_only_home_legs()
+    {
+        // A and B both 4 home points. Mutual home legs: A beats B 3-1, B beats A 1-0.
+        // Home-filtered H2H: both 3 pts, A better H2H GD (+2 vs +1) → A first.
+        // Unfiltered H2H would credit away sides and rank B first (4 H2H pts vs 3).
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.HeadToHead);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 3, 1),
+            new StandingMatch(_b, _a, 1, 0),
+            new StandingMatch(_a, _c, 0, 0),
+            new StandingMatch(_b, _c, 0, 0)
+        };
+
+        var standing = StandingCalculator.Calculate([_a, _b, _c], matches, rules, MatchFilter.Home);
+
+        standing.Find(_a)!.Points.Should().Be(4);
+        standing.Find(_b)!.Points.Should().Be(4);
+        standing.Rows[0].EntryId.Should().Be(_a);
+        standing.Rows[1].EntryId.Should().Be(_b);
+    }
+
+    [Fact]
+    public void Calculate_away_filter_head_to_head_uses_only_away_legs()
+    {
+        // Symmetric to home: away-only H2H must ignore home legs among tied teams.
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.HeadToHead);
+        var matches = new[]
+        {
+            new StandingMatch(_b, _a, 1, 3),
+            new StandingMatch(_a, _b, 0, 1),
+            new StandingMatch(_c, _a, 0, 0),
+            new StandingMatch(_c, _b, 0, 0)
+        };
+
+        var standing = StandingCalculator.Calculate([_a, _b, _c], matches, rules, MatchFilter.Away);
+
+        standing.Find(_a)!.Points.Should().Be(4);
+        standing.Find(_b)!.Points.Should().Be(4);
+        standing.Rows[0].EntryId.Should().Be(_a);
+        standing.Rows[1].EntryId.Should().Be(_b);
     }
 
     [Fact]
