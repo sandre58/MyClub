@@ -1,0 +1,36 @@
+---
+description: Development workflow protocol — modes, decisions, and delivery gates
+alwaysApply: true
+---
+
+# Development workflow
+
+Principle: **Challenge early, decide explicitly, implement deliberately.**
+
+Full protocol (phases, Cross Design Review severities, Done criteria) lives in Notion — Forge **Workflow de développement** (SoT) and the project's Workflow application page when present. Do not duplicate that narrative here.
+
+## Cursor modes (part of the protocol)
+
+- **Ask** — analysis / investigation / audit **without modifying** the project.
+- **Plan** — inspect the repository and build an implementation plan **without implementing**.
+- **Agent** — execute a **validated** plan: implementation, tests, verification, and documentation sync.
+
+Respect the mode the user selected. Do not implement in Ask or Plan. Do not invent a plan substitute when Agent was asked to execute an already-validated plan.
+
+## Roles
+
+- The human **decision maker** has final say.
+- Cursor is a challenger and executor — never a silent business decision maker.
+
+## Notion Decisions (strict)
+
+- Do **not** decide that a business decision must be taken, and do **not** choose its content.
+- If you discover a situation that needs business arbitration → **signal** it (e.g. "this needs a new business arbitration") and stop on that point.
+- **After** the decision maker validates a decision → you **may** create or update the Notion Décision page to reflect the **already** arbitrated content.
+- Never turn a technical hypothesis into a business decision "for documentation."
+
+## Scope and documentation
+
+- Out-of-scope discoveries → Notion **Task** (flagged); do not implement them silently.
+- In **Agent**, sync Notion / docs only in ways consistent with **already** validated decisions.
+- Prefer linking to canonical Notion / Git sources over inventing parallel docs.

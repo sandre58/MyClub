@@ -23,6 +23,9 @@ alwaysApply: true
 - Do not create new patterns without justification.
 - Do not generate unnecessary files.
 - Keep modifications minimal.
+- Follow the development workflow protocol (`workflow.mdc` + Notion Workflow SoT): challenge early, decide explicitly, implement deliberately.
+- Never turn a technical hypothesis into a business decision; signal arbitration needs and wait for the decision maker (see `workflow.mdc`).
+- Respect Cursor modes: Ask = no edits; Plan = plan only; Agent = execute a validated plan.
 
 # Documentation
 

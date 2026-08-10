@@ -1,0 +1,36 @@
+---
+description: Cross Design Review — challenge a design proposal before implementation (activate when reviewing design)
+alwaysApply: false
+---
+
+# Cross Design Review
+
+Use when challenging a design / architecture proposal **before** implementation.
+
+Goal: surface problems and alternatives so the human decision maker can decide. **Not** automatic consensus.
+
+## Look for
+
+- Inconsistencies with the existing codebase
+- Feasibility risks
+- DDD issues (ubiquitous language, bounded contexts)
+- Aggregate boundaries
+- Insufficient invariants
+- Misplaced responsibilities
+- Contradictions with existing Notion Décisions
+- Impact on future phases / roadmap work
+- Edge cases
+- Unnecessary complexity or technical debt
+
+## Severity
+
+- **Critical** — should not be implemented as proposed
+- **Important** — arbitration required before proceeding
+- **Minor** — improvement without structural impact
+- **Observation** — informative remark
+
+## Output
+
+Group findings by severity. For Critical / Important, state the issue, evidence (code or decisions), and viable alternatives — do not silently pick one.
+
+If a finding needs business arbitration, **signal** it; do not invent a Décision content.
