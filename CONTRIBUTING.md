@@ -29,7 +29,7 @@ git config commit.template .gitmessage
 
 ## Development workflow
 
-Product workflow (Intent → Reconciliation, Cursor Ask / Plan / Agent modes, Notion Décisions) is documented in Notion — Forge *Workflow de développement* (ecosystem SoT) and MyClub *Workflow de développement* (roles / local links). Agent behaviour: `.cursor/rules/workflow.mdc`. Do not add ADR Markdown under this repo.
+Product workflow (Intent → Reconciliation, Cursor Ask / Plan / Agent modes, Notion Décisions, reference business cases for important business phases) is documented in Notion — Forge *Workflow de développement* (ecosystem SoT) and MyClub *Workflow de développement* (roles / local links). Agent behaviour: `.cursor/rules/workflow.mdc`. Do not add ADR Markdown under this repo.
 
 ## Pull requests
 

@@ -21,6 +21,7 @@ Goal: surface problems and alternatives so the human decision maker can decide. 
 - Impact on future phases / roadmap work
 - Edge cases
 - Unnecessary complexity or technical debt
+- **Reference business cases** (when the phase is business-important): locate or request the 3–8 cases; challenge the model against each
 
 ## Severity
 
@@ -32,5 +33,7 @@ Goal: surface problems and alternatives so the human decision maker can decide. 
 ## Output
 
 Group findings by severity. For Critical / Important, state the issue, evidence (code or decisions), and viable alternatives — do not silently pick one.
+
+When reference cases exist, call out per case whether the model represents them (e.g. "Does the model correctly represent case 3?" / "Does this case reveal a missing invariant?").
 
 If a finding needs business arbitration, **signal** it; do not invent a Décision content.

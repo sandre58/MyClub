@@ -10,6 +10,8 @@ alwaysApply: false
 - Prefer tests that validate behavior rather than implementation details.
 - Keep tests readable and maintainable.
 - Use meaningful test names that describe scenario, expectation, and rule.
+- Notion **reference business cases** may inspire behavior tests; they are not automatically unit tests.
+- Prefer tests that prove a reference case can be built without violating invariants or bypassing the model.
 
 ## Stack (default)
 
