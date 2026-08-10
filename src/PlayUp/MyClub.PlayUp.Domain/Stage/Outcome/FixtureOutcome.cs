@@ -11,6 +11,10 @@ namespace MyClub.PlayUp.Domain.Stage;
 /// <summary>
 /// Decided winner and loser of a fixture confrontation (single-leg V1).
 /// </summary>
+/// <remarks>
+/// Does not carry a <see cref="FixtureId"/>. The fixture identity is supplied by Application
+/// (and checked by <see cref="ProgressionApplier"/>) from the surrounding orchestration context.
+/// </remarks>
 public sealed record FixtureOutcome
 {
     /// <summary>

@@ -90,7 +90,7 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_rejects_fixture_without_match()
     {
         var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", null);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -113,7 +113,7 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_rejects_fixture_with_multiple_matches()
     {
         var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", null);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
         var home = EntryId.New();
         var away = EntryId.New();
         var first = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
@@ -258,12 +258,67 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
+    public void Execute_rejects_match_stage_id_mismatch()
+    {
+        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var match = Match.Create(stage.CompetitionId, StageId.New(), home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        Finish(match, 2, 1);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
+        stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Execute_rejects_match_competition_id_mismatch()
+    {
+        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var match = Match.Create(CompetitionId.New(), stage.Id, home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        Finish(match, 2, 1);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
+        stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
     public void Execute_direct_conflict_bubbles_domain_error()
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
         var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
-        destination.AssignEntryToSlot("SF1-A", EntryId.New(), _clock);
+        var directEntry = EntryId.New();
+        destination.AssignEntryToSlot("SF1-A", directEntry, _clock);
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(source, home, away, 2, 1);
@@ -285,6 +340,42 @@ public sealed class ApplyProgressionOutcomeTests
             _clock);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
+        destination.FindSlot("SF1-A")!.EntryId.Should().Be(directEntry);
+    }
+
+    [Fact]
+    public void Execute_preflight_second_path_missing_slot_mutates_nothing()
+    {
+        var competitionId = CompetitionId.New();
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var (fixtureId, match) = AttachFinishedMatch(source, home, away, 2, 0);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixtureId,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(destination.Id, "SF1-A")),
+                new ProgressionPath(
+                    fixtureId,
+                    ProgressionOutcome.Loser,
+                    new ProgressionDestination(destination.Id, "Missing-Slot"))
+            ]),
+            _clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(
+            source,
+            fixtureId,
+            match,
+            [source, destination],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
+        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
     }
 
     [Fact]

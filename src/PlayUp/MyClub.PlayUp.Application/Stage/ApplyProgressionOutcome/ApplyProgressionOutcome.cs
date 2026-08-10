@@ -14,6 +14,12 @@ namespace MyClub.PlayUp.Application.Stage;
 /// <summary>
 /// Application use case: resolve fixture outcome and apply progression paths to destination slots.
 /// </summary>
+/// <remarks>
+/// Preflights destination stages/slots before any mutation (known orchestration failures → zero writes).
+/// Mutations then call <see cref="StageAggregate.ApplyResolvedEntry"/> successively.
+/// V1 does not provide transactional atomicity; no unit of work, repository, or EF transaction belongs here.
+/// A later Domain rejection mid-loop may leave earlier in-memory mutations applied.
+/// </remarks>
 public static class ApplyProgressionOutcome
 {
     /// <summary>
