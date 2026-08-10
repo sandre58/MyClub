@@ -27,12 +27,17 @@ public enum SelectionMode
     Bottom = 2,
 
     /// <summary>
-    /// The best N participants across the ranking scope (description only in V1).
+    /// The best N participants across the ranking scope (representable; resolution deferred).
     /// </summary>
     Best = 3,
 
     /// <summary>
-    /// The worst N participants across the ranking scope (description only in V1).
+    /// The worst N participants across the ranking scope (representable; resolution deferred).
     /// </summary>
-    Worst = 4
+    Worst = 4,
+
+    /// <summary>
+    /// Inclusive ranking range from <see cref="QualificationSelection.Value"/> to <see cref="QualificationSelection.EndValue"/>.
+    /// </summary>
+    Range = 5
 }

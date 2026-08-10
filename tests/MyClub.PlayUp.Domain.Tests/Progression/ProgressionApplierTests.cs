@@ -6,11 +6,12 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Progression;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stage;
 using Xunit;
 
-namespace MyClub.PlayUp.Domain.Tests.Stage;
+namespace MyClub.PlayUp.Domain.Tests.Progression;
 
 public sealed class ProgressionApplierTests
 {
@@ -27,7 +28,7 @@ public sealed class ProgressionApplierTests
 
         var result = ProgressionApplier.Apply(path, _fixtureId, outcome);
 
-        result.DestinationStageId.Should().Be(_destinationStageId);
+        result.StageId.Should().Be(_destinationStageId);
         result.SlotKey.Should().Be("SF1-A");
         result.EntryId.Should().Be(_winner);
     }
@@ -40,7 +41,7 @@ public sealed class ProgressionApplierTests
 
         var result = ProgressionApplier.Apply(path, _fixtureId, outcome);
 
-        result.DestinationStageId.Should().Be(_destinationStageId);
+        result.StageId.Should().Be(_destinationStageId);
         result.SlotKey.Should().Be("Consolante-1");
         result.EntryId.Should().Be(_loser);
     }
@@ -100,7 +101,7 @@ public sealed class ProgressionApplierTests
 
         var result = ProgressionApplier.Apply(path, _fixtureId, outcome);
 
-        result.DestinationStageId.Should().Be(remoteStageId);
+        result.StageId.Should().Be(remoteStageId);
         result.SlotKey.Should().Be("Remote-Slot");
         result.EntryId.Should().Be(_winner);
     }

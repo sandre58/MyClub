@@ -50,9 +50,11 @@
   <Folder Name="/cursor/" />
   <Folder Name="/cursor/rules/">
     <File Path=".cursor/rules/architecture.mdc" />
+    <File Path=".cursor/rules/cross-design-review.mdc" />
     <File Path=".cursor/rules/csharp.mdc" />
     <File Path=".cursor/rules/general.mdc" />
     <File Path=".cursor/rules/git.mdc" />
     <File Path=".cursor/rules/testing.mdc" />
+    <File Path=".cursor/rules/workflow.mdc" />
   </Folder>
 </Solution>

@@ -72,6 +72,6 @@ public sealed record QualificationPath
         new(
             Order,
             new QualificationSource(Source.Scope, Source.GroupId),
-            new QualificationSelection(Selection.Mode, Selection.Value),
+            new QualificationSelection(Selection.Mode, Selection.Value, Selection.EndValue),
             new QualificationDestination(Destination.StageId, Destination.SlotKey));
 }

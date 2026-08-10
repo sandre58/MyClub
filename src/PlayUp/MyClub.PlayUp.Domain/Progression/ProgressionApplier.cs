@@ -6,8 +6,9 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stage;
 
-namespace MyClub.PlayUp.Domain.Stage;
+namespace MyClub.PlayUp.Domain.Progression;
 
 /// <summary>
 /// Pure progression helper: maps a path configuration and fixture outcome to an occupant instruction.
@@ -20,10 +21,10 @@ public static class ProgressionApplier
     /// <param name="path">Declarative progression path (source fixture, outcome, destination).</param>
     /// <param name="fixtureId">Fixture identity supplied by Application (must match <see cref="ProgressionPath.SourceFixtureId"/>).</param>
     /// <param name="outcome">Decided winner/loser of the confrontation.</param>
-    /// <returns>Destination stage, slot key, and mapped entry.</returns>
+    /// <returns>Slot assignment instruction (no Stage mutation).</returns>
     /// <exception cref="ArgumentNullException"><paramref name="path"/> or <paramref name="outcome"/> is <see langword="null"/>.</exception>
     /// <exception cref="DomainException"><paramref name="fixtureId"/> does not match the path source fixture.</exception>
-    public static ProgressionApplyResult Apply(ProgressionPath path, FixtureId fixtureId, FixtureOutcome outcome)
+    public static SlotAssignmentInstruction Apply(ProgressionPath path, FixtureId fixtureId, FixtureOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(outcome);
@@ -39,7 +40,7 @@ public static class ProgressionApplier
             ? outcome.WinnerEntryId
             : outcome.LoserEntryId;
 
-        return new ProgressionApplyResult(
+        return new SlotAssignmentInstruction(
             path.Destination.StageId,
             path.Destination.SlotKey,
             entryId);

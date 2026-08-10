@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ProgressionApplyResult.cs" company="Stéphane ANDRE">
+// <copyright file="SlotAssignmentInstruction.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -9,21 +9,22 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Deterministic occupant instruction produced by <see cref="ProgressionApplier"/> (no Stage mutation).
+/// Deterministic occupant instruction for a slot (Qualification, Progression, future Draw).
+/// Not persisted — truth remains <see cref="Slot.EntryId"/> after <see cref="Stage.ApplyResolvedEntry"/>.
 /// </summary>
-public sealed record ProgressionApplyResult
+public sealed record SlotAssignmentInstruction
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ProgressionApplyResult"/> class.
+    /// Initializes a new instance of the <see cref="SlotAssignmentInstruction"/> class.
     /// </summary>
-    /// <param name="destinationStageId">Stage that owns the destination slot.</param>
+    /// <param name="stageId">Stage that owns the destination slot.</param>
     /// <param name="slotKey">Opaque destination slot key.</param>
-    /// <param name="entryId">Entry selected from the fixture outcome (winner or loser).</param>
-    public ProgressionApplyResult(StageId destinationStageId, string slotKey, EntryId entryId)
+    /// <param name="entryId">Entry to place in the destination slot.</param>
+    public SlotAssignmentInstruction(StageId stageId, string slotKey, EntryId entryId)
     {
         ArgumentNullException.ThrowIfNull(slotKey);
 
-        DestinationStageId = destinationStageId;
+        StageId = stageId;
         SlotKey = slotKey;
         EntryId = entryId;
     }
@@ -31,7 +32,7 @@ public sealed record ProgressionApplyResult
     /// <summary>
     /// Gets the destination stage identity.
     /// </summary>
-    public StageId DestinationStageId { get; }
+    public StageId StageId { get; }
 
     /// <summary>
     /// Gets the destination slot key.

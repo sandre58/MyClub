@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Match;
+using MyClub.PlayUp.Domain.Progression;
 using MyClub.PlayUp.Domain.Stage;
 using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 
@@ -31,7 +32,7 @@ public static class ApplyProgressionOutcome
     /// <param name="competitionStages">All competition stages (canonical instances for mutations).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <returns>Applied progression instructions; empty when no path targets the fixture.</returns>
-    public static IReadOnlyList<ProgressionApplyResult> Execute(
+    public static IReadOnlyList<SlotAssignmentInstruction> Execute(
         StageAggregate sourceStage,
         FixtureId fixtureId,
         Match match,
@@ -67,7 +68,7 @@ public static class ApplyProgressionOutcome
         for (var i = 0; i < instructions.Length; i++)
         {
             var instruction = instructions[i];
-            var destination = ResolveCanonicalStage(instruction.DestinationStageId, competitionStages);
+            var destination = ResolveCanonicalStage(instruction.StageId, competitionStages);
             if (destination.FindSlot(instruction.SlotKey) is null)
             {
                 throw new ApplicationFailureException(
