@@ -10,6 +10,7 @@ namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
 /// Entry ↔ Entry opposition proposal from a Draw (does not create Match; no Home/Away).
+/// Ubiquitous language: opposition proposal — not a generic Assignment.
 /// </summary>
 public sealed record PairingDrawResult
 {

@@ -83,6 +83,7 @@ public sealed class Draw : Entity<DrawId>
         }
 
         EnsureResultsWithinPool(resolution);
+        EnsureFixedPlacementsRespected(resolution);
         Resolution = resolution.Copy();
     }
 
@@ -211,5 +212,52 @@ public sealed class Draw : Entity<DrawId>
             default:
                 throw new InvalidOperationException();
         }
+    }
+
+    private void EnsureFixedPlacementsRespected(DrawResolution resolution)
+    {
+        // Inputs already required by EnsureResultsWithinPool.
+        var inputs = Inputs!;
+
+        switch (Kind)
+        {
+            case DrawResolutionKind.Slot:
+                if (inputs.FixedSlots.Any(fixedPlacement => !resolution.SlotResults.Any(r =>
+                        r.EntryId.Equals(fixedPlacement.EntryId)
+                        && string.Equals(r.SlotKey, fixedPlacement.SlotKey, StringComparison.Ordinal))))
+                {
+                    throw new DomainException(
+                        "Slot resolution must include all configured fixed placements.",
+                        StageErrorCodes.DrawFixedPlacementViolation);
+                }
+
+                break;
+            case DrawResolutionKind.Group:
+                if (inputs.FixedGroups.Any(fixedPlacement => !resolution.GroupResults.Any(r =>
+                        r.EntryId.Equals(fixedPlacement.EntryId)
+                        && r.GroupId.Equals(fixedPlacement.GroupId))))
+                {
+                    throw new DomainException(
+                        "Group resolution must include all configured fixed placements.",
+                        StageErrorCodes.DrawFixedPlacementViolation);
+                }
+
+                break;
+            case DrawResolutionKind.Pairing:
+                if (inputs.FixedPairings.Any(fixedPairing => !resolution.PairingResults.Any(r => SameUnorderedPair(r, fixedPairing))))
+                {
+                    throw new DomainException(
+                        "Pairing resolution must include all configured fixed pairings.",
+                        StageErrorCodes.DrawFixedPlacementViolation);
+                }
+
+                break;
+            default:
+                throw new InvalidOperationException();
+        }
+
+        static bool SameUnorderedPair(PairingDrawResult left, PairingDrawResult right) =>
+            (left.EntryA.Equals(right.EntryA) && left.EntryB.Equals(right.EntryB))
+            || (left.EntryA.Equals(right.EntryB) && left.EntryB.Equals(right.EntryA));
     }
 }

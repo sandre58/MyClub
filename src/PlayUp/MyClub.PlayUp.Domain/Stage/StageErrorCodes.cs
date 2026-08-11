@@ -177,6 +177,11 @@ public static class StageErrorCodes
     public const string DrawImmutable = "Stage.DrawImmutable";
 
     /// <summary>
+    /// Gets the code when a resolution does not include configured fixed placements.
+    /// </summary>
+    public const string DrawFixedPlacementViolation = "Stage.DrawFixedPlacementViolation";
+
+    /// <summary>
     /// Gets the code when a draw operation is otherwise invalid.
     /// </summary>
     public const string DrawInvalid = "Stage.DrawInvalid";

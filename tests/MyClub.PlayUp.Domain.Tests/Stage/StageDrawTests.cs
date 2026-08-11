@@ -152,6 +152,144 @@ public sealed class StageDrawTests
         inputs.PotMembership!.Pots[entry].Should().Be(1);
     }
 
+    [Fact]
+    public void RecordResolution_rejects_entry_outside_pool()
+    {
+        var stage = CreateStage();
+        var inPool = EntryId.New();
+        var outside = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([inPool]), _clock);
+
+        var act = () => stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(outside, "A")]),
+            _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawResolutionInvalid);
+    }
+
+    [Fact]
+    public void RecordResolution_rejects_when_fixed_slot_placement_missing()
+    {
+        var stage = CreateStage();
+        var fixedEntry = EntryId.New();
+        var other = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForSlot(
+                [fixedEntry, other],
+                fixedPlacements: [new SlotDrawPlacement(fixedEntry, "A")]),
+            _clock);
+
+        var act = () => stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(fixedEntry, "B"),
+                new SlotDrawPlacement(other, "A")
+            ]),
+            _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawFixedPlacementViolation);
+    }
+
+    [Fact]
+    public void RecordResolution_accepts_resolution_that_includes_fixed_slot()
+    {
+        var stage = CreateStage();
+        var fixedEntry = EntryId.New();
+        var other = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForSlot(
+                [fixedEntry, other],
+                fixedPlacements: [new SlotDrawPlacement(fixedEntry, "A")]),
+            _clock);
+
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(fixedEntry, "A"),
+                new SlotDrawPlacement(other, "B")
+            ]),
+            _clock);
+
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+        draw.Resolution.SlotResults.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Group_draw_records_and_publishes_without_mutating_groups()
+    {
+        var stage = CreateStage();
+        var group = stage.AddGroup("A", _clock);
+        var entry = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]), _clock);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, group.Id)]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+
+        draw.Status.Should().Be(DrawStatus.Published);
+        group.EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Pairing_draw_records_opposition_without_creating_match_structure()
+    {
+        var stage = CreateStage();
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([a, b]), _clock);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedPairings([new PairingDrawResult(a, b)]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+
+        draw.Resolution.PairingResults.Should().ContainSingle();
+        stage.Rounds.Should().BeEmpty();
+        stage.Matchdays.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Fixed_groups_on_slot_draw_inputs_are_rejected()
+    {
+        var entry = EntryId.New();
+        var wrong = DrawInputs.ForGroup([entry], fixedPlacements: [new GroupDrawPlacement(entry, GroupId.New())]);
+
+        var act = () => wrong.EnsureCompatibleWith(DrawResolutionKind.Slot);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawInputsInvalid);
+    }
+
+    [Fact]
+    public void Pairing_fixed_placement_order_insensitive()
+    {
+        var stage = CreateStage();
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForPairing([a, b], fixedPlacements: [new PairingDrawResult(a, b)]),
+            _clock);
+
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedPairings([new PairingDrawResult(b, a)]),
+            _clock);
+
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+    }
+
     private StageAggregate CreateStage() =>
         StageAggregate.Create(_competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
 
