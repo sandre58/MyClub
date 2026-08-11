@@ -10,11 +10,13 @@ using MyClub.PlayUp.Application.Standing;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Match;
+using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stage;
 using MyClub.PlayUp.Domain.Standing;
 using Xunit;
 using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
+using StandingView = MyClub.PlayUp.Domain.Standing.Standing;
 
 namespace MyClub.PlayUp.Application.Tests.Stage;
 
@@ -146,31 +148,325 @@ public sealed class ApplyQualificationTests
     }
 
     [Fact]
-    public void Execute_rejects_group_scoped_paths_until_multi_standing_orchestration()
+    public void Case1_single_group_positions_fill_slots()
     {
         var competitionId = CompetitionId.New();
-        var groupId = GroupId.New();
-        var league = CreateLeagueStage(competitionId, "Groups");
-        var terminal = CreateSlotStage(competitionId, "Terminal", ["A1"]);
-        var entries = CreateEntries(2);
-        var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "KO", ["A1", "A2"]);
+        var entries = CreateEntries(4);
+        var groupA = groups.AddGroup("A", _clock);
+        foreach (var entry in entries)
+        {
+            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+        }
 
-        league.ReplaceQualificationRules(
+        var matches = BuildRoundRobin(groups, entries);
+        var standingA = CalculateStanding.Execute(groupA.EntryIds, matches, groups.Regulation.StandingRules);
+
+        groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                new QualificationPath(
-                    1,
-                    QualificationSource.FromGroup(groupId),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "A1"))
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id, "A2")
             ]),
             _clock);
 
-        var act = () => ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView> { [groupA.Id] = standingA },
+            [groups, terminal],
+            _clock);
+
+        terminal.FindSlot("A1")!.EntryId.Should().Be(standingA.EntryAt(1));
+        terminal.FindSlot("A2")!.EntryId.Should().Be(standingA.EntryAt(2));
+    }
+
+    [Fact]
+    public void Case1_top_two_on_single_path_still_rejected_by_applier()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "KO", ["Pool"]);
+        var entries = CreateEntries(4);
+        var groupA = groups.AddGroup("A", _clock);
+        foreach (var entry in entries)
+        {
+            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+        }
+
+        var matches = BuildRoundRobin(groups, entries);
+        var standingA = CalculateStanding.Execute(groupA.EntryIds, matches, groups.Regulation.StandingRules);
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, groupA.Id, SelectionMode.Top, 2, terminal.Id, "Pool")
+            ]),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView> { [groupA.Id] = standingA },
+            [groups, terminal],
+            _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(QualificationErrorCodes.PathMultiEntry);
+    }
+
+    [Fact]
+    public void Case2_multi_group_positions_do_not_mix_standings()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "KO", ["A1", "A2", "B1", "B2"]);
+        var aEntries = CreateEntries(4);
+        var bEntries = CreateEntries(4);
+        var groupA = groups.AddGroup("A", _clock);
+        var groupB = groups.AddGroup("B", _clock);
+        foreach (var entry in aEntries)
+        {
+            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+        }
+
+        foreach (var entry in bEntries)
+        {
+            groups.AssignEntryToGroup(groupB.Id, entry, _clock);
+        }
+
+        var matchesA = BuildRoundRobin(groups, aEntries);
+        var matchesB = BuildRoundRobin(groups, bEntries);
+        var standingA = CalculateStanding.Execute(groupA.EntryIds, matchesA, groups.Regulation.StandingRules);
+        var standingB = CalculateStanding.Execute(groupB.EntryIds, matchesB, groups.Regulation.StandingRules);
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id, "A2"),
+                GroupPath(3, groupB.Id, SelectionMode.Position, 1, terminal.Id, "B1"),
+                GroupPath(4, groupB.Id, SelectionMode.Position, 2, terminal.Id, "B2")
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView>
+            {
+                [groupA.Id] = standingA,
+                [groupB.Id] = standingB
+            },
+            [groups, terminal],
+            _clock);
+
+        terminal.FindSlot("A1")!.EntryId.Should().Be(standingA.EntryAt(1));
+        terminal.FindSlot("A2")!.EntryId.Should().Be(standingA.EntryAt(2));
+        terminal.FindSlot("B1")!.EntryId.Should().Be(standingB.EntryAt(1));
+        terminal.FindSlot("B2")!.EntryId.Should().Be(standingB.EntryAt(2));
+
+        aEntries.Should().Contain(terminal.FindSlot("A1")!.EntryId!.Value);
+        aEntries.Should().Contain(terminal.FindSlot("A2")!.EntryId!.Value);
+        bEntries.Should().Contain(terminal.FindSlot("B1")!.EntryId!.Value);
+        bEntries.Should().Contain(terminal.FindSlot("B2")!.EntryId!.Value);
+        aEntries.Should().NotContain(terminal.FindSlot("B1")!.EntryId!.Value);
+        bEntries.Should().NotContain(terminal.FindSlot("A1")!.EntryId!.Value);
+    }
+
+    [Fact]
+    public void Case3_different_quotas_per_group()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "KO", ["A1", "A2", "B1", "C1", "C2", "C3"]);
+        var aEntries = CreateEntries(4);
+        var bEntries = CreateEntries(4);
+        var cEntries = CreateEntries(4);
+        var groupA = groups.AddGroup("A", _clock);
+        var groupB = groups.AddGroup("B", _clock);
+        var groupC = groups.AddGroup("C", _clock);
+        foreach (var entry in aEntries)
+        {
+            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+        }
+
+        foreach (var entry in bEntries)
+        {
+            groups.AssignEntryToGroup(groupB.Id, entry, _clock);
+        }
+
+        foreach (var entry in cEntries)
+        {
+            groups.AssignEntryToGroup(groupC.Id, entry, _clock);
+        }
+
+        var standingA = CalculateStanding.Execute(
+            groupA.EntryIds,
+            BuildRoundRobin(groups, aEntries),
+            groups.Regulation.StandingRules);
+        var standingB = CalculateStanding.Execute(
+            groupB.EntryIds,
+            BuildRoundRobin(groups, bEntries),
+            groups.Regulation.StandingRules);
+        var standingC = CalculateStanding.Execute(
+            groupC.EntryIds,
+            BuildRoundRobin(groups, cEntries),
+            groups.Regulation.StandingRules);
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id, "A2"),
+                GroupPath(3, groupB.Id, SelectionMode.Position, 1, terminal.Id, "B1"),
+                GroupPath(4, groupC.Id, SelectionMode.Position, 1, terminal.Id, "C1"),
+                GroupPath(5, groupC.Id, SelectionMode.Position, 2, terminal.Id, "C2"),
+                GroupPath(6, groupC.Id, SelectionMode.Position, 3, terminal.Id, "C3")
+            ]),
+            _clock);
+
+        var results = ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView>
+            {
+                [groupA.Id] = standingA,
+                [groupB.Id] = standingB,
+                [groupC.Id] = standingC
+            },
+            [groups, terminal],
+            _clock);
+
+        results.Should().HaveCount(6);
+        terminal.FindSlot("A1")!.EntryId.Should().Be(standingA.EntryAt(1));
+        terminal.FindSlot("A2")!.EntryId.Should().Be(standingA.EntryAt(2));
+        terminal.FindSlot("B1")!.EntryId.Should().Be(standingB.EntryAt(1));
+        terminal.FindSlot("C1")!.EntryId.Should().Be(standingC.EntryAt(1));
+        terminal.FindSlot("C2")!.EntryId.Should().Be(standingC.EntryAt(2));
+        terminal.FindSlot("C3")!.EntryId.Should().Be(standingC.EntryAt(3));
+    }
+
+    [Fact]
+    public void Case4_specific_positions_from_group_standing()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "KO", ["X", "Y", "Z"]);
+        var entries = CreateEntries(6);
+        var groupA = groups.AddGroup("A", _clock);
+        foreach (var entry in entries)
+        {
+            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+        }
+
+        var standingA = CalculateStanding.Execute(
+            groupA.EntryIds,
+            BuildRoundRobin(groups, entries),
+            groups.Regulation.StandingRules);
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "X"),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 3, terminal.Id, "Y"),
+                GroupPath(3, groupA.Id, SelectionMode.Position, 5, terminal.Id, "Z")
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView> { [groupA.Id] = standingA },
+            [groups, terminal],
+            _clock);
+
+        terminal.FindSlot("X")!.EntryId.Should().Be(standingA.EntryAt(1));
+        terminal.FindSlot("Y")!.EntryId.Should().Be(standingA.EntryAt(3));
+        terminal.FindSlot("Z")!.EntryId.Should().Be(standingA.EntryAt(5));
+    }
+
+    [Fact]
+    public void Execute_rejects_missing_group_standing()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["A1"]);
+        var entries = CreateEntries(2);
+        var groupA = groups.AddGroup("A", _clock);
+        foreach (var entry in entries)
+        {
+            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+        }
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1")
+            ]),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView>(),
+            [groups, terminal],
+            _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.QualificationSourceNotSupported);
+            .Which.Code.Should().Be(ApplicationErrorCodes.QualificationStandingMissing);
+    }
+
+    [Fact]
+    public void Execute_rejects_unknown_group_on_path()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["A1"]);
+        var unknownGroupId = GroupId.New();
+        var entries = CreateEntries(2);
+        var matches = BuildRoundRobin(groups, entries);
+        var standing = CalculateStanding.Execute(entries, matches, groups.Regulation.StandingRules);
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, unknownGroupId, SelectionMode.Position, 1, terminal.Id, "A1")
+            ]),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView> { [unknownGroupId] = standing },
+            [groups, terminal],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.QualificationGroupNotFound);
+    }
+
+    [Fact]
+    public void Execute_rejects_overall_path_without_overall_standing()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ"]);
+
+        league.ReplaceQualificationRules(
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(
+            league,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView>(),
+            [league, terminal],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.QualificationStandingMissing);
     }
 
     [Fact]
@@ -279,6 +575,19 @@ public sealed class ApplyQualificationTests
         new(
             order,
             QualificationSource.Overall(),
+            new QualificationSelection(mode, value),
+            new QualificationDestination(stageId, slotKey));
+
+    private static QualificationPath GroupPath(
+        int order,
+        GroupId groupId,
+        SelectionMode mode,
+        int value,
+        StageId stageId,
+        string slotKey) =>
+        new(
+            order,
+            QualificationSource.FromGroup(groupId),
             new QualificationSelection(mode, value),
             new QualificationDestination(stageId, slotKey));
 

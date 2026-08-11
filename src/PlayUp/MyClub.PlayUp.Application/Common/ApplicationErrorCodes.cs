@@ -32,9 +32,20 @@ public static class ApplicationErrorCodes
     public const string FixtureInvalid = "Application.FixtureInvalid";
 
     /// <summary>
-    /// Gets the code when qualification paths require per-group standings not yet orchestrated by V1.
+    /// Legacy code: group-scoped paths once rejected before multi-Standing orchestration (7.0.9.2).
+    /// Prefer <see cref="QualificationStandingMissing"/> / <see cref="QualificationGroupNotFound"/>.
     /// </summary>
     public const string QualificationSourceNotSupported = "Application.QualificationSourceNotSupported";
+
+    /// <summary>
+    /// Gets the code when a qualification path needs a standing that was not supplied.
+    /// </summary>
+    public const string QualificationStandingMissing = "Application.QualificationStandingMissing";
+
+    /// <summary>
+    /// Gets the code when a qualification path references a group absent from the source stage.
+    /// </summary>
+    public const string QualificationGroupNotFound = "Application.QualificationGroupNotFound";
 
     /// <summary>
     /// Gets the code when a published Draw resolution cannot be applied to the current Stage state.
