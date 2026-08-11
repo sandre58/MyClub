@@ -22,6 +22,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Matchday> _matchdays = [];
     private readonly List<Slot> _slots = [];
     private readonly List<DirectAssignment> _directAssignments = [];
+    private readonly List<Draw> _draws = [];
 
     private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
         : base(id)
@@ -76,6 +77,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the direct slot assignments (configuration feeds).
     /// </summary>
     public IReadOnlyList<DirectAssignment> DirectAssignments => _directAssignments.AsReadOnly();
+
+    /// <summary>
+    /// Gets the draws owned by this stage.
+    /// </summary>
+    public IReadOnlyList<Draw> Draws => _draws.AsReadOnly();
 
     private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
 
@@ -168,6 +174,97 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Creates a draft draw with the given resolution kind (inputs configured separately).
+    /// </summary>
+    /// <param name="kind">Principal resolution kind (immutable for this draw).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created draw.</returns>
+    public Draw CreateDraw(DrawResolutionKind kind, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        var draw = new Draw(DrawId.New(), kind);
+        _draws.Add(draw);
+        Raise(new StageDrawCreated(Id, draw.Id, kind, clock));
+        return draw;
+    }
+
+    /// <summary>
+    /// Configures draw inputs (Draft draw only). Sole entry point for Entries / SeedMap / Pot / fixed placements.
+    /// </summary>
+    public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+        GetDraw(drawId).ConfigureInputs(inputs);
+    }
+
+    /// <summary>
+    /// Records a typed resolution matching the draw kind (Draft only).
+    /// </summary>
+    public void RecordDrawResolution(DrawId drawId, DrawResolution resolution, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(resolution);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        var draw = GetDraw(drawId);
+        draw.RecordResolution(resolution);
+        Raise(new StageDrawResolutionRecorded(Id, drawId, resolution.State, clock));
+    }
+
+    /// <summary>
+    /// Marks that no admissible solution exists (Draft only; ≠ Cancel).
+    /// </summary>
+    public void MarkDrawNoSolution(DrawId drawId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        var draw = GetDraw(drawId);
+        draw.MarkNoSolution();
+        Raise(new StageDrawResolutionRecorded(Id, drawId, DrawResolutionState.NoSolution, clock));
+    }
+
+    /// <summary>
+    /// Publishes a resolved draw (immutable thereafter). Required before WhoFeeds exposes Draw targets.
+    /// </summary>
+    public void PublishDraw(DrawId drawId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        var draw = GetDraw(drawId);
+        draw.Publish();
+        Raise(new StageDrawPublished(Id, drawId, clock));
+    }
+
+    /// <summary>
+    /// Cancels a draw. A new draw is required for a rerun.
+    /// </summary>
+    public void CancelDraw(DrawId drawId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        var draw = GetDraw(drawId);
+        if (draw.Status == DrawStatus.Cancelled)
+        {
+            return;
+        }
+
+        draw.Cancel();
+        Raise(new StageDrawCancelled(Id, drawId, clock));
+    }
+
+    /// <summary>
     /// Replaces qualification rules. Allowed in Draft or Ready; Ready is demoted to Draft.
     /// </summary>
     /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
@@ -250,6 +347,21 @@ public sealed class Stage : AggregateRoot<StageId>
     public Group GetGroup(GroupId groupId) =>
         _groups.FirstOrDefault(g => g.Id.Equals(groupId))
         ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+
+    /// <summary>
+    /// Gets a draw by identity.
+    /// </summary>
+    /// <param name="drawId">The draw identity.</param>
+    /// <returns>The draw.</returns>
+    public Draw GetDraw(DrawId drawId) =>
+        _draws.FirstOrDefault(d => d.Id.Equals(drawId))
+        ?? throw new DomainException($"Draw '{drawId}' was not found.", StageErrorCodes.DrawNotFound);
+
+    /// <summary>
+    /// Finds a draw by identity, if any.
+    /// </summary>
+    public Draw? FindDraw(DrawId drawId) =>
+        _draws.FirstOrDefault(d => d.Id.Equals(drawId));
 
     /// <summary>
     /// Finds a group by identity, if any.

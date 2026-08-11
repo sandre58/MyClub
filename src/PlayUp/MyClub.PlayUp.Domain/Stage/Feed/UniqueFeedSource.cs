@@ -75,8 +75,8 @@ public sealed record UniqueFeedSource
         new(FeedKind.Direct, null, null, new DirectFeedRef(configuredEntryId), null);
 
     /// <summary>
-    /// Creates a unique draw feed source placeholder.
+    /// Creates a unique draw feed source from a published draw.
     /// </summary>
-    public static UniqueFeedSource ForDraw() =>
-        new(FeedKind.Draw, null, null, null, new DrawFeedRef());
+    public static UniqueFeedSource ForDraw(DrawId drawId) =>
+        new(FeedKind.Draw, null, null, null, new DrawFeedRef(drawId));
 }

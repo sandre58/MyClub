@@ -30,7 +30,7 @@ public sealed class DrawRulesTests
     }
 
     [Fact]
-    public void Constructor_accepts_predefined_with_seeds_pots_and_constraints()
+    public void Constructor_accepts_random_with_seeds_pots_and_constraints()
     {
         // Arrange
         var constraints = new[]
@@ -41,19 +41,23 @@ public sealed class DrawRulesTests
 
         // Act
         var rules = new DrawRules(
-            DrawMode.Predefined,
+            DrawMode.Random,
             new SeedingRules(4),
             new PotRules(4),
             constraints);
 
         // Assert
-        rules.Mode.Should().Be(DrawMode.Predefined);
+        rules.Mode.Should().Be(DrawMode.Random);
         rules.SeedingRules!.NumberOfSeeds.Should().Be(4);
         rules.PotRules!.NumberOfPots.Should().Be(4);
         rules.Constraints.Should().Equal(constraints);
         rules.Constraints[0].Enforcement.Should().Be(ConstraintEnforcement.Preferred);
         rules.Constraints[1].Enforcement.Should().Be(ConstraintEnforcement.Required);
     }
+
+    [Fact]
+    public void DrawMode_has_only_Random_in_V1() =>
+        Enum.GetNames<DrawMode>().Should().BeEquivalentTo("Random");
 
     [Fact]
     public void Equality_is_structural()
@@ -158,7 +162,7 @@ public sealed class DrawRulesTests
     {
         // Arrange
         var baseRegulation = StageRegulation.MaterializeFrom(SampleRegulations.Standard());
-        var drawRules = new DrawRules(DrawMode.Predefined, potRules: new PotRules(2));
+        var drawRules = new DrawRules(DrawMode.Random, potRules: new PotRules(2));
 
         // Act
         var updated = baseRegulation.WithDrawRules(drawRules);

@@ -7,17 +7,16 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// How pairings are generated for a draw (parameters only; no execution).
+/// Execution mode for attempting a draw resolution (parameters only; not the definition of Draw).
+/// Draw is the business procedure that selects among admissible resolutions; this enum only
+/// describes how an automated attempt may be produced. Manual ceremony is a future extension.
 /// </summary>
 public enum DrawMode
 {
     /// <summary>
-    /// Pairings are generated randomly (subject to constraints).
+    /// V1 automated attempt may use randomness (subject to constraints).
+    /// Does not imply that every Draw resolution comes from a random generator —
+    /// recorded or assisted resolutions remain valid.
     /// </summary>
-    Random = 0,
-
-    /// <summary>
-    /// Pairings follow a predefined scheme.
-    /// </summary>
-    Predefined = 1
+    Random = 0
 }

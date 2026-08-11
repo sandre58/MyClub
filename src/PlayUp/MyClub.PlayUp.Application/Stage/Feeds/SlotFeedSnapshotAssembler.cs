@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stage;
 using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 
@@ -85,13 +86,35 @@ public static class SlotFeedSnapshotAssembler
             directs,
             qualifications,
             progressions,
-            drawTargets: []);
+            BuildDrawTargets(target));
+    }
+
+    /// <summary>
+    /// Draw → SlotResolution (Published) → DrawFeedSource → WhoFeeds.
+    /// Draft / Cancelled / NoSolution draws do not contribute feeds (Prepare before Publish → Missing).
+    /// </summary>
+    private static DrawFeedSource[] BuildDrawTargets(StageAggregate target)
+    {
+        var targets = new List<DrawFeedSource>();
+        foreach (var draw in target.Draws)
+        {
+            if (draw.Status != DrawStatus.Published
+                || draw.Kind != DrawResolutionKind.Slot
+                || draw.Resolution.State != DrawResolutionState.Resolved)
+            {
+                continue;
+            }
+
+            targets.AddRange(draw.Resolution.SlotResults.Select(placement => new DrawFeedSource(placement.SlotKey, draw.Id)));
+        }
+
+        return [..targets];
     }
 
     private static void EnsureSlotExists(
         StageAggregate target,
         string destinationSlotKey,
-        Domain.Common.StageId sourceStageId,
+        StageId sourceStageId,
         string mechanism)
     {
         if (target.FindSlot(destinationSlotKey) is not null)

@@ -6,6 +6,8 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stage;
 using Xunit;
 
 namespace MyClub.PlayUp.Domain.Tests.Common;
@@ -23,6 +25,18 @@ public sealed class UbiquitousLanguageEnumTests
     [Fact]
     public void DrawStatus_matches_documented_lifecycle() =>
         Enum.GetNames<DrawStatus>().Should().BeEquivalentTo("Draft", "Published", "Cancelled");
+
+    [Fact]
+    public void DrawMode_matches_documented_V1_execution_modes() =>
+        Enum.GetNames<DrawMode>().Should().BeEquivalentTo("Random");
+
+    [Fact]
+    public void DrawResolutionKind_matches_documented_kinds() =>
+        Enum.GetNames<DrawResolutionKind>().Should().BeEquivalentTo("Slot", "Group", "Pairing");
+
+    [Fact]
+    public void DrawResolutionState_is_orthogonal_to_lifecycle() =>
+        Enum.GetNames<DrawResolutionState>().Should().BeEquivalentTo("NotResolved", "Resolved", "NoSolution");
 
     [Fact]
     public void MatchStatus_matches_documented_lifecycle() =>

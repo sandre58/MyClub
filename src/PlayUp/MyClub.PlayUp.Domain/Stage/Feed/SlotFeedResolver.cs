@@ -96,7 +96,7 @@ public static class SlotFeedResolver
                 progressions[0].SourceStageId,
                 progressions[0].SourceFixtureId,
                 progressions[0].Outcome),
-            FeedKind.Draw => UniqueFeedSource.ForDraw(),
+            FeedKind.Draw => UniqueFeedSource.ForDraw(draws[0].DrawId),
             _ => throw new DomainException(
                 "Unknown feed kind.",
                 StageErrorCodes.FeedSnapshotInvalid)

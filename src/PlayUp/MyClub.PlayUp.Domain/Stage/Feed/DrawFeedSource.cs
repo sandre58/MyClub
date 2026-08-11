@@ -4,10 +4,13 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
+
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Snapshot placeholder for a draw feed target (Draw Entity not required in V1).
+/// Snapshot row: a Slot is fed by a published Draw Slot resolution
+/// (Draw → SlotResolution → DrawFeedSource → WhoFeeds).
 /// </summary>
 public sealed record DrawFeedSource
 {
@@ -15,10 +18,20 @@ public sealed record DrawFeedSource
     /// Initializes a new instance of the <see cref="DrawFeedSource"/> class.
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
-    public DrawFeedSource(string slotKey) => SlotKey = Slot.NormalizeKey(slotKey);
+    /// <param name="drawId">Published draw identity.</param>
+    public DrawFeedSource(string slotKey, DrawId drawId)
+    {
+        SlotKey = Slot.NormalizeKey(slotKey);
+        DrawId = drawId;
+    }
 
     /// <summary>
     /// Gets the target slot key.
     /// </summary>
     public string SlotKey { get; }
+
+    /// <summary>
+    /// Gets the published draw identity.
+    /// </summary>
+    public DrawId DrawId { get; }
 }

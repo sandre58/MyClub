@@ -145,4 +145,39 @@ public static class StageErrorCodes
     /// Gets the code when a progression path source fixture does not match the supplied fixture identity.
     /// </summary>
     public const string ProgressionApplyFixtureMismatch = "Stage.ProgressionApplyFixtureMismatch";
+
+    /// <summary>
+    /// Gets the code when a draw cannot be found.
+    /// </summary>
+    public const string DrawNotFound = "Stage.DrawNotFound";
+
+    /// <summary>
+    /// Gets the code when draw inputs are invalid.
+    /// </summary>
+    public const string DrawInputsInvalid = "Stage.DrawInputsInvalid";
+
+    /// <summary>
+    /// Gets the code when a draw resolution payload is invalid.
+    /// </summary>
+    public const string DrawResolutionInvalid = "Stage.DrawResolutionInvalid";
+
+    /// <summary>
+    /// Gets the code when a resolution kind does not match the draw kind.
+    /// </summary>
+    public const string DrawResolutionKindMismatch = "Stage.DrawResolutionKindMismatch";
+
+    /// <summary>
+    /// Gets the code when a draw lifecycle transition is illegal.
+    /// </summary>
+    public const string DrawInvalidTransition = "Stage.DrawInvalidTransition";
+
+    /// <summary>
+    /// Gets the code when a published (or non-draft) draw is mutated.
+    /// </summary>
+    public const string DrawImmutable = "Stage.DrawImmutable";
+
+    /// <summary>
+    /// Gets the code when a draw operation is otherwise invalid.
+    /// </summary>
+    public const string DrawInvalid = "Stage.DrawInvalid";
 }

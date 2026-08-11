@@ -115,4 +115,49 @@ public sealed class SlotFeedSnapshotAssemblerTests
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StageNotInCompetition);
     }
+
+    [Fact]
+    public void Assemble_exposes_DrawTargets_only_after_Publish_Slot_draw()
+    {
+        var competitionId = CompetitionId.New();
+        var stage = StageAggregate.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+        stage.AddSlot("SF1-A", _clock);
+        var entry = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "SF1-A")]),
+            _clock);
+
+        SlotFeedSnapshotAssembler.Assemble(stage, [stage]).DrawTargets.Should().BeEmpty();
+
+        stage.PublishDraw(draw.Id, _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, [stage]);
+        snapshot.DrawTargets.Should().ContainSingle();
+        snapshot.DrawTargets[0].DrawId.Should().Be(draw.Id);
+        snapshot.DrawTargets[0].SlotKey.Should().Be("SF1-A");
+    }
+
+    [Fact]
+    public void Assemble_Direct_plus_published_Draw_is_MultipleFeeds_for_resolver()
+    {
+        var competitionId = CompetitionId.New();
+        var stage = StageAggregate.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+        stage.AddSlot("SF1-A", _clock);
+        var directEntry = EntryId.New();
+        stage.AssignEntryToSlot("SF1-A", directEntry, _clock);
+        var drawEntry = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([drawEntry]), _clock);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(drawEntry, "SF1-A")]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, [stage]);
+        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
+    }
 }

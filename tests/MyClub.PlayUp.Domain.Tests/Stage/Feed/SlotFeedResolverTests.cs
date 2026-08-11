@@ -177,7 +177,7 @@ public sealed class SlotFeedResolverTests
         var snapshot = Snapshot(
             ["SF1-A"],
             qualifications: [new QualificationFeedSource(_source, 1, "SF1-A")],
-            draws: [new DrawFeedSource("SF1-A")]);
+            draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
 
         SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
     }
@@ -191,7 +191,7 @@ public sealed class SlotFeedResolverTests
             [
                 new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A")
             ],
-            draws: [new DrawFeedSource("SF1-A")]);
+            draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
 
         SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
     }
@@ -229,15 +229,16 @@ public sealed class SlotFeedResolverTests
     }
 
     [Fact]
-    public void Unique_draw_resolves_placeholder()
+    public void Unique_draw_resolves_with_draw_id()
     {
-        var snapshot = Snapshot(["SF1-A"], draws: [new DrawFeedSource("SF1-A")]);
+        var drawId = DrawId.New();
+        var snapshot = Snapshot(["SF1-A"], draws: [new DrawFeedSource("SF1-A", drawId)]);
 
         var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
 
         result.Status.Should().Be(FeedResolutionStatus.Unique);
         result.Source!.Kind.Should().Be(FeedKind.Draw);
-        result.Source.Draw.Should().NotBeNull();
+        result.Source.Draw!.DrawId.Should().Be(drawId);
     }
 
     [Fact]

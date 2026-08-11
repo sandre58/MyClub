@@ -101,11 +101,12 @@ public sealed class RegulationIntegrationTests
         competition.ReplaceRegulation(
             new Regulation(new EntryRules(8, 32), competition.Regulation.MatchRules, competition.Regulation.StandingRules),
             _clock);
-        stage.ReplaceDrawRules(new DrawRules(DrawMode.Predefined), _clock);
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random, new SeedingRules(2)), _clock);
 
         // Assert
         competition.Regulation.EntryRules.MinimumTeams.Should().Be(8);
-        stage.Regulation.DrawRules!.Mode.Should().Be(DrawMode.Predefined);
+        stage.Regulation.DrawRules!.Mode.Should().Be(DrawMode.Random);
+        stage.Regulation.DrawRules.SeedingRules!.NumberOfSeeds.Should().Be(2);
         stage.Regulation.QualificationRules.Should().Be(qualification);
         stage.Regulation.TieFormat.Should().Be(defaultTie);
         stage.Regulation.MatchRules.Duration.DurationPerPeriod.Should().Be(45);

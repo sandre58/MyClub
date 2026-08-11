@@ -9,7 +9,9 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Describes the presence of seeded teams for a draw (count only; no team assignment).
+/// Regulation parameters for seeding presence (count only).
+/// Not an Entry→Seed map — concrete seed assignments belong to a Draw instance (SeedMap), not here.
+/// Distinct from Standing.Position / ranking.
 /// </summary>
 public sealed record SeedingRules
 {

@@ -9,7 +9,9 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Describes a pot-based draw organization (count only; no team-to-pot mapping).
+/// Regulation parameters for pot-based draw organization (count only).
+/// Not an Entry→Pot membership map — concrete pot assignments belong to a Draw instance (PotMembership), not here.
+/// Distinct from Seeding / SeedMap.
 /// </summary>
 public sealed record PotRules
 {
