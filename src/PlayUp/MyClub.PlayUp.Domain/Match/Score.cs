@@ -9,15 +9,19 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Match;
 
 /// <summary>
-/// Match score (home and away goals).
+/// Match play score (home and away goals at the end of play time).
 /// </summary>
+/// <remarks>
+/// Represents goals scored during play at the end of the encounter: regulation time plus extra time when played.
+/// Penalty shootout kicks are <strong>not</strong> included — see <see cref="PenaltyShootoutScore"/>.
+/// </remarks>
 public readonly record struct Score
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Score"/> struct.
     /// </summary>
-    /// <param name="homeGoals">Goals scored by the home entry (≥ 0).</param>
-    /// <param name="awayGoals">Goals scored by the away entry (≥ 0).</param>
+    /// <param name="homeGoals">Play goals by the home entry (≥ 0; extra time included when played).</param>
+    /// <param name="awayGoals">Play goals by the away entry (≥ 0; extra time included when played).</param>
     public Score(int homeGoals, int awayGoals)
     {
         if (homeGoals < 0 || awayGoals < 0)

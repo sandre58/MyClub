@@ -175,6 +175,66 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
+    public void Execute_tied_score_with_shootout_sets_winner()
+    {
+        var competitionId = CompetitionId.New();
+        var source = CreateKnockoutStage(competitionId, "Knockout", ["SF1-A"]);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
+        var match = Match.Create(source.CompetitionId, source.Id, home, away, _clock);
+        source.AttachMatch(fixture.Id, match.Id, _clock);
+        match.Start(_clock);
+        match.Finish(
+            new MatchResult(
+                ResultType.Played,
+                new Score(1, 1),
+                extraTimePlayed: false,
+                new PenaltyShootoutScore(5, 4)),
+            _clock);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(source.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var results = ApplyProgressionOutcome.Execute(source, fixture.Id, match, [source], _clock);
+
+        results.Should().ContainSingle();
+        results[0].EntryId.Should().Be(home);
+        source.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+    }
+
+    [Fact]
+    public void Assemble_maps_shootout_from_finished_match()
+    {
+        var competitionId = CompetitionId.New();
+        var stageId = StageId.New();
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var match = Match.Create(competitionId, stageId, home, away, _clock);
+        match.Start(_clock);
+        match.Finish(
+            new MatchResult(
+                ResultType.Played,
+                new Score(2, 2),
+                extraTimePlayed: true,
+                new PenaltyShootoutScore(4, 3)),
+            _clock);
+        var fixtureId = FixtureId.New();
+
+        var snapshot = FixtureOutcomeSnapshotAssembler.Assemble(fixtureId, match);
+
+        snapshot.Score.Should().Be(new Score(2, 2));
+        snapshot.PenaltyShootoutScore.Should().Be(new PenaltyShootoutScore(4, 3));
+        snapshot.GetType().GetProperty("ExtraTimePlayed").Should().BeNull();
+    }
+
+    [Fact]
     public void Execute_applies_when_destination_suspended()
     {
         var competitionId = CompetitionId.New();

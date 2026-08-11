@@ -135,6 +135,59 @@ public sealed class FixtureOutcomeResolverTests
         act.Should().NotThrow();
     }
 
-    private FixtureOutcomeSnapshot Finished(Score score) =>
-        new(_fixtureId, _matchId, _home, _away, MatchStatus.Finished, score);
+    [Fact]
+    public void Resolve_draw_with_home_shootout_win()
+    {
+        var snapshot = Finished(new Score(2, 2), new PenaltyShootoutScore(4, 3));
+
+        var outcome = FixtureOutcomeResolver.Resolve(snapshot);
+
+        outcome.WinnerEntryId.Should().Be(_home);
+        outcome.LoserEntryId.Should().Be(_away);
+    }
+
+    [Fact]
+    public void Resolve_draw_with_away_shootout_win()
+    {
+        var snapshot = Finished(new Score(0, 0), new PenaltyShootoutScore(4, 5));
+
+        var outcome = FixtureOutcomeResolver.Resolve(snapshot);
+
+        outcome.WinnerEntryId.Should().Be(_away);
+        outcome.LoserEntryId.Should().Be(_home);
+    }
+
+    [Fact]
+    public void Resolve_rejects_equal_shootout_as_invalid()
+    {
+        var snapshot = Finished(new Score(1, 1), new PenaltyShootoutScore(3, 3));
+
+        var act = () => FixtureOutcomeResolver.Resolve(snapshot);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeInvalid);
+    }
+
+    [Fact]
+    public void Resolve_outcome_identical_regardless_of_match_extra_time_flag()
+    {
+        // ExtraTimePlayed lives on MatchResult only — snapshot has no ET field; same Score/TAB ⇒ same Winner.
+        var withoutEt = new MatchResult(ResultType.Played, new Score(2, 1), extraTimePlayed: false);
+        var withEt = new MatchResult(ResultType.Played, new Score(2, 1), extraTimePlayed: true);
+
+        var outcomeWithoutEt = FixtureOutcomeResolver.Resolve(Finished(withoutEt.Score, withoutEt.PenaltyShootoutScore));
+        var outcomeWithEt = FixtureOutcomeResolver.Resolve(Finished(withEt.Score, withEt.PenaltyShootoutScore));
+
+        outcomeWithoutEt.Should().Be(outcomeWithEt);
+        outcomeWithEt.WinnerEntryId.Should().Be(_home);
+    }
+
+    [Fact]
+    public void Snapshot_does_not_carry_extra_time_played()
+    {
+        typeof(FixtureOutcomeSnapshot).GetProperty("ExtraTimePlayed").Should().BeNull();
+        typeof(FixtureOutcomeSnapshot).GetProperty("PenaltyShootoutScore").Should().NotBeNull();
+    }
+
+    private FixtureOutcomeSnapshot Finished(Score score, PenaltyShootoutScore? shootout = null) =>
+        new(_fixtureId, _matchId, _home, _away, MatchStatus.Finished, score, shootout);
 }

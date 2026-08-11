@@ -15,6 +15,7 @@ namespace MyClub.PlayUp.Domain.Stage;
 /// <remarks>
 /// Application is responsible for Fixture↔Match coherence (MatchId in Fixture.MatchIds; V1 exactly one match).
 /// Resolution rules live in <see cref="FixtureOutcomeResolver"/>.
+/// Does not carry <c>ExtraTimePlayed</c> — outcome depends only on play <see cref="Score"/> and optional shootout.
 /// </remarks>
 public sealed record FixtureOutcomeSnapshot
 {
@@ -26,14 +27,16 @@ public sealed record FixtureOutcomeSnapshot
     /// <param name="homeEntryId">Home participant.</param>
     /// <param name="awayEntryId">Away participant.</param>
     /// <param name="status">Match status.</param>
-    /// <param name="score">Final score when finished; otherwise <see langword="null"/>.</param>
+    /// <param name="score">Final play score when finished; otherwise <see langword="null"/>.</param>
+    /// <param name="penaltyShootoutScore">Shootout score when taken; otherwise <see langword="null"/>.</param>
     public FixtureOutcomeSnapshot(
         FixtureId fixtureId,
         MatchId matchId,
         EntryId homeEntryId,
         EntryId awayEntryId,
         MatchStatus status,
-        Score? score)
+        Score? score,
+        PenaltyShootoutScore? penaltyShootoutScore = null)
     {
         FixtureId = fixtureId;
         MatchId = matchId;
@@ -41,6 +44,7 @@ public sealed record FixtureOutcomeSnapshot
         AwayEntryId = awayEntryId;
         Status = status;
         Score = score;
+        PenaltyShootoutScore = penaltyShootoutScore;
     }
 
     /// <summary>
@@ -69,7 +73,12 @@ public sealed record FixtureOutcomeSnapshot
     public MatchStatus Status { get; }
 
     /// <summary>
-    /// Gets the score when available.
+    /// Gets the play score when available.
     /// </summary>
     public Score? Score { get; }
+
+    /// <summary>
+    /// Gets the penalty shootout score when taken; otherwise <see langword="null"/>.
+    /// </summary>
+    public PenaltyShootoutScore? PenaltyShootoutScore { get; }
 }

@@ -11,6 +11,10 @@ namespace MyClub.PlayUp.Domain.Stage;
 /// <summary>
 /// Pure single-leg fixture outcome helper: derives Winner/Loser from a snapshot (no aggregate loading).
 /// </summary>
+/// <remarks>
+/// Resolution uses play <see cref="Match.Score"/> and optional <see cref="Match.PenaltyShootoutScore"/> only.
+/// Extra time played is never consulted.
+/// </remarks>
 public static class FixtureOutcomeResolver
 {
     /// <summary>
@@ -36,12 +40,20 @@ public static class FixtureOutcomeResolver
             ? throw new DomainException(
                 "Fixture outcome requires a score when the match is finished.",
                 StageErrorCodes.FixtureOutcomeInvalid)
-            : score.HomeGoals == score.AwayGoals
-            ? throw new DomainException(
-                "Fixture outcome is undecided when the score is a draw.",
-                StageErrorCodes.FixtureOutcomeUndecided)
-            : score.HomeGoals > score.AwayGoals
-            ? new FixtureOutcome(snapshot.HomeEntryId, snapshot.AwayEntryId)
-            : new FixtureOutcome(snapshot.AwayEntryId, snapshot.HomeEntryId);
+            : score.HomeGoals != score.AwayGoals
+            ? score.HomeGoals > score.AwayGoals
+                ? new FixtureOutcome(snapshot.HomeEntryId, snapshot.AwayEntryId)
+                : new FixtureOutcome(snapshot.AwayEntryId, snapshot.HomeEntryId)
+            : snapshot.PenaltyShootoutScore is not { } shootout
+                ? throw new DomainException(
+                    "Fixture outcome is undecided when the score is a draw.",
+                    StageErrorCodes.FixtureOutcomeUndecided)
+                : shootout.HomeGoals == shootout.AwayGoals
+                    ? throw new DomainException(
+                        "Fixture outcome requires a decisive penalty shootout score.",
+                        StageErrorCodes.FixtureOutcomeInvalid)
+                    : shootout.HomeGoals > shootout.AwayGoals
+                        ? new FixtureOutcome(snapshot.HomeEntryId, snapshot.AwayEntryId)
+                        : new FixtureOutcome(snapshot.AwayEntryId, snapshot.HomeEntryId);
     }
 }

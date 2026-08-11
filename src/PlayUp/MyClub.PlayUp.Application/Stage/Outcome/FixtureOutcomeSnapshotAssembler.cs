@@ -34,6 +34,7 @@ public static class FixtureOutcomeSnapshotAssembler
             match.HomeEntryId,
             match.AwayEntryId,
             match.Status,
-            match.Result?.Score);
+            match.Result?.Score,
+            match.Result?.PenaltyShootoutScore);
     }
 }

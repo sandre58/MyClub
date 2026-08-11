@@ -126,7 +126,11 @@ public sealed class MatchLifecycleTests
         // Arrange
         var match = CreateLive();
         match.ClearDomainEvents();
-        var result = new MatchResult(ResultType.Played, new Score(2, 1));
+        var result = new MatchResult(
+            ResultType.Played,
+            new Score(2, 2),
+            extraTimePlayed: true,
+            new PenaltyShootoutScore(5, 4));
 
         // Act
         match.Finish(result, _clock);
@@ -134,10 +138,16 @@ public sealed class MatchLifecycleTests
         // Assert
         match.Status.Should().Be(MatchStatus.Finished);
         match.Result.Should().Be(result);
+        match.Result!.ExtraTimePlayed.Should().BeTrue();
+        match.Result.PenaltyShootoutScore.Should().Be(new PenaltyShootoutScore(5, 4));
         var finished = match.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<MatchFinished>().Subject;
         finished.MatchId.Should().Be(match.Id);
         finished.ResultType.Should().Be(ResultType.Played);
-        finished.Score.Should().Be(new Score(2, 1));
+        finished.Score.Should().Be(new Score(2, 2));
+
+        // MatchFinished remains lifecycle + Score only (no ExtraTimePlayed / shootout on the event).
+        finished.GetType().GetProperty("ExtraTimePlayed").Should().BeNull();
+        finished.GetType().GetProperty("PenaltyShootoutScore").Should().BeNull();
     }
 
     [Fact]
