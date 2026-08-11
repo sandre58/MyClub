@@ -221,6 +221,55 @@ public sealed class ApplyQualificationTests
         terminal.FindSlot("Champ")!.EntryId.Should().NotBe(first);
     }
 
+    [Fact]
+    public void Execute_applies_when_destination_suspended()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ"]);
+        terminal.AddRound("R1", _clock);
+        var entries = CreateEntries(2);
+        var matches = BuildRoundRobin(league, entries);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        league.ReplaceQualificationRules(
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            _clock);
+        terminal.Prepare(_clock);
+        terminal.Start(_clock);
+        terminal.Suspend(_clock);
+
+        ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        terminal.Status.Should().Be(StageStatus.Suspended);
+        terminal.FindSlot("Champ")!.EntryId.Should().Be(standing.EntryAt(1));
+        terminal.Draws.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_rejects_when_destination_completed()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ"]);
+        terminal.AddRound("R1", _clock);
+        var entries = CreateEntries(2);
+        var matches = BuildRoundRobin(league, entries);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        league.ReplaceQualificationRules(
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            _clock);
+        terminal.Prepare(_clock);
+        terminal.Start(_clock);
+        terminal.Complete(_clock);
+
+        var act = () => ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+        terminal.Status.Should().Be(StageStatus.Completed);
+    }
+
     private static QualificationPath Path(
         int order,
         SelectionMode mode,

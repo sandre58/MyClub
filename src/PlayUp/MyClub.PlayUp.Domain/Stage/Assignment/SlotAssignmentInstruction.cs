@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Deterministic occupant instruction for a slot (Qualification, Progression, future Draw).
+/// Deterministic occupant instruction for a slot (Qualification, Progression, Draw Slot).
 /// Not persisted — truth remains <see cref="Slot.EntryId"/> after <see cref="Stage.ApplyResolvedEntry"/>.
 /// </summary>
 public sealed record SlotAssignmentInstruction

@@ -9,9 +9,10 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Parameters describing how a draw should be organized.
+/// Parameters describing how a draw should be organized (StageRegulation).
 /// Immutable; no draw execution, publication, or result history.
-/// Distinct from a future Draw entity.
+/// Distinct from the Stage-owned <c>Draw</c> entity (procedure + inputs + resolution).
+/// <see cref="SeedingRules"/> / <see cref="PotRules"/> are counts only — concrete maps live on Draw inputs.
 /// </summary>
 public sealed record DrawRules
 {

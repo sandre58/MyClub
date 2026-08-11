@@ -21,6 +21,7 @@ namespace MyClub.PlayUp.Application.Stage;
 /// Pairing: opposition is conceptually unordered; V1 Match creation maps EntryA→Home, EntryB→Away
 /// as a technical convention only. Fixture target is Application orchestration input.
 /// Does not recalculate WhoFeeds and never creates DirectAssignment.
+/// Host supplies Pairing fixture context and Draw entry pools (typically ⊆ qualified/progressed Entries).
 /// </remarks>
 public static class ApplyDraw
 {

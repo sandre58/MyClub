@@ -111,6 +111,7 @@ public sealed class SlotFeedResolverTests
         result.Status.Should().Be(FeedResolutionStatus.Unique);
         result.Source!.Progression!.Outcome.Should().Be(ProgressionOutcome.Winner);
         result.Source.Progression.SourceFixtureId.Should().Be(fixtureId);
+        result.Source.Progression.SourceStageId.Should().Be(_source);
     }
 
     [Fact]
@@ -191,6 +192,17 @@ public sealed class SlotFeedResolverTests
             [
                 new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A")
             ],
+            draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
+
+        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
+    }
+
+    [Fact]
+    public void Direct_plus_draw_is_multiple_feeds()
+    {
+        var snapshot = Snapshot(
+            ["SF1-A"],
+            directs: [new DirectFeedSource("SF1-A", EntryId.New())],
             draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
 
         SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);

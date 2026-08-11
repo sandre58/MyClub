@@ -158,7 +158,7 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_draw_does_not_mutate()
+    public void Execute_tied_match_score_does_not_mutate()
     {
         var ctx = CreateSelfStageContext(homeGoals: 2, awayGoals: 2, withLoserPath: true);
 
@@ -172,6 +172,70 @@ public sealed class ApplyProgressionOutcomeTests
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeUndecided);
         ctx.Source.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         ctx.Source.FindSlot("Consolante-1")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Execute_applies_when_destination_suspended()
+    {
+        var competitionId = CompetitionId.New();
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var (fixtureId, match) = AttachFinishedMatch(source, home, away, homeGoals: 1, awayGoals: 0);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixtureId,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(destination.Id, "SF1-A"))
+            ]),
+            _clock);
+        destination.Prepare(_clock);
+        destination.Start(_clock);
+        destination.Suspend(_clock);
+
+        ApplyProgressionOutcome.Execute(source, fixtureId, match, [source, destination], _clock);
+
+        destination.Status.Should().Be(StageStatus.Suspended);
+        destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+        destination.Draws.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_rejects_when_destination_completed()
+    {
+        var competitionId = CompetitionId.New();
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var (fixtureId, match) = AttachFinishedMatch(source, home, away, homeGoals: 1, awayGoals: 0);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixtureId,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(destination.Id, "SF1-A"))
+            ]),
+            _clock);
+        destination.Prepare(_clock);
+        destination.Start(_clock);
+        destination.Complete(_clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(
+            source,
+            fixtureId,
+            match,
+            [source, destination],
+            _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        destination.Status.Should().Be(StageStatus.Completed);
     }
 
     [Fact]

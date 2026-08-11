@@ -176,6 +176,25 @@ public sealed class ApplyDrawTests
     }
 
     [Fact]
+    public void Execute_slot_applies_when_stage_suspended()
+    {
+        var stage = CreateStage();
+        stage.AddRound("R1", _clock);
+        var (draw, entry) = PublishSlotDraw(stage, "A");
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Suspend(_clock);
+        stage.ClearDomainEvents();
+
+        var result = ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        result.SlotInstructions.Should().ContainSingle();
+        stage.Status.Should().Be(StageStatus.Suspended);
+        stage.FindSlot("A")!.EntryId.Should().Be(entry);
+        draw.Status.Should().Be(DrawStatus.Published);
+    }
+
+    [Fact]
     public void Execute_slot_rejects_when_stage_completed()
     {
         var stage = CreateStage();
@@ -384,6 +403,33 @@ public sealed class ApplyDrawTests
         group.EntryIds.Should().Equal(prepareEntry);
         stage.DomainEvents.Should().BeEmpty();
         draw.Status.Should().Be(DrawStatus.Published);
+    }
+
+    [Fact]
+    public void Execute_group_rejects_when_stage_suspended()
+    {
+        var stage = CreateStage();
+        var group = stage.AddGroup("A", _clock);
+        var prepareEntry = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, prepareEntry, _clock);
+        stage.AddMatchday(1, _clock);
+
+        var entry = EntryId.New();
+        var draw = PublishGroupDraw(stage, entry, group.Id);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Suspend(_clock);
+        stage.ClearDomainEvents();
+
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+        group.EntryIds.Should().Equal(prepareEntry);
+        stage.DomainEvents.Should().BeEmpty();
+        draw.Status.Should().Be(DrawStatus.Published);
+        stage.Status.Should().Be(StageStatus.Suspended);
     }
 
     [Fact]

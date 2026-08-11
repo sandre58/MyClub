@@ -114,7 +114,7 @@ public sealed record SlotFeedSnapshot
     public IReadOnlyList<ProgressionFeedSource> InboundProgression { get; }
 
     /// <summary>
-    /// Gets draw feed targets (empty until Draw Entity).
+    /// Gets draw feed targets (Published Slot resolutions contributing to WhoFeeds).
     /// </summary>
     public IReadOnlyList<DrawFeedSource> DrawTargets { get; }
 }

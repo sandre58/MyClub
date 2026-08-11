@@ -9,8 +9,9 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Concrete Entry→Pot assignments for a Draw instance.
+/// Concrete Entry→Pot assignments for a Draw instance (Host/orchestration input).
 /// Distinct from <see cref="Rules.PotRules"/> (regulation count) and from SeedMap.
+/// Optional independently of SeedMap; never a destination by itself.
 /// </summary>
 public sealed record PotMembership
 {

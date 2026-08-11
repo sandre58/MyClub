@@ -9,7 +9,8 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage.Events;
 
 /// <summary>
-/// Raised when a draw is published (immutable result).
+/// Raised when a draw is published (immutable resolution snapshot).
+/// Publish ≠ Apply: materialization is <c>ApplyDraw</c> (Application) and does not change draw status.
 /// </summary>
 public sealed record StageDrawPublished : DomainEvent
 {

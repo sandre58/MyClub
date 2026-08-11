@@ -9,8 +9,9 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Concrete Entry→Seed assignments for a Draw instance.
+/// Concrete Entry→Seed assignments for a Draw instance (Host/orchestration input).
 /// Distinct from <see cref="Rules.SeedingRules"/> (regulation count) and from Standing.Position.
+/// May be built from Standing, Qualification results, or manual input — never a Slot/Group destination.
 /// </summary>
 public sealed record SeedMap
 {

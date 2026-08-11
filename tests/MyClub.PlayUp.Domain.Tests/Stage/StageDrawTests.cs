@@ -35,6 +35,37 @@ public sealed class StageDrawTests
     }
 
     [Fact]
+    public void CreateDraw_on_Ready_demotes_to_Draft()
+    {
+        var stage = CreateStage();
+        stage.AddRound("R1", _clock);
+        stage.Prepare(_clock);
+        stage.Status.Should().Be(StageStatus.Ready);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        stage.Status.Should().Be(StageStatus.Draft);
+        draw.Status.Should().Be(DrawStatus.Draft);
+        stage.DomainEvents.Should().Contain(e => e is StageDrawCreated);
+    }
+
+    [Fact]
+    public void CreateDraw_rejects_when_stage_running()
+    {
+        var stage = CreateStage();
+        stage.AddRound("R1", _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        stage.Draws.Should().BeEmpty();
+        stage.Status.Should().Be(StageStatus.Running);
+    }
+
+    [Fact]
     public void ConfigureDrawInputs_is_sole_entry_point_for_pool()
     {
         var stage = CreateStage();
@@ -279,6 +310,51 @@ public sealed class StageDrawTests
         var act = () => wrong.EnsureCompatibleWith(DrawResolutionKind.Slot);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawInputsInvalid);
+    }
+
+    [Fact]
+    public void SeedMap_only_is_valid_without_PotMembership()
+    {
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var seeds = new SeedMap(new Dictionary<EntryId, int> { [a] = 1, [b] = 2 });
+        var inputs = DrawInputs.ForSlot([a, b], seedMap: seeds);
+
+        inputs.SeedMap.Should().NotBeNull();
+        inputs.PotMembership.Should().BeNull();
+        inputs.SeedMap!.Seeds[a].Should().Be(1);
+    }
+
+    [Fact]
+    public void PotMembership_only_is_valid_without_SeedMap()
+    {
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var pots = new PotMembership(new Dictionary<EntryId, int> { [a] = 1, [b] = 1 });
+        var inputs = DrawInputs.ForSlot([a, b], potMembership: pots);
+
+        inputs.PotMembership.Should().NotBeNull();
+        inputs.SeedMap.Should().BeNull();
+        inputs.PotMembership!.Pots[a].Should().Be(1);
+    }
+
+    [Fact]
+    public void Single_slot_resolution_remains_a_valid_draw()
+    {
+        var stage = CreateStage();
+        stage.AddSlot("Only", _clock);
+        var entry = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "Only")]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+
+        draw.Status.Should().Be(DrawStatus.Published);
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+        draw.Resolution.SlotResults.Should().ContainSingle();
     }
 
     [Fact]

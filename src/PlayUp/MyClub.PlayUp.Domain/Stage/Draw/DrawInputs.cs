@@ -10,6 +10,8 @@ namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
 /// Concrete inputs owned by a Draw (Entries, optional SeedMap / PotMembership / fixed placements).
+/// Entry pool is assembled by Host/orchestration (e.g. from Qualification or Progression results);
+/// Domain does not enforce that the pool equals a prior mechanism's population.
 /// Fixed placements reuse the same placement shapes as resolution results for the Draw kind —
 /// not DirectAssignment and not a Fixed*Placement type family.
 /// </summary>
