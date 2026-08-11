@@ -71,7 +71,7 @@ public sealed record QualificationPath
     public QualificationPath Copy() =>
         new(
             Order,
-            new QualificationSource(Source.Scope, Source.GroupId),
+            new QualificationSource(Source.Scope, Source.GroupId, Source.AcrossGroupsPosition),
             new QualificationSelection(Selection.Mode, Selection.Value, Selection.EndValue),
             new QualificationDestination(Destination.StageId, Destination.SlotKey));
 }

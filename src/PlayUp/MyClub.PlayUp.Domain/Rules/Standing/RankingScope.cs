@@ -19,5 +19,11 @@ public enum RankingScope
     /// <summary>
     /// Overall ranking across the stage (no group id).
     /// </summary>
-    Overall = 1
+    Overall = 1,
+
+    /// <summary>
+    /// Derived ranking from the same position across every group
+    /// (<see cref="QualificationSource.AcrossGroupsPosition"/> required).
+    /// </summary>
+    AcrossGroups = 2
 }

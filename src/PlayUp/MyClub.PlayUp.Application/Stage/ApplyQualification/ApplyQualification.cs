@@ -8,6 +8,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stage;
+using MatchAggregate = MyClub.PlayUp.Domain.Match.Match;
 using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 using StandingView = MyClub.PlayUp.Domain.Standing.Standing;
 
@@ -19,11 +20,10 @@ namespace MyClub.PlayUp.Application.Stage;
 /// <remarks>
 /// Preflights destination stages/slots before any mutation.
 /// Replace local only — no cascade. V1: one path → one entry → one slot.
-/// Resolves each <see cref="QualificationPath.Source"/> to an already-calculated standing:
-/// Overall (or implied overall) uses <c>overallStanding</c>; Group uses the matching entry in
-/// <c>groupStandings</c>. Standings are calculated upstream (Application CalculateStanding);
-/// this use case does not compute rankings. <see cref="QualificationApplier"/> stays pure:
-/// Standing + Path → instruction; it does not load groups.
+/// Resolves each <see cref="QualificationPath.Source"/> to a standing:
+/// Overall uses <c>overallStanding</c>; Group uses <c>groupStandings</c>;
+/// AcrossGroups builds a derived standing via <see cref="CrossGroupStandingAssembler"/>
+/// (requires matches). <see cref="QualificationApplier"/> stays pure and source-agnostic.
 /// </remarks>
 public static class ApplyQualification
 {
@@ -36,7 +36,7 @@ public static class ApplyQualification
     /// <param name="clock">Clock for domain events.</param>
     /// <returns>Applied slot assignment instructions; empty when no qualification rules.</returns>
     /// <remarks>
-    /// Group-scoped paths require the multi-standing overload with per-group standings.
+    /// Group-scoped and AcrossGroups paths require the multi-standing overload.
     /// </remarks>
     public static IReadOnlyList<SlotAssignmentInstruction> Execute(
         StageAggregate sourceStage,
@@ -58,7 +58,41 @@ public static class ApplyQualification
     /// Standing for overall (or implied overall) paths; required when any such path exists.
     /// </param>
     /// <param name="groupStandings">
-    /// Per-group standings keyed by <see cref="GroupId"/>; required for each group-scoped path.
+    /// Per-group standings keyed by <see cref="GroupId"/>; required for each group-scoped path
+    /// and for every stage group when AcrossGroups paths exist.
+    /// </param>
+    /// <param name="competitionStages">All competition stages (canonical instances for mutations).</param>
+    /// <param name="clock">Clock for domain events.</param>
+    /// <returns>Applied slot assignment instructions; empty when no qualification rules.</returns>
+    /// <remarks>
+    /// AcrossGroups paths require the overload that supplies matches.
+    /// </remarks>
+    public static IReadOnlyList<SlotAssignmentInstruction> Execute(
+        StageAggregate sourceStage,
+        StandingView? overallStanding,
+        IReadOnlyDictionary<GroupId, StandingView> groupStandings,
+        IReadOnlyList<StageAggregate> competitionStages,
+        IClock clock) =>
+        Execute(
+            sourceStage,
+            overallStanding,
+            groupStandings,
+            matches: null,
+            competitionStages,
+            clock);
+
+    /// <summary>
+    /// Applies all qualification paths, including AcrossGroups derived standings when matches are provided.
+    /// </summary>
+    /// <param name="sourceStage">Stage that owns <see cref="QualificationRules"/>.</param>
+    /// <param name="overallStanding">
+    /// Standing for overall (or implied overall) paths; required when any such path exists.
+    /// </param>
+    /// <param name="groupStandings">
+    /// Per-group standings keyed by <see cref="GroupId"/>.
+    /// </param>
+    /// <param name="matches">
+    /// Stage matches required to assemble AcrossGroups derived standings; may be null when unused.
     /// </param>
     /// <param name="competitionStages">All competition stages (canonical instances for mutations).</param>
     /// <param name="clock">Clock for domain events.</param>
@@ -67,6 +101,7 @@ public static class ApplyQualification
         StageAggregate sourceStage,
         StandingView? overallStanding,
         IReadOnlyDictionary<GroupId, StandingView> groupStandings,
+        IReadOnlyList<MatchAggregate>? matches,
         IReadOnlyList<StageAggregate> competitionStages,
         IClock clock)
     {
@@ -82,8 +117,17 @@ public static class ApplyQualification
             return [];
         }
 
+        var derivedCache = new Dictionary<int, StandingView>();
         var instructions = paths
-            .Select(path => QualificationApplier.Apply(path, ResolveStanding(canonicalSource, path, overallStanding, groupStandings)))
+            .Select(path => QualificationApplier.Apply(
+                path,
+                ResolveStanding(
+                    canonicalSource,
+                    path,
+                    overallStanding,
+                    groupStandings,
+                    matches,
+                    derivedCache)))
             .ToArray();
 
         var destinations = new StageAggregate[instructions.Length];
@@ -114,8 +158,36 @@ public static class ApplyQualification
         StageAggregate sourceStage,
         QualificationPath path,
         StandingView? overallStanding,
-        IReadOnlyDictionary<GroupId, StandingView> groupStandings)
+        IReadOnlyDictionary<GroupId, StandingView> groupStandings,
+        IReadOnlyList<MatchAggregate>? matches,
+        Dictionary<int, StandingView> derivedCache)
     {
+        if (path.Source.Scope == RankingScope.AcrossGroups)
+        {
+            if (matches is null)
+            {
+                throw new ApplicationFailureException(
+                    "Across-groups qualification paths require stage matches.",
+                    ApplicationErrorCodes.QualificationMatchesRequired);
+            }
+
+            var position = path.Source.AcrossGroupsPosition
+                           ?? throw new ApplicationFailureException(
+                               "Across-groups qualification path is missing a position.",
+                               ApplicationErrorCodes.QualificationCandidatesEmpty);
+
+            if (derivedCache.TryGetValue(position, out var derived)) return derived;
+            derived = CrossGroupStandingAssembler.Build(
+                sourceStage.Groups,
+                groupStandings,
+                position,
+                matches,
+                sourceStage.Regulation.StandingRules);
+            derivedCache[position] = derived;
+
+            return derived;
+        }
+
         if (!IsGroupScoped(path))
         {
             return overallStanding

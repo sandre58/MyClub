@@ -70,9 +70,9 @@ public sealed class QualificationRulesTests
     }
 
     [Fact]
-    public void Constructor_accepts_best_thirds_description()
+    public void Constructor_accepts_selection_mode_best_as_config_only()
     {
-        // Arrange
+        // Arrange — Best is accepted in Rules config; Applier still rejects execution (not Best Third).
         var path = new QualificationPath(
             1,
             QualificationSource.Overall(),
@@ -86,6 +86,47 @@ public sealed class QualificationRulesTests
         rules.Paths[0].Source.Scope.Should().Be(RankingScope.Overall);
         rules.Paths[0].Selection.Mode.Should().Be(SelectionMode.Best);
         rules.Paths[0].Selection.Value.Should().Be(4);
+    }
+
+    [Fact]
+    public void AcrossGroups_paths_accept_position_selection()
+    {
+        // Arrange — CDM-like: AcrossGroups(3) + Position 1..4 (not Overall + Best).
+        var destination = StageId.New();
+        var paths = Enumerable.Range(1, 4)
+            .Select(i => new QualificationPath(
+                i,
+                QualificationSource.AcrossGroups(3),
+                new QualificationSelection(SelectionMode.Position, i),
+                new QualificationDestination(destination, $"R16-{i}")))
+            .ToArray();
+
+        // Act
+        var rules = new QualificationRules(paths);
+
+        // Assert
+        rules.Paths.Should().HaveCount(4);
+        rules.Paths.Should().OnlyContain(p =>
+            p.Source.Scope == RankingScope.AcrossGroups
+            && p.Source.AcrossGroupsPosition == 3
+            && p.Selection.Mode == SelectionMode.Position);
+        rules.Paths.Select(p => p.Selection.Value).Should().Equal(1, 2, 3, 4);
+    }
+
+    [Fact]
+    public void Path_Copy_preserves_across_groups_position()
+    {
+        var original = new QualificationPath(
+            1,
+            QualificationSource.AcrossGroups(3),
+            new QualificationSelection(SelectionMode.Position, 1),
+            new QualificationDestination(StageId.New(), "Slot"));
+
+        var copy = original.Copy();
+
+        copy.Should().Be(original);
+        copy.Source.AcrossGroupsPosition.Should().Be(3);
+        ReferenceEquals(copy.Source, original.Source).Should().BeFalse();
     }
 
     [Fact]

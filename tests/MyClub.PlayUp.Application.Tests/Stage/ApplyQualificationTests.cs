@@ -566,6 +566,315 @@ public sealed class ApplyQualificationTests
         terminal.Status.Should().Be(StageStatus.Completed);
     }
 
+    [Fact]
+    public void CDM_like_8_thirds_positions_1_to_4()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 8, teamsPerGroup: 4, strengthSpread: true);
+        var slotKeys = Enumerable.Range(1, 4).Select(i => $"R16-{i}").ToArray();
+        var terminal = CreateSlotStage(scenario.CompetitionId, "R16", slotKeys);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(AcrossGroupsPaths(3, terminal.Id, slotKeys)),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        for (var i = 1; i <= 4; i++)
+        {
+            terminal.FindSlot($"R16-{i}")!.EntryId.Should().Be(derived.EntryAt(i));
+        }
+
+        foreach (var groupStanding in scenario.GroupStandings.Values)
+        {
+            var third = groupStanding.EntryAt(3)!.Value;
+            var winner = groupStanding.EntryAt(1)!.Value;
+            derived.Rows.Select(r => r.EntryId).Should().Contain(third);
+            derived.Rows.Select(r => r.EntryId).Should().NotContain(winner);
+        }
+    }
+
+    [Fact]
+    public void Euro_like_6_thirds_positions_1_to_4()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 6, teamsPerGroup: 4, strengthSpread: true);
+        var slotKeys = Enumerable.Range(1, 4).Select(i => $"R16-{i}").ToArray();
+        var terminal = CreateSlotStage(scenario.CompetitionId, "R16", slotKeys);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(AcrossGroupsPaths(3, terminal.Id, slotKeys)),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        for (var i = 1; i <= 4; i++)
+        {
+            terminal.FindSlot($"R16-{i}")!.EntryId.Should().Be(derived.EntryAt(i));
+        }
+
+        derived.Rows.Should().HaveCount(6);
+    }
+
+    [Fact]
+    public void Eight_thirds_positions_1_to_2()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 8, teamsPerGroup: 4, strengthSpread: true);
+        var slotKeys = new[] { "Best1", "Best2" };
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", slotKeys);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(AcrossGroupsPaths(3, terminal.Id, slotKeys)),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        terminal.FindSlot("Best1")!.EntryId.Should().Be(derived.EntryAt(1));
+        terminal.FindSlot("Best2")!.EntryId.Should().Be(derived.EntryAt(2));
+        terminal.FindSlot("Best1")!.EntryId.Should().NotBe(derived.EntryAt(3));
+    }
+
+    [Fact]
+    public void Anti_overall_top4_differs_from_across_groups_thirds()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 4, teamsPerGroup: 4, strengthSpread: true);
+        var allEntries = scenario.GroupStandings.Values
+            .SelectMany(s => s.Rows.Select(r => r.EntryId))
+            .Distinct()
+            .ToArray();
+        var overall = CalculateStanding.Execute(
+            allEntries, scenario.Matches, scenario.GroupsStage.Regulation.StandingRules);
+        var derivedThirds = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        var overallTop4 = Enumerable.Range(1, 4).Select(i => overall.EntryAt(i)!.Value).ToArray();
+        var thirdsTop4 = Enumerable.Range(1, 4).Select(i => derivedThirds.EntryAt(i)!.Value).ToArray();
+        overallTop4.Should().NotBeEquivalentTo(thirdsTop4);
+
+        var slotKeys = Enumerable.Range(1, 4).Select(i => $"S{i}").ToArray();
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", slotKeys);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(AcrossGroupsPaths(3, terminal.Id, slotKeys)),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overall,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        for (var i = 1; i <= 4; i++)
+        {
+            terminal.FindSlot($"S{i}")!.EntryId.Should().Be(thirdsTop4[i - 1]);
+            terminal.FindSlot($"S{i}")!.EntryId.Should().NotBe(overallTop4[i - 1]);
+        }
+    }
+
+    [Fact]
+    public void Derived_standing_tie_falls_back_deterministically()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 3, teamsPerGroup: 4, strengthSpread: false);
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        var again = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        derived.Rows.Select(r => r.EntryId).Should().Equal(again.Rows.Select(r => r.EntryId));
+        derived.Rows.Select(r => r.Points).Should().OnlyContain(p => p == derived.Rows[0].Points);
+    }
+
+    [Fact]
+    public void Derived_standing_h2h_absent_does_not_break()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 4, teamsPerGroup: 4, strengthSpread: false);
+        var slotKeys = new[] { "T1", "T2" };
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", slotKeys);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(AcrossGroupsPaths(3, terminal.Id, slotKeys)),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        act.Should().NotThrow();
+        terminal.FindSlot("T1")!.EntryId.Should().NotBeNull();
+        terminal.FindSlot("T2")!.EntryId.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Derived_standing_h2h_present_reuses_calculator()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var groupA = groups.AddGroup("A", _clock);
+        var groupB = groups.AddGroup("B", _clock);
+        var a1 = EntryId.New();
+        var a2 = EntryId.New();
+        var b1 = EntryId.New();
+        var b2 = EntryId.New();
+        foreach (var e in new[] { a1, a2 })
+        {
+            groups.AssignEntryToGroup(groupA.Id, e, _clock);
+        }
+
+        foreach (var e in new[] { b1, b2 })
+        {
+            groups.AssignEntryToGroup(groupB.Id, e, _clock);
+        }
+
+        // Identical group results: each winner 1-0, same points/GD/GF.
+        var matches = new List<Match>
+        {
+            Finish(Match.Create(competitionId, groups.Id, a1, a2, _clock), 1, 0),
+            Finish(Match.Create(competitionId, groups.Id, b1, b2, _clock), 1, 0),
+
+            // Direct match between candidates enables HeadToHead among tied winners.
+            Finish(Match.Create(competitionId, groups.Id, a1, b1, _clock), 2, 0)
+        };
+
+        var standingA = CalculateStanding.Execute([a1, a2], matches, groups.Regulation.StandingRules);
+        var standingB = CalculateStanding.Execute([b1, b2], matches, groups.Regulation.StandingRules);
+        standingA.EntryAt(1).Should().Be(a1);
+        standingB.EntryAt(1).Should().Be(b1);
+
+        var derived = CrossGroupStandingAssembler.Build(
+            groups.Groups,
+            new Dictionary<GroupId, StandingView> { [groupA.Id] = standingA, [groupB.Id] = standingB },
+            position: 1,
+            matches,
+            groups.Regulation.StandingRules);
+
+        // a1 beat b1 head-to-head; both candidates reuse StandingCalculator criteria.
+        derived.EntryAt(1).Should().Be(a1);
+        derived.EntryAt(2).Should().Be(b1);
+
+        var terminal = CreateSlotStage(competitionId, "KO", ["W1", "W2"]);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(AcrossGroupsPaths(1, terminal.Id, ["W1", "W2"])),
+            _clock);
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView> { [groupA.Id] = standingA, [groupB.Id] = standingB },
+            matches,
+            [groups, terminal],
+            _clock);
+
+        terminal.FindSlot("W1")!.EntryId.Should().Be(a1);
+        terminal.FindSlot("W2")!.EntryId.Should().Be(b1);
+    }
+
+    [Fact]
+    public void Coexistence_group_paths_and_across_groups()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 2, teamsPerGroup: 4, strengthSpread: true);
+        var groupA = scenario.GroupsStage.Groups[0];
+        var groupB = scenario.GroupsStage.Groups[1];
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["A1", "B1", "BestThird"]);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
+                GroupPath(2, groupB.Id, SelectionMode.Position, 1, terminal.Id, "B1"),
+                AcrossGroupsPath(3, 3, 1, terminal.Id, "BestThird")
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        terminal.FindSlot("A1")!.EntryId.Should().Be(scenario.GroupStandings[groupA.Id].EntryAt(1));
+        terminal.FindSlot("B1")!.EntryId.Should().Be(scenario.GroupStandings[groupB.Id].EntryAt(1));
+        terminal.FindSlot("BestThird")!.EntryId.Should().Be(derived.EntryAt(1));
+    }
+
+    [Fact]
+    public void AcrossGroups_requires_matches()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 2, teamsPerGroup: 4, strengthSpread: false);
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["T1"]);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules([AcrossGroupsPath(1, 3, 1, terminal.Id, "T1")]),
+            _clock);
+
+        var act = () => ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.QualificationMatchesRequired);
+    }
+
     private static QualificationPath Path(
         int order,
         SelectionMode mode,
@@ -591,8 +900,59 @@ public sealed class ApplyQualificationTests
             new QualificationSelection(mode, value),
             new QualificationDestination(stageId, slotKey));
 
+    private static QualificationPath AcrossGroupsPath(
+        int order,
+        int acrossGroupsPosition,
+        int selectionPosition,
+        StageId stageId,
+        string slotKey) =>
+        new(
+            order,
+            QualificationSource.AcrossGroups(acrossGroupsPosition),
+            new QualificationSelection(SelectionMode.Position, selectionPosition),
+            new QualificationDestination(stageId, slotKey));
+
+    private static QualificationPath[] AcrossGroupsPaths(
+        int acrossGroupsPosition,
+        StageId stageId,
+        IReadOnlyList<string> slotKeys) =>
+        [
+            ..slotKeys.Select((key, index) =>
+                AcrossGroupsPath(index + 1, acrossGroupsPosition, index + 1, stageId, key))
+        ];
+
+    private GroupsScenario BuildGroupsScenario(int groupCount, int teamsPerGroup, bool strengthSpread)
+    {
+        var competitionId = CompetitionId.New();
+        var groupsStage = CreateLeagueStage(competitionId, "Groups");
+        var matches = new List<Match>();
+        var groupStandings = new Dictionary<GroupId, StandingView>();
+
+        for (var g = 0; g < groupCount; g++)
+        {
+            var group = groupsStage.AddGroup(((char)('A' + g)).ToString(), _clock);
+            var entries = CreateEntries(teamsPerGroup);
+            foreach (var entry in entries)
+            {
+                groupsStage.AssignEntryToGroup(group.Id, entry, _clock);
+            }
+
+            matches.AddRange(BuildRoundRobin(groupsStage, entries, goalOffset: strengthSpread ? g : 0));
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                entries, matches, groupsStage.Regulation.StandingRules);
+        }
+
+        return new GroupsScenario(competitionId, groupsStage, groupStandings, matches);
+    }
+
+    private sealed record GroupsScenario(
+        CompetitionId CompetitionId,
+        StageAggregate GroupsStage,
+        Dictionary<GroupId, StandingView> GroupStandings,
+        List<Match> Matches);
+
     private static EntryId[] CreateEntries(int count) =>
-    [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private StageAggregate CreateLeagueStage(CompetitionId competitionId, string name) =>
         StageAggregate.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
@@ -608,7 +968,7 @@ public sealed class ApplyQualificationTests
         return stage;
     }
 
-    private List<Match> BuildRoundRobin(StageAggregate stage, EntryId[] entries)
+    private List<Match> BuildRoundRobin(StageAggregate stage, EntryId[] entries, int goalOffset = 0)
     {
         var matches = new List<Match>();
         for (var i = 0; i < entries.Length; i++)
@@ -616,7 +976,7 @@ public sealed class ApplyQualificationTests
             for (var j = i + 1; j < entries.Length; j++)
             {
                 // Deterministic: earlier index wins at home with goal margin based on indices.
-                var homeGoals = entries.Length - i;
+                var homeGoals = entries.Length - i + goalOffset;
                 var match = Match.Create(stage.CompetitionId, stage.Id, entries[i], entries[j], _clock);
                 matches.Add(Finish(match, homeGoals, 0));
             }

@@ -48,6 +48,21 @@ public static class ApplicationErrorCodes
     public const string QualificationGroupNotFound = "Application.QualificationGroupNotFound";
 
     /// <summary>
+    /// Gets the code when AcrossGroups extraction yields no candidates.
+    /// </summary>
+    public const string QualificationCandidatesEmpty = "Application.QualificationCandidatesEmpty";
+
+    /// <summary>
+    /// Gets the code when AcrossGroups extraction finds the same entry more than once.
+    /// </summary>
+    public const string QualificationCandidateDuplicate = "Application.QualificationCandidateDuplicate";
+
+    /// <summary>
+    /// Gets the code when AcrossGroups paths are applied without a matches list.
+    /// </summary>
+    public const string QualificationMatchesRequired = "Application.QualificationMatchesRequired";
+
+    /// <summary>
     /// Gets the code when a published Draw resolution cannot be applied to the current Stage state.
     /// Distinct from Domain <c>NoSolution</c> (solver found no resolution).
     /// </summary>
