@@ -244,7 +244,7 @@ public sealed class Draw : Entity<DrawId>
 
                 break;
             case DrawResolutionKind.Pairing:
-                if (inputs.FixedPairings.Any(fixedPairing => !resolution.PairingResults.Any(r => SameUnorderedPair(r, fixedPairing))))
+                if (inputs.FixedPairings.Any(fixedPairing => !resolution.PairingResults.Any(r => sameUnorderedPair(r, fixedPairing))))
                 {
                     throw new DomainException(
                         "Pairing resolution must include all configured fixed pairings.",
@@ -256,7 +256,9 @@ public sealed class Draw : Entity<DrawId>
                 throw new InvalidOperationException();
         }
 
-        static bool SameUnorderedPair(PairingDrawResult left, PairingDrawResult right) =>
+        return;
+
+        static bool sameUnorderedPair(PairingDrawResult left, PairingDrawResult right) =>
             (left.EntryA.Equals(right.EntryA) && left.EntryB.Equals(right.EntryB))
             || (left.EntryA.Equals(right.EntryB) && left.EntryB.Equals(right.EntryA));
     }

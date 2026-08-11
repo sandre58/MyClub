@@ -260,6 +260,17 @@ public sealed class StageDrawTests
     }
 
     [Fact]
+    public void PairingDrawResult_rejects_self_pairing()
+    {
+        var entry = EntryId.New();
+
+        var act = () => new PairingDrawResult(entry, entry);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.DrawInputsInvalid);
+    }
+
+    [Fact]
     public void Fixed_groups_on_slot_draw_inputs_are_rejected()
     {
         var entry = EntryId.New();

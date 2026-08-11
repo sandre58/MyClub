@@ -35,4 +35,15 @@ public static class ApplicationErrorCodes
     /// Gets the code when qualification paths require per-group standings not yet orchestrated by V1.
     /// </summary>
     public const string QualificationSourceNotSupported = "Application.QualificationSourceNotSupported";
+
+    /// <summary>
+    /// Gets the code when a published Draw resolution cannot be applied to the current Stage state.
+    /// Distinct from Domain <c>NoSolution</c> (solver found no resolution).
+    /// </summary>
+    public const string DrawApplyFailure = "Application.DrawApplyFailure";
+
+    /// <summary>
+    /// Gets the code when ApplyDraw does not support the Draw resolution kind (e.g. Pairing in V1.A).
+    /// </summary>
+    public const string DrawKindNotSupported = "Application.DrawKindNotSupported";
 }
