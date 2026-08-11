@@ -27,12 +27,13 @@ public enum SelectionMode
     Bottom = 2,
 
     /// <summary>
-    /// The best N participants across the ranking scope (representable; resolution deferred).
+    /// Alias of <see cref="Top"/>: the best N participants of the supplied standing
+    /// (not a cross-group Best Third mechanism).
     /// </summary>
     Best = 3,
 
     /// <summary>
-    /// The worst N participants across the ranking scope (representable; resolution deferred).
+    /// Alias of <see cref="Bottom"/>: the worst N participants of the supplied standing.
     /// </summary>
     Worst = 4,
 

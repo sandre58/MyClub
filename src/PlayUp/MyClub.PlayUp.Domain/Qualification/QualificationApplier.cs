@@ -14,7 +14,9 @@ namespace MyClub.PlayUp.Domain.Qualification;
 /// <summary>
 /// Pure qualification helper: selects entries from a standing and maps a path to a slot instruction.
 /// Does not mutate aggregates or calculate standings.
-/// V1 does not execute <see cref="SelectionMode.Best"/> or <see cref="SelectionMode.Worst"/>.
+/// <see cref="SelectionMode.Best"/> is an alias of <see cref="SelectionMode.Top"/>;
+/// <see cref="SelectionMode.Worst"/> is an alias of <see cref="SelectionMode.Bottom"/>.
+/// Neither mode builds a cross-group universe (use <see cref="RankingScope.AcrossGroups"/> for that).
 /// </summary>
 public static class QualificationApplier
 {
@@ -35,12 +37,9 @@ public static class QualificationApplier
             : selection.Mode switch
         {
             SelectionMode.Position => SelectPosition(rows, selection.Value),
-            SelectionMode.Top => SelectTop(rows, selection.Value),
-            SelectionMode.Bottom => SelectBottom(rows, selection.Value),
+            SelectionMode.Top or SelectionMode.Best => SelectTop(rows, selection.Value),
+            SelectionMode.Bottom or SelectionMode.Worst => SelectBottom(rows, selection.Value),
             SelectionMode.Range => SelectRange(rows, selection.Value, selection.EndValue!.Value),
-            SelectionMode.Best or SelectionMode.Worst => throw new DomainException(
-                $"Selection mode '{selection.Mode}' is not supported by QualificationApplier V1.",
-                QualificationErrorCodes.SelectionNotSupported),
             _ => throw new DomainException(
                 "Selection mode is unknown.",
                 QualificationErrorCodes.SelectionNotSupported)

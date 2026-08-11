@@ -875,6 +875,90 @@ public sealed class ApplyQualificationTests
             .Which.Code.Should().Be(ApplicationErrorCodes.QualificationMatchesRequired);
     }
 
+    [Fact]
+    public void AcrossGroups_derived_then_Best_1_fills_slot()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 3, teamsPerGroup: 4, strengthSpread: true);
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["BestThird"]);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.AcrossGroups(3),
+                    new QualificationSelection(SelectionMode.Best, 1),
+                    new QualificationDestination(terminal.Id, "BestThird"))
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        terminal.FindSlot("BestThird")!.EntryId.Should().Be(derived.EntryAt(1));
+    }
+
+    [Fact]
+    public void Anti_overall_Best_is_not_across_groups_thirds()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 4, teamsPerGroup: 4, strengthSpread: true);
+        var allEntries = scenario.GroupStandings.Values
+            .SelectMany(s => s.Rows.Select(r => r.EntryId))
+            .Distinct()
+            .ToArray();
+        var overall = CalculateStanding.Execute(
+            allEntries, scenario.Matches, scenario.GroupsStage.Regulation.StandingRules);
+        var derivedThirds = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+
+        var overallBest1 = QualificationApplier.SelectEntries(
+            overall, new QualificationSelection(SelectionMode.Best, 1))[0];
+        var thirdsBest1 = QualificationApplier.SelectEntries(
+            derivedThirds, new QualificationSelection(SelectionMode.Best, 1))[0];
+
+        overallBest1.Should().Be(overall.EntryAt(1)!.Value);
+        thirdsBest1.Should().Be(derivedThirds.EntryAt(1)!.Value);
+        overallBest1.Should().NotBe(thirdsBest1);
+
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["OverallBest"]);
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Best, 1),
+                    new QualificationDestination(terminal.Id, "OverallBest"))
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overall,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        terminal.FindSlot("OverallBest")!.EntryId.Should().Be(overallBest1);
+        terminal.FindSlot("OverallBest")!.EntryId.Should().NotBe(thirdsBest1);
+    }
+
     private static QualificationPath Path(
         int order,
         SelectionMode mode,

@@ -70,9 +70,9 @@ public sealed class QualificationRulesTests
     }
 
     [Fact]
-    public void Constructor_accepts_selection_mode_best_as_config_only()
+    public void Constructor_accepts_selection_mode_best_as_top_alias_not_best_third()
     {
-        // Arrange — Best is accepted in Rules config; Applier still rejects execution (not Best Third).
+        // Arrange — Best is a Top alias on the supplied standing; not AcrossGroups / Best Third.
         var path = new QualificationPath(
             1,
             QualificationSource.Overall(),
@@ -86,6 +86,7 @@ public sealed class QualificationRulesTests
         rules.Paths[0].Source.Scope.Should().Be(RankingScope.Overall);
         rules.Paths[0].Selection.Mode.Should().Be(SelectionMode.Best);
         rules.Paths[0].Selection.Value.Should().Be(4);
+        rules.Paths[0].Source.AcrossGroupsPosition.Should().BeNull();
     }
 
     [Fact]

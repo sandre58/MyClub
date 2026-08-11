@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Domain.Qualification;
 public static class QualificationErrorCodes
 {
     /// <summary>
-    /// Gets the code when Best/Worst selection is not supported by the V1 applier.
+    /// Gets the code when the selection mode is unknown to the applier.
     /// </summary>
     public const string SelectionNotSupported = "Qualification.SelectionNotSupported";
 
