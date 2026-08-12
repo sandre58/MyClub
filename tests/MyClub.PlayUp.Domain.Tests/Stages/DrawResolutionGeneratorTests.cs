@@ -671,8 +671,9 @@ public sealed class DrawResolutionGeneratorTests
     }
 
     [Fact]
-    public void Group_RC_fixed_violating_max_association_is_invalid()
+    public void Group_RC_fixed_violating_max_association_returns_no_solution()
     {
+        // Fixed are structurally valid (pots/capacity) but already exceed Max → NoSolution (not Invalid).
         var entries = NewEntries(4);
         var groups = NewGroups(2);
         var pots = BalancedPots(entries, 2);
@@ -684,7 +685,7 @@ public sealed class DrawResolutionGeneratorTests
             new GroupDrawPlacement(entries[2], groups[0])
         };
 
-        var act = () => DrawResolutionGenerator.Generate(
+        var result = DrawResolutionGenerator.Generate(
             GroupRequest(
                 entries,
                 groups,
@@ -693,6 +694,75 @@ public sealed class DrawResolutionGeneratorTests
                 fixedGroups,
                 seed: 1,
                 constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        result.IsNoSolution.Should().BeTrue();
+        result.IsResolved.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Group_RC_fixed_pots_and_max_together_return_no_solution()
+    {
+        // Each Fixed alone respects Max=1; pots force another same-association entry into the fixed group.
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = new Dictionary<EntryId, int>
+        {
+            [entries[0]] = 1, [entries[1]] = 1,
+            [entries[2]] = 2, [entries[3]] = 2
+        };
+        var associationA = AssociationId.New();
+        var associationB = AssociationId.New();
+        var associations = new Dictionary<EntryId, AssociationId>
+        {
+            [entries[0]] = associationA,
+            [entries[1]] = associationB,
+            [entries[2]] = associationA,
+            [entries[3]] = associationB
+        };
+
+        // G0 has pot1=A; G1 has pot2=B → remaining pot2 A must join G0 → 2×A in G0.
+        var fixedGroups = new[]
+        {
+            new GroupDrawPlacement(entries[0], groups[0]),
+            new GroupDrawPlacement(entries[3], groups[1])
+        };
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                fixedGroups,
+                seed: 1,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        result.IsNoSolution.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Group_RC_duplicate_max_association_constraint_is_invalid()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 2);
+        var associations = entries.ToDictionary(e => e, _ => AssociationId.New());
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                [],
+                seed: 1,
+                constraints:
+                [
+                    DrawConstraint.MaxSameAssociationPerGroup(1),
+                    DrawConstraint.MaxSameAssociationPerGroup(2)
+                ],
                 context: new DrawConstraintContext(null, null, associations)));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
