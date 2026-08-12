@@ -176,6 +176,45 @@ public sealed class FixtureOutcomeResolverTests
     }
 
     [Fact]
+    public void Resolve_two_leg_away_goals_off_does_not_decide_tied_aggregate()
+    {
+        // Same scores as AG-on case (A 2, B 2; B would win on away goals) but AwayGoalsRule null → Undecided
+        var act = () => FixtureOutcomeResolver.Resolve(
+            TwoLeg(awayGoals: false),
+            Confrontation(
+                Leg(1, _home, _away, new Score(2, 1)),
+                Leg(2, _away, _home, new Score(1, 0))));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeUndecided);
+    }
+
+    [Fact]
+    public void Resolve_two_leg_extra_time_goals_in_score_decide_aggregate()
+    {
+        // Leg1 A 1-0 B; Leg2 after 90' B 1-0 A would be aggregate 1-1; ET makes Score 2-0 → aggregate A 1, B 2
+        var outcome = FixtureOutcomeResolver.Resolve(
+            TwoLeg(),
+            Confrontation(
+                Leg(1, _home, _away, new Score(1, 0)),
+                Leg(2, _away, _home, new Score(2, 0), extraTimePlayed: true)));
+
+        outcome.WinnerEntryId.Should().Be(_away);
+        outcome.LoserEntryId.Should().Be(_home);
+    }
+
+    [Fact]
+    public void Resolve_rejects_duplicate_leg_index_in_snapshot()
+    {
+        var act = () => FixtureOutcomeResolver.Resolve(
+            TwoLeg(),
+            Confrontation(
+                Leg(1, _home, _away, new Score(1, 0)),
+                Leg(1, _away, _home, new Score(0, 0))));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeInvalid);
+    }
+
+    [Fact]
     public void Resolve_two_leg_aggregate_tied_without_ag_uses_shootout_on_last_leg()
     {
         var outcome = FixtureOutcomeResolver.Resolve(

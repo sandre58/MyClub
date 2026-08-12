@@ -9,11 +9,11 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Immutable multi-leg fixture data for outcome resolution (no sports validation in the constructor).
+/// Immutable multi-leg (or single-leg) fixture data for outcome resolution (no sports validation in the constructor).
 /// </summary>
 /// <remarks>
 /// Application assembles legs from <see cref="Fixture.Attachments"/> and loaded matches.
-/// Resolution rules live in <see cref="FixtureOutcomeResolver"/>.
+/// Resolution rules (aggregate by EntryId, away goals, last-leg TAB, I10) live in <see cref="FixtureOutcomeResolver"/>.
 /// </remarks>
 public sealed record FixtureConfrontationSnapshot
 {

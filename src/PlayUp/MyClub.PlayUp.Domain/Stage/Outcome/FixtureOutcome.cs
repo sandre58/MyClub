@@ -9,11 +9,14 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stage;
 
 /// <summary>
-/// Decided winner and loser of a fixture confrontation (single-leg V1).
+/// Decided winner and loser of a fixture confrontation (single-leg or multi-leg).
 /// </summary>
 /// <remarks>
-/// Does not carry a <see cref="FixtureId"/>. The fixture identity is supplied by Application
-/// (and checked by <see cref="Progression.ProgressionApplier"/>) from the surrounding orchestration context.
+/// Derived from <see cref="FixtureOutcomeResolver"/> using <see cref="Rules.TieFormat"/> and
+/// confrontation legs (EntryId referential). Does not carry a <see cref="FixtureId"/>.
+/// The fixture identity is supplied by Application (and checked by
+/// <see cref="Progression.ProgressionApplier"/>) from the surrounding orchestration context.
+/// Undecided draws throw <c>Stage.FixtureOutcomeUndecided</c> — this type has no resolution status.
 /// </remarks>
 public sealed record FixtureOutcome
 {

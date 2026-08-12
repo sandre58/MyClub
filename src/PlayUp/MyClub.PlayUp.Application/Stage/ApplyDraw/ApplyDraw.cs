@@ -19,7 +19,8 @@ namespace MyClub.PlayUp.Application.Stage;
 /// V1 Application: preflight → Domain mutations. No unit of work / EF transaction here;
 /// persisted atomicity is a future Host/Infrastructure responsibility.
 /// Pairing: opposition is conceptually unordered; V1 Match creation maps EntryA→Home, EntryB→Away
-/// as a technical convention only. Fixture target is Application orchestration input.
+/// as a technical convention only. Fixture targets are Application orchestration input
+/// (one Fixture per pairing, LegIndex 1).
 /// Does not recalculate WhoFeeds and never creates DirectAssignment.
 /// Host supplies Pairing fixture context and Draw entry pools (typically ⊆ qualified/progressed Entries).
 /// </remarks>
@@ -31,8 +32,8 @@ public static class ApplyDraw
     /// <param name="stage">Stage that owns the Draw.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
-    /// <param name="pairingContext">Required for Pairing kind (target Fixture).</param>
-    /// <param name="knownMatches">Matches already attached to the target Fixture (for Pairing idempotence).</param>
+    /// <param name="pairingContext">Required for Pairing kind (target Fixtures, 1:1 with pairings).</param>
+    /// <param name="knownMatches">Matches already attached to any target Fixture (for Pairing idempotence).</param>
     /// <returns>Slot instructions and/or newly created Matches.</returns>
     public static ApplyDrawResult Execute(
         StageAggregate stage,
@@ -200,7 +201,7 @@ public static class ApplyDraw
         if (pairingContext is null)
         {
             throw new ApplicationFailureException(
-                "Pairing draw apply requires a PairingApplicationContext with a target FixtureId.",
+                "Pairing draw apply requires a PairingApplicationContext with target FixtureIds.",
                 ApplicationErrorCodes.DrawApplyFailure);
         }
 
@@ -211,17 +212,37 @@ public static class ApplyDraw
                 ApplicationErrorCodes.DrawApplyFailure);
         }
 
-        var fixture = stage.FindFixture(pairingContext.FixtureId)
-            ?? throw new ApplicationFailureException(
-                $"Fixture '{pairingContext.FixtureId}' was not found on stage '{stage.Id}'.",
-                ApplicationErrorCodes.DrawApplyFailure);
-
         var pairings = draw.Resolution.PairingResults;
         if (pairings.Count == 0)
         {
             throw new ApplicationFailureException(
                 $"Draw '{draw.Id}' has no pairing results to apply.",
                 ApplicationErrorCodes.DrawApplyFailure);
+        }
+
+        var fixtureIds = pairingContext.FixtureIds;
+        if (fixtureIds.Count != pairings.Count)
+        {
+            throw new ApplicationFailureException(
+                $"Pairing draw apply requires exactly one FixtureId per pairing (got {fixtureIds.Count} fixtures for {pairings.Count} pairings).",
+                ApplicationErrorCodes.DrawApplyFailure);
+        }
+
+        if (fixtureIds.Distinct().Count() != fixtureIds.Count)
+        {
+            throw new ApplicationFailureException(
+                "Pairing draw apply requires distinct FixtureIds (one fixture per pairing).",
+                ApplicationErrorCodes.DrawApplyFailure);
+        }
+
+        var fixtures = new List<Fixture>(fixtureIds.Count);
+        foreach (var fixtureId in fixtureIds)
+        {
+            var fixture = stage.FindFixture(fixtureId)
+                ?? throw new ApplicationFailureException(
+                    $"Fixture '{fixtureId}' was not found on stage '{stage.Id}'.",
+                    ApplicationErrorCodes.DrawApplyFailure);
+            fixtures.Add(fixture);
         }
 
         var pool = draw.Inputs!.Entries;
@@ -243,6 +264,7 @@ public static class ApplyDraw
             }
         }
 
+        var targetMatchIds = fixtures.SelectMany(f => f.MatchIds).ToHashSet();
         foreach (var match in knownMatches)
         {
             if (!match.StageId.Equals(stage.Id) || !match.CompetitionId.Equals(stage.CompetitionId))
@@ -252,62 +274,72 @@ public static class ApplyDraw
                     ApplicationErrorCodes.DrawApplyFailure);
             }
 
-            if (!fixture.MatchIds.Contains(match.Id))
+            if (!targetMatchIds.Contains(match.Id))
             {
                 throw new ApplicationFailureException(
-                    $"Known match '{match.Id}' is not attached to fixture '{fixture.Id}'.",
+                    $"Known match '{match.Id}' is not attached to any of the target fixtures.",
                     ApplicationErrorCodes.DrawApplyFailure);
             }
         }
 
-        if (knownMatches.Count != fixture.MatchIds.Count)
+        if (knownMatches.Count != targetMatchIds.Count)
         {
             throw new ApplicationFailureException(
-                "knownMatches must include every match already attached to the target fixture.",
+                "knownMatches must include every match already attached to the target fixtures.",
                 ApplicationErrorCodes.DrawApplyFailure);
         }
 
-        var fixtureMatchSet = knownMatches.ToList();
+        var knownById = knownMatches.ToDictionary(m => m.Id);
         var matchedPairingIndexes = new HashSet<int>();
         var matchedMatchIds = new HashSet<MatchId>();
 
         for (var i = 0; i < pairings.Count; i++)
         {
             var pairing = pairings[i];
-            var existing = fixtureMatchSet.FirstOrDefault(m =>
-                m.HomeEntryId.Equals(pairing.EntryA) && m.AwayEntryId.Equals(pairing.EntryB));
-            if (existing is null) continue;
+            var fixture = fixtures[i];
+            var existing = fixture.MatchIds
+                .Select(id => knownById.GetValueOrDefault(id))
+                .FirstOrDefault(m =>
+                    m is not null
+                    && m.HomeEntryId.Equals(pairing.EntryA)
+                    && m.AwayEntryId.Equals(pairing.EntryB));
+            if (existing is null)
+            {
+                continue;
+            }
+
             matchedPairingIndexes.Add(i);
             matchedMatchIds.Add(existing.Id);
         }
 
-        var unmatchedMatches = fixtureMatchSet.Where(m => !matchedMatchIds.Contains(m.Id)).ToArray();
+        var unmatchedMatches = knownMatches.Where(m => !matchedMatchIds.Contains(m.Id)).ToArray();
         var allMatched = matchedPairingIndexes.Count == pairings.Count;
         var noneMatched = matchedPairingIndexes.Count == 0;
+        var anyAttachments = fixtures.Any(f => f.MatchIds.Count > 0);
 
         if (allMatched && unmatchedMatches.Length == 0)
         {
             return [];
         }
 
-        if (!noneMatched || unmatchedMatches.Length > 0 || fixture.MatchIds.Count > 0)
+        if (!noneMatched || unmatchedMatches.Length > 0 || anyAttachments)
         {
             throw new ApplicationFailureException(
-                "Pairing draw apply requires an empty fixture or an exact match of all pairings (partial/divergent state is rejected).",
+                "Pairing draw apply requires empty target fixtures or an exact match of all pairings (partial/divergent state is rejected).",
                 ApplicationErrorCodes.DrawApplyFailure);
         }
 
         var created = new List<Match>(pairings.Count);
-        var nextLegIndex = 1;
-        foreach (var pairing in pairings)
+        for (var i = 0; i < pairings.Count; i++)
         {
+            var pairing = pairings[i];
             var match = Match.Create(
                 stage.CompetitionId,
                 stage.Id,
                 pairing.EntryA,
                 pairing.EntryB,
                 clock);
-            stage.AttachMatch(fixture.Id, match.Id, nextLegIndex++, clock);
+            stage.AttachMatch(fixtureIds[i], match.Id, legIndex: 1, clock);
             created.Add(match);
         }
 

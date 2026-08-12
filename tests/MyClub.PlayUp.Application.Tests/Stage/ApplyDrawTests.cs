@@ -436,7 +436,9 @@ public sealed class ApplyDrawTests
     public void Execute_pairing_creates_and_attaches_matches()
     {
         var stage = CreateStage();
-        var fixture = AddFixture(stage);
+        var round = stage.AddRound("R1", _clock);
+        var fixture1 = stage.AddFixture(round.Id, _clock);
+        var fixture2 = stage.AddFixture(round.Id, _clock);
         var a = EntryId.New();
         var b = EntryId.New();
         var c = EntryId.New();
@@ -450,7 +452,7 @@ public sealed class ApplyDrawTests
             stage,
             draw.Id,
             _clock,
-            new PairingApplicationContext(fixture.Id),
+            new PairingApplicationContext([fixture1.Id, fixture2.Id]),
             []);
 
         result.CreatedMatches.Should().HaveCount(2);
@@ -460,7 +462,10 @@ public sealed class ApplyDrawTests
         result.CreatedMatches[0].StageId.Should().Be(stage.Id);
         result.CreatedMatches[1].HomeEntryId.Should().Be(c);
         result.CreatedMatches[1].AwayEntryId.Should().Be(d);
-        fixture.MatchIds.Should().HaveCount(2);
+        fixture1.MatchIds.Should().ContainSingle().Which.Should().Be(result.CreatedMatches[0].Id);
+        fixture2.MatchIds.Should().ContainSingle().Which.Should().Be(result.CreatedMatches[1].Id);
+        fixture1.Attachments.Should().ContainSingle().Which.LegIndex.Should().Be(1);
+        fixture2.Attachments.Should().ContainSingle().Which.LegIndex.Should().Be(1);
         draw.Status.Should().Be(DrawStatus.Published);
         draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
     }
@@ -497,7 +502,9 @@ public sealed class ApplyDrawTests
     public void Execute_pairing_rejects_partial_state()
     {
         var stage = CreateStage();
-        var fixture = AddFixture(stage);
+        var round = stage.AddRound("R1", _clock);
+        var fixture1 = stage.AddFixture(round.Id, _clock);
+        var fixture2 = stage.AddFixture(round.Id, _clock);
         var a = EntryId.New();
         var b = EntryId.New();
         var c = EntryId.New();
@@ -507,19 +514,20 @@ public sealed class ApplyDrawTests
             [new PairingDrawResult(a, b), new PairingDrawResult(c, d)],
             [a, b, c, d]);
         var onlyFirst = Match.Create(_competitionId, stage.Id, a, b, _clock);
-        stage.AttachMatch(fixture.Id, onlyFirst.Id, legIndex: 1, _clock);
+        stage.AttachMatch(fixture1.Id, onlyFirst.Id, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(
             stage,
             draw.Id,
             _clock,
-            new PairingApplicationContext(fixture.Id),
+            new PairingApplicationContext([fixture1.Id, fixture2.Id]),
             [onlyFirst]);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
-        fixture.MatchIds.Should().ContainSingle().Which.Should().Be(onlyFirst.Id);
+        fixture1.MatchIds.Should().ContainSingle().Which.Should().Be(onlyFirst.Id);
+        fixture2.MatchIds.Should().BeEmpty();
         stage.DomainEvents.Should().BeEmpty();
     }
 

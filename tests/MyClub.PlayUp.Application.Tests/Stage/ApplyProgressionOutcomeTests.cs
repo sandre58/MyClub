@@ -621,6 +621,69 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
+    public void Execute_rejects_when_round_has_no_tie_format()
+    {
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("QF"),
+            SampleRegulations.Standard(),
+            _clock);
+        stage.AddRound("R1", tieFormat: null, _clock);
+        stage.AddSlot("SF1-A", _clock);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var (fixtureId, match) = AttachFinishedMatch(stage, home, away, homeGoals: 1, awayGoals: 0);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixtureId,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixtureId, [match], [stage], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.TieFormatRequired);
+        stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Execute_rejects_when_fixture_is_under_matchday()
+    {
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("League"),
+            SampleRegulations.Standard(),
+            _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        stage.AddSlot("SF1-A", _clock);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        Finish(match, homeGoals: 1, awayGoals: 0);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.TieFormatRequired);
+        stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
     public void Assemble_maps_match_fields_without_sports_decisions()
     {
         var stage = CreateKnockoutStage(CompetitionId.New(), "Knockout", ["SF1-A"]);

@@ -63,11 +63,7 @@ public static class FixtureOutcomeResolver
             }
         }
 
-        return ordered.Select(l => l.LegIndex).Distinct().Count() != ordered.Length
-            ? throw new DomainException(
-                "Fixture confrontation leg indexes must be unique.",
-                StageErrorCodes.FixtureOutcomeInvalid)
-            : ordered;
+        return ordered;
     }
 
     private static void EnsureFinishedWithScores(IReadOnlyList<FixtureLegSnapshot> legs)
