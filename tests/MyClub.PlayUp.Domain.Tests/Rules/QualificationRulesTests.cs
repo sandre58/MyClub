@@ -286,4 +286,113 @@ public sealed class QualificationRulesTests
         ReferenceEquals(copy.Paths[0], original.Paths[0]).Should().BeFalse();
         ReferenceEquals(copy.Paths[0].Destination, original.Paths[0].Destination).Should().BeFalse();
     }
+
+    [Fact]
+    public void ReplaceQualificationRules_rejects_local_destination_when_slot_missing()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            clock);
+        stage.AddRound("Final", clock);
+        stage.AddSlot("A1", clock);
+
+        var act = () => stage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(stage.Id, "Missing"))
+            ]),
+            clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotNotFound);
+    }
+
+    [Fact]
+    public void ReplaceQualificationRules_accepts_local_destination_when_slot_exists()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            clock);
+        stage.AddRound("Final", clock);
+        stage.AddSlot("Champ", clock);
+
+        stage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(stage.Id, "Champ"))
+            ]),
+            clock);
+
+        stage.Regulation.QualificationRules!.Paths.Should().ContainSingle();
+        stage.Prepare(clock);
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void ReplaceQualificationRules_rejects_local_destination_when_direct_feeds_slot()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            clock);
+        stage.AddRound("Final", clock);
+        stage.AddSlot("Champ", clock);
+        stage.AssignEntryToSlot("Champ", EntryId.New(), clock);
+
+        var act = () => stage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(stage.Id, "Champ"))
+            ]),
+            clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
+    }
+
+    [Fact]
+    public void Prepare_rejects_local_qualification_when_destination_slot_was_removed()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            clock);
+        stage.AddRound("Final", clock);
+        stage.AddSlot("Champ", clock);
+        stage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(stage.Id, "Champ"))
+            ]),
+            clock);
+        stage.RemoveSlot("Champ", clock);
+
+        var act = () => stage.Prepare(clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotNotFound);
+    }
 }

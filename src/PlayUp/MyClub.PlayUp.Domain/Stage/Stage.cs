@@ -266,6 +266,8 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces qualification rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Local destinations (<see cref="QualificationDestination.StageId"/> equals this stage)
+    /// must reference an existing slot and must not conflict with a direct assignment.
     /// </summary>
     /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -273,8 +275,16 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
-        DemoteToDraftIfReady();
 
+        if (qualificationRules is not null)
+        {
+            foreach (var path in qualificationRules.Paths)
+            {
+                EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey);
+            }
+        }
+
+        DemoteToDraftIfReady();
         Regulation = Regulation.WithQualificationRules(qualificationRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
@@ -282,6 +292,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
     /// Each path fixture must belong to this stage.
+    /// Local destinations must reference an existing slot and must not conflict with a direct assignment.
     /// </summary>
     /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -301,21 +312,7 @@ public sealed class Stage : AggregateRoot<StageId>
                         StageErrorCodes.FixtureNotFound);
                 }
 
-                if (!path.Destination.StageId.Equals(Id)) continue;
-                if (FindSlot(path.Destination.SlotKey) is null)
-                {
-                    throw new DomainException(
-                        $"Slot '{path.Destination.SlotKey}' was not found.",
-                        StageErrorCodes.SlotNotFound);
-                }
-
-                if (_directAssignments.Any(a =>
-                        string.Equals(a.SlotKey, path.Destination.SlotKey, StringComparison.Ordinal)))
-                {
-                    throw new DomainException(
-                        $"Slot '{path.Destination.SlotKey}' already has a direct assignment feed.",
-                        StageErrorCodes.SlotFeedConflict);
-                }
+                EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey);
             }
         }
 
@@ -1347,12 +1344,71 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Validates local slot/fixture/direct/progression consistency for Prepare.
+    /// Validates local destination for Qualification / Progression paths that target this stage.
+    /// Cross-stage destinations are validated by Application <c>PrepareStage</c>.
+    /// </summary>
+    private void EnsureLocalPathDestination(StageId destinationStageId, string slotKey)
+    {
+        if (!destinationStageId.Equals(Id))
+        {
+            return;
+        }
+
+        if (FindSlot(slotKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{slotKey}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+
+        if (_directAssignments.Any(a => string.Equals(a.SlotKey, slotKey, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{slotKey}' already has a direct assignment feed.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+    }
+
+    /// <summary>
+    /// Validates local slot/fixture/direct/progression/qualification consistency for Prepare.
     /// Does not require a global feed (inbound Qualification may exist outside this aggregate).
     /// Rejects multiple local feeds on the same slot.
     /// </summary>
     private void EnsureLocalSlotConfigurationForPrepare()
     {
+        if (Regulation.ProgressionRules is { } progression)
+        {
+            foreach (var path in progression.Paths)
+            {
+                if (!HasFixture(path.SourceFixtureId))
+                {
+                    throw new DomainException(
+                        $"Fixture '{path.SourceFixtureId}' was not found.",
+                        StageErrorCodes.FixtureNotFound);
+                }
+
+                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey) is null)
+                {
+                    throw new DomainException(
+                        $"Slot '{path.Destination.SlotKey}' was not found.",
+                        StageErrorCodes.SlotNotFound);
+                }
+            }
+        }
+
+        if (Regulation.QualificationRules is { } qualification)
+        {
+            foreach (var path in qualification.Paths)
+            {
+                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey) is null)
+                {
+                    throw new DomainException(
+                        $"Slot '{path.Destination.SlotKey}' was not found.",
+                        StageErrorCodes.SlotNotFound);
+                }
+            }
+        }
+
         if (_slots.Count == 0)
         {
             return;
@@ -1388,26 +1444,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 throw new DomainException(
                     $"Slot '{fixture.SlotBKey}' was not found.",
                     StageErrorCodes.SlotNotFound);
-            }
-        }
-
-        if (Regulation.ProgressionRules is { } progression)
-        {
-            foreach (var path in progression.Paths)
-            {
-                if (!HasFixture(path.SourceFixtureId))
-                {
-                    throw new DomainException(
-                        $"Fixture '{path.SourceFixtureId}' was not found.",
-                        StageErrorCodes.FixtureNotFound);
-                }
-
-                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey) is null)
-                {
-                    throw new DomainException(
-                        $"Slot '{path.Destination.SlotKey}' was not found.",
-                        StageErrorCodes.SlotNotFound);
-                }
             }
         }
 

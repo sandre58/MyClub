@@ -11,12 +11,17 @@ using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 namespace MyClub.PlayUp.Application.Stage;
 
 /// <summary>
-/// Application use case: WhoFeeds validation then local <see cref="StageAggregate.Prepare"/>.
+/// Application use case: configuration gates then WhoFeeds then local <see cref="StageAggregate.Prepare"/>.
 /// </summary>
+/// <remarks>
+/// Domain validates local structure and local path destinations.
+/// Application validates TieFormat when Progression references a Round fixture,
+/// outbound StageId/SlotKey destinations, and WhoFeeds (inbound).
+/// </remarks>
 public static class PrepareStage
 {
     /// <summary>
-    /// Validates global slot feeds when needed, then prepares the stage.
+    /// Validates configuration gates and global slot feeds when needed, then prepares the stage.
     /// </summary>
     /// <param name="target">Stage to prepare.</param>
     /// <param name="competitionStages">All competition stages (already loaded).</param>
@@ -30,6 +35,10 @@ public static class PrepareStage
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(clock);
+
+        EnsureStageInCompetition(target, competitionStages);
+        EnsureTieFormatForProgressionSources(target);
+        EnsureOutboundPathDestinations(target, competitionStages);
 
         if (target.Slots.Count == 0)
         {
@@ -55,5 +64,115 @@ public static class PrepareStage
 
         target.Prepare(clock);
         return resolutions;
+    }
+
+    private static void EnsureStageInCompetition(
+        StageAggregate target,
+        IReadOnlyList<StageAggregate> competitionStages)
+    {
+        if (competitionStages.Any(s => s.Id.Equals(target.Id)))
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"Stage '{target.Id}' is not part of the competition stages list.",
+            ApplicationErrorCodes.StageNotInCompetition);
+    }
+
+    /// <summary>
+    /// D10-A / D10-B: a Round needs TieFormat when Progression references one of its fixtures.
+    /// </summary>
+    private static void EnsureTieFormatForProgressionSources(StageAggregate target)
+    {
+        if (target.Regulation.ProgressionRules is not { } progression)
+        {
+            return;
+        }
+
+        var referencedFixtureIds = progression.Paths
+            .Select(p => p.SourceFixtureId)
+            .ToHashSet();
+
+        foreach (var round in target.Rounds)
+        {
+            if (round.TieFormat is not null)
+            {
+                continue;
+            }
+
+            if (!round.Fixtures.Any(f => referencedFixtureIds.Contains(f.Id)))
+            {
+                continue;
+            }
+
+            throw new ApplicationFailureException(
+                $"Round '{round.Name}' requires a TieFormat because one of its fixtures is referenced by a progression rule.",
+                ApplicationErrorCodes.TieFormatRequired);
+        }
+    }
+
+    /// <summary>
+    /// D10-D: outbound Qualification / Progression destinations must exist in the competition
+    /// and expose the declared SlotKey.
+    /// </summary>
+    private static void EnsureOutboundPathDestinations(
+        StageAggregate source,
+        IReadOnlyList<StageAggregate> competitionStages)
+    {
+        if (source.Regulation.QualificationRules is { } qualification)
+        {
+            foreach (var path in qualification.Paths)
+            {
+                EnsureOutboundDestination(
+                    source,
+                    competitionStages,
+                    path.Destination.StageId,
+                    path.Destination.SlotKey,
+                    "Qualification");
+            }
+        }
+
+        if (source.Regulation.ProgressionRules is not { } progression)
+        {
+            return;
+        }
+
+        foreach (var path in progression.Paths)
+        {
+            EnsureOutboundDestination(
+                source,
+                competitionStages,
+                path.Destination.StageId,
+                path.Destination.SlotKey,
+                "Progression");
+        }
+    }
+
+    private static void EnsureOutboundDestination(
+        StageAggregate source,
+        IReadOnlyList<StageAggregate> competitionStages,
+        StageId destinationStageId,
+        string slotKey,
+        string mechanism)
+    {
+        if (destinationStageId.Equals(source.Id))
+        {
+            return;
+        }
+
+        var destination = competitionStages.FirstOrDefault(s => s.Id.Equals(destinationStageId))
+            ?? throw new ApplicationFailureException(
+                $"{mechanism} destination stage '{destinationStageId}' is not part of the competition stages list.",
+                ApplicationErrorCodes.StageNotInCompetition);
+
+        if (destination.FindSlot(slotKey) is not null)
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"{mechanism} destination slot '{slotKey}' was not found on stage '{destination.Id}'.",
+            ApplicationErrorCodes.DanglingFeedTarget);
     }
 }

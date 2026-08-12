@@ -111,4 +111,258 @@ public sealed class PrepareStageTests
             .Which.Code.Should().Be(ApplicationErrorCodes.SlotFeedsInvalid);
         target.Status.Should().Be(StageStatus.Draft);
     }
+
+    [Fact]
+    public void Execute_rejects_when_progression_references_round_without_tie_format()
+    {
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        var round = stage.AddRound("QuarterFinal", tieFormat: null, _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("SF1-A", _clock);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(stage, [stage], _clock);
+
+        var ex = act.Should().Throw<ApplicationFailureException>().Which;
+        ex.Code.Should().Be(ApplicationErrorCodes.TieFormatRequired);
+        ex.Message.Should().Contain("QuarterFinal");
+        ex.Message.Should().Contain("TieFormat");
+        stage.Status.Should().Be(StageStatus.Draft);
+    }
+
+    [Fact]
+    public void Execute_prepares_when_progression_references_round_with_tie_format()
+    {
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        var round = stage.AddRound(
+            "QuarterFinal",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("SF1-A", _clock);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        PrepareStage.Execute(stage, [stage], _clock);
+
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Execute_prepares_when_round_has_no_tie_format_and_no_progression()
+    {
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        var round = stage.AddRound("QuarterFinal", tieFormat: null, _clock);
+        stage.AddFixture(round.Id, _clock);
+
+        PrepareStage.Execute(stage, [stage], _clock);
+
+        stage.Status.Should().Be(StageStatus.Ready);
+        round.TieFormat.Should().BeNull();
+    }
+
+    [Fact]
+    public void Execute_rejects_progression_outbound_when_destination_slot_missing()
+    {
+        var competitionId = CompetitionId.New();
+        var source = StageAggregate.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var semi = StageAggregate.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
+        var round = source.AddRound(
+            "QuarterFinal",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            _clock);
+        var fixture = source.AddFixture(round.Id, _clock);
+        semi.AddRound("SF", _clock);
+        semi.AddSlot("SF1-A", _clock);
+        semi.AddSlot("SF1B", _clock);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(semi.Id, "SF1-B"))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(source, [source, semi], _clock);
+
+        var ex = act.Should().Throw<ApplicationFailureException>().Which;
+        ex.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
+        ex.Message.Should().Contain("SF1-B");
+        source.Status.Should().Be(StageStatus.Draft);
+        semi.Status.Should().Be(StageStatus.Draft);
+    }
+
+    [Fact]
+    public void Execute_rejects_qualification_outbound_when_destination_slot_missing()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = StageAggregate.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var semi = StageAggregate.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
+        var group = groups.AddGroup("A", _clock);
+        groups.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        groups.AddMatchday(1, _clock);
+        semi.AddRound("SF", _clock);
+        semi.AddSlot("SF1-A", _clock);
+        semi.AddSlot("SF1B", _clock);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(semi.Id, "SF1-B"))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(groups, [groups, semi], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
+        groups.Status.Should().Be(StageStatus.Draft);
+    }
+
+    [Fact]
+    public void Execute_rejects_progression_outbound_when_destination_stage_missing()
+    {
+        var competitionId = CompetitionId.New();
+        var groupStage = StageAggregate.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var semi = StageAggregate.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
+        var final = StageAggregate.Create(competitionId, new StageName("Final"), SampleRegulations.Standard(), _clock);
+        var superFinalId = StageId.New();
+
+        var round = final.AddRound(
+            "Final",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            _clock);
+        var fixture = final.AddFixture(round.Id, _clock);
+        final.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(superFinalId, "Champ"))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(final, [groupStage, semi, final], _clock);
+
+        var ex = act.Should().Throw<ApplicationFailureException>().Which;
+        ex.Code.Should().Be(ApplicationErrorCodes.StageNotInCompetition);
+        ex.Message.Should().Contain(superFinalId.ToString());
+        final.Status.Should().Be(StageStatus.Draft);
+    }
+
+    [Fact]
+    public void Execute_rejects_qualification_outbound_when_destination_stage_missing()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = StageAggregate.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var semi = StageAggregate.Create(competitionId, new StageName("Semi"), SampleRegulations.Standard(), _clock);
+        var ghostId = StageId.New();
+        var group = groups.AddGroup("A", _clock);
+        groups.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        groups.AddMatchday(1, _clock);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(ghostId, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(groups, [groups, semi], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StageNotInCompetition);
+        groups.Status.Should().Be(StageStatus.Draft);
+    }
+
+    [Fact]
+    public void Execute_prepares_when_progression_outbound_destination_is_valid()
+    {
+        var competitionId = CompetitionId.New();
+        var source = StageAggregate.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var semi = StageAggregate.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
+        var round = source.AddRound(
+            "QuarterFinal",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            _clock);
+        var fixture = source.AddFixture(round.Id, _clock);
+        semi.AddRound("SF", _clock);
+        semi.AddSlot("SF1-A", _clock);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(semi.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        PrepareStage.Execute(source, [source, semi], _clock);
+
+        source.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Execute_prepares_when_qualification_outbound_destination_is_valid()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = StageAggregate.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var semi = StageAggregate.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
+        var group = groups.AddGroup("A", _clock);
+        groups.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        groups.AddMatchday(1, _clock);
+        semi.AddRound("SF", _clock);
+        semi.AddSlot("SF1-A", _clock);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(semi.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        PrepareStage.Execute(groups, [groups, semi], _clock);
+
+        groups.Status.Should().Be(StageStatus.Ready);
+    }
 }

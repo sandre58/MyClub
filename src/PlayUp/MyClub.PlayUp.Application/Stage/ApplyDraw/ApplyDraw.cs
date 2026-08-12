@@ -236,14 +236,7 @@ public static class ApplyDraw
         }
 
         var fixtures = new List<Fixture>(fixtureIds.Count);
-        foreach (var fixtureId in fixtureIds)
-        {
-            var fixture = stage.FindFixture(fixtureId)
-                ?? throw new ApplicationFailureException(
-                    $"Fixture '{fixtureId}' was not found on stage '{stage.Id}'.",
-                    ApplicationErrorCodes.DrawApplyFailure);
-            fixtures.Add(fixture);
-        }
+        fixtures.AddRange(fixtureIds.Select(fixtureId => stage.FindFixture(fixtureId) ?? throw new ApplicationFailureException($"Fixture '{fixtureId}' was not found on stage '{stage.Id}'.", ApplicationErrorCodes.DrawApplyFailure)));
 
         var pool = draw.Inputs!.Entries;
         var seenEntries = new HashSet<EntryId>();
@@ -298,10 +291,9 @@ public static class ApplyDraw
             var pairing = pairings[i];
             var fixture = fixtures[i];
             var existing = fixture.MatchIds
-                .Select(id => knownById.GetValueOrDefault(id))
+                .Select(knownById.GetValueOrDefault)
                 .FirstOrDefault(m =>
-                    m is not null
-                    && m.HomeEntryId.Equals(pairing.EntryA)
+                    m?.HomeEntryId.Equals(pairing.EntryA) == true
                     && m.AwayEntryId.Equals(pairing.EntryB));
             if (existing is null)
             {
