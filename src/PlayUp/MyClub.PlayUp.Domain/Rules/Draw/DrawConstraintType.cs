@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Kind of draw pairing constraint (V1 closed set).
+/// Kind of draw constraint (closed set).
 /// </summary>
 public enum DrawConstraintType
 {
@@ -24,5 +24,11 @@ public enum DrawConstraintType
     /// <summary>
     /// Avoid pairing teams from the same association.
     /// </summary>
-    SameAssociationAvoidance = 2
+    SameAssociationAvoidance = 2,
+
+    /// <summary>
+    /// Limit how many entries sharing an association may sit in the same group (Group kind).
+    /// Requires <see cref="DrawConstraint.MaxPerGroup"/>.
+    /// </summary>
+    MaxSameAssociationPerGroup = 3
 }

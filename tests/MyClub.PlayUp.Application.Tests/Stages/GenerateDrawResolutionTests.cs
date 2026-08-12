@@ -184,11 +184,7 @@ public sealed class GenerateDrawResolutionTests
     {
         var stage = CreateStageWithPots(numberOfPots: 4);
         var entries = NewEntries(8);
-        var groups = new[]
-        {
-            stage.AddGroup("A", _clock),
-            stage.AddGroup("B", _clock)
-        };
+        var groups = new[] { stage.AddGroup("A", _clock), stage.AddGroup("B", _clock) };
         var pots = BalancedPots(entries, 4);
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.ConfigureDrawInputs(
@@ -312,6 +308,97 @@ public sealed class GenerateDrawResolutionTests
     }
 
     [Fact]
+    public void Execute_group_passes_max_association_and_can_no_solution()
+    {
+        var stage = CreateStageWithPots(2);
+        var entries = NewEntries(4);
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var pots = BalancedPots(entries, 2);
+        var association = AssociationId.New();
+        var associations = entries.ToDictionary(e => e, _ => association);
+        stage.ReplaceDrawRules(
+            new DrawRules(
+                DrawMode.Random,
+                potRules: new PotRules(2),
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)]),
+            _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(entries, potMembership: new PotMembership(pots)),
+            _clock);
+
+        var result = GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [groupA.Id, groupB.Id],
+            constraintContext: new DrawConstraintContext(null, null, associations),
+            seed: 1);
+
+        result.IsNoSolution.Should().BeTrue();
+        draw.Resolution.State.Should().Be(DrawResolutionState.NoSolution);
+    }
+
+    [Fact]
+    public void Execute_group_passes_max_association_and_resolves_when_feasible()
+    {
+        var stage = CreateStageWithPots(2);
+        var entries = NewEntries(4);
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var pots = BalancedPots(entries, 2);
+        var a1 = AssociationId.New();
+        var a2 = AssociationId.New();
+        var associations = new Dictionary<EntryId, AssociationId>
+        {
+            [entries[0]] = a1, [entries[1]] = a2,
+            [entries[2]] = a1, [entries[3]] = a2
+        };
+        stage.ReplaceDrawRules(
+            new DrawRules(
+                DrawMode.Random,
+                potRules: new PotRules(2),
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)]),
+            _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(entries, potMembership: new PotMembership(pots)),
+            _clock);
+
+        var result = GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [groupA.Id, groupB.Id],
+            constraintContext: new DrawConstraintContext(null, null, associations),
+            seed: 3);
+
+        result.IsResolved.Should().BeTrue();
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+    }
+
+    [Fact]
+    public void Execute_filters_max_association_off_pairing()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(
+            new DrawRules(
+                DrawMode.Random,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)]),
+            _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(NewEntries(2)), _clock);
+
+        var result = GenerateDrawResolution.Execute(stage, draw.Id, _clock, seed: 1);
+
+        result.IsResolved.Should().BeTrue();
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+    }
+
+    [Fact]
     public void Execute_filters_pairing_constraints_off_slot_and_resolves()
     {
         // S9: Application filters SameGroup off Slot; generation proceeds without Domain Invalid.
@@ -395,15 +482,6 @@ public sealed class GenerateDrawResolutionTests
         draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
     }
 
-    private Stage CreateStageWithPots(int numberOfPots)
-    {
-        var stage = CreateStage();
-        stage.ReplaceDrawRules(
-            new DrawRules(DrawMode.Random, potRules: new PotRules(numberOfPots)),
-            _clock);
-        return stage;
-    }
-
     private static Dictionary<EntryId, int> BalancedPots(EntryId[] entries, int numberOfPots)
     {
         var perPot = entries.Length / numberOfPots;
@@ -422,6 +500,15 @@ public sealed class GenerateDrawResolutionTests
 
     private static EntryId[] NewEntries(int count) =>
         [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+
+    private Stage CreateStageWithPots(int numberOfPots)
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(numberOfPots)),
+            _clock);
+        return stage;
+    }
 
     private Stage CreateStage() =>
         Stage.Create(_competitionId, new StageName("Phase"), SampleRegulations.Standard(), _clock);

@@ -9,19 +9,21 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Auxiliary maps for Required draw constraints (injected by Application/Host — not part of DrawInputs).
+/// Auxiliary maps for draw constraints (injected by Application/Host — not part of DrawInputs).
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="DrawConstraintContext"/> class.
 /// </remarks>
 /// <param name="sourceGroupMap">Optional Entry → source group mapping for <c>SameGroupAvoidance</c>.</param>
 /// <param name="teamMap">Optional Entry → team mapping for <c>SameTeamAvoidance</c>.</param>
+/// <param name="associationMap">Optional Entry → association mapping for <c>MaxSameAssociationPerGroup</c>.</param>
 public sealed class DrawConstraintContext(
     IReadOnlyDictionary<EntryId, GroupId>? sourceGroupMap,
-    IReadOnlyDictionary<EntryId, TeamId>? teamMap)
+    IReadOnlyDictionary<EntryId, TeamId>? teamMap,
+    IReadOnlyDictionary<EntryId, AssociationId>? associationMap = null)
 {
     /// <summary>
-    /// Gets an empty context (no group / team maps).
+    /// Gets an empty context (no maps).
     /// </summary>
     public static DrawConstraintContext Empty { get; } = new(null, null);
 
@@ -34,4 +36,9 @@ public sealed class DrawConstraintContext(
     /// Gets the Entry → team map when present.
     /// </summary>
     public IReadOnlyDictionary<EntryId, TeamId>? TeamMap { get; } = teamMap;
+
+    /// <summary>
+    /// Gets the Entry → association map when present.
+    /// </summary>
+    public IReadOnlyDictionary<EntryId, AssociationId>? AssociationMap { get; } = associationMap;
 }

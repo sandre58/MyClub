@@ -519,15 +519,15 @@ public sealed class DrawResolutionGeneratorTests
         result.Resolution!.GroupResults.Where(p => p.GroupId.Equals(groups[0])).Should().HaveCount(4);
         result.Resolution.GroupResults.Where(p => p.GroupId.Equals(groups[1]))
             .Select(p => p.EntryId)
-            .Should().BeEquivalentTo(new[] { entries[1], entries[3], entries[5], entries[7] });
+            .Should().BeEquivalentTo([entries[1], entries[3], entries[5], entries[7]]);
         AssertGroupResolution(result.Resolution.GroupResults, entries, groups, pots, capacity: 4);
     }
 
     [Fact]
-    public void Group_RC_validated_request_under_G7_never_returns_no_solution()
+    public void Group_RC_validated_request_under_G7_without_max_association_never_returns_no_solution()
     {
-        // Documents G7 resolvability: every structurally valid Group request resolves.
-        // NoSolution remains a defensive generic-contract path, unreachable under G3–G7 V1.
+        // Documents G7 resolvability without MaxSameAssociationPerGroup.
+        // With MaxSameAssociation, NoSolution becomes a real business case (see dedicated RC).
         var scenarios = new[]
         {
             (Entries: 4, Groups: 2, Pots: 2, Seed: 1),
@@ -545,9 +545,227 @@ public sealed class DrawResolutionGeneratorTests
                 GroupRequest(entries, groups, pots, potCount, [], seed));
 
             result.IsNoSolution.Should().BeFalse(
-                because: "G3–G7 validated Group requests are always resolvable in V1");
+                because: "G3–G7 validated Group requests without MaxSameAssociation are always resolvable");
             result.IsResolved.Should().BeTrue();
         }
+    }
+
+    [Fact]
+    public void Group_RC_max_association_balanced_resolves()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 4);
+        var associations = FourAssociationsTwice(entries);
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                4,
+                [],
+                seed: 5,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        result.IsResolved.Should().BeTrue();
+        AssertGroupResolution(result.Resolution!.GroupResults, entries, groups, pots, capacity: 4);
+        AssertMaxAssociation(result.Resolution.GroupResults, associations, maxPerGroup: 1);
+    }
+
+    [Fact]
+    public void Group_RC_max_association_oversized_returns_no_solution()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 2);
+        var association = AssociationId.New();
+        var associations = entries.ToDictionary(e => e, _ => association);
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                [],
+                seed: 1,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        result.IsNoSolution.Should().BeTrue();
+        result.IsResolved.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Group_RC_max_association_two_saves_otherwise_impossible()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 2);
+        var association = AssociationId.New();
+        var associations = entries.ToDictionary(e => e, _ => association);
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                [],
+                seed: 1,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(2)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        result.IsResolved.Should().BeTrue();
+        AssertMaxAssociation(result.Resolution!.GroupResults, associations, maxPerGroup: 2);
+    }
+
+    [Fact]
+    public void Group_RC_max_association_incomplete_map_is_invalid()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 2);
+        var associations = new Dictionary<EntryId, AssociationId>
+        {
+            [entries[0]] = AssociationId.New(),
+            [entries[1]] = AssociationId.New(),
+            [entries[2]] = AssociationId.New()
+        };
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                [],
+                seed: 1,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC_pairing_constraint_on_group_is_invalid()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 2);
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                [],
+                seed: 1,
+                constraints: [new DrawConstraint(DrawConstraintType.SameGroupAvoidance, ConstraintEnforcement.Required)],
+                context: DrawConstraintContext.Empty));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC_fixed_violating_max_association_is_invalid()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 2);
+        var association = AssociationId.New();
+        var associations = entries.ToDictionary(e => e, _ => association);
+        var fixedGroups = new[]
+        {
+            new GroupDrawPlacement(entries[0], groups[0]),
+            new GroupDrawPlacement(entries[2], groups[0])
+        };
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                2,
+                fixedGroups,
+                seed: 1,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC_max_association_with_fixed_and_pots_resolves()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 4);
+        var a1 = AssociationId.New();
+        var a2 = AssociationId.New();
+        var associations = new Dictionary<EntryId, AssociationId>
+        {
+            [entries[0]] = a1, [entries[1]] = a2,
+            [entries[2]] = a2, [entries[3]] = a1,
+            [entries[4]] = a1, [entries[5]] = a2,
+            [entries[6]] = a2, [entries[7]] = a1
+        };
+        var fixedGroups = new[] { new GroupDrawPlacement(entries[0], groups[0]) };
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(
+                entries,
+                groups,
+                pots,
+                4,
+                fixedGroups,
+                seed: 9,
+                constraints: [DrawConstraint.MaxSameAssociationPerGroup(2)],
+                context: new DrawConstraintContext(null, null, associations)));
+
+        result.IsResolved.Should().BeTrue();
+        result.Resolution!.GroupResults.Should().Contain(p => p.EntryId.Equals(entries[0]) && p.GroupId.Equals(groups[0]));
+        AssertMaxAssociation(result.Resolution.GroupResults, associations, maxPerGroup: 2);
+    }
+
+    [Fact]
+    public void Group_RC_max_association_same_seed_is_reproducible()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 4);
+        var associations = FourAssociationsTwice(entries);
+        var constraints = new[] { DrawConstraint.MaxSameAssociationPerGroup(1) };
+        var context = new DrawConstraintContext(null, null, associations);
+
+        var r1 = DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, 4, [], 42, constraints, context));
+        var r2 = DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, 4, [], 42, constraints, context));
+
+        r1.IsResolved.Should().BeTrue();
+        NormalizeGroupPlacements(r1.Resolution!.GroupResults)
+            .Should().Equal(NormalizeGroupPlacements(r2.Resolution!.GroupResults));
+    }
+
+    [Fact]
+    public void Invalid_max_association_on_pairing_throws()
+    {
+        var entries = NewEntries(2);
+        var associations = entries.ToDictionary(e => e, _ => AssociationId.New());
+        var request = PairingRequest(
+            entries,
+            [],
+            [DrawConstraint.MaxSameAssociationPerGroup(1)],
+            new DrawConstraintContext(null, null, associations),
+            seed: 1);
+
+        var act = () => DrawResolutionGenerator.Generate(request);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
     }
 
     [Fact]
@@ -701,12 +919,14 @@ public sealed class DrawResolutionGeneratorTests
         IReadOnlyDictionary<EntryId, int> pots,
         int numberOfPots,
         IReadOnlyList<GroupDrawPlacement> fixedGroups,
-        int seed) =>
+        int seed,
+        IReadOnlyList<DrawConstraint>? constraints = null,
+        DrawConstraintContext? context = null) =>
         new(
             DrawResolutionKind.Group,
             entries,
-            [],
-            DrawConstraintContext.Empty,
+            constraints ?? [],
+            context ?? DrawConstraintContext.Empty,
             new SeededSource(seed),
             groupTargets: groupTargets,
             numberOfPots: numberOfPots,
@@ -730,6 +950,37 @@ public sealed class DrawResolutionGeneratorTests
         }
 
         return pots;
+    }
+
+    private static Dictionary<EntryId, AssociationId> FourAssociationsTwice(EntryId[] entries)
+    {
+        var associations = new[]
+        {
+            AssociationId.New(), AssociationId.New(), AssociationId.New(), AssociationId.New()
+        };
+
+        // Per pot of size 2: distinct associations; each association appears twice overall.
+        return new Dictionary<EntryId, AssociationId>
+        {
+            [entries[0]] = associations[0], [entries[1]] = associations[1],
+            [entries[2]] = associations[2], [entries[3]] = associations[3],
+            [entries[4]] = associations[0], [entries[5]] = associations[1],
+            [entries[6]] = associations[2], [entries[7]] = associations[3]
+        };
+    }
+
+    private static void AssertMaxAssociation(
+        IReadOnlyList<GroupDrawPlacement> placements,
+        Dictionary<EntryId, AssociationId> associations,
+        int maxPerGroup)
+    {
+        foreach (var group in placements.GroupBy(p => p.GroupId))
+        {
+            foreach (var byAssociation in group.GroupBy(p => associations[p.EntryId]))
+            {
+                byAssociation.Count().Should().BeLessThanOrEqualTo(maxPerGroup);
+            }
+        }
     }
 
     private static void AssertGroupResolution(

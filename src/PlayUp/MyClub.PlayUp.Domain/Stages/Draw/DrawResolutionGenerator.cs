@@ -14,9 +14,9 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// Pure Domain service: proposes one admissible <see cref="DrawResolution"/> under Required constraints,
 /// minimizing Preferred violations for Pairing (soft), or <see cref="DrawGenerationResult.NoSolution"/>.
 /// Does not mutate Draw / Stage. Slot, Pairing, and Group (pots V1). Invalid request → <see cref="DomainException"/>.
-/// Group V1: uniform capacity, mandatory pots, ≤1 entry per pot per group; no soft.
-/// Under G3–G7, any request that passes structural validation is always resolvable
-/// (independent permutation per pot); NoSolution is retained as a defensive generic-contract path.
+/// Group V1: uniform capacity, mandatory pots, ≤1 entry per pot per group;
+/// optional Required <c>MaxSameAssociationPerGroup</c>. Soft Group constraints are out of scope.
+/// Without MaxSameAssociation, G3–G7 alone always resolve; with MaxSameAssociation, NoSolution is a real outcome.
 /// </summary>
 public static class DrawResolutionGenerator
 {
@@ -65,10 +65,6 @@ public static class DrawResolutionGenerator
         {
             EnsureConstraintMaps(request.Kind, request.Constraints, request.Entries, request.ConstraintContext);
         }
-        else if (request.Constraints.Count > 0)
-        {
-            throw Invalid("Group generation does not accept Pairing draw constraints in V1.");
-        }
 
         switch (request.Kind)
         {
@@ -80,6 +76,7 @@ public static class DrawResolutionGenerator
                 break;
             case DrawResolutionKind.Group:
                 ValidateGroupShape(request);
+                ValidateGroupConstraints(request);
                 break;
             default:
                 break;
@@ -331,10 +328,57 @@ public static class DrawResolutionGenerator
 
                     EnsureCompleteMap(entries, context.TeamMap, "SameTeamAvoidance");
                     break;
+                case DrawConstraintType.MaxSameAssociationPerGroup:
+                    throw Invalid("MaxSameAssociationPerGroup is only supported for Group generation.");
                 default:
                     throw Invalid($"Draw constraint type '{constraint.ConstraintType}' is unknown.");
             }
         }
+    }
+
+    private static void ValidateGroupConstraints(DrawGenerationRequest request)
+    {
+        if (request.Constraints.Any(constraint => constraint.ConstraintType != DrawConstraintType.MaxSameAssociationPerGroup))
+        {
+            throw Invalid("Group generation accepts only MaxSameAssociationPerGroup constraints in V1.");
+        }
+
+        var maxPerGroup = ResolveMaxSameAssociation(request.Constraints);
+        if (maxPerGroup is null)
+        {
+            return;
+        }
+
+        EnsureCompleteMap(
+            request.Entries,
+            request.ConstraintContext.AssociationMap,
+            "MaxSameAssociationPerGroup");
+
+        var associationMap = request.ConstraintContext.AssociationMap!;
+        foreach (var groupPlacements in request.FixedGroups.GroupBy(p => p.GroupId))
+        {
+            var counts = new Dictionary<AssociationId, int>();
+            foreach (var placement in groupPlacements)
+            {
+                var associationId = associationMap[placement.EntryId];
+                counts.TryGetValue(associationId, out var count);
+                counts[associationId] = count + 1;
+                if (counts[associationId] > maxPerGroup.Value)
+                {
+                    throw Invalid("Fixed group placements violate MaxSameAssociationPerGroup.");
+                }
+            }
+        }
+    }
+
+    private static int? ResolveMaxSameAssociation(IReadOnlyList<DrawConstraint> constraints)
+    {
+        var values = constraints
+            .Where(c => c.ConstraintType == DrawConstraintType.MaxSameAssociationPerGroup)
+            .Select(c => c.MaxPerGroup!.Value)
+            .ToArray();
+
+        return values.Length == 0 ? null : values.Min();
     }
 
     private static void EnsureCompleteMap<T>(
@@ -406,13 +450,19 @@ public static class DrawResolutionGenerator
 
     private static DrawGenerationResult GenerateGroup(DrawGenerationRequest request)
     {
-        // V1 (G3–G7): after ValidateGroupShape, the instance is always structurally resolvable —
-        // one independent perfect matching per pot. NoSolution below is defensive / generic-contract only.
+        // Without MaxSameAssociationPerGroup (G3–G7 alone): always structurally resolvable.
+        // With MaxSameAssociationPerGroup: NoSolution is a real business outcome when Required-feasible
+        // placements do not exist (do not pre-classify that case as Invalid).
         var capacity = request.Entries.Count / request.GroupTargets!.Count;
         var pots = request.PotMembership!.Pots;
+        var maxSameAssociation = ResolveMaxSameAssociation(request.Constraints);
+        var associationMap = request.ConstraintContext.AssociationMap;
         var placements = new List<GroupDrawPlacement>();
         var occupiedPots = request.GroupTargets.ToDictionary(g => g, _ => new HashSet<int>());
         var counts = request.GroupTargets.ToDictionary(g => g, _ => 0);
+        var associationCounts = request.GroupTargets.ToDictionary(
+            g => g,
+            _ => new Dictionary<AssociationId, int>());
         var usedEntries = new HashSet<EntryId>();
 
         foreach (var fixedPlacement in request.FixedGroups)
@@ -421,6 +471,10 @@ public static class DrawResolutionGenerator
             usedEntries.Add(fixedPlacement.EntryId);
             occupiedPots[fixedPlacement.GroupId].Add(pots[fixedPlacement.EntryId]);
             counts[fixedPlacement.GroupId]++;
+            if (associationMap is not null)
+            {
+                IncrementAssociation(associationCounts[fixedPlacement.GroupId], associationMap[fixedPlacement.EntryId]);
+            }
         }
 
         var remaining = Shuffle(
@@ -432,7 +486,10 @@ public static class DrawResolutionGenerator
                 placements,
                 occupiedPots,
                 counts,
+                associationCounts,
                 pots,
+                associationMap,
+                maxSameAssociation,
                 capacity,
                 request.GroupTargets,
                 request.RandomSource)
@@ -445,7 +502,10 @@ public static class DrawResolutionGenerator
         List<GroupDrawPlacement> placements,
         Dictionary<GroupId, HashSet<int>> occupiedPots,
         Dictionary<GroupId, int> counts,
+        Dictionary<GroupId, Dictionary<AssociationId, int>> associationCounts,
         IReadOnlyDictionary<EntryId, int> pots,
+        IReadOnlyDictionary<EntryId, AssociationId>? associationMap,
+        int? maxSameAssociation,
         int capacity,
         IReadOnlyList<GroupId> groupTargets,
         IRandomSource random)
@@ -457,9 +517,13 @@ public static class DrawResolutionGenerator
 
         var entry = remaining[0];
         var pot = pots[entry];
+        var associationId = associationMap?[entry];
         var candidates = Shuffle(
             groupTargets
-                .Where(g => counts[g] < capacity && !occupiedPots[g].Contains(pot))
+                .Where(g =>
+                    counts[g] < capacity
+                    && !occupiedPots[g].Contains(pot)
+                    && IsAssociationAllowed(associationCounts[g], associationId, maxSameAssociation))
                 .ToList(),
             random);
 
@@ -468,19 +532,67 @@ public static class DrawResolutionGenerator
             placements.Add(new GroupDrawPlacement(entry, groupId));
             occupiedPots[groupId].Add(pot);
             counts[groupId]++;
+            if (associationId is { } assoc)
+            {
+                IncrementAssociation(associationCounts[groupId], assoc);
+            }
 
             var next = remaining.Skip(1).ToList();
-            if (TryAssignGroups(next, placements, occupiedPots, counts, pots, capacity, groupTargets, random))
+            if (TryAssignGroups(
+                    next,
+                    placements,
+                    occupiedPots,
+                    counts,
+                    associationCounts,
+                    pots,
+                    associationMap,
+                    maxSameAssociation,
+                    capacity,
+                    groupTargets,
+                    random))
             {
                 return true;
             }
 
             counts[groupId]--;
             occupiedPots[groupId].Remove(pot);
+            if (associationId is { } assocToRemove)
+            {
+                DecrementAssociation(associationCounts[groupId], assocToRemove);
+            }
+
             placements.RemoveAt(placements.Count - 1);
         }
 
         return false;
+    }
+
+    private static bool IsAssociationAllowed(
+        Dictionary<AssociationId, int> groupAssociationCounts,
+        AssociationId? associationId,
+        int? maxSameAssociation)
+    {
+        if (maxSameAssociation is null || associationId is null)
+        {
+            return true;
+        }
+
+        groupAssociationCounts.TryGetValue(associationId.Value, out var count);
+        return count < maxSameAssociation.Value;
+    }
+
+    private static void IncrementAssociation(Dictionary<AssociationId, int> counts, AssociationId associationId)
+    {
+        counts.TryGetValue(associationId, out var count);
+        counts[associationId] = count + 1;
+    }
+
+    private static void DecrementAssociation(Dictionary<AssociationId, int> counts, AssociationId associationId)
+    {
+        if (--counts[associationId] == 0)
+        {
+            counts.Remove(associationId);
+        }
     }
 
     private static DrawGenerationResult GeneratePairing(DrawGenerationRequest request)

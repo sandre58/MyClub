@@ -107,6 +107,34 @@ public sealed class DrawRulesTests
     }
 
     [Fact]
+    public void DrawConstraint_max_same_association_requires_factory_and_positive_max()
+    {
+        var viaCtor = () => new DrawConstraint(DrawConstraintType.MaxSameAssociationPerGroup);
+        var zero = () => DrawConstraint.MaxSameAssociationPerGroup(0);
+        var preferred = () => DrawConstraint.MaxSameAssociationPerGroup(1, ConstraintEnforcement.Preferred);
+
+        viaCtor.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.DrawRulesInvalid);
+        zero.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.DrawRulesInvalid);
+        preferred.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.DrawRulesInvalid);
+
+        var ok = DrawConstraint.MaxSameAssociationPerGroup(2);
+        ok.ConstraintType.Should().Be(DrawConstraintType.MaxSameAssociationPerGroup);
+        ok.MaxPerGroup.Should().Be(2);
+        ok.Enforcement.Should().Be(ConstraintEnforcement.Required);
+    }
+
+    [Fact]
+    public void DrawConstraint_copy_preserves_max_per_group()
+    {
+        var original = DrawConstraint.MaxSameAssociationPerGroup(3);
+        var copy = original.Copy();
+
+        copy.Should().Be(original);
+        ReferenceEquals(copy, original).Should().BeFalse();
+        copy.MaxPerGroup.Should().Be(3);
+    }
+
+    [Fact]
     public void DrawRules_rejects_unknown_mode()
     {
         // Arrange & Act

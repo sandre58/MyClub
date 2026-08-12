@@ -163,12 +163,17 @@ public static class GenerateDrawResolution
 
     /// <summary>
     /// Filters DrawRules constraints to those applicable for the generation kind.
-    /// Pairing: SameGroup / SameTeam. Slot/Group: none of those. SameAssociation never passed.
+    /// Pairing: SameGroup / SameTeam. Group: MaxSameAssociationPerGroup. SameAssociationAvoidance never passed.
     /// </summary>
     private static bool IsConstraintApplicable(DrawResolutionKind kind, DrawConstraint constraint) =>
-        constraint.ConstraintType != DrawConstraintType.SameAssociationAvoidance
-        && constraint.ConstraintType is DrawConstraintType.SameGroupAvoidance or DrawConstraintType.SameTeamAvoidance
-        && kind == DrawResolutionKind.Pairing;
+        constraint.ConstraintType switch
+        {
+            DrawConstraintType.SameAssociationAvoidance => false,
+            DrawConstraintType.SameGroupAvoidance or DrawConstraintType.SameTeamAvoidance =>
+                kind == DrawResolutionKind.Pairing,
+            DrawConstraintType.MaxSameAssociationPerGroup => kind == DrawResolutionKind.Group,
+            _ => false
+        };
 
     private static IRandomSource ResolveRandomSource(int? seed, IRandomSource? randomSource) =>
         randomSource ?? (seed is null ? new SystemRandomSource() : new SeededRandomSource(seed.Value));
