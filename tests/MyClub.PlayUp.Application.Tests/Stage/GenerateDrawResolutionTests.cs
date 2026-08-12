@@ -109,6 +109,28 @@ public sealed class GenerateDrawResolutionTests
     public void Execute_invalid_request_does_not_mark_no_solution()
     {
         var stage = CreateStage();
+        stage.AddSlot("A", _clock);
+        stage.AddSlot("B", _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(NewEntries(2)), _clock);
+
+        // Targets exist on Stage but coverage is wrong → Domain Invalid (not Application preflight).
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            slotTargets: ["A"],
+            seed: 1);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+        draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+    }
+
+    [Fact]
+    public void Execute_rejects_slot_target_missing_on_stage()
+    {
+        var stage = CreateStage();
+        stage.AddSlot("A", _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(NewEntries(2)), _clock);
 
@@ -116,7 +138,86 @@ public sealed class GenerateDrawResolutionTests
             stage,
             draw.Id,
             _clock,
-            slotTargets: ["OnlyOne"],
+            slotTargets: ["A", "Missing"],
+            seed: 1);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawGenerationFailure);
+        draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+    }
+
+    [Fact]
+    public void Execute_slot_with_fixed_preserves_fixed_placements()
+    {
+        var stage = CreateStage();
+        var entries = NewEntries(4);
+        foreach (var key in new[] { "S1", "S2", "S3", "S4" })
+        {
+            stage.AddSlot(key, _clock);
+        }
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForSlot(
+                entries,
+                fixedPlacements:
+                [
+                    new SlotDrawPlacement(entries[0], "S1"),
+                    new SlotDrawPlacement(entries[1], "S2")
+                ]),
+            _clock);
+
+        var result = GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            slotTargets: ["S1", "S2", "S3", "S4"],
+            seed: 9);
+
+        result.IsResolved.Should().BeTrue();
+        draw.Resolution.SlotResults.Should().Contain(s => s.EntryId.Equals(entries[0]) && s.SlotKey == "S1");
+        draw.Resolution.SlotResults.Should().Contain(s => s.EntryId.Equals(entries[1]) && s.SlotKey == "S2");
+    }
+
+    [Fact]
+    public void Execute_group_kind_is_invalid_and_leaves_not_resolved()
+    {
+        var stage = CreateStage();
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup(NewEntries(4)), _clock);
+
+        var act = () => GenerateDrawResolution.Execute(stage, draw.Id, _clock, seed: 1);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+        draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+    }
+
+    [Fact]
+    public void Execute_same_group_required_on_slot_is_invalid()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(
+            new DrawRules(
+                DrawMode.Random,
+                constraints:
+                [
+                    new DrawConstraint(DrawConstraintType.SameGroupAvoidance, ConstraintEnforcement.Required)
+                ]),
+            _clock);
+        foreach (var key in new[] { "A", "B" })
+        {
+            stage.AddSlot(key, _clock);
+        }
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(NewEntries(2)), _clock);
+
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            slotTargets: ["A", "B"],
             seed: 1);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);

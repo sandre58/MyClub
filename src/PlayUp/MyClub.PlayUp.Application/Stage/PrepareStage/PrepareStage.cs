@@ -14,7 +14,8 @@ namespace MyClub.PlayUp.Application.Stage;
 /// Application use case: configuration gates then WhoFeeds then local <see cref="StageAggregate.Prepare"/>.
 /// </summary>
 /// <remarks>
-/// Domain validates local structure and local path destinations.
+/// Hosts must call this use case for Draft → Ready — not <see cref="StageAggregate.Prepare"/> alone.
+/// Domain validates local structure and local path destinations only.
 /// Application validates TieFormat when Progression references a Round fixture,
 /// outbound StageId/SlotKey destinations, and WhoFeeds (inbound).
 /// </remarks>

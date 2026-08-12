@@ -568,7 +568,8 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Removes a slot when it is not referenced by direct assignment, local progression, or fixture slots.
+    /// Removes a slot when it is not referenced by direct assignment, local progression,
+    /// local qualification, or fixture slots.
     /// </summary>
     /// <param name="slotKey">The slot key to remove.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -588,7 +589,9 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.SlotReferenced);
         }
 
-        if (IsSlotReferencedByLocalProgression(key) || IsSlotReferencedByFixture(key))
+        if (IsSlotReferencedByLocalProgression(key)
+            || IsSlotReferencedByLocalQualification(key)
+            || IsSlotReferencedByFixture(key))
         {
             throw new DomainException(
                 $"Slot '{key}' is still referenced.",
@@ -618,6 +621,13 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Slot '{key}' already has a declarative progression feed.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        if (IsSlotFedByLocalQualification(key))
+        {
+            throw new DomainException(
+                $"Slot '{key}' already has a declarative qualification feed.",
                 StageErrorCodes.SlotFeedConflict);
         }
 
@@ -1315,8 +1325,17 @@ public sealed class Stage : AggregateRoot<StageId>
             && string.Equals(p.Destination.SlotKey, slotKey, StringComparison.Ordinal))
         == true;
 
+    private bool IsSlotFedByLocalQualification(string slotKey) =>
+        Regulation.QualificationRules?.Paths.Any(p =>
+            p.Destination.StageId.Equals(Id)
+            && string.Equals(p.Destination.SlotKey, slotKey, StringComparison.Ordinal))
+        == true;
+
     private bool IsSlotReferencedByLocalProgression(string slotKey) =>
         IsSlotFedByLocalProgression(slotKey);
+
+    private bool IsSlotReferencedByLocalQualification(string slotKey) =>
+        IsSlotFedByLocalQualification(slotKey);
 
     private bool IsSlotReferencedByFixture(string slotKey) =>
         EnumerateFixtures().Any(f =>
@@ -1456,6 +1475,11 @@ public sealed class Stage : AggregateRoot<StageId>
             }
 
             if (IsSlotFedByLocalProgression(slot.SlotKey))
+            {
+                localFeedCount++;
+            }
+
+            if (IsSlotFedByLocalQualification(slot.SlotKey))
             {
                 localFeedCount++;
             }

@@ -369,7 +369,7 @@ public sealed class QualificationRulesTests
     }
 
     [Fact]
-    public void Prepare_rejects_local_qualification_when_destination_slot_was_removed()
+    public void AssignEntryToSlot_rejects_when_local_qualification_feeds_slot()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
         var stage = StageAggregate.Create(
@@ -389,10 +389,50 @@ public sealed class QualificationRulesTests
                     new QualificationDestination(stage.Id, "Champ"))
             ]),
             clock);
-        stage.RemoveSlot("Champ", clock);
+
+        var act = () => stage.AssignEntryToSlot("Champ", EntryId.New(), clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
+    }
+
+    [Fact]
+    public void Prepare_rejects_multiple_local_feeds_when_qualification_and_progression()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            clock);
+        var round = stage.AddRound("SF", clock);
+        var fixture = stage.AddFixture(round.Id, clock);
+        stage.AddSlot("Final-A", clock);
+
+        // Progression first (write-time blocks Direct conflict only, not Qual vs Prog).
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "Final-A"))
+            ]),
+            clock);
+
+        // Qualification write only checks Direct; Prog+Qual multi-feed is Prepare-time.
+        stage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(stage.Id, "Final-A"))
+            ]),
+            clock);
 
         var act = () => stage.Prepare(clock);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotNotFound);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MultipleFeeds);
     }
 }

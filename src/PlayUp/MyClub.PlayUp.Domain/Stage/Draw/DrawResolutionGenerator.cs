@@ -14,6 +14,8 @@ namespace MyClub.PlayUp.Domain.Stage;
 /// Pure Domain service: proposes one admissible <see cref="DrawResolution"/> under Required constraints,
 /// or <see cref="DrawGenerationResult.NoSolution"/>. Does not mutate Draw / Stage.
 /// V1: Slot and Pairing only. Preferred ignored. Invalid request → <see cref="DomainException"/>.
+/// SameGroupAvoidance / SameTeamAvoidance Required apply to Pairing only; on Slot they are Invalid
+/// (Host should filter Stage DrawRules by kind when assembling the request).
 /// </summary>
 public static class DrawResolutionGenerator
 {

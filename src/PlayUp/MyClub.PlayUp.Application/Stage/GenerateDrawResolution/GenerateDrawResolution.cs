@@ -51,6 +51,8 @@ public static class GenerateDrawResolution
                 ApplicationErrorCodes.DrawGenerationFailure);
         }
 
+        EnsureSlotTargetsExistOnStage(stage, draw.Kind, slotTargets);
+
         var request = BuildRequest(
             draw,
             stage.Regulation.DrawRules,
@@ -78,6 +80,31 @@ public static class GenerateDrawResolution
             throw new ApplicationFailureException(
                 $"Draw '{draw.Id}' must be Draft to generate (status is '{draw.Status}').",
                 ApplicationErrorCodes.DrawGenerationFailure);
+        }
+    }
+
+    /// <summary>
+    /// Ensures Slot-kind targets exist on the Stage before Domain generation / Record.
+    /// Pairing and Group do not use <paramref name="slotTargets"/>.
+    /// </summary>
+    private static void EnsureSlotTargetsExistOnStage(
+        StageAggregate stage,
+        DrawResolutionKind kind,
+        IReadOnlyList<string>? slotTargets)
+    {
+        if (kind != DrawResolutionKind.Slot || slotTargets is null || slotTargets.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var target in slotTargets)
+        {
+            if (stage.FindSlot(target) is null)
+            {
+                throw new ApplicationFailureException(
+                    $"Slot target '{target}' was not found on stage '{stage.Id}'.",
+                    ApplicationErrorCodes.DrawGenerationFailure);
+            }
         }
     }
 
