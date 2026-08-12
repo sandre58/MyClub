@@ -8,9 +8,8 @@ using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Standing;
+using MyClub.PlayUp.Domain.Standings;
 using Xunit;
-using StandingView = MyClub.PlayUp.Domain.Standing.Standing;
 
 namespace MyClub.PlayUp.Domain.Tests.Qualification;
 
@@ -374,7 +373,7 @@ public sealed class QualificationApplierTests
         ReferenceEquals(copy.Condition, original.Condition).Should().BeFalse();
     }
 
-    private static StandingView ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
+    private static Standing ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
         new(
         [
             ..rows.Select(r => new StandingRow(
@@ -397,7 +396,7 @@ public sealed class QualificationApplierTests
             new QualificationDestination(_stageId, slotKey),
             QualificationCondition.PointsAtLeast(minimumPoints));
 
-    private StandingView BuildStanding()
+    private Standing BuildStanding()
     {
         var rules = new StandingRules(
             new PointsPolicy(3, 1, 0),

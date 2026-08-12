@@ -7,10 +7,9 @@
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stage;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
-using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 
 namespace MyClub.PlayUp.Domain.Tests.Rules;
 
@@ -149,7 +148,7 @@ public sealed class DrawRulesTests
             drawRules: drawRules);
 
         // Act
-        var stage = StageAggregate.Create(CompetitionId.New(), new StageName("Cup"), regulation, clock);
+        var stage = Stage.Create(CompetitionId.New(), new StageName("Cup"), regulation, clock);
 
         // Assert
         stage.Regulation.DrawRules.Should().Be(drawRules);

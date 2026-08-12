@@ -6,8 +6,8 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stage;
-using MyClub.PlayUp.Domain.Standing;
+using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Domain.Standings;
 
 namespace MyClub.PlayUp.Domain.Qualification;
 
@@ -26,7 +26,7 @@ public static class QualificationApplier
     /// <param name="standing">Calculated standing view.</param>
     /// <param name="selection">Selection mode and bounds.</param>
     /// <returns>Ordered selected entry identities.</returns>
-    public static IReadOnlyList<EntryId> SelectEntries(Standing.Standing standing, QualificationSelection selection)
+    public static IReadOnlyList<EntryId> SelectEntries(Standing standing, QualificationSelection selection)
     {
         ArgumentNullException.ThrowIfNull(standing);
         ArgumentNullException.ThrowIfNull(selection);
@@ -57,7 +57,7 @@ public static class QualificationApplier
     /// <exception cref="DomainException">
     /// Selection is unsupported, unresolved (0 entries), or yields more than one entry.
     /// </exception>
-    public static SlotAssignmentInstruction? Apply(QualificationPath path, Standing.Standing standing)
+    public static SlotAssignmentInstruction? Apply(QualificationPath path, Standing standing)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(standing);
@@ -77,7 +77,7 @@ public static class QualificationApplier
 
     private static SlotAssignmentInstruction? ResolveInstruction(
         QualificationPath path,
-        Standing.Standing standing,
+        Standing standing,
         EntryId entryId)
     {
         if (path.Condition is null)

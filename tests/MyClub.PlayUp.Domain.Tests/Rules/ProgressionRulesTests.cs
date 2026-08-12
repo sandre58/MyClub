@@ -7,11 +7,10 @@
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stage;
-using MyClub.PlayUp.Domain.Stage.Events;
+using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Domain.Stages.Events;
 using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
-using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 
 namespace MyClub.PlayUp.Domain.Tests.Rules;
 
@@ -95,7 +94,7 @@ public sealed class ProgressionRulesTests
     public void ReplaceProgressionRules_rejects_when_direct_assignment_feeds_destination()
     {
         // Arrange
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),
@@ -178,7 +177,7 @@ public sealed class ProgressionRulesTests
     public void ReplaceProgressionRules_accepts_fixture_of_stage_and_demotes_ready()
     {
         // Arrange
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),
@@ -211,7 +210,7 @@ public sealed class ProgressionRulesTests
     public void ReplaceProgressionRules_rejects_fixture_from_another_stage()
     {
         // Arrange
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),

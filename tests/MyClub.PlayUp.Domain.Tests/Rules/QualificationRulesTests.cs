@@ -7,10 +7,9 @@
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stage;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
-using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 
 namespace MyClub.PlayUp.Domain.Tests.Rules;
 
@@ -258,7 +257,7 @@ public sealed class QualificationRulesTests
             qualificationRules: qualification);
 
         // Act
-        var stage = StageAggregate.Create(CompetitionId.New(), new StageName("Poules"), regulation, clock);
+        var stage = Stage.Create(CompetitionId.New(), new StageName("Poules"), regulation, clock);
 
         // Assert
         stage.Regulation.QualificationRules.Should().Be(qualification);
@@ -291,7 +290,7 @@ public sealed class QualificationRulesTests
     public void ReplaceQualificationRules_rejects_local_destination_when_slot_missing()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),
@@ -317,7 +316,7 @@ public sealed class QualificationRulesTests
     public void ReplaceQualificationRules_accepts_local_destination_when_slot_exists()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),
@@ -345,7 +344,7 @@ public sealed class QualificationRulesTests
     public void ReplaceQualificationRules_rejects_local_destination_when_direct_feeds_slot()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),
@@ -372,7 +371,7 @@ public sealed class QualificationRulesTests
     public void AssignEntryToSlot_rejects_when_local_qualification_feeds_slot()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),
@@ -399,7 +398,7 @@ public sealed class QualificationRulesTests
     public void Prepare_rejects_multiple_local_feeds_when_qualification_and_progression()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             SampleRegulations.Standard(),

@@ -38,10 +38,16 @@
     <Folder Include="Rules\Progression">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
-    <Folder Include="Stage\Feed">
+    <Folder Include="Stages\Feed">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
-    <Folder Include="Stage\Outcome">
+    <Folder Include="Stages\Outcome">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Stages\Draw">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Stages\Assignment">
       <NamespaceProvider>False</NamespaceProvider>
     </Folder>
   </ItemGroup>

@@ -6,13 +6,11 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competition;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stage;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
-using CompetitionAggregate = MyClub.PlayUp.Domain.Competition.Competition;
-using StageAggregate = MyClub.PlayUp.Domain.Stage.Stage;
 
 namespace MyClub.PlayUp.Domain.Tests.Rules;
 
@@ -25,7 +23,7 @@ public sealed class RegulationIntegrationTests
     {
         // Arrange
         var regulation = SampleRegulations.Standard();
-        var competition = CompetitionAggregate.Create(new CompetitionName("Cup"), regulation, _clock);
+        var competition = Competition.Create(new CompetitionName("Cup"), regulation, _clock);
 
         // Assert create
         competition.Regulation.Should().Be(regulation);
@@ -50,13 +48,13 @@ public sealed class RegulationIntegrationTests
     public void Stage_materializes_from_competition_without_runtime_fallback()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(
+        var competition = Competition.Create(
             new CompetitionName("Cup"),
             SampleRegulations.Standard(),
             _clock);
 
         // Act
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             competition.Id,
             new StageName("Poules"),
             competition.Regulation,
@@ -75,7 +73,7 @@ public sealed class RegulationIntegrationTests
     public void Stage_full_regulation_composition_is_independent_of_competition()
     {
         // Arrange
-        var competition = CompetitionAggregate.Create(
+        var competition = Competition.Create(
             new CompetitionName("Cup"),
             SampleRegulations.Standard(),
             _clock);
@@ -97,7 +95,7 @@ public sealed class RegulationIntegrationTests
             qualification);
 
         // Act
-        var stage = StageAggregate.Create(competition.Id, new StageName("Poules"), stageRegulation, _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Poules"), stageRegulation, _clock);
         competition.ReplaceRegulation(
             new Regulation(new EntryRules(8, 32), competition.Regulation.MatchRules, competition.Regulation.StandingRules),
             _clock);
@@ -118,7 +116,7 @@ public sealed class RegulationIntegrationTests
         // Arrange
         var defaultTie = new TieFormat(2, true);
         var finalTie = new TieFormat(1, false, extraTimeRule: new ExtraTimeRule());
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             new StageRegulation(
@@ -175,7 +173,7 @@ public sealed class RegulationIntegrationTests
     public void Changing_stage_default_tie_format_does_not_change_existing_rounds()
     {
         // Arrange
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             new StageRegulation(
@@ -193,9 +191,9 @@ public sealed class RegulationIntegrationTests
         round.TieFormat!.NumberOfLegs.Should().Be(2);
     }
 
-    private StageAggregate CreateRunningCupStage()
+    private Stage CreateRunningCupStage()
     {
-        var stage = StageAggregate.Create(
+        var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
             new StageRegulation(

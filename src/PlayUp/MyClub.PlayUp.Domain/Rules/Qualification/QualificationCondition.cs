@@ -5,7 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Standing;
+using MyClub.PlayUp.Domain.Standings;
 
 namespace MyClub.PlayUp.Domain.Rules;
 

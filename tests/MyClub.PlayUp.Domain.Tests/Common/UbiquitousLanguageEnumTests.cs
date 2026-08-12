@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // <copyright file="UbiquitousLanguageEnumTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
@@ -7,7 +7,7 @@
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stage;
+using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Domain.Tests.Common;
