@@ -876,6 +876,183 @@ public sealed class ApplyQualificationTests
     }
 
     [Fact]
+    public void Conditional_position_qualifies_when_points_meet_threshold()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "KO", ["A", "B", "C"]);
+        var first = EntryId.New();
+        var second = EntryId.New();
+        var third = EntryId.New();
+        var standing = ManualStanding([(first, 1, 50), (second, 2, 45), (third, 3, 42)]);
+        league.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                PositionPath(1, 1, terminal.Id, "A"),
+                PositionPath(2, 2, terminal.Id, "B"),
+                ConditionalPositionPath(3, 3, 40, terminal.Id, "C")
+            ]),
+            _clock);
+
+        var results = ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        results.Should().HaveCount(3);
+        terminal.FindSlot("A")!.EntryId.Should().Be(first);
+        terminal.FindSlot("B")!.EntryId.Should().Be(second);
+        terminal.FindSlot("C")!.EntryId.Should().Be(third);
+    }
+
+    [Fact]
+    public void Conditional_position_skips_when_points_below_threshold()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "KO", ["A", "B", "C"]);
+        var first = EntryId.New();
+        var second = EntryId.New();
+        var third = EntryId.New();
+        var standing = ManualStanding([(first, 1, 50), (second, 2, 45), (third, 3, 39)]);
+        league.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                PositionPath(1, 1, terminal.Id, "A"),
+                PositionPath(2, 2, terminal.Id, "B"),
+                ConditionalPositionPath(3, 3, 40, terminal.Id, "C")
+            ]),
+            _clock);
+
+        var results = ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        results.Should().HaveCount(2);
+        terminal.FindSlot("A")!.EntryId.Should().Be(first);
+        terminal.FindSlot("B")!.EntryId.Should().Be(second);
+        terminal.FindSlot("C")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Conditional_position_reapply_clears_slot_when_condition_fails()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "KO", ["C"]);
+        var third = EntryId.New();
+        league.ReplaceQualificationRules(
+            new QualificationRules([ConditionalPositionPath(1, 1, 40, terminal.Id, "C")]),
+            _clock);
+
+        ApplyQualification.Execute(
+            league,
+            ManualStanding([(third, 1, 42)]),
+            [league, terminal],
+            _clock);
+        terminal.FindSlot("C")!.EntryId.Should().Be(third);
+
+        var results = ApplyQualification.Execute(
+            league,
+            ManualStanding([(third, 1, 39)]),
+            [league, terminal],
+            _clock);
+
+        results.Should().BeEmpty();
+        terminal.FindSlot("C")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Conditional_position_on_group_standing()
+    {
+        var competitionId = CompetitionId.New();
+        var groups = CreateLeagueStage(competitionId, "Groups");
+        var terminal = CreateSlotStage(competitionId, "KO", ["C"]);
+        var groupA = groups.AddGroup("A", _clock);
+        var first = EntryId.New();
+        var second = EntryId.New();
+        var third = EntryId.New();
+        foreach (var e in new[] { first, second, third })
+        {
+            groups.AssignEntryToGroup(groupA.Id, e, _clock);
+        }
+
+        var standingA = ManualStanding([(first, 1, 50), (second, 2, 45), (third, 3, 42)]);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(groupA.Id),
+                    new QualificationSelection(SelectionMode.Position, 3),
+                    new QualificationDestination(terminal.Id, "C"),
+                    QualificationCondition.PointsAtLeast(40))
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, StandingView> { [groupA.Id] = standingA },
+            [groups, terminal],
+            _clock);
+
+        terminal.FindSlot("C")!.EntryId.Should().Be(third);
+    }
+
+    [Fact]
+    public void Conditional_position_on_across_groups_standing()
+    {
+        var scenario = BuildGroupsScenario(groupCount: 3, teamsPerGroup: 4, strengthSpread: true);
+        var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["BestThird"]);
+        var derived = CrossGroupStandingAssembler.Build(
+            scenario.GroupsStage.Groups,
+            scenario.GroupStandings,
+            3,
+            scenario.Matches,
+            scenario.GroupsStage.Regulation.StandingRules);
+        var bestThird = derived.Rows[0];
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.AcrossGroups(3),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(terminal.Id, "BestThird"),
+                    QualificationCondition.PointsAtLeast(bestThird.Points))
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        terminal.FindSlot("BestThird")!.EntryId.Should().Be(bestThird.EntryId);
+
+        scenario.GroupsStage.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.AcrossGroups(3),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(terminal.Id, "BestThird"),
+                    QualificationCondition.PointsAtLeast(bestThird.Points + 1))
+            ]),
+            _clock);
+
+        ApplyQualification.Execute(
+            scenario.GroupsStage,
+            overallStanding: null,
+            scenario.GroupStandings,
+            scenario.Matches,
+            [scenario.GroupsStage, terminal],
+            _clock);
+
+        terminal.FindSlot("BestThird")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
     public void AcrossGroups_derived_then_Best_1_fills_slot()
     {
         var scenario = BuildGroupsScenario(groupCount: 3, teamsPerGroup: 4, strengthSpread: true);
@@ -970,6 +1147,41 @@ public sealed class ApplyQualificationTests
             QualificationSource.Overall(),
             new QualificationSelection(mode, value),
             new QualificationDestination(stageId, slotKey));
+
+    private static QualificationPath PositionPath(
+        int order,
+        int position,
+        StageId stageId,
+        string slotKey) =>
+        Path(order, SelectionMode.Position, position, stageId, slotKey);
+
+    private static QualificationPath ConditionalPositionPath(
+        int order,
+        int position,
+        int minimumPoints,
+        StageId stageId,
+        string slotKey) =>
+        new(
+            order,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, position),
+            new QualificationDestination(stageId, slotKey),
+            QualificationCondition.PointsAtLeast(minimumPoints));
+
+    private static StandingView ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
+        new(
+        [
+            ..rows.Select(r => new StandingRow(
+                r.EntryId,
+                r.Position,
+                played: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0,
+                goalsFor: 0,
+                goalsAgainst: 0,
+                points: r.Points))
+        ]);
 
     private static QualificationPath GroupPath(
         int order,

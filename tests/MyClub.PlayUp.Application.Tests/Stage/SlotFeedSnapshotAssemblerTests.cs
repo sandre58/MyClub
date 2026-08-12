@@ -48,6 +48,34 @@ public sealed class SlotFeedSnapshotAssemblerTests
     }
 
     [Fact]
+    public void Assemble_maps_conditional_qualification_path_as_feed()
+    {
+        var competitionId = CompetitionId.New();
+        var source = StageAggregate.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var target = StageAggregate.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("SF1-A", _clock);
+
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 3),
+                    new QualificationDestination(target.Id, "SF1-A"),
+                    QualificationCondition.PointsAtLeast(40))
+            ]),
+            _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
+
+        snapshot.InboundQualification.Should().ContainSingle();
+        snapshot.InboundQualification[0].SourceStageId.Should().Be(source.Id);
+        snapshot.InboundQualification[0].DestinationSlotKey.Should().Be("SF1-A");
+    }
+
+    [Fact]
     public void Assemble_maps_cross_stage_progression()
     {
         var competitionId = CompetitionId.New();

@@ -101,6 +101,34 @@ public sealed class StageApplyResolvedEntryTests
     }
 
     [Fact]
+    public void ClearResolvedEntry_clears_dynamic_occupant()
+    {
+        var stage = CreateCupWithSlots("A");
+        var entryId = EntryId.New();
+        stage.ApplyResolvedEntry("A", entryId, _clock);
+        stage.ClearDomainEvents();
+
+        stage.ClearResolvedEntry("A", _clock);
+
+        stage.FindSlot("A")!.EntryId.Should().BeNull();
+        var changed = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageSlotOccupantChanged>().Subject;
+        changed.PreviousEntryId.Should().Be(entryId);
+        changed.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void ClearResolvedEntry_vacant_is_noop()
+    {
+        var stage = CreateCupWithSlots("A");
+        stage.ClearDomainEvents();
+
+        stage.ClearResolvedEntry("A", _clock);
+
+        stage.FindSlot("A")!.EntryId.Should().BeNull();
+        stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
     public void ApplyResolvedEntry_does_not_create_direct_assignment()
     {
         var stage = CreateCupWithSlots("A");

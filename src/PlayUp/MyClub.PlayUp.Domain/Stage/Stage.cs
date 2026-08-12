@@ -720,6 +720,41 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Clears a dynamically resolved slot occupant without affecting <see cref="DirectAssignment"/>.
+    /// </summary>
+    /// <remarks>
+    /// Same mutability rules as <see cref="ApplyResolvedEntry"/>. No-op when already vacant.
+    /// A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
+    /// </remarks>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearResolvedEntry(string slotKey, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_directAssignments.Exists(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is owned by a direct assignment and cannot receive a dynamic resolution.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        if (slot.EntryId is null)
+        {
+            return;
+        }
+
+        var previousEntryId = slot.EntryId;
+        slot.ClearEntry();
+        Raise(new StageSlotOccupantChanged(Id, key, previousEntryId, entryId: null, clock));
+    }
+
+    /// <summary>
     /// Finds a slot by key.
     /// </summary>
     /// <param name="slotKey">The slot key.</param>

@@ -16,7 +16,7 @@ namespace MyClub.PlayUp.Domain.Qualification;
 /// Does not mutate aggregates or calculate standings.
 /// <see cref="SelectionMode.Best"/> is an alias of <see cref="SelectionMode.Top"/>;
 /// <see cref="SelectionMode.Worst"/> is an alias of <see cref="SelectionMode.Bottom"/>.
-/// Neither mode builds a cross-group universe (use <see cref="RankingScope.AcrossGroups"/> for that).
+/// Optional <see cref="QualificationPath.Condition"/> gates a single selected row (skip when false).
 /// </summary>
 public static class QualificationApplier
 {
@@ -47,15 +47,17 @@ public static class QualificationApplier
     }
 
     /// <summary>
-    /// Applies a qualification path to a standing, producing a single slot assignment instruction.
+    /// Applies a qualification path to a standing, producing a slot assignment instruction or a skip.
     /// </summary>
     /// <param name="path">Declarative qualification path.</param>
     /// <param name="standing">Calculated standing view.</param>
-    /// <returns>One slot assignment instruction.</returns>
+    /// <returns>
+    /// A slot assignment instruction when resolved; <see langword="null"/> when a condition gate skips.
+    /// </returns>
     /// <exception cref="DomainException">
-    /// Selection is unsupported, unresolved, or yields more than one entry (V1: one path → one entry).
+    /// Selection is unsupported, unresolved (0 entries), or yields more than one entry.
     /// </exception>
-    public static SlotAssignmentInstruction Apply(QualificationPath path, Standing.Standing standing)
+    public static SlotAssignmentInstruction? Apply(QualificationPath path, Standing.Standing standing)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(standing);
@@ -63,13 +65,34 @@ public static class QualificationApplier
         var selected = SelectEntries(standing, path.Selection);
         return selected.Count switch
         {
-            0 => throw new DomainException("Qualification selection did not resolve an entry from the standing.",
+            0 => throw new DomainException(
+                "Qualification selection did not resolve an entry from the standing.",
                 QualificationErrorCodes.SelectionUnresolved),
             > 1 => throw new DomainException(
                 "Qualification path must resolve to exactly one entry in V1 (use one path per slot).",
                 QualificationErrorCodes.PathMultiEntry),
-            _ => new SlotAssignmentInstruction(path.Destination.StageId, path.Destination.SlotKey, selected[0])
+            _ => ResolveInstruction(path, standing, selected[0])
         };
+    }
+
+    private static SlotAssignmentInstruction? ResolveInstruction(
+        QualificationPath path,
+        Standing.Standing standing,
+        EntryId entryId)
+    {
+        if (path.Condition is null)
+        {
+            return new SlotAssignmentInstruction(path.Destination.StageId, path.Destination.SlotKey, entryId);
+        }
+
+        var row = standing.Find(entryId)
+                  ?? throw new DomainException(
+                      "Selected entry was not found in the standing.",
+                      QualificationErrorCodes.SelectionUnresolved);
+
+        return path.Condition.IsSatisfiedBy(row)
+            ? new SlotAssignmentInstruction(path.Destination.StageId, path.Destination.SlotKey, entryId)
+            : null;
     }
 
     private static IReadOnlyList<EntryId> SelectPosition(IReadOnlyList<StandingRow> rows, int position)
@@ -93,5 +116,5 @@ public static class QualificationApplier
     }
 
     private static EntryId[] SelectRange(IReadOnlyList<StandingRow> rows, int from, int to) =>
-    [..rows.Where(r => r.Position >= from && r.Position <= to).OrderBy(r => r.Position).Select(r => r.EntryId)];
+        [..rows.Where(r => r.Position >= from && r.Position <= to).OrderBy(r => r.Position).Select(r => r.EntryId)];
 }

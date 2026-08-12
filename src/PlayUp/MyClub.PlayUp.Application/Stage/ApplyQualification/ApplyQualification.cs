@@ -118,40 +118,42 @@ public static class ApplyQualification
         }
 
         var derivedCache = new Dictionary<int, StandingView>();
-        var instructions = paths
-            .Select(path => QualificationApplier.Apply(
-                path,
-                ResolveStanding(
-                    canonicalSource,
-                    path,
-                    overallStanding,
-                    groupStandings,
-                    matches,
-                    derivedCache)))
-            .ToArray();
-
-        var destinations = new StageAggregate[instructions.Length];
-        for (var i = 0; i < instructions.Length; i++)
+        var outcomes = new (QualificationPath Path, SlotAssignmentInstruction? Instruction)[paths.Length];
+        for (var i = 0; i < paths.Length; i++)
         {
-            var instruction = instructions[i];
-            var destination = ResolveCanonicalStage(instruction.StageId, competitionStages);
-            if (destination.FindSlot(instruction.SlotKey) is null)
+            var path = paths[i];
+            var standing = ResolveStanding(
+                canonicalSource,
+                path,
+                overallStanding,
+                groupStandings,
+                matches,
+                derivedCache);
+            outcomes[i] = (path, QualificationApplier.Apply(path, standing));
+        }
+
+        var applied = new List<SlotAssignmentInstruction>(outcomes.Length);
+        foreach (var (path, instruction) in outcomes)
+        {
+            var destination = ResolveCanonicalStage(path.Destination.StageId, competitionStages);
+            if (destination.FindSlot(path.Destination.SlotKey) is null)
             {
                 throw new ApplicationFailureException(
-                    $"Qualification destination slot '{instruction.SlotKey}' was not found on stage '{destination.Id}'.",
+                    $"Qualification destination slot '{path.Destination.SlotKey}' was not found on stage '{destination.Id}'.",
                     ApplicationErrorCodes.DanglingFeedTarget);
             }
 
-            destinations[i] = destination;
+            if (instruction is null)
+            {
+                destination.ClearResolvedEntry(path.Destination.SlotKey, clock);
+                continue;
+            }
+
+            destination.ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock);
+            applied.Add(instruction);
         }
 
-        for (var i = 0; i < instructions.Length; i++)
-        {
-            var instruction = instructions[i];
-            destinations[i].ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock);
-        }
-
-        return instructions;
+        return applied;
     }
 
     private static StandingView ResolveStanding(

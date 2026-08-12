@@ -19,13 +19,13 @@ public sealed record StageSlotOccupantChanged : DomainEvent
     /// <param name="stageId">The stage identity.</param>
     /// <param name="slotKey">The target slot key whose occupant changed.</param>
     /// <param name="previousEntryId">The previous occupant of the target slot, or <see langword="null"/> if vacant.</param>
-    /// <param name="entryId">The new occupant of the target slot.</param>
+    /// <param name="entryId">The new occupant of the target slot, or <see langword="null"/> if cleared.</param>
     /// <param name="clock">The clock providing the occurrence timestamp.</param>
     public StageSlotOccupantChanged(
         StageId stageId,
         string slotKey,
         EntryId? previousEntryId,
-        EntryId entryId,
+        EntryId? entryId,
         IClock clock)
         : base(clock)
     {
@@ -51,7 +51,7 @@ public sealed record StageSlotOccupantChanged : DomainEvent
     public EntryId? PreviousEntryId { get; }
 
     /// <summary>
-    /// Gets the new occupant of the target slot.
+    /// Gets the new occupant of the target slot, or <see langword="null"/> if cleared.
     /// </summary>
-    public EntryId EntryId { get; }
+    public EntryId? EntryId { get; }
 }

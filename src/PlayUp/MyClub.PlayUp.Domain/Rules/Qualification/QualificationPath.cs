@@ -21,11 +21,15 @@ public sealed record QualificationPath
     /// <param name="source">Where participants are taken from.</param>
     /// <param name="selection">Which participants are selected.</param>
     /// <param name="destination">Where participants are routed.</param>
+    /// <param name="condition">
+    /// Optional gate on the selected standing row (V1: Points ≥ threshold; Position selection only).
+    /// </param>
     public QualificationPath(
         int order,
         QualificationSource source,
         QualificationSelection selection,
-        QualificationDestination destination)
+        QualificationDestination destination,
+        QualificationCondition? condition = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selection);
@@ -38,10 +42,18 @@ public sealed record QualificationPath
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
+        if (condition is not null && selection.Mode != SelectionMode.Position)
+        {
+            throw new DomainException(
+                "Qualification condition requires Position selection in V1.",
+                RulesErrorCodes.QualificationRulesInvalid);
+        }
+
         Order = order;
         Source = source;
         Selection = selection;
         Destination = destination;
+        Condition = condition;
     }
 
     /// <summary>
@@ -60,6 +72,11 @@ public sealed record QualificationPath
     public QualificationSelection Selection { get; }
 
     /// <summary>
+    /// Gets the optional condition gate on the selected standing row.
+    /// </summary>
+    public QualificationCondition? Condition { get; }
+
+    /// <summary>
     /// Gets the destination.
     /// </summary>
     public QualificationDestination Destination { get; }
@@ -73,5 +90,6 @@ public sealed record QualificationPath
             Order,
             new QualificationSource(Source.Scope, Source.GroupId, Source.AcrossGroupsPosition),
             new QualificationSelection(Selection.Mode, Selection.Value, Selection.EndValue),
-            new QualificationDestination(Destination.StageId, Destination.SlotKey));
+            new QualificationDestination(Destination.StageId, Destination.SlotKey),
+            Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints));
 }
