@@ -343,31 +343,21 @@ public static class DrawResolutionGenerator
             throw Invalid("Group generation accepts only MaxSameAssociationPerGroup constraints in V1.");
         }
 
-        var maxPerGroup = ResolveMaxSameAssociation(request.Constraints);
-        if (maxPerGroup is null)
+        var maxConstraints = request.Constraints
+            .Where(c => c.ConstraintType == DrawConstraintType.MaxSameAssociationPerGroup)
+            .ToArray();
+        switch (maxConstraints.Length)
         {
-            return;
-        }
-
-        EnsureCompleteMap(
-            request.Entries,
-            request.ConstraintContext.AssociationMap,
-            "MaxSameAssociationPerGroup");
-
-        var associationMap = request.ConstraintContext.AssociationMap!;
-        foreach (var groupPlacements in request.FixedGroups.GroupBy(p => p.GroupId))
-        {
-            var counts = new Dictionary<AssociationId, int>();
-            foreach (var placement in groupPlacements)
-            {
-                var associationId = associationMap[placement.EntryId];
-                counts.TryGetValue(associationId, out var count);
-                counts[associationId] = count + 1;
-                if (counts[associationId] > maxPerGroup.Value)
-                {
-                    throw Invalid("Fixed group placements violate MaxSameAssociationPerGroup.");
-                }
-            }
+            case > 1:
+                throw Invalid("Group generation accepts at most one MaxSameAssociationPerGroup constraint.");
+            case 0:
+                return;
+            default:
+                EnsureCompleteMap(
+                    request.Entries,
+                    request.ConstraintContext.AssociationMap,
+                    "MaxSameAssociationPerGroup");
+                break;
         }
     }
 
@@ -378,7 +368,7 @@ public static class DrawResolutionGenerator
             .Select(c => c.MaxPerGroup!.Value)
             .ToArray();
 
-        return values.Length == 0 ? null : values.Min();
+        return values.Length == 0 ? null : values[0];
     }
 
     private static void EnsureCompleteMap<T>(
@@ -471,9 +461,15 @@ public static class DrawResolutionGenerator
             usedEntries.Add(fixedPlacement.EntryId);
             occupiedPots[fixedPlacement.GroupId].Add(pots[fixedPlacement.EntryId]);
             counts[fixedPlacement.GroupId]++;
-            if (associationMap is not null)
+            if (associationMap is not null && maxSameAssociation is not null)
             {
-                IncrementAssociation(associationCounts[fixedPlacement.GroupId], associationMap[fixedPlacement.EntryId]);
+                var associationId = associationMap[fixedPlacement.EntryId];
+                IncrementAssociation(associationCounts[fixedPlacement.GroupId], associationId);
+                if (associationCounts[fixedPlacement.GroupId][associationId] > maxSameAssociation.Value)
+                {
+                    // Fixed are structurally valid but already incompatible with Required Max → NoSolution.
+                    return DrawGenerationResult.NoSolution();
+                }
             }
         }
 
