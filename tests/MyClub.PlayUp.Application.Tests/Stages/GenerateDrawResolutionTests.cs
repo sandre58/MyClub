@@ -180,16 +180,135 @@ public sealed class GenerateDrawResolutionTests
     }
 
     [Fact]
-    public void Execute_group_kind_is_invalid_and_leaves_not_resolved()
+    public void Execute_group_records_resolved_resolution()
+    {
+        var stage = CreateStageWithPots(numberOfPots: 4);
+        var entries = NewEntries(8);
+        var groups = new[]
+        {
+            stage.AddGroup("A", _clock),
+            stage.AddGroup("B", _clock)
+        };
+        var pots = BalancedPots(entries, 4);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(entries, potMembership: new PotMembership(pots)),
+            _clock);
+
+        var result = GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [..groups.Select(g => g.Id)],
+            seed: 5);
+
+        result.IsResolved.Should().BeTrue();
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+        draw.Resolution.GroupResults.Should().HaveCount(8);
+    }
+
+    [Fact]
+    public void Execute_group_target_missing_on_stage_fails()
+    {
+        var stage = CreateStageWithPots(2);
+        var entries = NewEntries(4);
+        var existing = stage.AddGroup("A", _clock);
+        var missing = GroupId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(entries, potMembership: new PotMembership(BalancedPots(entries, 2))),
+            _clock);
+
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [existing.Id, missing],
+            seed: 1);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawGenerationFailure);
+        draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+    }
+
+    [Fact]
+    public void Execute_group_without_pot_rules_fails()
     {
         var stage = CreateStage();
+        var g1 = stage.AddGroup("A", _clock);
+        var g2 = stage.AddGroup("B", _clock);
+        var entries = NewEntries(4);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(entries, potMembership: new PotMembership(BalancedPots(entries, 2))),
+            _clock);
+
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [g1.Id, g2.Id],
+            seed: 1);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawGenerationFailure);
+    }
+
+    [Fact]
+    public void Execute_group_missing_pot_membership_is_invalid()
+    {
+        var stage = CreateStageWithPots(2);
+        var g1 = stage.AddGroup("A", _clock);
+        var g2 = stage.AddGroup("B", _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup(NewEntries(4)), _clock);
 
-        var act = () => GenerateDrawResolution.Execute(stage, draw.Id, _clock, seed: 1);
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [g1.Id, g2.Id],
+            seed: 1);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
         draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+    }
+
+    [Fact]
+    public void Execute_group_generate_publish_apply_assigns_entries_to_groups()
+    {
+        var stage = CreateStageWithPots(2);
+        var entries = NewEntries(4);
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var pots = BalancedPots(entries, 2);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(entries, potMembership: new PotMembership(pots)),
+            _clock);
+
+        var generated = GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [groupA.Id, groupB.Id],
+            seed: 11);
+
+        generated.IsResolved.Should().BeTrue();
+        stage.PublishDraw(draw.Id, _clock);
+
+        var applied = ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        applied.CreatedMatches.Should().BeEmpty();
+        groupA.EntryIds.Should().HaveCount(2);
+        groupB.EntryIds.Should().HaveCount(2);
+        groupA.EntryIds.Concat(groupB.EntryIds).Should().BeEquivalentTo(entries);
+        pots[groupA.EntryIds[0]].Should().NotBe(pots[groupA.EntryIds[1]]);
+        pots[groupB.EntryIds[0]].Should().NotBe(pots[groupB.EntryIds[1]]);
     }
 
     [Fact]
@@ -274,6 +393,31 @@ public sealed class GenerateDrawResolutionTests
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
         draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+    }
+
+    private Stage CreateStageWithPots(int numberOfPots)
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(numberOfPots)),
+            _clock);
+        return stage;
+    }
+
+    private static Dictionary<EntryId, int> BalancedPots(EntryId[] entries, int numberOfPots)
+    {
+        var perPot = entries.Length / numberOfPots;
+        var pots = new Dictionary<EntryId, int>();
+        var index = 0;
+        for (var pot = 1; pot <= numberOfPots; pot++)
+        {
+            for (var i = 0; i < perPot; i++)
+            {
+                pots[entries[index++]] = pot;
+            }
+        }
+
+        return pots;
     }
 
     private static EntryId[] NewEntries(int count) =>

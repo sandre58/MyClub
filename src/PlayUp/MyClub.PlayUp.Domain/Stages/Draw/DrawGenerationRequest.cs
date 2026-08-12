@@ -12,8 +12,9 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Flat input contract for <see cref="DrawResolutionGenerator"/> (never the Draw aggregate).
-/// Required = feasibility; Preferred = soft optimization (Pairing SameGroup/SameTeam). Application
-/// should filter kind-inapplicable constraints before calling; incomplete maps → Invalid regardless of enforcement.
+/// Slot/Pairing: Required = feasibility; Preferred = soft optimization (Pairing SameGroup/SameTeam).
+/// Group V1: pots + uniform capacity + FixedGroups; Required feasibility only (no soft).
+/// Incomplete maps / structural incoherence → Invalid regardless of enforcement.
 /// </summary>
 public sealed class DrawGenerationRequest
 {
@@ -28,7 +29,11 @@ public sealed class DrawGenerationRequest
         IRandomSource randomSource,
         IReadOnlyList<string>? targets = null,
         IReadOnlyList<SlotDrawPlacement>? fixedSlots = null,
-        IReadOnlyList<PairingDrawResult>? fixedPairings = null)
+        IReadOnlyList<PairingDrawResult>? fixedPairings = null,
+        IReadOnlyList<GroupId>? groupTargets = null,
+        int? numberOfPots = null,
+        PotMembership? potMembership = null,
+        IReadOnlyList<GroupDrawPlacement>? fixedGroups = null)
     {
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(constraints);
@@ -43,6 +48,10 @@ public sealed class DrawGenerationRequest
         Targets = targets;
         FixedSlots = fixedSlots ?? [];
         FixedPairings = fixedPairings ?? [];
+        GroupTargets = groupTargets;
+        NumberOfPots = numberOfPots;
+        PotMembership = potMembership;
+        FixedGroups = fixedGroups ?? [];
     }
 
     /// <summary>
@@ -57,11 +66,12 @@ public sealed class DrawGenerationRequest
 
     /// <summary>
     /// Gets draw constraints (Required = feasibility; Preferred = soft cost for Pairing).
+    /// Unused for Group V1 (must be empty).
     /// </summary>
     public IReadOnlyList<DrawConstraint> Constraints { get; }
 
     /// <summary>
-    /// Gets auxiliary constraint maps.
+    /// Gets auxiliary constraint maps (Pairing).
     /// </summary>
     public DrawConstraintContext ConstraintContext { get; }
 
@@ -84,4 +94,24 @@ public sealed class DrawGenerationRequest
     /// Gets fixed Pairings (Pairing kind).
     /// </summary>
     public IReadOnlyList<PairingDrawResult> FixedPairings { get; }
+
+    /// <summary>
+    /// Gets explicit Group destination ids when <see cref="Kind"/> is Group.
+    /// </summary>
+    public IReadOnlyList<GroupId>? GroupTargets { get; }
+
+    /// <summary>
+    /// Gets <see cref="Rules.PotRules.NumberOfPots"/> for Group V1 (required).
+    /// </summary>
+    public int? NumberOfPots { get; }
+
+    /// <summary>
+    /// Gets Entry→pot membership for Group V1 (required).
+    /// </summary>
+    public PotMembership? PotMembership { get; }
+
+    /// <summary>
+    /// Gets fixed Group placements (Group kind).
+    /// </summary>
+    public IReadOnlyList<GroupDrawPlacement> FixedGroups { get; }
 }

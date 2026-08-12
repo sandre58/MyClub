@@ -296,15 +296,273 @@ public sealed class DrawResolutionGeneratorTests
     }
 
     [Fact]
-    public void Invalid_group_kind_throws()
+    public void Group_RC1_canonical_16_4_4_places_one_per_pot_per_group()
     {
-        var entries = NewEntries(2);
+        var entries = NewEntries(16);
+        var groups = NewGroups(4);
+        var pots = BalancedPots(entries, numberOfPots: 4);
+        var request = GroupRequest(entries, groups, pots, numberOfPots: 4, fixedGroups: [], seed: 21);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsResolved.Should().BeTrue();
+        result.PreferredViolations.Should().BeEmpty();
+        AssertGroupResolution(result.Resolution!.GroupResults, entries, groups, pots, capacity: 4);
+    }
+
+    [Fact]
+    public void Group_RC2_reduced_9_3_3_resolves()
+    {
+        var entries = NewEntries(9);
+        var groups = NewGroups(3);
+        var pots = BalancedPots(entries, numberOfPots: 3);
+        var request = GroupRequest(entries, groups, pots, 3, [], seed: 9);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsResolved.Should().BeTrue();
+        AssertGroupResolution(result.Resolution!.GroupResults, entries, groups, pots, capacity: 3);
+    }
+
+    [Fact]
+    public void Group_RC3_non_exact_division_is_invalid()
+    {
+        var entries = NewEntries(10);
+        var groups = NewGroups(4);
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, BalancedPots(entries, 2), 2, [], seed: 1));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC4_missing_pot_membership_is_invalid()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
         var request = new DrawGenerationRequest(
             DrawResolutionKind.Group,
             entries,
             [],
             DrawConstraintContext.Empty,
-            new SeededSource(1));
+            new SeededSource(1),
+            groupTargets: groups,
+            numberOfPots: 2,
+            potMembership: null);
+
+        var act = () => DrawResolutionGenerator.Generate(request);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC5_number_of_pots_not_equal_capacity_is_invalid()
+    {
+        var entries = NewEntries(16);
+        var groups = NewGroups(4);
+
+        // Capacity would be 4; NumberOfPots 5 is structurally invalid for V1.
+        var pots = new Dictionary<EntryId, int>();
+        for (var i = 0; i < entries.Length; i++)
+        {
+            pots[entries[i]] = (i % 5) + 1;
+        }
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, numberOfPots: 5, [], seed: 1));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC6_unbalanced_pot_sizes_are_invalid()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = new Dictionary<EntryId, int>
+        {
+            [entries[0]] = 1, [entries[1]] = 1, [entries[2]] = 1, // pot1 size 3
+            [entries[3]] = 2, [entries[4]] = 2,
+            [entries[5]] = 3, [entries[6]] = 3,
+            [entries[7]] = 4
+        };
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, numberOfPots: 4, [], seed: 1));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC7_compatible_fixed_are_respected()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, numberOfPots: 4);
+
+        // Ensure pots of fixed entries differ.
+        pots[entries[0]] = 1;
+        pots[entries[1]] = 1;
+        pots[entries[2]] = 2;
+        pots[entries[3]] = 2;
+        pots[entries[4]] = 3;
+        pots[entries[5]] = 3;
+        pots[entries[6]] = 4;
+        pots[entries[7]] = 4;
+        var fixedGroups = new[]
+        {
+            new GroupDrawPlacement(entries[0], groups[0]),
+            new GroupDrawPlacement(entries[2], groups[0])
+        };
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, 4, fixedGroups, seed: 12));
+
+        result.IsResolved.Should().BeTrue();
+        result.Resolution!.GroupResults.Should().Contain(p => p.EntryId.Equals(entries[0]) && p.GroupId.Equals(groups[0]));
+        result.Resolution.GroupResults.Should().Contain(p => p.EntryId.Equals(entries[2]) && p.GroupId.Equals(groups[0]));
+        AssertGroupResolution(result.Resolution.GroupResults, entries, groups, pots, capacity: 4);
+    }
+
+    [Fact]
+    public void Group_RC8_fixed_same_pot_in_one_group_is_invalid()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 4);
+        pots[entries[0]] = 1;
+        pots[entries[1]] = 1;
+        var fixedGroups = new[]
+        {
+            new GroupDrawPlacement(entries[0], groups[0]),
+            new GroupDrawPlacement(entries[1], groups[0])
+        };
+
+        var act = () => DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, 4, fixedGroups, seed: 1));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Group_RC9_same_seed_is_reproducible()
+    {
+        var entries = NewEntries(12);
+        var groups = NewGroups(3);
+        var pots = BalancedPots(entries, 4);
+        var r1 = DrawResolutionGenerator.Generate(GroupRequest(entries, groups, pots, 4, [], seed: 77));
+        var r2 = DrawResolutionGenerator.Generate(GroupRequest(entries, groups, pots, 4, [], seed: 77));
+
+        r1.IsResolved.Should().BeTrue();
+        NormalizeGroupPlacements(r1.Resolution!.GroupResults)
+            .Should().Equal(NormalizeGroupPlacements(r2.Resolution!.GroupResults));
+    }
+
+    [Fact]
+    public void Group_RC_4_2_2_resolves()
+    {
+        var entries = NewEntries(4);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, numberOfPots: 2);
+        var request = GroupRequest(entries, groups, pots, 2, [], seed: 3);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsResolved.Should().BeTrue();
+        result.IsNoSolution.Should().BeFalse();
+        AssertGroupResolution(result.Resolution!.GroupResults, entries, groups, pots, capacity: 2);
+    }
+
+    [Fact]
+    public void Group_RC_different_seeds_remain_resolved_and_may_differ()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 4);
+        var r1 = DrawResolutionGenerator.Generate(GroupRequest(entries, groups, pots, 4, [], seed: 1));
+        var r2 = DrawResolutionGenerator.Generate(GroupRequest(entries, groups, pots, 4, [], seed: 2));
+
+        r1.IsResolved.Should().BeTrue();
+        r2.IsResolved.Should().BeTrue();
+        AssertGroupResolution(r1.Resolution!.GroupResults, entries, groups, pots, capacity: 4);
+        AssertGroupResolution(r2.Resolution!.GroupResults, entries, groups, pots, capacity: 4);
+
+        // Seeds may produce different optima; inequality is not asserted.
+    }
+
+    [Fact]
+    public void Group_RC_group_fully_fixed_completes_remaining()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = new Dictionary<EntryId, int>
+        {
+            [entries[0]] = 1, [entries[1]] = 1,
+            [entries[2]] = 2, [entries[3]] = 2,
+            [entries[4]] = 3, [entries[5]] = 3,
+            [entries[6]] = 4, [entries[7]] = 4
+        };
+
+        // Group 0 fully filled by Fixed (one of each pot) — capacity 4.
+        var fixedGroups = new[]
+        {
+            new GroupDrawPlacement(entries[0], groups[0]),
+            new GroupDrawPlacement(entries[2], groups[0]),
+            new GroupDrawPlacement(entries[4], groups[0]),
+            new GroupDrawPlacement(entries[6], groups[0])
+        };
+
+        var result = DrawResolutionGenerator.Generate(
+            GroupRequest(entries, groups, pots, 4, fixedGroups, seed: 6));
+
+        result.IsResolved.Should().BeTrue();
+        result.Resolution!.GroupResults.Where(p => p.GroupId.Equals(groups[0])).Should().HaveCount(4);
+        result.Resolution.GroupResults.Where(p => p.GroupId.Equals(groups[1]))
+            .Select(p => p.EntryId)
+            .Should().BeEquivalentTo(new[] { entries[1], entries[3], entries[5], entries[7] });
+        AssertGroupResolution(result.Resolution.GroupResults, entries, groups, pots, capacity: 4);
+    }
+
+    [Fact]
+    public void Group_RC_validated_request_under_G7_never_returns_no_solution()
+    {
+        // Documents G7 resolvability: every structurally valid Group request resolves.
+        // NoSolution remains a defensive generic-contract path, unreachable under G3–G7 V1.
+        var scenarios = new[]
+        {
+            (Entries: 4, Groups: 2, Pots: 2, Seed: 1),
+            (Entries: 9, Groups: 3, Pots: 3, Seed: 2),
+            (Entries: 16, Groups: 4, Pots: 4, Seed: 3),
+            (Entries: 8, Groups: 2, Pots: 4, Seed: 4)
+        };
+
+        foreach (var (entryCount, groupCount, potCount, seed) in scenarios)
+        {
+            var entries = NewEntries(entryCount);
+            var groups = NewGroups(groupCount);
+            var pots = BalancedPots(entries, potCount);
+            var result = DrawResolutionGenerator.Generate(
+                GroupRequest(entries, groups, pots, potCount, [], seed));
+
+            result.IsNoSolution.Should().BeFalse(
+                because: "G3–G7 validated Group requests are always resolvable in V1");
+            result.IsResolved.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void Invalid_group_without_targets_throws()
+    {
+        var entries = NewEntries(4);
+        var pots = BalancedPots(entries, 2);
+        var request = new DrawGenerationRequest(
+            DrawResolutionKind.Group,
+            entries,
+            [],
+            DrawConstraintContext.Empty,
+            new SeededSource(1),
+            numberOfPots: 2,
+            potMembership: new PotMembership(pots));
 
         var act = () => DrawResolutionGenerator.Generate(request);
 
@@ -436,6 +694,67 @@ public sealed class DrawResolutionGeneratorTests
             null,
             null,
             fixedPairings);
+
+    private static DrawGenerationRequest GroupRequest(
+        IReadOnlyList<EntryId> entries,
+        IReadOnlyList<GroupId> groupTargets,
+        IReadOnlyDictionary<EntryId, int> pots,
+        int numberOfPots,
+        IReadOnlyList<GroupDrawPlacement> fixedGroups,
+        int seed) =>
+        new(
+            DrawResolutionKind.Group,
+            entries,
+            [],
+            DrawConstraintContext.Empty,
+            new SeededSource(seed),
+            groupTargets: groupTargets,
+            numberOfPots: numberOfPots,
+            potMembership: new PotMembership(pots),
+            fixedGroups: fixedGroups);
+
+    private static GroupId[] NewGroups(int count) =>
+        [..Enumerable.Range(0, count).Select(_ => GroupId.New())];
+
+    private static Dictionary<EntryId, int> BalancedPots(EntryId[] entries, int numberOfPots)
+    {
+        var groupsCount = entries.Length / numberOfPots;
+        var pots = new Dictionary<EntryId, int>();
+        var index = 0;
+        for (var pot = 1; pot <= numberOfPots; pot++)
+        {
+            for (var i = 0; i < groupsCount; i++)
+            {
+                pots[entries[index++]] = pot;
+            }
+        }
+
+        return pots;
+    }
+
+    private static void AssertGroupResolution(
+        IReadOnlyList<GroupDrawPlacement> placements,
+        EntryId[] entries,
+        IReadOnlyList<GroupId> groups,
+        Dictionary<EntryId, int> pots,
+        int capacity)
+    {
+        placements.Should().HaveCount(entries.Length);
+        placements.Select(p => p.EntryId).Should().BeEquivalentTo(entries);
+        foreach (var groupId in groups)
+        {
+            var inGroup = placements.Where(p => p.GroupId.Equals(groupId)).ToList();
+            inGroup.Should().HaveCount(capacity);
+            inGroup.Select(p => pots[p.EntryId]).Should().OnlyHaveUniqueItems();
+            inGroup.Select(p => pots[p.EntryId]).Should().BeEquivalentTo(Enumerable.Range(1, capacity));
+        }
+    }
+
+    private static List<(Guid Entry, Guid Group)> NormalizeGroupPlacements(IReadOnlyList<GroupDrawPlacement> placements) =>
+        [..placements
+            .Select(p => (Entry: p.EntryId.Value, Group: p.GroupId.Value))
+            .OrderBy(t => t.Entry)
+            .ThenBy(t => t.Group)];
 
     private static EntryId[] NewEntries(int count) =>
         [..Enumerable.Range(0, count).Select(_ => EntryId.New())];

@@ -24,6 +24,7 @@ public static class GenerateDrawResolution
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="slotTargets">Required for Slot kind (destination slot keys).</param>
+    /// <param name="groupTargets">Required for Group kind (destination group identities).</param>
     /// <param name="constraintContext">Optional maps for pairing constraints (Required and Preferred).</param>
     /// <param name="seed">Optional RNG seed (Application builds <see cref="SeededRandomSource"/>).</param>
     /// <param name="randomSource">Optional injected source; when null, uses seed or <see cref="SystemRandomSource"/>.</param>
@@ -33,6 +34,7 @@ public static class GenerateDrawResolution
         DrawId drawId,
         IClock clock,
         IReadOnlyList<string>? slotTargets = null,
+        IReadOnlyList<GroupId>? groupTargets = null,
         DrawConstraintContext? constraintContext = null,
         int? seed = null,
         IRandomSource? randomSource = null)
@@ -51,11 +53,13 @@ public static class GenerateDrawResolution
         }
 
         EnsureSlotTargetsExistOnStage(stage, draw.Kind, slotTargets);
+        EnsureGroupTargetsExistOnStage(stage, draw.Kind, groupTargets);
 
         var request = BuildRequest(
             draw,
             stage.Regulation.DrawRules,
             slotTargets,
+            groupTargets,
             constraintContext ?? DrawConstraintContext.Empty,
             ResolveRandomSource(seed, randomSource));
 
@@ -82,10 +86,6 @@ public static class GenerateDrawResolution
         }
     }
 
-    /// <summary>
-    /// Ensures Slot-kind targets exist on the Stage before Domain generation / Record.
-    /// Pairing and Group do not use <paramref name="slotTargets"/>.
-    /// </summary>
     private static void EnsureSlotTargetsExistOnStage(
         Stage stage,
         DrawResolutionKind kind,
@@ -107,10 +107,32 @@ public static class GenerateDrawResolution
         }
     }
 
+    private static void EnsureGroupTargetsExistOnStage(
+        Stage stage,
+        DrawResolutionKind kind,
+        IReadOnlyList<GroupId>? groupTargets)
+    {
+        if (kind != DrawResolutionKind.Group || groupTargets is null || groupTargets.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var groupId in groupTargets)
+        {
+            if (stage.FindGroup(groupId) is null)
+            {
+                throw new ApplicationFailureException(
+                    $"Group target '{groupId}' was not found on stage '{stage.Id}'.",
+                    ApplicationErrorCodes.DrawGenerationFailure);
+            }
+        }
+    }
+
     private static DrawGenerationRequest BuildRequest(
         Draw draw,
         DrawRules? drawRules,
         IReadOnlyList<string>? slotTargets,
+        IReadOnlyList<GroupId>? groupTargets,
         DrawConstraintContext constraintContext,
         IRandomSource randomSource)
     {
@@ -120,7 +142,11 @@ public static class GenerateDrawResolution
             .ToArray()
             ?? [];
 
-        return new DrawGenerationRequest(
+        return draw.Kind == DrawResolutionKind.Group && drawRules?.PotRules is null
+            ? throw new ApplicationFailureException(
+                $"Draw '{draw.Id}' requires PotRules on Stage regulation for Group generation.",
+                ApplicationErrorCodes.DrawGenerationFailure)
+            : new DrawGenerationRequest(
             draw.Kind,
             inputs.Entries,
             constraints,
@@ -128,15 +154,21 @@ public static class GenerateDrawResolution
             randomSource,
             slotTargets,
             inputs.FixedSlots,
-            inputs.FixedPairings);
+            inputs.FixedPairings,
+            groupTargets,
+            drawRules?.PotRules?.NumberOfPots,
+            inputs.PotMembership,
+            inputs.FixedGroups);
     }
 
     /// <summary>
-    /// Filters DrawRules constraints to those applicable for the generation kind (S9).
-    /// Pairing: SameGroup / SameTeam (Required or Preferred). Slot: none of those.
-    /// SameAssociation is never passed (Domain would Invalid).
+    /// Filters DrawRules constraints to those applicable for the generation kind.
+    /// Pairing: SameGroup / SameTeam. Slot/Group: none of those. SameAssociation never passed.
     /// </summary>
-    private static bool IsConstraintApplicable(DrawResolutionKind kind, DrawConstraint constraint) => constraint.ConstraintType != DrawConstraintType.SameAssociationAvoidance && constraint.ConstraintType is DrawConstraintType.SameGroupAvoidance or DrawConstraintType.SameTeamAvoidance && kind == DrawResolutionKind.Pairing;
+    private static bool IsConstraintApplicable(DrawResolutionKind kind, DrawConstraint constraint) =>
+        constraint.ConstraintType != DrawConstraintType.SameAssociationAvoidance
+        && constraint.ConstraintType is DrawConstraintType.SameGroupAvoidance or DrawConstraintType.SameTeamAvoidance
+        && kind == DrawResolutionKind.Pairing;
 
     private static IRandomSource ResolveRandomSource(int? seed, IRandomSource? randomSource) =>
         randomSource ?? (seed is null ? new SystemRandomSource() : new SeededRandomSource(seed.Value));

@@ -12,10 +12,11 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Pure Domain service: proposes one admissible <see cref="DrawResolution"/> under Required constraints,
-/// minimizing Preferred violations (soft), or <see cref="DrawGenerationResult.NoSolution"/>.
-/// Does not mutate Draw / Stage. Slot and Pairing only. Invalid request → <see cref="DomainException"/>.
-/// SameGroupAvoidance / SameTeamAvoidance apply to Pairing only; on Slot they are Invalid.
-/// Preferred never blocks: Cost = count of Preferred violations; tie-break = first optimum under RNG order.
+/// minimizing Preferred violations for Pairing (soft), or <see cref="DrawGenerationResult.NoSolution"/>.
+/// Does not mutate Draw / Stage. Slot, Pairing, and Group (pots V1). Invalid request → <see cref="DomainException"/>.
+/// Group V1: uniform capacity, mandatory pots, ≤1 entry per pot per group; no soft.
+/// Under G3–G7, any request that passes structural validation is always resolvable
+/// (independent permutation per pot); NoSolution is retained as a defensive generic-contract path.
 /// </summary>
 public static class DrawResolutionGenerator
 {
@@ -33,7 +34,7 @@ public static class DrawResolutionGenerator
         {
             DrawResolutionKind.Slot => GenerateSlot(request),
             DrawResolutionKind.Pairing => GeneratePairing(request),
-            DrawResolutionKind.Group => throw Invalid("Draw kind is not supported by the V1 generator."),
+            DrawResolutionKind.Group => GenerateGroup(request),
             _ => throw Invalid("Draw kind is not supported by the V1 generator.")
         };
     }
@@ -45,7 +46,7 @@ public static class DrawResolutionGenerator
             throw Invalid("Draw resolution kind is unknown.");
         }
 
-        if (request.Kind is not (DrawResolutionKind.Slot or DrawResolutionKind.Pairing))
+        if (request.Kind is not (DrawResolutionKind.Slot or DrawResolutionKind.Pairing or DrawResolutionKind.Group))
         {
             throw Invalid($"Draw kind '{request.Kind}' is not supported by the V1 generator.");
         }
@@ -60,7 +61,14 @@ public static class DrawResolutionGenerator
             throw Invalid("Entry pool cannot contain duplicates.");
         }
 
-        EnsureConstraintMaps(request.Kind, request.Constraints, request.Entries, request.ConstraintContext);
+        if (request.Kind != DrawResolutionKind.Group)
+        {
+            EnsureConstraintMaps(request.Kind, request.Constraints, request.Entries, request.ConstraintContext);
+        }
+        else if (request.Constraints.Count > 0)
+        {
+            throw Invalid("Group generation does not accept Pairing draw constraints in V1.");
+        }
 
         switch (request.Kind)
         {
@@ -71,6 +79,8 @@ public static class DrawResolutionGenerator
                 ValidatePairingShape(request);
                 break;
             case DrawResolutionKind.Group:
+                ValidateGroupShape(request);
+                break;
             default:
                 break;
         }
@@ -78,6 +88,8 @@ public static class DrawResolutionGenerator
 
     private static void ValidateSlotShape(DrawGenerationRequest request)
     {
+        EnsureNoGroupFields(request, "Slot");
+
         if (request.Targets is null || request.Targets.Count == 0)
         {
             throw Invalid("Slot generation requires target slot keys.");
@@ -129,6 +141,8 @@ public static class DrawResolutionGenerator
 
     private static void ValidatePairingShape(DrawGenerationRequest request)
     {
+        EnsureNoGroupFields(request, "Pairing");
+
         if (request.Targets is { Count: > 0 })
         {
             throw Invalid("Pairing generation does not accept slot targets.");
@@ -156,6 +170,136 @@ public static class DrawResolutionGenerator
             {
                 throw Invalid("Fixed pairings reuse an entry.");
             }
+        }
+    }
+
+    private static void ValidateGroupShape(DrawGenerationRequest request)
+    {
+        if (request.Targets is { Count: > 0 })
+        {
+            throw Invalid("Group generation does not accept slot targets.");
+        }
+
+        if (request.FixedSlots.Count > 0)
+        {
+            throw Invalid("Group generation cannot include fixed slot placements.");
+        }
+
+        if (request.FixedPairings.Count > 0)
+        {
+            throw Invalid("Group generation cannot include fixed pairings.");
+        }
+
+        if (request.GroupTargets is null || request.GroupTargets.Count == 0)
+        {
+            throw Invalid("Group generation requires target group identities.");
+        }
+
+        if (request.GroupTargets.Distinct().Count() != request.GroupTargets.Count)
+        {
+            throw Invalid("Group targets must be unique.");
+        }
+
+        if (request.Entries.Count % request.GroupTargets.Count != 0)
+        {
+            throw Invalid("Group capacity requires an exact division of entries by group targets.");
+        }
+
+        var capacity = request.Entries.Count / request.GroupTargets.Count;
+        if (request.NumberOfPots is null or < 2)
+        {
+            throw Invalid("Group generation requires PotRules.NumberOfPots (≥ 2).");
+        }
+
+        var numberOfPots = request.NumberOfPots.Value;
+        if (numberOfPots != capacity)
+        {
+            throw Invalid("Group V1 requires NumberOfPots to equal uniform group capacity.");
+        }
+
+        if (request.PotMembership is null)
+        {
+            throw Invalid("Group generation requires PotMembership.");
+        }
+
+        var pots = request.PotMembership.Pots;
+        foreach (var entryId in request.Entries)
+        {
+            if (!pots.TryGetValue(entryId, out var pot))
+            {
+                throw Invalid("PotMembership is incomplete for the entry pool.");
+            }
+
+            if (pot < 1 || pot > numberOfPots)
+            {
+                throw Invalid("PotMembership contains a pot number outside [1..NumberOfPots].");
+            }
+        }
+
+        if (pots.Keys.Any(entryId => !request.Entries.Contains(entryId)))
+        {
+            throw Invalid("PotMembership contains an entry outside the pool.");
+        }
+
+        for (var pot = 1; pot <= numberOfPots; pot++)
+        {
+            var potSize = pots.Count(pair => pair.Value == pot);
+            if (potSize != request.GroupTargets.Count)
+            {
+                throw Invalid("Each pot must contain exactly as many entries as there are group targets.");
+            }
+        }
+
+        if (request.FixedGroups.Select(f => f.EntryId).Distinct().Count() != request.FixedGroups.Count)
+        {
+            throw Invalid("Fixed group placements must have unique entries.");
+        }
+
+        var occupiedPotsByGroup = request.GroupTargets.ToDictionary(g => g, _ => new HashSet<int>());
+        var countByGroup = request.GroupTargets.ToDictionary(g => g, _ => 0);
+
+        foreach (var fixedPlacement in request.FixedGroups)
+        {
+            if (!request.Entries.Contains(fixedPlacement.EntryId))
+            {
+                throw Invalid("Fixed group placement references an entry outside the pool.");
+            }
+
+            if (!countByGroup.TryGetValue(fixedPlacement.GroupId, out var groupCount))
+            {
+                throw Invalid("Fixed group placement references a group outside the targets.");
+            }
+
+            var pot = pots[fixedPlacement.EntryId];
+            if (!occupiedPotsByGroup[fixedPlacement.GroupId].Add(pot))
+            {
+                throw Invalid("Fixed group placements put two entries from the same pot into one group.");
+            }
+
+            groupCount++;
+            countByGroup[fixedPlacement.GroupId] = groupCount;
+            if (groupCount > capacity)
+            {
+                throw Invalid("Fixed group placements exceed group capacity.");
+            }
+        }
+    }
+
+    private static void EnsureNoGroupFields(DrawGenerationRequest request, string kindLabel)
+    {
+        if (request.GroupTargets is { Count: > 0 })
+        {
+            throw Invalid($"{kindLabel} generation does not accept group targets.");
+        }
+
+        if (request.FixedGroups.Count > 0)
+        {
+            throw Invalid($"{kindLabel} generation cannot include fixed group placements.");
+        }
+
+        if (request.PotMembership is not null || request.NumberOfPots is not null)
+        {
+            throw Invalid($"{kindLabel} generation does not accept pot inputs.");
         }
     }
 
@@ -217,7 +361,6 @@ public static class DrawResolutionGenerator
         var freeTargets = targets.Where(t => !fixedBySlot.ContainsKey(t)).ToList();
         var freeEntries = Shuffle(request.Entries.Where(e => !fixedEntries.Contains(e)).ToList(), request.RandomSource);
 
-        // Exhaustive permutations via backtracking (randomized candidate order).
         var assignment = new Dictionary<string, EntryId>(StringComparer.Ordinal);
         foreach (var fixedPlacement in request.FixedSlots)
         {
@@ -261,6 +404,85 @@ public static class DrawResolutionGenerator
         return false;
     }
 
+    private static DrawGenerationResult GenerateGroup(DrawGenerationRequest request)
+    {
+        // V1 (G3–G7): after ValidateGroupShape, the instance is always structurally resolvable —
+        // one independent perfect matching per pot. NoSolution below is defensive / generic-contract only.
+        var capacity = request.Entries.Count / request.GroupTargets!.Count;
+        var pots = request.PotMembership!.Pots;
+        var placements = new List<GroupDrawPlacement>();
+        var occupiedPots = request.GroupTargets.ToDictionary(g => g, _ => new HashSet<int>());
+        var counts = request.GroupTargets.ToDictionary(g => g, _ => 0);
+        var usedEntries = new HashSet<EntryId>();
+
+        foreach (var fixedPlacement in request.FixedGroups)
+        {
+            placements.Add(fixedPlacement);
+            usedEntries.Add(fixedPlacement.EntryId);
+            occupiedPots[fixedPlacement.GroupId].Add(pots[fixedPlacement.EntryId]);
+            counts[fixedPlacement.GroupId]++;
+        }
+
+        var remaining = Shuffle(
+            request.Entries.Where(e => !usedEntries.Contains(e)).ToList(),
+            request.RandomSource);
+
+        return !TryAssignGroups(
+                remaining,
+                placements,
+                occupiedPots,
+                counts,
+                pots,
+                capacity,
+                request.GroupTargets,
+                request.RandomSource)
+            ? DrawGenerationResult.NoSolution()
+            : DrawGenerationResult.Resolved(DrawResolution.ResolvedGroups(placements));
+    }
+
+    private static bool TryAssignGroups(
+        List<EntryId> remaining,
+        List<GroupDrawPlacement> placements,
+        Dictionary<GroupId, HashSet<int>> occupiedPots,
+        Dictionary<GroupId, int> counts,
+        IReadOnlyDictionary<EntryId, int> pots,
+        int capacity,
+        IReadOnlyList<GroupId> groupTargets,
+        IRandomSource random)
+    {
+        if (remaining.Count == 0)
+        {
+            return true;
+        }
+
+        var entry = remaining[0];
+        var pot = pots[entry];
+        var candidates = Shuffle(
+            groupTargets
+                .Where(g => counts[g] < capacity && !occupiedPots[g].Contains(pot))
+                .ToList(),
+            random);
+
+        foreach (var groupId in candidates)
+        {
+            placements.Add(new GroupDrawPlacement(entry, groupId));
+            occupiedPots[groupId].Add(pot);
+            counts[groupId]++;
+
+            var next = remaining.Skip(1).ToList();
+            if (TryAssignGroups(next, placements, occupiedPots, counts, pots, capacity, groupTargets, random))
+            {
+                return true;
+            }
+
+            counts[groupId]--;
+            occupiedPots[groupId].Remove(pot);
+            placements.RemoveAt(placements.Count - 1);
+        }
+
+        return false;
+    }
+
     private static DrawGenerationResult GeneratePairing(DrawGenerationRequest request)
     {
         var required = FilterByEnforcement(request.Constraints, ConstraintEnforcement.Required);
@@ -273,7 +495,6 @@ public static class DrawResolutionGenerator
         {
             if (!IsPairAllowed(fixedPairing.EntryA, fixedPairing.EntryB, required, request.ConstraintContext))
             {
-                // Fixed already violate Required → no admissible completion.
                 return DrawGenerationResult.NoSolution();
             }
 
@@ -324,7 +545,6 @@ public static class DrawResolutionGenerator
         ref List<PreferredViolation>? bestViolations,
         ref int bestCost)
     {
-        // Exact pruning: partial cost already cannot beat (or replace) the first optimum.
         if (violations.Count >= bestCost)
         {
             return;

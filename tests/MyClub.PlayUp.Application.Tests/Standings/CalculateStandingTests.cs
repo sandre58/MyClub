@@ -29,13 +29,14 @@ public sealed class CalculateStandingTests
         match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         var rules = new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]);
 
+        // Home earned 3; deduct 4 so net points (−1 vs 0) decide rank without GUID tie-breaks.
         var standing = CalculateStanding.Execute(
             [home, away],
             [match],
             rules,
-            penalties: [new StandingPenalty(home, 3)]);
+            penalties: [new StandingPenalty(home, 4)]);
 
-        standing.Find(home)!.Points.Should().Be(0);
+        standing.Find(home)!.Points.Should().Be(-1);
         standing.Find(away)!.Points.Should().Be(0);
         standing.EntryAt(1).Should().Be(away);
     }
