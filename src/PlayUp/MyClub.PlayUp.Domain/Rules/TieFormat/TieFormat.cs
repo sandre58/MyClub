@@ -46,11 +46,16 @@ public sealed record TieFormat
                 RulesErrorCodes.TieFormatInvalid);
         }
 
-        if (numberOfLegs == SingleLeg && aggregateScoring)
+        switch (numberOfLegs)
         {
-            throw new DomainException(
-                "Aggregate scoring requires two legs.",
-                RulesErrorCodes.TieFormatInvalid);
+            case SingleLeg when aggregateScoring:
+                throw new DomainException(
+                    "Aggregate scoring requires two legs.",
+                    RulesErrorCodes.TieFormatInvalid);
+            case TwoLegs when !aggregateScoring:
+                throw new DomainException(
+                    "Two-legged ties require aggregate scoring in V1.",
+                    RulesErrorCodes.TieFormatInvalid);
         }
 
         if (awayGoalsRule is not null && (numberOfLegs != TwoLegs || !aggregateScoring))

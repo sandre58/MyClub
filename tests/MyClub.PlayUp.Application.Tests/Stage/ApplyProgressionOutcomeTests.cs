@@ -29,7 +29,7 @@ public sealed class ApplyProgressionOutcomeTests
         var results = ApplyProgressionOutcome.Execute(
             ctx.Source,
             ctx.FixtureId,
-            ctx.Match,
+            [ctx.Match],
             [ctx.Source],
             _clock);
 
@@ -60,7 +60,7 @@ public sealed class ApplyProgressionOutcomeTests
         var results = ApplyProgressionOutcome.Execute(
             source,
             fixtureId,
-            match,
+            [match],
             [source, destination],
             _clock);
 
@@ -77,7 +77,7 @@ public sealed class ApplyProgressionOutcomeTests
         var results = ApplyProgressionOutcome.Execute(
             ctx.Source,
             ctx.FixtureId,
-            ctx.Match,
+            [ctx.Match],
             [ctx.Source],
             _clock);
 
@@ -102,7 +102,7 @@ public sealed class ApplyProgressionOutcomeTests
             _clock);
         var match = Match.Create(stage.CompetitionId, stage.Id, EntryId.New(), EntryId.New(), _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
@@ -110,16 +110,57 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_rejects_fixture_with_multiple_matches()
+    public void Execute_two_leg_fixture_resolves_aggregate_winner()
+    {
+        var stage = StageAggregate.Create(
+            CompetitionId.New(),
+            new StageName("QF"),
+            SampleRegulations.Standard(),
+            _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        stage.AddSlot("SF1-A", _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var first = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
+        var second = Match.Create(stage.CompetitionId, stage.Id, away, home, _clock);
+        stage.AttachMatch(fixture.Id, first.Id, legIndex: 1, _clock);
+        stage.AttachMatch(fixture.Id, second.Id, legIndex: 2, _clock);
+        Finish(first, homeGoals: 1, awayGoals: 0);
+        Finish(second, homeGoals: 0, awayGoals: 2);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var results = ApplyProgressionOutcome.Execute(
+            stage,
+            fixture.Id,
+            [first, second],
+            [stage],
+            _clock);
+
+        results.Should().ContainSingle();
+        results[0].EntryId.Should().Be(home);
+        stage.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+    }
+
+    [Fact]
+    public void Execute_rejects_attachments_count_mismatch_vs_tie_format()
     {
         var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
         var home = EntryId.New();
         var away = EntryId.New();
         var first = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
-        var second = Match.Create(stage.CompetitionId, stage.Id, EntryId.New(), EntryId.New(), _clock);
-        stage.AttachMatch(fixture.Id, first.Id, _clock);
-        stage.AttachMatch(fixture.Id, second.Id, _clock);
+        var second = Match.Create(stage.CompetitionId, stage.Id, away, home, _clock);
+        stage.AttachMatch(fixture.Id, first.Id, legIndex: 1, _clock);
+        stage.AttachMatch(fixture.Id, second.Id, legIndex: 2, _clock);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -130,8 +171,14 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
         Finish(first, homeGoals: 2, awayGoals: 1);
+        Finish(second, homeGoals: 0, awayGoals: 1);
 
-        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, first, [stage], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(
+            stage,
+            fixture.Id,
+            [first, second],
+            [stage],
+            _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
@@ -148,7 +195,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             ctx.Source,
             ctx.FixtureId,
-            other,
+            [other],
             [ctx.Source],
             _clock);
 
@@ -165,7 +212,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             ctx.Source,
             ctx.FixtureId,
-            ctx.Match,
+            [ctx.Match],
             [ctx.Source],
             _clock);
 
@@ -178,12 +225,21 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_tied_score_with_shootout_sets_winner()
     {
         var competitionId = CompetitionId.New();
-        var source = CreateKnockoutStage(competitionId, "Knockout", ["SF1-A"]);
+        var source = StageAggregate.Create(
+            competitionId,
+            new StageName("Knockout"),
+            SampleRegulations.Standard(),
+            _clock);
+        source.AddRound(
+            "R1",
+            new TieFormat(TieFormat.SingleLeg, false, penaltyShootoutRule: new PenaltyShootoutRule()),
+            _clock);
+        source.AddSlot("SF1-A", _clock);
         var home = EntryId.New();
         var away = EntryId.New();
         var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
         var match = Match.Create(source.CompetitionId, source.Id, home, away, _clock);
-        source.AttachMatch(fixture.Id, match.Id, _clock);
+        source.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
         match.Finish(
             new MatchResult(
@@ -202,7 +258,7 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var results = ApplyProgressionOutcome.Execute(source, fixture.Id, match, [source], _clock);
+        var results = ApplyProgressionOutcome.Execute(source, fixture.Id, [match], [source], _clock);
 
         results.Should().ContainSingle();
         results[0].EntryId.Should().Be(home);
@@ -212,11 +268,12 @@ public sealed class ApplyProgressionOutcomeTests
     [Fact]
     public void Assemble_maps_shootout_from_finished_match()
     {
-        var competitionId = CompetitionId.New();
-        var stageId = StageId.New();
+        var stage = CreateKnockoutStage(CompetitionId.New(), "Knockout", ["SF1-A"]);
         var home = EntryId.New();
         var away = EntryId.New();
-        var match = Match.Create(competitionId, stageId, home, away, _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
         match.Finish(
             new MatchResult(
@@ -225,13 +282,15 @@ public sealed class ApplyProgressionOutcomeTests
                 extraTimePlayed: true,
                 new PenaltyShootoutScore(4, 3)),
             _clock);
-        var fixtureId = FixtureId.New();
 
-        var snapshot = FixtureOutcomeSnapshotAssembler.Assemble(fixtureId, match);
+        var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, [match]);
 
-        snapshot.Score.Should().Be(new Score(2, 2));
-        snapshot.PenaltyShootoutScore.Should().Be(new PenaltyShootoutScore(4, 3));
-        snapshot.GetType().GetProperty("ExtraTimePlayed").Should().BeNull();
+        snapshot.FixtureId.Should().Be(fixture.Id);
+        snapshot.Legs.Should().ContainSingle();
+        var leg = snapshot.Legs[0];
+        leg.Score.Should().Be(new Score(2, 2));
+        leg.ExtraTimePlayed.Should().BeTrue();
+        leg.PenaltyShootoutScore.Should().Be(new PenaltyShootoutScore(4, 3));
     }
 
     [Fact]
@@ -256,7 +315,7 @@ public sealed class ApplyProgressionOutcomeTests
         destination.Start(_clock);
         destination.Suspend(_clock);
 
-        ApplyProgressionOutcome.Execute(source, fixtureId, match, [source, destination], _clock);
+        ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         destination.Status.Should().Be(StageStatus.Suspended);
         destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
@@ -288,7 +347,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             source,
             fixtureId,
-            match,
+            [match],
             [source, destination],
             _clock);
 
@@ -307,7 +366,7 @@ public sealed class ApplyProgressionOutcomeTests
         var away = EntryId.New();
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(competitionId, stage.Id, home, away, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -318,7 +377,7 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeNotFinished);
         stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
@@ -343,7 +402,7 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(source, fixtureId, match, [source], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source], _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StageNotInCompetition);
@@ -372,7 +431,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             source,
             fixtureId,
-            match,
+            [match],
             [source, destination],
             _clock);
 
@@ -389,7 +448,7 @@ public sealed class ApplyProgressionOutcomeTests
         var home = EntryId.New();
         var away = EntryId.New();
         var match = Match.Create(stage.CompetitionId, StageId.New(), home, away, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         Finish(match, 2, 1);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
@@ -401,7 +460,7 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
@@ -416,7 +475,7 @@ public sealed class ApplyProgressionOutcomeTests
         var home = EntryId.New();
         var away = EntryId.New();
         var match = Match.Create(CompetitionId.New(), stage.Id, home, away, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         Finish(match, 2, 1);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
@@ -428,7 +487,7 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
@@ -459,7 +518,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             source,
             fixtureId,
-            match,
+            [match],
             [source, destination],
             _clock);
 
@@ -493,7 +552,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             source,
             fixtureId,
-            match,
+            [match],
             [source, destination],
             _clock);
 
@@ -506,10 +565,10 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_idempotent_second_call_is_noop_for_events()
     {
         var ctx = CreateSelfStageContext(homeGoals: 2, awayGoals: 1, withLoserPath: false);
-        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, ctx.Match, [ctx.Source], _clock);
+        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, [ctx.Match], [ctx.Source], _clock);
         ctx.Source.ClearDomainEvents();
 
-        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, ctx.Match, [ctx.Source], _clock);
+        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, [ctx.Match], [ctx.Source], _clock);
 
         ctx.Source.FindSlot("SF1-A")!.EntryId.Should().Be(ctx.Home);
         ctx.Source.DomainEvents.Should().NotContain(e => e is StageSlotOccupantChanged);
@@ -522,7 +581,7 @@ public sealed class ApplyProgressionOutcomeTests
         var previous = EntryId.New();
         ctx.Source.ApplyResolvedEntry("SF1-A", previous, _clock);
 
-        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, ctx.Match, [ctx.Source], _clock);
+        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, [ctx.Match], [ctx.Source], _clock);
 
         ctx.Source.FindSlot("SF1-A")!.EntryId.Should().Be(ctx.Home);
         ctx.Source.FindSlot("SF1-A")!.EntryId.Should().NotBe(previous);
@@ -535,9 +594,9 @@ public sealed class ApplyProgressionOutcomeTests
         var stage = CreateKnockoutStage(competitionId, "QF", ["SF1-A"]);
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(competitionId, stage.Id, EntryId.New(), EntryId.New(), _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
 
-        var results = ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+        var results = ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
 
         results.Should().BeEmpty();
         stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
@@ -553,7 +612,7 @@ public sealed class ApplyProgressionOutcomeTests
         var act = () => ApplyProgressionOutcome.Execute(
             ctx.Source,
             ctx.FixtureId,
-            ctx.Match,
+            [ctx.Match],
             [other],
             _clock);
 
@@ -564,21 +623,26 @@ public sealed class ApplyProgressionOutcomeTests
     [Fact]
     public void Assemble_maps_match_fields_without_sports_decisions()
     {
-        var competitionId = CompetitionId.New();
-        var stageId = StageId.New();
+        var stage = CreateKnockoutStage(CompetitionId.New(), "Knockout", ["SF1-A"]);
         var home = EntryId.New();
         var away = EntryId.New();
-        var match = Match.Create(competitionId, stageId, home, away, _clock);
-        var fixtureId = FixtureId.New();
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
 
-        var snapshot = FixtureOutcomeSnapshotAssembler.Assemble(fixtureId, match);
+        var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, [match]);
 
-        snapshot.FixtureId.Should().Be(fixtureId);
-        snapshot.MatchId.Should().Be(match.Id);
-        snapshot.HomeEntryId.Should().Be(home);
-        snapshot.AwayEntryId.Should().Be(away);
-        snapshot.Status.Should().Be(MatchStatus.Scheduled);
-        snapshot.Score.Should().BeNull();
+        snapshot.FixtureId.Should().Be(fixture.Id);
+        snapshot.Legs.Should().ContainSingle();
+        var leg = snapshot.Legs[0];
+        leg.LegIndex.Should().Be(1);
+        leg.MatchId.Should().Be(match.Id);
+        leg.HomeEntryId.Should().Be(home);
+        leg.AwayEntryId.Should().Be(away);
+        leg.Status.Should().Be(MatchStatus.Scheduled);
+        leg.Score.Should().BeNull();
+        leg.ExtraTimePlayed.Should().BeFalse();
+        leg.PenaltyShootoutScore.Should().BeNull();
     }
 
     private SelfStageContext CreateSelfStageContext(int homeGoals, int awayGoals, bool withLoserPath)
@@ -613,7 +677,7 @@ public sealed class ApplyProgressionOutcomeTests
     private StageAggregate CreateKnockoutStage(CompetitionId competitionId, string name, string[] slotKeys)
     {
         var stage = StageAggregate.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
-        stage.AddRound("R1", _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         foreach (var key in slotKeys)
         {
             stage.AddSlot(key, _clock);
@@ -631,7 +695,7 @@ public sealed class ApplyProgressionOutcomeTests
     {
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         Finish(match, homeGoals, awayGoals);
         return (fixture.Id, match);
     }

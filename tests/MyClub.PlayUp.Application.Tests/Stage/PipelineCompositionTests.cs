@@ -48,8 +48,8 @@ public sealed class PipelineCompositionTests
             ]),
             _clock);
 
-        ApplyProgressionOutcome.Execute(qf, fx1, m1, [qf, bridge], _clock);
-        ApplyProgressionOutcome.Execute(qf, fx2, m2, [qf, bridge], _clock);
+        ApplyProgressionOutcome.Execute(qf, fx1, [m1], [qf, bridge], _clock);
+        ApplyProgressionOutcome.Execute(qf, fx2, [m2], [qf, bridge], _clock);
 
         var pool = new[]
         {
@@ -120,7 +120,7 @@ public sealed class PipelineCompositionTests
             ]),
             _clock);
 
-        ApplyProgressionOutcome.Execute(stage, fixture.Id, match, [stage], _clock);
+        ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
 
         stage.FindSlot("SF1-A")!.EntryId.Should().Be(home);
         stage.FindSlot("Consolante")!.EntryId.Should().Be(away);
@@ -173,7 +173,7 @@ public sealed class PipelineCompositionTests
                     new ProgressionDestination(sf.Id, "SF1-A"))
             ]),
             _clock);
-        ApplyProgressionOutcome.Execute(qf, fixtureId, match, [qf, sf], _clock);
+        ApplyProgressionOutcome.Execute(qf, fixtureId, [match], [qf, sf], _clock);
 
         sf.FindSlot("SF1-A")!.EntryId.Should().Be(home);
         league.Draws.Should().BeEmpty();
@@ -271,8 +271,8 @@ public sealed class PipelineCompositionTests
                 new ProgressionPath(fxQf2.Id, ProgressionOutcome.Winner, new ProgressionDestination(bridge.Id, "W2"))
             ]),
             _clock);
-        ApplyProgressionOutcome.Execute(qf, fxQf1.Id, m1, [qf, bridge], _clock);
-        ApplyProgressionOutcome.Execute(qf, fxQf2.Id, m2, [qf, bridge], _clock);
+        ApplyProgressionOutcome.Execute(qf, fxQf1.Id, [m1], [qf, bridge], _clock);
+        ApplyProgressionOutcome.Execute(qf, fxQf2.Id, [m2], [qf, bridge], _clock);
 
         EntryId[] pool =
         [
@@ -318,7 +318,7 @@ public sealed class PipelineCompositionTests
     private StageAggregate CreateKnockout(CompetitionId competitionId, string name, string[] slotKeys)
     {
         var stage = StageAggregate.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
-        stage.AddRound("R1", _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         foreach (var key in slotKeys)
         {
             stage.AddSlot(key, _clock);
@@ -336,7 +336,7 @@ public sealed class PipelineCompositionTests
     {
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         Finish(match, homeGoals, awayGoals);
         return (fixture.Id, match);
     }

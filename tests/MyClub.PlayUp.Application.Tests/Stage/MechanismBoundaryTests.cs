@@ -71,7 +71,7 @@ public sealed class MechanismBoundaryTests
             ]),
             _clock);
 
-        ApplyProgressionOutcome.Execute(source, fixtureId, match, [source, destination], _clock);
+        ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         source.Draws.Should().BeEmpty();
         destination.Draws.Should().BeEmpty();
@@ -171,7 +171,7 @@ public sealed class MechanismBoundaryTests
     private StageAggregate CreateKnockout(CompetitionId competitionId, string name, string[] slotKeys)
     {
         var stage = CreateSlots(competitionId, name, slotKeys);
-        stage.AddRound("R1", _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         return stage;
     }
 
@@ -201,7 +201,7 @@ public sealed class MechanismBoundaryTests
     {
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(homeGoals, awayGoals)), _clock);
         return (fixture.Id, match);

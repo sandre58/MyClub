@@ -298,6 +298,7 @@ public static class ApplyDraw
         }
 
         var created = new List<Match>(pairings.Count);
+        var nextLegIndex = 1;
         foreach (var pairing in pairings)
         {
             var match = Match.Create(
@@ -306,7 +307,7 @@ public static class ApplyDraw
                 pairing.EntryA,
                 pairing.EntryB,
                 clock);
-            stage.AttachMatch(fixture.Id, match.Id, clock);
+            stage.AttachMatch(fixture.Id, match.Id, nextLegIndex++, clock);
             created.Add(match);
         }
 

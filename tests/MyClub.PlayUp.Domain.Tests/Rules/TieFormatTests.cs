@@ -80,6 +80,14 @@ public sealed class TieFormatTests
     }
 
     [Fact]
+    public void Constructor_rejects_two_legs_without_aggregate_scoring()
+    {
+        var act = () => new TieFormat(TieFormat.TwoLegs, aggregateScoring: false);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.TieFormatInvalid);
+    }
+
+    [Fact]
     public void Constructor_rejects_away_goals_without_aggregate_two_legs()
     {
         // Arrange & Act

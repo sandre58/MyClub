@@ -295,7 +295,7 @@ public sealed class QualificationApplierTests
         var instruction = QualificationApplier.Apply(path, standing);
 
         instruction.Should().NotBeNull();
-        instruction!.EntryId.Should().Be(_c);
+        instruction.EntryId.Should().Be(_c);
     }
 
     [Fact]
@@ -307,7 +307,7 @@ public sealed class QualificationApplierTests
         var instruction = QualificationApplier.Apply(path, standing);
 
         instruction.Should().NotBeNull();
-        instruction!.EntryId.Should().Be(_c);
+        instruction.EntryId.Should().Be(_c);
     }
 
     [Fact]

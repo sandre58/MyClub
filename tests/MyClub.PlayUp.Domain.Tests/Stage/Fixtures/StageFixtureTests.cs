@@ -22,14 +22,11 @@ public sealed class StageFixtureTests
     [Fact]
     public void AddFixture_under_Round_raises_StageFixtureAdded()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         stage.ClearDomainEvents();
 
-        // Act
         var fixture = stage.AddFixture(round.Id, _clock);
 
-        // Assert
         fixture.MatchIds.Should().BeEmpty();
         round.Fixtures.Should().ContainSingle().Which.Id.Should().Be(fixture.Id);
         stage.HasFixture(fixture.Id).Should().BeTrue();
@@ -42,14 +39,11 @@ public sealed class StageFixtureTests
     [Fact]
     public void AddFixture_under_Matchday_raises_StageFixtureAdded()
     {
-        // Arrange
         var stage = CreateChampionshipWithMatchday(out var matchday);
         stage.ClearDomainEvents();
 
-        // Act
         var fixture = stage.AddFixture(matchday.Id, _clock);
 
-        // Assert
         matchday.Fixtures.Should().ContainSingle().Which.Id.Should().Be(fixture.Id);
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureAdded>();
     }
@@ -57,28 +51,22 @@ public sealed class StageFixtureTests
     [Fact]
     public void AddFixture_unknown_round_is_rejected()
     {
-        // Arrange
         var stage = CreateCupWithRound(out _);
 
-        // Act
         var act = () => stage.AddFixture(RoundId.New(), _clock);
 
-        // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.RoundNotFound);
     }
 
     [Fact]
     public void RemoveFixture_raises_StageFixtureRemoved()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.RemoveFixture(fixture.Id, _clock);
 
-        // Assert
         stage.HasFixture(fixture.Id).Should().BeFalse();
         round.Fixtures.Should().BeEmpty();
         var removed = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureRemoved>().Subject;
@@ -88,89 +76,88 @@ public sealed class StageFixtureTests
     [Fact]
     public void RemoveFixture_unknown_is_rejected()
     {
-        // Arrange
         var stage = CreateCupWithRound(out _);
 
-        // Act
         var act = () => stage.RemoveFixture(FixtureId.New(), _clock);
 
-        // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureNotFound);
     }
 
     [Fact]
     public void AttachMatch_raises_StageMatchAttached()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
         stage.ClearDomainEvents();
 
-        // Act
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
 
-        // Assert
         fixture.MatchIds.Should().Equal(matchId);
+        fixture.Attachments.Should().ContainSingle().Which.LegIndex.Should().Be(1);
         stage.HasMatch(matchId).Should().BeTrue();
         var attached = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchAttached>().Subject;
         attached.StageId.Should().Be(stage.Id);
         attached.FixtureId.Should().Be(fixture.Id);
         attached.MatchId.Should().Be(matchId);
+        attached.LegIndex.Should().Be(1);
         attached.OccurredOn.Should().Be(_clock.UtcNow);
     }
 
     [Fact]
     public void AttachMatch_same_fixture_twice_is_noop()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
 
-        // Assert
         stage.Status.Should().Be(StageStatus.Ready);
         fixture.MatchIds.Should().Equal(matchId);
         stage.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
+    public void AttachMatch_duplicate_leg_index_is_rejected()
+    {
+        var stage = CreateCupWithRound(out var round);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AttachMatch(fixture.Id, MatchId.New(), legIndex: 1, _clock);
+
+        var act = () => stage.AttachMatch(fixture.Id, MatchId.New(), legIndex: 1, _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidConfiguration);
+    }
+
+    [Fact]
     public void AttachMatch_to_other_fixture_is_rejected()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var first = stage.AddFixture(round.Id, _clock);
         var second = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(first.Id, matchId, _clock);
+        stage.AttachMatch(first.Id, matchId, legIndex: 1, _clock);
 
-        // Act
-        var act = () => stage.AttachMatch(second.Id, matchId, _clock);
+        var act = () => stage.AttachMatch(second.Id, matchId, legIndex: 1, _clock);
 
-        // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MatchAlreadyAttached);
     }
 
     [Fact]
     public void DetachMatch_raises_StageMatchDetached()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.DetachMatch(fixture.Id, matchId, _clock);
 
-        // Assert
         fixture.MatchIds.Should().BeEmpty();
         stage.HasMatch(matchId).Should().BeFalse();
         var detached = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchDetached>().Subject;
@@ -180,46 +167,37 @@ public sealed class StageFixtureTests
     [Fact]
     public void DetachMatch_when_not_attached_is_rejected()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
 
-        // Act
         var act = () => stage.DetachMatch(fixture.Id, MatchId.New(), _clock);
 
-        // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MatchNotAttached);
     }
 
     [Fact]
     public void MatchId_is_unique_across_Round_and_Matchday_fixtures()
     {
-        // Arrange — championship only (cannot mix rounds + matchdays)
         var stage = CreateChampionshipWithMatchday(out var matchday);
         var a = stage.AddFixture(matchday.Id, _clock);
         var b = stage.AddFixture(matchday.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(a.Id, matchId, _clock);
+        stage.AttachMatch(a.Id, matchId, legIndex: 1, _clock);
 
-        // Act
-        var act = () => stage.AttachMatch(b.Id, matchId, _clock);
+        var act = () => stage.AttachMatch(b.Id, matchId, legIndex: 1, _clock);
 
-        // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MatchAlreadyAttached);
     }
 
     [Fact]
     public void AddFixture_demotes_Ready_to_Draft()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.AddFixture(round.Id, _clock);
 
-        // Assert
         stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureAdded>();
     }
@@ -227,16 +205,13 @@ public sealed class StageFixtureTests
     [Fact]
     public void RemoveFixture_demotes_Ready_to_Draft()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.RemoveFixture(fixture.Id, _clock);
 
-        // Assert
         stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureRemoved>();
     }
@@ -244,16 +219,13 @@ public sealed class StageFixtureTests
     [Fact]
     public void AttachMatch_demotes_Ready_to_Draft()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
-        stage.AttachMatch(fixture.Id, MatchId.New(), _clock);
+        stage.AttachMatch(fixture.Id, MatchId.New(), legIndex: 1, _clock);
 
-        // Assert
         stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchAttached>();
     }
@@ -261,18 +233,15 @@ public sealed class StageFixtureTests
     [Fact]
     public void DetachMatch_demotes_Ready_to_Draft()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.DetachMatch(fixture.Id, matchId, _clock);
 
-        // Assert
         stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchDetached>();
     }
@@ -283,11 +252,10 @@ public sealed class StageFixtureTests
     [InlineData(StageStatus.Completed)]
     public void Fixture_mutations_are_rejected_when_structure_locked(StageStatus locked)
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
         switch (locked)
@@ -305,48 +273,42 @@ public sealed class StageFixtureTests
                 break;
         }
 
-        // Act & Assert
         ((Action)(() => stage.AddFixture(round.Id, _clock))).Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         ((Action)(() => stage.RemoveFixture(fixture.Id, _clock))).Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
-        ((Action)(() => stage.AttachMatch(fixture.Id, MatchId.New(), _clock))).Should().Throw<DomainException>()
+        ((Action)(() => stage.AttachMatch(fixture.Id, MatchId.New(), legIndex: 2, _clock))).Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         ((Action)(() => stage.DetachMatch(fixture.Id, matchId, _clock))).Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
     }
 
     [Fact]
-    public void AttachMatch_preserves_order_of_multiple_MatchIds()
+    public void AttachMatch_two_legs_with_distinct_indexes()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var first = MatchId.New();
         var second = MatchId.New();
 
-        // Act
-        stage.AttachMatch(fixture.Id, first, _clock);
-        stage.AttachMatch(fixture.Id, second, _clock);
+        stage.AttachMatch(fixture.Id, first, legIndex: 1, _clock);
+        stage.AttachMatch(fixture.Id, second, legIndex: 2, _clock);
 
-        // Assert
         fixture.MatchIds.Should().Equal(first, second);
+        fixture.Attachments.Select(a => a.LegIndex).Should().Equal(1, 2);
     }
 
     [Fact]
     public void RemoveFixture_with_attached_matches_drops_MatchIds_without_Detach_events()
     {
-        // Arrange
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, _clock);
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.RemoveFixture(fixture.Id, _clock);
 
-        // Assert
         stage.HasMatch(matchId).Should().BeFalse();
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureRemoved>();
         stage.DomainEvents.Should().NotContain(e => e is StageMatchDetached);
@@ -355,25 +317,20 @@ public sealed class StageFixtureTests
     [Fact]
     public void AddFixture_unknown_matchday_is_rejected()
     {
-        // Arrange
         var stage = CreateChampionshipWithMatchday(out _);
 
-        // Act
         var act = () => stage.AddFixture(MatchdayId.New(), _clock);
 
-        // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MatchdayNotFound);
     }
 
     [Fact]
     public void AttachMatch_and_DetachMatch_unknown_fixture_are_rejected()
     {
-        // Arrange
         var stage = CreateCupWithRound(out _);
         var unknown = FixtureId.New();
 
-        // Act & Assert
-        ((Action)(() => stage.AttachMatch(unknown, MatchId.New(), _clock))).Should().Throw<DomainException>()
+        ((Action)(() => stage.AttachMatch(unknown, MatchId.New(), legIndex: 1, _clock))).Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.FixtureNotFound);
         ((Action)(() => stage.DetachMatch(unknown, MatchId.New(), _clock))).Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.FixtureNotFound);
@@ -382,15 +339,12 @@ public sealed class StageFixtureTests
     [Fact]
     public void RemoveFixture_under_Matchday_raises_StageFixtureRemoved()
     {
-        // Arrange
         var stage = CreateChampionshipWithMatchday(out var matchday);
         var fixture = stage.AddFixture(matchday.Id, _clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.RemoveFixture(fixture.Id, _clock);
 
-        // Assert
         matchday.Fixtures.Should().BeEmpty();
         stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureRemoved>();
     }

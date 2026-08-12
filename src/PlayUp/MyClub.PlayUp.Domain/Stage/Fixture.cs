@@ -16,16 +16,21 @@ namespace MyClub.PlayUp.Domain.Stage;
 [DebuggerDisplay("Fixture {Id} ({MatchIds.Count} matches)")]
 public sealed class Fixture : Entity<FixtureId>
 {
-    private readonly List<MatchId> _matchIds = [];
+    private readonly List<MatchAttachment> _attachments = [];
 
     internal Fixture(FixtureId id, string? slotAKey = null, string? slotBKey = null)
         : base(id) =>
         BindSlots(slotAKey, slotBKey);
 
     /// <summary>
-    /// Gets the ordered match identities attached to this fixture.
+    /// Gets the match attachments (MatchId + LegIndex). Order is not a business semantic for legs.
     /// </summary>
-    public IReadOnlyList<MatchId> MatchIds => _matchIds.AsReadOnly();
+    public IReadOnlyList<MatchAttachment> Attachments => _attachments.AsReadOnly();
+
+    /// <summary>
+    /// Gets the attached match identities (projection of <see cref="Attachments"/>). No leg semantics.
+    /// </summary>
+    public IReadOnlyList<MatchId> MatchIds => [.._attachments.Select(a => a.MatchId)];
 
     /// <summary>
     /// Gets bracket position A when set; otherwise <see langword="null"/>.
@@ -37,26 +42,44 @@ public sealed class Fixture : Entity<FixtureId>
     /// </summary>
     public string? SlotBKey { get; private set; }
 
-    internal bool Contains(MatchId matchId) => _matchIds.Contains(matchId);
+    internal bool Contains(MatchId matchId) => _attachments.Exists(a => a.MatchId.Equals(matchId));
 
     /// <summary>
-    /// Attaches a match identity. Returns <see langword="false"/> when already present (no-op).
+    /// Attaches a match identity with an explicit leg index.
+    /// Returns <see langword="false"/> when the same match is already attached (no-op).
     /// </summary>
-    internal bool AttachMatch(MatchId matchId)
+    internal bool AttachMatch(MatchId matchId, int legIndex)
     {
-        if (_matchIds.Contains(matchId))
+        if (Contains(matchId))
         {
             return false;
         }
 
-        _matchIds.Add(matchId);
+        if (_attachments.Exists(a => a.LegIndex == legIndex))
+        {
+            throw new DomainException(
+                $"Fixture already has a match attachment for leg index {legIndex}.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        _attachments.Add(new MatchAttachment(matchId, legIndex));
         return true;
     }
 
     /// <summary>
     /// Detaches a match identity. Returns <see langword="false"/> when not present.
     /// </summary>
-    internal bool DetachMatch(MatchId matchId) => _matchIds.Remove(matchId);
+    internal bool DetachMatch(MatchId matchId)
+    {
+        var index = _attachments.FindIndex(a => a.MatchId.Equals(matchId));
+        if (index < 0)
+        {
+            return false;
+        }
+
+        _attachments.RemoveAt(index);
+        return true;
+    }
 
     internal void BindSlots(string? slotAKey, string? slotBKey)
     {

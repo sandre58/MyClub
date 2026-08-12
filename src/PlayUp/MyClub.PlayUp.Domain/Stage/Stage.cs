@@ -1055,13 +1055,15 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Attaches a match identity to a fixture. No-op when already on that fixture.
+    /// Attaches a match identity to a fixture with an explicit leg index.
+    /// No-op when already on that fixture.
     /// Application validates that the match belongs to this stage (<c>Match.StageId</c>).
     /// </summary>
     /// <param name="fixtureId">The fixture identity.</param>
     /// <param name="matchId">The match identity.</param>
+    /// <param name="legIndex">1-based confrontation leg index.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void AttachMatch(FixtureId fixtureId, MatchId matchId, IClock clock)
+    public void AttachMatch(FixtureId fixtureId, MatchId matchId, int legIndex, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
@@ -1080,8 +1082,8 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         DemoteToDraftIfReady();
-        fixture.AttachMatch(matchId);
-        Raise(new StageMatchAttached(Id, fixtureId, matchId, clock));
+        fixture.AttachMatch(matchId, legIndex);
+        Raise(new StageMatchAttached(Id, fixtureId, matchId, legIndex, clock));
     }
 
     /// <summary>

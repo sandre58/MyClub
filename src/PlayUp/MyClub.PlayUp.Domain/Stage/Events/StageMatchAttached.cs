@@ -19,13 +19,20 @@ public sealed record StageMatchAttached : DomainEvent
     /// <param name="stageId">The stage identity.</param>
     /// <param name="fixtureId">The fixture identity.</param>
     /// <param name="matchId">The match identity.</param>
+    /// <param name="legIndex">1-based confrontation leg index.</param>
     /// <param name="clock">The clock providing the occurrence timestamp.</param>
-    public StageMatchAttached(StageId stageId, FixtureId fixtureId, MatchId matchId, IClock clock)
+    public StageMatchAttached(
+        StageId stageId,
+        FixtureId fixtureId,
+        MatchId matchId,
+        int legIndex,
+        IClock clock)
         : base(clock)
     {
         StageId = stageId;
         FixtureId = fixtureId;
         MatchId = matchId;
+        LegIndex = legIndex;
     }
 
     /// <summary>
@@ -42,4 +49,9 @@ public sealed record StageMatchAttached : DomainEvent
     /// Gets the match identity.
     /// </summary>
     public MatchId MatchId { get; }
+
+    /// <summary>
+    /// Gets the 1-based confrontation leg index.
+    /// </summary>
+    public int LegIndex { get; }
 }

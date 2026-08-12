@@ -507,7 +507,7 @@ public sealed class ApplyDrawTests
             [new PairingDrawResult(a, b), new PairingDrawResult(c, d)],
             [a, b, c, d]);
         var onlyFirst = Match.Create(_competitionId, stage.Id, a, b, _clock);
-        stage.AttachMatch(fixture.Id, onlyFirst.Id, _clock);
+        stage.AttachMatch(fixture.Id, onlyFirst.Id, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(
@@ -533,7 +533,7 @@ public sealed class ApplyDrawTests
         var c = EntryId.New();
         var draw = PublishPairingDraw(stage, [new PairingDrawResult(a, b)], [a, b]);
         var divergent = Match.Create(_competitionId, stage.Id, a, c, _clock);
-        stage.AttachMatch(fixture.Id, divergent.Id, _clock);
+        stage.AttachMatch(fixture.Id, divergent.Id, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(
@@ -559,7 +559,7 @@ public sealed class ApplyDrawTests
         var b = EntryId.New();
         var draw = PublishPairingDraw(stage, [new PairingDrawResult(a, b)]);
         var inverted = Match.Create(_competitionId, stage.Id, b, a, _clock);
-        stage.AttachMatch(fixture.Id, inverted.Id, _clock);
+        stage.AttachMatch(fixture.Id, inverted.Id, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(
@@ -632,7 +632,7 @@ public sealed class ApplyDrawTests
         var b = EntryId.New();
         var draw = PublishPairingDraw(stage, [new PairingDrawResult(a, b)]);
         var match = Match.Create(_competitionId, stage.Id, a, b, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(
