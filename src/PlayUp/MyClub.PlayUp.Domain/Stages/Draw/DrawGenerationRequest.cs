@@ -12,7 +12,8 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Flat input contract for <see cref="DrawResolutionGenerator"/> (never the Draw aggregate).
-/// Preferred constraints should already be filtered out by Application; Preferred are ignored if present.
+/// Required = feasibility; Preferred = soft optimization (Pairing SameGroup/SameTeam). Application
+/// should filter kind-inapplicable constraints before calling; incomplete maps → Invalid regardless of enforcement.
 /// </summary>
 public sealed class DrawGenerationRequest
 {
@@ -55,7 +56,7 @@ public sealed class DrawGenerationRequest
     public IReadOnlyList<EntryId> Entries { get; }
 
     /// <summary>
-    /// Gets draw constraints (Preferred ignored; Required evaluated for Pairing).
+    /// Gets draw constraints (Required = feasibility; Preferred = soft cost for Pairing).
     /// </summary>
     public IReadOnlyList<DrawConstraint> Constraints { get; }
 

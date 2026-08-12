@@ -13,7 +13,7 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: generate a Draw resolution and record it (or MarkNoSolution).
-/// Does not Publish, Apply, or Cancel.
+/// Does not Publish, Apply, or Cancel. Soft Preferred violations are returned, not persisted on Draw.
 /// </summary>
 public static class GenerateDrawResolution
 {
@@ -24,10 +24,10 @@ public static class GenerateDrawResolution
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="slotTargets">Required for Slot kind (destination slot keys).</param>
-    /// <param name="constraintContext">Optional maps for Required pairing constraints.</param>
+    /// <param name="constraintContext">Optional maps for pairing constraints (Required and Preferred).</param>
     /// <param name="seed">Optional RNG seed (Application builds <see cref="SeededRandomSource"/>).</param>
     /// <param name="randomSource">Optional injected source; when null, uses seed or <see cref="SystemRandomSource"/>.</param>
-    /// <returns>The generation result (also recorded on the Draw).</returns>
+    /// <returns>The generation result (also recorded on the Draw; soft violations not persisted).</returns>
     public static DrawGenerationResult Execute(
         Stage stage,
         DrawId drawId,
@@ -116,7 +116,7 @@ public static class GenerateDrawResolution
     {
         var inputs = draw.Inputs!;
         var constraints = drawRules?.Constraints
-            .Where(c => c.Enforcement == ConstraintEnforcement.Required)
+            .Where(c => IsConstraintApplicable(draw.Kind, c))
             .ToArray()
             ?? [];
 
@@ -131,5 +131,13 @@ public static class GenerateDrawResolution
             inputs.FixedPairings);
     }
 
-    private static IRandomSource ResolveRandomSource(int? seed, IRandomSource? randomSource) => randomSource ?? (seed is null ? new SystemRandomSource() : new SeededRandomSource(seed.Value));
+    /// <summary>
+    /// Filters DrawRules constraints to those applicable for the generation kind (S9).
+    /// Pairing: SameGroup / SameTeam (Required or Preferred). Slot: none of those.
+    /// SameAssociation is never passed (Domain would Invalid).
+    /// </summary>
+    private static bool IsConstraintApplicable(DrawResolutionKind kind, DrawConstraint constraint) => constraint.ConstraintType != DrawConstraintType.SameAssociationAvoidance && constraint.ConstraintType is DrawConstraintType.SameGroupAvoidance or DrawConstraintType.SameTeamAvoidance && kind == DrawResolutionKind.Pairing;
+
+    private static IRandomSource ResolveRandomSource(int? seed, IRandomSource? randomSource) =>
+        randomSource ?? (seed is null ? new SystemRandomSource() : new SeededRandomSource(seed.Value));
 }

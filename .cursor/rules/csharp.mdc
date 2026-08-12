@@ -47,7 +47,8 @@ When Domain / C# conventions change, update **all** of:
 ## Namespaces (Play'up Domain)
 
 - Under `Domain/Common/`, use a **flat** namespace `MyClub.PlayUp.Domain.Common` even when files live in physical subfolders (`Ids/`, `Enums/`).
-- Folders organize files; they do not create nested namespaces.
+- Aggregate roots use a **plural** folder + namespace (`Domain.Stages`, `Domain.Matches`, `Domain.Competitions`, `Domain.Standings`) with a **singular** type (`Stage`, `Match`, …) to avoid C# type≡namespace collisions. Mirror under Application (`Application.Stages`, …).
+- Organizational subfolders under an aggregate (`Stages/Draw`, `Feed`, `Outcome`, `Assignment`) and under `Rules/` do **not** create nested namespaces — mark them **Namespace Provider = False** in the Domain `.csproj`. Exception: `Events/` → nested `Domain.Stages.Events` (etc.).
 - Mark `Common/Ids` and `Common/Enums` as Rider **Namespace Provider = False** in the Domain `.csproj`.
 - Disable Roslyn `IDE0130` and Rider `resharper_check_namespace_highlighting` for `src/PlayUp/**`.
 

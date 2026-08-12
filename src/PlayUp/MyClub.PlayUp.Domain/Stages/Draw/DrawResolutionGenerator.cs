@@ -12,10 +12,10 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Pure Domain service: proposes one admissible <see cref="DrawResolution"/> under Required constraints,
-/// or <see cref="DrawGenerationResult.NoSolution"/>. Does not mutate Draw / Stage.
-/// V1: Slot and Pairing only. Preferred ignored. Invalid request → <see cref="DomainException"/>.
-/// SameGroupAvoidance / SameTeamAvoidance Required apply to Pairing only; on Slot they are Invalid
-/// (Host should filter Stage DrawRules by kind when assembling the request).
+/// minimizing Preferred violations (soft), or <see cref="DrawGenerationResult.NoSolution"/>.
+/// Does not mutate Draw / Stage. Slot and Pairing only. Invalid request → <see cref="DomainException"/>.
+/// SameGroupAvoidance / SameTeamAvoidance apply to Pairing only; on Slot they are Invalid.
+/// Preferred never blocks: Cost = count of Preferred violations; tie-break = first optimum under RNG order.
 /// </summary>
 public static class DrawResolutionGenerator
 {
@@ -23,7 +23,7 @@ public static class DrawResolutionGenerator
     /// Generates a resolution from a flat request (never a Draw aggregate).
     /// </summary>
     /// <param name="request">Generation request assembled by Application.</param>
-    /// <returns>Resolved or NoSolution.</returns>
+    /// <returns>Resolved (with optional Preferred violations) or NoSolution.</returns>
     public static DrawGenerationResult Generate(DrawGenerationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -60,8 +60,7 @@ public static class DrawResolutionGenerator
             throw Invalid("Entry pool cannot contain duplicates.");
         }
 
-        var required = RequiredConstraints(request.Constraints);
-        EnsureConstraintMaps(request.Kind, required, request.Entries, request.ConstraintContext);
+        EnsureConstraintMaps(request.Kind, request.Constraints, request.Entries, request.ConstraintContext);
 
         switch (request.Kind)
         {
@@ -162,11 +161,11 @@ public static class DrawResolutionGenerator
 
     private static void EnsureConstraintMaps(
         DrawResolutionKind kind,
-        IReadOnlyList<DrawConstraint> required,
+        IReadOnlyList<DrawConstraint> constraints,
         IReadOnlyList<EntryId> entries,
         DrawConstraintContext context)
     {
-        foreach (var constraint in required)
+        foreach (var constraint in constraints)
         {
             switch (constraint.ConstraintType)
             {
@@ -175,7 +174,7 @@ public static class DrawResolutionGenerator
                 case DrawConstraintType.SameGroupAvoidance:
                     if (kind == DrawResolutionKind.Slot)
                     {
-                        throw Invalid("SameGroupAvoidance Required is not supported for Slot generation in V1.");
+                        throw Invalid("SameGroupAvoidance is not supported for Slot generation in V1.");
                     }
 
                     EnsureCompleteMap(entries, context.SourceGroupMap, "SameGroupAvoidance");
@@ -183,7 +182,7 @@ public static class DrawResolutionGenerator
                 case DrawConstraintType.SameTeamAvoidance:
                     if (kind == DrawResolutionKind.Slot)
                     {
-                        throw Invalid("SameTeamAvoidance Required is not supported for Slot generation in V1.");
+                        throw Invalid("SameTeamAvoidance is not supported for Slot generation in V1.");
                     }
 
                     EnsureCompleteMap(entries, context.TeamMap, "SameTeamAvoidance");
@@ -201,12 +200,12 @@ public static class DrawResolutionGenerator
     {
         if (map is null)
         {
-            throw Invalid($"{constraintName} Required requires a complete constraint map.");
+            throw Invalid($"{constraintName} requires a complete constraint map.");
         }
 
         if (entries.Any(entryId => !map.ContainsKey(entryId)))
         {
-            throw Invalid($"{constraintName} Required map is incomplete for the entry pool.");
+            throw Invalid($"{constraintName} map is incomplete for the entry pool.");
         }
     }
 
@@ -264,9 +263,11 @@ public static class DrawResolutionGenerator
 
     private static DrawGenerationResult GeneratePairing(DrawGenerationRequest request)
     {
-        var required = RequiredConstraints(request.Constraints);
-        var used = new HashSet<EntryId>();
+        var required = FilterByEnforcement(request.Constraints, ConstraintEnforcement.Required);
+        var preferred = FilterByEnforcement(request.Constraints, ConstraintEnforcement.Preferred);
         var pairings = new List<PairingDrawResult>();
+        var violations = new List<PreferredViolation>();
+        var used = new HashSet<EntryId>();
 
         foreach (var fixedPairing in request.FixedPairings)
         {
@@ -279,24 +280,62 @@ public static class DrawResolutionGenerator
             pairings.Add(fixedPairing);
             used.Add(fixedPairing.EntryA);
             used.Add(fixedPairing.EntryB);
+            AppendPairViolations(
+                fixedPairing.EntryA,
+                fixedPairing.EntryB,
+                preferred,
+                request.ConstraintContext,
+                violations);
         }
 
         var remaining = Shuffle(request.Entries.Where(e => !used.Contains(e)).ToList(), request.RandomSource);
-        return !TryPair(remaining, pairings, required, request.ConstraintContext, request.RandomSource)
+        List<PairingDrawResult>? bestPairings = null;
+        List<PreferredViolation>? bestViolations = null;
+        var bestCost = int.MaxValue;
+
+        SearchBestPairing(
+            remaining,
+            pairings,
+            violations,
+            required,
+            preferred,
+            request.ConstraintContext,
+            request.RandomSource,
+            ref bestPairings,
+            ref bestViolations,
+            ref bestCost);
+
+        return bestPairings is null
             ? DrawGenerationResult.NoSolution()
-            : DrawGenerationResult.Resolved(DrawResolution.ResolvedPairings(pairings));
+            : DrawGenerationResult.Resolved(
+                DrawResolution.ResolvedPairings(bestPairings),
+                bestViolations);
     }
 
-    private static bool TryPair(
+    private static void SearchBestPairing(
         List<EntryId> remaining,
         List<PairingDrawResult> pairings,
+        List<PreferredViolation> violations,
         IReadOnlyList<DrawConstraint> required,
+        IReadOnlyList<DrawConstraint> preferred,
         DrawConstraintContext context,
-        IRandomSource random)
+        IRandomSource random,
+        ref List<PairingDrawResult>? bestPairings,
+        ref List<PreferredViolation>? bestViolations,
+        ref int bestCost)
     {
+        // Exact pruning: partial cost already cannot beat (or replace) the first optimum.
+        if (violations.Count >= bestCost)
+        {
+            return;
+        }
+
         if (remaining.Count == 0)
         {
-            return true;
+            bestCost = violations.Count;
+            bestPairings = [..pairings];
+            bestViolations = [..violations];
+            return;
         }
 
         var left = remaining[0];
@@ -304,58 +343,60 @@ public static class DrawResolutionGenerator
         foreach (var right in partners.Where(right => IsPairAllowed(left, right, required, context)))
         {
             pairings.Add(new PairingDrawResult(left, right));
-            var next = remaining.Where(e => !e.Equals(left) && !e.Equals(right)).ToList();
-            if (TryPair(next, pairings, required, context, random))
-            {
-                return true;
-            }
+            var before = violations.Count;
+            AppendPairViolations(left, right, preferred, context, violations);
 
+            var next = remaining.Where(e => !e.Equals(left) && !e.Equals(right)).ToList();
+            SearchBestPairing(
+                next,
+                pairings,
+                violations,
+                required,
+                preferred,
+                context,
+                random,
+                ref bestPairings,
+                ref bestViolations,
+                ref bestCost);
+
+            violations.RemoveRange(before, violations.Count - before);
             pairings.RemoveAt(pairings.Count - 1);
         }
-
-        return false;
     }
+
+    private static void AppendPairViolations(
+        EntryId a,
+        EntryId b,
+        IReadOnlyList<DrawConstraint> preferred,
+        DrawConstraintContext context,
+        List<PreferredViolation> violations) =>
+        violations.AddRange(from constraint in preferred where Violates(a, b, constraint.ConstraintType, context) select new PreferredViolation(constraint.ConstraintType, a, b));
+
+    private static bool Violates(
+        EntryId a,
+        EntryId b,
+        DrawConstraintType constraintType,
+        DrawConstraintContext context) =>
+        constraintType switch
+        {
+            DrawConstraintType.SameGroupAvoidance =>
+                context.SourceGroupMap![a].Equals(context.SourceGroupMap[b]),
+            DrawConstraintType.SameTeamAvoidance =>
+                context.TeamMap![a].Equals(context.TeamMap[b]),
+            _ => false
+        };
 
     private static bool IsPairAllowed(
         EntryId a,
         EntryId b,
         IReadOnlyList<DrawConstraint> required,
-        DrawConstraintContext context)
-    {
-        if (a.Equals(b))
-        {
-            return false;
-        }
+        DrawConstraintContext context) =>
+        !a.Equals(b) && required.All(constraint => !Violates(a, b, constraint.ConstraintType, context));
 
-        foreach (var constraint in required)
-        {
-            switch (constraint.ConstraintType)
-            {
-                case DrawConstraintType.SameGroupAvoidance:
-                    if (context.SourceGroupMap![a].Equals(context.SourceGroupMap[b]))
-                    {
-                        return false;
-                    }
-
-                    break;
-                case DrawConstraintType.SameTeamAvoidance:
-                    if (context.TeamMap![a].Equals(context.TeamMap[b]))
-                    {
-                        return false;
-                    }
-
-                    break;
-                case DrawConstraintType.SameAssociationAvoidance:
-                default:
-                    break;
-            }
-        }
-
-        return true;
-    }
-
-    private static IReadOnlyList<DrawConstraint> RequiredConstraints(IReadOnlyList<DrawConstraint> constraints) =>
-        [..constraints.Where(c => c.Enforcement == ConstraintEnforcement.Required)];
+    private static IReadOnlyList<DrawConstraint> FilterByEnforcement(
+        IReadOnlyList<DrawConstraint> constraints,
+        ConstraintEnforcement enforcement) =>
+        [..constraints.Where(c => c.Enforcement == enforcement)];
 
     private static List<string> NormalizeTargets(IReadOnlyList<string> targets) =>
         [..targets.Select(Slot.NormalizeKey)];

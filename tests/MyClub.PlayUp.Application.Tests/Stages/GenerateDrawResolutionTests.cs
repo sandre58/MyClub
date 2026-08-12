@@ -193,8 +193,9 @@ public sealed class GenerateDrawResolutionTests
     }
 
     [Fact]
-    public void Execute_same_group_required_on_slot_is_invalid()
+    public void Execute_filters_pairing_constraints_off_slot_and_resolves()
     {
+        // S9: Application filters SameGroup off Slot; generation proceeds without Domain Invalid.
         var stage = CreateStage();
         stage.ReplaceDrawRules(
             new DrawRules(
@@ -212,11 +213,63 @@ public sealed class GenerateDrawResolutionTests
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(NewEntries(2)), _clock);
 
-        var act = () => GenerateDrawResolution.Execute(
+        var result = GenerateDrawResolution.Execute(
             stage,
             draw.Id,
             _clock,
             slotTargets: ["A", "B"],
+            seed: 1);
+
+        result.IsResolved.Should().BeTrue();
+        result.PreferredViolations.Should().BeEmpty();
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+    }
+
+    [Fact]
+    public void Execute_passes_preferred_and_returns_violations_without_persisting_on_draw()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(
+            new DrawRules(
+                DrawMode.Random,
+                constraints: [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)]),
+            _clock);
+        var entries = NewEntries(4);
+        var g = GroupId.New();
+        var groups = entries.ToDictionary(e => e, _ => g);
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries), _clock);
+
+        var result = GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            constraintContext: new DrawConstraintContext(groups, null),
+            seed: 3);
+
+        result.IsResolved.Should().BeTrue();
+        result.PreferredViolationsCount.Should().BeGreaterThan(0);
+        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+        draw.Resolution.PairingResults.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Execute_preferred_incomplete_map_is_invalid_and_does_not_mark_no_solution()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(
+            new DrawRules(
+                DrawMode.Random,
+                constraints: [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)]),
+            _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(NewEntries(4)), _clock);
+
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            constraintContext: DrawConstraintContext.Empty,
             seed: 1);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);

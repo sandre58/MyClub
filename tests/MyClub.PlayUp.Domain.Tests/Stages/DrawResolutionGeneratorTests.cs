@@ -86,7 +86,35 @@ public sealed class DrawResolutionGeneratorTests
     }
 
     [Fact]
-    public void RC4_preferred_same_group_is_ignored()
+    public void Soft1_preferred_feasible_resolves_with_zero_violations()
+    {
+        var entries = NewEntries(4);
+        var g1 = GroupId.New();
+        var g2 = GroupId.New();
+        var groups = new Dictionary<EntryId, GroupId>
+        {
+            [entries[0]] = g1, [entries[1]] = g1,
+            [entries[2]] = g2, [entries[3]] = g2
+        };
+        var request = PairingRequest(
+            entries,
+            [],
+            [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)],
+            new DrawConstraintContext(groups, null),
+            seed: 5);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsResolved.Should().BeTrue();
+        result.PreferredViolationsCount.Should().Be(0);
+        foreach (var pair in result.Resolution!.PairingResults)
+        {
+            groups[pair.EntryA].Should().NotBe(groups[pair.EntryB]);
+        }
+    }
+
+    [Fact]
+    public void Soft2_preferred_impossible_still_resolves_with_violations()
     {
         var entries = NewEntries(4);
         var g = GroupId.New();
@@ -100,8 +128,136 @@ public sealed class DrawResolutionGeneratorTests
 
         var result = DrawResolutionGenerator.Generate(request);
 
-        // Preferred ignored → solution exists even if all same group.
         result.IsResolved.Should().BeTrue();
+        result.PreferredViolationsCount.Should().Be(2);
+        result.PreferredViolations.Should().OnlyContain(v =>
+            v.ConstraintType == DrawConstraintType.SameGroupAvoidance);
+    }
+
+    [Fact]
+    public void Soft3_selects_minimum_preferred_cost_among_required_feasible()
+    {
+        // 4 entries: A,B same group; C,D unique groups.
+        // Required: none. Preferred: SameGroup.
+        // Cost 0 is achievable by pairing A-C and B-D (or A-D, B-C), not A-B.
+        var entries = NewEntries(4);
+        var gA = GroupId.New();
+        var gC = GroupId.New();
+        var gD = GroupId.New();
+        var groups = new Dictionary<EntryId, GroupId>
+        {
+            [entries[0]] = gA,
+            [entries[1]] = gA,
+            [entries[2]] = gC,
+            [entries[3]] = gD
+        };
+        var request = PairingRequest(
+            entries,
+            [],
+            [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)],
+            new DrawConstraintContext(groups, null),
+            seed: 17);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsResolved.Should().BeTrue();
+        result.PreferredViolationsCount.Should().Be(0);
+        result.Resolution!.PairingResults.Should().NotContain(p =>
+            (p.EntryA.Equals(entries[0]) && p.EntryB.Equals(entries[1]))
+            || (p.EntryA.Equals(entries[1]) && p.EntryB.Equals(entries[0])));
+    }
+
+    [Fact]
+    public void Soft4_same_seed_reproduces_optimal_pairing()
+    {
+        var entries = NewEntries(6);
+        var g1 = GroupId.New();
+        var g2 = GroupId.New();
+        var g3 = GroupId.New();
+        var groups = new Dictionary<EntryId, GroupId>
+        {
+            [entries[0]] = g1, [entries[1]] = g1,
+            [entries[2]] = g2, [entries[3]] = g2,
+            [entries[4]] = g3, [entries[5]] = g3
+        };
+        var constraints = new[] { new DrawConstraint(DrawConstraintType.SameGroupAvoidance) };
+        var context = new DrawConstraintContext(groups, null);
+
+        var r1 = DrawResolutionGenerator.Generate(PairingRequest(entries, [], constraints, context, seed: 44));
+        var r2 = DrawResolutionGenerator.Generate(PairingRequest(entries, [], constraints, context, seed: 44));
+
+        r1.IsResolved.Should().BeTrue();
+        r2.IsResolved.Should().BeTrue();
+        r1.PreferredViolationsCount.Should().Be(r2.PreferredViolationsCount);
+        NormalizePairs(r1.Resolution!.PairingResults).Should().Equal(NormalizePairs(r2.Resolution!.PairingResults));
+    }
+
+    [Fact]
+    public void Soft5_required_impossible_is_no_solution_regardless_of_preferred()
+    {
+        var entries = NewEntries(4);
+        var g1 = GroupId.New();
+        var groups = entries.ToDictionary(e => e, _ => g1);
+        var request = PairingRequest(
+            entries,
+            [],
+            [
+                new DrawConstraint(DrawConstraintType.SameGroupAvoidance, ConstraintEnforcement.Required),
+                new DrawConstraint(DrawConstraintType.SameTeamAvoidance)
+            ],
+            new DrawConstraintContext(groups, entries.ToDictionary(e => e, _ => TeamId.New())),
+            seed: 1);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsNoSolution.Should().BeTrue();
+        result.Resolution.Should().BeNull();
+        result.PreferredViolations.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Soft6_preferred_incomplete_map_is_invalid()
+    {
+        var entries = NewEntries(4);
+        var request = PairingRequest(
+            entries,
+            [],
+            [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)],
+            DrawConstraintContext.Empty,
+            seed: 1);
+
+        var act = () => DrawResolutionGenerator.Generate(request);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+    }
+
+    [Fact]
+    public void Soft7_fixed_preferred_violation_counts_but_does_not_block()
+    {
+        var entries = NewEntries(4);
+        var g1 = GroupId.New();
+        var g2 = GroupId.New();
+        var g3 = GroupId.New();
+        var groups = new Dictionary<EntryId, GroupId>
+        {
+            [entries[0]] = g1, [entries[1]] = g1,
+            [entries[2]] = g2, [entries[3]] = g3
+        };
+        var request = PairingRequest(
+            entries,
+            [new PairingDrawResult(entries[0], entries[1])],
+            [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)],
+            new DrawConstraintContext(groups, null),
+            seed: 8);
+
+        var result = DrawResolutionGenerator.Generate(request);
+
+        result.IsResolved.Should().BeTrue();
+        result.PreferredViolationsCount.Should().Be(1);
+        result.PreferredViolations.Should().ContainSingle(v =>
+            v.ConstraintType == DrawConstraintType.SameGroupAvoidance
+            && ((v.EntryA.Equals(entries[0]) && v.EntryB.Equals(entries[1]))
+                || (v.EntryA.Equals(entries[1]) && v.EntryB.Equals(entries[0]))));
     }
 
     [Fact]
@@ -283,6 +439,17 @@ public sealed class DrawResolutionGeneratorTests
 
     private static EntryId[] NewEntries(int count) =>
         [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+
+    private static List<(Guid First, Guid Second)> NormalizePairs(IReadOnlyList<PairingDrawResult> pairs) =>
+        [..pairs
+            .Select(p =>
+            {
+                var a = p.EntryA.Value;
+                var b = p.EntryB.Value;
+                return a.CompareTo(b) <= 0 ? (First: a, Second: b) : (First: b, Second: a);
+            })
+            .OrderBy(t => t.First)
+            .ThenBy(t => t.Second)];
 
     /// <summary>
     /// Test double — Domain may use any <see cref="IRandomSource"/>; not Application SeededRandomSource.
