@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Standing;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
@@ -184,7 +185,8 @@ public static class ApplyQualification
                 groupStandings,
                 position,
                 matches,
-                sourceStage.Regulation.StandingRules);
+                sourceStage.Regulation.StandingRules,
+                CalculateStanding.ToStandingPenalties(sourceStage.Penalties));
             derivedCache[position] = derived;
 
             return derived;

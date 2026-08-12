@@ -8,6 +8,7 @@ using MyClub.PlayUp.Application.Standing;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stage;
+using MyClub.PlayUp.Domain.Standing;
 using MatchAggregate = MyClub.PlayUp.Domain.Match.Match;
 using StandingView = MyClub.PlayUp.Domain.Standing.Standing;
 
@@ -21,6 +22,8 @@ namespace MyClub.PlayUp.Application.Stage;
 /// Duplicate candidates and an empty candidate set fail explicitly.
 /// Match statistics reuse <see cref="CalculateStanding"/> with stage standing rules
 /// (opponents outside the candidate set still count).
+/// Supply <c>Stage.Penalties</c> (mapped) so deductions stay inside <see cref="StandingCalculator"/>;
+/// Host/Application must not subtract points themselves.
 /// </remarks>
 public static class CrossGroupStandingAssembler
 {
@@ -32,13 +35,17 @@ public static class CrossGroupStandingAssembler
     /// <param name="position">1-based standing position to extract from each group.</param>
     /// <param name="matches">Stage matches used to recalculate candidate statistics.</param>
     /// <param name="standingRules">Stage standing rules.</param>
+    /// <param name="penalties">
+    /// Optional penalties from the source stage (typically <c>CalculateStanding.ToStandingPenalties(stage.Penalties)</c>).
+    /// </param>
     /// <returns>Derived standing of across-groups candidates.</returns>
     public static StandingView Build(
         IReadOnlyList<Group> groups,
         IReadOnlyDictionary<GroupId, StandingView> groupStandings,
         int position,
         IReadOnlyList<MatchAggregate> matches,
-        StandingRules standingRules)
+        StandingRules standingRules,
+        IReadOnlyList<StandingPenalty>? penalties = null)
     {
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(groupStandings);
@@ -83,6 +90,6 @@ public static class CrossGroupStandingAssembler
             ? throw new ApplicationFailureException(
                 "Across-groups qualification has no candidates.",
                 ApplicationErrorCodes.QualificationCandidatesEmpty)
-            : CalculateStanding.Execute(candidates, matches, standingRules);
+            : CalculateStanding.Execute(candidates, matches, standingRules, penalties: penalties);
     }
 }

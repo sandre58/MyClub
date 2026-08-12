@@ -23,6 +23,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Slot> _slots = [];
     private readonly List<DirectAssignment> _directAssignments = [];
     private readonly List<Draw> _draws = [];
+    private readonly List<Penalty> _penalties = [];
 
     private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
         : base(id)
@@ -82,6 +83,12 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the draws owned by this stage.
     /// </summary>
     public IReadOnlyList<Draw> Draws => _draws.AsReadOnly();
+
+    /// <summary>
+    /// Gets the standing penalties owned by this stage.
+    /// Applicable solely by presence in this collection (no Active/Revoked status).
+    /// </summary>
+    public IReadOnlyList<Penalty> Penalties => _penalties.AsReadOnly();
 
     private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
 
@@ -172,6 +179,50 @@ public sealed class Stage : AggregateRoot<StageId>
         Regulation = Regulation.WithDrawRules(drawRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
+
+    /// <summary>
+    /// Adds a standing points deduction for an entry (mutable until Completed).
+    /// </summary>
+    /// <param name="entryId">Targeted competition entry.</param>
+    /// <param name="pointsDeducted">Points to deduct (&gt; 0).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="reason">Optional free-text reason (traceability only).</param>
+    /// <returns>The created penalty.</returns>
+    public Penalty AddPenalty(EntryId entryId, int pointsDeducted, IClock clock, string? reason = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsurePenaltiesMutable();
+
+        var penalty = new Penalty(PenaltyId.New(), entryId, pointsDeducted, reason);
+        _penalties.Add(penalty);
+        Raise(new StagePenaltyAdded(Id, penalty.Id, penalty.EntryId, penalty.PointsDeducted, penalty.Reason, clock));
+        return penalty;
+    }
+
+    /// <summary>
+    /// Removes a standing penalty from this stage (delete revocation).
+    /// </summary>
+    /// <param name="penaltyId">Penalty identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemovePenalty(PenaltyId penaltyId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsurePenaltiesMutable();
+
+        var penalty = FindPenalty(penaltyId)
+            ?? throw new DomainException(
+                $"Penalty '{penaltyId}' was not found.",
+                StageErrorCodes.PenaltyNotFound);
+
+        _penalties.Remove(penalty);
+        Raise(new StagePenaltyRemoved(Id, penalty.Id, penalty.EntryId, penalty.PointsDeducted, clock));
+    }
+
+    /// <summary>
+    /// Finds a penalty by identity, or <see langword="null"/> when absent.
+    /// </summary>
+    public Penalty? FindPenalty(PenaltyId penaltyId) =>
+        _penalties.FirstOrDefault(p => p.Id.Equals(penaltyId));
 
     /// <summary>
     /// Creates a draft draw with the given resolution kind (inputs configured separately).
@@ -1250,6 +1301,16 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Standing rules cannot be modified when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsurePenaltiesMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Penalties cannot be modified when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
         }
     }

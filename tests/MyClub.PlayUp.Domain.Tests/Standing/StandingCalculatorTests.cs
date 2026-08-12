@@ -174,6 +174,142 @@ public sealed class StandingCalculatorTests
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StandingErrorCodes.ParticipantsInvalid);
     }
 
+    [Fact]
+    public void Calculate_penalty_changes_order_by_net_points()
+    {
+        // Case 1: A 6 / B 3 / C 0 sportifs ; A −4 → B first on points alone.
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.GoalDifference, RankingCriterion.GoalsFor);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 2, 0),
+            new StandingMatch(_a, _c, 1, 0),
+            new StandingMatch(_b, _c, 1, 0)
+        };
+
+        var standing = StandingCalculator.Calculate(
+            [_a, _b, _c],
+            matches,
+            rules,
+            penalties: [new StandingPenalty(_a, 4)]);
+
+        standing.Rows.Select(r => r.EntryId).Should().Equal(_b, _a, _c);
+        standing.Find(_a)!.Points.Should().Be(2);
+        standing.Find(_b)!.Points.Should().Be(3);
+        standing.Find(_a)!.Wins.Should().Be(2);
+    }
+
+    [Fact]
+    public void Calculate_sums_multiple_penalties_for_same_entry()
+    {
+        // Case 2: A has 7 sport points (2W 1D) then −1 and −3 → 3.
+        var rules = Rules(RankingCriterion.Points);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 1, 0),
+            new StandingMatch(_a, _c, 2, 0),
+            new StandingMatch(_a, _b, 1, 1)
+        };
+
+        var standing = StandingCalculator.Calculate(
+            [_a, _b, _c],
+            matches,
+            rules,
+            penalties: [new StandingPenalty(_a, 1), new StandingPenalty(_a, 3)]);
+
+        standing.Find(_a)!.Points.Should().Be(3);
+    }
+
+    [Fact]
+    public void Calculate_allows_negative_net_points()
+    {
+        // Case 3: no matches, −3 → Points = −3.
+        var rules = Rules(RankingCriterion.Points);
+
+        var standing = StandingCalculator.Calculate(
+            [_a, _b],
+            [],
+            rules,
+            penalties: [new StandingPenalty(_a, 3)]);
+
+        standing.Find(_a)!.Points.Should().Be(-3);
+        standing.Find(_b)!.Points.Should().Be(0);
+        standing.Rows[0].EntryId.Should().Be(_b);
+    }
+
+    [Fact]
+    public void Calculate_penalties_do_not_affect_head_to_head_mini_table()
+    {
+        // Case 4: A and B both 4 sport points; H2H favors A. After A −1, global Points ranks B first.
+        // A drops to 3 (tied with C who beat A); H2H among A/C then ranks C ahead — proving the
+        // global Points step applied the penalty before any H2H mini-table.
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.HeadToHead);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _c, 1, 5),
+            new StandingMatch(_b, _c, 3, 0),
+            new StandingMatch(_a, _b, 1, 0),
+            new StandingMatch(_b, _a, 0, 0)
+        };
+
+        var without = StandingCalculator.Calculate([_a, _b, _c], matches, rules);
+        without.Find(_a)!.Points.Should().Be(4);
+        without.Find(_b)!.Points.Should().Be(4);
+        without.Rows.Select(r => r.EntryId).Should().Equal(_a, _b, _c);
+
+        var withPenalty = StandingCalculator.Calculate(
+            [_a, _b, _c],
+            matches,
+            rules,
+            penalties: [new StandingPenalty(_a, 1)]);
+
+        withPenalty.Find(_a)!.Points.Should().Be(3);
+        withPenalty.Find(_b)!.Points.Should().Be(4);
+        withPenalty.Find(_c)!.Points.Should().Be(3);
+        withPenalty.Rows.Select(r => r.EntryId).Should().Equal(_b, _c, _a);
+    }
+
+    [Fact]
+    public void Calculate_home_filter_still_applies_global_penalty()
+    {
+        // Case 5: home-only points for A = 3; global penalty −3 → 0.
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.GoalDifference);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 2, 0),
+            new StandingMatch(_b, _a, 3, 0)
+        };
+
+        var standing = StandingCalculator.Calculate(
+            [_a, _b],
+            matches,
+            rules,
+            MatchFilter.Home,
+            [new StandingPenalty(_a, 3)]);
+
+        standing.Find(_a)!.Played.Should().Be(1);
+        standing.Find(_a)!.Points.Should().Be(0);
+        standing.Find(_b)!.Points.Should().Be(3);
+    }
+
+    [Fact]
+    public void Calculate_null_or_empty_penalties_match_legacy_behavior()
+    {
+        var rules = Rules(RankingCriterion.Points, RankingCriterion.GoalDifference);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 2, 0),
+            new StandingMatch(_a, _c, 1, 0),
+            new StandingMatch(_b, _c, 3, 1)
+        };
+
+        var legacy = StandingCalculator.Calculate([_a, _b, _c], matches, rules);
+        var withNull = StandingCalculator.Calculate([_a, _b, _c], matches, rules, penalties: null);
+        var withEmpty = StandingCalculator.Calculate([_a, _b, _c], matches, rules, penalties: []);
+
+        withNull.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(legacy.Rows.Select(r => (r.EntryId, r.Points)));
+        withEmpty.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(legacy.Rows.Select(r => (r.EntryId, r.Points)));
+    }
+
     private static StandingRules Rules(params RankingCriterion[] criteria) =>
         new(new PointsPolicy(3, 1, 0), criteria);
 }

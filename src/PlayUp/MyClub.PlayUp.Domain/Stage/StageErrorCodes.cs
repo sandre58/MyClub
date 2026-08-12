@@ -190,4 +190,14 @@ public static class StageErrorCodes
     /// Gets the code when a draw generation request is structurally invalid (≠ NoSolution).
     /// </summary>
     public const string DrawGenerationInvalid = "Stage.DrawGenerationInvalid";
+
+    /// <summary>
+    /// Gets the code when a standing penalty cannot be found.
+    /// </summary>
+    public const string PenaltyNotFound = "Stage.PenaltyNotFound";
+
+    /// <summary>
+    /// Gets the code when a standing penalty payload is invalid.
+    /// </summary>
+    public const string PenaltyInvalid = "Stage.PenaltyInvalid";
 }

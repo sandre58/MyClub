@@ -166,6 +166,34 @@ public sealed class CrossGroupStandingAssemblerTests
         }
     }
 
+    [Fact]
+    public void Assembler_includes_source_stage_penalties_in_derived_standing()
+    {
+        // Case 6: better third receives a stage penalty → drops behind the other third.
+        var (stage, _, thirds, standings, matches) = BuildTwoGroupsWithKnownThirds();
+        var without = CrossGroupStandingAssembler.Build(
+            stage.Groups,
+            standings,
+            position: 3,
+            matches,
+            stage.Regulation.StandingRules);
+        var leader = without.EntryAt(1)!.Value;
+        var other = thirds.Single(t => !t.Equals(leader));
+        var leaderPoints = without.Find(leader)!.Points;
+        stage.AddPenalty(leader, leaderPoints, _clock);
+
+        var withPenalty = CrossGroupStandingAssembler.Build(
+            stage.Groups,
+            standings,
+            position: 3,
+            matches,
+            stage.Regulation.StandingRules,
+            CalculateStanding.ToStandingPenalties(stage.Penalties));
+
+        withPenalty.EntryAt(1).Should().Be(other);
+        withPenalty.Find(leader)!.Points.Should().Be(0);
+    }
+
     private static StandingView ManualStanding(IReadOnlyList<(EntryId EntryId, int Position)> rows) =>
         new(
         [

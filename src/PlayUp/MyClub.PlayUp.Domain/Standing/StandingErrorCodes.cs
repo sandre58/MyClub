@@ -25,4 +25,9 @@ public static class StandingErrorCodes
     /// Gets the code when standing rules are missing.
     /// </summary>
     public const string RulesRequired = "Standing.RulesRequired";
+
+    /// <summary>
+    /// Gets the code when a standing penalty snapshot is invalid.
+    /// </summary>
+    public const string PenaltyInvalid = "Standing.PenaltyInvalid";
 }

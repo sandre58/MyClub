@@ -10,8 +10,9 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Domain.Standing;
 
 /// <summary>
-/// Pure standing calculation from participants, finished match snapshots, rules, and match filter.
+/// Pure standing calculation from participants, finished match snapshots, rules, match filter, and optional penalties.
 /// Head-to-head ranking uses the same <see cref="MatchFilter"/> as global statistics.
+/// Penalties adjust global points only (not the head-to-head mini-table).
 /// </summary>
 public static class StandingCalculator
 {
@@ -22,12 +23,17 @@ public static class StandingCalculator
     /// <param name="matches">Finished match snapshots (may include non-participants; ignored for them).</param>
     /// <param name="rules">Standing rules (points + ordered criteria).</param>
     /// <param name="filter">Which side of each match counts for each entry.</param>
+    /// <param name="penalties">
+    /// Optional global point deductions. Applied after match points and before ranking.
+    /// Host/Application must supply stage penalties here; they must not subtract points themselves.
+    /// </param>
     /// <returns>A calculated standing view.</returns>
     public static Standing Calculate(
         IReadOnlyList<EntryId> participants,
         IReadOnlyList<StandingMatch> matches,
         StandingRules rules,
-        MatchFilter filter = MatchFilter.All)
+        MatchFilter filter = MatchFilter.All,
+        IReadOnlyList<StandingPenalty>? penalties = null)
     {
         ArgumentNullException.ThrowIfNull(participants);
         ArgumentNullException.ThrowIfNull(matches);
@@ -62,6 +68,8 @@ public static class StandingCalculator
             ApplyMatch(stats, participantSet, match, filter, rules.Points);
         }
 
+        ApplyPenalties(stats, participantSet, penalties);
+
         var rows = participants
             .Select(id =>
             {
@@ -88,6 +96,27 @@ public static class StandingCalculator
         }
 
         return new Standing(result);
+    }
+
+    private static void ApplyPenalties(
+        Dictionary<EntryId, MutableStats> stats,
+        HashSet<EntryId> participants,
+        IReadOnlyList<StandingPenalty>? penalties)
+    {
+        if (penalties is null || penalties.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var penalty in penalties)
+        {
+            if (!participants.Contains(penalty.EntryId))
+            {
+                continue;
+            }
+
+            stats[penalty.EntryId].Points -= penalty.PointsDeducted;
+        }
     }
 
     private static void ApplyMatch(
