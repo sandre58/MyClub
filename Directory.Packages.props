@@ -3,6 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Domain dependencies -->
+    <PackageVersion Include="MyNet.Generator" Version="19.6.0" />
     <!-- Code analysis -->
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-preview.4.26230.115" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />

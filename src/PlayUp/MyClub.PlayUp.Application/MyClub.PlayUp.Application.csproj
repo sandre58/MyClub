@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MyNet.Generator" />
     <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
   </ItemGroup>
 

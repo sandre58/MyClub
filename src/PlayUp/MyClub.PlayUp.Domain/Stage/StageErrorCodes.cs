@@ -185,4 +185,9 @@ public static class StageErrorCodes
     /// Gets the code when a draw operation is otherwise invalid.
     /// </summary>
     public const string DrawInvalid = "Stage.DrawInvalid";
+
+    /// <summary>
+    /// Gets the code when a draw generation request is structurally invalid (≠ NoSolution).
+    /// </summary>
+    public const string DrawGenerationInvalid = "Stage.DrawGenerationInvalid";
 }

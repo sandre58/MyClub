@@ -79,4 +79,10 @@ public static class ApplicationErrorCodes
     /// Gets the code when ApplyDraw does not support the Draw resolution kind (e.g. Pairing in V1.A).
     /// </summary>
     public const string DrawKindNotSupported = "Application.DrawKindNotSupported";
+
+    /// <summary>
+    /// Gets the code when GenerateDrawResolution cannot run (e.g. not Draft, missing inputs).
+    /// Distinct from Domain <c>DrawGenerationInvalid</c> (malformed request) and <c>NoSolution</c>.
+    /// </summary>
+    public const string DrawGenerationFailure = "Application.DrawGenerationFailure";
 }

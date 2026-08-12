@@ -5,6 +5,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MyNet.Generator" />
+  </ItemGroup>
+
   <!-- Physical folders under Common / Rules organize files; they must not append namespace segments (convention B / Rider). -->
   <ItemGroup>
     <Folder Include="Common\Ids">

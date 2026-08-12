@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
+
 namespace MyClub.PlayUp.Domain.Standing;
 
 /// <summary>
@@ -33,7 +35,7 @@ public sealed class Standing
     /// </summary>
     /// <param name="entryId">Entry identity.</param>
     /// <returns>The row, or <see langword="null"/>.</returns>
-    public StandingRow? Find(Common.EntryId entryId) =>
+    public StandingRow? Find(EntryId entryId) =>
         _rows.FirstOrDefault(r => r.EntryId.Equals(entryId));
 
     /// <summary>
@@ -41,6 +43,6 @@ public sealed class Standing
     /// </summary>
     /// <param name="position">1-based position.</param>
     /// <returns>The entry identity, or <see langword="null"/>.</returns>
-    public Common.EntryId? EntryAt(int position) =>
+    public EntryId? EntryAt(int position) =>
         _rows.FirstOrDefault(r => r.Position == position)?.EntryId;
 }
