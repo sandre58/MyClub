@@ -402,8 +402,33 @@ public static class ScheduleGenerator
 
         errors.AddRange(from match in request.Matches where !referenced.Contains(match.MatchId) select Err("Match context is unused (ghost context).", match.MatchId.ToString()));
 
-        var targetSet = request.TargetMatchIds.ToHashSet();
-        errors.AddRange(from precedence in request.Precedences where !targetSet.Contains(precedence.PredecessorMatchId) && request.Existing.Assignments.All(a => !a.MatchId.Equals(precedence.PredecessorMatchId)) select Err("Precedence predecessor outside targets must be Fixed (present in Existing).", precedence.PredecessorMatchId.ToString()));
+        // Fixed ∪ Targets: every constraint endpoint must be schedulable (assigned as Fixed or searched as Target).
+        var schedulable = new HashSet<MatchId>(request.TargetMatchIds);
+        foreach (var assignment in request.Existing.Assignments)
+        {
+            schedulable.Add(assignment.MatchId);
+        }
+
+        foreach (var precedence in request.Precedences)
+        {
+            if (!schedulable.Contains(precedence.PredecessorMatchId))
+            {
+                errors.Add(Err(
+                    "Precedence predecessor must belong to Fixed ∪ Targets.",
+                    precedence.PredecessorMatchId.ToString()));
+            }
+
+            if (!schedulable.Contains(precedence.SuccessorMatchId))
+            {
+                errors.Add(Err(
+                    "Precedence successor must belong to Fixed ∪ Targets.",
+                    precedence.SuccessorMatchId.ToString()));
+            }
+        }
+
+        errors.AddRange(from sameStart in request.SameStarts where !schedulable.Contains(sameStart.MatchA) || !schedulable.Contains(sameStart.MatchB) select Err("SameStart endpoints must belong to Fixed ∪ Targets.", sameStart.MatchA.ToString(), sameStart.MatchB.ToString()));
+
+        errors.AddRange(from separation in request.MinimumSeparations where !schedulable.Contains(separation.MatchA) || !schedulable.Contains(separation.MatchB) select Err("MinimumSeparation endpoints must belong to Fixed ∪ Targets.", separation.MatchA.ToString(), separation.MatchB.ToString()));
 
         if (HasPrecedenceCycle(request.Precedences))
         {

@@ -70,12 +70,116 @@ public sealed class ScheduleGeneratorTests
     }
 
     [Fact]
-    public void Validation_horizon_start_greater_than_end_throws_on_vo()
+    public void Validation_horizon_start_greater_than_end_throws_on_vo_outside_result_trichotomy()
     {
+        // A17 métier: H0 > H1 → InvalidRequest. Architecture: Horizon VO rejects construction
+        // (DomainException), so Generate never sees an inverted horizon — same pattern as Duration/Granularity.
         var act = () => new Horizon(H0.AddHours(1), H0);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(SchedulingErrorCodes.HorizonInvalid);
+    }
+
+    [Fact]
+    public void Validation_precedence_successor_dangling_is_invalid()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var resource = ResourceId.New();
+        var request = Request(
+            [Match(a), Match(b)],
+            [Resource(resource)],
+            [a],
+            precedences: [new Precedence(a, b, 0)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsInvalidRequest.Should().BeTrue();
+        result.Errors.Should().Contain(e =>
+            e.Code == SchedulingErrorCodes.InvalidRequest
+            && e.Message.Contains("Fixed ∪ Targets", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validation_precedence_predecessor_dangling_is_invalid()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var resource = ResourceId.New();
+        var request = Request(
+            [Match(a), Match(b)],
+            [Resource(resource)],
+            [b],
+            precedences: [new Precedence(a, b, 0)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsInvalidRequest.Should().BeTrue();
+        result.Errors.Should().Contain(e =>
+            e.Code == SchedulingErrorCodes.InvalidRequest
+            && e.Message.Contains("Fixed ∪ Targets", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validation_same_start_dangling_endpoint_is_invalid()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var resource = ResourceId.New();
+        var request = Request(
+            [Match(a), Match(b)],
+            [Resource(resource)],
+            [a],
+            sameStarts: [new SameStart(a, b)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsInvalidRequest.Should().BeTrue();
+        result.Errors.Should().Contain(e =>
+            e.Code == SchedulingErrorCodes.InvalidRequest
+            && e.Message.Contains("SameStart", StringComparison.Ordinal)
+            && e.Message.Contains("Fixed ∪ Targets", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validation_minimum_separation_dangling_endpoint_is_invalid()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var resource = ResourceId.New();
+        var request = Request(
+            [Match(a), Match(b)],
+            [Resource(resource)],
+            [a],
+            separations: [new MinimumSeparation(a, b, 0)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsInvalidRequest.Should().BeTrue();
+        result.Errors.Should().Contain(e =>
+            e.Code == SchedulingErrorCodes.InvalidRequest
+            && e.Message.Contains("MinimumSeparation", StringComparison.Ordinal)
+            && e.Message.Contains("Fixed ∪ Targets", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validation_constraint_endpoint_in_matches_but_neither_target_nor_existing_is_invalid()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var resource = ResourceId.New();
+
+        // B is in Matches (not ghost) but neither Target nor Existing — classic dangling SameStart partner.
+        var request = Request(
+            [Match(a), Match(b)],
+            [Resource(resource)],
+            [a],
+            sameStarts: [new SameStart(a, b)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsInvalidRequest.Should().BeTrue();
+        result.IsSuccess.Should().BeFalse();
     }
 
     [Fact]
@@ -571,6 +675,113 @@ public sealed class ScheduleGeneratorTests
         request.Existing.Assignments.Should().ContainSingle()
             .Which.Should().Be(existingAssignment);
         request.TargetMatchIds.Should().Equal(matchId);
+    }
+
+    [Fact]
+    public void SameStart_first_start_impossible_second_succeeds_after_undo()
+    {
+        // Fixed blocks R2 at H0; A@R1/H0 binds SameStart → B has no free resource at H0;
+        // Undo then A@R1/H0+60 → B@R2/H0+60 succeeds.
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var blocker = MatchId.New();
+        var r1 = ResourceId.New();
+        var r2 = ResourceId.New();
+        var existing = ScheduleOf(Assignment(blocker, r2, H0));
+        var request = Request(
+            [Match(a), Match(b), Match(blocker)],
+            [Resource(r1, availabilityMinutes: 120), Resource(r2, availabilityMinutes: 120)],
+            [a, b],
+            existing,
+            horizon: HorizonMinutes(120),
+            granularity: Granularity(60),
+            sameStarts: [new SameStart(a, b)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Schedule!.TryGet(a, out var aa).Should().BeTrue();
+        result.Schedule.TryGet(b, out var bb).Should().BeTrue();
+        aa.Start.Should().Be(H0.AddMinutes(60));
+        bb.Start.Should().Be(H0.AddMinutes(60));
+        aa.ResourceId.Should().Be(r1);
+        bb.ResourceId.Should().Be(r2);
+    }
+
+    [Fact]
+    public void MinimumSeparation_exact_15_minutes_is_satisfied()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var r1 = ResourceId.New();
+        var r2 = ResourceId.New();
+        var request = Request(
+            [
+                Match(a, durationMinutes: 60, imposedStart: H0),
+                Match(b, durationMinutes: 60, imposedStart: H0.AddMinutes(75))
+            ],
+            [Resource(r1), Resource(r2)],
+            [a, b],
+            horizon: HorizonMinutes(180),
+            separations: [new MinimumSeparation(a, b, 15)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsSuccess.Should().BeTrue();
+
+        // A.End + 15 == B.Start (interval semantics, not |ΔStart|)
+        result.Schedule!.TryGet(a, out var aa).Should().BeTrue();
+        result.Schedule.TryGet(b, out var bb).Should().BeTrue();
+        bb.Start.Should().Be(aa.Start.AddMinutes(75));
+    }
+
+    [Fact]
+    public void MinimumSeparation_14_minutes_is_violated_yielding_no_solution()
+    {
+        var a = MatchId.New();
+        var b = MatchId.New();
+        var r1 = ResourceId.New();
+        var r2 = ResourceId.New();
+        var request = Request(
+            [
+                Match(a, durationMinutes: 60, imposedStart: H0),
+                Match(b, durationMinutes: 60, imposedStart: H0.AddMinutes(74))
+            ],
+            [Resource(r1), Resource(r2)],
+            [a, b],
+            horizon: HorizonMinutes(180),
+            separations: [new MinimumSeparation(a, b, 15)]);
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsNoSolution.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Search_only_last_resource_is_valid()
+    {
+        var target = MatchId.New();
+        var f1 = MatchId.New();
+        var f2 = MatchId.New();
+        var r1 = ResourceId.New();
+        var r2 = ResourceId.New();
+        var r3 = ResourceId.New();
+        var existing = ScheduleOf(
+            Assignment(f1, r1, H0),
+            Assignment(f2, r2, H0));
+        var request = Request(
+            [Match(target), Match(f1), Match(f2)],
+            [Resource(r1), Resource(r2), Resource(r3)],
+            [target],
+            existing,
+            horizon: HorizonMinutes(60));
+
+        var result = ScheduleGenerator.Generate(request);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Schedule!.TryGet(target, out var assignment).Should().BeTrue();
+        assignment.ResourceId.Should().Be(r3);
+        assignment.Start.Should().Be(H0);
     }
 
     [Fact]

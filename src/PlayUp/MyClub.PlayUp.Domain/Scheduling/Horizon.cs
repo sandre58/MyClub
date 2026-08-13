@@ -9,7 +9,13 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Scheduling;
 
 /// <summary>
-/// Global closed scheduling horizon represented as half-open <c>[Start, End)</c>.
+/// Global scheduling horizon represented as half-open <c>[Start, End)</c>.
+/// <para>
+/// A17 métier: <c>H0 &gt; H1</c> ⇒ InvalidRequest. Mechanically this VO rejects
+/// <c>start &gt; end</c> with <see cref="DomainException"/> (same pattern as other Scheduling VOs),
+/// so that case never reaches <see cref="ScheduleGenerator.Generate"/> / <see cref="SchedulingResult"/>.
+/// <c>H0 == H1</c> is a valid empty horizon (domains empty when Duration &gt; 0).
+/// </para>
 /// </summary>
 public sealed record Horizon
 {
@@ -18,6 +24,7 @@ public sealed record Horizon
     /// </summary>
     /// <param name="start">Inclusive horizon start.</param>
     /// <param name="end">Exclusive horizon end (must be greater than or equal to <paramref name="start"/>).</param>
+    /// <exception cref="DomainException">Thrown when <paramref name="start"/> is greater than <paramref name="end"/> (A17; outside <see cref="SchedulingResult"/> trichotomy).</exception>
     public Horizon(DateTimeOffset start, DateTimeOffset end)
     {
         if (start > end)
