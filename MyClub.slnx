@@ -11,7 +11,7 @@
   <Folder Name="/build/">
     <File Path=".editorconfig" />
     <File Path=".runsettings" />
-    <File Path="Directory.Build.local.props.example" />
+    <File Path="Directory.Build.local.props" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
@@ -19,6 +19,7 @@
     <File Path="NuGet.config" />
     <File Path="build/code-analysis.props" />
     <File Path="build/dependencies.props" />
+    <File Path="build/local-mynet-feed.props" />
     <File Path="build/local-nuget-pack.props" />
     <File Path="build/package.props" />
     <File Path="build/repo.props" />

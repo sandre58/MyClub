@@ -137,7 +137,7 @@ public sealed class MatchLifecycleTests
         // Assert
         match.Status.Should().Be(MatchStatus.Finished);
         match.Result.Should().Be(result);
-        match.Result!.ExtraTimePlayed.Should().BeTrue();
+        match.Result.ExtraTimePlayed.Should().BeTrue();
         match.Result.PenaltyShootoutScore.Should().Be(new PenaltyShootoutScore(5, 4));
         var finished = match.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<MatchFinished>().Subject;
         finished.MatchId.Should().Be(match.Id);

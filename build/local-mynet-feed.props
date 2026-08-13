@@ -1,0 +1,12 @@
+<Project>
+    <!--
+      Local MyNet feed: opt in via Directory.Build.local.props (copy from Directory.Build.local.props.example).
+      Requires ../MyNet/packages (see MyNet/build/local-nuget-pack.props).
+    -->
+    <PropertyGroup>
+        <MyNetLocalVersion>0.0.0-local</MyNetLocalVersion>
+        <MyNetVersion>$(MyNetLocalVersion)</MyNetVersion>
+        <MyNetLocalFeed>$([MSBuild]::NormalizeDirectory($(MSBuildThisFileDirectory), '..', '..', 'MyNet', 'packages'))</MyNetLocalFeed>
+        <RestoreAdditionalProjectSources>$(MyNetLocalFeed)</RestoreAdditionalProjectSources>
+    </PropertyGroup>
+</Project>

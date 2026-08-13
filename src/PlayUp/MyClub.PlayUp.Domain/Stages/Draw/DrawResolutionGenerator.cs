@@ -393,7 +393,7 @@ public static class DrawResolutionGenerator
         var fixedBySlot = request.FixedSlots.ToDictionary(f => f.SlotKey, f => f.EntryId, StringComparer.Ordinal);
         var fixedEntries = request.FixedSlots.Select(f => f.EntryId).ToHashSet();
         var freeTargets = targets.Where(t => !fixedBySlot.ContainsKey(t)).ToList();
-        var freeEntries = Shuffle(request.Entries.Where(e => !fixedEntries.Contains(e)).ToList(), request.RandomSource);
+        var freeEntries = Shuffle([.. request.Entries.Where(e => !fixedEntries.Contains(e))], request.RandomSource);
 
         var assignment = new Dictionary<string, EntryId>(StringComparer.Ordinal);
         foreach (var fixedPlacement in request.FixedSlots)
@@ -423,7 +423,7 @@ public static class DrawResolutionGenerator
         }
 
         var target = freeTargets[index];
-        var candidates = Shuffle(freeEntries.Where(e => !assignment.ContainsValue(e)).ToList(), random);
+        var candidates = Shuffle([.. freeEntries.Where(e => !assignment.ContainsValue(e))], random);
         foreach (var entry in candidates)
         {
             assignment[target] = entry;
@@ -461,20 +461,18 @@ public static class DrawResolutionGenerator
             usedEntries.Add(fixedPlacement.EntryId);
             occupiedPots[fixedPlacement.GroupId].Add(pots[fixedPlacement.EntryId]);
             counts[fixedPlacement.GroupId]++;
-            if (associationMap is not null && maxSameAssociation is not null)
+            if (associationMap is null || maxSameAssociation is null) continue;
+            var associationId = associationMap[fixedPlacement.EntryId];
+            IncrementAssociation(associationCounts[fixedPlacement.GroupId], associationId);
+            if (associationCounts[fixedPlacement.GroupId][associationId] > maxSameAssociation.Value)
             {
-                var associationId = associationMap[fixedPlacement.EntryId];
-                IncrementAssociation(associationCounts[fixedPlacement.GroupId], associationId);
-                if (associationCounts[fixedPlacement.GroupId][associationId] > maxSameAssociation.Value)
-                {
-                    // Fixed are structurally valid but already incompatible with Required Max → NoSolution.
-                    return DrawGenerationResult.NoSolution();
-                }
+                // Fixed are structurally valid but already incompatible with Required Max → NoSolution.
+                return DrawGenerationResult.NoSolution();
             }
         }
 
         var remaining = Shuffle(
-            request.Entries.Where(e => !usedEntries.Contains(e)).ToList(),
+            [.. request.Entries.Where(e => !usedEntries.Contains(e))],
             request.RandomSource);
 
         return !TryAssignGroups(
@@ -515,12 +513,13 @@ public static class DrawResolutionGenerator
         var pot = pots[entry];
         var associationId = associationMap?[entry];
         var candidates = Shuffle(
-            groupTargets
-                .Where(g =>
-                    counts[g] < capacity
-                    && !occupiedPots[g].Contains(pot)
-                    && IsAssociationAllowed(associationCounts[g], associationId, maxSameAssociation))
-                .ToList(),
+            [
+                .. groupTargets
+                    .Where(g =>
+                        counts[g] < capacity
+                        && !occupiedPots[g].Contains(pot)
+                        && IsAssociationAllowed(associationCounts[g], associationId, maxSameAssociation))
+            ],
             random);
 
         foreach (var groupId in candidates)
@@ -617,7 +616,7 @@ public static class DrawResolutionGenerator
                 violations);
         }
 
-        var remaining = Shuffle(request.Entries.Where(e => !used.Contains(e)).ToList(), request.RandomSource);
+        var remaining = Shuffle([.. request.Entries.Where(e => !used.Contains(e))], request.RandomSource);
         List<PairingDrawResult>? bestPairings = null;
         List<PreferredViolation>? bestViolations = null;
         var bestCost = int.MaxValue;
@@ -667,7 +666,7 @@ public static class DrawResolutionGenerator
         }
 
         var left = remaining[0];
-        var partners = Shuffle(remaining.Skip(1).ToList(), random);
+        var partners = Shuffle([.. remaining.Skip(1)], random);
         foreach (var right in partners.Where(right => IsPairAllowed(left, right, required, context)))
         {
             pairings.Add(new PairingDrawResult(left, right));

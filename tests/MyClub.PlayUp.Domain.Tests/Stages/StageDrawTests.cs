@@ -321,7 +321,7 @@ public sealed class StageDrawTests
 
         inputs.SeedMap.Should().NotBeNull();
         inputs.PotMembership.Should().BeNull();
-        inputs.SeedMap!.Seeds[a].Should().Be(1);
+        inputs.SeedMap.Seeds[a].Should().Be(1);
     }
 
     [Fact]
@@ -334,7 +334,7 @@ public sealed class StageDrawTests
 
         inputs.PotMembership.Should().NotBeNull();
         inputs.SeedMap.Should().BeNull();
-        inputs.PotMembership!.Pots[a].Should().Be(1);
+        inputs.PotMembership.Pots[a].Should().Be(1);
     }
 
     [Fact]

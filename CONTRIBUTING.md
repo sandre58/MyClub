@@ -55,6 +55,17 @@ Central Package Management via [`Directory.Packages.props`](Directory.Packages.p
 - Shared test packages: [`build/dependencies.props`](build/dependencies.props).
 - Analyzers: [`build/code-analysis.props`](build/code-analysis.props).
 
+### Local MyNet packages (optional)
+
+By default (and in CI), MyNet packages are restored from **nuget.org** at the version pinned by `MyNetVersion` in `Directory.Packages.props`.
+
+To iterate against a sibling MyNet checkout (`../MyNet`) without publishing:
+
+1. In **MyNet**, create `Directory.Build.local.props` that imports `build/local-nuget-pack.props`, then `dotnet build` (writes `0.0.0-local` packages to `MyNet/packages`).
+2. In **MyClub**, copy [`Directory.Build.local.props.example`](Directory.Build.local.props.example) to `Directory.Build.local.props` (gitignored), then `dotnet restore` / `dotnet build`.
+
+Without `Directory.Build.local.props`, behaviour matches CI (published NuGets only).
+
 ## Testing
 
 - Place tests in `tests/` with project names ending in `Tests`.

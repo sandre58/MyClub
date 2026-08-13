@@ -2,9 +2,16 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
+  <!-- Versions -->
+  <PropertyGroup>
+    <MyNetVersion Condition="'$(MyNetVersion)' == ''">19.6.0</MyNetVersion>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
+
   <ItemGroup>
     <!-- Domain dependencies -->
-    <PackageVersion Include="MyNet.Generator" Version="19.6.0" />
+    <PackageVersion Include="MyNet.Generator" Version="$(MyNetVersion)" />
     <!-- Code analysis -->
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-preview.7.26381.103" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
