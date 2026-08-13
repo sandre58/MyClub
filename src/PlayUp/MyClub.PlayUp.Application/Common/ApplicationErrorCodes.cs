@@ -85,4 +85,16 @@ public static class ApplicationErrorCodes
     /// Distinct from Domain <c>DrawGenerationInvalid</c> (malformed request) and <c>NoSolution</c>.
     /// </summary>
     public const string DrawGenerationFailure = "Application.DrawGenerationFailure";
+
+    /// <summary>
+    /// Gets the code when GenerateSchedule cannot run (e.g. target match not attached to the Stage).
+    /// Distinct from Domain <c>SchedulingResult.InvalidRequest</c> / <c>NoSolution</c>.
+    /// </summary>
+    public const string ScheduleGenerationFailure = "Application.ScheduleGenerationFailure";
+
+    /// <summary>
+    /// Gets the code when ApplySchedule cannot run because the result is not Success
+    /// (NoSolution or InvalidRequest). Distinct from Domain placement invariants.
+    /// </summary>
+    public const string ScheduleApplyFailure = "Application.ScheduleApplyFailure";
 }

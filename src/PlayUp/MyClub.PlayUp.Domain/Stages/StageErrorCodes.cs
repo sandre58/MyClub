@@ -200,4 +200,10 @@ public static class StageErrorCodes
     /// Gets the code when a standing penalty payload is invalid.
     /// </summary>
     public const string PenaltyInvalid = "Stage.PenaltyInvalid";
+
+    /// <summary>
+    /// Gets the code when match placements in an Apply batch are invalid
+    /// (duplicates, missing target, Fixed divergence, unattached match).
+    /// </summary>
+    public const string MatchPlacementInvalid = "Stage.MatchPlacementInvalid";
 }

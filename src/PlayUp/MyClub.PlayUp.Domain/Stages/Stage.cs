@@ -24,6 +24,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<DirectAssignment> _directAssignments = [];
     private readonly List<Draw> _draws = [];
     private readonly List<Penalty> _penalties = [];
+    private readonly List<MatchPlacement> _matchPlacements = [];
 
     private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
         : base(id)
@@ -89,6 +90,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Applicable solely by presence in this collection (no Active/Revoked status).
     /// </summary>
     public IReadOnlyList<Penalty> Penalties => _penalties.AsReadOnly();
+
+    /// <summary>
+    /// Gets materialized calendar placements (one per attached <see cref="MatchId"/>).
+    /// </summary>
+    public IReadOnlyList<MatchPlacement> MatchPlacements => _matchPlacements.AsReadOnly();
 
     private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
 
@@ -1099,16 +1105,19 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
-        _ = GetFixture(fixtureId);
+        var fixture = GetFixture(fixtureId);
+        var matchIds = fixture.MatchIds.ToArray();
 
         DemoteToDraftIfReady();
         if (_rounds.Any(round => round.RemoveFixture(fixtureId)))
         {
+            ClearMatchPlacements(matchIds);
             Raise(new StageFixtureRemoved(Id, fixtureId, clock));
             return;
         }
 
         if (!_matchdays.Any(matchday => matchday.RemoveFixture(fixtureId))) return;
+        ClearMatchPlacements(matchIds);
         Raise(new StageFixtureRemoved(Id, fixtureId, clock));
     }
 
@@ -1165,7 +1174,140 @@ public sealed class Stage : AggregateRoot<StageId>
 
         DemoteToDraftIfReady();
         fixture.DetachMatch(matchId);
+        ClearMatchPlacement(matchId);
         Raise(new StageMatchDetached(Id, fixtureId, matchId, clock));
+    }
+
+    /// <summary>
+    /// Materializes calendar placements from a successful schedule resolution.
+    /// Prefights all invariants, then upserts <paramref name="targets"/> atomically.
+    /// Placements outside <paramref name="targets"/> (Fixed) are left unchanged;
+    /// if present in <paramref name="placements"/> they must match the current Stage state.
+    /// Idempotent when the same target placements are reapplied.
+    /// Does not re-run scheduling constraints (authority remains <c>ScheduleGenerator</c>).
+    /// </summary>
+    /// <param name="placements">Assignments from a Success schedule (typically Fixed ∪ Targets).</param>
+    /// <param name="targets">Match identities authorized for write/replace.</param>
+    public void ApplyMatchPlacements(
+        IReadOnlyList<MatchPlacement> placements,
+        IReadOnlyList<MatchId> targets)
+    {
+        ArgumentNullException.ThrowIfNull(placements);
+        ArgumentNullException.ThrowIfNull(targets);
+
+        if (targets.Distinct().Count() != targets.Count)
+        {
+            throw new DomainException(
+                "Target match identities cannot contain duplicates.",
+                StageErrorCodes.MatchPlacementInvalid);
+        }
+
+        if (placements.Select(p => p.MatchId).Distinct().Count() != placements.Count)
+        {
+            throw new DomainException(
+                "Schedule placements must have unique match identities.",
+                StageErrorCodes.MatchPlacementInvalid);
+        }
+
+        var byMatchId = placements.ToDictionary(p => p.MatchId);
+        var targetSet = targets.ToHashSet();
+
+        foreach (var targetId in targets)
+        {
+            if (!byMatchId.ContainsKey(targetId))
+            {
+                throw new DomainException(
+                    $"Target match '{targetId}' is missing from the schedule placements.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+
+            if (!HasMatch(targetId))
+            {
+                throw new DomainException(
+                    $"Match '{targetId}' is not attached to this stage.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+        }
+
+        foreach (var placement in placements)
+        {
+            if (targetSet.Contains(placement.MatchId))
+            {
+                continue;
+            }
+
+            // Fixed claim inside the schedule payload.
+            if (!HasMatch(placement.MatchId))
+            {
+                throw new DomainException(
+                    $"Fixed match '{placement.MatchId}' is not attached to this stage.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+
+            var current = FindMatchPlacement(placement.MatchId);
+            if (current is null
+                || current.Start != placement.Start
+                || !current.ResourceId.Equals(placement.ResourceId))
+            {
+                throw new DomainException(
+                    $"Fixed placement for match '{placement.MatchId}' diverges from the stage.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+        }
+
+        foreach (var targetId in targets)
+        {
+            UpsertMatchPlacement(byMatchId[targetId]);
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the materialized placement for a match.
+    /// </summary>
+    public bool TryGetMatchPlacement(MatchId matchId, out MatchPlacement placement)
+    {
+        var found = FindMatchPlacement(matchId);
+        if (found is null)
+        {
+            placement = null!;
+            return false;
+        }
+
+        placement = found;
+        return true;
+    }
+
+    private MatchPlacement? FindMatchPlacement(MatchId matchId) =>
+        _matchPlacements.Find(p => p.MatchId.Equals(matchId));
+
+    private void UpsertMatchPlacement(MatchPlacement placement)
+    {
+        var index = _matchPlacements.FindIndex(p => p.MatchId.Equals(placement.MatchId));
+        if (index < 0)
+        {
+            _matchPlacements.Add(placement);
+        }
+        else
+        {
+            _matchPlacements[index] = placement;
+        }
+    }
+
+    private void ClearMatchPlacement(MatchId matchId)
+    {
+        var index = _matchPlacements.FindIndex(p => p.MatchId.Equals(matchId));
+        if (index >= 0)
+        {
+            _matchPlacements.RemoveAt(index);
+        }
+    }
+
+    private void ClearMatchPlacements(IEnumerable<MatchId> matchIds)
+    {
+        foreach (var matchId in matchIds)
+        {
+            ClearMatchPlacement(matchId);
+        }
     }
 
     /// <summary>
