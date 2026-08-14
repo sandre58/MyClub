@@ -27,6 +27,16 @@ public static class ApplicationErrorCodes
     public const string StageNotFound = "Application.StageNotFound";
 
     /// <summary>
+    /// Gets the code when a competition identity cannot be loaded from persistence.
+    /// </summary>
+    public const string CompetitionNotFound = "Application.CompetitionNotFound";
+
+    /// <summary>
+    /// Gets the code when a match identity cannot be loaded from persistence.
+    /// </summary>
+    public const string MatchNotFound = "Application.MatchNotFound";
+
+    /// <summary>
     /// Gets the code when WhoFeeds validation fails before Prepare.
     /// </summary>
     public const string SlotFeedsInvalid = "Application.SlotFeedsInvalid";
