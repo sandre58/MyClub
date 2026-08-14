@@ -21,7 +21,7 @@ namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
 public static class PlayUpInfrastructureServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds the Play'up DbContext (PostgreSQL), ordered-collection interceptor, competition repository, unit of work, and system clock.
+    /// Adds the Play'up DbContext (PostgreSQL), ordered-collection interceptor, competition and match repositories, unit of work, and system clock.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The PostgreSQL connection string.</param>
@@ -39,6 +39,7 @@ public static class PlayUpInfrastructureServiceCollectionExtensions
         });
         services.AddScoped<IUnitOfWork>(static sp => sp.GetRequiredService<PlayUpDbContext>());
         services.AddScoped<ICompetitionRepository, CompetitionRepository>();
+        services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddSingleton<IClock, SystemClock>();
 
         return services;

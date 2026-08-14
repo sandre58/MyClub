@@ -31,11 +31,13 @@ public sealed class PlayUpInfrastructureServiceCollectionExtensionsTests
 
         var context = scoped.GetRequiredService<PlayUpDbContext>();
         var unitOfWork = scoped.GetRequiredService<IUnitOfWork>();
-        var repository = scoped.GetRequiredService<ICompetitionRepository>();
+        var competitionRepository = scoped.GetRequiredService<ICompetitionRepository>();
+        var matchRepository = scoped.GetRequiredService<IMatchRepository>();
         var clock = scoped.GetRequiredService<IClock>();
 
         unitOfWork.Should().BeSameAs(context);
-        repository.Should().NotBeNull();
+        competitionRepository.Should().NotBeNull();
+        matchRepository.Should().NotBeNull();
         clock.Should().BeOfType<SystemClock>();
         context.Database.ProviderName.Should().Be("Npgsql.EntityFrameworkCore.PostgreSQL");
 

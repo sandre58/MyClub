@@ -25,7 +25,7 @@ public sealed class PlayUpDbContextTests
         context.Model.GetEntityTypes()
             .Select(entityType => entityType.GetTableName())
             .Should()
-            .BeEquivalentTo("competitions", "competition_entries", "competition_stage_refs");
+            .BeEquivalentTo("competitions", "competition_entries", "competition_stage_refs", "matches");
         context.Database.ProviderName.Should().Be("Npgsql.EntityFrameworkCore.PostgreSQL");
 
         var stageRefs = context.Model.GetEntityTypes()
@@ -39,5 +39,14 @@ public sealed class PlayUpDbContextTests
         entries.GetIndexes().Should().ContainSingle(index => index.IsUnique);
         entries.GetForeignKeys().Should().ContainSingle()
             .Which.PrincipalEntityType.GetTableName().Should().Be("competitions");
+
+        var matches = context.Model.GetEntityTypes()
+            .Single(entityType => entityType.GetTableName() == "matches");
+        matches.GetForeignKeys().Should().ContainSingle()
+            .Which.DeleteBehavior.Should().Be(DeleteBehavior.Restrict);
+        matches.GetForeignKeys().Single().PrincipalEntityType.GetTableName().Should().Be("competitions");
+        matches.FindProperty("StageId")!.IsForeignKey().Should().BeFalse();
+        matches.GetIndexes().Should().ContainSingle(index => !index.IsUnique)
+            .Which.Properties.Select(property => property.Name).Should().Equal("CompetitionId");
     }
 }
