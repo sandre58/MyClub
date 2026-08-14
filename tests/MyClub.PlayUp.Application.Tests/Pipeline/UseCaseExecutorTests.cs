@@ -29,24 +29,30 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task PrepareStageAsync_loads_executes_and_saves_onceAsync()
     {
-        var stage = CreateDraftChampionshipStage();
+        var scenario = CreateDraftChampionshipOnCompetition();
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         stages
-            .Setup(repository => repository.GetByIdAsync(stage.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(stage);
+            .Setup(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Stage);
+        competitions
+            .Setup(repository => repository.GetByIdAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Competition);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
-        await executor.PrepareStageAsync(stage.Id);
+        await executor.PrepareStageAsync(scenario.Stage.Id);
 
-        stage.Status.Should().Be(StageStatus.Ready);
-        stages.Verify(repository => repository.GetByIdAsync(stage.Id, It.IsAny<CancellationToken>()), Times.Once);
+        scenario.Stage.Status.Should().Be(StageStatus.Ready);
+        stages.Verify(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        competitions.Verify(
+            repository => repository.GetByIdAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()),
+            Times.Once);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -74,9 +80,9 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task PrepareStageAsync_when_domain_rejects_does_not_saveAsync()
     {
-        var stage = CreateDraftChampionshipStage();
-        PrepareStage.Execute(stage, [stage], _clock);
-        stage.Status.Should().Be(StageStatus.Ready);
+        var scenario = CreateDraftChampionshipOnCompetition();
+        PrepareStage.Execute(scenario.Stage, [scenario.Stage], _clock);
+        scenario.Stage.Status.Should().Be(StageStatus.Ready);
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
@@ -84,15 +90,66 @@ public sealed class UseCaseExecutorTests
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         stages
-            .Setup(repository => repository.GetByIdAsync(stage.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(stage);
+            .Setup(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Stage);
+        competitions
+            .Setup(repository => repository.GetByIdAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Competition);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
-        var act = async () => await executor.PrepareStageAsync(stage.Id);
+        var act = async () => await executor.PrepareStageAsync(scenario.Stage.Id);
 
         var exception = await act.Should().ThrowAsync<DomainException>();
         exception.Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PrepareStageAsync_loads_multi_stage_for_cross_stage_progressionAsync()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var fixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock);
+
+        var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        semi.AddSlot("SF1-A", _clock);
+
+        competition.AddStage(quarter.Id, _clock);
+        competition.AddStage(semi.Id, _clock);
+
+        quarter.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(semi.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages.Setup(repository => repository.GetByIdAsync(quarter.Id, It.IsAny<CancellationToken>())).ReturnsAsync(quarter);
+        stages.Setup(repository => repository.GetByIdAsync(semi.Id, It.IsAny<CancellationToken>())).ReturnsAsync(semi);
+        competitions
+            .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition);
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        await executor.PrepareStageAsync(quarter.Id);
+
+        quarter.Status.Should().Be(StageStatus.Ready);
+        stages.Verify(repository => repository.GetByIdAsync(quarter.Id, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        stages.Verify(repository => repository.GetByIdAsync(semi.Id, It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -458,6 +515,15 @@ public sealed class UseCaseExecutorTests
         return stage;
     }
 
+    private ChampionshipScenario CreateDraftChampionshipOnCompetition()
+    {
+        var competition = Competition.Create(new CompetitionName("U15 League"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        return new ChampionshipScenario(competition, stage);
+    }
+
     private (Stage Stage, DrawId DrawId) CreateReadyToPublishSlotDraw()
     {
         var stage = CreateDraftChampionshipStage();
@@ -525,6 +591,8 @@ public sealed class UseCaseExecutorTests
 
         return new CupProgressionScenario(competition, source, destination, fixture.Id, match, home);
     }
+
+    private sealed record ChampionshipScenario(Competition Competition, Stage Stage);
 
     private sealed record CupProgressionScenario(
         Competition Competition,

@@ -19,6 +19,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// </summary>
 /// <remarks>
 /// Loads aggregates via ports, runs the static use case, then commits once via <see cref="IUnitOfWork"/>.
+/// PrepareStage and ApplyProgressionOutcome load all competition stages (cross-stage destinations / feeds).
 /// Does not know HTTP, EF Core, or Domain Event dispatch. Not a CQRS mediator — named methods only;
 /// do not introduce generic dispatch without a demonstrated need.
 /// Initializes a new instance of the <see cref="UseCaseExecutor"/> class.
@@ -49,8 +50,31 @@ public sealed class UseCaseExecutor(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        // R1 mono-stage: competition stage list is the target alone (no slots / cross-stage feeds).
-        PrepareStage.Execute(stage, [stage], clock);
+        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{stage.CompetitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var competitionStages = new List<Stage>(competition.StageIds.Count);
+        foreach (var competitionStageId in competition.StageIds)
+        {
+            var loaded = await stages.GetByIdAsync(competitionStageId, cancellationToken).ConfigureAwait(false)
+                ?? throw new ApplicationFailureException(
+                    $"Stage '{competitionStageId}' was not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            competitionStages.Add(loaded);
+        }
+
+        if (!competitionStages.Exists(candidate => candidate.Id.Equals(stageId)))
+        {
+            throw new ApplicationFailureException(
+                $"Stage '{stageId}' is not part of the competition stages list.",
+                ApplicationErrorCodes.StageNotInCompetition);
+        }
+
+        // Prefer the tracked instance from the competition list (same identity as StageIds load).
+        var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
+        PrepareStage.Execute(target, competitionStages, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

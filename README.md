@@ -55,7 +55,7 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Host: PrepareStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch) |
+| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Host R2 vertical proven: Draw → Match → Result → Progression) |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned |
 | **Train'in** | Training session design and follow-up. | Future |
 
@@ -67,7 +67,7 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs (`PrepareStage`, `ApplyProgressionOutcome`, `PublishDraw`, `ApplyDraw`, `StartMatch`, `FinishMatch`).
+**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs (`PrepareStage`, `PublishDraw`, `ApplyDraw`, `StartMatch`, `FinishMatch`, `ApplyProgressionOutcome`). Host R2 vertical proven (HTTP + PostgreSQL): `PublishDraw` → `ApplyDraw` → `Match.Start` → `Match.Finish` → `ApplyProgressionOutcome` → destination Slot.
 
 ```text
 src/
@@ -103,7 +103,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 | :--- | :----- |
 | Runtime | .NET 10 LTS |
 | Style | DDD, Modular Monolith |
-| API | ASP.NET Core Minimal APIs (Host; PrepareStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch) |
+| API | ASP.NET Core Minimal APIs (Host R2 vertical: Prepare → PublishDraw → ApplyDraw → Start/Finish Match → ApplyProgression) |
 | Persistence | EF Core 10 + PostgreSQL (Competition, Stage, Match; Testcontainers integration tests) |
 | Tests | xUnit, FluentAssertions, Moq (via Central Package Management) |
 | Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
