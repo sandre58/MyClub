@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
 /// Minimal persistence orchestration for Application use cases
-/// (named methods: PrepareStage, ApplyProgressionOutcome, PublishDraw, StartMatch, FinishMatch).
+/// (named methods: PrepareStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch).
 /// </summary>
 /// <remarks>
 /// Loads aggregates via ports, runs the static use case, then commits once via <see cref="IUnitOfWork"/>.
@@ -133,6 +133,46 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Loads a stage, runs <see cref="ApplyDraw"/>, adds newly created Matches, and saves once.
+    /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw identity.</param>
+    /// <param name="fixtureIds">
+    /// Target fixtures for Pairing apply (one per pairing result, same order). Ignored for Slot/Group.
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the draw is applied and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage or known matches cannot be loaded.</exception>
+    public async Task ApplyDrawAsync(
+        StageId stageId,
+        DrawId drawId,
+        IReadOnlyList<FixtureId>? fixtureIds = null,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        PairingApplicationContext? pairingContext = null;
+        IReadOnlyList<Match> knownMatches = [];
+        if (fixtureIds is { Count: > 0 })
+        {
+            pairingContext = new PairingApplicationContext(fixtureIds);
+            knownMatches = await LoadKnownMatchesForFixturesAsync(stage, fixtureIds, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var result = ApplyDraw.Execute(stage, drawId, clock, pairingContext, knownMatches);
+        foreach (var created in result.CreatedMatches)
+        {
+            matches.Add(created);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Loads a match, runs <see cref="StartMatch"/>, and saves changes.
     /// </summary>
     /// <param name="matchId">Match identity.</param>
@@ -172,5 +212,32 @@ public sealed class UseCaseExecutor(
 
         FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<IReadOnlyList<Match>> LoadKnownMatchesForFixturesAsync(
+        Stage stage,
+        IReadOnlyList<FixtureId> fixtureIds,
+        CancellationToken cancellationToken)
+    {
+        var loaded = new List<Match>();
+        foreach (var fixtureId in fixtureIds)
+        {
+            var fixture = stage.FindFixture(fixtureId);
+            if (fixture is null)
+            {
+                continue;
+            }
+
+            foreach (var attachment in fixture.Attachments)
+            {
+                var match = await matches.GetByIdAsync(attachment.MatchId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Match '{attachment.MatchId}' was not found.",
+                        ApplicationErrorCodes.MatchNotFound);
+                loaded.Add(match);
+            }
+        }
+
+        return loaded;
     }
 }

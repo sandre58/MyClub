@@ -60,4 +60,20 @@ app.MapPost(
         return Results.NoContent();
     });
 
+app.MapPost(
+    "/stages/{stageId:guid}/draws/{drawId:guid}/apply",
+    async (
+        Guid stageId,
+        Guid drawId,
+        ApplyDrawRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        IReadOnlyList<FixtureId> fixtureIds = [.. request.FixtureIds.Select(id => new FixtureId(id))];
+        await executor
+            .ApplyDrawAsync(new StageId(stageId), new DrawId(drawId), fixtureIds, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
 app.Run();

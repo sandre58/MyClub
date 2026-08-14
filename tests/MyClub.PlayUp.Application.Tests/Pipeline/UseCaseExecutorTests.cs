@@ -365,6 +365,81 @@ public sealed class UseCaseExecutorTests
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Fact]
+    public async Task ApplyDrawAsync_pairing_creates_match_adds_and_saves_onceAsync()
+    {
+        var scenario = CreatePublishedPairingDraw();
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Stage);
+        matchRepo.Setup(repository => repository.Add(It.IsAny<DomainMatch>()));
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        await executor.ApplyDrawAsync(scenario.Stage.Id, scenario.DrawId, [scenario.FixtureId]);
+
+        scenario.Stage.GetFixture(scenario.FixtureId).MatchIds.Should().ContainSingle();
+        matchRepo.Verify(repository => repository.Add(It.IsAny<DomainMatch>()), Times.Once);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ApplyDrawAsync_when_stage_missing_does_not_saveAsync()
+    {
+        var stageId = StageId.New();
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdAsync(stageId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stage?)null);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.ApplyDrawAsync(stageId, DrawId.New(), [FixtureId.New()]);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        matchRepo.Verify(repository => repository.Add(It.IsAny<DomainMatch>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ApplyDrawAsync_when_draw_not_published_does_not_saveAsync()
+    {
+        var stage = Stage.Create(CompetitionId.New(), new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("R1", _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([EntryId.New(), EntryId.New()]), _clock);
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stage);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.ApplyDrawAsync(stage.Id, draw.Id, [fixture.Id]);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        matchRepo.Verify(repository => repository.Add(It.IsAny<DomainMatch>()), Times.Never);
+        fixture.MatchIds.Should().BeEmpty();
+    }
+
     private UseCaseExecutor CreateExecutor(
         Mock<IStageRepository> stages,
         Mock<IMatchRepository> matches,
@@ -395,6 +470,23 @@ public sealed class UseCaseExecutorTests
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "A")]),
             _clock);
         return (stage, draw.Id);
+    }
+
+    private PublishedPairingScenario CreatePublishedPairingDraw()
+    {
+        var stage = Stage.Create(CompetitionId.New(), new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("R1", _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]), _clock);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+        return new PublishedPairingScenario(stage, draw.Id, fixture.Id, entryA, entryB);
     }
 
     private CupProgressionScenario CreateCupProgressionScenario()
@@ -441,4 +533,11 @@ public sealed class UseCaseExecutorTests
         FixtureId FixtureId,
         DomainMatch Match,
         EntryId Home);
+
+    private sealed record PublishedPairingScenario(
+        Stage Stage,
+        DrawId DrawId,
+        FixtureId FixtureId,
+        EntryId EntryA,
+        EntryId EntryB);
 }
