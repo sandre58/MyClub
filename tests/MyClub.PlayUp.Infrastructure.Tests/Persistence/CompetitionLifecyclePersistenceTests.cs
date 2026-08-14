@@ -63,4 +63,42 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
             loaded.Entries[2].Status.Should().Be(EntryStatus.Excluded);
         }
     }
+
+    [IntegrationFact]
+    public async Task Regulation_round_trips_and_replace_persists_on_postgresAsync()
+    {
+        CompetitionId id;
+        var initial = SampleRegulations.Standard();
+        var replacement = SampleRegulations.WithExtraTimeAndShootout();
+
+        using (var scope = fixture.CreateScope())
+        {
+            var repository = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+            var competition = Competition.Create(new CompetitionName("Cup"), initial, _clock);
+            id = competition.Id;
+            repository.Add(competition);
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        using (var scope = fixture.CreateScope())
+        {
+            var repository = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.Regulation.Should().Be(initial);
+            loaded.ReplaceRegulation(replacement, _clock);
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync();
+        }
+
+        using (var scope = fixture.CreateScope())
+        {
+            var reloaded = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.Regulation.Should().Be(replacement);
+            reloaded.Regulation.MatchRules.ExtraTimePolicy.Should().NotBeNull();
+            reloaded.Regulation.MatchRules.PenaltyShootoutPolicy.Should().NotBeNull();
+        }
+    }
 }

@@ -38,7 +38,8 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
             .HasColumnName("regulation")
             .HasColumnType("jsonb")
             .IsRequired()
-            .HasConversion(new RegulationJsonConverter(), RegulationJsonConverter.Comparer);
+            .HasConversion(new RegulationJsonConverter(), RegulationJsonConverter.Comparer)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
 
         builder.Property(competition => competition.Status)
             .HasColumnName("status")

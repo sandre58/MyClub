@@ -89,6 +89,45 @@ public sealed class StagePersistenceTests
     }
 
     [Fact]
+    public async Task ReplaceRoundTieFormat_marks_property_modified_and_persistsAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var replacement = new TieFormat(2, true, new AwayGoalsRule(), new ExtraTimeRule());
+        StageId stageId;
+        RoundId roundId;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var stage = Stage.Create(CompetitionId.New(), new StageName("Cup"), SampleRegulations.Standard(), _clock);
+            var round = stage.AddRound("Final", _clock);
+            stageId = stage.Id;
+            roundId = round.Id;
+            new StageRepository(context).Add(stage);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new StageRepository(context);
+            var loaded = await repository.GetByIdAsync(stageId);
+            loaded.Should().NotBeNull();
+            loaded.ReplaceRoundTieFormat(roundId, replacement, _clock);
+
+            context.Entry(loaded.Rounds.Single(round => round.Id == roundId))
+                .Property(round => round.TieFormat)
+                .IsModified.Should().BeTrue();
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new StageRepository(context).GetByIdAsync(stageId);
+            reloaded.Should().NotBeNull();
+            reloaded.Rounds.Single(round => round.Id == roundId).TieFormat.Should().Be(replacement);
+        }
+    }
+
+    [Fact]
     public async Task Fixture_XOR_round_parent_materializes_with_matchday_fk_nullAsync()
     {
         var databaseName = Guid.NewGuid().ToString();

@@ -104,6 +104,110 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task StageRegulation_nested_families_round_trip_on_postgresAsync()
+    {
+        StageId stageId;
+        var groupId = GroupId.New();
+        var destinationStageId = StageId.New();
+        var fixtureId = FixtureId.New();
+        var progressionStageId = StageId.New();
+        var regulation = StageRegulation.MaterializeFrom(SampleRegulations.WithExtraTimeAndShootout())
+            .WithTieFormat(new TieFormat(2, true, new AwayGoalsRule()))
+            .WithDrawRules(
+                new DrawRules(
+                    DrawMode.Random,
+                    new SeedingRules(4),
+                    constraints:
+                    [
+                        new DrawConstraint(DrawConstraintType.SameGroupAvoidance),
+                        DrawConstraint.MaxSameAssociationPerGroup(1)
+                    ]))
+            .WithQualificationRules(
+                new QualificationRules(
+                [
+                    new QualificationPath(
+                        1,
+                        QualificationSource.FromGroup(groupId),
+                        new QualificationSelection(SelectionMode.Position, 1),
+                        new QualificationDestination(destinationStageId, "QF1"),
+                        QualificationCondition.PointsAtLeast(4))
+                ]))
+            .WithProgressionRules(
+                new ProgressionRules(
+                [
+                    new ProgressionPath(
+                        fixtureId,
+                        ProgressionOutcome.Winner,
+                        new ProgressionDestination(progressionStageId, "SF1-A"))
+                ]));
+
+        using (var scope = fixture.CreateScope())
+        {
+            var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+            var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+            competitions.Add(competition);
+
+            var stage = Stage.Create(competition.Id, new StageName("Knockout"), regulation, _clock);
+            stageId = stage.Id;
+            stages.Add(stage);
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        using (var scope = fixture.CreateScope())
+        {
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            loaded.Should().NotBeNull();
+            loaded.Regulation.Should().Be(regulation);
+            loaded.Regulation.DrawRules!.Constraints.Should().Contain(c =>
+                c.ConstraintType == DrawConstraintType.MaxSameAssociationPerGroup && c.MaxPerGroup == 1);
+            loaded.Regulation.QualificationRules!.Paths[0].Condition!.MinimumPoints.Should().Be(4);
+            loaded.Regulation.ProgressionRules!.Paths.Should().ContainSingle();
+        }
+    }
+
+    [IntegrationFact]
+    public async Task Round_TieFormat_null_and_non_null_round_trip_on_postgresAsync()
+    {
+        StageId stageId;
+        RoundId nullTieFormatRoundId;
+        RoundId richTieFormatRoundId;
+        var richTieFormat = new TieFormat(
+            2,
+            true,
+            new AwayGoalsRule(),
+            new ExtraTimeRule(),
+            new PenaltyShootoutRule());
+
+        using (var scope = fixture.CreateScope())
+        {
+            var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+            var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+            competitions.Add(competition);
+
+            var stage = Stage.Create(competition.Id, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+            nullTieFormatRoundId = stage.AddRound("Final", _clock).Id;
+            richTieFormatRoundId = stage.AddRound("Semi-finals", richTieFormat, _clock).Id;
+            stageId = stage.Id;
+            stages.Add(stage);
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        using (var scope = fixture.CreateScope())
+        {
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            loaded.Should().NotBeNull();
+            loaded.Rounds.Single(round => round.Id == nullTieFormatRoundId).TieFormat.Should().BeNull();
+            loaded.Rounds.Single(round => round.Id == richTieFormatRoundId).TieFormat.Should().Be(richTieFormat);
+        }
+    }
+
+    [IntegrationFact]
     public async Task Structure_ordres_fixtures_xor_slots_and_attachments_round_tripAsync()
     {
         StageId stageId;
@@ -620,7 +724,6 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
     public async Task Delete_match_with_fixture_attachment_is_restrictedAsync()
     {
         MatchId matchId;
-        StageId stageId;
 
         using (var scope = fixture.CreateScope())
         {
@@ -634,8 +737,8 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
             var stage = Stage.Create(competition.Id, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
             var round = stage.AddRound("Final", _clock);
-            var fixture = stage.AddFixture(round.Id, _clock);
-            stageId = stage.Id;
+            var addFixture = stage.AddFixture(round.Id, _clock);
+            var stageId = stage.Id;
             stages.Add(stage);
             await unitOfWork.SaveChangesAsync();
 
@@ -646,7 +749,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
             var tracked = await stages.GetByIdAsync(stageId);
             tracked.Should().NotBeNull();
-            tracked.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
+            tracked.AttachMatch(addFixture.Id, matchId, legIndex: 1, _clock);
             await unitOfWork.SaveChangesAsync();
         }
 

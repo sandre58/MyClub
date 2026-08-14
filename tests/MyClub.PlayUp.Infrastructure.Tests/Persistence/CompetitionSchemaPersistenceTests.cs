@@ -47,6 +47,27 @@ public sealed class CompetitionSchemaPersistenceTests(PostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task Competitions_regulation_column_is_jsonb_not_nullAsync()
+    {
+        using var scope = fixture.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
+
+        var columns = await context.Database
+            .SqlQueryRaw<ColumnRow>(
+                """
+                SELECT column_name AS "Name", data_type AS "DataType", is_nullable AS "IsNullable"
+                FROM information_schema.columns
+                WHERE table_name = 'competitions'
+                  AND column_name = 'regulation'
+                """)
+            .ToListAsync();
+
+        columns.Should().ContainSingle();
+        columns[0].DataType.Should().Be("jsonb");
+        columns[0].IsNullable.Should().Be("NO");
+    }
+
+    [IntegrationFact]
     public async Task Delete_competition_cascades_entriesAsync()
     {
         CompetitionId id;
@@ -94,6 +115,10 @@ public sealed class CompetitionSchemaPersistenceTests(PostgresFixture fixture)
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Test")]
     [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local", Justification = "Test")]
     private sealed record DeferrableUniqueConstraintRow(string Name, bool IsDeferrable, bool IsDeferred);
+
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Test")]
+    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local", Justification = "Test")]
+    private sealed record ColumnRow(string Name, string DataType, string IsNullable);
 
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Test")]
     private sealed record CountRow(int Value);
