@@ -55,7 +55,7 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (domain layer started) |
+| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (domain, application, infrastructure foundations) |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned |
 | **Train'in** | Training session design and follow-up. | Future |
 
@@ -67,16 +67,18 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application (WhoFeeds / PrepareStage) for Play'up. Infrastructure and Host will follow as persistence and APIs land.
+**Current codebase:** Domain + Application (WhoFeeds / PrepareStage) + Infrastructure foundations (9.2.0) for Play'up. Host is still absent. Persistence mappings, repositories, and EF migrations are not in this phase.
 
 ```text
 src/
 └── PlayUp/
-    ├── MyClub.PlayUp.Domain/        # Competition · Stage · Match · Common · Rules
-    └── MyClub.PlayUp.Application/   # Use cases (e.g. PrepareStage, SlotFeedSnapshotAssembler)
+    ├── MyClub.PlayUp.Domain/           # Competition · Stage · Match · Common · Rules
+    ├── MyClub.PlayUp.Application/      # Use cases + IUnitOfWork
+    └── MyClub.PlayUp.Infrastructure/   # PlayUpDbContext, SystemClock, PostgreSQL DI
 tests/
 ├── MyClub.PlayUp.Domain.Tests/
-└── MyClub.PlayUp.Application.Tests/
+├── MyClub.PlayUp.Application.Tests/
+└── MyClub.PlayUp.Infrastructure.Tests/
 ```
 
 **Intended dependency flow (target):**
@@ -100,7 +102,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 | Runtime | .NET 10 LTS |
 | Style | DDD, Modular Monolith |
 | API (target) | ASP.NET Core Minimal APIs |
-| Persistence (target) | EF Core + PostgreSQL |
+| Persistence | EF Core + PostgreSQL (foundations; mappings and migrations later) |
 | Tests | xUnit, FluentAssertions, Moq (via Central Package Management) |
 | Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
 | Versioning | GitVersion + SemVer + Conventional Commits |

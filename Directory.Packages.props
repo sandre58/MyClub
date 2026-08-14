@@ -12,6 +12,11 @@
   <ItemGroup>
     <!-- Domain dependencies -->
     <PackageVersion Include="MyNet.Generator" Version="$(MyNetVersion)" />
+    <!-- Infrastructure (EF Core / PostgreSQL / DI) -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
     <!-- Code analysis -->
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-preview.7.26381.103" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />

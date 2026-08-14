@@ -71,6 +71,7 @@ Without `Directory.Build.local.props`, behaviour matches CI (published NuGets on
 - Place tests in `tests/` with project names ending in `Tests`.
 - Domain tests live in `tests/MyClub.PlayUp.Domain.Tests` and reference `MyClub.PlayUp.Domain` only.
 - Application tests live in `tests/MyClub.PlayUp.Application.Tests` and reference Application + Domain.
+- Infrastructure tests live in `tests/MyClub.PlayUp.Infrastructure.Tests` and reference Infrastructure + Application + Domain.
 
 ## Security
 
