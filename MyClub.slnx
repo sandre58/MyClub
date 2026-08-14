@@ -57,8 +57,13 @@
     <File Path=".cursor/rules/architecture.mdc" />
     <File Path=".cursor/rules/cross-design-review.mdc" />
     <File Path=".cursor/rules/csharp.mdc" />
+    <File Path=".cursor/rules/developer-knowledge-profile.mdc" />
     <File Path=".cursor/rules/general.mdc" />
     <File Path=".cursor/rules/git.mdc" />
+    <File Path=".cursor/rules/knowledge-capitalization.mdc" />
+    <File Path=".cursor/rules/learning-mode.mdc" />
+    <File Path=".cursor/rules/no-cargo-cult.mdc" />
+    <File Path=".cursor/rules/react-learning.mdc" />
     <File Path=".cursor/rules/testing.mdc" />
     <File Path=".cursor/rules/workflow.mdc" />
   </Folder>

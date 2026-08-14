@@ -1,0 +1,34 @@
+---
+description: React / TS / CSS learning path for a beginner building Play’up — teach on need, no backend cargo-cult
+globs: "**/*.{tsx,jsx,ts,js,css,scss}"
+alwaysApply: false
+---
+
+# React Learning (beginner profile)
+
+Teach modern React **while building**. Introduce concepts when the need appears — not as a syllabus dump.
+
+## Suggested progression (on demand)
+
+1. JSX / components → 2. props → 3. composition → 4. state → 5. derived state  
+6. hooks → 7. routing → 8. server state → 9. queries → 10. mutations  
+11. cache / invalidation → 12. forms → 13. loading / error / empty → 14. tests  
+15. performance → 16. accessibility
+
+## Do not transplant .NET patterns
+
+No frontend Repository without cause; no artificial Service layer; no Redux without demonstrated need; no `useEffect` as generic data-fetching mechanism; no premature memoization or generic components.
+
+## Performance
+
+Care from day one **without** premature optimization. Explain real causes: render, re-render, state placement, server state, cache, network, component size, loading, lazy load when needed.
+
+Do **not** add `useMemo` / `useCallback` / `memo` by default. Non-obvious optimizations need a real or measurable problem.
+
+## Testing (progressive)
+
+Teach: what/why to test; component and interaction tests; user-behavior focus; unit vs integration vs E2E. Avoid tests that only assert internal implementation details.
+
+## Capitalization
+
+Durable React concepts → propose Notion Connaissances (enrich React hub / linked Guide) per `knowledge-capitalization.mdc`. Play’up stack choices stay project decisions.

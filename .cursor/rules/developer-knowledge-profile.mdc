@@ -1,0 +1,42 @@
+---
+description: Developer knowledge profile (KNOWN / LEARNING / UNKNOWN) — adapt explanation depth
+alwaysApply: true
+---
+
+# Developer Knowledge Profile
+
+Initial profile for the decision maker (Senior .NET backend). Levels evolve from **observed** interactions — not from the “Senior .NET” title alone.
+
+## Levels
+
+| Level | Meaning | Explain | Capitalize |
+|---|---|---|---|
+| **KNOWN** | Solid mastery | No systematic pedagogy | No |
+| **LEARNING** | Actively learning | Important concepts yes | Possible if criteria met |
+| **UNKNOWN** | Not yet assessed | Short first pass; observe | Never auto-create Notion |
+
+## Initial map
+
+### KNOWN
+
+C#, .NET, ASP.NET Core, EF Core, PostgreSQL / SQL, DDD, software architecture, backend APIs, backend testing, common backend patterns.
+
+### LEARNING
+
+- TypeScript — beginner
+- JavaScript — intermediate / learning
+- React — beginner
+- CSS / frontend UI — general knowledge, not expertise
+- Angular — beginner (secondary vs React for Play’up 11.3+)
+
+### UNKNOWN
+
+Anything not listed. Short intro on first encounter; watch questions, corrections, and autonomous implementations.
+
+## Evolution
+
+- Evidence of mastery (correct usage, precise corrections, independent design) → stop treating as new; may move toward KNOWN.
+- Persistent confusion → keep explaining at LEARNING depth.
+- Propose updating Notion Technologies **Niveau de maîtrise** only when the shift is clear — do not sync on every message.
+
+Notion mapping (when syncing mastery): KNOWN ≈ `⭐ Maîtrisé` / `🟢 Utilisé régulièrement`; LEARNING ≈ `🟡 En apprentissage`; UNKNOWN ≈ `🔵 À découvrir`.
