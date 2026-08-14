@@ -61,6 +61,16 @@ app.MapPost(
     });
 
 app.MapPost(
+    "/stages/{stageId:guid}/draws/{drawId:guid}/publish",
+    async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        await executor
+            .PublishDrawAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
+app.MapPost(
     "/stages/{stageId:guid}/draws/{drawId:guid}/apply",
     async (
         Guid stageId,
