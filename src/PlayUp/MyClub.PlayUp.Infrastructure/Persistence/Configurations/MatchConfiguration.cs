@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence.Converters;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Configurations;
@@ -72,6 +73,11 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.HasOne<Competition>()
             .WithMany()
             .HasForeignKey(match => match.CompetitionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Stage>()
+            .WithMany()
+            .HasForeignKey(match => match.StageId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

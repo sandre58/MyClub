@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Xunit;
 
@@ -14,7 +15,7 @@ namespace MyClub.PlayUp.Infrastructure.Tests.Persistence;
 public sealed class PlayUpDbContextTests
 {
     [Fact]
-    public void Model_maps_competition_tables_without_opening_a_connection()
+    public void Model_maps_competition_match_and_stage_tables_without_opening_a_connection()
     {
         var options = new DbContextOptionsBuilder<PlayUpDbContext>()
             .UseNpgsql("Host=127.0.0.1;Database=playup_unconnected;Username=x;Password=x")
@@ -25,14 +26,28 @@ public sealed class PlayUpDbContextTests
         context.Model.GetEntityTypes()
             .Select(entityType => entityType.GetTableName())
             .Should()
-            .BeEquivalentTo("competitions", "competition_entries", "competition_stage_refs", "matches");
+            .BeEquivalentTo(
+                "competitions",
+                "competition_entries",
+                "competition_stage_refs",
+                "matches",
+                "stages",
+                "groups",
+                "group_entries",
+                "rounds",
+                "matchdays",
+                "fixtures",
+                "fixture_attachments",
+                "slots",
+                "stage_direct_assignments");
         context.Database.ProviderName.Should().Be("Npgsql.EntityFrameworkCore.PostgreSQL");
 
         var stageRefs = context.Model.GetEntityTypes()
             .Single(entityType => entityType.GetTableName() == "competition_stage_refs");
-        stageRefs.GetForeignKeys().Should().ContainSingle()
-            .Which.PrincipalEntityType.GetTableName().Should().Be("competitions");
-        stageRefs.GetIndexes().Should().BeEmpty();
+        stageRefs.GetForeignKeys().Should().HaveCount(2);
+        stageRefs.GetForeignKeys().Should().Contain(fk => fk.PrincipalEntityType.GetTableName() == "competitions");
+        stageRefs.GetForeignKeys().Should().Contain(fk =>
+            fk.PrincipalEntityType.GetTableName() == "stages" && fk.DeleteBehavior == DeleteBehavior.Restrict);
 
         var entries = context.Model.GetEntityTypes()
             .Single(entityType => entityType.GetTableName() == "competition_entries");
@@ -42,11 +57,27 @@ public sealed class PlayUpDbContextTests
 
         var matches = context.Model.GetEntityTypes()
             .Single(entityType => entityType.GetTableName() == "matches");
-        matches.GetForeignKeys().Should().ContainSingle()
-            .Which.DeleteBehavior.Should().Be(DeleteBehavior.Restrict);
-        matches.GetForeignKeys().Single().PrincipalEntityType.GetTableName().Should().Be("competitions");
-        matches.FindProperty("StageId")!.IsForeignKey().Should().BeFalse();
-        matches.GetIndexes().Should().ContainSingle(index => !index.IsUnique)
-            .Which.Properties.Select(property => property.Name).Should().Equal("CompetitionId");
+        matches.GetForeignKeys().Should().HaveCount(2);
+        matches.GetForeignKeys().Should().OnlyContain(fk => fk.DeleteBehavior == DeleteBehavior.Restrict);
+        matches.GetForeignKeys().Should().Contain(fk => fk.PrincipalEntityType.GetTableName() == "competitions");
+        matches.GetForeignKeys().Should().Contain(fk => fk.PrincipalEntityType.GetTableName() == "stages");
+        matches.FindProperty("StageId")!.IsForeignKey().Should().BeTrue();
+
+        var stage = context.Model.FindEntityType(typeof(Stage));
+        stage.Should().NotBeNull();
+        stage.FindNavigation(nameof(Stage.Draws)).Should().BeNull();
+        stage.FindNavigation(nameof(Stage.Penalties)).Should().BeNull();
+        stage.FindNavigation(nameof(Stage.MatchPlacements)).Should().BeNull();
+
+        context.Model.GetEntityTypes()
+            .Single(entityType => entityType.GetTableName() == "fixtures")
+            .FindProperty("round_id")
+            .Should()
+            .NotBeNull();
+        context.Model.GetEntityTypes()
+            .Single(entityType => entityType.GetTableName() == "fixtures")
+            .FindProperty("matchday_id")
+            .Should()
+            .NotBeNull();
     }
 }

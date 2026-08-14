@@ -25,23 +25,38 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
     [IntegrationFact]
     public async Task SetStageOrder_persists_through_unit_of_work_when_competition_stays_unchangedAsync()
     {
-        var stageA = StageId.New();
-        var stageB = StageId.New();
-        var stageC = StageId.New();
+        StageId stageA;
+        StageId stageB;
+        StageId stageC;
         CompetitionId id;
 
         using (var scope = fixture.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
-            competition.AddStage(stageA, _clock);
-            competition.AddStage(stageB, _clock);
-            competition.AddStage(stageC, _clock);
             id = competition.Id;
-
             repository.Add(competition);
+            await unitOfWork.SaveChangesAsync();
+
+            var stageAEntity = StageSeed.CreateDraft(id, _clock, "A");
+            var stageBEntity = StageSeed.CreateDraft(id, _clock, "B");
+            var stageCEntity = StageSeed.CreateDraft(id, _clock, "C");
+            stageA = stageAEntity.Id;
+            stageB = stageBEntity.Id;
+            stageC = stageCEntity.Id;
+            stages.Add(stageAEntity);
+            stages.Add(stageBEntity);
+            stages.Add(stageCEntity);
+            await unitOfWork.SaveChangesAsync();
+
+            var tracked = await repository.GetByIdAsync(id);
+            tracked.Should().NotBeNull();
+            tracked.AddStage(stageA, _clock);
+            tracked.AddStage(stageB, _clock);
+            tracked.AddStage(stageC, _clock);
             await unitOfWork.SaveChangesAsync();
         }
 

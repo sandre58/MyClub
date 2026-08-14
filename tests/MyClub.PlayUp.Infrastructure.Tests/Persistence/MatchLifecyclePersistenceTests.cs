@@ -25,7 +25,7 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
     public async Task Create_reload_preserves_scheduled_ids_and_null_resultAsync()
     {
         CompetitionId competitionId;
-        var stageId = StageId.New();
+        StageId stageId;
         var home = EntryId.New();
         var away = EntryId.New();
         MatchId matchId;
@@ -33,12 +33,18 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
             competitionId = competition.Id;
             competitions.Add(competition);
+
+            var stage = StageSeed.CreateDraft(competitionId, _clock);
+            stageId = stage.Id;
+            stages.Add(stage);
+            await unitOfWork.SaveChangesAsync();
 
             var match = Match.Create(competitionId, stageId, home, away, _clock);
             matchId = match.Id;
@@ -72,13 +78,17 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
             competitions.Add(competition);
+            var stage = StageSeed.CreateDraft(competition.Id, _clock);
+            stages.Add(stage);
+            await unitOfWork.SaveChangesAsync();
 
-            var match = Match.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+            var match = Match.Create(competition.Id, stage.Id, EntryId.New(), EntryId.New(), _clock);
             match.Start(_clock);
             match.Finish(result, _clock);
             matchId = match.Id;
@@ -104,18 +114,22 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
             competitions.Add(competition);
+            var stage = StageSeed.CreateDraft(competition.Id, _clock);
+            stages.Add(stage);
+            await unitOfWork.SaveChangesAsync();
 
-            var postponed = Match.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+            var postponed = Match.Create(competition.Id, stage.Id, EntryId.New(), EntryId.New(), _clock);
             postponed.Postpone(_clock);
             postponedId = postponed.Id;
             matches.Add(postponed);
 
-            var cancelled = Match.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+            var cancelled = Match.Create(competition.Id, stage.Id, EntryId.New(), EntryId.New(), _clock);
             cancelled.Cancel(_clock);
             cancelledId = cancelled.Id;
             matches.Add(cancelled);

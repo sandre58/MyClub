@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PlayUpDbContext))]
-    partial class PlayUpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814122406_FixFixtureAttachmentsMapping")]
+    partial class FixFixtureAttachmentsMapping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,7 +156,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("stage_id");
+                    b.HasIndex("stage_id", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("groups", (string)null);
                 });
@@ -178,7 +182,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("stage_id");
+                    b.HasIndex("stage_id", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("matchdays", (string)null);
                 });
@@ -209,7 +214,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("stage_id");
+                    b.HasIndex("stage_id", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("rounds", (string)null);
                 });
@@ -323,6 +329,9 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnName("sort_order");
 
                     b.HasKey("GroupId", "EntryId");
+
+                    b.HasIndex("GroupId", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("group_entries", (string)null);
                 });

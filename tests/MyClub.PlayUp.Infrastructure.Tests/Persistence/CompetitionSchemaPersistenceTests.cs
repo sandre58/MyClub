@@ -47,10 +47,9 @@ public sealed class CompetitionSchemaPersistenceTests(PostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Delete_competition_cascades_entries_and_stage_refsAsync()
+    public async Task Delete_competition_cascades_entriesAsync()
     {
         CompetitionId id;
-        var stageId = StageId.New();
 
         using (var scope = fixture.CreateScope())
         {
@@ -59,7 +58,6 @@ public sealed class CompetitionSchemaPersistenceTests(PostgresFixture fixture)
 
             var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
             competition.AddEntry(TeamId.New(), "Team A", _clock);
-            competition.AddStage(stageId, _clock);
             id = competition.Id;
 
             repository.Add(competition);
@@ -80,7 +78,6 @@ public sealed class CompetitionSchemaPersistenceTests(PostgresFixture fixture)
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
 
             (await context.Set<Competition>().CountAsync(candidate => candidate.Id == id)).Should().Be(0);
-            (await context.Set<CompetitionStageRef>().CountAsync(row => row.CompetitionId == id)).Should().Be(0);
 
             var entryCount = await context.Database.SqlQueryRaw<CountRow>(
                     """

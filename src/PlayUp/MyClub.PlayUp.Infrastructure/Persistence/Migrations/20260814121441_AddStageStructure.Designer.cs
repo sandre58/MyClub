@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PlayUpDbContext))]
-    partial class PlayUpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814121441_AddStageStructure")]
+    partial class AddStageStructure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,7 +156,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("stage_id");
+                    b.HasIndex("stage_id", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("groups", (string)null);
                 });
@@ -178,7 +182,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("stage_id");
+                    b.HasIndex("stage_id", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("matchdays", (string)null);
                 });
@@ -209,7 +214,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("stage_id");
+                    b.HasIndex("stage_id", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("rounds", (string)null);
                 });
@@ -287,27 +293,6 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                     b.ToTable("competition_stage_refs", (string)null);
                 });
 
-            modelBuilder.Entity("MyClub.PlayUp.Infrastructure.Persistence.FixtureAttachmentRef", b =>
-                {
-                    b.Property<Guid>("FixtureId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("fixture_id");
-
-                    b.Property<int>("LegIndex")
-                        .HasColumnType("integer")
-                        .HasColumnName("leg_index");
-
-                    b.Property<Guid>("MatchId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("match_id");
-
-                    b.HasKey("FixtureId", "LegIndex");
-
-                    b.HasIndex("MatchId");
-
-                    b.ToTable("fixture_attachments", (string)null);
-                });
-
             modelBuilder.Entity("MyClub.PlayUp.Infrastructure.Persistence.GroupEntryRef", b =>
                 {
                     b.Property<Guid>("GroupId")
@@ -323,6 +308,9 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnName("sort_order");
 
                     b.HasKey("GroupId", "EntryId");
+
+                    b.HasIndex("GroupId", "SortOrder")
+                        .IsUnique();
 
                     b.ToTable("group_entries", (string)null);
                 });
@@ -396,6 +384,40 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .WithMany("Fixtures")
                         .HasForeignKey("round_id")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.OwnsMany("MyClub.PlayUp.Domain.Stages.MatchAttachment", "Attachments", b1 =>
+                        {
+                            b1.Property<Guid>("fixture_id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("LegIndex")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer")
+                                .HasColumnName("leg_index");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("LegIndex"));
+
+                            b1.Property<Guid>("MatchId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("match_id");
+
+                            b1.HasKey("fixture_id", "LegIndex");
+
+                            b1.HasIndex("MatchId");
+
+                            b1.ToTable("fixture_attachments", (string)null);
+
+                            b1.HasOne("MyClub.PlayUp.Domain.Matches.Match", null)
+                                .WithMany()
+                                .HasForeignKey("MatchId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired();
+
+                            b1.WithOwner()
+                                .HasForeignKey("fixture_id");
+                        });
+
+                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("MyClub.PlayUp.Domain.Stages.Group", b =>
@@ -478,21 +500,6 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                     b.HasOne("MyClub.PlayUp.Domain.Stages.Stage", null)
                         .WithMany()
                         .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("MyClub.PlayUp.Infrastructure.Persistence.FixtureAttachmentRef", b =>
-                {
-                    b.HasOne("MyClub.PlayUp.Domain.Stages.Fixture", null)
-                        .WithMany()
-                        .HasForeignKey("FixtureId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MyClub.PlayUp.Domain.Matches.Match", null)
-                        .WithMany()
-                        .HasForeignKey("MatchId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

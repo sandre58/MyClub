@@ -16,7 +16,9 @@ internal static class PlayUpInMemory
     {
         var options = new DbContextOptionsBuilder<PlayUpDbContext>()
             .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
-            .AddInterceptors(new CompetitionOrderedCollectionsInterceptor())
+            .AddInterceptors(
+                new CompetitionOrderedCollectionsInterceptor(),
+                new StageOrderedCollectionsInterceptor())
             .Options;
 
         return new PlayUpDbContext(options);

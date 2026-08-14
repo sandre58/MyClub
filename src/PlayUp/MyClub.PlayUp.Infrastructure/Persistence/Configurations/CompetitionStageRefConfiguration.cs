@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence.Converters;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Configurations;
@@ -41,5 +42,10 @@ internal sealed class CompetitionStageRefConfiguration : IEntityTypeConfiguratio
             .WithMany()
             .HasForeignKey(row => row.CompetitionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<Stage>()
+            .WithMany()
+            .HasForeignKey(row => row.StageId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

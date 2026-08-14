@@ -34,7 +34,10 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
             competition.AddEntry(TeamId.New(), "Team A", _clock);
             competition.AddEntry(TeamId.New(), "Team B", _clock);
             var excluded = competition.AddEntry(TeamId.New(), "Team C", _clock);
-            competition.AddStage(StageId.New(), _clock);
+
+            var stage = StageSeed.CreateDraft(competition.Id, _clock, "Main");
+            scope.ServiceProvider.GetRequiredService<IStageRepository>().Add(stage);
+            competition.AddStage(stage.Id, _clock);
             competition.Prepare(_clock);
             competition.ExcludeEntry(excluded.Id, _clock);
             competition.Start(_clock);

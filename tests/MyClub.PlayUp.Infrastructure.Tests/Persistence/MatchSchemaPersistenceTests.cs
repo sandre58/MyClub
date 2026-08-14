@@ -61,13 +61,18 @@ public sealed class MatchSchemaPersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
             competitionId = competition.Id;
             competitions.Add(competition);
-            matches.Add(Match.Create(competitionId, StageId.New(), EntryId.New(), EntryId.New(), _clock));
+            var stage = StageSeed.CreateDraft(competitionId, _clock);
+            stages.Add(stage);
+            await unitOfWork.SaveChangesAsync();
+
+            matches.Add(Match.Create(competitionId, stage.Id, EntryId.New(), EntryId.New(), _clock));
             await unitOfWork.SaveChangesAsync();
         }
 
@@ -91,7 +96,7 @@ public sealed class MatchSchemaPersistenceTests(PostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Stage_id_has_no_foreign_key_constraintAsync()
+    public async Task Stage_id_has_foreign_key_to_stagesAsync()
     {
         using var scope = fixture.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
@@ -104,11 +109,13 @@ public sealed class MatchSchemaPersistenceTests(PostgresFixture fixture)
                 JOIN pg_class t ON t.oid = c.conrelid
                 WHERE t.relname = 'matches'
                   AND c.contype = 'f'
+                ORDER BY c.conname
                 """)
             .ToListAsync();
 
-        foreignKeys.Should().ContainSingle()
-            .Which.Name.Should().Be("FK_matches_competitions_competition_id");
+        foreignKeys.Select(row => row.Name).Should().Equal(
+            "FK_matches_competitions_competition_id",
+            "FK_matches_stages_stage_id");
     }
 
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Test")]
