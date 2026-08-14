@@ -13,7 +13,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.SaveInterceptors;
 
 /// <summary>
 /// Writes Domain list order into shadow <c>sort_order</c>, and syncs group_entries / fixture_attachments rows.
-/// Domain remains the source of truth; Slots / DirectAssignments have natural keys and need no sort_order sync.
+/// Domain remains the source of truth; Slots / DirectAssignments / MatchPlacements have natural keys and need no sort_order sync.
+/// Draw/Penalty sort_order sync is independent of Groups/Rounds/Matchdays/Fixtures (shared helper only).
 /// </summary>
 internal sealed class StageOrderedCollectionsInterceptor : SaveChangesInterceptor
 {
@@ -51,6 +52,8 @@ internal sealed class StageOrderedCollectionsInterceptor : SaveChangesIntercepto
             SyncSortOrder(context, StageOrderedCollectionsAccessor.GetGroups(stage));
             SyncSortOrder(context, StageOrderedCollectionsAccessor.GetRounds(stage));
             SyncSortOrder(context, StageOrderedCollectionsAccessor.GetMatchdays(stage));
+            SyncSortOrder(context, StageOrderedCollectionsAccessor.GetDraws(stage));
+            SyncSortOrder(context, StageOrderedCollectionsAccessor.GetPenalties(stage));
 
             foreach (var group in stage.Groups)
             {

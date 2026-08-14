@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core repository for the Stage aggregate structure.
+/// EF Core repository for the Stage aggregate (structure + runtime state).
 /// </summary>
 internal sealed class StageRepository(PlayUpDbContext context) : IStageRepository
 {
@@ -22,6 +22,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         var alreadyTracked = context.Set<Stage>().Local.Any(candidate => candidate.Id.Equals(id));
 
         var stage = await context.Set<Stage>()
+            .AsSplitQuery()
             .Include(candidate => candidate.Groups)
             .Include(candidate => candidate.Rounds)
             .ThenInclude(round => round.Fixtures)
@@ -29,6 +30,9 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             .ThenInclude(matchday => matchday.Fixtures)
             .Include(candidate => candidate.Slots)
             .Include(candidate => candidate.DirectAssignments)
+            .Include(candidate => candidate.Draws)
+            .Include(candidate => candidate.Penalties)
+            .Include(candidate => candidate.MatchPlacements)
             .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
             .ConfigureAwait(false);
 
@@ -104,6 +108,16 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             StageOrderedCollectionsAccessor.ReorderMatchdayFixtures(matchday, fixtures);
             await HydrateAttachmentsAsync(fixtures, cancellationToken).ConfigureAwait(false);
         }
+
+        var draws = StageOrderedCollectionsAccessor.GetDraws(stage)
+            .OrderBy(draw => context.Entry(draw).Property<int>("SortOrder").CurrentValue)
+            .ToList();
+        StageOrderedCollectionsAccessor.ReorderDraws(stage, draws);
+
+        var penalties = StageOrderedCollectionsAccessor.GetPenalties(stage)
+            .OrderBy(penalty => context.Entry(penalty).Property<int>("SortOrder").CurrentValue)
+            .ToList();
+        StageOrderedCollectionsAccessor.ReorderPenalties(stage, penalties);
     }
 
     private async Task HydrateAttachmentsAsync(List<Fixture> fixtures, CancellationToken cancellationToken)

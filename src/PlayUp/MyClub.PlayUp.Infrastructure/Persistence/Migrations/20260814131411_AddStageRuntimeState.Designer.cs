@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PlayUpDbContext))]
-    partial class PlayUpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814131411_AddStageRuntimeState")]
+    partial class AddStageRuntimeState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -236,7 +239,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnName("points_deducted");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("reason");
 
                     b.Property<int>("SortOrder")

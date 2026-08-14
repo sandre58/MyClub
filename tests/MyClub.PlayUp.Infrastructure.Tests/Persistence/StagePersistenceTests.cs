@@ -295,17 +295,20 @@ public sealed class StagePersistenceTests
     }
 
     [Fact]
-    public async Task Model_ignores_draws_penalties_and_match_placementsAsync()
+    public async Task Model_maps_draws_penalties_and_match_placementsAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();
         var entity = context.Model.FindEntityType(typeof(Stage));
         entity.Should().NotBeNull();
-        entity.FindNavigation(nameof(Stage.Draws)).Should().BeNull();
-        entity.FindNavigation(nameof(Stage.Penalties)).Should().BeNull();
-        entity.FindNavigation(nameof(Stage.MatchPlacements)).Should().BeNull();
-        entity.FindProperty("_draws").Should().BeNull();
-        entity.FindProperty("_penalties").Should().BeNull();
-        entity.FindProperty("_matchPlacements").Should().BeNull();
+        entity.FindNavigation(nameof(Stage.Draws)).Should().NotBeNull();
+        entity.FindNavigation(nameof(Stage.Penalties)).Should().NotBeNull();
+        entity.FindNavigation(nameof(Stage.MatchPlacements)).Should().NotBeNull();
+        entity.FindNavigation(nameof(Stage.DomainEvents)).Should().BeNull();
+
+        context.Model.GetEntityTypes().Select(type => type.GetTableName())
+            .Should().Contain(["draws", "penalties", "match_placements"]);
+        context.Model.GetEntityTypes().Select(type => type.GetTableName())
+            .Should().NotContain(["qualification_results", "progression_results", "standings"]);
     }
 
     [Fact]

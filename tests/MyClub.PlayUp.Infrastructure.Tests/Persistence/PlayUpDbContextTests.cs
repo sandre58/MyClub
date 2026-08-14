@@ -39,7 +39,10 @@ public sealed class PlayUpDbContextTests
                 "fixtures",
                 "fixture_attachments",
                 "slots",
-                "stage_direct_assignments");
+                "stage_direct_assignments",
+                "draws",
+                "penalties",
+                "match_placements");
         context.Database.ProviderName.Should().Be("Npgsql.EntityFrameworkCore.PostgreSQL");
 
         var stageRefs = context.Model.GetEntityTypes()
@@ -65,9 +68,17 @@ public sealed class PlayUpDbContextTests
 
         var stage = context.Model.FindEntityType(typeof(Stage));
         stage.Should().NotBeNull();
-        stage.FindNavigation(nameof(Stage.Draws)).Should().BeNull();
-        stage.FindNavigation(nameof(Stage.Penalties)).Should().BeNull();
-        stage.FindNavigation(nameof(Stage.MatchPlacements)).Should().BeNull();
+        stage.FindNavigation(nameof(Stage.Draws)).Should().NotBeNull();
+        stage.FindNavigation(nameof(Stage.Penalties)).Should().NotBeNull();
+        stage.FindNavigation(nameof(Stage.MatchPlacements)).Should().NotBeNull();
+        stage.FindNavigation(nameof(Stage.DomainEvents)).Should().BeNull();
+
+        var placements = context.Model.GetEntityTypes()
+            .Single(entityType => entityType.GetTableName() == "match_placements");
+        placements.GetForeignKeys()
+            .Should()
+            .Contain(fk => fk.PrincipalEntityType.GetTableName() == "matches"
+                && fk.DeleteBehavior == DeleteBehavior.Restrict);
 
         context.Model.GetEntityTypes()
             .Single(entityType => entityType.GetTableName() == "fixtures")

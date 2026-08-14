@@ -19,6 +19,8 @@ internal static class StageOrderedCollectionsAccessor
     private static readonly FieldInfo RoundsField = RequireField(typeof(Stage), "_rounds");
     private static readonly FieldInfo MatchdaysField = RequireField(typeof(Stage), "_matchdays");
     private static readonly FieldInfo SlotsField = RequireField(typeof(Stage), "_slots");
+    private static readonly FieldInfo DrawsField = RequireField(typeof(Stage), "_draws");
+    private static readonly FieldInfo PenaltiesField = RequireField(typeof(Stage), "_penalties");
     private static readonly FieldInfo DirectAssignmentsField = RequireField(typeof(Stage), "_directAssignments");
     private static readonly FieldInfo GroupEntryIdsField = RequireField(typeof(Group), "_entryIds");
     private static readonly FieldInfo RoundFixturesField = RequireField(typeof(Round), "_fixtures");
@@ -32,6 +34,10 @@ internal static class StageOrderedCollectionsAccessor
     internal static List<Matchday> GetMatchdays(Stage stage) => GetList<Matchday>(MatchdaysField, stage);
 
     internal static List<Slot> GetSlots(Stage stage) => GetList<Slot>(SlotsField, stage);
+
+    internal static List<Draw> GetDraws(Stage stage) => GetList<Draw>(DrawsField, stage);
+
+    internal static List<Penalty> GetPenalties(Stage stage) => GetList<Penalty>(PenaltiesField, stage);
 
     internal static List<DirectAssignment> GetDirectAssignments(Stage stage) =>
         GetList<DirectAssignment>(DirectAssignmentsField, stage);
@@ -57,6 +63,12 @@ internal static class StageOrderedCollectionsAccessor
 
     internal static void ReorderMatchdays(Stage stage, IEnumerable<Matchday> ordered) =>
         ReorderInPlace(GetMatchdays(stage), ordered);
+
+    internal static void ReorderDraws(Stage stage, IEnumerable<Draw> ordered) =>
+        ReorderInPlace(GetDraws(stage), ordered);
+
+    internal static void ReorderPenalties(Stage stage, IEnumerable<Penalty> ordered) =>
+        ReorderInPlace(GetPenalties(stage), ordered);
 
     internal static void ReorderEntryIds(Group group, IEnumerable<EntryId> ordered) =>
         Replace(GetEntryIds(group), ordered);

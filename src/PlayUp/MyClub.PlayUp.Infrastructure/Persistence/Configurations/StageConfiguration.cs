@@ -8,13 +8,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence.Converters;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Configurations;
 
 /// <summary>
-/// EF Core mapping for the Stage aggregate structure (Draws/Penalties/MatchPlacements ignored).
+/// EF Core mapping for the Stage aggregate structure including runtime Draws/Penalties/MatchPlacements.
 /// </summary>
 internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
 {
@@ -56,13 +57,7 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
         builder.Ignore(stage => stage.DomainEvents);
-        builder.Ignore(stage => stage.Draws);
-        builder.Ignore(stage => stage.Penalties);
-        builder.Ignore(stage => stage.MatchPlacements);
         builder.Metadata.AddIgnored("_domainEvents");
-        builder.Metadata.AddIgnored("_draws");
-        builder.Metadata.AddIgnored("_penalties");
-        builder.Metadata.AddIgnored("_matchPlacements");
 
         builder.HasOne<Competition>()
             .WithMany()
@@ -101,9 +96,30 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasField("_slots")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.HasMany(stage => stage.Draws)
+            .WithOne()
+            .HasForeignKey("stage_id")
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(stage => stage.Draws)
+            .HasField("_draws")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(stage => stage.Penalties)
+            .WithOne()
+            .HasForeignKey("stage_id")
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(stage => stage.Penalties)
+            .HasField("_penalties")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.OwnsMany(stage => stage.DirectAssignments, ConfigureDirectAssignments);
         builder.Navigation(stage => stage.DirectAssignments)
             .HasField("_directAssignments")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.OwnsMany(stage => stage.MatchPlacements, ConfigureMatchPlacements);
+        builder.Navigation(stage => stage.MatchPlacements)
+            .HasField("_matchPlacements")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 
@@ -124,76 +140,33 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .IsRequired()
             .HasConversion(new GuidTypedIdConverter<EntryId>());
     }
-}
 
-/// <summary>
-/// EF Core mapping for ordered group entry rows.
-/// </summary>
-internal sealed class GroupEntryRefConfiguration : IEntityTypeConfiguration<GroupEntryRef>
-{
-    /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<GroupEntryRef> builder)
+    private static void ConfigureMatchPlacements(OwnedNavigationBuilder<Stage, MatchPlacement> placements)
     {
-        builder.ToTable("group_entries");
-        builder.HasKey(row => new { row.GroupId, row.EntryId });
+        placements.ToTable("match_placements");
+        placements.WithOwner().HasForeignKey("stage_id");
+        placements.HasKey("stage_id", "MatchId");
 
-        builder.Property(row => row.GroupId)
-            .HasColumnName("group_id")
+        placements.Property(placement => placement.MatchId)
+            .HasColumnName("match_id")
             .HasColumnType("uuid")
-            .HasConversion(new GuidTypedIdConverter<GroupId>());
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<MatchId>());
 
-        builder.Property(row => row.EntryId)
-            .HasColumnName("entry_id")
-            .HasColumnType("uuid")
-            .HasConversion(new GuidTypedIdConverter<EntryId>());
-
-        builder.Property(row => row.SortOrder)
-            .HasColumnName("sort_order")
+        placements.Property(placement => placement.Start)
+            .HasColumnName("start")
+            .HasColumnType("timestamp with time zone")
             .IsRequired();
 
-        builder.HasOne<Group>()
+        placements.Property(placement => placement.ResourceId)
+            .HasColumnName("resource_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<ResourceId>());
+
+        placements.HasOne<Match>()
             .WithMany()
-            .HasForeignKey(row => row.GroupId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
-
-/// <summary>
-/// EF Core mapping for Stage matchdays.
-/// </summary>
-internal sealed class MatchdayConfiguration : IEntityTypeConfiguration<Matchday>
-{
-    /// <inheritdoc />
-    public void Configure(EntityTypeBuilder<Matchday> builder)
-    {
-        builder.ToTable("matchdays");
-        builder.HasKey(matchday => matchday.Id);
-
-        builder.Property(matchday => matchday.Id)
-            .HasColumnName("id")
-            .HasColumnType("uuid")
-            .HasConversion(new GuidTypedIdConverter<MatchdayId>());
-
-        builder.Property(matchday => matchday.Number)
-            .HasColumnName("number")
-            .IsRequired();
-
-        builder.Property<StageId>("stage_id")
-            .HasColumnName("stage_id")
-            .HasColumnType("uuid")
-            .HasConversion(new GuidTypedIdConverter<StageId>());
-
-        builder.Property<int>("SortOrder")
-            .HasColumnName("sort_order")
-            .IsRequired();
-
-        builder.HasMany(matchday => matchday.Fixtures)
-            .WithOne()
-            .HasForeignKey("matchday_id")
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
-        builder.Navigation(matchday => matchday.Fixtures)
-            .HasField("_fixtures")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
+            .HasForeignKey(placement => placement.MatchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
