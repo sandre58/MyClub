@@ -18,7 +18,7 @@ namespace MyClub.PlayUp.Host.Tests;
 public sealed class HostPostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+        .WithImage("postgres:18")
         .Build();
 
     public string ConnectionString => _container.GetConnectionString();

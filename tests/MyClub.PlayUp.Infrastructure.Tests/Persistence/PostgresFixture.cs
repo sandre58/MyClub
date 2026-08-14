@@ -18,7 +18,7 @@ namespace MyClub.PlayUp.Infrastructure.Tests.Persistence;
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+        .WithImage("postgres:18")
         .Build();
 
     private ServiceProvider? _provider;

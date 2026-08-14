@@ -114,7 +114,8 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
         {
             var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
             loaded.Should().NotBeNull();
-            loaded.Draws.Single(draw => draw.Id == noSolutionId).Resolution.State.Should().Be(DrawResolutionState.NoSolution);
+            loaded.Draws.Single(draw => draw.Id == noSolutionId).Resolution.State.Should()
+                .Be(DrawResolutionState.NoSolution);
             loaded.Draws.Single(draw => draw.Id == cancelledId).Status.Should().Be(DrawStatus.Cancelled);
         }
     }

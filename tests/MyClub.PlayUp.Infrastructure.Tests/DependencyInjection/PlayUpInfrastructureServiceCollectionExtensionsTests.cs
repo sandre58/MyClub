@@ -17,7 +17,7 @@ namespace MyClub.PlayUp.Infrastructure.Tests.DependencyInjection;
 
 public sealed class PlayUpInfrastructureServiceCollectionExtensionsTests
 {
-    private const string ConnectionString = "Host=127.0.0.1;Database=playup_unconnected;Username=x;Password=x";
+    private const string ConnectionString = "Host=127.0.0.1;Database=myclub_unconnected;Username=x;Password=x";
 
     [Fact]
     public void AddPlayUpInfrastructure_registers_context_as_unit_of_work_and_system_clock()

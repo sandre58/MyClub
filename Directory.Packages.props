@@ -6,9 +6,9 @@
   <PropertyGroup>
     <MyNetVersion Condition="'$(MyNetVersion)' == ''">19.6.0</MyNetVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <!-- Domain dependencies -->
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.11" />
     <PackageVersion Include="MyNet.Generator" Version="$(MyNetVersion)" />
     <!-- Infrastructure (EF Core / PostgreSQL / DI) — 9.2.0: EF Core 10 LTS, not EF 11 preview -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />

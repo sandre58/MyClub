@@ -18,7 +18,7 @@ public sealed class PlayUpDbContextTests
     public void Model_maps_competition_match_and_stage_tables_without_opening_a_connection()
     {
         var options = new DbContextOptionsBuilder<PlayUpDbContext>()
-            .UseNpgsql("Host=127.0.0.1;Database=playup_unconnected;Username=x;Password=x")
+            .UseNpgsql("Host=127.0.0.1;Database=myclub_unconnected;Username=x;Password=x")
             .Options;
 
         using var context = new PlayUpDbContext(options);
