@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Matches;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
@@ -14,11 +15,13 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
-/// Minimal persistence orchestration for Application use cases
-/// (named methods: PrepareStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch).
+/// Minimal persistence orchestration for Application use cases and named read methods
+/// (PrepareStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch,
+/// GetCompetitionOverview, GetStageOverview, ListMatchesByStage, GetMatchDetail).
 /// </summary>
 /// <remarks>
-/// Loads aggregates via ports, runs the static use case, then commits once via <see cref="IUnitOfWork"/>.
+/// Command methods load aggregates via ports, run the static use case, then commit once via <see cref="IUnitOfWork"/>.
+/// Read methods load aggregates, assemble product DTOs, and never call SaveChanges.
 /// PrepareStage and ApplyProgressionOutcome load all competition stages (cross-stage destinations / feeds).
 /// Does not know HTTP, EF Core, or Domain Event dispatch. Not a CQRS mediator — named methods only;
 /// do not introduce generic dispatch without a demonstrated need.
@@ -236,6 +239,109 @@ public sealed class UseCaseExecutor(
 
         FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a competition and its stages, then assembles <see cref="CompetitionOverviewDto"/>.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The competition overview.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the competition or a referenced stage is missing.</exception>
+    public async Task<CompetitionOverviewDto> GetCompetitionOverviewAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var loadedStages = new List<Stage>(competition.StageIds.Count);
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+                ?? throw new ApplicationFailureException(
+                    $"Stage '{stageId}' was not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            loadedStages.Add(stage);
+        }
+
+        return CompetitionOverviewAssembler.Assemble(competition, loadedStages);
+    }
+
+    /// <summary>
+    /// Loads a stage and its competition, then assembles <see cref="StageOverviewDto"/>.
+    /// </summary>
+    /// <param name="stageId">Stage identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The stage overview.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage or competition is missing.</exception>
+    public async Task<StageOverviewDto> GetStageOverviewAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{stage.CompetitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        return StageOverviewAssembler.Assemble(stage, competition);
+    }
+
+    /// <summary>
+    /// Lists matches for a stage as <see cref="MatchSummaryDto"/> rows (stable fixture/round order).
+    /// </summary>
+    /// <param name="stageId">Stage identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Match summaries (possibly empty).</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage or competition is missing.</exception>
+    public async Task<IReadOnlyList<MatchSummaryDto>> ListMatchesByStageAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{stage.CompetitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var matchList = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        return MatchReadAssembler.AssembleSummaries(stage, competition, matchList);
+    }
+
+    /// <summary>
+    /// Loads a match and assembles <see cref="MatchDetailDto"/> (no Winner).
+    /// </summary>
+    /// <param name="matchId">Match identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The match detail.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the match or competition is missing.</exception>
+    public async Task<MatchDetailDto> GetMatchDetailAsync(
+        MatchId matchId,
+        CancellationToken cancellationToken = default)
+    {
+        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Match '{matchId}' was not found.",
+                ApplicationErrorCodes.MatchNotFound);
+
+        var competition = await competitions.GetByIdAsync(match.CompetitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{match.CompetitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var stage = await stages.GetByIdAsync(match.StageId, cancellationToken).ConfigureAwait(false);
+        return MatchReadAssembler.AssembleDetail(match, competition, stage);
     }
 
     private async Task<IReadOnlyList<Match>> LoadKnownMatchesForFixturesAsync(

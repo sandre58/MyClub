@@ -23,6 +23,16 @@ public interface IMatchRepository
     Task<Match?> GetByIdAsync(MatchId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Lists matches belonging to a stage.
+    /// Baseline order is MatchId (applied in Infrastructure after SQL filter).
+    /// Product ordering (fixture/round) is applied in Application assembly.
+    /// </summary>
+    /// <param name="stageId">The stage identity.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Matches for the stage (possibly empty).</returns>
+    Task<IReadOnlyList<Match>> ListByStageAsync(StageId stageId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new match to the current unit of work.
     /// </summary>
     /// <param name="match">The match to add.</param>

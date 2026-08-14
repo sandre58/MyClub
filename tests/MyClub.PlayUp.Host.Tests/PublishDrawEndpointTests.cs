@@ -54,7 +54,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problem.Should().NotBeNull();
-        GetCode(problem!).Should().Be(ApplicationErrorCodes.StageNotFound);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
 
     [IntegrationFact]
@@ -69,7 +69,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problem.Should().NotBeNull();
-        GetCode(problem!).Should().Be(StageErrorCodes.DrawInvalidTransition);
+        GetCode(problem).Should().Be(StageErrorCodes.DrawInvalidTransition);
 
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);

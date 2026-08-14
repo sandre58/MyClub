@@ -22,6 +22,23 @@ When Domain / C# conventions change, update **all** of:
 - Prefer meaningful names over abbreviations.
 - Async methods end with `Async`.
 
+### Application / Host wire contracts
+
+- **HTTP inbound bodies** (Host Minimal API / controllers) use the suffix **`Request`**  
+  (e.g. `FinishMatchRequest`, `ApplyDrawRequest`). Live under `Host/Contracts/`.
+- **Product / HTTP wire shapes** assembled for API responses (or shared as Application read contracts returned by Host) use the suffix **`Dto`**  
+  (e.g. `CompetitionOverviewDto`, `MatchDetailDto`). Nested wire types also use `Dto`.
+- **Do not** put `Dto` / `Request` on Domain types (entities, VOs, events).
+- **Do not** require `Dto` on Application-internal results that are not HTTP wire contracts  
+  (e.g. `ApplyDrawResult`, Domain snapshots used only inside use cases).
+- Prefer intention in the name (`Overview`, `Summary`, `Detail`) **plus** the role suffix (`Dto` / `Request`), not a bare Domain mirror.
+
+### Application folder for product reads
+
+- Prefer **`Application/Reads/`** for the read surface (DTOs + assemblers + display-name helpers).
+- **Do not** rename it to `Dtos/` — `Dto` is a type-role suffix, not a module; assemblers are not DTOs; a stereotype folder fights use-case cohesion.
+- Host inbound contracts stay in `Host/Contracts/` (`*Request`), separate from Application reads.
+
 ## Language
 
 - Prefer file-scoped namespaces.

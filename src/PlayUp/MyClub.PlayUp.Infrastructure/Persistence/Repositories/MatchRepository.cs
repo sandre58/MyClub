@@ -21,6 +21,19 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         context.Set<Match>().SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Match>> ListByStageAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        // Filter in SQL; order by MatchId.Value in memory (typed Id is not IComparable for providers).
+        var matches = await context.Set<Match>()
+            .Where(candidate => candidate.StageId == stageId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return [.. matches.OrderBy(candidate => candidate.Id.Value)];
+    }
+
+    /// <inheritdoc />
     public void Add(Match match)
     {
         ArgumentNullException.ThrowIfNull(match);

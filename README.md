@@ -55,7 +55,7 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Host R2 vertical proven: Draw → Match → Result → Progression) |
+| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Host R2 + Read Surface MVP: Competition/Stage/Match GET) |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned |
 | **Train'in** | Training session design and follow-up. | Future |
 
@@ -67,7 +67,7 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs (`PrepareStage`, `PublishDraw`, `ApplyDraw`, `StartMatch`, `FinishMatch`, `ApplyProgressionOutcome`). Host R2 vertical proven (HTTP + PostgreSQL): `PublishDraw` → `ApplyDraw` → `Match.Start` → `Match.Finish` → `ApplyProgressionOutcome` → destination Slot.
+**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs. Write surface: `PrepareStage`, `PublishDraw`, `ApplyDraw`, `StartMatch`, `FinishMatch`, `ApplyProgressionOutcome`. Read surface MVP (11.1.b): `GET /competitions/{id}`, `GET /stages/{id}`, `GET /stages/{id}/matches`, `GET /matches/{id}`. Host R2 vertical proven end-to-end (commands → observable reads). Catalog bootstrap remains a later tranche.
 
 ```text
 src/

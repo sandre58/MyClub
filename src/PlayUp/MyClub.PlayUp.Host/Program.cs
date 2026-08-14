@@ -24,6 +24,46 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
+app.MapGet(
+    "/competitions/{competitionId:guid}",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var overview = await executor
+            .GetCompetitionOverviewAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(overview);
+    });
+
+app.MapGet(
+    "/stages/{stageId:guid}",
+    async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var overview = await executor
+            .GetStageOverviewAsync(new StageId(stageId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(overview);
+    });
+
+app.MapGet(
+    "/stages/{stageId:guid}/matches",
+    async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var matches = await executor
+            .ListMatchesByStageAsync(new StageId(stageId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(matches);
+    });
+
+app.MapGet(
+    "/matches/{matchId:guid}",
+    async (Guid matchId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var detail = await executor
+            .GetMatchDetailAsync(new MatchId(matchId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(detail);
+    });
+
 app.MapPost(
     "/stages/{stageId:guid}/prepare",
     async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>

@@ -14,7 +14,6 @@ using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
@@ -69,7 +68,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problem.Should().NotBeNull();
-        GetCode(problem!).Should().Be(ApplicationErrorCodes.StageNotFound);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
 
     [IntegrationFact]
@@ -86,7 +85,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
         problem.Should().NotBeNull();
-        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.DrawApplyFailure);
 
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
@@ -157,7 +156,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("R1", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        var addFixture = stage.AddFixture(round.Id, _clock);
         var entryA = EntryId.New();
         var entryB = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
@@ -175,7 +174,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return new PairingSeed(stage.Id, draw.Id, fixture.Id, entryA, entryB);
+        return new PairingSeed(stage.Id, draw.Id, addFixture.Id, entryA, entryB);
     }
 
     private sealed record PairingSeed(

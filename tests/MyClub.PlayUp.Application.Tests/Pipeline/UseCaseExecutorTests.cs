@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
@@ -602,6 +603,7 @@ public sealed class UseCaseExecutorTests
         DomainMatch Match,
         EntryId Home);
 
+    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local", Justification = "Test")]
     private sealed record PublishedPairingScenario(
         Stage Stage,
         DrawId DrawId,

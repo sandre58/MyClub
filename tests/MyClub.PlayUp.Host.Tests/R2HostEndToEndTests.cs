@@ -12,9 +12,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
@@ -23,8 +23,8 @@ using Xunit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Phase 10.9 — vertical R2 proof: Publish → Apply → Start → Finish → Progression → destination Slot
-/// via Host Minimal APIs and PostgreSQL (no Domain / Infrastructure changes beyond Prepare multi-stage load).
+/// Phase 10.9 / 11.1.b — vertical R2 proof with Read Surface observability
+/// (Prepare → Publish → Apply → Start → Finish → Progression → GET Stage/Matches/Match).
 /// </summary>
 [Collection("host-postgres")]
 [Trait("Category", "Integration")]
@@ -94,6 +94,16 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             match.Result.Should().BeNull();
         }
 
+        // Before progression — destination slots empty (observable via Read Surface).
+        using (var stageBefore = await client.GetAsync($"/stages/{seed.SemiStageId.Value}"))
+        {
+            stageBefore.StatusCode.Should().Be(HttpStatusCode.OK);
+            var semiOverview = await stageBefore.Content.ReadFromJsonAsync<StageOverviewDto>();
+            semiOverview.Should().NotBeNull();
+            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().BeNull();
+            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
+        }
+
         // StartMatch
         using (var start = await client.PostAsync(StartUri(matchId), content: null))
         {
@@ -140,6 +150,40 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             semi.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
             semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
         }
+
+        // After progression — slot SF1-A observable via GET Stage.
+        using (var stageAfter = await client.GetAsync($"/stages/{seed.SemiStageId.Value}"))
+        {
+            stageAfter.StatusCode.Should().Be(HttpStatusCode.OK);
+            var semiOverview = await stageAfter.Content.ReadFromJsonAsync<StageOverviewDto>();
+            semiOverview.Should().NotBeNull();
+            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().Be(seed.Home.Value);
+            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").DisplayName.Should().Be("Home FC");
+            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
+        }
+
+        using (var matchesResponse = await client.GetAsync($"/stages/{seed.QuarterStageId.Value}/matches"))
+        {
+            matchesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            var summaries = await matchesResponse.Content.ReadFromJsonAsync<List<MatchSummaryDto>>();
+            summaries.Should().ContainSingle();
+            summaries[0].MatchId.Should().Be(matchId.Value);
+            summaries[0].Status.Should().Be(MatchStatus.Finished);
+            summaries[0].Score.Should().Be(new MatchScoreDto(2, 0));
+            summaries[0].Home.DisplayName.Should().Be("Home FC");
+            AssertNoWinnerInJson(await matchesResponse.Content.ReadAsStringAsync());
+        }
+
+        using var matchResponse = await client.GetAsync($"/matches/{matchId.Value}");
+        matchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var detail = await matchResponse.Content.ReadFromJsonAsync<MatchDetailDto>();
+        detail.Should().NotBeNull();
+        detail.Result.Should().NotBeNull();
+        detail.Result!.HomeGoals.Should().Be(2);
+        detail.Result.AwayGoals.Should().Be(0);
+        detail.Home.DisplayName.Should().Be("Home FC");
+        detail.Away.DisplayName.Should().Be("Away FC");
+        AssertNoWinnerInJson(await matchResponse.Content.ReadAsStringAsync());
     }
 
     [IntegrationFact]
@@ -167,16 +211,14 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             progress.StatusCode.Should().Be(HttpStatusCode.BadRequest);
             var problem = await progress.Content.ReadFromJsonAsync<ProblemDetails>();
             problem.Should().NotBeNull();
-            GetCode(problem!).Should().Be(ApplicationErrorCodes.FixtureInvalid);
+            GetCode(problem).Should().Be(ApplicationErrorCodes.FixtureInvalid);
         }
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var semi = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-                .GetByIdAsync(seed.SemiStageId);
-            semi!.FindSlot("SF1-A")!.EntryId.Should().BeNull();
-            semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
-        }
+        using var scope = factory.Services.CreateScope();
+        var semi = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+            .GetByIdAsync(seed.SemiStageId);
+        semi!.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
     }
 
     private static Uri PrepareUri(StageId stageId) =>
@@ -207,6 +249,31 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
                 _ => raw.ToString()
             };
 
+    private static void AssertNoWinnerInJson(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        AssertNoWinner(document.RootElement);
+    }
+
+    private static void AssertNoWinner(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                property.Name.Equals("winner", StringComparison.OrdinalIgnoreCase).Should().BeFalse();
+                AssertNoWinner(property.Value);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                AssertNoWinner(item);
+            }
+        }
+    }
+
     /// <summary>
     /// Seeds structure + Pairing Draw Draft+Resolved. HTTP workflow starts at Prepare / Publish.
     /// </summary>
@@ -218,11 +285,13 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         var competition = Competition.Create(new CompetitionName("R2 Host Cup"), SampleRegulations.Standard(), _clock);
+        var homeEntry = competition.AddEntry(TeamId.New(), "Home FC", _clock);
+        var awayEntry = competition.AddEntry(TeamId.New(), "Away FC", _clock);
         competitions.Add(competition);
 
         var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        var fixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock);
+        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock);
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
@@ -236,14 +305,14 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    fixture.Id,
+                    addFixture.Id,
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(semi.Id, "SF1-A"))
             ]),
             _clock);
 
-        var home = EntryId.New();
-        var away = EntryId.New();
+        var home = homeEntry.Id;
+        var away = awayEntry.Id;
         var draw = quarter.CreateDraw(DrawResolutionKind.Pairing, _clock);
         quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]), _clock);
         quarter.RecordDrawResolution(
@@ -260,7 +329,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             quarter.Id,
             semi.Id,
             draw.Id,
-            fixture.Id,
+            addFixture.Id,
             home,
             away);
     }
