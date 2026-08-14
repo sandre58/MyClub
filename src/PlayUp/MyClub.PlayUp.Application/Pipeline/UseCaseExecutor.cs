@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
@@ -14,7 +15,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
 /// Minimal persistence orchestration for Application use cases
-/// (PrepareStage mono-AR ; ApplyProgressionOutcome multi-AR).
+/// (named methods: PrepareStage, ApplyProgressionOutcome, PublishDraw, StartMatch, FinishMatch).
 /// </summary>
 /// <remarks>
 /// Loads aggregates via ports, runs the static use case, then commits once via <see cref="IUnitOfWork"/>.
@@ -106,6 +107,70 @@ public sealed class UseCaseExecutor(
         }
 
         ApplyProgressionOutcome.Execute(source, fixtureId, loadedMatches, competitionStages, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a stage, runs <see cref="PublishDraw"/>, and saves changes.
+    /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the draw is published and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
+    public async Task PublishDrawAsync(
+        StageId stageId,
+        DrawId drawId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        PublishDraw.Execute(stage, drawId, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a match, runs <see cref="StartMatch"/>, and saves changes.
+    /// </summary>
+    /// <param name="matchId">Match identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the match is started and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist.</exception>
+    public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
+    {
+        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Match '{matchId}' was not found.",
+                ApplicationErrorCodes.MatchNotFound);
+
+        StartMatch.Execute(match, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a match, runs <see cref="FinishMatch"/>, and saves changes.
+    /// </summary>
+    /// <param name="matchId">Match identity.</param>
+    /// <param name="result">Domain match result.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the match is finished and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist.</exception>
+    public async Task FinishMatchAsync(
+        MatchId matchId,
+        MatchResult result,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Match '{matchId}' was not found.",
+                ApplicationErrorCodes.MatchNotFound);
+
+        FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

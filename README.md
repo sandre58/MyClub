@@ -55,7 +55,7 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Domain + Application + Infrastructure + Host vertical slices PrepareStage / ApplyProgressionOutcome) |
+| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Domain + Application + Infrastructure + Host; Application: PrepareStage, ApplyProgressionOutcome, PublishDraw, StartMatch, FinishMatch) |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned |
 | **Train'in** | Training session design and follow-up. | Future |
 
@@ -67,7 +67,7 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host (Minimal APIs, `UseCaseExecutor`, PrepareStage + ApplyProgressionOutcome endpoints) for Play'up.
+**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host (Minimal APIs; PrepareStage + ApplyProgressionOutcome endpoints). Application `UseCaseExecutor` also orchestrates PublishDraw, StartMatch, FinishMatch (not yet HTTP).
 
 ```text
 src/
