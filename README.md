@@ -67,14 +67,14 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application (WhoFeeds / PrepareStage) + Infrastructure foundations (9.2.0) for Play'up. Host is still absent. Persistence mappings, repositories, and EF migrations are not in this phase.
+**Current codebase:** Domain + Application (WhoFeeds / PrepareStage) + Infrastructure (Competition persistence) for Play'up. Host is still absent.
 
 ```text
 src/
 └── PlayUp/
     ├── MyClub.PlayUp.Domain/           # Competition · Stage · Match · Common · Rules
-    ├── MyClub.PlayUp.Application/      # Use cases + IUnitOfWork
-    └── MyClub.PlayUp.Infrastructure/   # PlayUpDbContext, SystemClock, PostgreSQL DI
+    ├── MyClub.PlayUp.Application/      # Use cases + IUnitOfWork + ICompetitionRepository
+    └── MyClub.PlayUp.Infrastructure/   # PlayUpDbContext, Competition mapping, PostgreSQL DI
 tests/
 ├── MyClub.PlayUp.Domain.Tests/
 ├── MyClub.PlayUp.Application.Tests/
@@ -102,7 +102,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 | Runtime | .NET 10 LTS |
 | Style | DDD, Modular Monolith |
 | API (target) | ASP.NET Core Minimal APIs |
-| Persistence | EF Core + PostgreSQL (foundations; mappings and migrations later) |
+| Persistence | EF Core 10 + PostgreSQL (Competition aggregate; Stage/Match later) |
 | Tests | xUnit, FluentAssertions, Moq (via Central Package Management) |
 | Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
 | Versioning | GitVersion + SemVer + Conventional Commits |
@@ -113,6 +113,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see [`global.json`](global.json))
 - Git
+- Docker (optional; required for PostgreSQL integration tests)
 
 ---
 
@@ -121,6 +122,12 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 ```bash
 dotnet restore
 dotnet build
+dotnet test --filter Category!=Integration
+```
+
+PostgreSQL integration tests (`Category=Integration`) use Testcontainers and need Docker:
+
+```bash
 dotnet test
 ```
 
@@ -140,7 +147,7 @@ dotnet test /p:CollectCoverage=true
 | `tests/` | Test projects (`*Tests`) |
 | `build/` | Shared MSBuild props |
 | `docs/` | Contributor docs (pointers to Notion; guides) |
-| `.github/` | CI, Dependabot, issue/PR templates |
+| `.config/` | Local .NET tools (`dotnet-ef`) |
 | `.cursor/rules/` | AI assistant conventions for this repo |
 
 ---
@@ -158,7 +165,7 @@ dotnet test /p:CollectCoverage=true
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Please run `dotnet build` and `dotnet test` before opening a pull request.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please run `dotnet build` and `dotnet test --filter Category!=Integration` before opening a pull request. Run the full `dotnet test` suite when Docker is available.
 
 Security reports: [SECURITY.md](SECURITY.md).
 

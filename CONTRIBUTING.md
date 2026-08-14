@@ -8,10 +8,17 @@ Thank you for contributing.
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see `global.json`)
 - Git
+- Docker (optional; required for PostgreSQL integration tests)
 
 ```bash
 dotnet restore
 dotnet build
+dotnet test --filter Category!=Integration
+```
+
+Full suite, including Testcontainers PostgreSQL tests:
+
+```bash
 dotnet test
 ```
 
@@ -35,7 +42,7 @@ Product workflow (Intent → Reconciliation, Cursor Ask / Plan / Agent modes, No
 
 1. Branch from `main` (`feature/…` or `bugfix/…`).
 2. Keep changes focused.
-3. Run build and tests locally.
+3. Run build and tests locally (`dotnet test --filter Category!=Integration`; full `dotnet test` when Docker is available).
 4. Fill the [pull request template](.github/PULL_REQUEST_TEMPLATE.md).
 
 **Commit messages:** [Conventional Commits](https://www.conventionalcommits.org/).
@@ -72,6 +79,8 @@ Without `Directory.Build.local.props`, behaviour matches CI (published NuGets on
 - Domain tests live in `tests/MyClub.PlayUp.Domain.Tests` and reference `MyClub.PlayUp.Domain` only.
 - Application tests live in `tests/MyClub.PlayUp.Application.Tests` and reference Application + Domain.
 - Infrastructure tests live in `tests/MyClub.PlayUp.Infrastructure.Tests` and reference Infrastructure + Application + Domain.
+- Tests marked `Category=Integration` require Docker (Testcontainers PostgreSQL). Skip them locally with `--filter Category!=Integration`.
+- EF migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations`. Restore `dotnet-ef` via `dotnet tool restore` (see `.config/dotnet-tools.json`).
 
 ## Security
 

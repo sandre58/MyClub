@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Infrastructure.Persistence;
+using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
+using MyClub.PlayUp.Infrastructure.Persistence.SaveInterceptors;
 using MyClub.PlayUp.Infrastructure.Time;
 
 namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
@@ -19,7 +21,7 @@ namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
 public static class PlayUpInfrastructureServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds the Play'up DbContext (PostgreSQL), unit of work, and system clock.
+    /// Adds the Play'up DbContext (PostgreSQL), ordered-collection interceptor, competition repository, unit of work, and system clock.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The PostgreSQL connection string.</param>
@@ -29,8 +31,14 @@ public static class PlayUpInfrastructureServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
-        services.AddDbContext<PlayUpDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddSingleton<CompetitionOrderedCollectionsInterceptor>();
+        services.AddDbContext<PlayUpDbContext>((serviceProvider, options) =>
+        {
+            options.UseNpgsql(connectionString);
+            options.AddInterceptors(serviceProvider.GetRequiredService<CompetitionOrderedCollectionsInterceptor>());
+        });
         services.AddScoped<IUnitOfWork>(static sp => sp.GetRequiredService<PlayUpDbContext>());
+        services.AddScoped<ICompetitionRepository, CompetitionRepository>();
         services.AddSingleton<IClock, SystemClock>();
 
         return services;
