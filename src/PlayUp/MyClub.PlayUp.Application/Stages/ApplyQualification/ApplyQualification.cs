@@ -24,6 +24,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// Overall uses <c>overallStanding</c>; Group uses <c>groupStandings</c>;
 /// AcrossGroups builds a derived standing via <see cref="CrossGroupStandingAssembler"/>
 /// (requires matches). <see cref="QualificationApplier"/> stays pure and source-agnostic.
+/// Persistence: caller loads all competition Stages into one scope, invokes this use case,
+/// then calls <c>IUnitOfWork.SaveChangesAsync</c> once (no Application transaction API).
 /// </remarks>
 public static class ApplyQualification
 {

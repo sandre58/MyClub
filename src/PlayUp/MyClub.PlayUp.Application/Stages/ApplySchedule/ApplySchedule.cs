@@ -15,7 +15,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// Caller supplies Targets explicitly; does not open Stage collections for direct mutation.
 /// </summary>
 /// <remarks>
-/// V1 Application: Domain batch Apply only. No unit of work / EF transaction here.
+/// Domain batch Apply only. Persistence: caller loads the Stage, invokes this use case, then
+/// calls <c>IUnitOfWork.SaveChangesAsync</c> once (placements stay on Stage; Match ARs unchanged).
 /// </remarks>
 public static class ApplySchedule
 {

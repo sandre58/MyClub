@@ -15,8 +15,9 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <remarks>
 /// Preflights all known failure conditions before any mutation.
-/// V1 Application: preflight → Domain mutations. No unit of work / EF transaction here;
-/// persisted atomicity is a future Host/Infrastructure responsibility.
+/// Persistence: caller loads tracked ARs in one DI scope, invokes this use case, then calls
+/// <c>IUnitOfWork.SaveChangesAsync</c> once. Pairing callers must
+/// <c>IMatchRepository.Add</c> each created Match before that single SaveChanges.
 /// Pairing: opposition is conceptually unordered; V1 Match creation maps EntryA→Home, EntryB→Away
 /// as a technical convention only. Fixture targets are Application orchestration input
 /// (one Fixture per pairing, LegIndex 1).

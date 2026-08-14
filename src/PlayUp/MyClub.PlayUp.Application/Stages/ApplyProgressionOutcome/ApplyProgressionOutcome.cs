@@ -18,8 +18,9 @@ namespace MyClub.PlayUp.Application.Stages;
 /// <remarks>
 /// Preflights destination stages/slots before any mutation (known orchestration failures → zero writes).
 /// Mutations then call <see cref="Stage.ApplyResolvedEntry"/> successively.
-/// V1 does not provide transactional atomicity; no unit of work, repository, or EF transaction belongs here.
-/// A later Domain rejection mid-loop may leave earlier in-memory mutations applied.
+/// Persistence: caller loads source/destination Stages (and Matches) into one scope, invokes this
+/// use case, then calls <c>IUnitOfWork.SaveChangesAsync</c> once. A Domain rejection mid-loop
+/// before SaveChanges leaves nothing persisted; do not introduce Application transactions.
 /// </remarks>
 public static class ApplyProgressionOutcome
 {
