@@ -7,6 +7,7 @@
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Host;
+using MyClub.PlayUp.Host.Contracts;
 using MyClub.PlayUp.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,24 @@ app.MapPost(
         await executor
             .ApplyProgressionOutcomeAsync(new StageId(stageId), new FixtureId(fixtureId), cancellationToken)
             .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
+// Match is an independent aggregate: routes are Match-centric (executor loads by MatchId only).
+app.MapPost(
+    "/matches/{matchId:guid}/start",
+    async (Guid matchId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        await executor.StartMatchAsync(new MatchId(matchId), cancellationToken).ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
+app.MapPost(
+    "/matches/{matchId:guid}/finish",
+    async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var result = request.ToDomain();
+        await executor.FinishMatchAsync(new MatchId(matchId), result, cancellationToken).ConfigureAwait(false);
         return Results.NoContent();
     });
 
