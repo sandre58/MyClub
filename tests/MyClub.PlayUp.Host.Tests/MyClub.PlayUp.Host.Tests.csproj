@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1515;CA2007;CA1031</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Host\MyClub.PlayUp.Host.csproj" />
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

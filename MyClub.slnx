@@ -4,11 +4,13 @@
     <Project Path="src/PlayUp/MyClub.PlayUp.Domain/MyClub.PlayUp.Domain.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.Application/MyClub.PlayUp.Application.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.Infrastructure/MyClub.PlayUp.Infrastructure.csproj" />
+    <Project Path="src/PlayUp/MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MyClub.PlayUp.Domain.Tests/MyClub.PlayUp.Domain.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.Application.Tests/MyClub.PlayUp.Application.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.Infrastructure.Tests/MyClub.PlayUp.Infrastructure.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.Host.Tests/MyClub.PlayUp.Host.Tests.csproj" />
   </Folder>
   <Folder Name="/build/">
     <File Path=".editorconfig" />
