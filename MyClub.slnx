@@ -36,6 +36,11 @@
     <File Path=".env.example" />
     <File Path="compose.yml" />
   </Folder>
+  <Folder Name="/run/">
+    <File Path=".run/PlayUp Host.run.xml" />
+    <File Path=".run/PlayUp Web.run.xml" />
+    <File Path=".run/PlayUp Host + Web.run.xml" />
+  </Folder>
   <Folder Name="/docs/">
     <File Path="CONTRIBUTING.md" />
     <File Path="LICENSE" />

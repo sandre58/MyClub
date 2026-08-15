@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PlayUp Host + Web" type="CompoundRunConfigurationType">
+    <toRun name="PlayUp Host" type="LaunchSettings" />
+    <toRun name="PlayUp Web" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>
