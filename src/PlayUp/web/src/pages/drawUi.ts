@@ -1,6 +1,6 @@
-import type { StageDraw, StageSlot } from '../types'
+import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types'
 
-/** UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied for Slot). */
+/** UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied). */
 export type DrawUiProjection = {
   message: string
   showResults: boolean
@@ -19,11 +19,12 @@ export type DrawUiProjection = {
 export function getDrawUiProjection(
   draw: StageDraw,
   slots: StageSlot[],
+  rounds: StageRound[] = [],
 ): DrawUiProjection {
   const isApplied =
-    draw.kind === 0 &&
     draw.resolutionState === 1 &&
-    isSlotDrawApplied(draw, slots)
+    ((draw.kind === 0 && isSlotDrawApplied(draw, slots)) ||
+      (draw.kind === 2 && isPairingDrawApplied(draw, rounds)))
 
   const statusTone =
     draw.status === 2
@@ -70,10 +71,17 @@ export function getDrawUiProjection(
   }
 
   if (draw.status === 1 && draw.resolutionState === 1) {
+    let appliedMessage = 'Published draw.'
+    if (isApplied && draw.kind === 0) {
+      appliedMessage =
+        'Published draw. Placements match the current stage slots.'
+    } else if (isApplied && draw.kind === 2) {
+      appliedMessage =
+        'Published draw. Target fixtures already have attached matches.'
+    }
+
     return {
-      message: isApplied
-        ? 'Published draw. Placements match the current stage slots.'
-        : 'Published draw.',
+      message: appliedMessage,
       showResults: true,
       isApplied,
       statusTone,
@@ -110,4 +118,56 @@ export function isSlotDrawApplied(
     const slot = byKey.get(placement.slotKey)
     return slot?.entryId != null && slot.entryId === placement.entryId
   })
+}
+
+/**
+ * Fixtures in StageOverview order: rounds then fixtures within each round.
+ * Host/repository reorder by SortOrder on load — this is the stable 1:1 source for Pairing Apply.
+ */
+export function listStageFixturesInOrder(
+  rounds: StageRound[],
+): StageFixture[] {
+  return rounds.flatMap((round) => round.fixtures)
+}
+
+/**
+ * Strict automap: pairing[i] → fixture[i] only when counts match and both > 0.
+ * Returns null when the UI must block Apply (ambiguous / incomplete mapping).
+ */
+export function resolvePairingFixtureIds(
+  draw: StageDraw,
+  rounds: StageRound[],
+): string[] | null {
+  if (draw.kind !== 2 || draw.resolutionState !== 1) {
+    return null
+  }
+
+  const fixtures = listStageFixturesInOrder(rounds)
+  if (
+    draw.pairings.length === 0 ||
+    fixtures.length === 0 ||
+    draw.pairings.length !== fixtures.length
+  ) {
+    return null
+  }
+
+  return fixtures.map((fixture) => fixture.id)
+}
+
+/**
+ * Lightweight Pairing “applied” heuristic from StageOverview only:
+ * same count as automap + every target fixture already has at least one attachment.
+ * Does not verify entry identities (would need the matches query).
+ */
+export function isPairingDrawApplied(
+  draw: StageDraw,
+  rounds: StageRound[],
+): boolean {
+  const fixtureIds = resolvePairingFixtureIds(draw, rounds)
+  if (fixtureIds === null) {
+    return false
+  }
+
+  const fixtures = listStageFixturesInOrder(rounds)
+  return fixtures.every((fixture) => fixture.attachments.length > 0)
 }

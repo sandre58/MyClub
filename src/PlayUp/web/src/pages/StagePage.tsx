@@ -1,7 +1,18 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { fetchCompetitionOverview, fetchStageOverview } from '../api'
-import { BackLink, EmptyState, ErrorState, LoadingState } from '../queryUi'
+import {
+  applyDraw,
+  fetchCompetitionOverview,
+  fetchStageOverview,
+  publishDraw,
+} from '../api'
+import {
+  BackLink,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  formatError,
+} from '../queryUi'
 import {
   drawResolutionKindLabel,
   drawResolutionStateLabel,
@@ -9,9 +20,13 @@ import {
   stageStatusLabel,
   type StageDraw,
   type StageOverview,
+  type StageRound,
   type StageSlot,
 } from '../types'
-import { getDrawUiProjection } from './drawUi'
+import {
+  getDrawUiProjection,
+  resolvePairingFixtureIds,
+} from './drawUi'
 
 export function StagePage() {
   const { stageId = '' } = useParams()
@@ -140,7 +155,12 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         )}
       </section>
 
-      <DrawSection draws={data.draws} slots={data.slots} />
+      <DrawSection
+        stageId={data.id}
+        draws={data.draws}
+        slots={data.slots}
+        rounds={data.rounds}
+      />
     </article>
   )
 }
@@ -150,11 +170,15 @@ function StageOverviewView({ data }: { data: StageOverview }) {
  * Same page module — not a features/draws layer.
  */
 function DrawSection({
+  stageId,
   draws,
   slots,
+  rounds,
 }: {
+  stageId: string
   draws: StageDraw[]
   slots: StageSlot[]
+  rounds: StageRound[]
 }) {
   return (
     <section aria-labelledby="draws-heading">
@@ -167,7 +191,12 @@ function DrawSection({
         <ul className="draw-list">
           {draws.map((draw) => (
             <li key={draw.id}>
-              <DrawCard draw={draw} slots={slots} />
+              <DrawCard
+                stageId={stageId}
+                draw={draw}
+                slots={slots}
+                rounds={rounds}
+              />
             </li>
           ))}
         </ul>
@@ -176,9 +205,19 @@ function DrawSection({
   )
 }
 
-function DrawCard({ draw, slots }: { draw: StageDraw; slots: StageSlot[] }) {
+function DrawCard({
+  stageId,
+  draw,
+  slots,
+  rounds,
+}: {
+  stageId: string
+  draw: StageDraw
+  slots: StageSlot[]
+  rounds: StageRound[]
+}) {
   // DERIVED UI: computed each render from props (server state), never useState.
-  const ui = getDrawUiProjection(draw, slots)
+  const ui = getDrawUiProjection(draw, slots, rounds)
 
   return (
     <article className="draw-card">
@@ -257,6 +296,154 @@ function DrawCard({ draw, slots }: { draw: StageDraw; slots: StageSlot[] }) {
           Group placements are not shown in this overview yet.
         </p>
       )}
+
+      <DrawActions
+        stageId={stageId}
+        draw={draw}
+        rounds={rounds}
+        isApplied={ui.isApplied}
+      />
     </article>
+  )
+}
+
+/**
+ * useMutation = “run this write when the user asks”, not “keep this data fresh”.
+ * Client state here is only the confirmation gate (window.confirm) — not a copy of the Draw.
+ */
+function DrawActions({
+  stageId,
+  draw,
+  rounds,
+  isApplied,
+}: {
+  stageId: string
+  draw: StageDraw
+  rounds: StageRound[]
+  isApplied: boolean
+}) {
+  const queryClient = useQueryClient()
+
+  const canPublish = draw.status === 0 && draw.resolutionState === 1
+  const canApply =
+    draw.status === 1 &&
+    draw.resolutionState === 1 &&
+    !isApplied &&
+    (draw.kind === 0 || draw.kind === 2)
+
+  const pairingFixtureIds =
+    draw.kind === 2 ? resolvePairingFixtureIds(draw, rounds) : null
+  const pairingMapBlocked = draw.kind === 2 && canApply && pairingFixtureIds === null
+
+  const publishMutation = useMutation({
+    mutationFn: () => publishDraw(stageId, draw.id),
+    onSuccess: async () => {
+      // invalidateQueries marks cache stale → active queries refetch.
+      // Prefer this over refetchQueries: only mounted observers refetch;
+      // inactive keys refresh when next used.
+      await queryClient.invalidateQueries({ queryKey: ['stages', stageId] })
+    },
+  })
+
+  const applyMutation = useMutation({
+    mutationFn: () => {
+      if (draw.kind === 0) {
+        return applyDraw(stageId, draw.id, { fixtureIds: [] })
+      }
+
+      if (draw.kind === 2) {
+        const fixtureIds = resolvePairingFixtureIds(draw, rounds)
+        if (fixtureIds === null) {
+          throw new Error(
+            'Cannot apply pairing: fixture count must match pairing count for a 1:1 map.',
+          )
+        }
+        return applyDraw(stageId, draw.id, { fixtureIds })
+      }
+
+      throw new Error('Apply is not available for this draw kind.')
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['stages', stageId] })
+      if (draw.kind === 2) {
+        await queryClient.invalidateQueries({
+          queryKey: ['matches', 'by-stage', stageId],
+        })
+      }
+    },
+  })
+
+  const busy = publishMutation.isPending || applyMutation.isPending
+  const mutationError = publishMutation.error ?? applyMutation.error
+
+  function handlePublish() {
+    publishMutation.mutate()
+  }
+
+  function handleApply() {
+    // CLIENT STATE: confirmation is local UI intent, not server state.
+    // window.confirm is acceptable for this phase — replace with a small
+    // accessible dialog later if organizers need richer UX.
+    const confirmed = window.confirm(
+      'Apply this draw? This will update the stage and may create matches.',
+    )
+    if (!confirmed) {
+      return
+    }
+    applyMutation.mutate()
+  }
+
+  if (!canPublish && !canApply && !pairingMapBlocked && !mutationError) {
+    return null
+  }
+
+  return (
+    <div className="draw-actions" aria-busy={busy}>
+      {canPublish && (
+        <button
+          type="button"
+          className="btn"
+          disabled={busy}
+          onClick={handlePublish}
+        >
+          {publishMutation.isPending ? 'Publishing…' : 'Publish'}
+        </button>
+      )}
+
+      {canApply && draw.kind === 0 && (
+        <button
+          type="button"
+          className="btn"
+          disabled={busy}
+          onClick={handleApply}
+        >
+          {applyMutation.isPending ? 'Applying…' : 'Apply'}
+        </button>
+      )}
+
+      {canApply && draw.kind === 2 && pairingFixtureIds !== null && (
+        <button
+          type="button"
+          className="btn"
+          disabled={busy}
+          onClick={handleApply}
+        >
+          {applyMutation.isPending ? 'Applying…' : 'Apply'}
+        </button>
+      )}
+
+      {pairingMapBlocked && (
+        <p className="hint" role="status">
+          Apply is unavailable: the number of pairings must equal the number of
+          stage fixtures for a 1:1 mapping.
+        </p>
+      )}
+
+      {mutationError && (
+        <p className="error" role="alert">
+          {formatError(mutationError)}
+        </p>
+      )}
+    </div>
   )
 }

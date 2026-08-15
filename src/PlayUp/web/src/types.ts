@@ -89,6 +89,11 @@ export interface FinishMatchRequest {
   penaltyShootoutAwayGoals?: number | null
 }
 
+/** Body for POST .../draws/{id}/apply — Pairing needs one fixture id per pairing (same order). */
+export interface ApplyDrawRequest {
+  fixtureIds: string[]
+}
+
 export interface StageFixtureAttachment {
   matchId: string
   legIndex: number

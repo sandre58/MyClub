@@ -1,4 +1,5 @@
 import type {
+  ApplyDrawRequest,
   CompetitionOverview,
   FinishMatchRequest,
   MatchDetail,
@@ -120,4 +121,18 @@ export function applyProgressionOutcome(
   return postNoContent(
     `/stages/${stageId}/fixtures/${fixtureId}/apply-progression`,
   )
+}
+
+/** POST /stages/{stageId}/draws/{drawId}/publish → 204 */
+export function publishDraw(stageId: string, drawId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`)
+}
+
+/** POST /stages/{stageId}/draws/{drawId}/apply → 204 */
+export function applyDraw(
+  stageId: string,
+  drawId: string,
+  request: ApplyDrawRequest,
+): Promise<void> {
+  return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`, request)
 }
