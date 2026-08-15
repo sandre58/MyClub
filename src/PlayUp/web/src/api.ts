@@ -123,6 +123,11 @@ export function applyProgressionOutcome(
   )
 }
 
+/** POST /stages/{stageId}/prepare → 204 (bodyless; Draft → Ready) */
+export function prepareStage(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/prepare`)
+}
+
 /** POST /stages/{stageId}/draws/{drawId}/publish → 204 */
 export function publishDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`)

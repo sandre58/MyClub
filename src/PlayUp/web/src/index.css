@@ -389,6 +389,14 @@ select:focus-visible {
     margin-top: var(--space-1);
 }
 
+.stage-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
 @media (max-width: 40rem) {
     .draw-pairing {
         grid-template-columns: 1fr;

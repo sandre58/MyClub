@@ -7,6 +7,7 @@ import {
   applyDraw,
   fetchCompetitionOverview,
   fetchStageOverview,
+  prepareStage,
   publishDraw,
 } from '../api'
 import type { StageDraw, StageOverview, StageRound, StageSlot } from '../types'
@@ -24,6 +25,7 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchStageOverview: vi.fn(),
     fetchCompetitionOverview: vi.fn(),
+    prepareStage: vi.fn(),
     publishDraw: vi.fn(),
     applyDraw: vi.fn(),
   }
@@ -202,6 +204,127 @@ describe('getDrawUiProjection', () => {
   })
 })
 
+describe('StagePage prepare', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+      id: competitionId,
+      name: 'Dev Seed Cup',
+      status: 0,
+      entries: [],
+      stages: [],
+    })
+    vi.mocked(prepareStage).mockResolvedValue(undefined)
+    vi.mocked(publishDraw).mockResolvedValue(undefined)
+    vi.mocked(applyDraw).mockResolvedValue(undefined)
+  })
+
+  it('shows Prepare stage when status is Draft', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+
+    renderStagePage()
+
+    expect(
+      await screen.findByRole('button', { name: 'Prepare stage' }),
+    ).toBeEnabled()
+    expect(screen.getByText('Draft')).toBeInTheDocument()
+  })
+
+  it('hides Prepare stage when status is Ready', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 1 }))
+
+    renderStagePage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Ready')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByRole('button', { name: /Prepare stage/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides Prepare stage when status is Running', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 2 }))
+
+    renderStagePage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Running')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByRole('button', { name: /Prepare stage/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('Prepare calls prepareStage and shows Ready after refetch', async () => {
+    const user = userEvent.setup()
+    let prepared = false
+
+    vi.mocked(fetchStageOverview).mockImplementation(async () =>
+      baseOverview({ status: prepared ? 1 : 0 }),
+    )
+    vi.mocked(prepareStage).mockImplementation(async () => {
+      prepared = true
+    })
+
+    renderStagePage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Prepare stage' }),
+    )
+
+    await waitFor(() => {
+      expect(prepareStage).toHaveBeenCalledWith(stageId)
+      expect(screen.getByText('Ready')).toBeInTheDocument()
+    })
+    expect(
+      screen.queryByRole('button', { name: /Prepare stage/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('disables Prepare while pending', async () => {
+    const user = userEvent.setup()
+    let resolvePrepare!: () => void
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+    vi.mocked(prepareStage).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePrepare = () => resolve(undefined)
+        }),
+    )
+
+    renderStagePage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Prepare stage' }),
+    )
+
+    expect(
+      await screen.findByRole('button', { name: 'Preparing stage…' }),
+    ).toBeDisabled()
+
+    resolvePrepare()
+    await waitFor(() => {
+      expect(prepareStage).toHaveBeenCalledWith(stageId)
+    })
+  })
+
+  it('shows Prepare error and keeps Draft with button usable', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+    vi.mocked(prepareStage).mockRejectedValue(new Error('Prepare blocked'))
+
+    renderStagePage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Prepare stage' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Prepare blocked')
+    expect(screen.getByText('Draft')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Prepare stage' }),
+    ).toBeEnabled()
+  })
+})
+
 describe('StagePage draws', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -212,6 +335,7 @@ describe('StagePage draws', () => {
       entries: [],
       stages: [],
     })
+    vi.mocked(prepareStage).mockResolvedValue(undefined)
     vi.mocked(publishDraw).mockResolvedValue(undefined)
     vi.mocked(applyDraw).mockResolvedValue(undefined)
   })

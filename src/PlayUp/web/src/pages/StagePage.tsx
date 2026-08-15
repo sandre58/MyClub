@@ -4,6 +4,7 @@ import {
   applyDraw,
   fetchCompetitionOverview,
   fetchStageOverview,
+  prepareStage,
   publishDraw,
 } from '../api'
 import {
@@ -70,10 +71,28 @@ export function StagePage() {
 }
 
 function StageOverviewView({ data }: { data: StageOverview }) {
+  const queryClient = useQueryClient()
   const fixtureCount = data.rounds.reduce(
     (sum, round) => sum + round.fixtures.length,
     0,
   )
+
+  // UX gate only: Domain still rejects Prepare when not Draft / not ready.
+  const canPrepare = data.status === 0
+
+  // useMutation = write on user intent. Server state stays in the stage query.
+  const prepareMutation = useMutation({
+    mutationFn: () => prepareStage(data.id),
+    onSuccess: async () => {
+      // Invalidate → active observers refetch → badge shows Ready from GET.
+      await queryClient.invalidateQueries({ queryKey: ['stages', data.id] })
+      // CompetitionOverview.stages[].status would stay Draft for staleTime (30s)
+      // after Back → Competition; Prepare changes that field, so invalidate it.
+      await queryClient.invalidateQueries({
+        queryKey: ['competitions', data.competitionId],
+      })
+    },
+  })
 
   return (
     <article className="panel">
@@ -90,6 +109,27 @@ function StageOverviewView({ data }: { data: StageOverview }) {
             View matches →
           </Link>
         </p>
+        {(canPrepare || prepareMutation.isError) && (
+          <div className="stage-actions" aria-busy={prepareMutation.isPending}>
+            {canPrepare && (
+              <button
+                type="button"
+                className="btn"
+                disabled={prepareMutation.isPending}
+                onClick={() => prepareMutation.mutate()}
+              >
+                {prepareMutation.isPending
+                  ? 'Preparing stage…'
+                  : 'Prepare stage'}
+              </button>
+            )}
+            {prepareMutation.isError && (
+              <p className="error" role="alert">
+                {formatError(prepareMutation.error)}
+              </p>
+            )}
+          </div>
+        )}
       </header>
 
       <section>
