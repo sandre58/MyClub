@@ -5,6 +5,7 @@ Contributor-facing documentation for **MyClub**. Product vision, detailed archit
 | Document | Description |
 | :------- | :---------- |
 | [Guides](guides/README.md) | Developer guides (growing with the codebase) |
+| [Local persistence](guides/local-persistence.md) | PostgreSQL 18 via Docker Compose, secrets, migrations, Compose vs Testcontainers |
 
 ## Canonical sources
 

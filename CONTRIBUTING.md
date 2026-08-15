@@ -8,7 +8,7 @@ Thank you for contributing.
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see `global.json`)
 - Git
-- Docker (optional; required for PostgreSQL integration tests)
+- Docker Desktop — local PostgreSQL via `compose.yml`, and Testcontainers for `Category=Integration` tests
 
 ```bash
 dotnet restore
@@ -16,7 +16,9 @@ dotnet build
 dotnet test --filter Category!=Integration
 ```
 
-Full suite, including Testcontainers PostgreSQL tests:
+**Local Host database:** copy `.env.example` → `.env`, run `docker compose up -d`, set Host User Secrets `ConnectionStrings:PlayUp`, apply migrations. Step-by-step: [docs/guides/local-persistence.md](docs/guides/local-persistence.md).
+
+Full suite, including Testcontainers PostgreSQL tests (ephemeral; not the Compose volume):
 
 ```bash
 dotnet test
@@ -79,8 +81,10 @@ Without `Directory.Build.local.props`, behaviour matches CI (published NuGets on
 - Domain tests live in `tests/MyClub.PlayUp.Domain.Tests` and reference `MyClub.PlayUp.Domain` only.
 - Application tests live in `tests/MyClub.PlayUp.Application.Tests` and reference Application + Domain.
 - Infrastructure tests live in `tests/MyClub.PlayUp.Infrastructure.Tests` and reference Infrastructure + Application + Domain.
-- Tests marked `Category=Integration` require Docker (Testcontainers PostgreSQL). Skip them locally with `--filter Category!=Integration`.
-- EF migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations`. Restore `dotnet-ef` via `dotnet tool restore` (see `.config/dotnet-tools.json`).
+- Tests marked `Category=Integration` require Docker (Testcontainers PostgreSQL). Skip them locally with `--filter Category!=Integration`. Do not point those tests at the Compose `myclub` database.
+- EF migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations`. Restore `dotnet-ef` via `dotnet tool restore` (see `.config/dotnet-tools.json`). Apply with `dotnet ef database update --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host`.
+- Never commit `.env`, User Secrets, or real connection strings. Use `.env.example` as the Compose template only.
+- Prefer `docker compose down` over `docker compose down -v` unless you intentionally want to delete the local `myclub-postgres-data` volume.
 
 ## Security
 

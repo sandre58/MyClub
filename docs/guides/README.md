@@ -1,9 +1,11 @@
 # Developer guides
 
-Guides will appear here as Play'up features land (domain modeling patterns, testing, persistence, hosting).
+| Guide | Description |
+| :---- | :---------- |
+| [Local persistence](local-persistence.md) | Docker Compose PostgreSQL for Host development; User Secrets; EF migrations; Compose vs Testcontainers |
 
-Until then:
+Also:
 
-- Setup and contribution workflow: [CONTRIBUTING.md](../CONTRIBUTING.md)
-- Project overview: [README.md](../README.md)
+- Setup and contribution workflow: [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- Project overview: [README.md](../../README.md)
 - Architecture and decisions: Notion project *MyClub* (not duplicated in Git)

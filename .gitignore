@@ -106,6 +106,5 @@ Directory.Build.local.props
 ## Secrets / Environment
 ## =========================
 .env
-.env.*
 secrets.json
 appsettings.Development.json

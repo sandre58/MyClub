@@ -104,7 +104,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 | Runtime | .NET 10 LTS |
 | Style | DDD, Modular Monolith |
 | API | ASP.NET Core Minimal APIs (Host R2 vertical: Prepare → PublishDraw → ApplyDraw → Start/Finish Match → ApplyProgression) |
-| Persistence | EF Core 10 + PostgreSQL (Competition, Stage, Match; Testcontainers integration tests) |
+| Persistence | EF Core 10 + PostgreSQL 18 (Compose for local Host; Testcontainers for integration tests) |
 | Tests | xUnit, FluentAssertions, Moq (via Central Package Management) |
 | Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
 | Versioning | GitVersion + SemVer + Conventional Commits |
@@ -115,7 +115,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see [`global.json`](global.json))
 - Git
-- Docker (optional; required for PostgreSQL integration tests)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) — required for local PostgreSQL (`compose.yml`) and for Testcontainers integration tests
 
 ---
 
@@ -127,7 +127,23 @@ dotnet build
 dotnet test --filter Category!=Integration
 ```
 
-PostgreSQL integration tests (`Category=Integration`) use Testcontainers and need Docker:
+### Local PostgreSQL (Host development)
+
+Persistent PostgreSQL 18 via Docker Compose. Copy `.env.example` → `.env`, set a local password, then:
+
+```bash
+docker compose up -d
+dotnet user-secrets set "ConnectionStrings:PlayUp" "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=YOUR_LOCAL_PASSWORD" --project src/PlayUp/MyClub.PlayUp.Host
+dotnet tool restore
+dotnet ef database update --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host
+dotnet run --project src/PlayUp/MyClub.PlayUp.Host
+```
+
+Full bootstrap (volume persistence, secrets vs `.env`, `docker compose down` vs `down -v`, Compose vs Testcontainers): [docs/guides/local-persistence.md](docs/guides/local-persistence.md).
+
+### Integration tests
+
+PostgreSQL integration tests (`Category=Integration`) use **Testcontainers** (ephemeral containers), not the Compose volume:
 
 ```bash
 dotnet test
@@ -148,6 +164,7 @@ dotnet test /p:CollectCoverage=true
 | `src/PlayUp/` | Play'up product projects |
 | `tests/` | Test projects (`*Tests`) |
 | `build/` | Shared MSBuild props |
+| `compose.yml` | Local PostgreSQL 18 (Docker Compose) |
 | `docs/` | Contributor docs (pointers to Notion; guides) |
 | `.config/` | Local .NET tools (`dotnet-ef`) |
 | `.cursor/rules/` | AI assistant conventions for this repo |

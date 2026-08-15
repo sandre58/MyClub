@@ -30,6 +30,11 @@
     <File Path="global.json" />
     <File Path="stylecop.json" />
   </Folder>
+  <Folder Name="/docker/">
+    <File Path=".env" />
+    <File Path=".env.example" />
+    <File Path="compose.yml" />
+  </Folder>
   <Folder Name="/docs/">
     <File Path="CONTRIBUTING.md" />
     <File Path="LICENSE" />
@@ -37,7 +42,13 @@
     <File Path="SECURITY.md" />
   </Folder>
   <Folder Name="/docs/guides/">
+    <File Path="docs/guides/local-persistence.md" />
     <File Path="docs/guides/README.md" />
+  </Folder>
+  <Folder Name="/git/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path=".gitmessage" />
   </Folder>
   <Folder Name="/github/">
     <File Path=".github/CODEOWNERS" />
