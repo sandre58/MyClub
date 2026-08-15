@@ -10,7 +10,7 @@ export function HomePage() {
   }
 
   return (
-    <main className="page">
+    <main id="main" className="page">
       <header className="page__header">
         <p className="eyebrow">Play’up · Organizer</p>
         <h1>Choose a competition</h1>

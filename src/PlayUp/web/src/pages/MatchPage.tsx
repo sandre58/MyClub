@@ -8,7 +8,13 @@ import {
   fetchMatchDetail,
   fetchStageOverview,
 } from '../api'
-import { BackLink, ErrorState, LoadingState, formatError } from '../queryUi'
+import {
+  BackLink,
+  ErrorState,
+  LoadingState,
+  MatchStatusBadge,
+  formatError,
+} from '../queryUi'
 import {
   formatScore,
   matchStatusLabel,
@@ -16,7 +22,6 @@ import {
   sideLabel,
   type FinishMatchRequest,
   type MatchDetail,
-  type MatchStatus,
   type ResultType,
 } from '../types'
 
@@ -38,13 +43,13 @@ export function MatchPage() {
   })
 
   return (
-    <main className="page">
+    <main id="main" className="page">
       <header className="page__header">
         <p className="eyebrow">Match</p>
         <h1>
           {matchQuery.data
             ? `${sideLabel(matchQuery.data.home)} vs ${sideLabel(matchQuery.data.away)}`
-            : 'Detail'}
+            : 'Match'}
         </h1>
         {stageId && (
           <BackLink to={`/stages/${stageId}/matches`}>
@@ -76,20 +81,25 @@ function MatchDetailView({
 }: {
   data: MatchDetail
   stageName?: string
-  stageSlots?: { slotKey: string; entryId: string | null; displayName: string | null }[]
+  stageSlots?: {
+    slotKey: string
+    entryId: string | null
+    displayName: string | null
+  }[]
 }) {
   const queryClient = useQueryClient()
   const homeName = sideLabel(data.home)
   const awayName = sideLabel(data.away)
 
   // useMutation = “run this write when the user asks”, not “keep this data fresh”.
-  // Analogy: closer to calling an Application use case than to a GET repository.
-  // Unlike .NET, there is no Command/Handler class — just a function + cache side-effects.
   const startMutation = useMutation({
     mutationFn: () => startMatch(data.matchId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ['matches', data.matchId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ['matches', 'by-stage', data.stageId],
       })
     },
   })
@@ -129,17 +139,17 @@ function MatchDetailView({
 
   const mutationError =
     startMutation.error ?? finishMutation.error ?? progressionMutation.error
-  const anyPending =
-    startMutation.isPending ||
-    finishMutation.isPending ||
-    progressionMutation.isPending
 
   const sf1a = stageSlots?.find((slot) => slot.slotKey === 'SF1-A')
 
   return (
     <article className="panel match-panel">
       <header className="panel__header">
-        <div className="scoreboard" aria-live="polite">
+        <div
+          className="scoreboard"
+          aria-live="polite"
+          aria-label={`Score ${homeName} ${data.result?.homeGoals ?? 'none'} to ${awayName} ${data.result?.awayGoals ?? 'none'}`}
+        >
           <div className="scoreboard__side">
             <span className="scoreboard__name">{homeName}</span>
             <span className="scoreboard__goals">
@@ -157,16 +167,15 @@ function MatchDetailView({
           </div>
         </div>
 
-        <p className={`match-status match-status--${statusTone(data.status)}`}>
-          <span className="match-status__dot" aria-hidden="true" />
-          {matchStatusLabel[data.status]}
+        <p className="status-line">
+          <MatchStatusBadge status={data.status} />
         </p>
-        <p className="mono">{data.matchId}</p>
+        <p className="mono muted">{data.matchId}</p>
       </header>
 
       {data.status === 2 && data.result && (
         <section>
-          <h3>Result</h3>
+          <h2 className="section-title">Result</h2>
           <ul className="plain-list">
             <li>
               Score:{' '}
@@ -189,8 +198,15 @@ function MatchDetailView({
         </section>
       )}
 
-      <section className="match-actions">
-        <h3>Actions</h3>
+      <section
+        className="match-actions"
+        aria-busy={
+          startMutation.isPending ||
+          finishMutation.isPending ||
+          progressionMutation.isPending
+        }
+      >
+        <h2 className="section-title">Actions</h2>
 
         {data.status === 0 && (
           <button
@@ -234,12 +250,6 @@ function MatchDetailView({
             </p>
           )}
 
-        {anyPending && (
-          <p className="hint" role="status">
-            Working…
-          </p>
-        )}
-
         {mutationError && (
           <p className="error" role="alert">
             {formatError(mutationError)}
@@ -255,7 +265,7 @@ function MatchDetailView({
       </section>
 
       <section>
-        <h3>Context</h3>
+        <h2 className="section-title">Context</h2>
         <ul className="plain-list">
           <li>
             Stage:{' '}
@@ -369,34 +379,35 @@ function FinishMatchForm({
 
   return (
     <form className="finish-form" onSubmit={handleSubmit} noValidate>
-      <div className="finish-form__row">
-        <label htmlFor="homeGoals">
-          {homeName} goals
-          <input
-            id="homeGoals"
-            type="number"
-            min={0}
-            step={1}
-            inputMode="numeric"
-            value={homeGoals}
-            disabled={pending}
-            onChange={(e) => setHomeGoals(e.target.value)}
-          />
-        </label>
-        <label htmlFor="awayGoals">
-          {awayName} goals
-          <input
-            id="awayGoals"
-            type="number"
-            min={0}
-            step={1}
-            inputMode="numeric"
-            value={awayGoals}
-            disabled={pending}
-            onChange={(e) => setAwayGoals(e.target.value)}
-          />
-        </label>
-      </div>
+      <fieldset className="finish-form__fieldset" disabled={pending}>
+        <legend className="finish-form__legend">Score</legend>
+        <div className="finish-form__row">
+          <label htmlFor="homeGoals">
+            {homeName} goals
+            <input
+              id="homeGoals"
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={homeGoals}
+              onChange={(e) => setHomeGoals(e.target.value)}
+            />
+          </label>
+          <label htmlFor="awayGoals">
+            {awayName} goals
+            <input
+              id="awayGoals"
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={awayGoals}
+              onChange={(e) => setAwayGoals(e.target.value)}
+            />
+          </label>
+        </div>
+      </fieldset>
 
       <label htmlFor="resultType">
         Result type
@@ -425,34 +436,37 @@ function FinishMatchForm({
         Extra time played
       </label>
 
-      <div className="finish-form__row">
-        <label htmlFor="shootoutHome">
-          Shootout {homeName} (optional)
-          <input
-            id="shootoutHome"
-            type="number"
-            min={0}
-            step={1}
-            inputMode="numeric"
-            value={shootoutHome}
-            disabled={pending}
-            onChange={(e) => setShootoutHome(e.target.value)}
-          />
-        </label>
-        <label htmlFor="shootoutAway">
-          Shootout {awayName} (optional)
-          <input
-            id="shootoutAway"
-            type="number"
-            min={0}
-            step={1}
-            inputMode="numeric"
-            value={shootoutAway}
-            disabled={pending}
-            onChange={(e) => setShootoutAway(e.target.value)}
-          />
-        </label>
-      </div>
+      <fieldset className="finish-form__fieldset" disabled={pending}>
+        <legend className="finish-form__legend">
+          Penalty shootout (optional)
+        </legend>
+        <div className="finish-form__row">
+          <label htmlFor="shootoutHome">
+            {homeName} kicks
+            <input
+              id="shootoutHome"
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={shootoutHome}
+              onChange={(e) => setShootoutHome(e.target.value)}
+            />
+          </label>
+          <label htmlFor="shootoutAway">
+            {awayName} kicks
+            <input
+              id="shootoutAway"
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={shootoutAway}
+              onChange={(e) => setShootoutAway(e.target.value)}
+            />
+          </label>
+        </div>
+      </fieldset>
 
       {localError && (
         <p className="error" role="alert">
@@ -465,17 +479,4 @@ function FinishMatchForm({
       </button>
     </form>
   )
-}
-
-function statusTone(status: MatchStatus): string {
-  switch (status) {
-    case 0:
-      return 'scheduled'
-    case 1:
-      return 'live'
-    case 2:
-      return 'finished'
-    default:
-      return 'other'
-  }
 }

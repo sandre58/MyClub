@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  applyProgressionOutcome,
   fetchMatchDetail,
   fetchStageOverview,
   finishMatch,
@@ -26,6 +27,7 @@ vi.mock('../api', async (importOriginal) => {
 
 const matchId = '11111111-1111-1111-1111-111111111111'
 const stageId = '22222222-2222-2222-2222-222222222222'
+const fixtureId = '44444444-4444-4444-4444-444444444444'
 
 function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
   return {
@@ -36,7 +38,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
     home: { entryId: 'home', displayName: 'Alpha' },
     away: { entryId: 'away', displayName: 'Beta' },
     result: null,
-    fixtureId: '44444444-4444-4444-4444-444444444444',
+    fixtureId,
     legIndex: 1,
     ...overrides,
   }
@@ -48,9 +50,7 @@ const stageOverview: StageOverview = {
   name: 'QF',
   status: 0,
   rounds: [],
-  slots: [
-    { slotKey: 'SF1-A', entryId: null, displayName: null },
-  ],
+  slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
   draws: [],
 }
 
@@ -75,12 +75,30 @@ function renderMatchPage() {
   return { queryClient }
 }
 
-describe('MatchPage command loop', () => {
+describe('MatchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview)
     vi.mocked(startMatch).mockResolvedValue(undefined)
     vi.mocked(finishMatch).mockResolvedValue(undefined)
+    vi.mocked(applyProgressionOutcome).mockResolvedValue(undefined)
+  })
+
+  it('read state: Scheduled match shows Start and empty scoreboard', async () => {
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 0 }))
+
+    renderMatchPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Alpha vs Beta' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Scheduled')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Start match' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Finish match' }),
+    ).not.toBeInTheDocument()
   })
 
   it('Start button triggers startMatch mutation', async () => {
@@ -89,10 +107,9 @@ describe('MatchPage command loop', () => {
 
     renderMatchPage()
 
-    const startButton = await screen.findByRole('button', {
-      name: 'Start match',
-    })
-    await user.click(startButton)
+    await user.click(
+      await screen.findByRole('button', { name: 'Start match' }),
+    )
 
     await waitFor(() => {
       expect(startMatch).toHaveBeenCalledWith(matchId)
@@ -125,7 +142,7 @@ describe('MatchPage command loop', () => {
     })
   })
 
-  it('successful Start invalidates then refetches the match', async () => {
+  it('successful Start refetches and shows Live', async () => {
     const user = userEvent.setup()
     const fetchMatch = vi.mocked(fetchMatchDetail)
     fetchMatch.mockImplementation(async () => baseMatch({ status: 0 }))
@@ -134,15 +151,67 @@ describe('MatchPage command loop', () => {
     await screen.findByRole('button', { name: 'Start match' })
     const callsBeforeClick = fetchMatch.mock.calls.length
 
-    // After Start succeeds, invalidation refetches — return Live from then on.
     fetchMatch.mockImplementation(async () => baseMatch({ status: 1 }))
 
     await user.click(screen.getByRole('button', { name: 'Start match' }))
 
     await waitFor(() => {
       expect(startMatch).toHaveBeenCalledWith(matchId)
-      expect(screen.getByText('Live', { exact: true })).toBeInTheDocument()
+      expect(screen.getByText('Live')).toBeInTheDocument()
     })
     expect(fetchMatch.mock.calls.length).toBeGreaterThan(callsBeforeClick)
+  })
+
+  it('Apply progression calls the Host route and shows slot fill', async () => {
+    const user = userEvent.setup()
+    let progressed = false
+
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({
+        status: 2,
+        result: {
+          type: 0,
+          homeGoals: 2,
+          awayGoals: 1,
+          extraTimePlayed: false,
+          shootout: null,
+        },
+      }),
+    )
+    vi.mocked(fetchStageOverview).mockImplementation(async () => {
+      if (!progressed) {
+        return stageOverview
+      }
+      return {
+        ...stageOverview,
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: 'home',
+            displayName: 'Alpha',
+          },
+        ],
+      }
+    })
+    vi.mocked(applyProgressionOutcome).mockImplementation(async () => {
+      progressed = true
+    })
+
+    renderMatchPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Apply progression' }),
+    )
+
+    await waitFor(() => {
+      expect(applyProgressionOutcome).toHaveBeenCalledWith(stageId, fixtureId)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Progression applied: slot SF1-A/i),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Alpha', { selector: 'strong' })).toBeInTheDocument()
+    })
   })
 })

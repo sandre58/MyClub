@@ -23,14 +23,10 @@ export function CompetitionPage() {
   })
 
   return (
-    <main className="page">
+    <main id="main" className="page">
       <header className="page__header">
         <p className="eyebrow">Competition</p>
-        <h1>Overview</h1>
-        <p className="lede">
-          Stages below are real <code>Link</code>s — client navigation, no full
-          reload.
-        </p>
+        <h1>{query.data?.name ?? 'Competition'}</h1>
       </header>
 
       {query.isPending && <LoadingState />}
@@ -44,15 +40,17 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
   return (
     <article className="panel">
       <header className="panel__header">
-        <h2>{data.name}</h2>
-        <p>
-          Status: <strong>{competitionStatusLabel[data.status]}</strong>
+        <p className="status-line">
+          <span className="status-badge status-badge--neutral">
+            <span className="status-badge__dot" aria-hidden="true" />
+            {competitionStatusLabel[data.status]}
+          </span>
         </p>
-        <p className="mono">{data.id}</p>
+        <p className="mono muted">{data.id}</p>
       </header>
 
       <section>
-        <h3>Entries</h3>
+        <h2 className="section-title">Entries</h2>
         {data.entries.length === 0 ? (
           <EmptyState>No entries yet.</EmptyState>
         ) : (
@@ -70,17 +68,22 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
       </section>
 
       <section>
-        <h3>Stages</h3>
+        <h2 className="section-title">Stages</h2>
         {data.stages.length === 0 ? (
           <EmptyState>No stages in this competition.</EmptyState>
         ) : (
-          <ul className="link-list">
+          <ul className="entity-list">
             {data.stages.map((stage) => (
-              <li key={stage.stageId}>
-                <Link to={`/stages/${stage.stageId}`}>{stage.name}</Link>{' '}
-                <span className="muted">
-                  ({stageStatusLabel[stage.status]})
-                </span>
+              <li key={stage.stageId} className="entity-list__item">
+                <Link
+                  className="entity-list__link"
+                  to={`/stages/${stage.stageId}`}
+                >
+                  <span className="entity-list__title">{stage.name}</span>
+                  <span className="muted">
+                    {stageStatusLabel[stage.status]}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

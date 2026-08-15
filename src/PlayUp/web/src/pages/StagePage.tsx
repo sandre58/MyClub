@@ -28,10 +28,10 @@ export function StagePage() {
   })
 
   return (
-    <main className="page">
+    <main id="main" className="page">
       <header className="page__header">
         <p className="eyebrow">Stage</p>
-        <h1>{stageQuery.data?.name ?? 'Overview'}</h1>
+        <h1>{stageQuery.data?.name ?? 'Stage'}</h1>
         {competitionId && (
           <BackLink to={`/competitions/${competitionId}`}>
             ←{' '}
@@ -58,10 +58,13 @@ function StageOverviewView({ data }: { data: StageOverview }) {
   return (
     <article className="panel">
       <header className="panel__header">
-        <p>
-          Status: <strong>{stageStatusLabel[data.status]}</strong>
+        <p className="status-line">
+          <span className="status-badge status-badge--neutral">
+            <span className="status-badge__dot" aria-hidden="true" />
+            {stageStatusLabel[data.status]}
+          </span>
         </p>
-        <p className="mono">{data.id}</p>
+        <p className="mono muted">{data.id}</p>
         <p>
           <Link className="action-link" to={`/stages/${data.id}/matches`}>
             View matches →
@@ -70,7 +73,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       </header>
 
       <section>
-        <h3>Rounds ({data.rounds.length})</h3>
+        <h2 className="section-title">Rounds ({data.rounds.length})</h2>
         {data.rounds.length === 0 ? (
           <EmptyState>No rounds defined.</EmptyState>
         ) : (
@@ -113,7 +116,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       </section>
 
       <section>
-        <h3>Slots ({data.slots.length})</h3>
+        <h2 className="section-title">Slots ({data.slots.length})</h2>
         {data.slots.length === 0 ? (
           <EmptyState>No slots on this stage.</EmptyState>
         ) : (
@@ -133,7 +136,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       </section>
 
       <section>
-        <h3>Draws ({data.draws.length})</h3>
+        <h2 className="section-title">Draws ({data.draws.length})</h2>
         {data.draws.length === 0 ? (
           <EmptyState>No draws yet.</EmptyState>
         ) : (

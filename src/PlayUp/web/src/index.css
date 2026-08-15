@@ -15,8 +15,10 @@
   --space-3: 1rem;
   --space-4: 1.5rem;
   --space-5: 2.5rem;
-  --radius: 0.4rem;
+  --radius: 0.45rem;
   --measure: 44rem;
+  --page-pad: clamp(1rem, 3vw, 1.5rem);
+  --title-size: clamp(1.45rem, 2.5vw + 0.8rem, 1.95rem);
 }
 
 *,
@@ -38,6 +40,26 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* Skip link: visible on keyboard focus only — classic a11y pattern. */
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  inset-block-start: var(--space-3);
+  z-index: 20;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform 120ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 a {
@@ -68,7 +90,7 @@ select:focus-visible {
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
-  width: min(100% - 2rem, var(--measure));
+  width: min(100% - 2 * var(--page-pad), var(--measure));
   margin-inline: auto;
   padding-block: var(--space-3);
 }
@@ -86,9 +108,9 @@ select:focus-visible {
 }
 
 .page {
-  width: min(100% - 2rem, var(--measure));
+  width: min(100% - 2 * var(--page-pad), var(--measure));
   margin-inline: auto;
-  padding-block: var(--space-5);
+  padding-block: clamp(1.5rem, 4vw, var(--space-5));
 }
 
 .page__header {
@@ -96,7 +118,7 @@ select:focus-visible {
 
   & h1 {
     margin: var(--space-1) 0;
-    font-size: 1.85rem;
+    font-size: var(--title-size);
     line-height: 1.15;
   }
 }
@@ -122,6 +144,55 @@ select:focus-visible {
 
 .action-link {
   font-weight: 600;
+}
+
+.section-title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.status-line {
+  margin: var(--space-2) 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-border) 45%, var(--color-surface));
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.status-badge__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+
+.status-badge--neutral .status-badge__dot,
+.status-badge--scheduled .status-badge__dot,
+.status-badge--other .status-badge__dot {
+  background: var(--color-muted);
+}
+
+.status-badge--live {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.status-badge--live .status-badge__dot {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--color-accent) 28%, transparent);
+}
+
+.status-badge--finished .status-badge__dot {
+  background: var(--color-text);
 }
 
 .error {
@@ -168,10 +239,11 @@ select:focus-visible {
 .panel {
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: clamp(1rem, 2.5vw, var(--space-4));
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-text) 4%, transparent);
 
   & h2,
   & h3 {
@@ -189,7 +261,7 @@ select:focus-visible {
 .link-list,
 .nested-list {
   margin: 0;
-  padding-left: 1.2rem;
+  padding-inline-start: 1.2rem;
 }
 
 .plain-list li + li,
@@ -203,6 +275,7 @@ select:focus-visible {
   font-size: 0.95rem;
 }
 
+.entity-list,
 .match-list {
   list-style: none;
   margin: 0;
@@ -211,12 +284,15 @@ select:focus-visible {
   gap: var(--space-2);
 }
 
+.entity-list__item,
 .match-list__item {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
+  transition: background-color 120ms ease;
 }
 
+.entity-list__link,
 .match-list__link {
   display: grid;
   gap: var(--space-1);
@@ -225,22 +301,29 @@ select:focus-visible {
   color: inherit;
 }
 
+.entity-list__link:hover,
 .match-list__link:hover {
   background: var(--color-accent-soft);
 }
 
+.entity-list__title,
 .match-list__sides {
   font-weight: 600;
 }
 
 .match-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-muted);
   font-size: 0.95rem;
 }
 
-.match-headline {
-  font-size: 1.15rem;
+.match-list__score {
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
+  color: var(--color-text);
 }
 
 .match-panel {
@@ -268,11 +351,11 @@ select:focus-visible {
 
 .scoreboard__name {
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 1.2vw + 0.7rem, 1.15rem);
 }
 
 .scoreboard__goals {
-  font-size: 2rem;
+  font-size: clamp(1.6rem, 2vw + 1rem, 2.1rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -284,34 +367,6 @@ select:focus-visible {
   color: var(--color-muted);
   font-size: 1.5rem;
   font-weight: 600;
-}
-
-.match-status {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  font-weight: 600;
-}
-
-.match-status__dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--color-muted);
-}
-
-.match-status--scheduled .match-status__dot {
-  background: var(--color-muted);
-}
-
-.match-status--live .match-status__dot {
-  background: var(--color-accent);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-accent) 25%, transparent);
-}
-
-.match-status--finished .match-status__dot {
-  background: var(--color-text);
 }
 
 .match-actions {
@@ -338,9 +393,24 @@ select:focus-visible {
   grid-template-columns: none;
 }
 
+.finish-form__fieldset {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.finish-form__legend {
+  padding-inline: var(--space-1);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .finish-form__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: var(--space-3);
 }
 
@@ -355,7 +425,8 @@ select:focus-visible {
 }
 
 .finish-form input:disabled,
-.finish-form select:disabled {
+.finish-form select:disabled,
+.finish-form fieldset:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -375,10 +446,6 @@ code {
 }
 
 @media (max-width: 40rem) {
-  .page__header h1 {
-    font-size: 1.5rem;
-  }
-
   .scoreboard {
     grid-template-columns: 1fr;
     justify-items: center;
@@ -392,9 +459,5 @@ code {
 
   .scoreboard__sep {
     display: none;
-  }
-
-  .finish-form__row {
-    grid-template-columns: 1fr;
   }
 }

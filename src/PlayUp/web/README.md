@@ -84,7 +84,7 @@ No CORS in development: the browser only talks to Vite; Vite forwards `/competit
 
 On Match detail:
 
-1. **Start** → `POST /matches/{id}/start` → invalidate match → status Live  
+1. **Start** → `POST /matches/{id}/start` → invalidate match + stage match list → status Live  
 2. **Finish** (controlled form) → `POST /matches/{id}/finish` → invalidate match + stage match list  
 3. **Apply progression** → `POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression` → invalidate match + list + stage (slot fill)
 
@@ -102,4 +102,4 @@ Re-seed after pulling DevSeed progression changes (`Winner` → slot `SF1-A`).
 
 ## Out of scope (later)
 
-features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS, Draw UI, Playwright.
+`features/` until more domains collide; Sass/Tailwind; UI libraries; OpenAPI; auth; Host CORS; Draw UI; Playwright.

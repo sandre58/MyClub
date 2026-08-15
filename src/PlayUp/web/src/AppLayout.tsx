@@ -5,12 +5,13 @@ import { Link, Outlet } from 'react-router-dom'
  *
  * Outlet = “render the matched child route here”.
  * Without it, nested routes would have nowhere to appear.
- * Client navigation (Link) updates the URL and swaps the Outlet content
- * without a full browser document reload.
  */
 export function AppLayout() {
   return (
     <div className="app">
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <header className="app-header">
         <nav className="app-nav" aria-label="Primary">
           <Link to="/" className="app-nav__brand">
