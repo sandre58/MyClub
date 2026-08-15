@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.DependencyInjection;
@@ -34,6 +35,7 @@ using var scope = provider.CreateScope();
 
 var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
 var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 var clock = scope.ServiceProvider.GetRequiredService<IClock>();
 
@@ -67,8 +69,17 @@ stage.RecordDrawResolution(
     clock);
 
 competition.AddStage(stage.Id, clock);
+
+// One attached match so SPA navigation can reach Match detail (11.3.2).
+var fixtureId = stage.Rounds[0].Fixtures[0].Id;
+var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, clock);
+stage.AttachMatch(fixtureId, match.Id, legIndex: 1, clock);
+
 competitions.Add(competition);
 stages.Add(stage);
+matches.Add(match);
 await unitOfWork.SaveChangesAsync().ConfigureAwait(false);
 
-Console.WriteLine(competition.Id.Value);
+Console.WriteLine($"competitionId={competition.Id.Value}");
+Console.WriteLine($"stageId={stage.Id.Value}");
+Console.WriteLine($"matchId={match.Id.Value}");

@@ -1,4 +1,9 @@
-import type { CompetitionOverview } from './types'
+import type {
+  CompetitionOverview,
+  MatchDetail,
+  MatchSummary,
+  StageOverview,
+} from './types'
 
 export class ApiError extends Error {
   readonly status: number
@@ -13,12 +18,12 @@ export class ApiError extends Error {
 }
 
 /**
- * Relative URL → Vite proxy → Host GET /competitions/{id}
+ * Shared JSON GET helper.
+ * Problem: four read endpoints would otherwise copy the same !ok / ProblemDetails parsing.
+ * Not a generic “API layer” — just one fetch path with typed return.
  */
-export async function fetchCompetitionOverview(
-  competitionId: string,
-): Promise<CompetitionOverview> {
-  const response = await fetch(`/competitions/${competitionId}`)
+async function getJson<T>(url: string): Promise<T> {
+  const response = await fetch(url)
 
   if (!response.ok) {
     let detail: string | undefined
@@ -39,5 +44,29 @@ export async function fetchCompetitionOverview(
     )
   }
 
-  return (await response.json()) as CompetitionOverview
+  return (await response.json()) as T
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id} */
+export function fetchCompetitionOverview(
+  competitionId: string,
+): Promise<CompetitionOverview> {
+  return getJson(`/competitions/${competitionId}`)
+}
+
+/** Relative URL → Vite proxy → Host GET /stages/{id} */
+export function fetchStageOverview(stageId: string): Promise<StageOverview> {
+  return getJson(`/stages/${stageId}`)
+}
+
+/** Relative URL → Vite proxy → Host GET /stages/{id}/matches */
+export function fetchMatchesByStage(
+  stageId: string,
+): Promise<MatchSummary[]> {
+  return getJson(`/stages/${stageId}/matches`)
+}
+
+/** Relative URL → Vite proxy → Host GET /matches/{id} */
+export function fetchMatchDetail(matchId: string): Promise<MatchDetail> {
+  return getJson(`/matches/${matchId}`)
 }

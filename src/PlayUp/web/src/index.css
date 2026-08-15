@@ -16,7 +16,7 @@
   --space-4: 1.5rem;
   --space-5: 2.5rem;
   --radius: 0.4rem;
-  --measure: 42rem;
+  --measure: 44rem;
 }
 
 *,
@@ -38,6 +38,50 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  filter: brightness(0.92);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.app-header {
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.app-nav {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  width: min(100% - 2rem, var(--measure));
+  margin-inline: auto;
+  padding-block: var(--space-3);
+}
+
+.app-nav__brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.app-nav__meta {
+  color: var(--color-muted);
+  font-size: 0.9rem;
 }
 
 .page {
@@ -71,55 +115,12 @@ body {
   color: var(--color-muted);
 }
 
-.id-form {
-  display: grid;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-
-  & label {
-    font-weight: 600;
-  }
+.back {
+  margin: var(--space-2) 0 0;
 }
 
-.id-form__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-
-  & input {
-    flex: 1 1 16rem;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    font: inherit;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-  }
-
-  & button {
-    padding: 0.55rem 1rem;
-    border: 0;
-    border-radius: var(--radius);
-    background: var(--color-accent);
-    color: #fff;
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  & button:hover {
-    filter: brightness(1.05);
-  }
-
-  & button:focus-visible,
-  & input:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-  }
+.action-link {
+  font-weight: 600;
 }
 
 .error {
@@ -129,7 +130,7 @@ body {
   color: var(--color-danger);
 }
 
-.overview {
+.panel {
   display: grid;
   gap: var(--space-4);
   padding: var(--space-4);
@@ -141,15 +142,70 @@ body {
   & h3 {
     margin: 0 0 var(--space-2);
   }
+}
 
-  & ul {
-    margin: 0;
-    padding-left: 1.2rem;
+.panel__header {
+  & p {
+    margin: var(--space-1) 0;
   }
+}
 
-  & li + li {
-    margin-top: var(--space-1);
-  }
+.plain-list,
+.link-list,
+.nested-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.plain-list li + li,
+.link-list li + li {
+  margin-top: var(--space-1);
+}
+
+.nested-list {
+  margin-top: var(--space-1);
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.match-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.match-list__item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.match-list__link {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  text-decoration: none;
+  color: inherit;
+}
+
+.match-list__link:hover {
+  background: var(--color-accent-soft);
+}
+
+.match-list__sides {
+  font-weight: 600;
+}
+
+.match-list__meta {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.match-headline {
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
 .mono {
@@ -164,4 +220,10 @@ code {
   padding: 0.1em 0.35em;
   border-radius: 0.25rem;
   background: var(--color-accent-soft);
+}
+
+@media (max-width: 40rem) {
+  .page__header h1 {
+    font-size: 1.5rem;
+  }
 }

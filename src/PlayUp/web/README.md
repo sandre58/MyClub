@@ -6,7 +6,7 @@ Independent Vite + React + TypeScript app under `src/PlayUp/web/`. **Not** a .NE
 
 1. PostgreSQL with Play’up schema (local compose).
 2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`).
-3. A competition in the database (KEEP SEED).
+3. A competition in the database (KEEP SEED) that includes at least one stage with an attached match.
 
 ### Seed a competition (local)
 
@@ -16,7 +16,7 @@ Requires Host User Secrets `ConnectionStrings:PlayUp` (same as running the Host 
 dotnet run --project ../MyClub.PlayUp.DevSeed
 ```
 
-Copy the printed Guid into `.env.local` as `VITE_SEED_COMPETITION_ID`.
+Copy the printed `competitionId` into `.env.local` as `VITE_SEED_COMPETITION_ID`. The seed also prints `stageId` and `matchId` for deep-link checks.
 
 ## Dev
 
@@ -28,21 +28,30 @@ npm run dev
 
 Open `http://127.0.0.1:5173/` → redirects to `/competitions/<seed-id>`.
 
-### Request path (11.3.1)
+### Navigation path (11.3.2)
+
+```text
+/competitions/:competitionId
+  → /stages/:stageId
+    → /stages/:stageId/matches
+      → /matches/:matchId
+```
+
+### Request path
 
 ```text
 Browser
   → React UI
-  → React Router (/competitions/:id)
-  → TanStack Query (useQuery)
-  → fetch('/competitions/:id')
+  → React Router (URL → page)
+  → TanStack Query (useQuery + stable query keys)
+  → fetch('/competitions|stages|matches/…')
   → Vite proxy
   → ASP.NET Host Minimal API
-  → CompetitionOverview DTO (JSON)
+  → Read DTO (JSON)
   → React render
 ```
 
-No CORS in development: the browser only talks to Vite; Vite forwards `/competitions` to the Host.
+No CORS in development: the browser only talks to Vite; Vite forwards `/competitions`, `/stages`, and `/matches` to the Host.
 
 ## Scripts
 
@@ -52,6 +61,6 @@ No CORS in development: the browser only talks to Vite; Vite forwards `/competit
 | `npm run build` | Typecheck + production bundle |
 | `npm run preview` | Serve the production bundle |
 
-## Out of scope (11.3.1)
+## Out of scope (until 11.3.3+)
 
-Stage/Match pages, mutations, features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS.
+Mutations (Start / Finish / Progression), features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS.
