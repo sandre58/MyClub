@@ -128,6 +128,11 @@ export function prepareStage(stageId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/prepare`)
 }
 
+/** POST /stages/{stageId}/start → 204 (bodyless; Ready → Running) */
+export function startStage(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/start`)
+}
+
 /** POST /stages/{stageId}/draws/{drawId}/publish → 204 */
 export function publishDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`)

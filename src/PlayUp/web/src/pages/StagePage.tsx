@@ -6,6 +6,7 @@ import {
   fetchStageOverview,
   prepareStage,
   publishDraw,
+  startStage,
 } from '../api'
 import {
   BackLink,
@@ -77,8 +78,9 @@ function StageOverviewView({ data }: { data: StageOverview }) {
     0,
   )
 
-  // UX gate only: Domain still rejects Prepare when not Draft / not ready.
+  // UX gate only: Domain still rejects Prepare / Start when status is wrong.
   const canPrepare = data.status === 0
+  const canStart = data.status === 1
 
   // useMutation = write on user intent. Server state stays in the stage query.
   const prepareMutation = useMutation({
@@ -93,6 +95,22 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       })
     },
   })
+
+  const startMutation = useMutation({
+    mutationFn: () => startStage(data.id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['stages', data.id] })
+      // Same field as Prepare: CompetitionPage shows stage status from overview.
+      await queryClient.invalidateQueries({
+        queryKey: ['competitions', data.competitionId],
+      })
+    },
+  })
+
+  const stageActionBusy = prepareMutation.isPending || startMutation.isPending
+  const stageActionError = prepareMutation.error ?? startMutation.error
+  const showStageActions =
+    canPrepare || canStart || prepareMutation.isError || startMutation.isError
 
   return (
     <article className="panel">
@@ -109,13 +127,13 @@ function StageOverviewView({ data }: { data: StageOverview }) {
             View matches →
           </Link>
         </p>
-        {(canPrepare || prepareMutation.isError) && (
-          <div className="stage-actions" aria-busy={prepareMutation.isPending}>
+        {showStageActions && (
+          <div className="stage-actions" aria-busy={stageActionBusy}>
             {canPrepare && (
               <button
                 type="button"
                 className="btn"
-                disabled={prepareMutation.isPending}
+                disabled={stageActionBusy}
                 onClick={() => prepareMutation.mutate()}
               >
                 {prepareMutation.isPending
@@ -123,9 +141,19 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                   : 'Prepare stage'}
               </button>
             )}
-            {prepareMutation.isError && (
+            {canStart && (
+              <button
+                type="button"
+                className="btn"
+                disabled={stageActionBusy}
+                onClick={() => startMutation.mutate()}
+              >
+                {startMutation.isPending ? 'Starting stage…' : 'Start stage'}
+              </button>
+            )}
+            {stageActionError && (
               <p className="error" role="alert">
-                {formatError(prepareMutation.error)}
+                {formatError(stageActionError)}
               </p>
             )}
           </div>

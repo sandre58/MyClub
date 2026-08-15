@@ -16,7 +16,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
-/// (PrepareStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch,
+/// (PrepareStage, StartStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch,
 /// GetCompetitionOverview, GetStageOverview, ListMatchesByStage, GetMatchDetail).
 /// </summary>
 /// <remarks>
@@ -78,6 +78,24 @@ public sealed class UseCaseExecutor(
         // Prefer the tracked instance from the competition list (same identity as StageIds load).
         var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
         PrepareStage.Execute(target, competitionStages, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a stage, runs <see cref="StartStage"/>, and saves changes.
+    /// </summary>
+    /// <param name="stageId">Stage identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the stage is started and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
+    public async Task StartStageAsync(StageId stageId, CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        StartStage.Execute(stage, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

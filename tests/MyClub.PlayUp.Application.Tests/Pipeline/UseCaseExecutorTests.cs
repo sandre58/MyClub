@@ -106,6 +106,76 @@ public sealed class UseCaseExecutorTests
     }
 
     [Fact]
+    public async Task StartStageAsync_loads_starts_and_saves_onceAsync()
+    {
+        var scenario = CreateDraftChampionshipOnCompetition();
+        PrepareStage.Execute(scenario.Stage, [scenario.Stage], _clock);
+        scenario.Stage.Status.Should().Be(StageStatus.Ready);
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Stage);
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        await executor.StartStageAsync(scenario.Stage.Id);
+
+        scenario.Stage.Status.Should().Be(StageStatus.Running);
+        stages.Verify(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task StartStageAsync_when_missing_throws_and_does_not_saveAsync()
+    {
+        var stageId = StageId.New();
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdAsync(stageId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stage?)null);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        var act = async () => await executor.StartStageAsync(stageId);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task StartStageAsync_when_domain_rejects_does_not_saveAsync()
+    {
+        var scenario = CreateDraftChampionshipOnCompetition();
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scenario.Stage);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        var act = async () => await executor.StartStageAsync(scenario.Stage.Id);
+
+        var exception = await act.Should().ThrowAsync<DomainException>();
+        exception.Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task PrepareStageAsync_loads_multi_stage_for_cross_stage_progressionAsync()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
