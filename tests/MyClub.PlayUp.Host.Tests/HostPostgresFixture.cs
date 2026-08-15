@@ -17,8 +17,7 @@ namespace MyClub.PlayUp.Host.Tests;
 [SuppressMessage("Design", "CA1515:Consider making public types internal", Justification = "xUnit injects the collection fixture through a public test constructor.")]
 public sealed class HostPostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:18")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18")
         .Build();
 
     public string ConnectionString => _container.GetConnectionString();

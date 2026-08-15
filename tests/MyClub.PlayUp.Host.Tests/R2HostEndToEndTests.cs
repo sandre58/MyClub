@@ -257,20 +257,37 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
     private static void AssertNoWinner(JsonElement element)
     {
-        if (element.ValueKind == JsonValueKind.Object)
+        switch (element.ValueKind)
         {
-            foreach (var property in element.EnumerateObject())
-            {
-                property.Name.Equals("winner", StringComparison.OrdinalIgnoreCase).Should().BeFalse();
-                AssertNoWinner(property.Value);
-            }
-        }
-        else if (element.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in element.EnumerateArray())
-            {
-                AssertNoWinner(item);
-            }
+            case JsonValueKind.Object:
+                {
+                    foreach (var property in element.EnumerateObject())
+                    {
+                        property.Name.Equals("winner", StringComparison.OrdinalIgnoreCase).Should().BeFalse();
+                        AssertNoWinner(property.Value);
+                    }
+
+                    break;
+                }
+
+            case JsonValueKind.Array:
+                {
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        AssertNoWinner(item);
+                    }
+
+                    break;
+                }
+
+            case JsonValueKind.Undefined:
+            case JsonValueKind.String:
+            case JsonValueKind.Number:
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
+            default:
+                break;
         }
     }
 
