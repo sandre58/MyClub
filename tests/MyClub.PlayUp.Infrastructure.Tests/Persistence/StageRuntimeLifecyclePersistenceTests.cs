@@ -240,7 +240,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
                 matchId.Value);
 
             var exception = await act.Should().ThrowAsync<PostgresException>();
-            exception.Which.SqlState.Should().Be(PostgresErrorCodes.ForeignKeyViolation);
+            exception.Which.SqlState.Should().Be(PostgresErrorCodes.RestrictViolation);
             exception.Which.ConstraintName.Should().Be("FK_match_placements_matches_match_id");
         }
     }
