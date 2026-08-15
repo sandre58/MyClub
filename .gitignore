@@ -103,6 +103,12 @@ StyleCop.Cache
 Directory.Build.local.props
 
 ## =========================
+## Frontend (Node)
+## =========================
+**/node_modules/
+**/dist/
+
+## =========================
 ## Secrets / Environment
 ## =========================
 .env

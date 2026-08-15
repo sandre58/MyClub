@@ -30,6 +30,7 @@ PostgreSQL 18 (Docker Compose)
 | Layer | Responsibility |
 | :---- | :------------- |
 | **Host** | Owns runtime configuration. Reads `ConnectionStrings:PlayUp` and calls `AddPlayUpInfrastructure`. |
+| **DevSeed** | One-shot local seed tool. Same key `ConnectionStrings:PlayUp` via shared User Secrets Id `MyClub.PlayUp.Host` (no ProjectReference to Host). |
 | **Infrastructure** | Consumes the connection string. Configures `PlayUpDbContext` with `UseNpgsql`. Does **not** read Host User Secrets. |
 | **EF design-time** | Uses the Host as startup project (service provider). No `IDesignTimeDbContextFactory` is required. |
 | **Docker Compose** | Persistent local PostgreSQL for developers (`compose.yml`). |
@@ -61,9 +62,10 @@ PostgreSQL 18 (Docker Compose)
 | Source | Role |
 | :----- | :--- |
 | `.env` / `.env.example` | Variables for **Docker Compose** (`POSTGRES_*`). `.env` is gitignored. |
-| Host User Secrets | Runtime **`ConnectionStrings:PlayUp`** for the ASP.NET Host and `dotnet ef`. |
+| Host User Secrets | Runtime **`ConnectionStrings:PlayUp`** for the ASP.NET Host, `dotnet ef`, and **DevSeed** (shared `UserSecretsId`). |
 | `appsettings.json` | No connection string (no secrets in Git). |
 | `appsettings.Development.json` | Gitignored; local logging overrides only — not the SoT for the connection string. |
+| Env `ConnectionStrings__PlayUp` | Optional override (CI / shells); same key as Host. |
 
 Keep the password in `.env` and in User Secrets aligned so the Host can connect to the Compose database.
 
@@ -124,6 +126,8 @@ dotnet user-secrets list --project src/PlayUp/MyClub.PlayUp.Host
 
 You should see `ConnectionStrings:PlayUp` (password never commit this value).
 
+The same secret store is used by **DevSeed** (`UserSecretsId` = `MyClub.PlayUp.Host`).
+
 ## 6. Apply EF Core migrations
 
 Migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations`.
@@ -141,6 +145,20 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.Host
 ```
 
 Confirm the process starts without a missing-connection-string exception.
+
+### Optional — seed a competition for the organizer SPA
+
+```bash
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevSeed
+```
+
+Uses the same `ConnectionStrings:PlayUp` as the Host (User Secrets / env). Optional one-shot override:
+
+```bash
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevSeed -- "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=YOUR_LOCAL_PASSWORD"
+```
+
+Prints the new competition Guid (for `web/.env.local` → `VITE_SEED_COMPETITION_ID`).
 
 ## 8. Connect with a client (optional)
 
@@ -194,7 +212,7 @@ docker volume ls
 | `docker compose down` | Stop containers; **keep** volumes |
 | `docker compose down -v` | Stop containers and **delete** volumes (data loss) |
 | `docker volume ls` | List volumes (look for `myclub-postgres-data`) |
-| `dotnet ef database update --project …Infrastructure --startup-project …Host` | Apply migrations |
+| `dotnet run --project src/PlayUp/MyClub.PlayUp.DevSeed` | Seed a competition (same User Secrets as Host) |
 | `dotnet test --filter Category!=Integration` | Fast suite without Testcontainers |
 | `dotnet test` | Full suite (needs Docker for Testcontainers) |
 
