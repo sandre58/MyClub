@@ -7,12 +7,17 @@ import {
   drawResolutionStateLabel,
   drawStatusLabel,
   stageStatusLabel,
+  type StageDraw,
   type StageOverview,
+  type StageSlot,
 } from '../types'
+import { getDrawUiProjection } from './drawUi'
 
 export function StagePage() {
   const { stageId = '' } = useParams()
 
+  // SERVER STATE: StageOverview lives in TanStack Query — one cache entry for the stage.
+  // Draw UI below only reads this result; it never copies draws into useState.
   const stageQuery = useQuery({
     queryKey: ['stages', stageId],
     queryFn: () => fetchStageOverview(stageId),
@@ -135,46 +140,123 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         )}
       </section>
 
-      <section>
-        <h2 className="section-title">Draws ({data.draws.length})</h2>
-        {data.draws.length === 0 ? (
-          <EmptyState>No draws yet.</EmptyState>
-        ) : (
-          <ul className="plain-list">
-            {data.draws.map((draw) => (
-              <li key={draw.id}>
-                <strong>{drawResolutionKindLabel[draw.kind]}</strong>{' '}
-                <span className="muted">
-                  ({drawStatusLabel[draw.status]} ·{' '}
-                  {drawResolutionStateLabel[draw.resolutionState]})
+      <DrawSection draws={data.draws} slots={data.slots} />
+    </article>
+  )
+}
+
+/**
+ * Composition: a named section keeps StageOverviewView readable.
+ * Same page module — not a features/draws layer.
+ */
+function DrawSection({
+  draws,
+  slots,
+}: {
+  draws: StageDraw[]
+  slots: StageSlot[]
+}) {
+  return (
+    <section aria-labelledby="draws-heading">
+      <h2 id="draws-heading" className="section-title">
+        Draws ({draws.length})
+      </h2>
+      {draws.length === 0 ? (
+        <EmptyState>No draws yet.</EmptyState>
+      ) : (
+        <ul className="draw-list">
+          {draws.map((draw) => (
+            <li key={draw.id}>
+              <DrawCard draw={draw} slots={slots} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function DrawCard({ draw, slots }: { draw: StageDraw; slots: StageSlot[] }) {
+  // DERIVED UI: computed each render from props (server state), never useState.
+  const ui = getDrawUiProjection(draw, slots)
+
+  return (
+    <article className="draw-card">
+      <header className="draw-card__header">
+        <h3 className="draw-card__title">
+          {drawResolutionKindLabel[draw.kind]} draw
+        </h3>
+        <p className="draw-card__badges">
+          <span className={`status-badge status-badge--${ui.statusTone}`}>
+            <span className="status-badge__dot" aria-hidden="true" />
+            {drawStatusLabel[draw.status]}
+          </span>
+          <span className="status-badge status-badge--neutral">
+            <span className="status-badge__dot" aria-hidden="true" />
+            {drawResolutionStateLabel[draw.resolutionState]}
+          </span>
+          {ui.isApplied && (
+            <span className="status-badge status-badge--live">
+              <span className="status-badge__dot" aria-hidden="true" />
+              Applied
+            </span>
+          )}
+        </p>
+      </header>
+
+      <p className="draw-card__message">{ui.message}</p>
+
+      {ui.showResults && draw.kind === 2 && draw.pairings.length > 0 && (
+        <div className="draw-card__results">
+          <h4 className="draw-card__results-title">Result</h4>
+          <ul className="draw-pairing-list">
+            {draw.pairings.map((pairing) => (
+              <li
+                key={`${pairing.entryAId}-${pairing.entryBId}`}
+                className="draw-pairing"
+              >
+                <span className="draw-pairing__side">
+                  {pairing.entryADisplayName?.trim() || 'Unknown entry'}
                 </span>
-                {draw.pairings.length > 0 && (
-                  <ul className="nested-list">
-                    {draw.pairings.map((pairing) => (
-                      <li
-                        key={`${pairing.entryAId}-${pairing.entryBId}`}
-                      >
-                        {pairing.entryADisplayName ?? 'Entry A'} vs{' '}
-                        {pairing.entryBDisplayName ?? 'Entry B'}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {draw.slotPlacements.length > 0 && (
-                  <ul className="nested-list">
-                    {draw.slotPlacements.map((placement) => (
-                      <li key={`${placement.slotKey}-${placement.entryId}`}>
-                        <code>{placement.slotKey}</code> →{' '}
-                        {placement.displayName ?? placement.entryId}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <span className="draw-pairing__vs" aria-hidden="true">
+                  vs
+                </span>
+                <span className="draw-pairing__side">
+                  {pairing.entryBDisplayName?.trim() || 'Unknown entry'}
+                </span>
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </div>
+      )}
+
+      {ui.showResults && draw.kind === 0 && draw.slotPlacements.length > 0 && (
+        <div className="draw-card__results">
+          <h4 className="draw-card__results-title">Placements</h4>
+          <ul className="draw-placement-list">
+            {draw.slotPlacements.map((placement) => (
+              <li
+                key={`${placement.slotKey}-${placement.entryId}`}
+                className="draw-placement"
+              >
+                <code className="draw-placement__slot">{placement.slotKey}</code>
+                <span className="draw-placement__arrow" aria-hidden="true">
+                  →
+                </span>
+                <span className="draw-placement__entry">
+                  {placement.displayName?.trim() || 'Unknown entry'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {ui.showResults && draw.kind === 1 && draw.resolutionState === 1 && (
+        <p className="hint" role="status">
+          Group placements are not shown in this overview yet.
+        </p>
+      )}
     </article>
   )
 }

@@ -275,6 +275,126 @@ select:focus-visible {
   font-size: 0.95rem;
 }
 
+/* Draw read section (11.4.1) — organizer-facing, no actions yet. */
+.draw-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.draw-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-accent-soft));
+}
+
+.draw-card__header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.draw-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.draw-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.draw-card__message {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.draw-card__results {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.draw-card__results-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.draw-pairing-list,
+.draw-placement-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.draw-pairing {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+.draw-pairing__side {
+  font-weight: 600;
+}
+
+.draw-pairing__side:last-child {
+  text-align: end;
+}
+
+.draw-pairing__vs {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.draw-placement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.draw-placement__slot {
+  font-weight: 600;
+}
+
+.draw-placement__arrow {
+  color: var(--color-muted);
+}
+
+.draw-placement__entry {
+  font-weight: 600;
+}
+
+@media (max-width: 40rem) {
+  .draw-pairing {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .draw-pairing__side:last-child {
+    text-align: center;
+  }
+}
+
 .entity-list,
 .match-list {
   list-style: none;
