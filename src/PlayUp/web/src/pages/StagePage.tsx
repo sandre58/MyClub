@@ -243,7 +243,9 @@ function DrawCard({
         </p>
       </header>
 
-      <p className="draw-card__message">{ui.message}</p>
+      <p className="draw-card__message" role="status">
+        {ui.message}
+      </p>
 
       {ui.showResults && draw.kind === 2 && draw.pairings.length > 0 && (
         <div className="draw-card__results">
@@ -257,9 +259,7 @@ function DrawCard({
                 <span className="draw-pairing__side">
                   {pairing.entryADisplayName?.trim() || 'Unknown entry'}
                 </span>
-                <span className="draw-pairing__vs" aria-hidden="true">
-                  vs
-                </span>
+                <span className="draw-pairing__vs">vs</span>
                 <span className="draw-pairing__side">
                   {pairing.entryBDisplayName?.trim() || 'Unknown entry'}
                 </span>
@@ -406,7 +406,7 @@ function DrawActions({
           disabled={busy}
           onClick={handlePublish}
         >
-          {publishMutation.isPending ? 'Publishing…' : 'Publish'}
+          {publishMutation.isPending ? 'Publishing draw…' : 'Publish draw'}
         </button>
       )}
 
@@ -417,7 +417,7 @@ function DrawActions({
           disabled={busy}
           onClick={handleApply}
         >
-          {applyMutation.isPending ? 'Applying…' : 'Apply'}
+          {applyMutation.isPending ? 'Applying draw…' : 'Apply draw'}
         </button>
       )}
 
@@ -428,7 +428,7 @@ function DrawActions({
           disabled={busy}
           onClick={handleApply}
         >
-          {applyMutation.isPending ? 'Applying…' : 'Apply'}
+          {applyMutation.isPending ? 'Applying draw…' : 'Apply draw'}
         </button>
       )}
 

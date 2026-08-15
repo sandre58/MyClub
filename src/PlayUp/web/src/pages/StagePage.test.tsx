@@ -216,7 +216,7 @@ describe('StagePage draws', () => {
     vi.mocked(applyDraw).mockResolvedValue(undefined)
   })
 
-  it('shows pairing result for draft + resolved', async () => {
+  it('shows pairing result for draft + resolved without Apply', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [pairingDraw()] }),
     )
@@ -235,9 +235,15 @@ describe('StagePage draws', () => {
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
     expect(screen.getByText('vs')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Publish draw' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Apply draw/i }),
+    ).not.toBeInTheDocument()
   })
 
-  it('hides result for draft + not resolved', async () => {
+  it('hides Publish and Apply for draft + not resolved', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [
@@ -258,9 +264,72 @@ describe('StagePage draws', () => {
     })
     expect(screen.queryByText('Result')).not.toBeInTheDocument()
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Publish draw/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Apply draw/i }),
+    ).not.toBeInTheDocument()
   })
 
-  it('shows Published for published + resolved', async () => {
+  it('shows No solution without Publish or Apply', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        draws: [
+          pairingDraw({
+            resolutionState: 2,
+            pairings: [],
+          }),
+        ],
+      }),
+    )
+
+    renderStagePage()
+
+    expect(
+      await screen.findByText(
+        'No admissible solution was found for this draw.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('No solution')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Publish draw/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Apply draw/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows Cancelled without Publish or Apply', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        draws: [
+          pairingDraw({
+            status: 2,
+            resolutionState: 1,
+          }),
+        ],
+      }),
+    )
+
+    renderStagePage()
+
+    expect(
+      await screen.findByText(
+        'This draw was cancelled. A new draw is required to run again.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Cancelled')).toBeInTheDocument()
+    expect(screen.getByText('Alpha')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Publish draw/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Apply draw/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows Published with Apply when not yet applied', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [pairingDraw({ status: 1 })],
@@ -274,6 +343,12 @@ describe('StagePage draws', () => {
       expect(screen.getByText('Published draw.')).toBeInTheDocument()
     })
     expect(screen.getByText('Published')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Publish draw/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Apply draw' }),
+    ).toBeInTheDocument()
   })
 
   it('shows derived Applied when slot placements match stage slots', async () => {
@@ -299,6 +374,9 @@ describe('StagePage draws', () => {
     ).toBeInTheDocument()
     expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.queryByRole('button', { name: /Apply draw/i }),
+    ).not.toBeInTheDocument()
   })
 
   it('does not show Applied when slot occupants do not match', async () => {
@@ -315,17 +393,8 @@ describe('StagePage draws', () => {
       expect(screen.getByText('Published draw.')).toBeInTheDocument()
     })
     expect(screen.queryByText('Applied')).not.toBeInTheDocument()
-  })
-
-  it('shows Publish for draft + resolved', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [pairingDraw()] }),
-    )
-
-    renderStagePage()
-
     expect(
-      await screen.findByRole('button', { name: 'Publish' }),
+      screen.getByRole('button', { name: 'Apply draw' }),
     ).toBeInTheDocument()
   })
 
@@ -344,7 +413,9 @@ describe('StagePage draws', () => {
     })
 
     renderStagePage()
-    const publishButton = await screen.findByRole('button', { name: 'Publish' })
+    const publishButton = await screen.findByRole('button', {
+      name: 'Publish draw',
+    })
     await user.click(publishButton)
 
     await waitFor(() => {
@@ -368,11 +439,13 @@ describe('StagePage draws', () => {
     )
 
     renderStagePage()
-    const publishButton = await screen.findByRole('button', { name: 'Publish' })
+    const publishButton = await screen.findByRole('button', {
+      name: 'Publish draw',
+    })
     await user.click(publishButton)
 
     expect(
-      await screen.findByRole('button', { name: 'Publishing…' }),
+      await screen.findByRole('button', { name: 'Publishing draw…' }),
     ).toBeDisabled()
 
     resolvePublish()
@@ -389,7 +462,9 @@ describe('StagePage draws', () => {
     vi.mocked(publishDraw).mockRejectedValue(new Error('Publish blocked'))
 
     renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Publish' }))
+    await user.click(
+      await screen.findByRole('button', { name: 'Publish draw' }),
+    )
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Publish blocked')
   })
@@ -416,7 +491,7 @@ describe('StagePage draws', () => {
     })
 
     renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Apply' }))
+    await user.click(await screen.findByRole('button', { name: 'Apply draw' }))
 
     expect(confirmSpy).toHaveBeenCalled()
     await waitFor(() => {
@@ -425,6 +500,59 @@ describe('StagePage draws', () => {
       })
       expect(screen.getByText('Applied')).toBeInTheDocument()
     })
+
+    confirmSpy.mockRestore()
+  })
+
+  it('disables Apply while pending', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    let resolveApply!: () => void
+
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+        draws: [slotDraw()],
+      }),
+    )
+    vi.mocked(applyDraw).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveApply = () => resolve(undefined)
+        }),
+    )
+
+    renderStagePage()
+    await user.click(await screen.findByRole('button', { name: 'Apply draw' }))
+
+    expect(
+      await screen.findByRole('button', { name: 'Applying draw…' }),
+    ).toBeDisabled()
+
+    resolveApply()
+    await waitFor(() => {
+      expect(applyDraw).toHaveBeenCalled()
+    })
+
+    confirmSpy.mockRestore()
+  })
+
+  it('shows Apply error message', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+        draws: [slotDraw()],
+      }),
+    )
+    vi.mocked(applyDraw).mockRejectedValue(new Error('Apply blocked'))
+
+    renderStagePage()
+    await user.click(await screen.findByRole('button', { name: 'Apply draw' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Apply blocked')
 
     confirmSpy.mockRestore()
   })
@@ -441,7 +569,7 @@ describe('StagePage draws', () => {
     )
 
     renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Apply' }))
+    await user.click(await screen.findByRole('button', { name: 'Apply draw' }))
 
     expect(confirmSpy).toHaveBeenCalled()
     expect(applyDraw).not.toHaveBeenCalled()
@@ -461,7 +589,7 @@ describe('StagePage draws', () => {
     )
 
     renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Apply' }))
+    await user.click(await screen.findByRole('button', { name: 'Apply draw' }))
 
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalledWith(stageId, drawId, {
@@ -470,5 +598,39 @@ describe('StagePage draws', () => {
     })
 
     confirmSpy.mockRestore()
+  })
+
+  it('hides Apply for published Pairing when fixtures already have attachments', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        draws: [pairingDraw({ status: 1 })],
+        rounds: [
+          {
+            id: 'r1',
+            name: 'R1',
+            fixtures: [
+              {
+                id: fixtureId,
+                slotAKey: null,
+                slotBKey: null,
+                attachments: [{ matchId: 'm1', legIndex: 1 }],
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    renderStagePage()
+
+    expect(
+      await screen.findByText(
+        'Published draw. Target fixtures already have attached matches.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Applied')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Apply draw/i }),
+    ).not.toBeInTheDocument()
   })
 })
