@@ -96,8 +96,10 @@ Re-seed after pulling DevSeed progression changes (`Winner` → slot `SF1-A`).
 |---|---|
 | `npm run dev` | Vite HMR server |
 | `npm run build` | Typecheck + production bundle |
+| `npm run test` | Vitest watch |
+| `npm run test:run` | Vitest single run (CI) |
 | `npm run preview` | Serve the production bundle |
 
 ## Out of scope (later)
 
-Vitest/RTL, features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS, Draw UI.
+features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS, Draw UI, Playwright.

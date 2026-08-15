@@ -1,5 +1,6 @@
-import { defineConfig, type ProxyOptions } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import type { ProxyOptions } from 'vite'
 
 // Dev only: browser calls /competitions|stages|matches on the Vite origin;
 // Vite forwards to the ASP.NET Host. No CORS needed in development.
@@ -31,5 +32,10 @@ export default defineConfig({
       '/stages': apiProxy(),
       '/matches': apiProxy(),
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: false,
   },
 })
