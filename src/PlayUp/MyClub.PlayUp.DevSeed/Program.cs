@@ -61,6 +61,19 @@ var stage = Stage.Create(competition.Id, new StageName("QF"), regulation, clock)
 stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), clock);
 stage.AddFixture(stage.Rounds[0].Id, clock);
 stage.AddSlot("SF1-A", clock);
+
+// Winner of the seeded fixture fills SF1-A so SPA can demo ApplyProgressionOutcome (11.3.3).
+var fixtureId = stage.Rounds[0].Fixtures[0].Id;
+stage.ReplaceProgressionRules(
+    new ProgressionRules(
+    [
+        new ProgressionPath(
+            fixtureId,
+            ProgressionOutcome.Winner,
+            new ProgressionDestination(stage.Id, "SF1-A"))
+    ]),
+    clock);
+
 var draw = stage.CreateDraw(DrawResolutionKind.Pairing, clock);
 stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home.Id, away.Id]), clock);
 stage.RecordDrawResolution(
@@ -71,7 +84,6 @@ stage.RecordDrawResolution(
 competition.AddStage(stage.Id, clock);
 
 // One attached match so SPA navigation can reach Match detail (11.3.2).
-var fixtureId = stage.Rounds[0].Fixtures[0].Id;
 var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, clock);
 stage.AttachMatch(fixtureId, match.Id, legIndex: 1, clock);
 

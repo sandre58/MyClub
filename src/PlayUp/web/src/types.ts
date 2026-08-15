@@ -76,6 +76,19 @@ export interface MatchDetail {
   legIndex: number | null
 }
 
+/**
+ * Body for POST /matches/{id}/finish — mirrors Host FinishMatchRequest (camelCase JSON).
+ * Shootout fields: send both or neither (Host rejects a partial pair).
+ */
+export interface FinishMatchRequest {
+  type: ResultType
+  homeGoals: number
+  awayGoals: number
+  extraTimePlayed: boolean
+  penaltyShootoutHomeGoals?: number | null
+  penaltyShootoutAwayGoals?: number | null
+}
+
 export interface StageFixtureAttachment {
   matchId: string
   legIndex: number

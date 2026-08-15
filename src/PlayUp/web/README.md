@@ -70,15 +70,25 @@ If Rider does not list the shared configs after pull: **File | Invalidate Caches
 Browser
   → React UI
   → React Router (URL → page)
-  → TanStack Query (useQuery + stable query keys)
+  → TanStack Query (useQuery / useMutation + query keys)
   → fetch('/competitions|stages|matches/…')
-  → Vite proxy
+  → Vite proxy (JSON only; HTML deep-links stay on the SPA)
   → ASP.NET Host Minimal API
-  → Read DTO (JSON)
-  → React render
+  → Read DTO or 204 command
+  → invalidate → refetch → React render
 ```
 
-No CORS in development: the browser only talks to Vite; Vite forwards `/competitions`, `/stages`, and `/matches` to the Host.
+No CORS in development: the browser only talks to Vite; Vite forwards `/competitions`, `/stages`, and `/matches` to the Host. Document navigations (`Accept: text/html`) are not proxied so deep-links like `/matches/{id}` load the SPA.
+
+### Command loop (11.3.3)
+
+On Match detail:
+
+1. **Start** → `POST /matches/{id}/start` → invalidate match → status Live  
+2. **Finish** (controlled form) → `POST /matches/{id}/finish` → invalidate match + stage match list  
+3. **Apply progression** → `POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression` → invalidate match + list + stage (slot fill)
+
+Re-seed after pulling DevSeed progression changes (`Winner` → slot `SF1-A`).
 
 ## Scripts
 
@@ -88,6 +98,6 @@ No CORS in development: the browser only talks to Vite; Vite forwards `/competit
 | `npm run build` | Typecheck + production bundle |
 | `npm run preview` | Serve the production bundle |
 
-## Out of scope (until 11.3.3+)
+## Out of scope (later)
 
-Mutations (Start / Finish / Progression), features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS.
+Vitest/RTL, features/ architecture, Sass/Tailwind, UI libraries, OpenAPI, auth, Host CORS, Draw UI.
