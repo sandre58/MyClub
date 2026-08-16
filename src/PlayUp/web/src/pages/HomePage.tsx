@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PageHeader } from '../ui'
 
 const seedCompetitionId = import.meta.env.VITE_SEED_COMPETITION_ID as
   | string
@@ -11,35 +12,40 @@ const seedCompetitionId = import.meta.env.VITE_SEED_COMPETITION_ID as
 export function HomePage() {
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Play’up · Organizer</p>
-        <h1>Welcome</h1>
-        <p className="lede">
-          Open your competitions, pick one, and continue from its workspace.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Play’up · Organizer"
+        title="Welcome"
+        lede="Open a competition to prepare its organisation, follow the matches that need you, and record results."
+      />
 
-      <ul className="entity-list">
-        <li className="entity-list__item">
-          <Link className="entity-list__link" to="/competitions">
-            <span className="entity-list__title">Competition list</span>
-            <span className="muted">Browse competitions on this Host</span>
-          </Link>
-        </li>
+      <div className="card-grid">
+        <Link className="nav-card" to="/competitions">
+          <span className="nav-card__title">
+            Competition list
+            <span className="row__chevron" aria-hidden="true">
+              →
+            </span>
+          </span>
+          <span className="nav-card__desc">
+            Browse every competition on this Host and open its workspace.
+          </span>
+        </Link>
         {seedCompetitionId && (
-          <li className="entity-list__item">
-            <Link
-              className="entity-list__link"
-              to={`/competitions/${seedCompetitionId}`}
-            >
-              <span className="entity-list__title">Seed competition</span>
-              <span className="muted">Dev shortcut from .env.local</span>
-            </Link>
-          </li>
+          <Link className="nav-card" to={`/competitions/${seedCompetitionId}`}>
+            <span className="nav-card__title">
+              Seed competition
+              <span className="row__chevron" aria-hidden="true">
+                →
+              </span>
+            </span>
+            <span className="nav-card__desc">
+              Development shortcut configured in <code>.env.local</code>.
+            </span>
+          </Link>
         )}
-      </ul>
+      </div>
 
-      <p className="hint">
+      <p className="caption">
         Deep links also work for <code>/stages/:id</code>,{' '}
         <code>/stages/:id/matches</code>, and <code>/matches/:id</code>.
       </p>

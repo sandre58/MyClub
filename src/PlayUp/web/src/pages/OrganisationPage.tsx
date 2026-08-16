@@ -11,16 +11,18 @@ import {
   withdrawCompetitionEntry,
 } from '../api'
 import {
-  BackLink,
+  CompetitionNav,
+  CompetitionStatusBadge,
   EmptyState,
+  EntryStatusBadge,
   ErrorState,
   LoadingState,
-  formatError,
-} from '../queryUi'
+  MutationError,
+  PageHeader,
+  PendingLabel,
+  StageStatusBadge,
+} from '../ui'
 import {
-  competitionStatusLabel,
-  entryStatusLabel,
-  stageStatusLabel,
   structureFormatKindLabel,
   type OrganisationEntry,
   type OrganisationView,
@@ -45,15 +47,25 @@ export function OrganisationPage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Organisation</p>
-        <h1>{query.data?.name ?? 'Organisation'}</h1>
-        {competitionId && (
-          <BackLink to={`/competitions/${competitionId}`}>
-            ← Back to workspace
-          </BackLink>
-        )}
-      </header>
+      <PageHeader
+        eyebrow="Organisation"
+        title={query.data?.name ?? 'Organisation'}
+        back={
+          competitionId
+            ? {
+                to: `/competitions/${competitionId}`,
+                label: 'Back to workspace',
+              }
+            : undefined
+        }
+        badges={
+          query.data && <CompetitionStatusBadge status={query.data.status} />
+        }
+      />
+
+      {competitionId && (
+        <CompetitionNav competitionId={competitionId} current="organisation" />
+      )}
 
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} />}
@@ -66,17 +78,7 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
   const can = (action: string) => data.actions.includes(action)
 
   return (
-    <article className="panel">
-      <header className="panel__header">
-        <p className="status-line">
-          <span className="status-badge status-badge--neutral">
-            <span className="status-badge__dot" aria-hidden="true" />
-            {competitionStatusLabel[data.status]}
-          </span>
-        </p>
-        <p className="mono muted">{data.competitionId}</p>
-      </header>
-
+    <div className="section-stack">
       <ReadinessSection readiness={data.readiness} />
       <ParticipantsSection
         data={data}
@@ -85,15 +87,9 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
         canWithdraw={can('WithdrawEntry')}
         canExclude={can('ExcludeEntry')}
       />
-      <RegulationSection
-        data={data}
-        canReplace={can('ReplaceRegulation')}
-      />
-      <StructureSection
-        data={data}
-        canConfigure={can('ConfigureStructure')}
-      />
-    </article>
+      <StructureSection data={data} canConfigure={can('ConfigureStructure')} />
+      <RegulationSection data={data} canReplace={can('ReplaceRegulation')} />
+    </div>
   )
 }
 
@@ -102,52 +98,76 @@ function ReadinessSection({
 }: {
   readiness: OrganisationView['readiness']
 }) {
+  const ready = readiness.readyForNextSlice
+
   return (
-    <section>
-      <h2 className="section-title">Readiness</h2>
-      <ul className="plain-list">
-        <li>
-          Ready for next slice:{' '}
-          <span className="muted">
-            {readiness.readyForNextSlice ? 'Yes' : 'No'}
+    <section className="card" aria-labelledby="readiness-heading">
+      <div className="card__head">
+        <h2 className="card__title" id="readiness-heading">
+          Readiness
+        </h2>
+        <span className={`status-badge status-badge--${ready ? 'ok' : 'warn'}`}>
+          <span className="status-badge__dot" aria-hidden="true" />
+          {ready ? 'Ready for next slice' : 'Preparation in progress'}
+        </span>
+      </div>
+
+      <ul className="check-list">
+        <Check ok={readiness.readyForNextSlice}>Ready for next slice</Check>
+        <Check ok={readiness.readyForDraw}>Ready for draw</Check>
+        <li className="check">
+          <span className="check__mark" aria-hidden="true">
+            ·
           </span>
-        </li>
-        <li>
-          Ready for draw:{' '}
-          <span className="muted">
-            {readiness.readyForDraw ? 'Yes' : 'No'}
-          </span>
-        </li>
-        <li>
-          Attached matches:{' '}
-          <span className="muted">{readiness.attachedMatchCount}</span>
+          <span>Attached matches</span>
+          <span className="caption">{readiness.attachedMatchCount}</span>
         </li>
       </ul>
+
       {readiness.blockers.length > 0 && (
-        <>
-          <h3 className="section-title">Blockers</h3>
-          <ul className="plain-list">
+        <div className="stack stack--tight">
+          <h3 className="stat__label">Blockers</h3>
+          <ul className="check-list">
             {readiness.blockers.map((code) => (
-              <li key={code} className="mono muted">
-                {code}
+              <li key={code} className="check check--no">
+                <span className="check__mark" aria-hidden="true">
+                  !
+                </span>
+                <span className="mono">{code}</span>
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
+
       {readiness.hints.length > 0 && (
-        <>
-          <h3 className="section-title">Hints</h3>
-          <ul className="plain-list">
+        <div className="stack stack--tight">
+          <h3 className="stat__label">Hints</h3>
+          <ul className="check-list">
             {readiness.hints.map((hint) => (
-              <li key={hint} className="muted">
-                {hint}
+              <li key={hint} className="check">
+                <span className="check__mark" aria-hidden="true">
+                  →
+                </span>
+                <span className="muted">{hint}</span>
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
     </section>
+  )
+}
+
+function Check({ ok, children }: { ok: boolean; children: string }) {
+  return (
+    <li className={`check ${ok ? 'check--yes' : 'check--no'}`}>
+      <span className="check__mark" aria-hidden="true">
+        {ok ? '✓' : '·'}
+      </span>
+      <span>{children}</span>
+      <span className="caption">{ok ? 'Yes' : 'No'}</span>
+    </li>
   )
 }
 
@@ -190,17 +210,23 @@ function ParticipantsSection({
   })
 
   return (
-    <section>
-      <h2 className="section-title">Participants</h2>
-      <p className="hint">
-        Active {data.participants.activeCount} · Occupying{' '}
-        {data.participants.occupyingCount}
-      </p>
+    <section className="card" aria-labelledby="participants-heading">
+      <div className="card__head">
+        <h2 className="card__title" id="participants-heading">
+          Participants
+        </h2>
+        <p className="card__subtitle">
+          {data.participants.activeCount} active ·{' '}
+          {data.participants.occupyingCount} occupying a slot
+        </p>
+      </div>
 
       {data.participants.entries.length === 0 ? (
-        <EmptyState>No entries yet.</EmptyState>
+        <EmptyState title="No entries yet">
+          Add the teams taking part; the structure and the draw need them.
+        </EmptyState>
       ) : (
-        <ul className="plain-list">
+        <ul className="row-list">
           {data.participants.entries.map((entry) => (
             <li key={entry.entryId}>
               <EntryRow
@@ -218,7 +244,7 @@ function ParticipantsSection({
 
       {canAdd && (
         <form
-          className="org-form"
+          className="form form--inline"
           onSubmit={(event: FormEvent) => {
             event.preventDefault()
             if (displayName.trim().length === 0 || addMutation.isPending) {
@@ -227,27 +253,28 @@ function ParticipantsSection({
             addMutation.mutate()
           }}
         >
-          <label>
+          <label className="field">
             New entry name
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
               disabled={addMutation.isPending}
+              placeholder="e.g. Alpha FC"
               required
             />
           </label>
           <button
             type="submit"
-            className="btn"
+            className="btn btn--primary"
             disabled={addMutation.isPending || displayName.trim().length === 0}
           >
-            {addMutation.isPending ? 'Adding…' : 'Add entry'}
+            {addMutation.isPending ? (
+              <PendingLabel>Adding…</PendingLabel>
+            ) : (
+              'Add entry'
+            )}
           </button>
-          {addMutation.isError && (
-            <p className="error" role="alert">
-              {formatError(addMutation.error)}
-            </p>
-          )}
+          {addMutation.isError && <MutationError error={addMutation.error} />}
         </form>
       )}
     </section>
@@ -299,16 +326,16 @@ function EntryRow({
     renameMutation.error ?? withdrawMutation.error ?? excludeMutation.error
 
   return (
-    <div className="org-entry">
-      <p>
-        <strong>{entry.displayName}</strong>{' '}
-        <span className="muted">({entryStatusLabel[entry.status]})</span>
+    <div className="entry">
+      <p className="entry__identity">
+        <span className="entry__name">{entry.displayName}</span>
+        <EntryStatusBadge status={entry.status} />
       </p>
       {(canRename || canWithdraw || canExclude) && (
-        <div className="org-entry__actions">
+        <div className="entry__actions">
           {canRename && (
             <form
-              className="org-form org-form--inline"
+              className="form form--inline"
               onSubmit={(event: FormEvent) => {
                 event.preventDefault()
                 if (name.trim().length === 0 || pending) {
@@ -317,7 +344,7 @@ function EntryRow({
                 renameMutation.mutate()
               }}
             >
-              <label>
+              <label className="field">
                 Rename
                 <input
                   value={name}
@@ -328,17 +355,21 @@ function EntryRow({
               </label>
               <button
                 type="submit"
-                className="btn"
+                className="btn btn--sm"
                 disabled={pending || name.trim().length === 0}
               >
-                {renameMutation.isPending ? busyLabel : 'Rename'}
+                {renameMutation.isPending ? (
+                  <PendingLabel>{busyLabel}</PendingLabel>
+                ) : (
+                  'Rename'
+                )}
               </button>
             </form>
           )}
           {canWithdraw && (
             <button
               type="button"
-              className="btn"
+              className="btn btn--sm btn--ghost"
               disabled={pending}
               onClick={() => {
                 if (
@@ -351,13 +382,17 @@ function EntryRow({
                 withdrawMutation.mutate()
               }}
             >
-              {withdrawMutation.isPending ? busyLabel : 'Withdraw'}
+              {withdrawMutation.isPending ? (
+                <PendingLabel>{busyLabel}</PendingLabel>
+              ) : (
+                'Withdraw'
+              )}
             </button>
           )}
           {canExclude && (
             <button
               type="button"
-              className="btn"
+              className="btn btn--sm btn--danger"
               disabled={pending}
               onClick={() => {
                 if (
@@ -370,15 +405,19 @@ function EntryRow({
                 excludeMutation.mutate()
               }}
             >
-              {excludeMutation.isPending ? busyLabel : 'Exclude'}
+              {excludeMutation.isPending ? (
+                <PendingLabel>{busyLabel}</PendingLabel>
+              ) : (
+                'Exclude'
+              )}
             </button>
           )}
         </div>
       )}
       {mutationError && (
-        <p className="error" role="alert">
-          {formatError(mutationError)}
-        </p>
+        <div className="entry__error">
+          <MutationError error={mutationError} />
+        </div>
       )}
     </div>
   )
@@ -429,33 +468,38 @@ function RegulationSection({
     }
 
   return (
-    <section>
-      <h2 className="section-title">Regulation</h2>
-      <ul className="plain-list">
-        <li>
-          Teams:{' '}
-          <span className="muted">
+    <section className="card" aria-labelledby="regulation-heading">
+      <div className="card__head">
+        <h2 className="card__title" id="regulation-heading">
+          Regulation
+        </h2>
+      </div>
+
+      <dl className="fact-list">
+        <div className="fact">
+          <dt className="fact__label">Teams</dt>
+          <dd className="fact__value">
             {regulation.minimumTeams}–{regulation.maximumTeams}
-          </span>
-        </li>
-        <li>
-          Match:{' '}
-          <span className="muted">
-            {regulation.numberOfPeriods}×{regulation.durationPerPeriod}
-          </span>
-        </li>
-        <li>
-          Points:{' '}
-          <span className="muted">
-            W{regulation.winPoints} / D{regulation.drawPoints} / L
+          </dd>
+        </div>
+        <div className="fact">
+          <dt className="fact__label">Match</dt>
+          <dd className="fact__value">
+            {regulation.numberOfPeriods}×{regulation.durationPerPeriod}′
+          </dd>
+        </div>
+        <div className="fact">
+          <dt className="fact__label">Points W / D / L</dt>
+          <dd className="fact__value">
+            {regulation.winPoints} / {regulation.drawPoints} /{' '}
             {regulation.lossPoints}
-          </span>
-        </li>
-      </ul>
+          </dd>
+        </div>
+      </dl>
 
       {canReplace && (
         <form
-          className="org-form"
+          className="form form--wide"
           onSubmit={(event: FormEvent) => {
             event.preventDefault()
             if (mutation.isPending) {
@@ -464,30 +508,34 @@ function RegulationSection({
             mutation.mutate()
           }}
         >
-          <fieldset className="org-form__fieldset" disabled={mutation.isPending}>
-            <legend className="org-form__legend">Replace regulation</legend>
-            <div className="org-form__row">
-              <label>
+          <fieldset className="fieldset" disabled={mutation.isPending}>
+            <legend className="fieldset__legend">Replace regulation</legend>
+            <div className="form-row">
+              <label className="field">
                 Minimum teams
                 <input
                   type="number"
                   value={form.minimumTeams}
-                  onChange={(event) => setNumber('minimumTeams')(event.target.value)}
+                  onChange={(event) =>
+                    setNumber('minimumTeams')(event.target.value)
+                  }
                   required
                 />
               </label>
-              <label>
+              <label className="field">
                 Maximum teams
                 <input
                   type="number"
                   value={form.maximumTeams}
-                  onChange={(event) => setNumber('maximumTeams')(event.target.value)}
+                  onChange={(event) =>
+                    setNumber('maximumTeams')(event.target.value)
+                  }
                   required
                 />
               </label>
             </div>
-            <div className="org-form__row">
-              <label>
+            <div className="form-row">
+              <label className="field">
                 Duration per period
                 <input
                   type="number"
@@ -498,7 +546,7 @@ function RegulationSection({
                   required
                 />
               </label>
-              <label>
+              <label className="field">
                 Number of periods
                 <input
                   type="number"
@@ -509,7 +557,7 @@ function RegulationSection({
                   required
                 />
               </label>
-              <label>
+              <label className="field">
                 Half-time duration
                 <input
                   type="number"
@@ -521,44 +569,59 @@ function RegulationSection({
                 />
               </label>
             </div>
-            <div className="org-form__row">
-              <label>
+            <div className="form-row">
+              <label className="field">
                 Win points
                 <input
                   type="number"
                   value={form.winPoints}
-                  onChange={(event) => setNumber('winPoints')(event.target.value)}
+                  onChange={(event) =>
+                    setNumber('winPoints')(event.target.value)
+                  }
                   required
                 />
               </label>
-              <label>
+              <label className="field">
                 Draw points
                 <input
                   type="number"
                   value={form.drawPoints}
-                  onChange={(event) => setNumber('drawPoints')(event.target.value)}
+                  onChange={(event) =>
+                    setNumber('drawPoints')(event.target.value)
+                  }
                   required
                 />
               </label>
-              <label>
+              <label className="field">
                 Loss points
                 <input
                   type="number"
                   value={form.lossPoints}
-                  onChange={(event) => setNumber('lossPoints')(event.target.value)}
+                  onChange={(event) =>
+                    setNumber('lossPoints')(event.target.value)
+                  }
                   required
                 />
               </label>
             </div>
           </fieldset>
-          <button type="submit" className="btn" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Saving…' : 'Save regulation'}
-          </button>
-          {mutation.isError && (
-            <p className="error" role="alert">
-              {formatError(mutation.error)}
-            </p>
-          )}
+          <div className="button-row">
+            <button
+              type="submit"
+              className="btn btn--primary"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <PendingLabel>Saving…</PendingLabel>
+              ) : (
+                'Save regulation'
+              )}
+            </button>
+            <span className="caption">
+              Replaces the whole regulation of the competition.
+            </span>
+          </div>
+          {mutation.isError && <MutationError error={mutation.error} />}
         </form>
       )}
     </section>
@@ -608,50 +671,63 @@ function StructureSection({
   const primaryStageId = data.format.primaryStageId
 
   return (
-    <section>
-      <h2 className="section-title">Structure</h2>
-      <ul className="plain-list">
-        <li>
-          Format:{' '}
-          <span className="muted">
-            {formatKind
-              ? structureFormatKindLabel[formatKind]
-              : data.format.label}
-          </span>
-        </li>
-        <li>
-          Groups / rounds / matchdays / slots:{' '}
-          <span className="muted">
-            {data.structure.groupCount} / {data.structure.roundCount} /{' '}
-            {data.structure.matchdayCount} / {data.structure.slotCount}
-          </span>
-        </li>
+    <section className="card" aria-labelledby="structure-heading">
+      <div className="card__head">
+        <h2 className="card__title" id="structure-heading">
+          Structure
+        </h2>
+        <p className="card__subtitle">
+          {formatKind ? structureFormatKindLabel[formatKind] : data.format.label}
+        </p>
+      </div>
+
+      <dl className="fact-list">
+        <div className="fact">
+          <dt className="fact__label">Groups</dt>
+          <dd className="fact__value">{data.structure.groupCount}</dd>
+        </div>
+        <div className="fact">
+          <dt className="fact__label">Rounds</dt>
+          <dd className="fact__value">{data.structure.roundCount}</dd>
+        </div>
+        <div className="fact">
+          <dt className="fact__label">Matchdays</dt>
+          <dd className="fact__value">{data.structure.matchdayCount}</dd>
+        </div>
+        <div className="fact">
+          <dt className="fact__label">Slots</dt>
+          <dd className="fact__value">{data.structure.slotCount}</dd>
+        </div>
         {data.structure.numberOfPots != null && (
-          <li>
-            Pots:{' '}
-            <span className="muted">{data.structure.numberOfPots}</span>
-          </li>
+          <div className="fact">
+            <dt className="fact__label">Pots</dt>
+            <dd className="fact__value">{data.structure.numberOfPots}</dd>
+          </div>
         )}
-      </ul>
+      </dl>
 
       {primaryStageId && (
-        <p>
-          <Link to={`/stages/${primaryStageId}`}>
-            Open stage{' '}
-            {data.format.primaryStageName
-              ? `“${data.format.primaryStageName}”`
-              : ''}
-            {data.format.primaryStageStatus
-              ? ` (${stageStatusLabel[data.format.primaryStageStatus]})`
-              : ''}{' '}
-            →
-          </Link>
-        </p>
+        <Link className="row" to={`/stages/${primaryStageId}`}>
+          <span className="row__main">
+            <span className="row__title">
+              {data.format.primaryStageName ?? 'Primary stage'}
+            </span>
+            <span className="row__meta">Prepare the draw and the matches</span>
+          </span>
+          <span className="row__aside">
+            {data.format.primaryStageStatus && (
+              <StageStatusBadge status={data.format.primaryStageStatus} />
+            )}
+            <span className="row__chevron" aria-hidden="true">
+              →
+            </span>
+          </span>
+        </Link>
       )}
 
       {canConfigure && (
         <form
-          className="org-form"
+          className="form"
           onSubmit={(event: FormEvent) => {
             event.preventDefault()
             if (mutation.isPending) {
@@ -660,9 +736,9 @@ function StructureSection({
             mutation.mutate()
           }}
         >
-          <fieldset className="org-form__fieldset" disabled={mutation.isPending}>
-            <legend className="org-form__legend">Configure structure</legend>
-            <label>
+          <fieldset className="fieldset" disabled={mutation.isPending}>
+            <legend className="fieldset__legend">Configure structure</legend>
+            <label className="field">
               Format
               <select
                 value={format}
@@ -675,15 +751,16 @@ function StructureSection({
                 <option value="Cup">Cup</option>
               </select>
             </label>
-            <label>
+            <label className="field">
               Stage name (optional)
               <input
                 value={stageName}
                 onChange={(event) => setStageName(event.target.value)}
+                placeholder="e.g. Regular season"
               />
             </label>
             {format === 'Championship' && (
-              <label>
+              <label className="field">
                 Matchday count
                 <input
                   type="number"
@@ -697,8 +774,8 @@ function StructureSection({
               </label>
             )}
             {format === 'Groups' && (
-              <div className="org-form__row">
-                <label>
+              <div className="form-row">
+                <label className="field">
                   Group count
                   <input
                     type="number"
@@ -710,7 +787,7 @@ function StructureSection({
                     required
                   />
                 </label>
-                <label>
+                <label className="field">
                   Participants per group
                   <input
                     type="number"
@@ -725,7 +802,7 @@ function StructureSection({
               </div>
             )}
             {format === 'Cup' && (
-              <label>
+              <label className="field">
                 Bracket size (power of two)
                 <input
                   type="number"
@@ -739,14 +816,23 @@ function StructureSection({
               </label>
             )}
           </fieldset>
-          <button type="submit" className="btn" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Configuring…' : 'Configure structure'}
-          </button>
-          {mutation.isError && (
-            <p className="error" role="alert">
-              {formatError(mutation.error)}
-            </p>
-          )}
+          <div className="button-row">
+            <button
+              type="submit"
+              className="btn btn--primary"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <PendingLabel>Configuring…</PendingLabel>
+              ) : (
+                'Configure structure'
+              )}
+            </button>
+            <span className="caption">
+              Rebuilds the stage structure of the competition.
+            </span>
+          </div>
+          {mutation.isError && <MutationError error={mutation.error} />}
         </form>
       )}
     </section>

@@ -1,10 +1,14 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 
 /**
  * Shared shell for organizer screens.
  *
  * Outlet = “render the matched child route here”.
  * Without it, nested routes would have nowhere to appear.
+ *
+ * Top bar rather than a sidebar: the app has two global destinations,
+ * everything else is competition-scoped and navigated from inside a
+ * competition (see the context nav on competition pages).
  */
 export function AppLayout() {
   return (
@@ -13,14 +17,22 @@ export function AppLayout() {
         Skip to content
       </a>
       <header className="app-header">
-        <nav className="app-nav" aria-label="Primary">
-          <Link to="/" className="app-nav__brand">
+        <div className="app-header__inner">
+          <Link to="/" className="brand">
+            <span className="brand__mark" aria-hidden="true">
+              P
+            </span>
             Play’up
           </Link>
-          <Link to="/competitions" className="app-nav__meta">
-            Competitions
-          </Link>
-        </nav>
+          <nav className="app-nav" aria-label="Primary">
+            <NavLink to="/" end className="app-nav__link">
+              Home
+            </NavLink>
+            <NavLink to="/competitions" className="app-nav__link">
+              Competitions
+            </NavLink>
+          </nav>
+        </div>
       </header>
       <Outlet />
     </div>

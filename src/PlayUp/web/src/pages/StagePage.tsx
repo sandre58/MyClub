@@ -9,26 +9,25 @@ import {
   startStage,
 } from '../api'
 import {
-  BackLink,
+  DrawResolutionBadge,
+  DrawStatusBadge,
   EmptyState,
   ErrorState,
   LoadingState,
-  formatError,
-} from '../queryUi'
+  MutationError,
+  PageHeader,
+  PendingLabel,
+  StageStatusBadge,
+  StatusBadge,
+} from '../ui'
 import {
   drawResolutionKindLabel,
-  drawResolutionStateLabel,
-  drawStatusLabel,
-  stageStatusLabel,
   type StageDraw,
   type StageOverview,
   type StageRound,
   type StageSlot,
 } from '../types'
-import {
-  getDrawUiProjection,
-  resolvePairingFixtureIds,
-} from './drawUi'
+import { getDrawUiProjection, resolvePairingFixtureIds } from './drawUi'
 
 export function StagePage() {
   const { stageId = '' } = useParams()
@@ -51,18 +50,23 @@ export function StagePage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Stage</p>
-        <h1>{stageQuery.data?.name ?? 'Stage'}</h1>
-        {competitionId && (
-          <BackLink to={`/competitions/${competitionId}/overview`}>
-            ←{' '}
-            {competitionQuery.data?.name
-              ? `Back to ${competitionQuery.data.name}`
-              : 'Back to competition'}
-          </BackLink>
-        )}
-      </header>
+      <PageHeader
+        eyebrow="Stage"
+        title={stageQuery.data?.name ?? 'Stage'}
+        back={
+          competitionId
+            ? {
+                to: `/competitions/${competitionId}/overview`,
+                label: competitionQuery.data?.name
+                  ? `Back to ${competitionQuery.data.name}`
+                  : 'Back to competition',
+              }
+            : undefined
+        }
+        badges={
+          stageQuery.data && <StageStatusBadge status={stageQuery.data.status} />
+        }
+      />
 
       {stageQuery.isPending && <LoadingState />}
       {stageQuery.isError && <ErrorState error={stageQuery.error} />}
@@ -113,57 +117,70 @@ function StageOverviewView({ data }: { data: StageOverview }) {
     canPrepare || canStart || prepareMutation.isError || startMutation.isError
 
   return (
-    <article className="panel">
-      <header className="panel__header">
-        <p className="status-line">
-          <span className="status-badge status-badge--neutral">
-            <span className="status-badge__dot" aria-hidden="true" />
-            {stageStatusLabel[data.status]}
-          </span>
-        </p>
-        <p className="mono muted">{data.id}</p>
-        <p>
-          <Link className="action-link" to={`/stages/${data.id}/matches`}>
-            View matches →
-          </Link>
-        </p>
-        {showStageActions && (
-          <div className="stage-actions" aria-busy={stageActionBusy}>
-            {canPrepare && (
-              <button
-                type="button"
-                className="btn"
-                disabled={stageActionBusy}
-                onClick={() => prepareMutation.mutate()}
-              >
-                {prepareMutation.isPending
-                  ? 'Preparing stage…'
-                  : 'Prepare stage'}
-              </button>
-            )}
-            {canStart && (
-              <button
-                type="button"
-                className="btn"
-                disabled={stageActionBusy}
-                onClick={() => startMutation.mutate()}
-              >
-                {startMutation.isPending ? 'Starting stage…' : 'Start stage'}
-              </button>
-            )}
-            {stageActionError && (
-              <p className="error" role="alert">
-                {formatError(stageActionError)}
-              </p>
-            )}
-          </div>
-        )}
-      </header>
+    <div className="section-stack">
+      <section className="card" aria-labelledby="stage-heading">
+        <div className="card__head">
+          <h2 className="card__title" id="stage-heading">
+            Stage operations
+          </h2>
+          <span className="id-chip">{data.id}</span>
+        </div>
 
-      <section>
-        <h2 className="section-title">Rounds ({data.rounds.length})</h2>
+        <div className="button-row">
+          {showStageActions && (
+            <span className="button-row" aria-busy={stageActionBusy}>
+              {canPrepare && (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={stageActionBusy}
+                  onClick={() => prepareMutation.mutate()}
+                >
+                  {prepareMutation.isPending ? (
+                    <PendingLabel>Preparing stage…</PendingLabel>
+                  ) : (
+                    'Prepare stage'
+                  )}
+                </button>
+              )}
+              {canStart && (
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={stageActionBusy}
+                  onClick={() => startMutation.mutate()}
+                >
+                  {startMutation.isPending ? (
+                    <PendingLabel>Starting stage…</PendingLabel>
+                  ) : (
+                    'Start stage'
+                  )}
+                </button>
+              )}
+            </span>
+          )}
+          <Link className="btn" to={`/stages/${data.id}/matches`}>
+            View matches
+          </Link>
+        </div>
+
+        {stageActionError && <MutationError error={stageActionError} />}
+      </section>
+
+      <section className="card" aria-labelledby="rounds-heading">
+        <div className="card__head">
+          <h2 className="card__title" id="rounds-heading">
+            Rounds ({data.rounds.length})
+          </h2>
+          <p className="card__subtitle">
+            {fixtureCount} fixture{fixtureCount === 1 ? '' : 's'} total · match
+            list is a separate read
+          </p>
+        </div>
         {data.rounds.length === 0 ? (
-          <EmptyState>No rounds defined.</EmptyState>
+          <EmptyState title="No rounds defined">
+            Preparing the stage creates its rounds and fixtures.
+          </EmptyState>
         ) : (
           <ul className="plain-list">
             {data.rounds.map((round) => (
@@ -197,16 +214,16 @@ function StageOverviewView({ data }: { data: StageOverview }) {
             ))}
           </ul>
         )}
-        <p className="hint">
-          {fixtureCount} fixture{fixtureCount === 1 ? '' : 's'} total · match
-          list is a separate read.
-        </p>
       </section>
 
-      <section>
-        <h2 className="section-title">Slots ({data.slots.length})</h2>
+      <section className="card" aria-labelledby="slots-heading">
+        <h2 className="card__title" id="slots-heading">
+          Slots ({data.slots.length})
+        </h2>
         {data.slots.length === 0 ? (
-          <EmptyState>No slots on this stage.</EmptyState>
+          <EmptyState title="No slots on this stage">
+            Slots appear once the structure defines placement positions.
+          </EmptyState>
         ) : (
           <ul className="plain-list">
             {data.slots.map((slot) => (
@@ -229,7 +246,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         slots={data.slots}
         rounds={data.rounds}
       />
-    </article>
+    </div>
   )
 }
 
@@ -249,12 +266,14 @@ function DrawSection({
   rounds: StageRound[]
 }) {
   return (
-    <section aria-labelledby="draws-heading">
-      <h2 id="draws-heading" className="section-title">
+    <section className="card" aria-labelledby="draws-heading">
+      <h2 id="draws-heading" className="card__title">
         Draws ({draws.length})
       </h2>
       {draws.length === 0 ? (
-        <EmptyState>No draws yet.</EmptyState>
+        <EmptyState title="No draws yet">
+          A draw appears once the stage structure requires one.
+        </EmptyState>
       ) : (
         <ul className="draw-list">
           {draws.map((draw) => (
@@ -289,25 +308,14 @@ function DrawCard({
 
   return (
     <article className="draw-card">
-      <header className="draw-card__header">
+      <header className="stack stack--tight">
         <h3 className="draw-card__title">
           {drawResolutionKindLabel[draw.kind]} draw
         </h3>
-        <p className="draw-card__badges">
-          <span className={`status-badge status-badge--${ui.statusTone}`}>
-            <span className="status-badge__dot" aria-hidden="true" />
-            {drawStatusLabel[draw.status]}
-          </span>
-          <span className="status-badge status-badge--neutral">
-            <span className="status-badge__dot" aria-hidden="true" />
-            {drawResolutionStateLabel[draw.resolutionState]}
-          </span>
-          {ui.isApplied && (
-            <span className="status-badge status-badge--live">
-              <span className="status-badge__dot" aria-hidden="true" />
-              Applied
-            </span>
-          )}
+        <p className="badge-row">
+          <DrawStatusBadge status={draw.status} />
+          <DrawResolutionBadge state={draw.resolutionState} />
+          {ui.isApplied && <StatusBadge tone="ok">Applied</StatusBadge>}
         </p>
       </header>
 
@@ -316,7 +324,7 @@ function DrawCard({
       </p>
 
       {ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0 && (
-        <div className="draw-card__results">
+        <div className="stack stack--tight">
           <h4 className="draw-card__results-title">Result</h4>
           <ul className="draw-pairing-list">
             {draw.pairings.map((pairing) => (
@@ -338,7 +346,7 @@ function DrawCard({
       )}
 
       {ui.showResults && draw.kind === 'Slot' && draw.slotPlacements.length > 0 && (
-        <div className="draw-card__results">
+        <div className="stack stack--tight">
           <h4 className="draw-card__results-title">Placements</h4>
           <ul className="draw-placement-list">
             {draw.slotPlacements.map((placement) => (
@@ -346,7 +354,7 @@ function DrawCard({
                 key={`${placement.slotKey}-${placement.entryId}`}
                 className="draw-placement"
               >
-                <code className="draw-placement__slot">{placement.slotKey}</code>
+                <code>{placement.slotKey}</code>
                 <span className="draw-placement__arrow" aria-hidden="true">
                   →
                 </span>
@@ -470,52 +478,60 @@ function DrawActions({
   }
 
   return (
-    <div className="draw-actions" aria-busy={busy}>
+    <div className="button-row" aria-busy={busy}>
       {canPublish && (
         <button
           type="button"
-          className="btn"
+          className="btn btn--primary btn--sm"
           disabled={busy}
           onClick={handlePublish}
         >
-          {publishMutation.isPending ? 'Publishing draw…' : 'Publish draw'}
+          {publishMutation.isPending ? (
+            <PendingLabel>Publishing draw…</PendingLabel>
+          ) : (
+            'Publish draw'
+          )}
         </button>
       )}
 
       {canApply && draw.kind === 'Slot' && (
         <button
           type="button"
-          className="btn"
+          className="btn btn--primary btn--sm"
           disabled={busy}
           onClick={handleApply}
         >
-          {applyMutation.isPending ? 'Applying draw…' : 'Apply draw'}
+          {applyMutation.isPending ? (
+            <PendingLabel>Applying draw…</PendingLabel>
+          ) : (
+            'Apply draw'
+          )}
         </button>
       )}
 
       {canApply && draw.kind === 'Pairing' && pairingFixtureIds !== null && (
         <button
           type="button"
-          className="btn"
+          className="btn btn--primary btn--sm"
           disabled={busy}
           onClick={handleApply}
         >
-          {applyMutation.isPending ? 'Applying draw…' : 'Apply draw'}
+          {applyMutation.isPending ? (
+            <PendingLabel>Applying draw…</PendingLabel>
+          ) : (
+            'Apply draw'
+          )}
         </button>
       )}
 
       {pairingMapBlocked && (
-        <p className="hint" role="status">
+        <p className="notice notice--warning" role="status">
           Apply is unavailable: the number of pairings must equal the number of
           stage fixtures for a 1:1 mapping.
         </p>
       )}
 
-      {mutationError && (
-        <p className="error" role="alert">
-          {formatError(mutationError)}
-        </p>
-      )}
+      {mutationError && <MutationError error={mutationError} />}
     </div>
   )
 }

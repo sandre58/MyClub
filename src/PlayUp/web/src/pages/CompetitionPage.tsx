@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionOverview } from '../api'
-import { BackLink, EmptyState, ErrorState, LoadingState } from '../queryUi'
 import {
-  competitionStatusLabel,
-  entryStatusLabel,
-  stageStatusLabel,
-  type CompetitionOverview,
-} from '../types'
+  CompetitionNav,
+  CompetitionStatusBadge,
+  EmptyState,
+  EntryStatusBadge,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+  StageStatusBadge,
+} from '../ui'
+import { type CompetitionOverview } from '../types'
 
 /**
  * Competition Overview — GET /competitions/{id}.
@@ -24,15 +28,25 @@ export function CompetitionPage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Competition</p>
-        <h1>{query.data?.name ?? 'Competition'}</h1>
-        {competitionId && (
-          <BackLink to={`/competitions/${competitionId}`}>
-            ← Back to workspace
-          </BackLink>
-        )}
-      </header>
+      <PageHeader
+        eyebrow="Competition"
+        title={query.data?.name ?? 'Competition'}
+        back={
+          competitionId
+            ? {
+                to: `/competitions/${competitionId}`,
+                label: 'Back to workspace',
+              }
+            : undefined
+        }
+        badges={
+          query.data && <CompetitionStatusBadge status={query.data.status} />
+        }
+      />
+
+      {competitionId && (
+        <CompetitionNav competitionId={competitionId} current="overview" />
+      )}
 
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} />}
@@ -43,50 +57,33 @@ export function CompetitionPage() {
 
 function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
   return (
-    <article className="panel">
-      <header className="panel__header">
-        <p className="status-line">
-          <span className="status-badge status-badge--neutral">
-            <span className="status-badge__dot" aria-hidden="true" />
-            {competitionStatusLabel[data.status]}
-          </span>
-        </p>
-        <p className="mono muted">{data.id}</p>
-      </header>
-
-      <section>
-        <h2 className="section-title">Entries</h2>
-        {data.entries.length === 0 ? (
-          <EmptyState>No entries yet.</EmptyState>
-        ) : (
-          <ul className="plain-list">
-            {data.entries.map((entry) => (
-              <li key={entry.entryId}>
-                {entry.displayName}{' '}
-                <span className="muted">
-                  ({entryStatusLabel[entry.status]})
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h2 className="section-title">Stages</h2>
+    <div className="section-stack">
+      <section className="card" aria-labelledby="stages-heading">
+        <div className="card__head">
+          <h2 className="card__title" id="stages-heading">
+            Stages
+          </h2>
+          <p className="card__subtitle">
+            {data.stages.length} stage{data.stages.length === 1 ? '' : 's'}
+          </p>
+        </div>
         {data.stages.length === 0 ? (
-          <EmptyState>No stages in this competition.</EmptyState>
+          <EmptyState title="No stages in this competition">
+            Configure the structure from the Organisation hub to create one.
+          </EmptyState>
         ) : (
-          <ul className="entity-list">
+          <ul className="row-list">
             {data.stages.map((stage) => (
-              <li key={stage.stageId} className="entity-list__item">
-                <Link
-                  className="entity-list__link"
-                  to={`/stages/${stage.stageId}`}
-                >
-                  <span className="entity-list__title">{stage.name}</span>
-                  <span className="muted">
-                    {stageStatusLabel[stage.status]}
+              <li key={stage.stageId}>
+                <Link className="row" to={`/stages/${stage.stageId}`}>
+                  <span className="row__main">
+                    <span className="row__title">{stage.name}</span>
+                  </span>
+                  <span className="row__aside">
+                    <StageStatusBadge status={stage.status} />
+                    <span className="row__chevron" aria-hidden="true">
+                      →
+                    </span>
                   </span>
                 </Link>
               </li>
@@ -94,6 +91,35 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
           </ul>
         )}
       </section>
-    </article>
+
+      <section className="card" aria-labelledby="entries-heading">
+        <div className="card__head">
+          <h2 className="card__title" id="entries-heading">
+            Entries
+          </h2>
+          <p className="card__subtitle">
+            {data.entries.length} entr{data.entries.length === 1 ? 'y' : 'ies'}
+          </p>
+        </div>
+        {data.entries.length === 0 ? (
+          <EmptyState title="No entries yet">
+            Add participants from the Organisation hub.
+          </EmptyState>
+        ) : (
+          <ul className="row-list">
+            {data.entries.map((entry) => (
+              <li key={entry.entryId} className="entry">
+                <span className="entry__name">{entry.displayName}</span>
+                <EntryStatusBadge status={entry.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <p className="caption">
+        Competition <span className="id-chip">{data.id}</span>
+      </p>
+    </div>
   )
 }

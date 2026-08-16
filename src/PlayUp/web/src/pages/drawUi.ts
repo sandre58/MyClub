@@ -1,11 +1,13 @@
 import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types'
 
-/** UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied). */
+/**
+ * UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied).
+ * Status colours come from the shared badge tones (see ui.tsx).
+ */
 export type DrawUiProjection = {
   message: string
   showResults: boolean
   isApplied: boolean
-  statusTone: 'neutral' | 'live' | 'finished' | 'other'
 }
 
 /**
@@ -26,20 +28,12 @@ export function getDrawUiProjection(
     ((draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
       (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)))
 
-  const statusTone =
-    draw.status === 'Cancelled'
-      ? 'other'
-      : draw.status === 'Published'
-        ? 'live'
-        : 'neutral'
-
   if (draw.status === 'Cancelled') {
     return {
       message:
         'This draw was cancelled. A new draw is required to run again.',
       showResults: draw.resolutionState === 'Resolved',
       isApplied: false,
-      statusTone,
     }
   }
 
@@ -48,7 +42,6 @@ export function getDrawUiProjection(
       message: 'Draw in preparation — no result yet.',
       showResults: false,
       isApplied: false,
-      statusTone,
     }
   }
 
@@ -57,7 +50,6 @@ export function getDrawUiProjection(
       message: 'Draw resolved but not published.',
       showResults: true,
       isApplied: false,
-      statusTone,
     }
   }
 
@@ -66,7 +58,6 @@ export function getDrawUiProjection(
       message: 'No admissible solution was found for this draw.',
       showResults: false,
       isApplied: false,
-      statusTone,
     }
   }
 
@@ -84,7 +75,6 @@ export function getDrawUiProjection(
       message: appliedMessage,
       showResults: true,
       isApplied,
-      statusTone,
     }
   }
 
@@ -92,7 +82,6 @@ export function getDrawUiProjection(
     message: 'Draw status is available below.',
     showResults: draw.resolutionState === 'Resolved',
     isApplied: false,
-    statusTone,
   }
 }
 

@@ -2,17 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { fetchMatchesByStage, fetchStageOverview } from '../api'
 import {
-  BackLink,
   EmptyState,
   ErrorState,
   LoadingState,
   MatchStatusBadge,
-} from '../queryUi'
-import {
-  formatScore,
-  sideLabel,
-  type MatchSummary,
-} from '../types'
+  PageHeader,
+} from '../ui'
+import { formatScore, sideLabel, type MatchSummary } from '../types'
 
 export function StageMatchesPage() {
   const { stageId = '' } = useParams()
@@ -35,17 +31,19 @@ export function StageMatchesPage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Matches</p>
-        <h1>
-          {stageQuery.data
+      <PageHeader
+        eyebrow="Matches"
+        title={
+          stageQuery.data
             ? `${stageQuery.data.name} · matches`
-            : 'Stage matches'}
-        </h1>
-        {stageId && (
-          <BackLink to={`/stages/${stageId}`}>← Back to stage</BackLink>
-        )}
-      </header>
+            : 'Stage matches'
+        }
+        back={
+          stageId
+            ? { to: `/stages/${stageId}`, label: 'Back to stage' }
+            : undefined
+        }
+      />
 
       {pending && <LoadingState />}
       {error && <ErrorState error={error} />}
@@ -57,28 +55,33 @@ export function StageMatchesPage() {
 function MatchList({ matches }: { matches: MatchSummary[] }) {
   if (matches.length === 0) {
     return (
-      <EmptyState>
-        No matches for this stage yet. Structure may exist without attached
-        matches.
+      <EmptyState title="No matches for this stage yet">
+        Structure may exist without attached matches. Prepare the draw on the
+        stage to materialize them.
       </EmptyState>
     )
   }
 
   return (
-    <ul className="match-list">
+    <ul className="row-list">
       {matches.map((match) => (
-        <li key={match.matchId} className="match-list__item">
-          <Link to={`/matches/${match.matchId}`} className="match-list__link">
-            <span className="match-list__sides">
-              {sideLabel(match.home)} vs {sideLabel(match.away)}
+        <li key={match.matchId}>
+          <Link to={`/matches/${match.matchId}`} className="match-row">
+            <span className="row__main">
+              <span className="match-row__sides">
+                {sideLabel(match.home)} vs {sideLabel(match.away)}
+              </span>
             </span>
-            <span className="match-list__meta">
-              <MatchStatusBadge status={match.status} />
+            <span className="match-row__aside">
               {match.score ? (
-                <span className="match-list__score">
+                <span className="match-row__score">
                   {formatScore(match.score)}
                 </span>
               ) : null}
+              <MatchStatusBadge status={match.status} />
+              <span className="row__chevron" aria-hidden="true">
+                →
+              </span>
             </span>
           </Link>
         </li>

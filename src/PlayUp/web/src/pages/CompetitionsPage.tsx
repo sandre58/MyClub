@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchCompetitions } from '../api'
-import { BackLink, EmptyState, ErrorState, LoadingState } from '../queryUi'
 import {
-  competitionStatusLabel,
-  type CompetitionListItem,
-} from '../types'
+  CompetitionStatusBadge,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+} from '../ui'
+import { type CompetitionListItem } from '../types'
 
 /**
  * Organizer Competition List — GET /competitions.
@@ -19,11 +22,16 @@ export function CompetitionsPage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Competitions</p>
-        <h1>Competition list</h1>
-        <BackLink to="/">← Back to home</BackLink>
-      </header>
+      <PageHeader
+        eyebrow="Competitions"
+        title="Competition list"
+        back={{ to: '/', label: 'Back to home' }}
+        lede={
+          query.data
+            ? `${query.data.length} competition${query.data.length === 1 ? '' : 's'} on this Host.`
+            : undefined
+        }
+      />
 
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} />}
@@ -35,23 +43,25 @@ export function CompetitionsPage() {
 function CompetitionList({ items }: { items: CompetitionListItem[] }) {
   if (items.length === 0) {
     return (
-      <EmptyState>
-        No competitions yet. Create one on the Host, then refresh this list.
+      <EmptyState title="No competitions yet">
+        Create a competition on the Host, then refresh this list.
       </EmptyState>
     )
   }
 
   return (
-    <ul className="entity-list">
+    <ul className="row-list">
       {items.map((item) => (
-        <li key={item.id} className="entity-list__item">
-          <Link
-            className="entity-list__link"
-            to={`/competitions/${item.id}`}
-          >
-            <span className="entity-list__title">{item.name}</span>
-            <span className="muted">
-              {competitionStatusLabel[item.status]}
+        <li key={item.id}>
+          <Link className="row" to={`/competitions/${item.id}`}>
+            <span className="row__main">
+              <span className="row__title">{item.name}</span>
+            </span>
+            <span className="row__aside">
+              <CompetitionStatusBadge status={item.status} />
+              <span className="row__chevron" aria-hidden="true">
+                →
+              </span>
             </span>
           </Link>
         </li>

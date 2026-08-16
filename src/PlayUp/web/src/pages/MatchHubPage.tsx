@@ -6,16 +6,20 @@ import {
   fetchNeedsAttention,
 } from '../api'
 import {
-  BackLink,
+  CompetitionNav,
   EmptyState,
   ErrorState,
   LoadingState,
   MatchStatusBadge,
-} from '../queryUi'
+  PageHeader,
+  StatusBadge,
+  type StatusTone,
+} from '../ui'
 import {
   formatScore,
   sideLabel,
   type CompetitionStageSummary,
+  type MatchStatus,
   type MatchSummary,
   type NeedsAttentionItem,
 } from '../types'
@@ -63,30 +67,37 @@ export function MatchHubPage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Match hub</p>
-        <h1>
-          {overviewQuery.data
+      <PageHeader
+        eyebrow="Match hub"
+        title={
+          overviewQuery.data
             ? `${overviewQuery.data.name} · matches`
-            : 'Matches'}
-        </h1>
-        {competitionId && (
-          <BackLink to={`/competitions/${competitionId}`}>
-            ← Back to workspace
-          </BackLink>
-        )}
-      </header>
+            : 'Matches'
+        }
+        back={
+          competitionId
+            ? {
+                to: `/competitions/${competitionId}`,
+                label: 'Back to workspace',
+              }
+            : undefined
+        }
+      />
+
+      {competitionId && (
+        <CompetitionNav competitionId={competitionId} current="matches" />
+      )}
 
       {pending && <LoadingState />}
       {error && <ErrorState error={error} />}
       {!pending && !error && overviewQuery.data && (
-        <article className="panel">
+        <div className="section-stack">
           <AttentionSection
             items={attentionQuery.data?.items ?? []}
             matches={rows}
           />
           <MatchHubList rows={rows} stages={stages} />
-        </article>
+        </div>
       )}
     </main>
   )
@@ -123,40 +134,69 @@ function AttentionSection({
 }) {
   if (items.length === 0) {
     return (
-      <section>
-        <h2 className="section-title">Attention</h2>
-        <EmptyState>Nothing needs attention right now.</EmptyState>
+      <section className="card" aria-labelledby="attention-heading">
+        <div className="card__head">
+          <h2 className="card__title" id="attention-heading">
+            Attention
+          </h2>
+          <span className="status-badge status-badge--ok">
+            <span className="status-badge__dot" aria-hidden="true" />
+            Clear
+          </span>
+        </div>
+        <EmptyState title="Nothing needs attention right now">
+          Items appear here when the Host reports a blocked or pending step.
+        </EmptyState>
       </section>
     )
   }
 
   return (
-    <section>
-      <h2 className="section-title">Attention ({items.length})</h2>
-      <ul className="entity-list">
+    <section className="card" aria-labelledby="attention-heading">
+      <div className="card__head">
+        <h2 className="card__title" id="attention-heading">
+          Attention
+        </h2>
+        <span className="status-badge status-badge--warn">
+          <span className="status-badge__dot" aria-hidden="true" />
+          {items.length} to review
+        </span>
+      </div>
+      <ul className="row-list">
         {items.map((item) => {
           const href = attentionHref(item, matches)
-          const meta = (
-            <span className="muted">
-              {item.severity} · {item.source}
-              {item.targetType ? ` · ${item.targetType}` : ''}
-            </span>
+          const body = (
+            <>
+              <span className="row__main">
+                <span className="row__title">{item.reason}</span>
+                <span className="row__meta">
+                  {item.source}
+                  {item.targetType ? ` · ${item.targetType}` : ''}
+                </span>
+              </span>
+              <span className="row__aside">
+                <StatusBadge tone={severityTone(item.severity)}>
+                  {item.severity}
+                </StatusBadge>
+                {href && (
+                  <span className="row__chevron" aria-hidden="true">
+                    →
+                  </span>
+                )}
+              </span>
+            </>
           )
+
           return (
             <li
               key={`${item.source}:${item.targetType}:${item.targetId}:${item.reason}`}
-              className="entity-list__item"
             >
               {href ? (
-                <Link className="entity-list__link" to={href}>
-                  <span className="entity-list__title">{item.reason}</span>
-                  {meta}
+                <Link className="row" to={href}>
+                  {body}
                 </Link>
               ) : (
-                <div className="entity-list__link">
-                  <span className="entity-list__title">{item.reason}</span>
-                  {meta}
-                </div>
+                <div className="row">{body}</div>
               )}
             </li>
           )
@@ -164,6 +204,19 @@ function AttentionSection({
       </ul>
     </section>
   )
+}
+
+/** Host severity strings are free-form; map the known ones, stay neutral otherwise. */
+function severityTone(severity: string): StatusTone {
+  switch (severity.toLowerCase()) {
+    case 'blocking':
+    case 'error':
+      return 'danger'
+    case 'warning':
+      return 'warn'
+    default:
+      return 'info'
+  }
 }
 
 function attentionHref(
@@ -193,6 +246,14 @@ function attentionHref(
   return null
 }
 
+/** Reading order for the organizer: what is running, then what is next. */
+const matchGroups: { title: string; statuses: MatchStatus[] }[] = [
+  { title: 'Live now', statuses: ['Live'] },
+  { title: 'Upcoming', statuses: ['Scheduled'] },
+  { title: 'Finished', statuses: ['Finished'] },
+  { title: 'Postponed or cancelled', statuses: ['Postponed', 'Cancelled'] },
+]
+
 function MatchHubList({
   rows,
   stages,
@@ -201,41 +262,80 @@ function MatchHubList({
   stages: CompetitionStageSummary[]
 }) {
   return (
-    <section>
-      <h2 className="section-title">All matches</h2>
+    <section className="card" aria-labelledby="matches-heading">
+      <div className="card__head">
+        <h2 className="card__title" id="matches-heading">
+          Matches
+        </h2>
+        {rows.length > 0 && (
+          <p className="card__subtitle">
+            {rows.length} match{rows.length === 1 ? '' : 'es'} across{' '}
+            {stages.length} stage{stages.length === 1 ? '' : 's'}
+          </p>
+        )}
+      </div>
+
       {stages.length === 0 ? (
-        <EmptyState>
+        <EmptyState title="No stages yet">
           No stages yet. Configure organisation structure first.
         </EmptyState>
       ) : rows.length === 0 ? (
-        <EmptyState>
+        <EmptyState title="No matches yet">
           No matches attached yet. Open a stage to prepare draws and materialize
           matches.
         </EmptyState>
       ) : (
-        <ul className="match-list">
-          {rows.map(({ match, stageName }) => (
-            <li key={match.matchId} className="match-list__item">
-              <Link
-                to={`/matches/${match.matchId}`}
-                className="match-list__link"
-              >
-                <span className="match-list__sides">
-                  {sideLabel(match.home)} vs {sideLabel(match.away)}
-                </span>
-                <span className="match-list__meta">
-                  <span className="muted">{stageName}</span>
-                  <MatchStatusBadge status={match.status} />
-                  {match.score ? (
-                    <span className="match-list__score">
-                      {formatScore(match.score)}
-                    </span>
-                  ) : null}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="section-stack">
+          {matchGroups.map((group) => {
+            const groupRows = rows.filter((row) =>
+              group.statuses.includes(row.match.status),
+            )
+            if (groupRows.length === 0) {
+              return null
+            }
+
+            return (
+              <div className="match-group" key={group.title}>
+                <h3 className="match-group__title">
+                  {group.title}
+                  <span className="match-group__count">
+                    {groupRows.length}
+                  </span>
+                </h3>
+                <ul className="row-list">
+                  {groupRows.map(({ match, stageName }) => (
+                    <li key={match.matchId}>
+                      <Link
+                        to={`/matches/${match.matchId}`}
+                        className="match-row"
+                      >
+                        <span className="row__main">
+                          <span className="match-row__sides">
+                            {sideLabel(match.home)} vs {sideLabel(match.away)}
+                          </span>
+                          <span className="match-row__meta">
+                            <span>{stageName}</span>
+                          </span>
+                        </span>
+                        <span className="match-row__aside">
+                          {match.score ? (
+                            <span className="match-row__score">
+                              {formatScore(match.score)}
+                            </span>
+                          ) : null}
+                          <MatchStatusBadge status={match.status} />
+                          <span className="row__chevron" aria-hidden="true">
+                            →
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+        </div>
       )}
     </section>
   )

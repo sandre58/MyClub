@@ -168,9 +168,8 @@ describe('OrganisationPage', () => {
       await screen.findByRole('heading', { name: 'Spring Cup' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Alpha')).toBeInTheDocument()
-    expect(
-      screen.getByText((_, element) => element?.textContent === 'Alpha (Active)'),
-    ).toBeInTheDocument()
+    // Entry status is a badge next to the name (13.5), no longer “Alpha (Active)”.
+    expect(screen.getByText('Active')).toBeInTheDocument()
     expect(screen.getByText('InsufficientParticipants')).toBeInTheDocument()
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
   })

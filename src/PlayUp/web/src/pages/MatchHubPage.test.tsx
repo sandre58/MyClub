@@ -163,7 +163,9 @@ describe('MatchHubPage', () => {
     expect(
       await screen.findByText(/Progression en attente/i),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Blocking · ProgressionPending/i)).toBeInTheDocument()
+    // Severity is a badge (13.5); source and target stay in the row meta line.
+    expect(screen.getByText('Blocking')).toBeInTheDocument()
+    expect(screen.getByText(/ProgressionPending · Fixture/i)).toBeInTheDocument()
   })
 
   it('shows an error when overview read fails', async () => {

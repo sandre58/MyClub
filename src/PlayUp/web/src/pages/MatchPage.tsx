@@ -9,12 +9,13 @@ import {
   fetchStageOverview,
 } from '../api'
 import {
-  BackLink,
   ErrorState,
   LoadingState,
   MatchStatusBadge,
-  formatError,
-} from '../queryUi'
+  MutationError,
+  PageHeader,
+  PendingLabel,
+} from '../ui'
 import {
   formatScore,
   matchStatusLabel,
@@ -45,22 +46,27 @@ export function MatchPage() {
 
   return (
     <main id="main" className="page">
-      <header className="page__header">
-        <p className="eyebrow">Match</p>
-        <h1>
-          {matchQuery.data
+      <PageHeader
+        eyebrow={stageQuery.data?.name ? `Match · ${stageQuery.data.name}` : 'Match'}
+        title={
+          matchQuery.data
             ? `${sideLabel(matchQuery.data.home)} vs ${sideLabel(matchQuery.data.away)}`
-            : 'Match'}
-        </h1>
-        {stageId && (
-          <BackLink to={`/stages/${stageId}/matches`}>
-            ← Back to{' '}
-            {stageQuery.data?.name
-              ? `${stageQuery.data.name} matches`
-              : 'match list'}
-          </BackLink>
-        )}
-      </header>
+            : 'Match'
+        }
+        back={
+          stageId
+            ? {
+                to: `/stages/${stageId}/matches`,
+                label: stageQuery.data?.name
+                  ? `Back to ${stageQuery.data.name} matches`
+                  : 'Back to match list',
+              }
+            : undefined
+        }
+        badges={
+          matchQuery.data && <MatchStatusBadge status={matchQuery.data.status} />
+        }
+      />
 
       {matchQuery.isPending && <LoadingState />}
       {matchQuery.isError && <ErrorState error={matchQuery.error} />}
@@ -148,82 +154,110 @@ function MatchDetailView({
     startMutation.error ?? finishMutation.error ?? progressionMutation.error
 
   const sf1a = stageSlots?.find((slot) => slot.slotKey === 'SF1-A')
+  const busy =
+    startMutation.isPending ||
+    finishMutation.isPending ||
+    progressionMutation.isPending
 
   return (
-    <article className="panel match-panel">
-      <header className="panel__header">
+    <div className="section-stack">
+      <section className="card card--hero" aria-labelledby="scoreboard-heading">
+        <h2 className="card__title" id="scoreboard-heading">
+          Scoreboard
+        </h2>
         <div
           className="scoreboard"
           aria-live="polite"
           aria-label={`Score ${homeName} ${data.result?.homeGoals ?? 'none'} to ${awayName} ${data.result?.awayGoals ?? 'none'}`}
         >
           <div className="scoreboard__side">
+            <span className="scoreboard__role">Home</span>
             <span className="scoreboard__name">{homeName}</span>
-            <span className="scoreboard__goals">
+          </div>
+          <p className="scoreboard__score">
+            <span
+              className={
+                data.result
+                  ? 'scoreboard__goals'
+                  : 'scoreboard__goals scoreboard__goals--empty'
+              }
+            >
               {data.result?.homeGoals ?? '–'}
             </span>
-          </div>
-          <span className="scoreboard__sep" aria-hidden="true">
-            –
-          </span>
-          <div className="scoreboard__side scoreboard__side--away">
-            <span className="scoreboard__goals">
+            <span className="scoreboard__sep" aria-hidden="true">
+              :
+            </span>
+            <span
+              className={
+                data.result
+                  ? 'scoreboard__goals'
+                  : 'scoreboard__goals scoreboard__goals--empty'
+              }
+            >
               {data.result?.awayGoals ?? '–'}
             </span>
+          </p>
+          <div className="scoreboard__side">
+            <span className="scoreboard__role">Away</span>
             <span className="scoreboard__name">{awayName}</span>
           </div>
         </div>
 
-        <p className="status-line">
-          <MatchStatusBadge status={data.status} />
-        </p>
-        <p className="mono muted">{data.matchId}</p>
-      </header>
-
-      {data.status === 'Finished' && data.result && (
-        <section>
-          <h2 className="section-title">Result</h2>
-          <ul className="plain-list">
-            <li>
-              Score:{' '}
-              <strong>
-                {formatScore({
-                  homeGoals: data.result.homeGoals,
-                  awayGoals: data.result.awayGoals,
-                })}
-              </strong>
-            </li>
-            <li>Type: {resultTypeLabel[data.result.type]}</li>
-            <li>
-              Extra time:{' '}
-              {data.result.extraTimePlayed ? 'Yes' : 'No'}
-            </li>
+        {data.status === 'Finished' && data.result && (
+          <dl className="fact-list">
+            <div className="fact">
+              <dt className="fact__label">Type</dt>
+              <dd className="fact__value">
+                {resultTypeLabel[data.result.type]}
+              </dd>
+            </div>
+            <div className="fact">
+              <dt className="fact__label">Extra time</dt>
+              <dd className="fact__value">
+                {data.result.extraTimePlayed ? 'Yes' : 'No'}
+              </dd>
+            </div>
             {data.result.shootout && (
-              <li>Shootout: {formatScore(data.result.shootout)}</li>
+              <div className="fact">
+                <dt className="fact__label">Shootout</dt>
+                <dd className="fact__value">
+                  {formatScore(data.result.shootout)}
+                </dd>
+              </div>
             )}
-          </ul>
-        </section>
-      )}
+          </dl>
+        )}
+      </section>
 
-      <section
-        className="match-actions"
-        aria-busy={
-          startMutation.isPending ||
-          finishMutation.isPending ||
-          progressionMutation.isPending
-        }
-      >
-        <h2 className="section-title">Actions</h2>
+      <section className="card" aria-labelledby="actions-heading" aria-busy={busy}>
+        <div className="card__head">
+          <h2 className="card__title" id="actions-heading">
+            Actions
+          </h2>
+          <p className="card__subtitle">
+            Available steps for a {matchStatusLabel[data.status].toLowerCase()}{' '}
+            match
+          </p>
+        </div>
 
         {data.status === 'Scheduled' && (
-          <button
-            type="button"
-            className="btn"
-            disabled={startMutation.isPending}
-            onClick={() => startMutation.mutate()}
-          >
-            {startMutation.isPending ? 'Starting…' : 'Start match'}
-          </button>
+          <div className="button-row">
+            <button
+              type="button"
+              className="btn btn--primary btn--lg"
+              disabled={startMutation.isPending}
+              onClick={() => startMutation.mutate()}
+            >
+              {startMutation.isPending ? (
+                <PendingLabel>Starting…</PendingLabel>
+              ) : (
+                'Start match'
+              )}
+            </button>
+            <span className="caption">
+              Kicks the match off and unlocks the result form.
+            </span>
+          </div>
         )}
 
         {data.status === 'Live' && (
@@ -236,70 +270,84 @@ function MatchDetailView({
         )}
 
         {data.status === 'Finished' && data.fixtureId && (
-          <button
-            type="button"
-            className="btn"
-            disabled={progressionMutation.isPending}
-            onClick={() => progressionMutation.mutate()}
-          >
-            {progressionMutation.isPending
-              ? 'Applying progression…'
-              : 'Apply progression'}
-          </button>
+          <div className="button-row">
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={progressionMutation.isPending}
+              onClick={() => progressionMutation.mutate()}
+            >
+              {progressionMutation.isPending ? (
+                <PendingLabel>Applying progression…</PendingLabel>
+              ) : (
+                'Apply progression'
+              )}
+            </button>
+            <span className="caption">
+              Moves the qualified entry into its next slot.
+            </span>
+          </div>
         )}
 
         {data.status !== 'Scheduled' &&
           data.status !== 'Live' &&
           data.status !== 'Finished' && (
-            <p className="hint">
-              No organizer action for status{' '}
-              {matchStatusLabel[data.status]}.
+            <p className="notice">
+              No organizer action for status {matchStatusLabel[data.status]}.
             </p>
           )}
 
-        {mutationError && (
-          <p className="error" role="alert">
-            {formatError(mutationError)}
-          </p>
-        )}
+        {mutationError && <MutationError error={mutationError} />}
 
         {progressionMutation.isSuccess && sf1a?.entryId && (
-          <p className="success" role="status">
+          <p className="notice notice--success" role="status">
             Progression applied: slot SF1-A →{' '}
             <strong>{sf1a.displayName ?? sf1a.entryId}</strong>
           </p>
         )}
       </section>
 
-      <section>
-        <h2 className="section-title">Context</h2>
-        <ul className="plain-list">
-          <li>
-            Stage:{' '}
-            {stageName ?? (
-              <span className="mono">{data.stageId}</span>
-            )}
-          </li>
-          <li>
-            Competition: <span className="mono">{data.competitionId}</span>
-          </li>
+      <section className="card" aria-labelledby="context-heading">
+        <h2 className="card__title" id="context-heading">
+          Context
+        </h2>
+        <dl className="fact-list">
+          <div className="fact">
+            <dt className="fact__label">Stage</dt>
+            <dd className="fact__value">
+              {stageName ?? <span className="mono">{data.stageId}</span>}
+            </dd>
+          </div>
+          <div className="fact">
+            <dt className="fact__label">Competition</dt>
+            <dd className="fact__value">
+              <span className="mono">{data.competitionId}</span>
+            </dd>
+          </div>
           {data.fixtureId && (
-            <li>
-              Fixture: <span className="mono">{data.fixtureId}</span>
-              {data.legIndex != null ? ` · leg ${data.legIndex}` : ''}
-            </li>
+            <div className="fact">
+              <dt className="fact__label">
+                Fixture{data.legIndex != null ? ` · leg ${data.legIndex}` : ''}
+              </dt>
+              <dd className="fact__value">
+                <span className="mono">{data.fixtureId}</span>
+              </dd>
+            </div>
           )}
           {sf1a && (
-            <li>
-              Slot SF1-A:{' '}
-              {sf1a.entryId
-                ? (sf1a.displayName ?? sf1a.entryId)
-                : 'empty'}
-            </li>
+            <div className="fact">
+              <dt className="fact__label">Slot SF1-A</dt>
+              <dd className="fact__value">
+                {sf1a.entryId ? (sf1a.displayName ?? sf1a.entryId) : 'empty'}
+              </dd>
+            </div>
           )}
-        </ul>
+        </dl>
+        <p className="caption">
+          Match <span className="id-chip">{data.matchId}</span>
+        </p>
       </section>
-    </article>
+    </div>
   )
 }
 
@@ -385,11 +433,11 @@ function FinishMatchForm({
   }
 
   return (
-    <form className="finish-form" onSubmit={handleSubmit} noValidate>
-      <fieldset className="finish-form__fieldset" disabled={pending}>
-        <legend className="finish-form__legend">Score</legend>
-        <div className="finish-form__row">
-          <label htmlFor="homeGoals">
+    <form className="form form--wide" onSubmit={handleSubmit} noValidate>
+      <fieldset className="fieldset" disabled={pending}>
+        <legend className="fieldset__legend">Final score</legend>
+        <div className="form-row">
+          <label className="field" htmlFor="homeGoals">
             {homeName} goals
             <input
               id="homeGoals"
@@ -401,7 +449,7 @@ function FinishMatchForm({
               onChange={(e) => setHomeGoals(e.target.value)}
             />
           </label>
-          <label htmlFor="awayGoals">
+          <label className="field" htmlFor="awayGoals">
             {awayName} goals
             <input
               id="awayGoals"
@@ -416,39 +464,40 @@ function FinishMatchForm({
         </div>
       </fieldset>
 
-      <label htmlFor="resultType">
-        Result type
-        <select
-          id="resultType"
-          value={type}
-          disabled={pending}
-          onChange={(e) => setType(e.target.value as ResultType)}
-        >
-          {resultTypeOptions.map((value) => (
-            <option key={value} value={value}>
-              {resultTypeLabel[value]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="form-row">
+        <label className="field" htmlFor="resultType">
+          Result type
+          <select
+            id="resultType"
+            value={type}
+            disabled={pending}
+            onChange={(e) => setType(e.target.value as ResultType)}
+          >
+            {resultTypeOptions.map((value) => (
+              <option key={value} value={value}>
+                {resultTypeLabel[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field field--check" htmlFor="extraTime">
+          <input
+            id="extraTime"
+            type="checkbox"
+            checked={extraTimePlayed}
+            disabled={pending}
+            onChange={(e) => setExtraTimePlayed(e.target.checked)}
+          />
+          Extra time played
+        </label>
+      </div>
 
-      <label className="finish-form__check" htmlFor="extraTime">
-        <input
-          id="extraTime"
-          type="checkbox"
-          checked={extraTimePlayed}
-          disabled={pending}
-          onChange={(e) => setExtraTimePlayed(e.target.checked)}
-        />
-        Extra time played
-      </label>
-
-      <fieldset className="finish-form__fieldset" disabled={pending}>
-        <legend className="finish-form__legend">
+      <fieldset className="fieldset" disabled={pending}>
+        <legend className="fieldset__legend">
           Penalty shootout (optional)
         </legend>
-        <div className="finish-form__row">
-          <label htmlFor="shootoutHome">
+        <div className="form-row">
+          <label className="field" htmlFor="shootoutHome">
             {homeName} kicks
             <input
               id="shootoutHome"
@@ -460,7 +509,7 @@ function FinishMatchForm({
               onChange={(e) => setShootoutHome(e.target.value)}
             />
           </label>
-          <label htmlFor="shootoutAway">
+          <label className="field" htmlFor="shootoutAway">
             {awayName} kicks
             <input
               id="shootoutAway"
@@ -473,17 +522,25 @@ function FinishMatchForm({
             />
           </label>
         </div>
+        <p className="field__hint">Leave both empty when there was no shootout.</p>
       </fieldset>
 
       {localError && (
-        <p className="error" role="alert">
+        <p className="notice notice--danger" role="alert">
           {localError}
         </p>
       )}
 
-      <button type="submit" className="btn" disabled={pending}>
-        {pending ? 'Finishing…' : 'Finish match'}
-      </button>
+      <div className="button-row">
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg"
+          disabled={pending}
+        >
+          {pending ? <PendingLabel>Finishing…</PendingLabel> : 'Finish match'}
+        </button>
+        <span className="caption">Records the result and closes the match.</span>
+      </div>
     </form>
   )
 }
