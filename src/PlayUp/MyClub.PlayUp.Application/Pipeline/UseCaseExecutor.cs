@@ -10,16 +10,18 @@ using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
-/// (CreateCompetition, PrepareStage, StartStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw,
-/// StartMatch, FinishMatch, ListCompetitions, GetWorkspaceSummary, GetCompetitionOverview,
-/// GetStageOverview, ListMatchesByStage, GetMatchDetail).
+/// (CreateCompetition, Organisation Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
+/// PublishDraw, ApplyDraw, StartMatch, FinishMatch, ListCompetitions, GetWorkspaceSummary,
+/// GetCompetitionOverview, GetOrganisationView, GetStageOverview, ListMatchesByStage, GetMatchDetail).
 /// </summary>
 /// <remarks>
 /// Command methods load aggregates via ports, run the static use case, then commit once via <see cref="IUnitOfWork"/>.
@@ -275,6 +277,150 @@ public sealed class UseCaseExecutor(
         competitions.Add(competition);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return WorkspaceSummaryAssembler.Assemble(competition);
+    }
+
+    /// <summary>
+    /// Adds an entry and returns the updated <see cref="OrganisationViewDto"/>.
+    /// </summary>
+    public async Task<OrganisationViewDto> AddEntryAsync(
+        CompetitionId competitionId,
+        string displayName,
+        Guid? teamId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        AddEntry.Execute(
+            competition,
+            displayName,
+            clock,
+            teamId is null ? null : new TeamId(teamId.Value));
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Renames an entry and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> RenameEntryAsync(
+        CompetitionId competitionId,
+        EntryId entryId,
+        string displayName,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        RenameEntry.Execute(competition, entryId, displayName, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Withdraws an entry and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> WithdrawEntryAsync(
+        CompetitionId competitionId,
+        EntryId entryId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        WithdrawEntry.Execute(competition, entryId, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Excludes an entry and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> ExcludeEntryAsync(
+        CompetitionId competitionId,
+        EntryId entryId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        ExcludeEntry.Execute(competition, entryId, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Replaces competition regulation and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> ReplaceRegulationAsync(
+        CompetitionId competitionId,
+        Regulation regulation,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        ReplaceRegulation.Execute(competition, regulation, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Configures primary stage structure from a typed intent (atomic SaveChanges).
+    /// </summary>
+    public async Task<OrganisationViewDto> ConfigureStructureAsync(
+        CompetitionId competitionId,
+        StructureIntent intent,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(intent);
+
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        Stage? primary = null;
+        if (competition.StageIds.Count > 0)
+        {
+            primary = await stages.GetByIdAsync(competition.StageIds[0], cancellationToken).ConfigureAwait(false)
+                ?? throw new ApplicationFailureException(
+                    $"Stage '{competition.StageIds[0]}' was not found.",
+                    ApplicationErrorCodes.StageNotFound);
+        }
+
+        var result = ConfigureStructure.Execute(competition, primary, intent, clock);
+        if (result.StageCreated)
+        {
+            stages.Add(result.Stage);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Assembles <see cref="OrganisationViewDto"/> for the Organisation hub.
+    /// </summary>
+    public async Task<OrganisationViewDto> GetOrganisationViewAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Competition> RequireCompetitionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken)
+    {
+        return await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+    }
+
+    private async Task<OrganisationViewDto> AssembleOrganisationViewAsync(
+        Competition competition,
+        CancellationToken cancellationToken)
+    {
+        var loadedStages = new List<Stage>(competition.StageIds.Count);
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+                ?? throw new ApplicationFailureException(
+                    $"Stage '{stageId}' was not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            loadedStages.Add(stage);
+        }
+
+        return OrganisationViewAssembler.Assemble(competition, loadedStages);
     }
 
     /// <summary>

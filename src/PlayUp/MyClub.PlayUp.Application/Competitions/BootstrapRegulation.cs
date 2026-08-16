@@ -12,8 +12,8 @@ namespace MyClub.PlayUp.Application.Competitions;
 /// Application-default <see cref="Regulation"/> for Slice 1 CreateCompetition bootstrap.
 /// </summary>
 /// <remarks>
-/// Domain requires a Regulation at <c>Competition.Create</c>. Until Slice 2 (Organisation / Configure)
-/// exposes regulation editing, Create uses this standard football amateur baseline.
+/// Domain requires a Regulation at <c>Competition.Create</c>. Create uses this standard football
+/// amateur baseline; organizers replace it via Slice 2 <c>ReplaceRegulation</c> when needed.
 /// Not a Domain concept and not a product Catalog template.
 /// </remarks>
 public static class BootstrapRegulation

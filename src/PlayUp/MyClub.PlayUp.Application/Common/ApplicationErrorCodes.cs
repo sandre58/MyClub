@@ -112,4 +112,24 @@ public static class ApplicationErrorCodes
     /// (NoSolution or InvalidRequest). Distinct from Domain placement invariants.
     /// </summary>
     public const string ScheduleApplyFailure = "Application.ScheduleApplyFailure";
+
+    /// <summary>
+    /// Gets the code when AddEntry would exceed <c>EntryRules.MaximumTeams</c>.
+    /// </summary>
+    public const string EntryCapacityExceeded = "Application.EntryCapacityExceeded";
+
+    /// <summary>
+    /// Gets the code when a ConfigureStructure intent has invalid parameters.
+    /// </summary>
+    public const string InvalidStructureIntent = "Application.InvalidStructureIntent";
+
+    /// <summary>
+    /// Gets the code when Cup bracket size is not a supported power of two (V1 bound).
+    /// </summary>
+    public const string CupBracketNotPowerOfTwo = "Application.CupBracketNotPowerOfTwo";
+
+    /// <summary>
+    /// Gets the code when Organisation mutations are refused for the current lifecycle status.
+    /// </summary>
+    public const string OrganisationNotMutable = "Application.OrganisationNotMutable";
 }

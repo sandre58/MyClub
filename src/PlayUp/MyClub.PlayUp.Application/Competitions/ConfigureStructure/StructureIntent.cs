@@ -1,0 +1,142 @@
+// -----------------------------------------------------------------------
+// <copyright file="StructureIntent.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+namespace MyClub.PlayUp.Application.Competitions;
+
+/// <summary>
+/// Application command describing a typed V1 structure configuration.
+/// </summary>
+/// <remarks>
+/// Not a Domain concept. Factories validate format-specific parameters before Domain mutation.
+/// </remarks>
+public sealed class StructureIntent
+{
+    private StructureIntent(
+        StructureFormatKind format,
+        string stageName,
+        int matchdayCount,
+        int groupCount,
+        int participantsPerGroup,
+        int bracketSize)
+    {
+        Format = format;
+        StageName = stageName;
+        MatchdayCount = matchdayCount;
+        GroupCount = groupCount;
+        ParticipantsPerGroup = participantsPerGroup;
+        BracketSize = bracketSize;
+    }
+
+    /// <summary>Gets the format kind.</summary>
+    public StructureFormatKind Format { get; }
+
+    /// <summary>Gets the primary stage display name.</summary>
+    public string StageName { get; }
+
+    /// <summary>Gets championship matchday count (Championship only).</summary>
+    public int MatchdayCount { get; }
+
+    /// <summary>Gets group count (Groups only).</summary>
+    public int GroupCount { get; }
+
+    /// <summary>Gets participants per group / pot count (Groups only).</summary>
+    public int ParticipantsPerGroup { get; }
+
+    /// <summary>Gets cup bracket size — power of two (Cup only).</summary>
+    public int BracketSize { get; }
+
+    /// <summary>
+    /// Builds a championship intent (matchdays only; fixtures/matches deferred to Slice 3).
+    /// </summary>
+    /// <param name="matchdayCount">Number of matchdays (≥ 1).</param>
+    /// <param name="stageName">Optional stage name.</param>
+    /// <returns>Validated intent.</returns>
+    public static StructureIntent Championship(int matchdayCount = 1, string? stageName = null)
+    {
+        if (matchdayCount < 1)
+        {
+            throw new ApplicationFailureException(
+                "Championship requires at least one matchday.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        return new StructureIntent(
+            StructureFormatKind.Championship,
+            NormalizeStageName(stageName, "Championnat"),
+            matchdayCount,
+            groupCount: 0,
+            participantsPerGroup: 0,
+            bracketSize: 0);
+    }
+
+    /// <summary>
+    /// Builds a groups intent (empty groups + matchday + PotRules for future Group Draw).
+    /// </summary>
+    /// <param name="groupCount">Number of groups (≥ 2).</param>
+    /// <param name="participantsPerGroup">Capacity per group (≥ 2); becomes PotRules.NumberOfPots.</param>
+    /// <param name="stageName">Optional stage name.</param>
+    /// <returns>Validated intent.</returns>
+    public static StructureIntent Groups(int groupCount, int participantsPerGroup, string? stageName = null)
+    {
+        if (groupCount < 2)
+        {
+            throw new ApplicationFailureException(
+                "Groups format requires at least two groups.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        if (participantsPerGroup < 2)
+        {
+            throw new ApplicationFailureException(
+                "Groups format requires at least two participants per group (PotRules).",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        return new StructureIntent(
+            StructureFormatKind.Groups,
+            NormalizeStageName(stageName, "Phase de groupes"),
+            matchdayCount: 1,
+            groupCount,
+            participantsPerGroup,
+            bracketSize: 0);
+    }
+
+    /// <summary>
+    /// Builds a cup intent. V1 bounds bracket size to a power of two (no bye matrix).
+    /// </summary>
+    /// <param name="bracketSize">Slot count; must be a power of two in [2, 64].</param>
+    /// <param name="stageName">Optional stage name.</param>
+    /// <returns>Validated intent.</returns>
+    public static StructureIntent Cup(int bracketSize, string? stageName = null)
+    {
+        if (bracketSize is < 2 or > 64 || !IsPowerOfTwo(bracketSize))
+        {
+            throw new ApplicationFailureException(
+                "Cup V1 requires a bracket size that is a power of two between 2 and 64 (non-power-of-two cups are out of scope).",
+                ApplicationErrorCodes.CupBracketNotPowerOfTwo);
+        }
+
+        return new StructureIntent(
+            StructureFormatKind.Cup,
+            NormalizeStageName(stageName, "Coupe"),
+            matchdayCount: 0,
+            groupCount: 0,
+            participantsPerGroup: 0,
+            bracketSize);
+    }
+
+    private static string NormalizeStageName(string? stageName, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(stageName))
+        {
+            return fallback;
+        }
+
+        return stageName.Trim();
+    }
+
+    private static bool IsPowerOfTwo(int value) => value > 0 && (value & (value - 1)) == 0;
+}

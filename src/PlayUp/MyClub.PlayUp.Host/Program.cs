@@ -53,6 +53,119 @@ app.MapGet(
     });
 
 app.MapGet(
+    "/competitions/{competitionId:guid}/organisation",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .GetOrganisationViewAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries",
+    async (
+        Guid competitionId,
+        AddEntryRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .AddEntryAsync(
+                new CompetitionId(competitionId),
+                request.DisplayName,
+                request.TeamId,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/rename",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        RenameEntryRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .RenameEntryAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                request.DisplayName,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/withdraw",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .WithdrawEntryAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/exclude",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .ExcludeEntryAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPut(
+    "/competitions/{competitionId:guid}/regulation",
+    async (
+        Guid competitionId,
+        ReplaceRegulationRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .ReplaceRegulationAsync(
+                new CompetitionId(competitionId),
+                OrganisationRequestMapper.ToRegulation(request),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/organisation/structure",
+    async (
+        Guid competitionId,
+        ConfigureStructureRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var intent = OrganisationRequestMapper.ToStructureIntent(request);
+        var view = await executor
+            .ConfigureStructureAsync(new CompetitionId(competitionId), intent, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapGet(
     "/competitions/{competitionId:guid}",
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
     {
