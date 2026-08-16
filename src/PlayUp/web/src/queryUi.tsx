@@ -55,11 +55,11 @@ export function matchStatusTone(
   status: MatchStatus,
 ): 'scheduled' | 'live' | 'finished' | 'other' {
   switch (status) {
-    case 0:
+    case 'Scheduled':
       return 'scheduled'
-    case 1:
+    case 'Live':
       return 'live'
-    case 2:
+    case 'Finished':
       return 'finished'
     default:
       return 'other'

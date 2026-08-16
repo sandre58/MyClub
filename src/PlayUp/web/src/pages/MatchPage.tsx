@@ -19,6 +19,7 @@ import {
   formatScore,
   matchStatusLabel,
   resultTypeLabel,
+  resultTypeOptions,
   sideLabel,
   type FinishMatchRequest,
   type MatchDetail,
@@ -173,7 +174,7 @@ function MatchDetailView({
         <p className="mono muted">{data.matchId}</p>
       </header>
 
-      {data.status === 2 && data.result && (
+      {data.status === 'Finished' && data.result && (
         <section>
           <h2 className="section-title">Result</h2>
           <ul className="plain-list">
@@ -208,7 +209,7 @@ function MatchDetailView({
       >
         <h2 className="section-title">Actions</h2>
 
-        {data.status === 0 && (
+        {data.status === 'Scheduled' && (
           <button
             type="button"
             className="btn"
@@ -219,7 +220,7 @@ function MatchDetailView({
           </button>
         )}
 
-        {data.status === 1 && (
+        {data.status === 'Live' && (
           <FinishMatchForm
             homeName={homeName}
             awayName={awayName}
@@ -228,7 +229,7 @@ function MatchDetailView({
           />
         )}
 
-        {data.status === 2 && data.fixtureId && (
+        {data.status === 'Finished' && data.fixtureId && (
           <button
             type="button"
             className="btn"
@@ -241,9 +242,9 @@ function MatchDetailView({
           </button>
         )}
 
-        {data.status !== 0 &&
-          data.status !== 1 &&
-          data.status !== 2 && (
+        {data.status !== 'Scheduled' &&
+          data.status !== 'Live' &&
+          data.status !== 'Finished' && (
             <p className="hint">
               No organizer action for status{' '}
               {matchStatusLabel[data.status]}.
@@ -313,7 +314,7 @@ function FinishMatchForm({
 }) {
   const [homeGoals, setHomeGoals] = useState('0')
   const [awayGoals, setAwayGoals] = useState('0')
-  const [type, setType] = useState<ResultType>(0)
+  const [type, setType] = useState<ResultType>('Played')
   const [extraTimePlayed, setExtraTimePlayed] = useState(false)
   const [shootoutHome, setShootoutHome] = useState('')
   const [shootoutAway, setShootoutAway] = useState('')
@@ -415,9 +416,9 @@ function FinishMatchForm({
           id="resultType"
           value={type}
           disabled={pending}
-          onChange={(e) => setType(Number(e.target.value) as ResultType)}
+          onChange={(e) => setType(e.target.value as ResultType)}
         >
-          {([0, 1, 2, 3] as const).map((value) => (
+          {resultTypeOptions.map((value) => (
             <option key={value} value={value}>
               {resultTypeLabel[value]}
             </option>

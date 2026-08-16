@@ -46,7 +46,7 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
     id: stageId,
     competitionId,
     name: 'QF',
-    status: 0,
+    status: 'Draft',
     rounds: [],
     slots: [],
     draws: [],
@@ -57,9 +57,9 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
 function pairingDraw(overrides: Partial<StageDraw> = {}): StageDraw {
   return {
     id: drawId,
-    kind: 2,
-    status: 0,
-    resolutionState: 1,
+    kind: 'Pairing',
+    status: 'Draft',
+    resolutionState: 'Resolved',
     pairings: [
       {
         entryAId: entryA,
@@ -76,9 +76,9 @@ function pairingDraw(overrides: Partial<StageDraw> = {}): StageDraw {
 function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
   return {
     id: slotDrawId,
-    kind: 0,
-    status: 1,
-    resolutionState: 1,
+    kind: 'Slot',
+    status: 'Published',
+    resolutionState: 'Resolved',
     pairings: [],
     slotPlacements: [
       {
@@ -179,12 +179,12 @@ describe('isPairingDrawApplied', () => {
         ],
       },
     ]
-    expect(isPairingDrawApplied(pairingDraw({ status: 1 }), rounds)).toBe(true)
+    expect(isPairingDrawApplied(pairingDraw({ status: 'Published' }), rounds)).toBe(true)
   })
 
   it('is false when a target fixture has no attachment', () => {
     expect(
-      isPairingDrawApplied(pairingDraw({ status: 1 }), oneEmptyFixtureRound()),
+      isPairingDrawApplied(pairingDraw({ status: 'Published' }), oneEmptyFixtureRound()),
     ).toBe(false)
   })
 })
@@ -192,7 +192,7 @@ describe('isPairingDrawApplied', () => {
 describe('getDrawUiProjection', () => {
   it('describes draft + not resolved without results', () => {
     const ui = getDrawUiProjection(
-      pairingDraw({ resolutionState: 0, pairings: [] }),
+      pairingDraw({ resolutionState: 'NotResolved', pairings: [] }),
       [],
     )
     expect(ui.message).toMatch(/preparation/i)
@@ -212,7 +212,7 @@ describe('StagePage prepare', () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
-      status: 0,
+      status: 'Draft',
       entries: [],
       stages: [],
     })
@@ -223,7 +223,7 @@ describe('StagePage prepare', () => {
   })
 
   it('shows Prepare stage when status is Draft', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
 
     renderStagePage()
 
@@ -234,7 +234,7 @@ describe('StagePage prepare', () => {
   })
 
   it('hides Prepare stage when status is Ready', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 1 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
 
     renderStagePage()
 
@@ -247,7 +247,7 @@ describe('StagePage prepare', () => {
   })
 
   it('hides Prepare stage when status is Running', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 2 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Running' }))
 
     renderStagePage()
 
@@ -264,7 +264,7 @@ describe('StagePage prepare', () => {
     let prepared = false
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
-      baseOverview({ status: prepared ? 1 : 0 }),
+      baseOverview({ status: prepared ? 'Ready' : 'Draft' }),
     )
     vi.mocked(prepareStage).mockImplementation(async () => {
       prepared = true
@@ -287,7 +287,7 @@ describe('StagePage prepare', () => {
   it('disables Prepare while pending', async () => {
     const user = userEvent.setup()
     let resolvePrepare!: () => void
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
     vi.mocked(prepareStage).mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -312,7 +312,7 @@ describe('StagePage prepare', () => {
 
   it('shows Prepare error and keeps Draft with button usable', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
     vi.mocked(prepareStage).mockRejectedValue(new Error('Prepare blocked'))
 
     renderStagePage()
@@ -334,7 +334,7 @@ describe('StagePage start', () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
-      status: 0,
+      status: 'Draft',
       entries: [],
       stages: [],
     })
@@ -345,7 +345,7 @@ describe('StagePage start', () => {
   })
 
   it('shows Start stage when status is Ready', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 1 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
 
     renderStagePage()
 
@@ -359,7 +359,7 @@ describe('StagePage start', () => {
   })
 
   it('hides Start stage when status is Draft', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 0 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
 
     renderStagePage()
 
@@ -372,7 +372,7 @@ describe('StagePage start', () => {
   })
 
   it('hides Start stage when status is Running', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 2 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Running' }))
 
     renderStagePage()
 
@@ -385,7 +385,7 @@ describe('StagePage start', () => {
   })
 
   it('hides Start stage when status is Completed', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 4 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Completed' }))
 
     renderStagePage()
 
@@ -402,7 +402,7 @@ describe('StagePage start', () => {
     let started = false
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
-      baseOverview({ status: started ? 2 : 1 }),
+      baseOverview({ status: started ? 'Running' : 'Ready' }),
     )
     vi.mocked(startStage).mockImplementation(async () => {
       started = true
@@ -423,7 +423,7 @@ describe('StagePage start', () => {
   it('disables Start while pending', async () => {
     const user = userEvent.setup()
     let resolveStart!: () => void
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 1 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
     vi.mocked(startStage).mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -446,7 +446,7 @@ describe('StagePage start', () => {
 
   it('shows Start error and keeps Ready with button usable', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 1 }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
     vi.mocked(startStage).mockRejectedValue(new Error('Start blocked'))
 
     renderStagePage()
@@ -464,7 +464,7 @@ describe('StagePage draws', () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
-      status: 0,
+      status: 'Draft',
       entries: [],
       stages: [],
     })
@@ -506,7 +506,7 @@ describe('StagePage draws', () => {
       baseOverview({
         draws: [
           pairingDraw({
-            resolutionState: 0,
+            resolutionState: 'NotResolved',
             pairings: [],
           }),
         ],
@@ -535,7 +535,7 @@ describe('StagePage draws', () => {
       baseOverview({
         draws: [
           pairingDraw({
-            resolutionState: 2,
+            resolutionState: 'NoSolution',
             pairings: [],
           }),
         ],
@@ -563,8 +563,8 @@ describe('StagePage draws', () => {
       baseOverview({
         draws: [
           pairingDraw({
-            status: 2,
-            resolutionState: 1,
+            status: 'Cancelled',
+            resolutionState: 'Resolved',
           }),
         ],
       }),
@@ -590,7 +590,7 @@ describe('StagePage draws', () => {
   it('shows Published with Apply when not yet applied', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        draws: [pairingDraw({ status: 1 })],
+        draws: [pairingDraw({ status: 'Published' })],
         rounds: oneEmptyFixtureRound(),
       }),
     )
@@ -662,7 +662,7 @@ describe('StagePage draws', () => {
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
       baseOverview({
-        draws: [pairingDraw({ status: published ? 1 : 0 })],
+        draws: [pairingDraw({ status: published ? 'Published' : 'Draft' })],
         rounds: oneEmptyFixtureRound(),
       }),
     )
@@ -841,7 +841,7 @@ describe('StagePage draws', () => {
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        draws: [pairingDraw({ status: 1 })],
+        draws: [pairingDraw({ status: 'Published' })],
         rounds: oneEmptyFixtureRound(),
       }),
     )
@@ -861,7 +861,7 @@ describe('StagePage draws', () => {
   it('hides Apply for published Pairing when fixtures already have attachments', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        draws: [pairingDraw({ status: 1 })],
+        draws: [pairingDraw({ status: 'Published' })],
         rounds: [
           {
             id: 'r1',

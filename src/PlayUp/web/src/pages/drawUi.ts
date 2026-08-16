@@ -22,28 +22,28 @@ export function getDrawUiProjection(
   rounds: StageRound[] = [],
 ): DrawUiProjection {
   const isApplied =
-    draw.resolutionState === 1 &&
-    ((draw.kind === 0 && isSlotDrawApplied(draw, slots)) ||
-      (draw.kind === 2 && isPairingDrawApplied(draw, rounds)))
+    draw.resolutionState === 'Resolved' &&
+    ((draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
+      (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)))
 
   const statusTone =
-    draw.status === 2
+    draw.status === 'Cancelled'
       ? 'other'
-      : draw.status === 1
+      : draw.status === 'Published'
         ? 'live'
         : 'neutral'
 
-  if (draw.status === 2) {
+  if (draw.status === 'Cancelled') {
     return {
       message:
         'This draw was cancelled. A new draw is required to run again.',
-      showResults: draw.resolutionState === 1,
+      showResults: draw.resolutionState === 'Resolved',
       isApplied: false,
       statusTone,
     }
   }
 
-  if (draw.status === 0 && draw.resolutionState === 0) {
+  if (draw.status === 'Draft' && draw.resolutionState === 'NotResolved') {
     return {
       message: 'Draw in preparation — no result yet.',
       showResults: false,
@@ -52,7 +52,7 @@ export function getDrawUiProjection(
     }
   }
 
-  if (draw.status === 0 && draw.resolutionState === 1) {
+  if (draw.status === 'Draft' && draw.resolutionState === 'Resolved') {
     return {
       message: 'Draw resolved but not published.',
       showResults: true,
@@ -61,7 +61,7 @@ export function getDrawUiProjection(
     }
   }
 
-  if (draw.status === 0 && draw.resolutionState === 2) {
+  if (draw.status === 'Draft' && draw.resolutionState === 'NoSolution') {
     return {
       message: 'No admissible solution was found for this draw.',
       showResults: false,
@@ -70,12 +70,12 @@ export function getDrawUiProjection(
     }
   }
 
-  if (draw.status === 1 && draw.resolutionState === 1) {
+  if (draw.status === 'Published' && draw.resolutionState === 'Resolved') {
     let appliedMessage = 'Published draw.'
-    if (isApplied && draw.kind === 0) {
+    if (isApplied && draw.kind === 'Slot') {
       appliedMessage =
         'Published draw. Placements match the current stage slots.'
-    } else if (isApplied && draw.kind === 2) {
+    } else if (isApplied && draw.kind === 'Pairing') {
       appliedMessage =
         'Published draw. Target fixtures already have attached matches.'
     }
@@ -90,7 +90,7 @@ export function getDrawUiProjection(
 
   return {
     message: 'Draw status is available below.',
-    showResults: draw.resolutionState === 1,
+    showResults: draw.resolutionState === 'Resolved',
     isApplied: false,
     statusTone,
   }
@@ -104,7 +104,7 @@ export function isSlotDrawApplied(
   draw: StageDraw,
   slots: StageSlot[],
 ): boolean {
-  if (draw.kind !== 0 || draw.resolutionState !== 1) {
+  if (draw.kind !== 'Slot' || draw.resolutionState !== 'Resolved') {
     return false
   }
 
@@ -138,7 +138,7 @@ export function resolvePairingFixtureIds(
   draw: StageDraw,
   rounds: StageRound[],
 ): string[] | null {
-  if (draw.kind !== 2 || draw.resolutionState !== 1) {
+  if (draw.kind !== 'Pairing' || draw.resolutionState !== 'Resolved') {
     return null
   }
 

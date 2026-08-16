@@ -34,7 +34,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
     matchId,
     competitionId: '33333333-3333-3333-3333-333333333333',
     stageId,
-    status: 0,
+    status: 'Scheduled',
     home: { entryId: 'home', displayName: 'Alpha' },
     away: { entryId: 'away', displayName: 'Beta' },
     result: null,
@@ -48,7 +48,7 @@ const stageOverview: StageOverview = {
   id: stageId,
   competitionId: '33333333-3333-3333-3333-333333333333',
   name: 'QF',
-  status: 0,
+  status: 'Draft',
   rounds: [],
   slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
   draws: [],
@@ -85,7 +85,7 @@ describe('MatchPage', () => {
   })
 
   it('read state: Scheduled match shows Start and empty scoreboard', async () => {
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 0 }))
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 'Scheduled' }))
 
     renderMatchPage()
 
@@ -103,7 +103,7 @@ describe('MatchPage', () => {
 
   it('Start button triggers startMatch mutation', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 0 }))
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 'Scheduled' }))
 
     renderMatchPage()
 
@@ -118,7 +118,7 @@ describe('MatchPage', () => {
 
   it('Finish form submits the FinishMatch request body', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 1 }))
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 'Live' }))
 
     renderMatchPage()
 
@@ -134,7 +134,7 @@ describe('MatchPage', () => {
 
     await waitFor(() => {
       expect(finishMatch).toHaveBeenCalledWith(matchId, {
-        type: 0,
+        type: 'Played',
         homeGoals: 2,
         awayGoals: 1,
         extraTimePlayed: false,
@@ -145,13 +145,13 @@ describe('MatchPage', () => {
   it('successful Start refetches and shows Live', async () => {
     const user = userEvent.setup()
     const fetchMatch = vi.mocked(fetchMatchDetail)
-    fetchMatch.mockImplementation(async () => baseMatch({ status: 0 }))
+    fetchMatch.mockImplementation(async () => baseMatch({ status: 'Scheduled' }))
 
     renderMatchPage()
     await screen.findByRole('button', { name: 'Start match' })
     const callsBeforeClick = fetchMatch.mock.calls.length
 
-    fetchMatch.mockImplementation(async () => baseMatch({ status: 1 }))
+    fetchMatch.mockImplementation(async () => baseMatch({ status: 'Live' }))
 
     await user.click(screen.getByRole('button', { name: 'Start match' }))
 
@@ -168,9 +168,9 @@ describe('MatchPage', () => {
 
     vi.mocked(fetchMatchDetail).mockResolvedValue(
       baseMatch({
-        status: 2,
+        status: 'Finished',
         result: {
-          type: 0,
+          type: 'Played',
           homeGoals: 2,
           awayGoals: 1,
           extraTimePlayed: false,

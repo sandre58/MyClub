@@ -79,8 +79,8 @@ function StageOverviewView({ data }: { data: StageOverview }) {
   )
 
   // UX gate only: Domain still rejects Prepare / Start when status is wrong.
-  const canPrepare = data.status === 0
-  const canStart = data.status === 1
+  const canPrepare = data.status === 'Draft'
+  const canStart = data.status === 'Ready'
 
   // useMutation = write on user intent. Server state stays in the stage query.
   const prepareMutation = useMutation({
@@ -315,7 +315,7 @@ function DrawCard({
         {ui.message}
       </p>
 
-      {ui.showResults && draw.kind === 2 && draw.pairings.length > 0 && (
+      {ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0 && (
         <div className="draw-card__results">
           <h4 className="draw-card__results-title">Result</h4>
           <ul className="draw-pairing-list">
@@ -337,7 +337,7 @@ function DrawCard({
         </div>
       )}
 
-      {ui.showResults && draw.kind === 0 && draw.slotPlacements.length > 0 && (
+      {ui.showResults && draw.kind === 'Slot' && draw.slotPlacements.length > 0 && (
         <div className="draw-card__results">
           <h4 className="draw-card__results-title">Placements</h4>
           <ul className="draw-placement-list">
@@ -359,7 +359,9 @@ function DrawCard({
         </div>
       )}
 
-      {ui.showResults && draw.kind === 1 && draw.resolutionState === 1 && (
+      {ui.showResults &&
+        draw.kind === 'Group' &&
+        draw.resolutionState === 'Resolved' && (
         <p className="hint" role="status">
           Group placements are not shown in this overview yet.
         </p>
@@ -392,16 +394,18 @@ function DrawActions({
 }) {
   const queryClient = useQueryClient()
 
-  const canPublish = draw.status === 0 && draw.resolutionState === 1
+  const canPublish =
+    draw.status === 'Draft' && draw.resolutionState === 'Resolved'
   const canApply =
-    draw.status === 1 &&
-    draw.resolutionState === 1 &&
+    draw.status === 'Published' &&
+    draw.resolutionState === 'Resolved' &&
     !isApplied &&
-    (draw.kind === 0 || draw.kind === 2)
+    (draw.kind === 'Slot' || draw.kind === 'Pairing')
 
   const pairingFixtureIds =
-    draw.kind === 2 ? resolvePairingFixtureIds(draw, rounds) : null
-  const pairingMapBlocked = draw.kind === 2 && canApply && pairingFixtureIds === null
+    draw.kind === 'Pairing' ? resolvePairingFixtureIds(draw, rounds) : null
+  const pairingMapBlocked =
+    draw.kind === 'Pairing' && canApply && pairingFixtureIds === null
 
   const publishMutation = useMutation({
     mutationFn: () => publishDraw(stageId, draw.id),
@@ -415,11 +419,11 @@ function DrawActions({
 
   const applyMutation = useMutation({
     mutationFn: () => {
-      if (draw.kind === 0) {
+      if (draw.kind === 'Slot') {
         return applyDraw(stageId, draw.id, { fixtureIds: [] })
       }
 
-      if (draw.kind === 2) {
+      if (draw.kind === 'Pairing') {
         const fixtureIds = resolvePairingFixtureIds(draw, rounds)
         if (fixtureIds === null) {
           throw new Error(
@@ -433,7 +437,7 @@ function DrawActions({
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['stages', stageId] })
-      if (draw.kind === 2) {
+      if (draw.kind === 'Pairing') {
         await queryClient.invalidateQueries({
           queryKey: ['matches', 'by-stage', stageId],
         })
@@ -478,7 +482,7 @@ function DrawActions({
         </button>
       )}
 
-      {canApply && draw.kind === 0 && (
+      {canApply && draw.kind === 'Slot' && (
         <button
           type="button"
           className="btn"
@@ -489,7 +493,7 @@ function DrawActions({
         </button>
       )}
 
-      {canApply && draw.kind === 2 && pairingFixtureIds !== null && (
+      {canApply && draw.kind === 'Pairing' && pairingFixtureIds !== null && (
         <button
           type="button"
           className="btn"

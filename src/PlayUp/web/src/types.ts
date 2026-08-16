@@ -1,19 +1,49 @@
 /**
- * Manual mirrors of Application Reads DTOs (11.1).
- * ASP.NET Core JSON uses camelCase; enums are numeric unless configured otherwise.
+ * Manual mirrors of Application Reads DTOs.
+ * ASP.NET Core JSON uses camelCase property names.
+ * Phase 12.8: enums are JSON strings (enum member names), not numbers.
+ * See docs/guides/http-api-contract.md.
  *
  * TypeScript types document the expected shape at compile time.
  * They do NOT validate JSON at runtime — a mismatched API still type-checks.
  */
 
-export type CompetitionStatus = 0 | 1 | 2 | 3 | 4 | 5
-export type EntryStatus = 0 | 1 | 2 | 3 | 4
-export type StageStatus = 0 | 1 | 2 | 3 | 4
-export type MatchStatus = 0 | 1 | 2 | 3 | 4
-export type ResultType = 0 | 1 | 2 | 3
-export type DrawStatus = 0 | 1 | 2
-export type DrawResolutionKind = 0 | 1 | 2
-export type DrawResolutionState = 0 | 1 | 2
+export type CompetitionStatus =
+  | 'Draft'
+  | 'Ready'
+  | 'Running'
+  | 'Suspended'
+  | 'Completed'
+  | 'Archived'
+
+export type EntryStatus =
+  | 'Active'
+  | 'Qualified'
+  | 'Eliminated'
+  | 'Withdrawn'
+  | 'Excluded'
+
+export type StageStatus =
+  | 'Draft'
+  | 'Ready'
+  | 'Running'
+  | 'Suspended'
+  | 'Completed'
+
+export type MatchStatus =
+  | 'Scheduled'
+  | 'Live'
+  | 'Finished'
+  | 'Postponed'
+  | 'Cancelled'
+
+export type ResultType = 'Played' | 'Forfeit' | 'WalkOver' | 'Administrative'
+
+export type DrawStatus = 'Draft' | 'Published' | 'Cancelled'
+
+export type DrawResolutionKind = 'Slot' | 'Group' | 'Pairing'
+
+export type DrawResolutionState = 'NotResolved' | 'Resolved' | 'NoSolution'
 
 export interface CompetitionEntrySummary {
   entryId: string
@@ -79,6 +109,7 @@ export interface MatchDetail {
 /**
  * Body for POST /matches/{id}/finish — mirrors Host FinishMatchRequest (camelCase JSON).
  * Shootout fields: send both or neither (Host rejects a partial pair).
+ * `type` is a ResultType string enum member name (e.g. "Played").
  */
 export interface FinishMatchRequest {
   type: ResultType
@@ -151,62 +182,69 @@ export interface StageOverview {
 }
 
 export const competitionStatusLabel: Record<CompetitionStatus, string> = {
-  0: 'Draft',
-  1: 'Ready',
-  2: 'Running',
-  3: 'Suspended',
-  4: 'Completed',
-  5: 'Archived',
+  Draft: 'Draft',
+  Ready: 'Ready',
+  Running: 'Running',
+  Suspended: 'Suspended',
+  Completed: 'Completed',
+  Archived: 'Archived',
 }
 
 export const entryStatusLabel: Record<EntryStatus, string> = {
-  0: 'Active',
-  1: 'Qualified',
-  2: 'Eliminated',
-  3: 'Withdrawn',
-  4: 'Excluded',
+  Active: 'Active',
+  Qualified: 'Qualified',
+  Eliminated: 'Eliminated',
+  Withdrawn: 'Withdrawn',
+  Excluded: 'Excluded',
 }
 
 export const stageStatusLabel: Record<StageStatus, string> = {
-  0: 'Draft',
-  1: 'Ready',
-  2: 'Running',
-  3: 'Suspended',
-  4: 'Completed',
+  Draft: 'Draft',
+  Ready: 'Ready',
+  Running: 'Running',
+  Suspended: 'Suspended',
+  Completed: 'Completed',
 }
 
 export const matchStatusLabel: Record<MatchStatus, string> = {
-  0: 'Scheduled',
-  1: 'Live',
-  2: 'Finished',
-  3: 'Postponed',
-  4: 'Cancelled',
+  Scheduled: 'Scheduled',
+  Live: 'Live',
+  Finished: 'Finished',
+  Postponed: 'Postponed',
+  Cancelled: 'Cancelled',
 }
 
 export const resultTypeLabel: Record<ResultType, string> = {
-  0: 'Played',
-  1: 'Forfeit',
-  2: 'Walk-over',
-  3: 'Administrative',
+  Played: 'Played',
+  Forfeit: 'Forfeit',
+  WalkOver: 'Walk-over',
+  Administrative: 'Administrative',
 }
 
 export const drawStatusLabel: Record<DrawStatus, string> = {
-  0: 'Draft',
-  1: 'Published',
-  2: 'Cancelled',
+  Draft: 'Draft',
+  Published: 'Published',
+  Cancelled: 'Cancelled',
 }
 
 export const drawResolutionKindLabel: Record<DrawResolutionKind, string> = {
-  0: 'Slot',
-  1: 'Group',
-  2: 'Pairing',
+  Slot: 'Slot',
+  Group: 'Group',
+  Pairing: 'Pairing',
 }
 
 export const drawResolutionStateLabel: Record<DrawResolutionState, string> = {
-  0: 'Not resolved',
-  1: 'Resolved',
-  2: 'No solution',
+  NotResolved: 'Not resolved',
+  Resolved: 'Resolved',
+  NoSolution: 'No solution',
 }
+
+export const resultTypeOptions: readonly ResultType[] = [
+  'Played',
+  'Forfeit',
+  'WalkOver',
+  'Administrative',
+] as const
 
 export function sideLabel(side: EntrySide): string {
   return side.displayName?.trim() || 'Unknown entry'
