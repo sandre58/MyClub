@@ -48,6 +48,7 @@ public static class CompetitionOverviewAssembler
             competition.Name.Value,
             competition.Status,
             entries,
-            stageSummaries);
+            stageSummaries,
+            competition.CompletionMode);
     }
 }

@@ -29,5 +29,8 @@ public sealed class WorkspaceSummaryAssemblerTests
         summary.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueOrganisationCode);
         summary.NextActionLabel.Should().Be("Continuer la préparation");
         summary.AttentionCount.Should().Be(0);
+        summary.CanCompleteNormally.Should().BeFalse();
+        summary.CompletionMode.Should().BeNull();
+        summary.CompletionBlockers.Should().BeEmpty();
     }
 }

@@ -152,4 +152,19 @@ public static class ApplicationErrorCodes
     /// Gets the code when ApplyProgression would overwrite a dynamic slot occupant (F8 preflight).
     /// </summary>
     public const string SlotOccupancyConflict = "Application.SlotOccupancyConflict";
+
+    /// <summary>
+    /// Gets the code when Complete(Normal) is refused because the competition is not sportively complete.
+    /// </summary>
+    public const string CompletionNotAllowed = "Application.CompletionNotAllowed";
+
+    /// <summary>
+    /// Gets the code when the completion mode string cannot be parsed.
+    /// </summary>
+    public const string InvalidCompletionMode = "Application.InvalidCompletionMode";
+
+    /// <summary>
+    /// Gets the code when a normal lifecycle mutation is refused because the Competition is Completed or Archived.
+    /// </summary>
+    public const string CompetitionClosed = "Application.CompetitionClosed";
 }

@@ -16,12 +16,14 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Status">Lifecycle status.</param>
 /// <param name="Entries">Participating entries.</param>
 /// <param name="Stages">Referenced stages (name + status).</param>
+/// <param name="CompletionMode">How the competition was completed, when set.</param>
 public sealed record CompetitionOverviewDto(
     Guid Id,
     string Name,
     CompetitionStatus Status,
     IReadOnlyList<CompetitionEntrySummaryDto> Entries,
-    IReadOnlyList<CompetitionStageSummaryDto> Stages);
+    IReadOnlyList<CompetitionStageSummaryDto> Stages,
+    CompletionMode? CompletionMode = null);
 
 /// <summary>
 /// Entry line in a competition overview.

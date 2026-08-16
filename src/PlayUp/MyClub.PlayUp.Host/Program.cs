@@ -262,6 +262,31 @@ app.MapGet(
         return Results.Ok(attention);
     });
 
+app.MapPost(
+    "/competitions/{competitionId:guid}/complete",
+    async (
+        Guid competitionId,
+        CompleteCompetitionRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var mode = ParseCompletionMode(request.Mode);
+        await executor
+            .CompleteCompetitionAsync(new CompetitionId(competitionId), mode, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/archive",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        await executor
+            .ArchiveCompetitionAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
 // Match is an independent aggregate: routes are Match-centric (executor loads by MatchId only).
 app.MapPost(
     "/matches/{matchId:guid}/start",
@@ -396,6 +421,28 @@ app.MapPost(
     });
 
 app.Run();
+
+static CompletionMode ParseCompletionMode(string mode)
+{
+    if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase))
+    {
+        return CompletionMode.Normal;
+    }
+
+    if (mode.Equals("Administrative", StringComparison.OrdinalIgnoreCase))
+    {
+        return CompletionMode.Administrative;
+    }
+
+    if (mode.Equals("Abandoned", StringComparison.OrdinalIgnoreCase))
+    {
+        return CompletionMode.Abandoned;
+    }
+
+    throw new ApplicationFailureException(
+        $"Unknown completion mode '{mode}'. Expected Normal, Administrative, or Abandoned.",
+        ApplicationErrorCodes.InvalidCompletionMode);
+}
 
 static DrawResolutionKind ParseDrawKind(string kind)
 {

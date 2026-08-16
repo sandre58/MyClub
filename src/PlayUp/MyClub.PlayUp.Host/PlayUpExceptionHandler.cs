@@ -40,6 +40,11 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
             problem.Extensions["code"] = code;
         }
 
+        if (exception is ApplicationFailureException { Reasons.Count: > 0 } application)
+        {
+            problem.Extensions["reasons"] = application.Reasons;
+        }
+
         httpContext.Response.StatusCode = statusCode.Value;
         await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken).ConfigureAwait(false);
         return true;
@@ -60,6 +65,10 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
                 (StatusCodes.Status409Conflict, "Consequence operation not allowed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.SlotOccupancyConflict } application =>
                 (StatusCodes.Status409Conflict, "Slot occupancy conflict", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CompletionNotAllowed } application =>
+                (StatusCodes.Status409Conflict, "Completion not allowed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CompetitionClosed } application =>
+                (StatusCodes.Status409Conflict, "Competition closed", application.Code),
             ApplicationFailureException application =>
                 (StatusCodes.Status400BadRequest, "Application failure", application.Code),
             DomainException domain =>

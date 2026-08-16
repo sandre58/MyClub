@@ -21,8 +21,9 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
 /// (CreateCompetition, Organisation Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
-/// PublishDraw, ApplyDraw, StartMatch, FinishMatch, ListCompetitions, GetWorkspaceSummary,
-/// GetCompetitionOverview, GetOrganisationView, GetStageOverview, ListMatchesByStage, GetMatchDetail).
+/// PublishDraw, ApplyDraw, StartMatch, FinishMatch, CompleteCompetition, ArchiveCompetition,
+/// ListCompetitions, GetWorkspaceSummary, GetCompetitionOverview, GetOrganisationView,
+/// GetStageOverview, ListMatchesByStage, GetMatchDetail).
 /// </summary>
 /// <remarks>
 /// Command methods load aggregates via ports, run the static use case, then commit once via <see cref="IUnitOfWork"/>.
@@ -63,6 +64,8 @@ public sealed class UseCaseExecutor(
                 $"Competition '{stage.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
         var competitionStages = new List<Stage>(competition.StageIds.Count);
         foreach (var competitionStageId in competition.StageIds)
         {
@@ -99,6 +102,12 @@ public sealed class UseCaseExecutor(
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{stage.CompetitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
 
         StartStage.Execute(stage, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -228,6 +237,9 @@ public sealed class UseCaseExecutor(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+
         PublishDraw.Execute(stage, drawId, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -253,6 +265,9 @@ public sealed class UseCaseExecutor(
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
+
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
 
         var draw = stage.GetDraw(drawId);
         var resolvedFixtures = fixtureIds;
@@ -348,6 +363,41 @@ public sealed class UseCaseExecutor(
             .ConfigureAwait(false);
 
         FinishMatch.Execute(match, result, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Completes a competition (Normal gated by <see cref="CompletionAnalyzer"/>).
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="mode">Completion manner.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the competition is completed and persisted.</returns>
+    public async Task CompleteCompetitionAsync(
+        CompetitionId competitionId,
+        CompletionMode mode,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+        var analysis = CompletionAnalyzer.Analyze(competition, competitionStages, matchesByStage);
+        CompleteCompetition.Execute(competition, mode, analysis, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Archives a completed competition.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the competition is archived and persisted.</returns>
+    public async Task ArchiveCompetitionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        ArchiveCompetition.Execute(competition, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -493,6 +543,8 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
         var draw = CreateDraw.Execute(stage, kind, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDrawSummary(stage.Id, draw);
@@ -508,6 +560,7 @@ public sealed class UseCaseExecutor(
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
         var draw = stage.GetDraw(drawId);
         var inputs = DrawInputsFactory.CreateDefault(competition, stage, draw.Kind);
         ConfigureDrawInputs.Execute(stage, drawId, inputs, clock);
@@ -524,6 +577,8 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
         var draw = stage.GetDraw(drawId);
         IReadOnlyList<string>? slotTargets = draw.Kind == DrawResolutionKind.Slot
             ? stage.Slots.Select(slot => slot.SlotKey).ToArray()
@@ -657,6 +712,8 @@ public sealed class UseCaseExecutor(
         ArgumentNullException.ThrowIfNull(targetMatchIds);
 
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
         var schedule = new Schedule(
         [
             .. assignments.Select(a => new ScheduleAssignment(
@@ -768,13 +825,19 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var attention = await GetNeedsAttentionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
-        return WorkspaceSummaryAssembler.Assemble(competition, attention.Count);
+        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+        var attention = NeedsAttentionAssembler.Assemble(competition, competitionStages, matchesByStage);
+        var analysis = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended
+            ? CompletionAnalyzer.Analyze(competition, competitionStages, matchesByStage)
+            : null;
+
+        return WorkspaceSummaryAssembler.Assemble(competition, attention.Count, analysis);
     }
 
     /// <summary>
@@ -957,6 +1020,41 @@ public sealed class UseCaseExecutor(
                 $"Consequence operations are not allowed when competition is '{competition.Status}'.",
                 ApplicationErrorCodes.ConsequenceOperationNotAllowed);
         }
+    }
+
+    private async Task EnsureCompetitionAllowsLifecycleMutationAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+    }
+
+    private static void EnsureCompetitionAllowsLifecycleMutation(Competition competition)
+    {
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            throw new ApplicationFailureException(
+                $"Lifecycle mutations are not allowed when competition is '{competition.Status}'.",
+                ApplicationErrorCodes.CompetitionClosed);
+        }
+    }
+
+    private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageAsync(
+        IReadOnlyList<Stage> competitionStages,
+        CancellationToken cancellationToken)
+    {
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stage in competitionStages)
+        {
+            matchesByStage[stage.Id] = await matches.ListByStageAsync(stage.Id, cancellationToken).ConfigureAwait(false);
+        }
+
+        return matchesByStage;
     }
 
     private async Task<List<Stage>> LoadCompetitionStagesAsync(
