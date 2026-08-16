@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -16,8 +17,9 @@ namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
-/// (PrepareStage, StartStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw, StartMatch, FinishMatch,
-/// GetCompetitionOverview, GetStageOverview, ListMatchesByStage, GetMatchDetail).
+/// (CreateCompetition, PrepareStage, StartStage, ApplyProgressionOutcome, PublishDraw, ApplyDraw,
+/// StartMatch, FinishMatch, ListCompetitions, GetWorkspaceSummary, GetCompetitionOverview,
+/// GetStageOverview, ListMatchesByStage, GetMatchDetail).
 /// </summary>
 /// <remarks>
 /// Command methods load aggregates via ports, run the static use case, then commit once via <see cref="IUnitOfWork"/>.
@@ -257,6 +259,53 @@ public sealed class UseCaseExecutor(
 
         FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Creates a Competition (bootstrap regulation), persists it, and returns <see cref="WorkspaceSummaryDto"/>.
+    /// </summary>
+    /// <param name="name">Display name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Workspace summary for the new Draft competition.</returns>
+    public async Task<WorkspaceSummaryDto> CreateCompetitionAsync(
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = CreateCompetition.Execute(name, clock);
+        competitions.Add(competition);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return WorkspaceSummaryAssembler.Assemble(competition);
+    }
+
+    /// <summary>
+    /// Lists competitions for the organizer Competition List.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List item DTOs (possibly empty).</returns>
+    public async Task<IReadOnlyList<CompetitionListItemDto>> ListCompetitionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var list = await competitions.ListAsync(cancellationToken).ConfigureAwait(false);
+        return CompetitionListAssembler.Assemble(list);
+    }
+
+    /// <summary>
+    /// Loads a competition and assembles the minimal Accueil <see cref="WorkspaceSummaryDto"/>.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Workspace summary.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the competition is missing.</exception>
+    public async Task<WorkspaceSummaryDto> GetWorkspaceSummaryAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        return WorkspaceSummaryAssembler.Assemble(competition);
     }
 
     /// <summary>

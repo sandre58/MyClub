@@ -45,6 +45,20 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Competition>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        // List does not hydrate StageIds / entry sort — enough for Competition List rows.
+        var competitions = await context.Set<Competition>()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return [.. competitions
+            .OrderBy(competition => competition.Name.Value, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(competition => competition.Id.Value)];
+    }
+
+    /// <inheritdoc />
     public void Add(Competition competition)
     {
         ArgumentNullException.ThrowIfNull(competition);

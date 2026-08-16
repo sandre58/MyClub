@@ -23,6 +23,13 @@ public interface ICompetitionRepository
     Task<Competition?> GetByIdAsync(CompetitionId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Lists competitions for the organizer Competition List (no stage hydration).
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Competitions ordered by name, then identity.</returns>
+    Task<IReadOnlyList<Competition>> ListAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new competition to the current unit of work.
     /// </summary>
     /// <param name="competition">The competition to add.</param>

@@ -24,6 +24,34 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
+app.MapPost(
+    "/competitions",
+    async (CreateCompetitionRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var summary = await executor
+            .CreateCompetitionAsync(request.Name, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Created($"/competitions/{summary.Id}/workspace", summary);
+    });
+
+app.MapGet(
+    "/competitions",
+    async (UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var list = await executor.ListCompetitionsAsync(cancellationToken).ConfigureAwait(false);
+        return Results.Ok(list);
+    });
+
+app.MapGet(
+    "/competitions/{competitionId:guid}/workspace",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var summary = await executor
+            .GetWorkspaceSummaryAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(summary);
+    });
+
 app.MapGet(
     "/competitions/{competitionId:guid}",
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
