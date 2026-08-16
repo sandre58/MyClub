@@ -54,7 +54,13 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
         <ul className="plain-list">
           <li>
             Attention items:{' '}
-            <span className="muted">{data.attentionCount}</span>
+            {data.attentionCount > 0 ? (
+              <Link to={`/competitions/${data.id}/matches`}>
+                {data.attentionCount}
+              </Link>
+            ) : (
+              <span className="muted">{data.attentionCount}</span>
+            )}
           </li>
           {data.nextActionLabel && (
             <li>
@@ -105,6 +111,15 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
               <span className="muted">
                 Participants, regulation, structure
               </span>
+            </Link>
+          </li>
+          <li className="entity-list__item">
+            <Link
+              className="entity-list__link"
+              to={`/competitions/${data.id}/matches`}
+            >
+              <span className="entity-list__title">Match hub</span>
+              <span className="muted">Attention and competition matches</span>
             </Link>
           </li>
           <li className="entity-list__item">

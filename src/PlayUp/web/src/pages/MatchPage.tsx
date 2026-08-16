@@ -135,6 +135,12 @@ function MatchDetailView({
       await queryClient.invalidateQueries({
         queryKey: ['stages', data.stageId],
       })
+      await queryClient.invalidateQueries({
+        queryKey: ['competitions', data.competitionId, 'attention'],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ['competitions', data.competitionId, 'workspace'],
+      })
     },
   })
 

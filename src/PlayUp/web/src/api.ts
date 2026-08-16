@@ -7,6 +7,7 @@ import type {
   FinishMatchRequest,
   MatchDetail,
   MatchSummary,
+  NeedsAttention,
   OrganisationView,
   RenameEntryRequest,
   ReplaceRegulationRequest,
@@ -127,6 +128,13 @@ export function fetchOrganisationView(
   competitionId: string,
 ): Promise<OrganisationView> {
   return getJson(`/competitions/${competitionId}/organisation`)
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/attention */
+export function fetchNeedsAttention(
+  competitionId: string,
+): Promise<NeedsAttention> {
+  return getJson(`/competitions/${competitionId}/attention`)
 }
 
 /** POST /competitions/{id}/entries → OrganisationView */

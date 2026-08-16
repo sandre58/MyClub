@@ -58,6 +58,10 @@ function renderWorkspacePage() {
             path="/competitions/:competitionId/organisation"
             element={<p>Organisation route</p>}
           />
+          <Route
+            path="/competitions/:competitionId/matches"
+            element={<p>Match hub route</p>}
+          />
           <Route path="/competitions" element={<p>List route</p>} />
         </Routes>
       </MemoryRouter>
@@ -129,6 +133,30 @@ describe('CompetitionWorkspacePage', () => {
     )
 
     expect(screen.getByText('Organisation route')).toBeInTheDocument()
+  })
+
+  it('navigates to match hub from Continue', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitionWorkspace).mockResolvedValue(workspace())
+
+    renderWorkspacePage()
+
+    await user.click(await screen.findByRole('link', { name: /Match hub/i }))
+
+    expect(screen.getByText('Match hub route')).toBeInTheDocument()
+  })
+
+  it('links attention count to match hub when count > 0', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitionWorkspace).mockResolvedValue(
+      workspace({ attentionCount: 3 }),
+    )
+
+    renderWorkspacePage()
+
+    await user.click(await screen.findByRole('link', { name: '3' }))
+
+    expect(screen.getByText('Match hub route')).toBeInTheDocument()
   })
 
   it('navigates back to the competition list', async () => {

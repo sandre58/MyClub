@@ -86,6 +86,22 @@ export interface WorkspaceSummary {
   completionBlockers: string[] | null
 }
 
+/** GET /competitions/{id}/attention — derived Needs Attention hub. */
+export interface NeedsAttention {
+  competitionId: string
+  items: NeedsAttentionItem[]
+  /** Host also exposes Count; prefer items.length when omitted. */
+  count?: number
+}
+
+export interface NeedsAttentionItem {
+  source: string
+  reason: string
+  severity: string
+  targetType: string | null
+  targetId: string | null
+}
+
 export interface CompetitionOverview {
   id: string
   name: string

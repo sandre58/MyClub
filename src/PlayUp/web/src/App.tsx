@@ -4,6 +4,7 @@ import { CompetitionPage } from './pages/CompetitionPage'
 import { CompetitionWorkspacePage } from './pages/CompetitionWorkspacePage'
 import { CompetitionsPage } from './pages/CompetitionsPage'
 import { HomePage } from './pages/HomePage'
+import { MatchHubPage } from './pages/MatchHubPage'
 import { MatchPage } from './pages/MatchPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { OrganisationPage } from './pages/OrganisationPage'
@@ -34,6 +35,10 @@ export default function App() {
         <Route
           path="/competitions/:competitionId/overview"
           element={<CompetitionPage />}
+        />
+        <Route
+          path="/competitions/:competitionId/matches"
+          element={<MatchHubPage />}
         />
         <Route path="/stages/:stageId" element={<StagePage />} />
         <Route
