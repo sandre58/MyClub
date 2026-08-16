@@ -32,7 +32,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 1));
         structureResponse.EnsureSuccessStatusCode();
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var materializeResponse = await client.PostAsync(
@@ -41,7 +41,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         materializeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/organisation");
-        var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(6);
 
@@ -58,7 +58,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
                 ResourceIds: [resourceId],
                 MatchDurationMinutes: 90));
         generateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var proposal = await generateResponse.Content.ReadFromJsonAsync<ScheduleProposalDto>();
+        var proposal = await generateResponse.Content.ReadFromJsonAsync<ScheduleProposalDto>(HostJson.Options);
         proposal.Should().NotBeNull();
         if (proposal!.IsSuccess)
         {
@@ -83,14 +83,14 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var createDraw = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws",
             new CreateDrawRequest("Group"));
         createDraw.StatusCode.Should().Be(HttpStatusCode.Created);
-        var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>();
+        var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>(HostJson.Options);
         draw!.Kind.Should().Be(DrawResolutionKind.Group);
 
         using var inputs = await client.PostAsync(
@@ -102,7 +102,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             $"/stages/{stageId}/draws/{draw.DrawId}/generate",
             null);
         generate.EnsureSuccessStatusCode();
-        var generated = await generate.Content.ReadFromJsonAsync<DrawGenerationDto>();
+        var generated = await generate.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options);
         generated!.IsResolved.Should().BeTrue();
 
         using var publish = await client.PostAsync(
@@ -121,7 +121,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         materialize.EnsureSuccessStatusCode();
 
         using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/organisation");
-        var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(2);
     }
@@ -138,19 +138,19 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var createDraw = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws",
             new CreateDrawRequest("Pairing"));
-        var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>();
+        var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>(HostJson.Options);
 
         await client.PostAsync($"/stages/{stageId}/draws/{draw!.DrawId}/inputs", null);
         using var generate = await client.PostAsync(
             $"/stages/{stageId}/draws/{draw.DrawId}/generate",
             null);
-        (await generate.Content.ReadFromJsonAsync<DrawGenerationDto>())!.IsResolved.Should().BeTrue();
+        (await generate.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options))!.IsResolved.Should().BeTrue();
 
         await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/publish", null);
         using var apply = await client.PostAsJsonAsync(
@@ -159,7 +159,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/organisation");
-        var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(2);
     }
@@ -170,7 +170,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             "/competitions",
             new CreateCompetitionRequest($"{prefix} {Guid.CreateVersion7():N}"));
         createResponse.EnsureSuccessStatusCode();
-        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         return created!.Id;
     }
 

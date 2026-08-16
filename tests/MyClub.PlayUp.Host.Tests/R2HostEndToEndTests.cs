@@ -98,7 +98,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using (var stageBefore = await client.GetAsync($"/stages/{seed.SemiStageId.Value}"))
         {
             stageBefore.StatusCode.Should().Be(HttpStatusCode.OK);
-            var semiOverview = await stageBefore.Content.ReadFromJsonAsync<StageOverviewDto>();
+            var semiOverview = await stageBefore.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
             semiOverview.Should().NotBeNull();
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().BeNull();
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
@@ -155,7 +155,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using (var stageAfter = await client.GetAsync($"/stages/{seed.SemiStageId.Value}"))
         {
             stageAfter.StatusCode.Should().Be(HttpStatusCode.OK);
-            var semiOverview = await stageAfter.Content.ReadFromJsonAsync<StageOverviewDto>();
+            var semiOverview = await stageAfter.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
             semiOverview.Should().NotBeNull();
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().Be(seed.Home.Value);
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").DisplayName.Should().Be("Home FC");
@@ -165,7 +165,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using (var matchesResponse = await client.GetAsync($"/stages/{seed.QuarterStageId.Value}/matches"))
         {
             matchesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-            var summaries = await matchesResponse.Content.ReadFromJsonAsync<List<MatchSummaryDto>>();
+            var summaries = await matchesResponse.Content.ReadFromJsonAsync<List<MatchSummaryDto>>(HostJson.Options);
             summaries.Should().ContainSingle();
             summaries[0].MatchId.Should().Be(matchId.Value);
             summaries[0].Status.Should().Be(MatchStatus.Finished);
@@ -176,7 +176,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         using var matchResponse = await client.GetAsync($"/matches/{matchId.Value}");
         matchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var detail = await matchResponse.Content.ReadFromJsonAsync<MatchDetailDto>();
+        var detail = await matchResponse.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
         detail.Should().NotBeNull();
         detail.Result.Should().NotBeNull();
         detail.Result!.HomeGoals.Should().Be(2);
@@ -209,7 +209,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
                    content: null))
         {
             progress.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-            var problem = await progress.Content.ReadFromJsonAsync<ProblemDetails>();
+            var problem = await progress.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
             problem.Should().NotBeNull();
             GetCode(problem).Should().Be(ApplicationErrorCodes.FixtureInvalid);
         }

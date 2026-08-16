@@ -52,7 +52,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsync(PublishUri(StageId.New(), DrawId.New()), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
@@ -67,7 +67,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsync(PublishUri(seed.StageId, seed.DrawId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(StageErrorCodes.DrawInvalidTransition);
 

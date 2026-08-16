@@ -37,7 +37,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CompetitionOverviewDto>();
+        var body = await response.Content.ReadFromJsonAsync<CompetitionOverviewDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.Id.Should().Be(seed.CompetitionId.Value);
         body.Name.Should().Be("Read Cup");
@@ -54,7 +54,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionNotFound);
     }
 
@@ -67,7 +67,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var response = await client.GetAsync($"/stages/{seed.StageId.Value}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<StageOverviewDto>();
+        var body = await response.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.Id.Should().Be(seed.StageId.Value);
         body.Slots.Should().Contain(slot => slot.SlotKey == "SF1-A");
@@ -83,7 +83,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var response = await client.GetAsync($"/stages/{Guid.CreateVersion7()}");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
 
@@ -96,7 +96,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var empty = await client.GetAsync($"/stages/{seed.StageId.Value}/matches");
         empty.StatusCode.Should().Be(HttpStatusCode.OK);
-        var emptyBody = await empty.Content.ReadFromJsonAsync<List<MatchSummaryDto>>();
+        var emptyBody = await empty.Content.ReadFromJsonAsync<List<MatchSummaryDto>>(HostJson.Options);
         emptyBody.Should().NotBeNull().And.BeEmpty();
 
         MatchId matchId;
@@ -115,7 +115,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var listed = await client.GetAsync($"/stages/{seed.StageId.Value}/matches");
         listed.StatusCode.Should().Be(HttpStatusCode.OK);
-        var listBody = await listed.Content.ReadFromJsonAsync<List<MatchSummaryDto>>();
+        var listBody = await listed.Content.ReadFromJsonAsync<List<MatchSummaryDto>>(HostJson.Options);
         listBody.Should().ContainSingle();
         listBody[0].MatchId.Should().Be(matchId.Value);
         listBody[0].Home.DisplayName.Should().Be("Alpha");
@@ -147,7 +147,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         using var client = factory.CreateClient();
         using var response = await client.GetAsync($"/matches/{matchId.Value}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<MatchDetailDto>();
+        var body = await response.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.MatchId.Should().Be(matchId.Value);
         body.Result.Should().NotBeNull();
@@ -158,7 +158,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var missing = await client.GetAsync($"/matches/{Guid.CreateVersion7()}");
         missing.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await missing.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await missing.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.MatchNotFound);
     }
 

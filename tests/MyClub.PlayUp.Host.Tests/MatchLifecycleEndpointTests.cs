@@ -55,7 +55,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsync(StartUri(MatchId.New()), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.MatchNotFound);
     }
@@ -70,7 +70,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsync(StartUri(matchId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(MatchErrorCodes.InvalidTransition);
 
@@ -113,7 +113,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsJsonAsync(FinishUri(MatchId.New()), body);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.MatchNotFound);
     }
@@ -129,7 +129,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsJsonAsync(FinishUri(matchId), body);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(MatchErrorCodes.InvalidTransition);
 
@@ -156,7 +156,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsJsonAsync(FinishUri(matchId), body);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(MatchErrorCodes.InvalidResult);
 
@@ -218,7 +218,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsync(StartUri(matchId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
 
@@ -239,7 +239,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
             new FinishMatchRequest(ResultType.Played, 1, 0));
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
 
@@ -259,7 +259,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using (var listed = await client.GetAsync($"/stages/{seed.StageId.Value}/matches"))
         {
             listed.StatusCode.Should().Be(HttpStatusCode.OK);
-            var summaries = await listed.Content.ReadFromJsonAsync<MatchSummaryDto[]>();
+            var summaries = await listed.Content.ReadFromJsonAsync<MatchSummaryDto[]>(HostJson.Options);
             summaries.Should().ContainSingle();
             summaries![0].MatchId.Should().Be(seed.MatchId.Value);
             summaries[0].Status.Should().Be(MatchStatus.Scheduled);
@@ -270,7 +270,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         using (var detailBefore = await client.GetAsync($"/matches/{seed.MatchId.Value}"))
         {
             detailBefore.StatusCode.Should().Be(HttpStatusCode.OK);
-            var detail = await detailBefore.Content.ReadFromJsonAsync<MatchDetailDto>();
+            var detail = await detailBefore.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
             detail.Should().NotBeNull();
             detail!.ScheduledAt.Should().Be(seed.Kickoff);
             detail.ResourceId.Should().Be(seed.ResourceId.Value);
@@ -285,7 +285,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         using (var detailLive = await client.GetAsync($"/matches/{seed.MatchId.Value}"))
         {
-            var detail = await detailLive.Content.ReadFromJsonAsync<MatchDetailDto>();
+            var detail = await detailLive.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
             detail!.Status.Should().Be(MatchStatus.Live);
             detail.ScheduledAt.Should().Be(seed.Kickoff);
         }
@@ -299,7 +299,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         using (var detailFinished = await client.GetAsync($"/matches/{seed.MatchId.Value}"))
         {
-            var detail = await detailFinished.Content.ReadFromJsonAsync<MatchDetailDto>();
+            var detail = await detailFinished.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
             detail!.Status.Should().Be(MatchStatus.Finished);
             detail.Result.Should().NotBeNull();
             detail.Result!.HomeGoals.Should().Be(2);

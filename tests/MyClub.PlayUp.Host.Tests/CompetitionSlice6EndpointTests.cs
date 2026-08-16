@@ -40,13 +40,13 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
         completeResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var workspaceCompleted = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/workspace");
-        var completedSummary = await workspaceCompleted.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var completedSummary = await workspaceCompleted.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         completedSummary!.Status.Should().Be(CompetitionStatus.Completed);
         completedSummary.CompletionMode.Should().Be(CompletionMode.Normal);
         completedSummary.NextActionCode.Should().Be("OpenConsultation");
 
         using var overviewCompleted = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}");
-        var overview = await overviewCompleted.Content.ReadFromJsonAsync<CompetitionOverviewDto>();
+        var overview = await overviewCompleted.Content.ReadFromJsonAsync<CompetitionOverviewDto>(HostJson.Options);
         overview!.CompletionMode.Should().Be(CompletionMode.Normal);
 
         using var archiveResponse = await client.PostAsync(
@@ -55,7 +55,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
         archiveResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var workspaceArchived = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/workspace");
-        var archivedSummary = await workspaceArchived.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var archivedSummary = await workspaceArchived.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         archivedSummary!.Status.Should().Be(CompetitionStatus.Archived);
         archivedSummary.CompletionMode.Should().Be(CompletionMode.Normal);
 
@@ -79,7 +79,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
             new { mode = "Normal" });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompletionNotAllowed);
         GetReasons(problem!).Should().Contain(CompletionAnalyzer.ReasonScheduledMatches);
 
@@ -134,7 +134,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(CompetitionErrorCodes.InvalidTransition);
     }
 
@@ -162,7 +162,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionClosed);
     }
 

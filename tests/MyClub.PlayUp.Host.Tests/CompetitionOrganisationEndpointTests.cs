@@ -31,7 +31,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             "/competitions",
             new CreateCompetitionRequest($"Slice2 Org {Guid.CreateVersion7():N}"));
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         created.Should().NotBeNull();
         var competitionId = created.Id;
 
@@ -39,7 +39,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/entries",
             new AddEntryRequest("Alpha"));
         addResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var afterAdd = await addResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var afterAdd = await addResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         afterAdd.Should().NotBeNull();
         afterAdd.Participants.ActiveCount.Should().Be(1);
 
@@ -52,7 +52,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 2));
         structureResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var structured = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var structured = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         structured.Should().NotBeNull();
         structured.Format.Kind.Should().Be(StructureFormatKind.Championship);
         structured.Structure.MatchdayCount.Should().Be(2);
@@ -61,7 +61,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
 
         using var getResponse = await client.GetAsync($"/competitions/{competitionId}/organisation");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var reloaded = await getResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var reloaded = await getResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         reloaded.Should().NotBeNull();
         reloaded.Participants.ActiveCount.Should().Be(2);
         reloaded.Structure.MatchdayCount.Should().Be(2);
@@ -83,7 +83,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
         groupsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var groups = await groupsResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var groups = await groupsResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         groups!.Structure.GroupCount.Should().Be(2);
         groups.Structure.NumberOfPots.Should().Be(2);
         groups.Readiness.ReadyForDraw.Should().BeTrue();
@@ -92,7 +92,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
         cupResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var cup = await cupResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var cup = await cupResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         cup!.Format.Kind.Should().Be(StructureFormatKind.Cup);
         cup.Structure.SlotCount.Should().Be(4);
         cup.Structure.RoundCount.Should().Be(1);
@@ -109,20 +109,20 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         using var addResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/entries",
             new AddEntryRequest("Old Name"));
-        var view = await addResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var view = await addResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         var entryId = view!.Participants.Entries[0].EntryId;
 
         using var renameResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/entries/{entryId}/rename",
             new RenameEntryRequest("New Name"));
         renameResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await renameResponse.Content.ReadFromJsonAsync<OrganisationViewDto>())!
+        (await renameResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options))!
             .Participants.Entries[0].DisplayName.Should().Be("New Name");
 
         using var addOther = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/entries",
             new AddEntryRequest("Other"));
-        var otherId = (await addOther.Content.ReadFromJsonAsync<OrganisationViewDto>())!
+        var otherId = (await addOther.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options))!
             .Participants.Entries.Single(entry => entry.DisplayName == "Other").EntryId;
 
         using var excludeResponse = await client.PostAsJsonAsync(
@@ -147,7 +147,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
                 DrawPoints: 1,
                 LossPoints: 0));
         regulationResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var regulated = await regulationResponse.Content.ReadFromJsonAsync<OrganisationViewDto>();
+        var regulated = await regulationResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         regulated!.Regulation.MinimumTeams.Should().Be(3);
         regulated.Regulation.MaximumTeams.Should().Be(32);
         regulated.Regulation.DurationPerPeriod.Should().Be(40);
@@ -164,7 +164,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 6));
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CupBracketNotPowerOfTwo);
     }
 
@@ -176,7 +176,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
 
         using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/organisation");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionNotFound);
     }
 
@@ -186,7 +186,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             "/competitions",
             new CreateCompetitionRequest($"{prefix} {Guid.CreateVersion7():N}"));
         createResponse.EnsureSuccessStatusCode();
-        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         return created!.Id;
     }
 

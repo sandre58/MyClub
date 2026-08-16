@@ -32,7 +32,7 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
             "/competitions",
             new CreateCompetitionRequest(name));
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var created = await createResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         created.Should().NotBeNull();
         created.Name.Should().Be(name);
         created.Status.Should().Be(CompetitionStatus.Draft);
@@ -44,13 +44,13 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
 
         using var listResponse = await client.GetAsync("/competitions");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var list = await listResponse.Content.ReadFromJsonAsync<List<CompetitionListItemDto>>();
+        var list = await listResponse.Content.ReadFromJsonAsync<List<CompetitionListItemDto>>(HostJson.Options);
         list.Should().NotBeNull();
         list.Should().Contain(item => item.Id == created.Id && item.Name == name && item.Status == CompetitionStatus.Draft);
 
         using var workspaceResponse = await client.GetAsync($"/competitions/{created.Id}/workspace");
         workspaceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var workspace = await workspaceResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var workspace = await workspaceResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         workspace.Should().NotBeNull();
         workspace.Id.Should().Be(created.Id);
         workspace.Name.Should().Be(name);
@@ -66,7 +66,7 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
 
         using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/workspace");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionNotFound);
     }
 

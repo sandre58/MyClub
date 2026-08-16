@@ -59,7 +59,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.SlotOccupancyConflict);
 
         using var scope = factory.Services.CreateScope();
@@ -76,13 +76,13 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
 
         using var attentionResponse = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/attention");
         attentionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var attention = await attentionResponse.Content.ReadFromJsonAsync<NeedsAttentionDto>();
+        var attention = await attentionResponse.Content.ReadFromJsonAsync<NeedsAttentionDto>(HostJson.Options);
         attention!.Count.Should().BeGreaterThan(0);
         attention.Items.Should().Contain(item => item.Source == NeedsAttentionAssembler.SourceProgressionPending);
 
         using var workspaceResponse = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/workspace");
         workspaceResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var workspace = await workspaceResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>();
+        var workspace = await workspaceResponse.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
         workspace!.AttentionCount.Should().Be(attention.Count);
     }
 
@@ -98,7 +98,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.ConsequenceOperationNotAllowed);
     }
 

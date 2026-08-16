@@ -53,7 +53,7 @@ public sealed class PrepareStageEndpointTests(HostPostgresFixture fixture)
         using var response = await client.PostAsync(PrepareUri(missingId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
@@ -70,7 +70,7 @@ public sealed class PrepareStageEndpointTests(HostPostgresFixture fixture)
 
         using var second = await client.PostAsync(PrepareUri(stageId), content: null);
         second.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await second.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await second.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(StageErrorCodes.InvalidTransition);
     }

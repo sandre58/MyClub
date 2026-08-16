@@ -66,7 +66,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
             new ApplyDrawRequest([Guid.NewGuid()]));
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
@@ -83,7 +83,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
             new ApplyDrawRequest([seed.FixtureId.Value]));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.DrawApplyFailure);
 

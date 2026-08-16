@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Text.Json.Serialization;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Domain.Common;
@@ -19,6 +20,11 @@ var connectionString = builder.Configuration.GetConnectionString("PlayUp")
 
 builder.Services.AddPlayUpInfrastructure(connectionString);
 builder.Services.AddScoped<UseCaseExecutor>();
+builder.Services.ConfigureHttpJsonOptions(static options =>
+{
+    // Phase 12.8: HTTP enums as JSON strings (camelCase property names unchanged).
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<PlayUpExceptionHandler>();
 
@@ -240,16 +246,14 @@ app.MapPost(
         var applied = await executor
             .ApplyQualificationAsync(new StageId(stageId), cancellationToken)
             .ConfigureAwait(false);
-        return Results.Ok(new
-        {
-            appliedCount = applied.Count,
-            assignments = applied.Select(instruction => new
-            {
-                stageId = instruction.StageId.Value,
-                slotKey = instruction.SlotKey,
-                entryId = instruction.EntryId.Value
-            }).ToArray()
-        });
+        return Results.Ok(new QualificationApplyResponse(
+            applied.Count,
+            [
+                .. applied.Select(instruction => new QualificationAssignmentDto(
+                    instruction.StageId.Value,
+                    instruction.SlotKey,
+                    instruction.EntryId.Value))
+            ]));
     });
 
 app.MapGet(
@@ -381,12 +385,10 @@ app.MapPost(
         var result = await executor
             .MaterializeMatchesAsync(new StageId(stageId), cancellationToken)
             .ConfigureAwait(false);
-        return Results.Ok(new
-        {
-            createdCount = result.CreatedMatches.Count,
-            attachedMatchIds = result.AttachedMatchIds.Select(id => id.Value).ToArray(),
-            alreadyComplete = result.AlreadyComplete
-        });
+        return Results.Ok(new MaterializeMatchesResponse(
+            result.CreatedMatches.Count,
+            [.. result.AttachedMatchIds.Select(id => id.Value)],
+            result.AlreadyComplete));
     });
 
 app.MapPost(

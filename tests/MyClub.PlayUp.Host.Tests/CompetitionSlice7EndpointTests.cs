@@ -37,7 +37,7 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
         using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/consultation");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var view = await response.Content.ReadFromJsonAsync<ConsultationViewDto>();
+        var view = await response.Content.ReadFromJsonAsync<ConsultationViewDto>(HostJson.Options);
         view.Should().NotBeNull();
         view!.Status.Should().Be(CompetitionStatus.Running);
         view.FormatKind.Should().Be(StructureFormatKind.Championship);
@@ -59,7 +59,7 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
 
         using var completedResponse = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/consultation");
         completedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var completed = await completedResponse.Content.ReadFromJsonAsync<ConsultationViewDto>();
+        var completed = await completedResponse.Content.ReadFromJsonAsync<ConsultationViewDto>(HostJson.Options);
         completed!.Status.Should().Be(CompetitionStatus.Completed);
         completed.CompletionMode.Should().Be(CompletionMode.Normal);
         completed.Results.Should().NotBeEmpty();
@@ -71,7 +71,7 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
 
         using var archivedResponse = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/consultation");
         archivedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var archived = await archivedResponse.Content.ReadFromJsonAsync<ConsultationViewDto>();
+        var archived = await archivedResponse.Content.ReadFromJsonAsync<ConsultationViewDto>(HostJson.Options);
         archived!.Status.Should().Be(CompetitionStatus.Archived);
         archived.Results.Should().HaveCount(completed.Results.Count);
         archived.Standings.Applicable.Should().BeTrue();
@@ -85,7 +85,7 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
 
         using var response = await client.GetAsync($"/competitions/{Guid.NewGuid()}/consultation");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
     }
 

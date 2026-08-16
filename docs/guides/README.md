@@ -3,6 +3,7 @@
 | Guide | Description |
 | :---- | :---------- |
 | [Local persistence](local-persistence.md) | Docker Compose PostgreSQL for Host development; User Secrets; EF migrations; Compose vs Testcontainers |
+| [HTTP API contract](http-api-contract.md) | Phase 12.8 Host JSON conventions (string enums, named DTOs, ProblemDetails) |
 
 Also:
 

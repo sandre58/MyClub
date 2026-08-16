@@ -57,7 +57,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
     }
@@ -74,7 +74,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(StageErrorCodes.FixtureNotFound);
     }

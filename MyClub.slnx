@@ -48,6 +48,7 @@
     <File Path="SECURITY.md" />
   </Folder>
   <Folder Name="/docs/guides/">
+    <File Path="docs/guides/http-api-contract.md" />
     <File Path="docs/guides/local-persistence.md" />
     <File Path="docs/guides/README.md" />
   </Folder>
