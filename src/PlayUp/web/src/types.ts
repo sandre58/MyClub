@@ -16,6 +16,9 @@ export type CompetitionStatus =
   | 'Completed'
   | 'Archived'
 
+/** Host CompletionMode — string enum member names. */
+export type CompletionMode = 'Normal' | 'Administrative' | 'Abandoned'
+
 export type EntryStatus =
   | 'Active'
   | 'Qualified'
@@ -45,6 +48,9 @@ export type DrawResolutionKind = 'Slot' | 'Group' | 'Pairing'
 
 export type DrawResolutionState = 'NotResolved' | 'Resolved' | 'NoSolution'
 
+/** Application StructureFormatKind — organisation format intent (string on wire). */
+export type StructureFormatKind = 'Championship' | 'Groups' | 'Cup'
+
 export interface CompetitionEntrySummary {
   entryId: string
   displayName: string
@@ -57,12 +63,134 @@ export interface CompetitionStageSummary {
   status: StageStatus
 }
 
+/** GET /competitions — one row in the organizer list. */
+export interface CompetitionListItem {
+  id: string
+  name: string
+  status: CompetitionStatus
+}
+
+/**
+ * GET /competitions/{id}/workspace — Accueil / competition landing.
+ * nextAction* and attention/completion fields are Read hints from the Host.
+ */
+export interface WorkspaceSummary {
+  id: string
+  name: string
+  status: CompetitionStatus
+  nextActionCode: string | null
+  nextActionLabel: string | null
+  attentionCount: number
+  completionMode: CompletionMode | null
+  canCompleteNormally: boolean
+  completionBlockers: string[] | null
+}
+
 export interface CompetitionOverview {
   id: string
   name: string
   status: CompetitionStatus
   entries: CompetitionEntrySummary[]
   stages: CompetitionStageSummary[]
+}
+
+/** GET /competitions/{id}/organisation — Slice 2 Organisation hub. */
+export interface OrganisationView {
+  competitionId: string
+  name: string
+  status: CompetitionStatus
+  participants: OrganisationParticipantsSummary
+  format: OrganisationFormatSummary
+  regulation: OrganisationRegulationSummary
+  structure: OrganisationStructureSummary
+  actions: string[]
+  readiness: OrganisationReadiness
+}
+
+export interface OrganisationParticipantsSummary {
+  activeCount: number
+  occupyingCount: number
+  entries: OrganisationEntry[]
+}
+
+export interface OrganisationEntry {
+  entryId: string
+  displayName: string
+  status: EntryStatus
+}
+
+export interface OrganisationFormatSummary {
+  kind: StructureFormatKind | null
+  label: string
+  primaryStageId: string | null
+  primaryStageName: string | null
+  primaryStageStatus: StageStatus | null
+}
+
+export interface OrganisationRegulationSummary {
+  minimumTeams: number
+  maximumTeams: number
+  durationPerPeriod: number
+  numberOfPeriods: number
+  winPoints: number
+  drawPoints: number
+  lossPoints: number
+}
+
+export interface OrganisationStructureSummary {
+  groupCount: number
+  roundCount: number
+  matchdayCount: number
+  slotCount: number
+  hasDrawRules: boolean
+  numberOfPots: number | null
+}
+
+export interface OrganisationReadiness {
+  readyForNextSlice: boolean
+  readyForDraw: boolean
+  readyForMaterialization: boolean
+  readyForSchedule: boolean
+  readyForMatchOperation: boolean
+  readyForSchedulePath: boolean
+  attachedMatchCount: number
+  blockers: string[]
+  hints: string[]
+}
+
+/** POST /competitions/{id}/entries */
+export interface AddEntryRequest {
+  displayName: string
+  teamId?: string | null
+}
+
+/** POST .../entries/{entryId}/rename */
+export interface RenameEntryRequest {
+  displayName: string
+}
+
+/** PUT /competitions/{id}/regulation */
+export interface ReplaceRegulationRequest {
+  minimumTeams: number
+  maximumTeams: number
+  durationPerPeriod: number
+  numberOfPeriods: number
+  halfTimeDuration: number
+  winPoints: number
+  drawPoints: number
+  lossPoints: number
+  forfeitWinnerGoals?: number
+  forfeitLoserGoals?: number
+}
+
+/** POST /competitions/{id}/organisation/structure */
+export interface ConfigureStructureRequest {
+  format: StructureFormatKind | string
+  stageName?: string | null
+  matchdayCount?: number | null
+  groupCount?: number | null
+  participantsPerGroup?: number | null
+  bracketSize?: number | null
 }
 
 export interface EntrySide {
@@ -190,6 +318,12 @@ export const competitionStatusLabel: Record<CompetitionStatus, string> = {
   Archived: 'Archived',
 }
 
+export const completionModeLabel: Record<CompletionMode, string> = {
+  Normal: 'Normal',
+  Administrative: 'Administrative',
+  Abandoned: 'Abandoned',
+}
+
 export const entryStatusLabel: Record<EntryStatus, string> = {
   Active: 'Active',
   Qualified: 'Qualified',
@@ -237,6 +371,12 @@ export const drawResolutionStateLabel: Record<DrawResolutionState, string> = {
   NotResolved: 'Not resolved',
   Resolved: 'Resolved',
   NoSolution: 'No solution',
+}
+
+export const structureFormatKindLabel: Record<StructureFormatKind, string> = {
+  Championship: 'Championship',
+  Groups: 'Groups',
+  Cup: 'Cup',
 }
 
 export const resultTypeOptions: readonly ResultType[] = [

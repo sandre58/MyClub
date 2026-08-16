@@ -17,7 +17,9 @@ export function AppLayout() {
           <Link to="/" className="app-nav__brand">
             Play’up
           </Link>
-          <span className="app-nav__meta">Organizer</span>
+          <Link to="/competitions" className="app-nav__meta">
+            Competitions
+          </Link>
         </nav>
       </header>
       <Outlet />

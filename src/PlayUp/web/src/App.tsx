@@ -1,9 +1,12 @@
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
 import { CompetitionPage } from './pages/CompetitionPage'
+import { CompetitionWorkspacePage } from './pages/CompetitionWorkspacePage'
+import { CompetitionsPage } from './pages/CompetitionsPage'
 import { HomePage } from './pages/HomePage'
 import { MatchPage } from './pages/MatchPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { OrganisationPage } from './pages/OrganisationPage'
 import { StageMatchesPage } from './pages/StageMatchesPage'
 import { StagePage } from './pages/StagePage'
 
@@ -19,8 +22,17 @@ export default function App() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/competitions" element={<CompetitionsPage />} />
         <Route
           path="/competitions/:competitionId"
+          element={<CompetitionWorkspacePage />}
+        />
+        <Route
+          path="/competitions/:competitionId/organisation"
+          element={<OrganisationPage />}
+        />
+        <Route
+          path="/competitions/:competitionId/overview"
           element={<CompetitionPage />}
         />
         <Route path="/stages/:stageId" element={<StagePage />} />

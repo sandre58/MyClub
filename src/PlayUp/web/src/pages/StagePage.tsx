@@ -55,7 +55,7 @@ export function StagePage() {
         <p className="eyebrow">Stage</p>
         <h1>{stageQuery.data?.name ?? 'Stage'}</h1>
         {competitionId && (
-          <BackLink to={`/competitions/${competitionId}`}>
+          <BackLink to={`/competitions/${competitionId}/overview`}>
             ←{' '}
             {competitionQuery.data?.name
               ? `Back to ${competitionQuery.data.name}`

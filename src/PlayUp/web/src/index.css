@@ -104,6 +104,11 @@ select:focus-visible {
 .app-nav__meta {
     color: var(--color-muted);
     font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.app-nav__meta:hover {
+    color: var(--color-text);
 }
 
 .page {
@@ -508,13 +513,15 @@ select:focus-visible {
     gap: var(--space-3);
 }
 
-.finish-form {
+.finish-form,
+.org-form {
     display: grid;
     gap: var(--space-3);
     max-width: 28rem;
 }
 
-.finish-form label {
+.finish-form label,
+.org-form label {
     display: grid;
     gap: var(--space-1);
     font-size: 0.95rem;
@@ -527,7 +534,8 @@ select:focus-visible {
     grid-template-columns: none;
 }
 
-.finish-form__fieldset {
+.finish-form__fieldset,
+.org-form__fieldset {
     margin: 0;
     padding: var(--space-3);
     border: 1px solid var(--color-border);
@@ -536,20 +544,26 @@ select:focus-visible {
     gap: var(--space-3);
 }
 
-.finish-form__legend {
+.finish-form__legend,
+.org-form__legend {
     padding-inline: var(--space-1);
     font-weight: 600;
     font-size: 0.9rem;
 }
 
-.finish-form__row {
+.finish-form__row,
+.org-form__row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     gap: var(--space-3);
 }
 
 .finish-form input[type='number'],
-.finish-form select {
+.finish-form select,
+.org-form input[type='number'],
+.org-form input[type='text'],
+.org-form input:not([type]),
+.org-form select {
     width: 100%;
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--color-border);
@@ -560,9 +574,28 @@ select:focus-visible {
 
 .finish-form input:disabled,
 .finish-form select:disabled,
-.finish-form fieldset:disabled {
+.finish-form fieldset:disabled,
+.org-form input:disabled,
+.org-form select:disabled,
+.org-form fieldset:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.org-form--inline {
+    max-width: none;
+}
+
+.org-entry {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.org-entry__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: end;
 }
 
 .mono {

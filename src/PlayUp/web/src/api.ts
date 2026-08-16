@@ -1,10 +1,17 @@
 import type {
+  AddEntryRequest,
   ApplyDrawRequest,
+  CompetitionListItem,
   CompetitionOverview,
+  ConfigureStructureRequest,
   FinishMatchRequest,
   MatchDetail,
   MatchSummary,
+  OrganisationView,
+  RenameEntryRequest,
+  ReplaceRegulationRequest,
   StageOverview,
+  WorkspaceSummary,
 } from './types'
 
 export class ApiError extends Error {
@@ -58,6 +65,26 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 /**
+ * POST/PUT helpers for Host commands that return a JSON body (Organisation mutations).
+ */
+async function sendJson<T>(
+  method: 'POST' | 'PUT',
+  url: string,
+  body?: unknown,
+): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers:
+      body === undefined
+        ? undefined
+        : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  await throwIfNotOk(response)
+  return (await response.json()) as T
+}
+
+/**
  * POST for Host commands that return 204 No Content.
  * Do not call response.json() — an empty body is not JSON.
  */
@@ -76,11 +103,93 @@ async function postNoContent(
   await throwIfNotOk(response)
 }
 
+/** Relative URL → Vite proxy → Host GET /competitions */
+export function fetchCompetitions(): Promise<CompetitionListItem[]> {
+  return getJson('/competitions')
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/workspace */
+export function fetchCompetitionWorkspace(
+  competitionId: string,
+): Promise<WorkspaceSummary> {
+  return getJson(`/competitions/${competitionId}/workspace`)
+}
+
 /** Relative URL → Vite proxy → Host GET /competitions/{id} */
 export function fetchCompetitionOverview(
   competitionId: string,
 ): Promise<CompetitionOverview> {
   return getJson(`/competitions/${competitionId}`)
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/organisation */
+export function fetchOrganisationView(
+  competitionId: string,
+): Promise<OrganisationView> {
+  return getJson(`/competitions/${competitionId}/organisation`)
+}
+
+/** POST /competitions/{id}/entries → OrganisationView */
+export function addCompetitionEntry(
+  competitionId: string,
+  request: AddEntryRequest,
+): Promise<OrganisationView> {
+  return sendJson('POST', `/competitions/${competitionId}/entries`, request)
+}
+
+/** POST .../entries/{entryId}/rename → OrganisationView */
+export function renameCompetitionEntry(
+  competitionId: string,
+  entryId: string,
+  request: RenameEntryRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/rename`,
+    request,
+  )
+}
+
+/** POST .../entries/{entryId}/withdraw → OrganisationView */
+export function withdrawCompetitionEntry(
+  competitionId: string,
+  entryId: string,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/withdraw`,
+  )
+}
+
+/** POST .../entries/{entryId}/exclude → OrganisationView */
+export function excludeCompetitionEntry(
+  competitionId: string,
+  entryId: string,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/exclude`,
+  )
+}
+
+/** PUT /competitions/{id}/regulation → OrganisationView */
+export function replaceCompetitionRegulation(
+  competitionId: string,
+  request: ReplaceRegulationRequest,
+): Promise<OrganisationView> {
+  return sendJson('PUT', `/competitions/${competitionId}/regulation`, request)
+}
+
+/** POST /competitions/{id}/organisation/structure → OrganisationView */
+export function configureOrganisationStructure(
+  competitionId: string,
+  request: ConfigureStructureRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/organisation/structure`,
+    request,
+  )
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id} */

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionOverview } from '../api'
-import { EmptyState, ErrorState, LoadingState } from '../queryUi'
+import { BackLink, EmptyState, ErrorState, LoadingState } from '../queryUi'
 import {
   competitionStatusLabel,
   entryStatusLabel,
@@ -10,8 +10,8 @@ import {
 } from '../types'
 
 /**
- * Route param :competitionId comes from /competitions/:competitionId.
- * useParams reads it; the page does not put business data in the URL.
+ * Competition Overview — GET /competitions/{id}.
+ * Route: /competitions/:competitionId/overview (workspace is the parent hub).
  */
 export function CompetitionPage() {
   const { competitionId = '' } = useParams()
@@ -27,6 +27,11 @@ export function CompetitionPage() {
       <header className="page__header">
         <p className="eyebrow">Competition</p>
         <h1>{query.data?.name ?? 'Competition'}</h1>
+        {competitionId && (
+          <BackLink to={`/competitions/${competitionId}`}>
+            ← Back to workspace
+          </BackLink>
+        )}
       </header>
 
       {query.isPending && <LoadingState />}
