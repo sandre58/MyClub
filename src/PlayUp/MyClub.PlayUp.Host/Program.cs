@@ -262,6 +262,16 @@ app.MapGet(
         return Results.Ok(attention);
     });
 
+app.MapGet(
+    "/competitions/{competitionId:guid}/consultation",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var consultation = await executor
+            .GetConsultationAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(consultation);
+    });
+
 app.MapPost(
     "/competitions/{competitionId:guid}/complete",
     async (

@@ -78,8 +78,8 @@ public static class WorkspaceSummaryAssembler
                 "OpenMatches",
                 "Voir les matchs"),
             CompetitionStatus.Completed => (
-                "ArchiveCompetition",
-                "Archiver la compétition"),
+                "OpenConsultation",
+                "Consulter les résultats"),
             CompetitionStatus.Archived => (
                 "OpenConsultation",
                 "Consulter l’archive"),

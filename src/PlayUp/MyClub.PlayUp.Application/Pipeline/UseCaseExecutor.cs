@@ -23,7 +23,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// (CreateCompetition, Organisation Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
 /// PublishDraw, ApplyDraw, StartMatch, FinishMatch, CompleteCompetition, ArchiveCompetition,
 /// ListCompetitions, GetWorkspaceSummary, GetCompetitionOverview, GetOrganisationView,
-/// GetStageOverview, ListMatchesByStage, GetMatchDetail).
+/// GetStageOverview, ListMatchesByStage, GetMatchDetail, GetConsultation).
 /// </summary>
 /// <remarks>
 /// Command methods load aggregates via ports, run the static use case, then commit once via <see cref="IUnitOfWork"/>.
@@ -863,6 +863,26 @@ public sealed class UseCaseExecutor(
         }
 
         return NeedsAttentionAssembler.Assemble(competition, competitionStages, matchesByStage);
+    }
+
+    /// <summary>
+    /// Assembles Consultation (Results / Standings / Structure) for a competition.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Consultation view DTO.</returns>
+    public async Task<ConsultationViewDto> GetConsultationAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+        return ConsultationAssembler.Assemble(competition, competitionStages, matchesByStage);
     }
 
     /// <summary>
