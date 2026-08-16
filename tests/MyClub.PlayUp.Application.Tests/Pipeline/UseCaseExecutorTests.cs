@@ -357,7 +357,8 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task StartMatchAsync_loads_starts_and_saves_onceAsync()
     {
-        var match = DomainMatch.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var competition = CreateOpenCompetition();
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
@@ -366,6 +367,7 @@ public sealed class UseCaseExecutorTests
         matchRepo
             .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -401,7 +403,8 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task StartMatchAsync_when_domain_rejects_does_not_saveAsync()
     {
-        var match = DomainMatch.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var competition = CreateOpenCompetition();
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
         match.Start(_clock);
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
@@ -412,6 +415,7 @@ public sealed class UseCaseExecutorTests
         matchRepo
             .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.StartMatchAsync(match.Id);
@@ -424,7 +428,8 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task FinishMatchAsync_loads_finishes_and_saves_onceAsync()
     {
-        var match = DomainMatch.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var competition = CreateOpenCompetition();
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
         match.Start(_clock);
         var result = new DomainMatchResult(ResultType.Played, new DomainScore(2, 1));
 
@@ -436,6 +441,7 @@ public sealed class UseCaseExecutorTests
         matchRepo
             .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -473,7 +479,8 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task FinishMatchAsync_when_domain_rejects_does_not_saveAsync()
     {
-        var match = DomainMatch.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var competition = CreateOpenCompetition();
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
         var result = new DomainMatchResult(ResultType.Played, new DomainScore(1, 0));
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
@@ -484,6 +491,7 @@ public sealed class UseCaseExecutorTests
         matchRepo
             .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.FinishMatchAsync(match.Id, result);
@@ -491,6 +499,90 @@ public sealed class UseCaseExecutorTests
         var exception = await act.Should().ThrowAsync<DomainException>();
         exception.Which.Code.Should().Be(MatchErrorCodes.InvalidTransition);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(CompetitionStatus.Completed)]
+    [InlineData(CompetitionStatus.Archived)]
+    public async Task StartMatchAsync_when_competition_closed_rejects_without_saveAsync(CompetitionStatus closedStatus)
+    {
+        var competition = CreateClosedCompetition(closedStatus);
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        matchRepo
+            .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.StartMatchAsync(match.Id);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
+        match.Status.Should().Be(MatchStatus.Scheduled);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(CompetitionStatus.Completed)]
+    [InlineData(CompetitionStatus.Archived)]
+    public async Task FinishMatchAsync_when_competition_closed_rejects_without_saveAsync(CompetitionStatus closedStatus)
+    {
+        var competition = CreateClosedCompetition(closedStatus);
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        match.Start(_clock);
+        var result = new DomainMatchResult(ResultType.Played, new DomainScore(1, 0));
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        matchRepo
+            .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.FinishMatchAsync(match.Id, result);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
+        match.Status.Should().Be(MatchStatus.Live);
+        match.Result.Should().BeNull();
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(CompetitionStatus.Draft)]
+    [InlineData(CompetitionStatus.Ready)]
+    [InlineData(CompetitionStatus.Running)]
+    public async Task StartMatchAsync_when_competition_open_allows_startAsync(CompetitionStatus openStatus)
+    {
+        var competition = CreateCompetitionAt(openStatus);
+        var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        matchRepo
+            .Setup(repository => repository.GetByIdAsync(match.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(match);
+        SetupCompetitionLookup(competitions, competition);
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        await executor.StartMatchAsync(match.Id);
+
+        match.Status.Should().Be(MatchStatus.Live);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -568,12 +660,60 @@ public sealed class UseCaseExecutorTests
         fixture.MatchIds.Should().BeEmpty();
     }
 
+    private static void SetupCompetitionLookup(Mock<ICompetitionRepository> competitions, Competition competition) =>
+        competitions
+            .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition);
+
     private UseCaseExecutor CreateExecutor(
         Mock<IStageRepository> stages,
         Mock<IMatchRepository> matches,
         Mock<ICompetitionRepository> competitions,
         Mock<IUnitOfWork> unitOfWork) =>
         new(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+
+    private Competition CreateOpenCompetition() => CreateCompetitionAt(CompetitionStatus.Draft);
+
+    private Competition CreateClosedCompetition(CompetitionStatus closedStatus) =>
+        CreateCompetitionAt(closedStatus);
+
+    private Competition CreateCompetitionAt(CompetitionStatus status)
+    {
+        var competition = Competition.Create(new CompetitionName("Match Ops"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Team A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+
+        if (status == CompetitionStatus.Draft)
+        {
+            return competition;
+        }
+
+        competition.Prepare(_clock);
+        if (status == CompetitionStatus.Ready)
+        {
+            return competition;
+        }
+
+        competition.Start(_clock);
+        if (status == CompetitionStatus.Running)
+        {
+            return competition;
+        }
+
+        competition.Complete(CompletionMode.Administrative, _clock);
+        if (status == CompetitionStatus.Completed)
+        {
+            return competition;
+        }
+
+        if (status == CompetitionStatus.Archived)
+        {
+            competition.Archive(_clock);
+            return competition;
+        }
+
+        throw new InvalidOperationException($"Unsupported competition status '{status}' for test setup.");
+    }
 
     private Stage CreateDraftChampionshipStage()
     {

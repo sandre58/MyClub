@@ -259,13 +259,16 @@ public sealed class UseCaseExecutor(
     /// <param name="matchId">Match identity.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is started and persisted.</returns>
-    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist.</exception>
+    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist or the competition is closed.</exception>
     public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
     {
         var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
+
+        await EnsureCompetitionAllowsMatchOperationAsync(match.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
 
         StartMatch.Execute(match, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -278,7 +281,7 @@ public sealed class UseCaseExecutor(
     /// <param name="result">Domain match result.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is finished and persisted.</returns>
-    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist.</exception>
+    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist or the competition is closed.</exception>
     public async Task FinishMatchAsync(
         MatchId matchId,
         MatchResult result,
@@ -290,6 +293,9 @@ public sealed class UseCaseExecutor(
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
+
+        await EnsureCompetitionAllowsMatchOperationAsync(match.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
 
         FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -848,5 +854,22 @@ public sealed class UseCaseExecutor(
         }
 
         return loaded;
+    }
+
+    private async Task EnsureCompetitionAllowsMatchOperationAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            throw new ApplicationFailureException(
+                $"Match operations are not allowed when competition is '{competition.Status}'.",
+                ApplicationErrorCodes.MatchOperationNotAllowed);
+        }
     }
 }

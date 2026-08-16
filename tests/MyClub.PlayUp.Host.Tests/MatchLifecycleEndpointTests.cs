@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -207,6 +208,106 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         }
     }
 
+    [IntegrationFact]
+    public async Task Start_when_competition_completed_returns_409_MatchOperationNotAllowedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var matchId = await SeedMatchOnClosedCompetitionAsync(factory, archive: false);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(StartUri(matchId), content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        GetCode(problem).Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
+
+        using var scope = factory.Services.CreateScope();
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        loaded!.Status.Should().Be(MatchStatus.Scheduled);
+    }
+
+    [IntegrationFact]
+    public async Task Finish_when_competition_archived_returns_409_MatchOperationNotAllowedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var matchId = await SeedMatchOnClosedCompetitionAsync(factory, archive: true, startMatch: true);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsJsonAsync(
+            FinishUri(matchId),
+            new FinishMatchRequest(ResultType.Played, 1, 0));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        GetCode(problem).Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
+
+        using var scope = factory.Services.CreateScope();
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        loaded!.Status.Should().Be(MatchStatus.Live);
+        loaded.Result.Should().BeNull();
+    }
+
+    [IntegrationFact]
+    public async Task List_detail_start_finish_exposes_optional_placement_and_persists_lifecycleAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAttachedMatchWithPlacementAsync(factory);
+        using var client = factory.CreateClient();
+
+        using (var listed = await client.GetAsync($"/stages/{seed.StageId.Value}/matches"))
+        {
+            listed.StatusCode.Should().Be(HttpStatusCode.OK);
+            var summaries = await listed.Content.ReadFromJsonAsync<MatchSummaryDto[]>();
+            summaries.Should().ContainSingle();
+            summaries![0].MatchId.Should().Be(seed.MatchId.Value);
+            summaries[0].Status.Should().Be(MatchStatus.Scheduled);
+            summaries[0].ScheduledAt.Should().Be(seed.Kickoff);
+            summaries[0].ResourceId.Should().Be(seed.ResourceId.Value);
+        }
+
+        using (var detailBefore = await client.GetAsync($"/matches/{seed.MatchId.Value}"))
+        {
+            detailBefore.StatusCode.Should().Be(HttpStatusCode.OK);
+            var detail = await detailBefore.Content.ReadFromJsonAsync<MatchDetailDto>();
+            detail.Should().NotBeNull();
+            detail!.ScheduledAt.Should().Be(seed.Kickoff);
+            detail.ResourceId.Should().Be(seed.ResourceId.Value);
+            detail.Status.Should().Be(MatchStatus.Scheduled);
+            detail.Result.Should().BeNull();
+        }
+
+        using (var start = await client.PostAsync(StartUri(seed.MatchId), content: null))
+        {
+            start.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var detailLive = await client.GetAsync($"/matches/{seed.MatchId.Value}"))
+        {
+            var detail = await detailLive.Content.ReadFromJsonAsync<MatchDetailDto>();
+            detail!.Status.Should().Be(MatchStatus.Live);
+            detail.ScheduledAt.Should().Be(seed.Kickoff);
+        }
+
+        using (var finish = await client.PostAsJsonAsync(
+            FinishUri(seed.MatchId),
+            new FinishMatchRequest(ResultType.Played, 2, 0)))
+        {
+            finish.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var detailFinished = await client.GetAsync($"/matches/{seed.MatchId.Value}"))
+        {
+            var detail = await detailFinished.Content.ReadFromJsonAsync<MatchDetailDto>();
+            detail!.Status.Should().Be(MatchStatus.Finished);
+            detail.Result.Should().NotBeNull();
+            detail.Result!.HomeGoals.Should().Be(2);
+            detail.Result.AwayGoals.Should().Be(0);
+            detail.ScheduledAt.Should().Be(seed.Kickoff);
+        }
+    }
+
     private static Uri StartUri(MatchId matchId) =>
         new($"/matches/{matchId.Value}/start", UriKind.Relative);
 
@@ -254,5 +355,78 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         matches.Add(match);
         await unitOfWork.SaveChangesAsync();
         return match.Id;
+    }
+
+    private async Task<MatchId> SeedMatchOnClosedCompetitionAsync(
+        PlayUpWebApplicationFactory factory,
+        bool archive,
+        bool startMatch = false)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Closed Match League"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("Matchday 1"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        stages.Add(stage);
+
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        if (startMatch)
+        {
+            match.Start(_clock);
+        }
+
+        matches.Add(match);
+
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Complete(CompletionMode.Administrative, _clock);
+        if (archive)
+        {
+            competition.Archive(_clock);
+        }
+
+        await unitOfWork.SaveChangesAsync();
+        return match.Id;
+    }
+
+    private async Task<(StageId StageId, MatchId MatchId, DateTimeOffset Kickoff, ResourceId ResourceId)>
+        SeedAttachedMatchWithPlacementAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Placed Match League"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("Matchday 1"), SampleRegulations.Standard(), _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        competition.AddStage(stage.Id, _clock);
+
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var kickoff = new DateTimeOffset(2026, 9, 12, 18, 30, 0, TimeSpan.Zero);
+        var resourceId = ResourceId.New();
+        stage.ApplyMatchPlacements([new MatchPlacement(match.Id, kickoff, resourceId)], [match.Id]);
+
+        stages.Add(stage);
+        matches.Add(match);
+        await unitOfWork.SaveChangesAsync();
+        return (stage.Id, match.Id, kickoff, resourceId);
     }
 }

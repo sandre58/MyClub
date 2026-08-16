@@ -54,6 +54,8 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
                 (StatusCodes.Status404NotFound, "Competition not found", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MatchNotFound } application =>
                 (StatusCodes.Status404NotFound, "Match not found", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.MatchOperationNotAllowed } application =>
+                (StatusCodes.Status409Conflict, "Match operation not allowed", application.Code),
             ApplicationFailureException application =>
                 (StatusCodes.Status400BadRequest, "Application failure", application.Code),
             DomainException domain =>

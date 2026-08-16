@@ -55,6 +55,39 @@ public sealed class MatchReadAssemblerTests
         summaries[1].MatchId.Should().Be(match2.Id.Value);
         summaries[1].Score.Should().BeNull();
         summaries[1].Status.Should().Be(MatchStatus.Scheduled);
+        summaries[0].ScheduledAt.Should().BeNull();
+        summaries[0].ResourceId.Should().BeNull();
+        summaries[1].ScheduledAt.Should().BeNull();
+        summaries[1].ResourceId.Should().BeNull();
+    }
+
+    [Fact]
+    public void AssembleSummaries_and_detail_map_optional_calendar_placement()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+
+        var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var kickoff = new DateTimeOffset(2026, 9, 1, 15, 0, 0, TimeSpan.Zero);
+        var resourceId = ResourceId.New();
+        stage.ApplyMatchPlacements(
+            [new MatchPlacement(match.Id, kickoff, resourceId)],
+            [match.Id]);
+
+        var summaries = MatchReadAssembler.AssembleSummaries(stage, competition, [match]);
+        var detail = MatchReadAssembler.AssembleDetail(match, competition, stage);
+
+        summaries.Should().ContainSingle();
+        summaries[0].ScheduledAt.Should().Be(kickoff);
+        summaries[0].ResourceId.Should().Be(resourceId.Value);
+        detail.ScheduledAt.Should().Be(kickoff);
+        detail.ResourceId.Should().Be(resourceId.Value);
     }
 
     [Fact]
@@ -117,5 +150,7 @@ public sealed class MatchReadAssemblerTests
         detail.Result.Should().BeNull();
         detail.FixtureId.Should().BeNull();
         detail.LegIndex.Should().BeNull();
+        detail.ScheduledAt.Should().BeNull();
+        detail.ResourceId.Should().BeNull();
     }
 }

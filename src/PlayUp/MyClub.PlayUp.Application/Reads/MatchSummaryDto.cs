@@ -19,6 +19,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Score">Play score when finished; otherwise <see langword="null"/>.</param>
 /// <param name="FixtureId">Owning fixture when attached.</param>
 /// <param name="RoundId">Owning round when the fixture is in a round.</param>
+/// <param name="ScheduledAt">Optional calendar start from Stage placement.</param>
+/// <param name="ResourceId">Optional scheduling resource from Stage placement.</param>
 public sealed record MatchSummaryDto(
     Guid MatchId,
     Guid StageId,
@@ -27,4 +29,6 @@ public sealed record MatchSummaryDto(
     EntrySideDto Away,
     MatchScoreDto? Score,
     Guid? FixtureId,
-    Guid? RoundId);
+    Guid? RoundId,
+    DateTimeOffset? ScheduledAt = null,
+    Guid? ResourceId = null);

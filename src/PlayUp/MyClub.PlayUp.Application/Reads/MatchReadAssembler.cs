@@ -42,8 +42,8 @@ public static class MatchReadAssembler
                 .ThenBy(match => match.Id.Value)
                 .Select(match =>
                 {
-                    Guid? fixtureId = null;
-                    Guid? roundId = null;
+                    ResolveCalendarPlacement(stage, match.Id, out var scheduledAt, out var resourceId);
+
                     if (!placement.TryGetValue(match.Id, out var info))
                     {
                         return new MatchSummaryDto(
@@ -55,12 +55,11 @@ public static class MatchReadAssembler
                             new EntrySideDto(match.AwayEntryId.Value,
                                 EntryDisplayNames.Resolve(names, match.AwayEntryId)),
                             MapScore(match.Result),
-                            fixtureId,
-                            roundId);
+                            FixtureId: null,
+                            RoundId: null,
+                            scheduledAt,
+                            resourceId);
                     }
-
-                    fixtureId = info.FixtureId.Value;
-                    roundId = info.RoundId?.Value;
 
                     return new MatchSummaryDto(
                         match.Id.Value,
@@ -69,8 +68,10 @@ public static class MatchReadAssembler
                         new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
                         new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
                         MapScore(match.Result),
-                        fixtureId,
-                        roundId);
+                        info.FixtureId.Value,
+                        info.RoundId?.Value,
+                        scheduledAt,
+                        resourceId);
                 })
         ];
     }
@@ -88,8 +89,12 @@ public static class MatchReadAssembler
         ArgumentNullException.ThrowIfNull(competition);
 
         var names = EntryDisplayNames.ToMap(competition);
-        Guid? fixtureId = null;
-        int? legIndex = null;
+        DateTimeOffset? scheduledAt = null;
+        Guid? resourceId = null;
+        if (stage is not null)
+        {
+            ResolveCalendarPlacement(stage, match.Id, out scheduledAt, out resourceId);
+        }
 
         if (stage is null)
         {
@@ -101,8 +106,10 @@ public static class MatchReadAssembler
                 new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
                 new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
                 MapResult(match.Result),
-                fixtureId,
-                legIndex);
+                FixtureId: null,
+                LegIndex: null,
+                scheduledAt,
+                resourceId);
         }
 
         var attachment = FindAttachment(stage, match.Id);
@@ -116,12 +123,11 @@ public static class MatchReadAssembler
                 new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
                 new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
                 MapResult(match.Result),
-                fixtureId,
-                legIndex);
+                FixtureId: null,
+                LegIndex: null,
+                scheduledAt,
+                resourceId);
         }
-
-        fixtureId = found.FixtureId.Value;
-        legIndex = found.LegIndex;
 
         return new MatchDetailDto(
             match.Id.Value,
@@ -131,8 +137,27 @@ public static class MatchReadAssembler
             new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
             new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
             MapResult(match.Result),
-            fixtureId,
-            legIndex);
+            found.FixtureId.Value,
+            found.LegIndex,
+            scheduledAt,
+            resourceId);
+    }
+
+    private static void ResolveCalendarPlacement(
+        Stage stage,
+        MatchId matchId,
+        out DateTimeOffset? scheduledAt,
+        out Guid? resourceId)
+    {
+        if (stage.TryGetMatchPlacement(matchId, out var placement))
+        {
+            scheduledAt = placement.Start;
+            resourceId = placement.ResourceId.Value;
+            return;
+        }
+
+        scheduledAt = null;
+        resourceId = null;
     }
 
     private static MatchScoreDto? MapScore(MatchResult? result) =>

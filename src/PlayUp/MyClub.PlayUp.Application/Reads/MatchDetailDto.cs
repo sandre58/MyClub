@@ -20,6 +20,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Result">Full result when finished; otherwise <see langword="null"/>.</param>
 /// <param name="FixtureId">Owning fixture when attached.</param>
 /// <param name="LegIndex">Leg index when attached.</param>
+/// <param name="ScheduledAt">Optional calendar start from Stage placement.</param>
+/// <param name="ResourceId">Optional scheduling resource from Stage placement.</param>
 public sealed record MatchDetailDto(
     Guid MatchId,
     Guid CompetitionId,
@@ -29,4 +31,6 @@ public sealed record MatchDetailDto(
     EntrySideDto Away,
     MatchResultDto? Result,
     Guid? FixtureId,
-    int? LegIndex);
+    int? LegIndex,
+    DateTimeOffset? ScheduledAt = null,
+    Guid? ResourceId = null);

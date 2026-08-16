@@ -137,4 +137,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when Fixture/Match materialization cannot run.
     /// </summary>
     public const string MaterializationFailure = "Application.MaterializationFailure";
+
+    /// <summary>
+    /// Gets the code when Start/Finish is refused because the Competition is Completed or Archived.
+    /// </summary>
+    public const string MatchOperationNotAllowed = "Application.MatchOperationNotAllowed";
 }
