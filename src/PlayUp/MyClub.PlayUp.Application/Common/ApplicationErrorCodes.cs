@@ -142,4 +142,14 @@ public static class ApplicationErrorCodes
     /// Gets the code when Start/Finish is refused because the Competition is Completed or Archived.
     /// </summary>
     public const string MatchOperationNotAllowed = "Application.MatchOperationNotAllowed";
+
+    /// <summary>
+    /// Gets the code when Qualification/Progression is refused because the Competition is Completed or Archived.
+    /// </summary>
+    public const string ConsequenceOperationNotAllowed = "Application.ConsequenceOperationNotAllowed";
+
+    /// <summary>
+    /// Gets the code when ApplyProgression would overwrite a dynamic slot occupant (F8 preflight).
+    /// </summary>
+    public const string SlotOccupancyConflict = "Application.SlotOccupancyConflict";
 }

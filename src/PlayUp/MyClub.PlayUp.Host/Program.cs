@@ -233,6 +233,35 @@ app.MapPost(
         return Results.NoContent();
     });
 
+app.MapPost(
+    "/stages/{stageId:guid}/qualification/apply",
+    async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var applied = await executor
+            .ApplyQualificationAsync(new StageId(stageId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(new
+        {
+            appliedCount = applied.Count,
+            assignments = applied.Select(instruction => new
+            {
+                stageId = instruction.StageId.Value,
+                slotKey = instruction.SlotKey,
+                entryId = instruction.EntryId.Value
+            }).ToArray()
+        });
+    });
+
+app.MapGet(
+    "/competitions/{competitionId:guid}/attention",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var attention = await executor
+            .GetNeedsAttentionAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(attention);
+    });
+
 // Match is an independent aggregate: routes are Match-centric (executor loads by MatchId only).
 app.MapPost(
     "/matches/{matchId:guid}/start",

@@ -13,14 +13,14 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 /// <remarks>
 /// <see cref="NextActionCode"/> / <see cref="NextActionLabel"/> are Application/Read hints — not Domain fields.
-/// <see cref="AttentionCount"/> is always 0 in Slice 1 (Needs Attention arrives in a later slice).
+/// <see cref="AttentionCount"/> is a derived Needs Attention count (Slice 5) — not persisted.
 /// </remarks>
 /// <param name="Id">Competition identity.</param>
 /// <param name="Name">Display name.</param>
 /// <param name="Status">Lifecycle status.</param>
 /// <param name="NextActionCode">Stable machine code for the stub next step (e.g. ContinueOrganisation).</param>
 /// <param name="NextActionLabel">Organizer-facing next step label.</param>
-/// <param name="AttentionCount">Needs Attention count (0 in Slice 1).</param>
+/// <param name="AttentionCount">Derived Needs Attention count.</param>
 public sealed record WorkspaceSummaryDto(
     Guid Id,
     string Name,

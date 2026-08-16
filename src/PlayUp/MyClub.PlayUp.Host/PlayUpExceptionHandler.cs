@@ -56,6 +56,10 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
                 (StatusCodes.Status404NotFound, "Match not found", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MatchOperationNotAllowed } application =>
                 (StatusCodes.Status409Conflict, "Match operation not allowed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ConsequenceOperationNotAllowed } application =>
+                (StatusCodes.Status409Conflict, "Consequence operation not allowed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.SlotOccupancyConflict } application =>
+                (StatusCodes.Status409Conflict, "Slot occupancy conflict", application.Code),
             ApplicationFailureException application =>
                 (StatusCodes.Status400BadRequest, "Application failure", application.Code),
             DomainException domain =>

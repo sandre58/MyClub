@@ -83,6 +83,11 @@ public static class ApplyProgressionOutcome
 
         for (var i = 0; i < instructions.Length; i++)
         {
+            SlotOccupancyConflictGuard.EnsureCompatible(destinations[i], instructions[i]);
+        }
+
+        for (var i = 0; i < instructions.Length; i++)
+        {
             var instruction = instructions[i];
             destinations[i].ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock);
         }

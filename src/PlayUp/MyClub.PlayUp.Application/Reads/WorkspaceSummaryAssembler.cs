@@ -13,8 +13,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Assembles a minimal WorkspaceSummary for Accueil (Slice 1).
 /// </summary>
 /// <remarks>
-/// Next action is a Read stub: Draft → ContinueOrganisation. Richer next / attention / completion
-/// arrive in later slices — not Domain properties.
+/// Next action is a Read stub. AttentionCount is derived via Needs Attention (Slice 5).
 /// </remarks>
 public static class WorkspaceSummaryAssembler
 {
@@ -22,13 +21,15 @@ public static class WorkspaceSummaryAssembler
     public const string ContinueOrganisationCode = "ContinueOrganisation";
 
     /// <summary>
-    /// Builds the Slice 1 workspace summary.
+    /// Builds the workspace summary.
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
+    /// <param name="attentionCount">Derived Needs Attention count.</param>
     /// <returns>Workspace summary DTO.</returns>
-    public static WorkspaceSummaryDto Assemble(Competition competition)
+    public static WorkspaceSummaryDto Assemble(Competition competition, int attentionCount = 0)
     {
         ArgumentNullException.ThrowIfNull(competition);
+        ArgumentOutOfRangeException.ThrowIfNegative(attentionCount);
 
         var (code, label) = ResolveNextStub(competition.Status);
         return new WorkspaceSummaryDto(
@@ -37,7 +38,7 @@ public static class WorkspaceSummaryAssembler
             competition.Status,
             code,
             label,
-            AttentionCount: 0);
+            attentionCount);
     }
 
     private static (string? Code, string? Label) ResolveNextStub(CompetitionStatus status) =>

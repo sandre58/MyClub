@@ -574,16 +574,24 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_replaces_existing_resolved_occupant()
+    public void Execute_when_slot_occupied_by_different_entry_rejects_without_mutation()
     {
         var ctx = CreateSelfStageContext(homeGoals: 2, awayGoals: 1, withLoserPath: false);
         var previous = EntryId.New();
         ctx.Source.ApplyResolvedEntry("SF1-A", previous, _clock);
+        ctx.Source.ClearDomainEvents();
 
-        ApplyProgressionOutcome.Execute(ctx.Source, ctx.FixtureId, [ctx.Match], [ctx.Source], _clock);
+        var act = () => ApplyProgressionOutcome.Execute(
+            ctx.Source,
+            ctx.FixtureId,
+            [ctx.Match],
+            [ctx.Source],
+            _clock);
 
-        ctx.Source.FindSlot("SF1-A")!.EntryId.Should().Be(ctx.Home);
-        ctx.Source.FindSlot("SF1-A")!.EntryId.Should().NotBe(previous);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.SlotOccupancyConflict);
+        ctx.Source.FindSlot("SF1-A")!.EntryId.Should().Be(previous);
+        ctx.Source.DomainEvents.Should().NotContain(e => e is StageSlotOccupantChanged);
     }
 
     [Fact]

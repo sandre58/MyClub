@@ -127,6 +127,8 @@ public sealed class UseCaseExecutor(
                 $"Competition '{source.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
+        EnsureCompetitionAllowsConsequenceOperation(competition);
+
         var competitionStages = new List<Stage>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
         {
@@ -158,6 +160,54 @@ public sealed class UseCaseExecutor(
 
         ApplyProgressionOutcome.Execute(source, fixtureId, loadedMatches, competitionStages, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads competition stages and source matches, calculates standings, applies qualification, and saves once.
+    /// </summary>
+    /// <param name="sourceStageId">Stage that owns qualification rules.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Applied slot assignment instructions.</returns>
+    public async Task<IReadOnlyList<SlotAssignmentInstruction>> ApplyQualificationAsync(
+        StageId sourceStageId,
+        CancellationToken cancellationToken = default)
+    {
+        var source = await stages.GetByIdAsync(sourceStageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{sourceStageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdAsync(source.CompetitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{source.CompetitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        EnsureCompetitionAllowsConsequenceOperation(competition);
+
+        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        if (!competitionStages.Exists(candidate => candidate.Id.Equals(sourceStageId)))
+        {
+            throw new ApplicationFailureException(
+                $"Stage '{sourceStageId}' is not part of the competition stages list.",
+                ApplicationErrorCodes.StageNotInCompetition);
+        }
+
+        var canonicalSource = competitionStages.First(candidate => candidate.Id.Equals(sourceStageId));
+        var stageMatches = await matches.ListByStageAsync(sourceStageId, cancellationToken).ConfigureAwait(false);
+        var (overall, groupStandings) = QualificationStandingFactory.Build(
+            competition,
+            canonicalSource,
+            stageMatches);
+
+        var applied = ApplyQualification.Execute(
+            canonicalSource,
+            overall,
+            groupStandings,
+            stageMatches,
+            competitionStages,
+            clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return applied;
     }
 
     /// <summary>
@@ -718,12 +768,38 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
+        var attention = await GetNeedsAttentionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
-        return WorkspaceSummaryAssembler.Assemble(competition);
+        return WorkspaceSummaryAssembler.Assemble(competition, attention.Count);
+    }
+
+    /// <summary>
+    /// Assembles Needs Attention for a competition (derived Read).
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Needs Attention DTO.</returns>
+    public async Task<NeedsAttentionDto> GetNeedsAttentionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stage in competitionStages)
+        {
+            matchesByStage[stage.Id] = await matches.ListByStageAsync(stage.Id, cancellationToken).ConfigureAwait(false);
+        }
+
+        return NeedsAttentionAssembler.Assemble(competition, competitionStages, matchesByStage);
     }
 
     /// <summary>
@@ -871,5 +947,32 @@ public sealed class UseCaseExecutor(
                 $"Match operations are not allowed when competition is '{competition.Status}'.",
                 ApplicationErrorCodes.MatchOperationNotAllowed);
         }
+    }
+
+    private static void EnsureCompetitionAllowsConsequenceOperation(Competition competition)
+    {
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            throw new ApplicationFailureException(
+                $"Consequence operations are not allowed when competition is '{competition.Status}'.",
+                ApplicationErrorCodes.ConsequenceOperationNotAllowed);
+        }
+    }
+
+    private async Task<List<Stage>> LoadCompetitionStagesAsync(
+        Competition competition,
+        CancellationToken cancellationToken)
+    {
+        var competitionStages = new List<Stage>(competition.StageIds.Count);
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+                ?? throw new ApplicationFailureException(
+                    $"Stage '{stageId}' was not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            competitionStages.Add(stage);
+        }
+
+        return competitionStages;
     }
 }
