@@ -9,7 +9,6 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
@@ -39,7 +38,7 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
 
         var view = await response.Content.ReadFromJsonAsync<ConsultationViewDto>(HostJson.Options);
         view.Should().NotBeNull();
-        view!.Status.Should().Be(CompetitionStatus.Running);
+        view.Status.Should().Be(CompetitionStatus.Running);
         view.FormatKind.Should().Be(StructureFormatKind.Championship);
         view.Results.Should().HaveCount(3);
         view.Results.Should().OnlyContain(r => r.Score != null && r.MatchId != Guid.Empty);
@@ -134,11 +133,11 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
         {
             for (var j = i + 1; j < entries.Length; j++)
             {
-                var fixture = stage.AddFixture(md.Id, _clock);
+                var addFixture = stage.AddFixture(md.Id, _clock);
                 var match = Match.Create(competition.Id, stage.Id, entries[i], entries[j], _clock);
                 match.Start(_clock);
                 match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
-                stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+                stage.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
                 matches.Add(match);
             }
         }

@@ -72,28 +72,7 @@ public static class NeedsAttentionAssembler
         return new NeedsAttentionDto(competition.Id.Value, items);
     }
 
-    private static void CollectDrawNoSolutions(Stage stage, List<NeedsAttentionItemDto> items)
-    {
-        foreach (var draw in stage.Draws)
-        {
-            if (draw.Status == DrawStatus.Cancelled)
-            {
-                continue;
-            }
-
-            if (draw.Resolution.State != DrawResolutionState.NoSolution)
-            {
-                continue;
-            }
-
-            items.Add(new NeedsAttentionItemDto(
-                SourceDrawNoSolution,
-                $"Le tirage '{draw.Id}' n’a pas de solution.",
-                SeverityBlocking,
-                "Draw",
-                draw.Id.Value.ToString()));
-        }
-    }
+    private static void CollectDrawNoSolutions(Stage stage, List<NeedsAttentionItemDto> items) => items.AddRange(from draw in stage.Draws where draw.Status != DrawStatus.Cancelled where draw.Resolution.State == DrawResolutionState.NoSolution select new NeedsAttentionItemDto(SourceDrawNoSolution, $"Le tirage '{draw.Id}' n’a pas de solution.", SeverityBlocking, "Draw", draw.Id.Value.ToString()));
 
     private static void CollectQualificationAttentions(
         Stage source,
@@ -299,7 +278,7 @@ public static class NeedsAttentionAssembler
     private static Standing BuildOverall(Stage source, IReadOnlyList<Match> matches)
     {
         var participants = matches
-            .Where(match => match.Status == MatchStatus.Finished && match.Result is not null)
+            .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
             .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
             .Distinct()
             .ToArray();
@@ -331,7 +310,7 @@ public static class NeedsAttentionAssembler
         Stage sourceStage,
         QualificationPath path,
         Standing? overallStanding,
-        IReadOnlyDictionary<GroupId, Standing> groupStandings,
+        Dictionary<GroupId, Standing> groupStandings,
         IReadOnlyList<Match> matches)
     {
         if (path.Source.Scope == RankingScope.AcrossGroups)
@@ -347,13 +326,10 @@ public static class NeedsAttentionAssembler
                 CalculateStanding.ToStandingPenalties(sourceStage.Penalties));
         }
 
-        if (path.Source.GroupId is not null || path.Source.Scope == RankingScope.Group)
-        {
-            var groupId = path.Source.GroupId
-                ?? throw new InvalidOperationException("Group id missing.");
-            return groupStandings[groupId];
-        }
-
-        return overallStanding ?? throw new InvalidOperationException("Overall standing missing.");
+        if (path.Source.GroupId is null && path.Source.Scope != RankingScope.Group)
+            return overallStanding ?? throw new InvalidOperationException("Overall standing missing.");
+        var groupId = path.Source.GroupId
+                      ?? throw new InvalidOperationException("Group id missing.");
+        return groupStandings[groupId];
     }
 }

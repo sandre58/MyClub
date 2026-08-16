@@ -56,7 +56,7 @@ public static class ConsultationAssembler
         var formatLabel = FormatLabel(formatKind, primary);
         var names = EntryDisplayNames.ToMap(competition);
 
-        var results = AssembleResults(competition, stages, matchesByStage, names);
+        var results = AssembleResults(competition, stages, matchesByStage);
         var standings = AssembleStandings(competition, stages, matchesByStage, names, formatKind);
         var structure = AssembleStructure(stages, names, formatKind);
 
@@ -83,25 +83,10 @@ public static class ConsultationAssembler
         return stages.FirstOrDefault(stage => stage.Id.Equals(primaryId));
     }
 
-    private static StructureFormatKind? InferFormat(Stage stage)
-    {
-        if (stage.Rounds.Count > 0)
-        {
-            return StructureFormatKind.Cup;
-        }
-
-        if (stage.Groups.Count > 0)
-        {
-            return StructureFormatKind.Groups;
-        }
-
-        if (stage.Matchdays.Count > 0)
-        {
-            return StructureFormatKind.Championship;
-        }
-
-        return null;
-    }
+    private static StructureFormatKind? InferFormat(Stage stage) =>
+        stage.Rounds.Count > 0
+            ? StructureFormatKind.Cup
+            : stage.Groups.Count > 0 ? StructureFormatKind.Groups : stage.Matchdays.Count > 0 ? StructureFormatKind.Championship : null;
 
     private static string FormatLabel(StructureFormatKind? kind, Stage? primary) =>
         kind switch
@@ -113,11 +98,10 @@ public static class ConsultationAssembler
             _ => "Structure partielle"
         };
 
-    private static IReadOnlyList<ConsultationResultDto> AssembleResults(
+    private static List<ConsultationResultDto> AssembleResults(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
-        IReadOnlyDictionary<EntryId, string> names)
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
     {
         var results = new List<ConsultationResultDto>();
         foreach (var stage in stages)
@@ -192,18 +176,25 @@ public static class ConsultationAssembler
         IReadOnlyDictionary<EntryId, string> names,
         StructureFormatKind? primaryFormat)
     {
-        if (primaryFormat == StructureFormatKind.Cup)
+        switch (primaryFormat)
         {
-            return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
-        }
+            case StructureFormatKind.Cup:
+                return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
+            case StructureFormatKind.Championship:
+            case StructureFormatKind.Groups:
+                break;
+            case null when stages.All(stage => InferFormat(stage) is null or StructureFormatKind.Cup):
+                {
+                    var onlyCup = stages.Count > 0 &&
+                                  stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
+                    return new ConsultationStandingsSectionDto(
+                        false,
+                        onlyCup ? NotApplicableCupFormat : NotApplicableNoStructure,
+                        []);
+                }
 
-        if (primaryFormat is null && stages.All(stage => InferFormat(stage) is null or StructureFormatKind.Cup))
-        {
-            var onlyCup = stages.Count > 0 && stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
-            return new ConsultationStandingsSectionDto(
-                false,
-                onlyCup ? NotApplicableCupFormat : NotApplicableNoStructure,
-                []);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(primaryFormat), primaryFormat, null);
         }
 
         var tables = new List<ConsultationStandingTableDto>();
@@ -233,34 +224,16 @@ public static class ConsultationAssembler
             }
             else
             {
-                foreach (var group in stage.Groups)
-                {
-                    var standing = CalculateStanding.Execute(
-                        group.EntryIds,
-                        matches,
-                        rules,
-                        MatchFilter.All,
-                        penalties);
-                    tables.Add(new ConsultationStandingTableDto(
-                        ScopeGroup,
-                        stage.Id.Value,
-                        stage.Name.Value,
-                        group.Id.Value,
-                        group.Name,
-                        MapRows(standing, names)));
-                }
+                tables.AddRange(from @group in stage.Groups let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties) select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
             }
         }
 
-        if (tables.Count == 0)
-        {
-            return new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, []);
-        }
-
-        return new ConsultationStandingsSectionDto(true, null, tables);
+        return tables.Count == 0
+            ? new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, [])
+            : new ConsultationStandingsSectionDto(true, null, tables);
     }
 
-    private static IReadOnlyList<EntryId> ResolveOverallParticipants(
+    private static EntryId[] ResolveOverallParticipants(
         Competition competition,
         IReadOnlyList<Match> matches)
     {
@@ -268,15 +241,11 @@ public static class ConsultationAssembler
             .Where(entry => entry.Status == EntryStatus.Active)
             .Select(entry => entry.Id)
             .ToArray();
-        if (active.Length > 0)
-        {
-            return active;
-        }
-
-        return
-        [
+        return active.Length > 0
+            ? active
+            : [
             .. matches
-                .Where(match => match.Status == MatchStatus.Finished && match.Result is not null)
+                .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
                 .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
                 .Distinct()
         ];
@@ -285,20 +254,20 @@ public static class ConsultationAssembler
     private static IReadOnlyList<ConsultationStandingRowDto> MapRows(
         Standing standing,
         IReadOnlyDictionary<EntryId, string> names) =>
-        [
-            .. standing.Rows.Select(row => new ConsultationStandingRowDto(
-                row.Position,
-                row.EntryId.Value,
-                EntryDisplayNames.Resolve(names, row.EntryId) ?? row.EntryId.Value.ToString(),
-                row.Played,
-                row.Wins,
-                row.Draws,
-                row.Losses,
-                row.GoalsFor,
-                row.GoalsAgainst,
-                row.GoalDifference,
-                row.Points))
-        ];
+    [
+        .. standing.Rows.Select(row => new ConsultationStandingRowDto(
+            row.Position,
+            row.EntryId.Value,
+            EntryDisplayNames.Resolve(names, row.EntryId) ?? row.EntryId.Value.ToString(),
+            row.Played,
+            row.Wins,
+            row.Draws,
+            row.Losses,
+            row.GoalsFor,
+            row.GoalsAgainst,
+            row.GoalDifference,
+            row.Points))
+    ];
 
     private static ConsultationStructureDto AssembleStructure(
         IReadOnlyList<Stage> stages,

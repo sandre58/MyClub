@@ -22,45 +22,30 @@ internal static class OrganisationRequestMapper
     public static StructureIntent ToStructureIntent(ConfigureStructureRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var format = (request.Format ?? string.Empty).Trim();
-        if (format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase))
-        {
-            return StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName);
-        }
-
-        if (format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase))
-        {
-            if (request.GroupCount is null || request.ParticipantsPerGroup is null)
-            {
-                throw new ApplicationFailureException(
+        var format = request.Format.Trim();
+        return format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
+            || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase)
+            ? StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName)
+            : format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
+            || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase)
+            ? request.GroupCount is null || request.ParticipantsPerGroup is null
+                ? throw new ApplicationFailureException(
                     "Groups format requires GroupCount and ParticipantsPerGroup.",
-                    ApplicationErrorCodes.InvalidStructureIntent);
-            }
-
-            return StructureIntent.Groups(
+                    ApplicationErrorCodes.InvalidStructureIntent)
+                : StructureIntent.Groups(
                 request.GroupCount.Value,
                 request.ParticipantsPerGroup.Value,
-                request.StageName);
-        }
-
-        if (format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Coupe", StringComparison.OrdinalIgnoreCase))
-        {
-            if (request.BracketSize is null)
-            {
-                throw new ApplicationFailureException(
-                    "Cup format requires BracketSize (power of two, 2–64).",
-                    ApplicationErrorCodes.InvalidStructureIntent);
-            }
-
-            return StructureIntent.Cup(request.BracketSize.Value, request.StageName);
-        }
-
-        throw new ApplicationFailureException(
-            $"Unknown organisation format '{request.Format}'. Expected Championship, Groups, or Cup.",
-            ApplicationErrorCodes.InvalidStructureIntent);
+                request.StageName)
+            : !format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
+            && !format.Equals("Coupe", StringComparison.OrdinalIgnoreCase)
+            ? throw new ApplicationFailureException(
+                $"Unknown organisation format '{request.Format}'. Expected Championship, Groups, or Cup.",
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : request.BracketSize is null
+            ? throw new ApplicationFailureException(
+                "Cup format requires BracketSize (power of two, 2–64).",
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : StructureIntent.Cup(request.BracketSize.Value, request.StageName);
     }
 
     /// <summary>

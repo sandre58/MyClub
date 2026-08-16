@@ -29,14 +29,11 @@ public static class DrawInputsFactory
             .OrderBy(id => id.Value)
             .ToList();
 
-        if (entries.Count == 0)
-        {
-            throw new ApplicationFailureException(
+        return entries.Count == 0
+            ? throw new ApplicationFailureException(
                 "Draw inputs require at least one active entry.",
-                ApplicationErrorCodes.DrawGenerationFailure);
-        }
-
-        return kind switch
+                ApplicationErrorCodes.DrawGenerationFailure)
+            : kind switch
         {
             DrawResolutionKind.Group => DrawInputs.ForGroup(entries, potMembership: BuildSequentialPots(entries, stage)),
             DrawResolutionKind.Pairing => DrawInputs.ForPairing(entries),
@@ -47,7 +44,7 @@ public static class DrawInputsFactory
         };
     }
 
-    private static PotMembership BuildSequentialPots(IReadOnlyList<EntryId> entries, Stage stage)
+    private static PotMembership BuildSequentialPots(List<EntryId> entries, Stage stage)
     {
         var numberOfPots = stage.Regulation.DrawRules?.PotRules?.NumberOfPots
             ?? throw new ApplicationFailureException(

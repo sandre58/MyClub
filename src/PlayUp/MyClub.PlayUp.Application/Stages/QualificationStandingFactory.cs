@@ -39,13 +39,10 @@ public static class QualificationStandingFactory
         var penalties = CalculateStanding.ToStandingPenalties(sourceStage.Penalties);
         var rules = sourceStage.Regulation.StandingRules;
 
-        static bool IsGroupScoped(QualificationPath path) =>
-            path.Source.GroupId is not null || path.Source.Scope == RankingScope.Group;
-
         var needsOverall = paths.Any(path =>
-            path.Source.Scope != RankingScope.AcrossGroups && !IsGroupScoped(path));
+            path.Source.Scope != RankingScope.AcrossGroups && !isGroupScoped(path));
         var needsGroups = paths.Any(path =>
-            IsGroupScoped(path) || path.Source.Scope == RankingScope.AcrossGroups);
+            isGroupScoped(path) || path.Source.Scope == RankingScope.AcrossGroups);
 
         Standing? overall = null;
         if (needsOverall)
@@ -57,7 +54,7 @@ public static class QualificationStandingFactory
             if (participants.Length == 0)
             {
                 participants = [.. matches
-                    .Where(match => match.Status == MatchStatus.Finished && match.Result is not null)
+                    .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
                     .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
                     .Distinct()];
             }
@@ -66,19 +63,20 @@ public static class QualificationStandingFactory
         }
 
         var groupStandings = new Dictionary<GroupId, Standing>();
-        if (needsGroups)
+        if (!needsGroups) return (overall, groupStandings);
+        foreach (var group in sourceStage.Groups)
         {
-            foreach (var group in sourceStage.Groups)
-            {
-                groupStandings[group.Id] = CalculateStanding.Execute(
-                    group.EntryIds,
-                    matches,
-                    rules,
-                    MatchFilter.All,
-                    penalties);
-            }
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                matches,
+                rules,
+                MatchFilter.All,
+                penalties);
         }
 
         return (overall, groupStandings);
+
+        static bool isGroupScoped(QualificationPath path) =>
+            path.Source.GroupId is not null || path.Source.Scope == RankingScope.Group;
     }
 }

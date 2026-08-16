@@ -54,23 +54,18 @@ public sealed class StructureIntent
     /// <param name="matchdayCount">Number of matchdays (≥ 1).</param>
     /// <param name="stageName">Optional stage name.</param>
     /// <returns>Validated intent.</returns>
-    public static StructureIntent Championship(int matchdayCount = 1, string? stageName = null)
-    {
-        if (matchdayCount < 1)
-        {
-            throw new ApplicationFailureException(
+    public static StructureIntent Championship(int matchdayCount = 1, string? stageName = null) =>
+        matchdayCount < 1
+            ? throw new ApplicationFailureException(
                 "Championship requires at least one matchday.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        return new StructureIntent(
-            StructureFormatKind.Championship,
-            NormalizeStageName(stageName, "Championnat"),
-            matchdayCount,
-            groupCount: 0,
-            participantsPerGroup: 0,
-            bracketSize: 0);
-    }
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : new StructureIntent(
+                StructureFormatKind.Championship,
+                NormalizeStageName(stageName, "Championnat"),
+                matchdayCount,
+                groupCount: 0,
+                participantsPerGroup: 0,
+                bracketSize: 0);
 
     /// <summary>
     /// Builds a groups intent (empty groups + matchday + PotRules for future Group Draw).
@@ -79,30 +74,22 @@ public sealed class StructureIntent
     /// <param name="participantsPerGroup">Capacity per group (≥ 2); becomes PotRules.NumberOfPots.</param>
     /// <param name="stageName">Optional stage name.</param>
     /// <returns>Validated intent.</returns>
-    public static StructureIntent Groups(int groupCount, int participantsPerGroup, string? stageName = null)
-    {
-        if (groupCount < 2)
-        {
-            throw new ApplicationFailureException(
+    public static StructureIntent Groups(int groupCount, int participantsPerGroup, string? stageName = null) =>
+        groupCount < 2
+            ? throw new ApplicationFailureException(
                 "Groups format requires at least two groups.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        if (participantsPerGroup < 2)
-        {
-            throw new ApplicationFailureException(
-                "Groups format requires at least two participants per group (PotRules).",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        return new StructureIntent(
-            StructureFormatKind.Groups,
-            NormalizeStageName(stageName, "Phase de groupes"),
-            matchdayCount: 1,
-            groupCount,
-            participantsPerGroup,
-            bracketSize: 0);
-    }
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : participantsPerGroup < 2
+                ? throw new ApplicationFailureException(
+                    "Groups format requires at least two participants per group (PotRules).",
+                    ApplicationErrorCodes.InvalidStructureIntent)
+                : new StructureIntent(
+                    StructureFormatKind.Groups,
+                    NormalizeStageName(stageName, "Phase de groupes"),
+                    matchdayCount: 1,
+                    groupCount,
+                    participantsPerGroup,
+                    bracketSize: 0);
 
     /// <summary>
     /// Builds a cup intent. V1 bounds bracket size to a power of two (no bye matrix).
@@ -110,33 +97,20 @@ public sealed class StructureIntent
     /// <param name="bracketSize">Slot count; must be a power of two in [2, 64].</param>
     /// <param name="stageName">Optional stage name.</param>
     /// <returns>Validated intent.</returns>
-    public static StructureIntent Cup(int bracketSize, string? stageName = null)
-    {
-        if (bracketSize is < 2 or > 64 || !IsPowerOfTwo(bracketSize))
-        {
-            throw new ApplicationFailureException(
+    public static StructureIntent Cup(int bracketSize, string? stageName = null) =>
+        bracketSize is < 2 or > 64 || !IsPowerOfTwo(bracketSize)
+            ? throw new ApplicationFailureException(
                 "Cup V1 requires a bracket size that is a power of two between 2 and 64 (non-power-of-two cups are out of scope).",
-                ApplicationErrorCodes.CupBracketNotPowerOfTwo);
-        }
+                ApplicationErrorCodes.CupBracketNotPowerOfTwo)
+            : new StructureIntent(
+                StructureFormatKind.Cup,
+                NormalizeStageName(stageName, "Coupe"),
+                matchdayCount: 0,
+                groupCount: 0,
+                participantsPerGroup: 0,
+                bracketSize);
 
-        return new StructureIntent(
-            StructureFormatKind.Cup,
-            NormalizeStageName(stageName, "Coupe"),
-            matchdayCount: 0,
-            groupCount: 0,
-            participantsPerGroup: 0,
-            bracketSize);
-    }
-
-    private static string NormalizeStageName(string? stageName, string fallback)
-    {
-        if (string.IsNullOrWhiteSpace(stageName))
-        {
-            return fallback;
-        }
-
-        return stageName.Trim();
-    }
+    private static string NormalizeStageName(string? stageName, string fallback) => string.IsNullOrWhiteSpace(stageName) ? fallback : stageName.Trim();
 
     private static bool IsPowerOfTwo(int value) => value > 0 && (value & (value - 1)) == 0;
 }

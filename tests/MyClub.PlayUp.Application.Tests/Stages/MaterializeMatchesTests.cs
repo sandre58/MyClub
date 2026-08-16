@@ -10,7 +10,6 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -30,7 +29,7 @@ public sealed class MaterializeMatchesTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(1),
+            StructureIntent.Championship(),
             _clock);
 
         var first = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);

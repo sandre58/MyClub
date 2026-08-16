@@ -261,7 +261,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
             listed.StatusCode.Should().Be(HttpStatusCode.OK);
             var summaries = await listed.Content.ReadFromJsonAsync<MatchSummaryDto[]>(HostJson.Options);
             summaries.Should().ContainSingle();
-            summaries![0].MatchId.Should().Be(seed.MatchId.Value);
+            summaries[0].MatchId.Should().Be(seed.MatchId.Value);
             summaries[0].Status.Should().Be(MatchStatus.Scheduled);
             summaries[0].ScheduledAt.Should().Be(seed.Kickoff);
             summaries[0].ResourceId.Should().Be(seed.ResourceId.Value);
@@ -272,7 +272,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
             detailBefore.StatusCode.Should().Be(HttpStatusCode.OK);
             var detail = await detailBefore.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
             detail.Should().NotBeNull();
-            detail!.ScheduledAt.Should().Be(seed.Kickoff);
+            detail.ScheduledAt.Should().Be(seed.Kickoff);
             detail.ResourceId.Should().Be(seed.ResourceId.Value);
             detail.Status.Should().Be(MatchStatus.Scheduled);
             detail.Result.Should().BeNull();
@@ -414,11 +414,11 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("Matchday 1"), SampleRegulations.Standard(), _clock);
         var matchday = stage.AddMatchday(1, _clock);
-        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var addFixture = stage.AddFixture(matchday.Id, _clock);
         competition.AddStage(stage.Id, _clock);
 
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
-        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
 
         var kickoff = new DateTimeOffset(2026, 9, 12, 18, 30, 0, TimeSpan.Zero);
         var resourceId = ResourceId.New();

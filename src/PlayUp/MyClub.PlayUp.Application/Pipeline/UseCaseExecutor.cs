@@ -315,7 +315,7 @@ public sealed class UseCaseExecutor(
             stage.AddFixture(round.Id, clock);
         }
 
-        return round.Fixtures.Take(needed).Select(fixture => fixture.Id).ToArray();
+        return [.. round.Fixtures.Take(needed).Select(fixture => fixture.Id)];
     }
 
     /// <summary>
@@ -665,23 +665,7 @@ public sealed class UseCaseExecutor(
 
         // Ensure every target has a context.
         var contextIds = matchContexts.Select(context => context.MatchId).ToHashSet();
-        foreach (var target in targets)
-        {
-            if (contextIds.Contains(target))
-            {
-                continue;
-            }
-
-            var match = loadedMatches.FirstOrDefault(candidate => candidate.Id.Equals(target))
-                ?? throw new ApplicationFailureException(
-                    $"Match '{target}' was not found for scheduling.",
-                    ApplicationErrorCodes.MatchNotFound);
-            matchContexts = [..matchContexts, new MatchSchedulingContext(
-                match.Id,
-                duration,
-                home: MatchParticipantRef.Known(match.HomeEntryId),
-                away: MatchParticipantRef.Known(match.AwayEntryId))];
-        }
+        matchContexts = (from target in targets where !contextIds.Contains(target) select loadedMatches.FirstOrDefault(candidate => candidate.Id.Equals(target)) ?? throw new ApplicationFailureException($"Match '{target}' was not found for scheduling.", ApplicationErrorCodes.MatchNotFound)).Aggregate(matchContexts, (current, match) => [.. current, new MatchSchedulingContext(match.Id, duration, home: MatchParticipantRef.Known(match.HomeEntryId), away: MatchParticipantRef.Known(match.AwayEntryId))]);
 
         var resources = resourceIds
             .Select(id => new ResourceSchedulingContext(new ResourceId(id), [window]))
@@ -727,14 +711,6 @@ public sealed class UseCaseExecutor(
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<Stage> RequireStageAsync(StageId stageId, CancellationToken cancellationToken)
-    {
-        return await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
-            ?? throw new ApplicationFailureException(
-                $"Stage '{stageId}' was not found.",
-                ApplicationErrorCodes.StageNotFound);
-    }
-
     private static DrawSummaryDto ToDrawSummary(StageId stageId, Draw draw) =>
         new(
             draw.Id.Value,
@@ -749,41 +725,39 @@ public sealed class UseCaseExecutor(
             result.IsSuccess,
             result.IsNoSolution,
             result.IsInvalidRequest,
-            result.Schedule?.Assignments
-                .Select(a => new ScheduleAssignmentDto(a.MatchId.Value, a.Start, a.ResourceId.Value))
-                .ToArray()
-            ?? []);
+            result.Schedule?.Assignments.Select(a => new ScheduleAssignmentDto(a.MatchId.Value, a.Start, a.ResourceId.Value)).ToArray() ?? []);
 
-    private static IReadOnlyList<MatchId> ResolveScheduleTargets(
+    private static MatchId[] ResolveScheduleTargets(
         Stage stage,
         IReadOnlyList<Match> loadedMatches,
         IReadOnlyList<Guid>? targetMatchIds)
     {
         if (targetMatchIds is { Count: > 0 })
         {
-            return targetMatchIds.Select(id => new MatchId(id)).ToArray();
+            return [.. targetMatchIds.Select(id => new MatchId(id))];
         }
 
         var attached = loadedMatches.Where(match => stage.HasMatch(match.Id)).Select(match => match.Id).ToArray();
-        if (attached.Length == 0)
-        {
-            throw new ApplicationFailureException(
+        return attached.Length == 0
+            ? throw new ApplicationFailureException(
                 "GenerateSchedule requires attached matches (materialize first).",
-                ApplicationErrorCodes.ScheduleGenerationFailure);
-        }
-
-        return attached;
+                ApplicationErrorCodes.ScheduleGenerationFailure)
+            : attached;
     }
+
+    private async Task<Stage> RequireStageAsync(StageId stageId, CancellationToken cancellationToken) =>
+        await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        ?? throw new ApplicationFailureException(
+            $"Stage '{stageId}' was not found.",
+            ApplicationErrorCodes.StageNotFound);
 
     private async Task<Competition> RequireCompetitionAsync(
         CompetitionId competitionId,
-        CancellationToken cancellationToken)
-    {
-        return await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
-            ?? throw new ApplicationFailureException(
-                $"Competition '{competitionId}' was not found.",
-                ApplicationErrorCodes.CompetitionNotFound);
-    }
+        CancellationToken cancellationToken) =>
+        await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+        ?? throw new ApplicationFailureException(
+            $"Competition '{competitionId}' was not found.",
+            ApplicationErrorCodes.CompetitionNotFound);
 
     private async Task<OrganisationViewDto> AssembleOrganisationViewAsync(
         Competition competition,
@@ -988,6 +962,26 @@ public sealed class UseCaseExecutor(
         return MatchReadAssembler.AssembleDetail(match, competition, stage);
     }
 
+    private static void EnsureCompetitionAllowsConsequenceOperation(Competition competition)
+    {
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            throw new ApplicationFailureException(
+                $"Consequence operations are not allowed when competition is '{competition.Status}'.",
+                ApplicationErrorCodes.ConsequenceOperationNotAllowed);
+        }
+    }
+
+    private static void EnsureCompetitionAllowsLifecycleMutation(Competition competition)
+    {
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            throw new ApplicationFailureException(
+                $"Lifecycle mutations are not allowed when competition is '{competition.Status}'.",
+                ApplicationErrorCodes.CompetitionClosed);
+        }
+    }
+
     private async Task<IReadOnlyList<Match>> LoadKnownMatchesForFixturesAsync(
         Stage stage,
         IReadOnlyList<FixtureId> fixtureIds,
@@ -1032,16 +1026,6 @@ public sealed class UseCaseExecutor(
         }
     }
 
-    private static void EnsureCompetitionAllowsConsequenceOperation(Competition competition)
-    {
-        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
-        {
-            throw new ApplicationFailureException(
-                $"Consequence operations are not allowed when competition is '{competition.Status}'.",
-                ApplicationErrorCodes.ConsequenceOperationNotAllowed);
-        }
-    }
-
     private async Task EnsureCompetitionAllowsLifecycleMutationAsync(
         CompetitionId competitionId,
         CancellationToken cancellationToken)
@@ -1052,16 +1036,6 @@ public sealed class UseCaseExecutor(
                 ApplicationErrorCodes.CompetitionNotFound);
 
         EnsureCompetitionAllowsLifecycleMutation(competition);
-    }
-
-    private static void EnsureCompetitionAllowsLifecycleMutation(Competition competition)
-    {
-        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
-        {
-            throw new ApplicationFailureException(
-                $"Lifecycle mutations are not allowed when competition is '{competition.Status}'.",
-                ApplicationErrorCodes.CompetitionClosed);
-        }
     }
 
     private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageAsync(

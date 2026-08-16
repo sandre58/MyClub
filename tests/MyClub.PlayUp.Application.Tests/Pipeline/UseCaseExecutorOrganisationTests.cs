@@ -11,7 +11,6 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -37,7 +36,7 @@ public sealed class UseCaseExecutorOrganisationTests
         stages
             .Setup(repository => repository.GetByIdAsync(It.IsAny<StageId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((StageId id, CancellationToken _) =>
-                addedStage is not null && addedStage.Id.Equals(id) ? addedStage : null);
+                addedStage?.Id.Equals(id) == true ? addedStage : null);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         unitOfWork

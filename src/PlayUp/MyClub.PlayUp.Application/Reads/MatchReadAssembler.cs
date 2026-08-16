@@ -44,9 +44,8 @@ public static class MatchReadAssembler
                 {
                     ResolveCalendarPlacement(stage, match.Id, out var scheduledAt, out var resourceId);
 
-                    if (!placement.TryGetValue(match.Id, out var info))
-                    {
-                        return new MatchSummaryDto(
+                    return !placement.TryGetValue(match.Id, out var info)
+                        ? new MatchSummaryDto(
                             match.Id.Value,
                             match.StageId.Value,
                             match.Status,
@@ -58,10 +57,8 @@ public static class MatchReadAssembler
                             FixtureId: null,
                             RoundId: null,
                             scheduledAt,
-                            resourceId);
-                    }
-
-                    return new MatchSummaryDto(
+                            resourceId)
+                        : new MatchSummaryDto(
                         match.Id.Value,
                         match.StageId.Value,
                         match.Status,
@@ -113,9 +110,8 @@ public static class MatchReadAssembler
         }
 
         var attachment = FindAttachment(stage, match.Id);
-        if (attachment is not { } found)
-        {
-            return new MatchDetailDto(
+        return attachment is not { } found
+            ? new MatchDetailDto(
                 match.Id.Value,
                 match.CompetitionId.Value,
                 match.StageId.Value,
@@ -126,10 +122,8 @@ public static class MatchReadAssembler
                 FixtureId: null,
                 LegIndex: null,
                 scheduledAt,
-                resourceId);
-        }
-
-        return new MatchDetailDto(
+                resourceId)
+            : new MatchDetailDto(
             match.Id.Value,
             match.CompetitionId.Value,
             match.StageId.Value,

@@ -6,7 +6,6 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;

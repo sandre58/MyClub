@@ -5,11 +5,9 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -43,7 +41,7 @@ public sealed class Slice3DrawPipelineTests
             stage,
             draw.Id,
             _clock,
-            groupTargets: stage.Groups.Select(group => group.Id).ToArray());
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]);
         generated.IsResolved.Should().BeTrue();
 
         PublishDraw.Execute(stage, draw.Id, _clock);

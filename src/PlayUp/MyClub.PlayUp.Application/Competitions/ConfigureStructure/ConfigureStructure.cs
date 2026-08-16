@@ -171,13 +171,5 @@ public static class ConfigureStructure
         stage.ReplaceDrawRules(null, clock);
     }
 
-    private static string GroupLabel(int index)
-    {
-        if (index < 26)
-        {
-            return ((char)('A' + index)).ToString();
-        }
-
-        return $"G{index + 1}";
-    }
+    private static string GroupLabel(int index) => index < 26 ? ((char)('A' + index)).ToString() : $"G{index + 1}";
 }

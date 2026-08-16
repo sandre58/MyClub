@@ -67,7 +67,7 @@ public static class CompletionAnalyzer
 
         var sportivelyComplete = reasons.Count == 0;
         var canCompleteNormally = sportivelyComplete
-            && competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
+                                  && competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
 
         return new CompletionAnalysis(sportivelyComplete, canCompleteNormally, reasons);
     }
@@ -95,6 +95,11 @@ public static class CompletionAnalyzer
                     case MatchStatus.Postponed:
                         postponed++;
                         break;
+                    case MatchStatus.Finished:
+                    case MatchStatus.Cancelled:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(matchesByStage));
                 }
             }
         }
@@ -115,12 +120,11 @@ public static class CompletionAnalyzer
             reasons.Add(new CompletionReasonDto(ReasonLiveMatches, message));
         }
 
-        if (postponed > 0)
-        {
-            var message = postponed == 1
-                ? "1 match est encore reporté."
-                : $"{postponed} matchs sont encore reportés.";
-            reasons.Add(new CompletionReasonDto(ReasonPostponedMatches, message));
-        }
+        if (postponed <= 0) return;
+
+        var msg = postponed == 1
+            ? "1 match est encore reporté."
+            : $"{postponed} matchs sont encore reportés.";
+        reasons.Add(new CompletionReasonDto(ReasonPostponedMatches, msg));
     }
 }

@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -136,7 +135,7 @@ public sealed class OrganisationUseCaseTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(1),
+            StructureIntent.Championship(),
             _clock);
         var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
 

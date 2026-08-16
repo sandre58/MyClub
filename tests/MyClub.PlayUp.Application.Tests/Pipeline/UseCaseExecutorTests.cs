@@ -708,29 +708,20 @@ public sealed class UseCaseExecutorTests
         }
 
         competition.Complete(CompletionMode.Administrative, _clock);
-        if (status == CompetitionStatus.Completed)
+        switch (status)
         {
-            return competition;
+            case CompetitionStatus.Completed:
+                return competition;
+            case CompetitionStatus.Archived:
+                competition.Archive(_clock);
+                return competition;
+            case CompetitionStatus.Draft:
+            case CompetitionStatus.Ready:
+            case CompetitionStatus.Running:
+            case CompetitionStatus.Suspended:
+            default:
+                throw new InvalidOperationException($"Unsupported competition status '{status}' for test setup.");
         }
-
-        if (status == CompetitionStatus.Archived)
-        {
-            competition.Archive(_clock);
-            return competition;
-        }
-
-        throw new InvalidOperationException($"Unsupported competition status '{status}' for test setup.");
-    }
-
-    private Stage CreateDraftChampionshipStage()
-    {
-        var stage = Stage.Create(
-            CompetitionId.New(),
-            new StageName("U15 League"),
-            SampleRegulations.Standard(),
-            _clock);
-        stage.AddMatchday(1, _clock);
-        return stage;
     }
 
     private ChampionshipScenario CreateDraftChampionshipOnCompetition()

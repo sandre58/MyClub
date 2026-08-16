@@ -91,16 +91,10 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Complete_administrative_allows_incompleteAsync()
-    {
-        await Complete_exceptional_mode_allows_incompleteAsync("Administrative");
-    }
+    public async Task Complete_administrative_allows_incompleteAsync() => await Complete_exceptional_mode_allows_incompleteAsync("Administrative");
 
     [IntegrationFact]
-    public async Task Complete_abandoned_allows_incompleteAsync()
-    {
-        await Complete_exceptional_mode_allows_incompleteAsync("Abandoned");
-    }
+    public async Task Complete_abandoned_allows_incompleteAsync() => await Complete_exceptional_mode_allows_incompleteAsync("Abandoned");
 
     private async Task Complete_exceptional_mode_allows_incompleteAsync(string mode)
     {
@@ -189,28 +183,17 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
                 _ => raw.ToString()
             };
 
-    private static IReadOnlyList<string> GetReasons(ProblemDetails problem)
-    {
-        if (!problem.Extensions.TryGetValue("reasons", out var raw) || raw is null)
-        {
-            return [];
-        }
-
-        if (raw is JsonElement { ValueKind: JsonValueKind.Array } element)
-        {
-            return element.EnumerateArray()
-                .Select(item => item.GetString()!)
-                .Where(text => text is not null)
-                .ToArray()!;
-        }
-
-        if (raw is IEnumerable<string> texts)
-        {
-            return texts.ToArray();
-        }
-
-        return [];
-    }
+    private static IReadOnlyList<string> GetReasons(ProblemDetails problem) =>
+        !problem.Extensions.TryGetValue("reasons", out var raw) || raw is null
+            ? []
+            : raw switch
+            {
+                JsonElement { ValueKind: JsonValueKind.Array } element => [
+                    .. element.EnumerateArray().Select(item => item.GetString()!)
+                ]!,
+                IEnumerable<string> texts => [.. texts],
+                _ => []
+            };
 
     private async Task<(CompetitionId CompetitionId, StageId StageId, MatchId MatchId)> SeedRunningFinishedAsync(
         PlayUpWebApplicationFactory factory,

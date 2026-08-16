@@ -37,13 +37,10 @@ public static class AddEntry
         ArgumentNullException.ThrowIfNull(clock);
 
         var occupying = competition.Entries.Count(entry => entry.IsOccupying);
-        if (occupying >= competition.Regulation.EntryRules.MaximumTeams)
-        {
-            throw new ApplicationFailureException(
+        return occupying >= competition.Regulation.EntryRules.MaximumTeams
+            ? throw new ApplicationFailureException(
                 $"Competition already has the maximum of {competition.Regulation.EntryRules.MaximumTeams} occupying entries.",
-                ApplicationErrorCodes.EntryCapacityExceeded);
-        }
-
-        return competition.AddEntry(teamId ?? TeamId.New(), displayName, clock);
+                ApplicationErrorCodes.EntryCapacityExceeded)
+            : competition.AddEntry(teamId ?? TeamId.New(), displayName, clock);
     }
 }

@@ -7,7 +7,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
@@ -60,13 +59,13 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         generateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var proposal = await generateResponse.Content.ReadFromJsonAsync<ScheduleProposalDto>(HostJson.Options);
         proposal.Should().NotBeNull();
-        if (proposal!.IsSuccess)
+        if (proposal.IsSuccess)
         {
             using var applyResponse = await client.PostAsJsonAsync(
                 $"/stages/{stageId}/schedule/apply",
                 new ApplyScheduleRequest(
                     proposal.Assignments,
-                    proposal.Assignments.Select(a => a.MatchId).ToArray()));
+                    [.. proposal.Assignments.Select(a => a.MatchId)]));
             applyResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
     }

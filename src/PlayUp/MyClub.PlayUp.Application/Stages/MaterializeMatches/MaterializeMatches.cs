@@ -51,9 +51,9 @@ public static class MaterializeMatches
         EnsureMutable(competition, stage);
 
         var format = InferFormat(stage)
-            ?? throw new ApplicationFailureException(
-                "Stage has no recognised V1 structure for materialization.",
-                ApplicationErrorCodes.MaterializationFailure);
+                     ?? throw new ApplicationFailureException(
+                         "Stage has no recognised V1 structure for materialization.",
+                         ApplicationErrorCodes.MaterializationFailure);
 
         return format switch
         {
@@ -114,7 +114,7 @@ public static class MaterializeMatches
                     ApplicationErrorCodes.MaterializationFailure);
             }
 
-            var pairs = BuildRoundRobinPairs(group.EntryIds.ToList());
+            var pairs = BuildRoundRobinPairs([.. group.EntryIds]);
             var rounds = CircleMethodRounds(pairs);
             perGroupRounds.Add(rounds);
             maxRounds = Math.Max(maxRounds, rounds.Count);
@@ -128,7 +128,7 @@ public static class MaterializeMatches
         {
             return new MaterializeMatchesResult(
                 [],
-                existingMatches.Select(match => match.Id).ToArray(),
+                [.. existingMatches.Select(match => match.Id)],
                 AlreadyComplete: true);
         }
 
@@ -160,7 +160,7 @@ public static class MaterializeMatches
 
         return new MaterializeMatchesResult(
             created,
-            existingByPair.Values.Select(match => match.Id).ToArray(),
+            [.. existingByPair.Values.Select(match => match.Id)],
             AlreadyComplete: false);
     }
 
@@ -179,9 +179,9 @@ public static class MaterializeMatches
         }
 
         var round = stage.Rounds.FirstOrDefault()
-            ?? throw new ApplicationFailureException(
-                "Cup materialization requires a round on the stage.",
-                ApplicationErrorCodes.MaterializationFailure);
+                    ?? throw new ApplicationFailureException(
+                        "Cup materialization requires a round on the stage.",
+                        ApplicationErrorCodes.MaterializationFailure);
 
         var expectedFixtures = entries.Count / 2;
         while (round.Fixtures.Count < expectedFixtures)
@@ -190,20 +190,16 @@ public static class MaterializeMatches
         }
 
         var attached = CollectAttachedMatchIds(stage);
-        if (attached.Count >= expectedFixtures
+        return attached.Count >= expectedFixtures
             && existingMatches.Count >= expectedFixtures
-            && existingMatches.All(match => attached.Contains(match.Id)))
-        {
-            return new MaterializeMatchesResult([], attached, AlreadyComplete: true);
-        }
+            && existingMatches.All(match => attached.Contains(match.Id))
+            ? new MaterializeMatchesResult([], attached, AlreadyComplete: true)
+            : attached.Count == 0
+            ?
 
-        if (attached.Count == 0)
-        {
             // Fixtures ready for Pairing ApplyDraw — Matches are created by Apply, not here.
-            return new MaterializeMatchesResult([], [], AlreadyComplete: false);
-        }
-
-        return new MaterializeMatchesResult([], attached, AlreadyComplete: attached.Count >= expectedFixtures);
+            new MaterializeMatchesResult([], [], AlreadyComplete: false)
+            : new MaterializeMatchesResult([], attached, AlreadyComplete: attached.Count >= expectedFixtures);
     }
 
     private static MaterializeMatchesResult MaterializePairsOnMatchdays(
@@ -227,11 +223,11 @@ public static class MaterializeMatches
         {
             return new MaterializeMatchesResult(
                 [],
-                existingMatches.Select(match => match.Id).ToArray(),
+                [.. existingMatches.Select(match => match.Id)],
                 AlreadyComplete: true);
         }
 
-        var rounds = CircleMethodRounds(pairs.Select(pair => (pair.Home, pair.Away)).ToList());
+        var rounds = CircleMethodRounds([.. pairs.Select(pair => (pair.Home, pair.Away))]);
         EnsureMatchdays(stage, rounds.Count, clock);
         var matchdaysByIndex = stage.Matchdays.OrderBy(matchday => matchday.Number).ToList();
 
@@ -347,18 +343,20 @@ public static class MaterializeMatches
     }
 
     private static IReadOnlyList<EntryId> GetActiveEntries(Competition competition) =>
-        competition.Entries
+    [
+        .. competition.Entries
             .Where(entry => entry.Status == EntryStatus.Active)
             .Select(entry => entry.Id)
             .OrderBy(id => id.Value)
-            .ToList();
+    ];
 
     private static IReadOnlyList<MatchId> CollectAttachedMatchIds(Stage stage) =>
-        stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
+    [
+        .. stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
             .Concat(stage.Rounds.SelectMany(round => round.Fixtures))
             .SelectMany(fixture => fixture.MatchIds)
             .Distinct()
-            .ToArray();
+    ];
 
     private static (EntryId Left, EntryId Right) CanonicalPair(EntryId a, EntryId b) =>
         a.Value.CompareTo(b.Value) <= 0 ? (a, b) : (b, a);
@@ -366,25 +364,14 @@ public static class MaterializeMatches
     private static (EntryId Home, EntryId Away) CanonicalOrdered(EntryId a, EntryId b) =>
         a.Value.CompareTo(b.Value) <= 0 ? (a, b) : (b, a);
 
-    private static StructureFormatKind? InferFormat(Stage stage)
-    {
-        if (stage.Rounds.Count > 0)
-        {
-            return StructureFormatKind.Cup;
-        }
-
-        if (stage.Groups.Count > 0)
-        {
-            return StructureFormatKind.Groups;
-        }
-
-        if (stage.Matchdays.Count > 0)
-        {
-            return StructureFormatKind.Championship;
-        }
-
-        return null;
-    }
+    private static StructureFormatKind? InferFormat(Stage stage) =>
+        stage.Rounds.Count > 0
+            ? StructureFormatKind.Cup
+            : stage.Groups.Count > 0
+                ? StructureFormatKind.Groups
+                : stage.Matchdays.Count > 0
+                    ? StructureFormatKind.Championship
+                    : null;
 
     private static void EnsureMutable(Competition competition, Stage stage)
     {

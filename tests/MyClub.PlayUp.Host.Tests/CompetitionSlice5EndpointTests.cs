@@ -32,18 +32,18 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
     public async Task Apply_qualification_fills_destination_slotsAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedChampionshipQualificationAsync(factory);
+        var (leagueId, terminalId) = await SeedChampionshipQualificationAsync(factory);
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsync(
-            $"/stages/{seed.LeagueId.Value}/qualification/apply",
+            $"/stages/{leagueId.Value}/qualification/apply",
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var scope = factory.Services.CreateScope();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var terminal = await stages.GetByIdAsync(seed.TerminalId);
+        var terminal = await stages.GetByIdAsync(terminalId);
         terminal!.FindSlot("Champ")!.EntryId.Should().NotBeNull();
     }
 
@@ -90,11 +90,11 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
     public async Task Apply_qualification_when_competition_completed_returns_409Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedChampionshipQualificationAsync(factory, completeCompetition: true);
+        var (leagueId, _) = await SeedChampionshipQualificationAsync(factory, completeCompetition: true);
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsync(
-            $"/stages/{seed.LeagueId.Value}/qualification/apply",
+            $"/stages/{leagueId.Value}/qualification/apply",
             content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -152,11 +152,11 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         {
             for (var j = i + 1; j < entries.Length; j++)
             {
-                var fixture = league.AddFixture(md.Id, _clock);
+                var addFixture = league.AddFixture(md.Id, _clock);
                 var match = Match.Create(competition.Id, league.Id, entries[i], entries[j], _clock);
                 match.Start(_clock);
                 match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
-                league.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+                league.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
                 matches.Add(match);
             }
         }
@@ -194,16 +194,16 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stage.AddSlot("SF1-A", _clock);
         competition.AddStage(stage.Id, _clock);
 
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(3, 1)), _clock);
-        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    fixture.Id,
+                    addFixture.Id,
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -212,7 +212,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         matches.Add(match);
         await unitOfWork.SaveChangesAsync();
-        return (competition.Id, stage.Id, fixture.Id);
+        return (competition.Id, stage.Id, addFixture.Id);
     }
 
     private async Task<(StageId StageId, FixtureId FixtureId, EntryId ForeignEntryId)>
@@ -235,16 +235,16 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stage.AddSlot("SF1-A", _clock);
         competition.AddStage(stage.Id, _clock);
 
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
-        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    fixture.Id,
+                    addFixture.Id,
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -254,6 +254,6 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         matches.Add(match);
         await unitOfWork.SaveChangesAsync();
-        return (stage.Id, fixture.Id, foreign.Id);
+        return (stage.Id, addFixture.Id, foreign.Id);
     }
 }

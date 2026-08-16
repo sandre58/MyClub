@@ -68,7 +68,7 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
 
         var typed = JsonSerializer.Deserialize<MaterializeMatchesResponse>(json, HostJson.Options);
         typed.Should().NotBeNull();
-        typed!.CreatedCount.Should().Be(6);
+        typed.CreatedCount.Should().Be(6);
         typed.AttachedMatchIds.Should().HaveCount(6);
         typed.AlreadyComplete.Should().BeFalse();
     }
@@ -77,11 +77,11 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
     public async Task Apply_qualification_returns_named_contract_shapeAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await QualificationContractSeed.CreateAsync(factory);
+        var (leagueId, _) = await QualificationContractSeed.CreateAsync(factory);
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsync(
-            $"/stages/{seed.LeagueId}/qualification/apply",
+            $"/stages/{leagueId}/qualification/apply",
             content: null);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -98,7 +98,7 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
 
         var typed = JsonSerializer.Deserialize<QualificationApplyResponse>(json, HostJson.Options);
         typed.Should().NotBeNull();
-        typed!.AppliedCount.Should().Be(typed.Assignments.Count);
+        typed.AppliedCount.Should().Be(typed.Assignments.Count);
         typed.Assignments.Should().Contain(a => a.SlotKey == "Champ");
     }
 

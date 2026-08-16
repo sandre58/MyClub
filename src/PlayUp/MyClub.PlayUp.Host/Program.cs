@@ -16,15 +16,14 @@ using MyClub.PlayUp.Infrastructure.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("PlayUp")
-    ?? throw new InvalidOperationException("Connection string 'PlayUp' is not configured.");
+                       ?? throw new InvalidOperationException("Connection string 'PlayUp' is not configured.");
 
 builder.Services.AddPlayUpInfrastructure(connectionString);
 builder.Services.AddScoped<UseCaseExecutor>();
 builder.Services.ConfigureHttpJsonOptions(static options =>
-{
+
     // Phase 12.8: HTTP enums as JSON strings (camelCase property names unchanged).
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<PlayUpExceptionHandler>();
 
@@ -284,7 +283,7 @@ app.MapPost(
         UseCaseExecutor executor,
         CancellationToken cancellationToken) =>
     {
-        var mode = ParseCompletionMode(request.Mode);
+        var mode = parseCompletionMode(request.Mode);
         await executor
             .CompleteCompetitionAsync(new CompetitionId(competitionId), mode, cancellationToken)
             .ConfigureAwait(false);
@@ -351,7 +350,7 @@ app.MapPost(
     "/stages/{stageId:guid}/draws",
     async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
     {
-        var kind = ParseDrawKind(request.Kind);
+        var kind = parseDrawKind(request.Kind);
         var summary = await executor
             .CreateDrawAsync(new StageId(stageId), kind, cancellationToken)
             .ConfigureAwait(false);
@@ -433,49 +432,26 @@ app.MapPost(
     });
 
 app.Run();
+return;
 
-static CompletionMode ParseCompletionMode(string mode)
-{
-    if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase))
-    {
-        return CompletionMode.Normal;
-    }
+static CompletionMode parseCompletionMode(string mode) => mode.Equals("Normal", StringComparison.OrdinalIgnoreCase)
+    ? CompletionMode.Normal
+    : mode.Equals("Administrative", StringComparison.OrdinalIgnoreCase)
+        ? CompletionMode.Administrative
+        : mode.Equals("Abandoned", StringComparison.OrdinalIgnoreCase)
+            ? CompletionMode.Abandoned
+            : throw new ApplicationFailureException(
+                $"Unknown completion mode '{mode}'. Expected Normal, Administrative, or Abandoned.",
+                ApplicationErrorCodes.InvalidCompletionMode);
 
-    if (mode.Equals("Administrative", StringComparison.OrdinalIgnoreCase))
-    {
-        return CompletionMode.Administrative;
-    }
-
-    if (mode.Equals("Abandoned", StringComparison.OrdinalIgnoreCase))
-    {
-        return CompletionMode.Abandoned;
-    }
-
-    throw new ApplicationFailureException(
-        $"Unknown completion mode '{mode}'. Expected Normal, Administrative, or Abandoned.",
-        ApplicationErrorCodes.InvalidCompletionMode);
-}
-
-static DrawResolutionKind ParseDrawKind(string kind)
-{
-    if (kind.Equals("Slot", StringComparison.OrdinalIgnoreCase))
-    {
-        return DrawResolutionKind.Slot;
-    }
-
-    if (kind.Equals("Group", StringComparison.OrdinalIgnoreCase)
-        || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase))
-    {
-        return DrawResolutionKind.Group;
-    }
-
-    if (kind.Equals("Pairing", StringComparison.OrdinalIgnoreCase)
-        || kind.Equals("Cup", StringComparison.OrdinalIgnoreCase))
-    {
-        return DrawResolutionKind.Pairing;
-    }
-
-    throw new ApplicationFailureException(
-        $"Unknown draw kind '{kind}'. Expected Slot, Group, or Pairing.",
-        ApplicationErrorCodes.DrawKindNotSupported);
-}
+static DrawResolutionKind parseDrawKind(string kind) => kind.Equals("Slot", StringComparison.OrdinalIgnoreCase)
+    ? DrawResolutionKind.Slot
+    : kind.Equals("Group", StringComparison.OrdinalIgnoreCase)
+      || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase)
+        ? DrawResolutionKind.Group
+        : kind.Equals("Pairing", StringComparison.OrdinalIgnoreCase)
+          || kind.Equals("Cup", StringComparison.OrdinalIgnoreCase)
+            ? DrawResolutionKind.Pairing
+            : throw new ApplicationFailureException(
+                $"Unknown draw kind '{kind}'. Expected Slot, Group, or Pairing.",
+                ApplicationErrorCodes.DrawKindNotSupported);

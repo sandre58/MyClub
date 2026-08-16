@@ -72,19 +72,12 @@ public static class OrganisationViewAssembler
             readiness);
     }
 
-    private static int CountAttachedMatches(Stage? primary)
-    {
-        if (primary is null)
-        {
-            return 0;
-        }
-
-        return primary.Matchdays.SelectMany(matchday => matchday.Fixtures)
-            .Concat(primary.Rounds.SelectMany(round => round.Fixtures))
-            .SelectMany(fixture => fixture.MatchIds)
-            .Distinct()
-            .Count();
-    }
+    private static int CountAttachedMatches(Stage? primary) =>
+        primary?.Matchdays.SelectMany(matchday => matchday.Fixtures)
+                .Concat(primary.Rounds.SelectMany(round => round.Fixtures))
+                .SelectMany(fixture => fixture.MatchIds)
+                .Distinct()
+                .Count() ?? 0;
 
     private static Stage? ResolvePrimaryStage(Competition competition, IReadOnlyList<Stage> stages)
     {
@@ -133,7 +126,6 @@ public static class OrganisationViewAssembler
             StructureFormatKind.Championship => "Championnat",
             StructureFormatKind.Groups => "Groupes",
             StructureFormatKind.Cup => "Coupe",
-            null => "Structure partielle",
             _ => "Structure partielle"
         };
 
@@ -145,25 +137,10 @@ public static class OrganisationViewAssembler
             primary.Status);
     }
 
-    private static StructureFormatKind? InferFormat(Stage stage)
-    {
-        if (stage.Rounds.Count > 0)
-        {
-            return StructureFormatKind.Cup;
-        }
-
-        if (stage.Groups.Count > 0)
-        {
-            return StructureFormatKind.Groups;
-        }
-
-        if (stage.Matchdays.Count > 0)
-        {
-            return StructureFormatKind.Championship;
-        }
-
-        return null;
-    }
+    private static StructureFormatKind? InferFormat(Stage stage) =>
+        stage.Rounds.Count > 0
+            ? StructureFormatKind.Cup
+            : stage.Groups.Count > 0 ? StructureFormatKind.Groups : stage.Matchdays.Count > 0 ? StructureFormatKind.Championship : null;
 
     private static OrganisationStructureSummaryDto BuildStructureSummary(Stage? primary)
     {
@@ -234,7 +211,7 @@ public static class OrganisationViewAssembler
                     }
                     else
                     {
-                        readyForDraw = structure.GroupCount >= 2 && structure.MatchdayCount >= 1;
+                        readyForDraw = structure is { GroupCount: >= 2, MatchdayCount: >= 1 };
                         var assigned = primary.Groups.Sum(group => group.EntryIds.Count);
                         readyForMaterialization = assigned >= 2 && primary.Groups.All(group => group.EntryIds.Count >= 2);
                         hints.Add(readyForMaterialization
@@ -259,6 +236,10 @@ public static class OrganisationViewAssembler
                     }
 
                     break;
+                case null:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(formatKind), formatKind, null);
             }
         }
 
@@ -280,20 +261,17 @@ public static class OrganisationViewAssembler
             hints);
     }
 
-    private static IReadOnlyList<string> BuildActions(Competition competition)
-    {
-        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+    private static IReadOnlyList<string> BuildActions(Competition competition) =>
+        competition.Status switch
         {
-            return [];
-        }
-
-        if (competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended)
-        {
-            return ["WithdrawEntry"];
-        }
-
-        return [ActionAddEntry, ActionConfigureStructure, ActionReplaceRegulation, "RenameEntry", "WithdrawEntry", "ExcludeEntry"];
-    }
+            CompetitionStatus.Completed or CompetitionStatus.Archived => [],
+            CompetitionStatus.Running or CompetitionStatus.Suspended => ["WithdrawEntry"],
+            _ =>
+            [
+                ActionAddEntry, ActionConfigureStructure, ActionReplaceRegulation, "RenameEntry", "WithdrawEntry",
+                "ExcludeEntry"
+            ]
+        };
 
     private static bool IsPowerOfTwo(int value) => value > 0 && (value & (value - 1)) == 0;
 }
