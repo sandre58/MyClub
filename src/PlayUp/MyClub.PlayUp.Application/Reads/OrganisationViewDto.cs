@@ -95,12 +95,20 @@ public sealed record OrganisationStructureSummaryDto(
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
 /// <param name="ReadyForNextSlice">True when organisation is sufficient for Slice 3 entry.</param>
 /// <param name="ReadyForDraw">True when a Draw path is identifiable.</param>
-/// <param name="ReadyForSchedulePath">True when championship-style schedule path is identifiable (structure only; Matches still Slice 3).</param>
+/// <param name="ReadyForMaterialization">True when Fixtures/Matches can be materialized.</param>
+/// <param name="ReadyForSchedule">True when attached Matches exist for scheduling.</param>
+/// <param name="ReadyForMatchOperation">True when Slice 4 can start (Matches attached; schedule optional).</param>
+/// <param name="ReadyForSchedulePath">Legacy Slice 2 hint: championship schedule path identifiable from structure.</param>
+/// <param name="AttachedMatchCount">Matches attached to the primary stage.</param>
 /// <param name="Blockers">Machine-readable blocker codes.</param>
 /// <param name="Hints">Human-readable hints.</param>
 public sealed record OrganisationReadinessDto(
     bool ReadyForNextSlice,
     bool ReadyForDraw,
+    bool ReadyForMaterialization,
+    bool ReadyForSchedule,
+    bool ReadyForMatchOperation,
     bool ReadyForSchedulePath,
+    int AttachedMatchCount,
     IReadOnlyList<string> Blockers,
     IReadOnlyList<string> Hints);

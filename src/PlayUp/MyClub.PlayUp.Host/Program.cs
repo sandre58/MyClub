@@ -4,8 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host;
 using MyClub.PlayUp.Host.Contracts;
 using MyClub.PlayUp.Infrastructure.DependencyInjection;
@@ -264,15 +266,128 @@ app.MapPost(
     async (
         Guid stageId,
         Guid drawId,
-        ApplyDrawRequest request,
+        ApplyDrawRequest? request,
         UseCaseExecutor executor,
         CancellationToken cancellationToken) =>
     {
-        IReadOnlyList<FixtureId> fixtureIds = [.. request.FixtureIds.Select(id => new FixtureId(id))];
+        IReadOnlyList<FixtureId>? fixtureIds = request?.FixtureIds is { Count: > 0 } ids
+            ? [.. ids.Select(id => new FixtureId(id))]
+            : null;
         await executor
             .ApplyDrawAsync(new StageId(stageId), new DrawId(drawId), fixtureIds, cancellationToken)
             .ConfigureAwait(false);
         return Results.NoContent();
     });
 
+app.MapPost(
+    "/stages/{stageId:guid}/draws",
+    async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var kind = ParseDrawKind(request.Kind);
+        var summary = await executor
+            .CreateDrawAsync(new StageId(stageId), kind, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Created($"/stages/{stageId}/draws/{summary.DrawId}", summary);
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/draws/{drawId:guid}/inputs",
+    async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var summary = await executor
+            .ConfigureDrawInputsAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(summary);
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/draws/{drawId:guid}/generate",
+    async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var result = await executor
+            .GenerateDrawAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(result);
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/matches/materialize",
+    async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var result = await executor
+            .MaterializeMatchesAsync(new StageId(stageId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(new
+        {
+            createdCount = result.CreatedMatches.Count,
+            attachedMatchIds = result.AttachedMatchIds.Select(id => id.Value).ToArray(),
+            alreadyComplete = result.AlreadyComplete
+        });
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/schedule/generate",
+    async (
+        Guid stageId,
+        GenerateScheduleRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var proposal = await executor
+            .GenerateScheduleAsync(
+                new StageId(stageId),
+                request.HorizonStart,
+                request.HorizonEnd,
+                request.GranularityMinutes,
+                request.TimeZoneId,
+                request.TargetMatchIds,
+                request.ResourceIds,
+                request.MatchDurationMinutes,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(proposal);
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/schedule/apply",
+    async (
+        Guid stageId,
+        ApplyScheduleRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        await executor
+            .ApplyScheduleAsync(
+                new StageId(stageId),
+                request.Assignments,
+                request.TargetMatchIds,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
 app.Run();
+
+static DrawResolutionKind ParseDrawKind(string kind)
+{
+    if (kind.Equals("Slot", StringComparison.OrdinalIgnoreCase))
+    {
+        return DrawResolutionKind.Slot;
+    }
+
+    if (kind.Equals("Group", StringComparison.OrdinalIgnoreCase)
+        || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase))
+    {
+        return DrawResolutionKind.Group;
+    }
+
+    if (kind.Equals("Pairing", StringComparison.OrdinalIgnoreCase)
+        || kind.Equals("Cup", StringComparison.OrdinalIgnoreCase))
+    {
+        return DrawResolutionKind.Pairing;
+    }
+
+    throw new ApplicationFailureException(
+        $"Unknown draw kind '{kind}'. Expected Slot, Group, or Pairing.",
+        ApplicationErrorCodes.DrawKindNotSupported);
+}

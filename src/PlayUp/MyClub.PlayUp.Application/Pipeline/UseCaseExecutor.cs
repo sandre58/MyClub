@@ -13,6 +13,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Scheduling;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
@@ -203,12 +204,20 @@ public sealed class UseCaseExecutor(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
+        var draw = stage.GetDraw(drawId);
+        var resolvedFixtures = fixtureIds;
+        if (draw.Kind == DrawResolutionKind.Pairing
+            && (resolvedFixtures is null || resolvedFixtures.Count == 0))
+        {
+            resolvedFixtures = EnsurePairingFixtures(stage, draw, clock);
+        }
+
         PairingApplicationContext? pairingContext = null;
         IReadOnlyList<Match> knownMatches = [];
-        if (fixtureIds is { Count: > 0 })
+        if (resolvedFixtures is { Count: > 0 })
         {
-            pairingContext = new PairingApplicationContext(fixtureIds);
-            knownMatches = await LoadKnownMatchesForFixturesAsync(stage, fixtureIds, cancellationToken)
+            pairingContext = new PairingApplicationContext(resolvedFixtures);
+            knownMatches = await LoadKnownMatchesForFixturesAsync(stage, resolvedFixtures, cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -219,6 +228,29 @@ public sealed class UseCaseExecutor(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static IReadOnlyList<FixtureId> EnsurePairingFixtures(Stage stage, Draw draw, IClock clock)
+    {
+        if (draw.Resolution.State != DrawResolutionState.Resolved)
+        {
+            throw new ApplicationFailureException(
+                $"Draw '{draw.Id}' must be Resolved before Pairing apply.",
+                ApplicationErrorCodes.DrawApplyFailure);
+        }
+
+        var needed = draw.Resolution.PairingResults.Count;
+        var round = stage.Rounds.FirstOrDefault()
+            ?? throw new ApplicationFailureException(
+                "Pairing apply requires a round with fixtures on the stage.",
+                ApplicationErrorCodes.DrawApplyFailure);
+
+        while (round.Fixtures.Count < needed)
+        {
+            stage.AddFixture(round.Id, clock);
+        }
+
+        return round.Fixtures.Take(needed).Select(fixture => fixture.Id).ToArray();
     }
 
     /// <summary>
@@ -394,6 +426,240 @@ public sealed class UseCaseExecutor(
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Creates a Draft Draw on a stage.
+    /// </summary>
+    public async Task<DrawSummaryDto> CreateDrawAsync(
+        StageId stageId,
+        DrawResolutionKind kind,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var draw = CreateDraw.Execute(stage, kind, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ToDrawSummary(stage.Id, draw);
+    }
+
+    /// <summary>
+    /// Configures default draw inputs from active competition entries.
+    /// </summary>
+    public async Task<DrawSummaryDto> ConfigureDrawInputsAsync(
+        StageId stageId,
+        DrawId drawId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
+        var draw = stage.GetDraw(drawId);
+        var inputs = DrawInputsFactory.CreateDefault(competition, stage, draw.Kind);
+        ConfigureDrawInputs.Execute(stage, drawId, inputs, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ToDrawSummary(stage.Id, stage.GetDraw(drawId));
+    }
+
+    /// <summary>
+    /// Generates a draw resolution (or NoSolution) for a Draft draw.
+    /// </summary>
+    public async Task<DrawGenerationDto> GenerateDrawAsync(
+        StageId stageId,
+        DrawId drawId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var draw = stage.GetDraw(drawId);
+        IReadOnlyList<string>? slotTargets = draw.Kind == DrawResolutionKind.Slot
+            ? stage.Slots.Select(slot => slot.SlotKey).ToArray()
+            : null;
+        IReadOnlyList<GroupId>? groupTargets = draw.Kind == DrawResolutionKind.Group
+            ? stage.Groups.Select(group => group.Id).ToArray()
+            : null;
+
+        var result = GenerateDrawResolution.Execute(
+            stage,
+            drawId,
+            clock,
+            slotTargets,
+            groupTargets);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var updated = stage.GetDraw(drawId);
+        return new DrawGenerationDto(
+            updated.Id.Value,
+            result.IsResolved,
+            result.IsNoSolution,
+            updated.Status,
+            updated.Resolution.State);
+    }
+
+    /// <summary>
+    /// Materializes Fixtures/Matches for the stage format (Championship / Groups / Cup fixtures).
+    /// </summary>
+    public async Task<MaterializeMatchesResult> MaterializeMatchesAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
+        var existing = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var result = MaterializeMatches.Execute(competition, stage, existing, clock);
+        foreach (var created in result.CreatedMatches)
+        {
+            matches.Add(created);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    /// <summary>
+    /// Generates a schedule proposal without mutating the Stage.
+    /// </summary>
+    public async Task<ScheduleProposalDto> GenerateScheduleAsync(
+        StageId stageId,
+        DateTimeOffset horizonStart,
+        DateTimeOffset horizonEnd,
+        int granularityMinutes,
+        string timeZoneId,
+        IReadOnlyList<Guid>? targetMatchIds,
+        IReadOnlyList<Guid> resourceIds,
+        int matchDurationMinutes,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(resourceIds);
+        if (resourceIds.Count == 0)
+        {
+            throw new ApplicationFailureException(
+                "GenerateSchedule requires at least one resource.",
+                ApplicationErrorCodes.ScheduleGenerationFailure);
+        }
+
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var loadedMatches = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var targets = ResolveScheduleTargets(stage, loadedMatches, targetMatchIds);
+        var duration = new SchedulingDuration(matchDurationMinutes);
+        var horizon = new Horizon(horizonStart, horizonEnd);
+        var window = new TimeWindow(horizonStart, horizonEnd);
+        var matchContexts = loadedMatches
+            .Where(match => targets.Contains(match.Id) || stage.MatchPlacements.Any(p => p.MatchId.Equals(match.Id)))
+            .Select(match => new MatchSchedulingContext(
+                match.Id,
+                duration,
+                allowedStartWindows: null,
+                allowedResourceIds: null,
+                imposedStart: null,
+                home: MatchParticipantRef.Known(match.HomeEntryId),
+                away: MatchParticipantRef.Known(match.AwayEntryId)))
+            .ToArray();
+
+        // Ensure every target has a context.
+        var contextIds = matchContexts.Select(context => context.MatchId).ToHashSet();
+        foreach (var target in targets)
+        {
+            if (contextIds.Contains(target))
+            {
+                continue;
+            }
+
+            var match = loadedMatches.FirstOrDefault(candidate => candidate.Id.Equals(target))
+                ?? throw new ApplicationFailureException(
+                    $"Match '{target}' was not found for scheduling.",
+                    ApplicationErrorCodes.MatchNotFound);
+            matchContexts = [..matchContexts, new MatchSchedulingContext(
+                match.Id,
+                duration,
+                home: MatchParticipantRef.Known(match.HomeEntryId),
+                away: MatchParticipantRef.Known(match.AwayEntryId))];
+        }
+
+        var resources = resourceIds
+            .Select(id => new ResourceSchedulingContext(new ResourceId(id), [window]))
+            .ToArray();
+
+        var result = GenerateSchedule.Execute(
+            stage,
+            targets,
+            horizon,
+            new TimeGranularity(granularityMinutes),
+            timeZoneId,
+            matchContexts,
+            resources);
+
+        return ToScheduleProposal(result);
+    }
+
+    /// <summary>
+    /// Applies a successful schedule proposal onto Stage placements.
+    /// </summary>
+    public async Task ApplyScheduleAsync(
+        StageId stageId,
+        IReadOnlyList<ScheduleAssignmentDto> assignments,
+        IReadOnlyList<Guid> targetMatchIds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(assignments);
+        ArgumentNullException.ThrowIfNull(targetMatchIds);
+
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var schedule = new Schedule(
+        [
+            .. assignments.Select(a => new ScheduleAssignment(
+                new MatchId(a.MatchId),
+                new ResourceId(a.ResourceId),
+                a.Start))
+        ]);
+        var result = SchedulingResult.Success(schedule);
+        var targets = targetMatchIds.Select(id => new MatchId(id)).ToArray();
+        ApplySchedule.Execute(stage, result, targets);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Stage> RequireStageAsync(StageId stageId, CancellationToken cancellationToken)
+    {
+        return await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+    }
+
+    private static DrawSummaryDto ToDrawSummary(StageId stageId, Draw draw) =>
+        new(
+            draw.Id.Value,
+            stageId.Value,
+            draw.Kind,
+            draw.Status,
+            draw.Resolution.State,
+            draw.Resolution.State == DrawResolutionState.NoSolution);
+
+    private static ScheduleProposalDto ToScheduleProposal(SchedulingResult result) =>
+        new(
+            result.IsSuccess,
+            result.IsNoSolution,
+            result.IsInvalidRequest,
+            result.Schedule?.Assignments
+                .Select(a => new ScheduleAssignmentDto(a.MatchId.Value, a.Start, a.ResourceId.Value))
+                .ToArray()
+            ?? []);
+
+    private static IReadOnlyList<MatchId> ResolveScheduleTargets(
+        Stage stage,
+        IReadOnlyList<Match> loadedMatches,
+        IReadOnlyList<Guid>? targetMatchIds)
+    {
+        if (targetMatchIds is { Count: > 0 })
+        {
+            return targetMatchIds.Select(id => new MatchId(id)).ToArray();
+        }
+
+        var attached = loadedMatches.Where(match => stage.HasMatch(match.Id)).Select(match => match.Id).ToArray();
+        if (attached.Length == 0)
+        {
+            throw new ApplicationFailureException(
+                "GenerateSchedule requires attached matches (materialize first).",
+                ApplicationErrorCodes.ScheduleGenerationFailure);
+        }
+
+        return attached;
     }
 
     private async Task<Competition> RequireCompetitionAsync(

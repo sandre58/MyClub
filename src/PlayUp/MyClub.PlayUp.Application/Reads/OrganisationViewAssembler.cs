@@ -56,7 +56,8 @@ public static class OrganisationViewAssembler
         var structure = BuildStructureSummary(primary);
         var participants = BuildParticipants(competition);
         var regulation = BuildRegulation(competition);
-        var readiness = BuildReadiness(competition, primary, format.Kind, structure);
+        var attachedMatchCount = CountAttachedMatches(primary);
+        var readiness = BuildReadiness(competition, primary, format.Kind, structure, attachedMatchCount);
         var actions = BuildActions(competition);
 
         return new OrganisationViewDto(
@@ -69,6 +70,20 @@ public static class OrganisationViewAssembler
             structure,
             actions,
             readiness);
+    }
+
+    private static int CountAttachedMatches(Stage? primary)
+    {
+        if (primary is null)
+        {
+            return 0;
+        }
+
+        return primary.Matchdays.SelectMany(matchday => matchday.Fixtures)
+            .Concat(primary.Rounds.SelectMany(round => round.Fixtures))
+            .SelectMany(fixture => fixture.MatchIds)
+            .Distinct()
+            .Count();
     }
 
     private static Stage? ResolvePrimaryStage(Competition competition, IReadOnlyList<Stage> stages)
@@ -171,7 +186,8 @@ public static class OrganisationViewAssembler
         Competition competition,
         Stage? primary,
         StructureFormatKind? formatKind,
-        OrganisationStructureSummaryDto structure)
+        OrganisationStructureSummaryDto structure,
+        int attachedMatchCount)
     {
         var blockers = new List<string>();
         var hints = new List<string>();
@@ -197,6 +213,7 @@ public static class OrganisationViewAssembler
 
         var readyForDraw = false;
         var readyForSchedulePath = false;
+        var readyForMaterialization = false;
 
         if (primary is not null && formatKind is not null && blockers.Count == 0)
         {
@@ -204,7 +221,10 @@ public static class OrganisationViewAssembler
             {
                 case StructureFormatKind.Championship:
                     readyForSchedulePath = structure.MatchdayCount > 0;
-                    hints.Add("Championnat : la matérialisation des matchs et le calendrier appartiennent au Slice 3.");
+                    readyForMaterialization = activeCount >= 2 && structure.MatchdayCount > 0;
+                    hints.Add(attachedMatchCount == 0
+                        ? "Championnat : matérialiser les matchs (aller simple), puis optionnellement planifier."
+                        : "Championnat : matchs matérialisés — calendrier optionnel.");
                     break;
                 case StructureFormatKind.Groups:
                     if (structure.NumberOfPots is null)
@@ -215,7 +235,11 @@ public static class OrganisationViewAssembler
                     else
                     {
                         readyForDraw = structure.GroupCount >= 2 && structure.MatchdayCount >= 1;
-                        hints.Add("Groupes : prêts pour CreateDraw / GenerateDraw (Slice 3) — pas encore générés.");
+                        var assigned = primary.Groups.Sum(group => group.EntryIds.Count);
+                        readyForMaterialization = assigned >= 2 && primary.Groups.All(group => group.EntryIds.Count >= 2);
+                        hints.Add(readyForMaterialization
+                            ? "Groupes : tirage appliqué — matérialiser les matchs intra-groupes."
+                            : "Groupes : créer/générer/publier/appliquer le tirage, puis matérialiser.");
                     }
 
                     break;
@@ -228,18 +252,30 @@ public static class OrganisationViewAssembler
                     else
                     {
                         readyForDraw = structure.RoundCount >= 1;
-                        hints.Add("Coupe : prêts pour un tirage Slot/Pairing (Slice 3).");
+                        readyForMaterialization = readyForDraw;
+                        hints.Add(attachedMatchCount == 0
+                            ? "Coupe : tirage Pairing (Generate/Publish/Apply) pour créer les matchs."
+                            : "Coupe : matchs exploitables présents — calendrier optionnel.");
                     }
 
                     break;
             }
         }
 
+        var readyForSchedule = attachedMatchCount > 0;
+        var readyForMatchOperation = attachedMatchCount > 0
+            && competition.Status is not CompetitionStatus.Completed
+            and not CompetitionStatus.Archived;
         var readyForNext = blockers.Count == 0 && (readyForDraw || readyForSchedulePath);
+
         return new OrganisationReadinessDto(
             readyForNext,
             readyForDraw,
+            readyForMaterialization,
+            readyForSchedule,
+            readyForMatchOperation,
             readyForSchedulePath,
+            attachedMatchCount,
             blockers,
             hints);
     }

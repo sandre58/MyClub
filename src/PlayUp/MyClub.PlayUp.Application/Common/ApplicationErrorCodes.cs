@@ -132,4 +132,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when Organisation mutations are refused for the current lifecycle status.
     /// </summary>
     public const string OrganisationNotMutable = "Application.OrganisationNotMutable";
+
+    /// <summary>
+    /// Gets the code when Fixture/Match materialization cannot run.
+    /// </summary>
+    public const string MaterializationFailure = "Application.MaterializationFailure";
 }
