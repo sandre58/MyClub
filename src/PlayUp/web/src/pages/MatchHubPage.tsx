@@ -6,7 +6,6 @@ import {
   fetchNeedsAttention,
 } from '../api'
 import {
-  CompetitionNav,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -69,11 +68,7 @@ export function MatchHubPage() {
     <main id="main" className="page">
       <PageHeader
         eyebrow="Match hub"
-        title={
-          overviewQuery.data
-            ? `${overviewQuery.data.name} · matches`
-            : 'Matches'
-        }
+        title="Matches"
         back={
           competitionId
             ? {
@@ -83,10 +78,6 @@ export function MatchHubPage() {
             : undefined
         }
       />
-
-      {competitionId && (
-        <CompetitionNav competitionId={competitionId} current="matches" />
-      )}
 
       {pending && <LoadingState />}
       {error && <ErrorState error={error} />}

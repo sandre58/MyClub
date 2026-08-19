@@ -68,7 +68,7 @@ describe('AppShell', () => {
   it('exposes the main landmark from the page content', () => {
     renderWithShell('/')
 
-    expect(document.getElementById('main')).toBeInTheDocument()
+    expect(document.querySelectorAll('#main')).toHaveLength(1)
   })
 
   it('exposes primary navigation and skip link', () => {

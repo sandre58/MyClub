@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionOverview } from '../api'
 import {
-  CompetitionNav,
   CompetitionStatusBadge,
   EmptyState,
   EntryStatusBadge,
@@ -30,7 +29,7 @@ export function CompetitionPage() {
     <main id="main" className="page">
       <PageHeader
         eyebrow="Competition"
-        title={query.data?.name ?? 'Competition'}
+        title="Stages & entries"
         back={
           competitionId
             ? {
@@ -43,10 +42,6 @@ export function CompetitionPage() {
           query.data && <CompetitionStatusBadge status={query.data.status} />
         }
       />
-
-      {competitionId && (
-        <CompetitionNav competitionId={competitionId} current="overview" />
-      )}
 
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} />}

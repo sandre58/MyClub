@@ -165,13 +165,25 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Spring Cup' }),
+      await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Alpha')).toBeInTheDocument()
+    expect(await screen.findByText('Alpha')).toBeInTheDocument()
     // Entry status is a badge next to the name (13.5), no longer “Alpha (Active)”.
     expect(screen.getByText('Active')).toBeInTheDocument()
     expect(screen.getByText('InsufficientParticipants')).toBeInTheDocument()
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
+  })
+
+  it('does not render redundant competition section navigation', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderOrganisationPage()
+
+    await screen.findByRole('heading', { name: 'Organisation' })
+
+    expect(
+      screen.queryByRole('navigation', { name: 'Competition sections' }),
+    ).not.toBeInTheDocument()
   })
 
   it('shows empty participants state', async () => {
@@ -419,7 +431,7 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Spring Cup' }),
+      await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Add entry' }),

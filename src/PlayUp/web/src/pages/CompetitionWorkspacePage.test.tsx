@@ -90,9 +90,9 @@ describe('CompetitionWorkspacePage', () => {
     renderWorkspacePage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Spring Cup' }),
+      await screen.findByRole('heading', { name: 'Workspace' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Draft')).toBeInTheDocument()
+    expect(await screen.findByText('Draft')).toBeInTheDocument()
     expect(screen.getByText('Continuer la préparation')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
   })

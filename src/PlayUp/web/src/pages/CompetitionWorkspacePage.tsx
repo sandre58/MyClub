@@ -27,7 +27,7 @@ export function CompetitionWorkspacePage() {
     <main id="main" className="page">
       <PageHeader
         eyebrow="Workspace"
-        title={query.data?.name ?? 'Competition'}
+        title="Workspace"
         back={{ to: '/competitions', label: 'Back to competitions' }}
         badges={
           query.data && <CompetitionStatusBadge status={query.data.status} />

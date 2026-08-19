@@ -11,7 +11,6 @@ import {
   withdrawCompetitionEntry,
 } from '../api'
 import {
-  CompetitionNav,
   CompetitionStatusBadge,
   EmptyState,
   EntryStatusBadge,
@@ -49,7 +48,7 @@ export function OrganisationPage() {
     <main id="main" className="page">
       <PageHeader
         eyebrow="Organisation"
-        title={query.data?.name ?? 'Organisation'}
+        title="Organisation"
         back={
           competitionId
             ? {
@@ -62,10 +61,6 @@ export function OrganisationPage() {
           query.data && <CompetitionStatusBadge status={query.data.status} />
         }
       />
-
-      {competitionId && (
-        <CompetitionNav competitionId={competitionId} current="organisation" />
-      )}
 
       {query.isPending && <LoadingState />}
       {query.isError && <ErrorState error={query.error} />}

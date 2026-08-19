@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { ApiError } from './api'
 import type {
@@ -19,11 +19,11 @@ import {
 } from './types'
 
 /**
- * Shared page chrome: header, navigation, status badges and the
- * loading / error / empty / pending states every read page needs.
+ * Shared page primitives: header, status badges and the loading / error /
+ * empty / pending states every read page needs.
  *
- * Everything here is reused by at least two screens — a class alone is
- * not a reason to add a component.
+ * PageHeader expresses page title and local context only — global navigation
+ * and competition context live in the Shell (14.6).
  */
 
 /** Visual meaning of a state, shared by every status family. */
@@ -81,57 +81,6 @@ export function BackLink({
       <span aria-hidden="true">←</span>
       {children}
     </Link>
-  )
-}
-
-/**
- * Lateral navigation inside one competition.
- * Rendered on the sub-screens; the workspace itself is the hub they return to.
- */
-export function CompetitionNav({
-  competitionId,
-  current,
-}: {
-  competitionId: string
-  current: 'organisation' | 'matches' | 'overview'
-}) {
-  const items = [
-    { key: 'workspace', label: 'Workspace', to: `/competitions/${competitionId}` },
-    {
-      key: 'organisation',
-      label: 'Organisation',
-      to: `/competitions/${competitionId}/organisation`,
-    },
-    {
-      key: 'matches',
-      label: 'Match hub',
-      to: `/competitions/${competitionId}/matches`,
-    },
-    {
-      key: 'overview',
-      label: 'Stages & entries',
-      to: `/competitions/${competitionId}/overview`,
-    },
-  ]
-
-  return (
-    <nav className="context-nav" aria-label="Competition sections">
-      {items.map((item) =>
-        item.key === current ? (
-          <span
-            key={item.key}
-            className="context-nav__item context-nav__item--current"
-            aria-current="page"
-          >
-            {item.label}
-          </span>
-        ) : (
-          <NavLink key={item.key} to={item.to} className="context-nav__item" end>
-            {item.label}
-          </NavLink>
-        ),
-      )}
-    </nav>
   )
 }
 
