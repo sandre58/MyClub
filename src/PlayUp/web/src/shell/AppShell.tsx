@@ -7,6 +7,7 @@ import { AttentionDrawer } from './AttentionDrawer'
 import { ShellHeader } from './ShellHeader'
 import { ShellMain } from './ShellMain'
 import { ShellSidebar } from './ShellSidebar'
+import { SHELL_ATTENTION_DRAWER_PANEL_ID } from './shellIds'
 
 const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed'
 
@@ -42,7 +43,7 @@ export function AppShell() {
         Skip to content
       </a>
 
-      <div className="shell__frame">
+      <div className="shell__frame" inert={attentionDrawerOpen || undefined}>
         <ShellSidebar
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((value) => !value)}
@@ -50,6 +51,7 @@ export function AppShell() {
 
         <div className="shell__column">
           <ShellHeader
+            attentionDrawerId={SHELL_ATTENTION_DRAWER_PANEL_ID}
             attentionDrawerOpen={attentionDrawerOpen}
             attentionTriggerRef={attentionTriggerRef}
             onAttentionClick={() => setAttentionDrawerOpen(true)}
@@ -62,6 +64,7 @@ export function AppShell() {
 
       <AttentionDrawer
         open={attentionDrawerOpen}
+        panelId={SHELL_ATTENTION_DRAWER_PANEL_ID}
         onClose={() => setAttentionDrawerOpen(false)}
         returnFocusRef={attentionTriggerRef}
       />

@@ -49,6 +49,10 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             path="/stages/:stageId/matches"
             element={<p>Stage matches page</p>}
           />
+          <Route
+            path="/stages/:stageId/matches"
+            element={<p>Stage matches page</p>}
+          />
           <Route path="/matches/:matchId" element={<p>Match deep link</p>} />
         </Route>
       </Routes>
@@ -157,6 +161,15 @@ describe('AppShell', () => {
       screen.getByRole('button', { name: 'Expand sidebar' }),
     ).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+  })
+
+  it('maps stage matches deep links to Matchs', () => {
+    renderWithShell('/stages/stage-id/matches')
+
+    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 
   it('continues to render deep-link routes inside the shell', () => {

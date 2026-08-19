@@ -277,6 +277,33 @@ describe('AttentionDrawer', () => {
     )
   })
 
+  it('closes via the backdrop', async () => {
+    const user = userEvent.setup()
+    renderWithShell(`/competitions/${competitionId}`)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Fermer À traiter' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  it('isolates the shell frame while open', async () => {
+    const user = userEvent.setup()
+    renderWithShell(`/competitions/${competitionId}`)
+
+    expect(document.querySelector('.shell__frame')).not.toHaveAttribute('inert')
+
+    await user.click(
+      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+    )
+
+    expect(document.querySelector('.shell__frame')).toHaveAttribute('inert')
+  })
+
   it('does not introduce a new /attention route', async () => {
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)

@@ -5,6 +5,7 @@ import { fetchNeedsAttention } from '../api'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type ShellHeaderProps = {
+  attentionDrawerId?: string
   attentionDrawerOpen?: boolean
   attentionTriggerRef?: RefObject<HTMLButtonElement | null>
   onAttentionClick?: () => void
@@ -15,6 +16,7 @@ type ShellHeaderProps = {
  * Opens the attention drawer via onAttentionClick; business nav stays in Sidebar.
  */
 export function ShellHeader({
+  attentionDrawerId,
   attentionDrawerOpen = false,
   attentionTriggerRef,
   onAttentionClick,
@@ -48,13 +50,15 @@ export function ShellHeader({
         <AttentionTrigger
           buttonRef={attentionTriggerRef}
           count={attentionCount}
+          drawerId={attentionDrawerId}
           drawerOpen={attentionDrawerOpen}
           onClick={onAttentionClick}
         />
         <button
           type="button"
           className="ds-btn ds-btn--ghost ds-icon-button shell-header__icon-action"
-          aria-label="Paramètres"
+          aria-label="Paramètres (bientôt disponible)"
+          aria-disabled="true"
           disabled
         >
           <SettingsIcon aria-hidden="true" />
@@ -62,7 +66,8 @@ export function ShellHeader({
         <button
           type="button"
           className="ds-btn ds-btn--ghost shell-header__user-action"
-          aria-label="Utilisateur"
+          aria-label="Utilisateur (bientôt disponible)"
+          aria-disabled="true"
           disabled
         >
           <UserIcon className="shell-header__user-icon" aria-hidden="true" />
@@ -154,11 +159,13 @@ function ShellHeaderCompetitionContext({
 
 function AttentionTrigger({
   count,
+  drawerId,
   drawerOpen,
   onClick,
   buttonRef,
 }: {
   count: number
+  drawerId?: string
   drawerOpen: boolean
   onClick?: () => void
   buttonRef?: RefObject<HTMLButtonElement | null>
@@ -180,6 +187,7 @@ function AttentionTrigger({
       }`}
       aria-expanded={drawerOpen}
       aria-haspopup="dialog"
+      aria-controls={drawerId}
       aria-label={accessibleLabel}
       onClick={onClick}
     >

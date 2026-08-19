@@ -51,4 +51,33 @@ describe('resolveActiveDestination', () => {
       'cockpit',
     )
   })
+
+  it('maps organisation routes to Organisation', () => {
+    expect(
+      resolveActiveDestination(
+        `/competitions/${competitionId}/organisation`,
+      ),
+    ).toBe('organisation')
+  })
+
+  it('maps match hub routes to Matchs', () => {
+    expect(
+      resolveActiveDestination(`/competitions/${competitionId}/matches`),
+    ).toBe('matches')
+    expect(resolveActiveDestination(`/stages/${stageId}/matches`)).toBe(
+      'matches',
+    )
+    expect(resolveActiveDestination(`/matches/${matchId}`)).toBe('matches')
+  })
+
+  it('maps consultation routes to Consultation', () => {
+    expect(
+      resolveActiveDestination(`/competitions/${competitionId}/overview`),
+    ).toBe('consultation')
+    expect(resolveActiveDestination(`/stages/${stageId}`)).toBe('consultation')
+  })
+
+  it('returns null for routes outside the shell destinations', () => {
+    expect(resolveActiveDestination('/foundations')).toBeNull()
+  })
 })

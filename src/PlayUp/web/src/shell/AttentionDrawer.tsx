@@ -17,6 +17,7 @@ import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type AttentionDrawerProps = {
   open: boolean
+  panelId: string
   onClose: () => void
   returnFocusRef: RefObject<HTMLButtonElement | null>
 }
@@ -26,6 +27,7 @@ type AttentionDrawerProps = {
  */
 export function AttentionDrawer({
   open,
+  panelId,
   onClose,
   returnFocusRef,
 }: AttentionDrawerProps) {
@@ -135,6 +137,7 @@ export function AttentionDrawer({
 
       <div
         ref={panelRef}
+        id={panelId}
         className="shell-attention-drawer__panel ds-overlay"
         role="dialog"
         aria-modal="true"

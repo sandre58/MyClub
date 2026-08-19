@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -177,6 +178,26 @@ describe('ShellHeader', () => {
     })
     expect(trigger).toHaveClass('shell-header__attention--active')
     expect(screen.getByText('1')).toBeInTheDocument()
+  })
+
+  it('links the attention trigger to the drawer panel', async () => {
+    const user = userEvent.setup()
+    renderWithShell(`/competitions/${competitionId}`)
+
+    const trigger = await screen.findByRole('button', {
+      name: 'À traiter, aucun élément',
+    })
+    expect(trigger).toHaveAttribute(
+      'aria-controls',
+      'shell-attention-drawer-panel',
+    )
+
+    await user.click(trigger)
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    expect(
+      document.getElementById('shell-attention-drawer-panel'),
+    ).toBeInTheDocument()
   })
 
   it('does not change the route when rendering the header', async () => {
