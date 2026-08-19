@@ -1,0 +1,27 @@
+/*
+ * One grotesque family at a time. Bake-off via [data-font], not a second face.
+ * Five roles — not a 7-step type scale. No mono, no display sportif.
+ */
+.ds-root,
+.ds-root[data-font='plex'] {
+    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+.ds-root[data-font='inter'] {
+    --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+.ds-root {
+    --text-display: 2rem;
+    --text-heading: 1.375rem;
+    --text-body: 0.9375rem;
+    --text-label: 0.8125rem;
+    --text-meta: 0.75rem;
+
+    --font-weight-regular: 400;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    --leading-tight: 1.2;
+    --leading-normal: 1.45;
+}

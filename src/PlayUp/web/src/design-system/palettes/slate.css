@@ -1,0 +1,22 @@
+/*
+ * Palette piste: slate / neutres froids.
+ * Distincte du teal et du bleu 13.5 (#3452d8). Pas une 3e marque figée.
+ */
+.ds-root[data-palette='slate'] {
+    --primitive-canvas: #f2f3f5;
+    --primitive-surface: #ffffff;
+    --primitive-surface-secondary: #e8eaee;
+    --primitive-ink: #14171c;
+    --primitive-text-primary: #14171c;
+    --primitive-text-secondary: #4a515c;
+    --primitive-border: #d3d6dc;
+    --primitive-border-strong: #bdc2ca;
+    --primitive-brand: #3d4a5c;
+    --primitive-brand-hover: #2f3948;
+    --primitive-success: #1b6b44;
+    --primitive-attention: #8a5200;
+    --primitive-error: #b4232c;
+    --primitive-info: #215a86;
+    --primitive-focus: #3d4a5c;
+    --primitive-on-ink: #f4f5f7;
+}

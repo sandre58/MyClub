@@ -1,0 +1,26 @@
+/*
+ * Play’up design-system foundations (14.5).
+ *
+ * Scoped to .ds-root — does not replace the 13.5 :root in index.css.
+ * Components and pages must not read --primitive-* ; semantic tokens are the API.
+ *
+ * Semantic token budget: 46 / ~50 (ceiling 70)
+ *   color 16 · spacing 6 · geometry 7 · typography 11 · density 4 · motion 2
+ */
+
+@import './palettes/warm-ink.css';
+@import './palettes/teal.css';
+@import './palettes/slate.css';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/geometry.css';
+@import './tokens/density.css';
+@import './tokens/motion.css';
+@import './foundations/base.css';
+@import './foundations/typography.css';
+@import './foundations/surfaces.css';
+@import './foundations/focus.css';
+@import './foundations/states.css';
+@import './foundations/actions.css';
+@import './foundations/controls.css';

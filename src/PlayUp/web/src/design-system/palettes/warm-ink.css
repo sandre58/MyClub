@@ -1,0 +1,24 @@
+/*
+ * Palette piste: neutres chauds / encre.
+ * Hex expérimentaux — pas une SoT de marque.
+ * Marque quasi-encre: l'identité doit tenir sans teinte forte.
+ */
+.ds-root,
+.ds-root[data-palette='warm-ink'] {
+    --primitive-canvas: #f3f1ee;
+    --primitive-surface: #fffefb;
+    --primitive-surface-secondary: #ebe8e3;
+    --primitive-ink: #16181d;
+    --primitive-text-primary: #16181d;
+    --primitive-text-secondary: #4a4f57;
+    --primitive-border: #d9d4cc;
+    --primitive-border-strong: #c4beb4;
+    --primitive-brand: #2c3038;
+    --primitive-brand-hover: #1f2329;
+    --primitive-success: #1b6b44;
+    --primitive-attention: #8a5200;
+    --primitive-error: #b4232c;
+    --primitive-info: #215a86;
+    --primitive-focus: #16181d;
+    --primitive-on-ink: #f7f5f2;
+}

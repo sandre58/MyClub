@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
 import { CompetitionPage } from './pages/CompetitionPage'
@@ -11,16 +12,31 @@ import { OrganisationPage } from './pages/OrganisationPage'
 import { StageMatchesPage } from './pages/StageMatchesPage'
 import { StagePage } from './pages/StagePage'
 
+const FoundationsPlayground = lazy(async () => {
+  const module = await import('./dev/FoundationsPlayground')
+  return { default: module.FoundationsPlayground }
+})
+
 /**
  * Route table only.
  *
- * Route = URL pattern → element to render.
- * Nested under AppLayout so Outlet swaps page content while the shell stays.
+ * /dev/foundations is outside AppLayout: 14.5 validation terrain,
+ * not organizer chrome. Lazy so Plex/Inter and DS CSS stay off the 13.5 bundle.
+ *
+ * Nested under AppLayout so Outlet swaps page content while the 13.5 shell stays.
  * Params (:competitionId, :stageId, :matchId) are opaque ids — not business fields.
  */
 export default function App() {
   return (
     <Routes>
+      <Route
+        path="/dev/foundations"
+        element={
+          <Suspense fallback={<p>Chargement…</p>}>
+            <FoundationsPlayground />
+          </Suspense>
+        }
+      />
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/competitions" element={<CompetitionsPage />} />

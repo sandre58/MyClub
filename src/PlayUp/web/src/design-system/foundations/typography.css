@@ -1,0 +1,40 @@
+.ds-display {
+    font-size: var(--text-display);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+}
+
+.ds-heading {
+    font-size: var(--text-heading);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+    color: var(--color-ink);
+}
+
+.ds-body {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-normal);
+    color: var(--color-text-primary);
+}
+
+.ds-label {
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+    color: var(--color-text-primary);
+}
+
+.ds-meta {
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-normal);
+    color: var(--color-text-secondary);
+}
+
+.ds-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}

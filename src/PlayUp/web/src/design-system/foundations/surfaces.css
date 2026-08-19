@@ -1,0 +1,33 @@
+/*
+ * Four surface levels. There is no .ds-card — Card is not a foundation.
+ * Groups cluster by title and proximity, not by a box.
+ */
+
+.ds-canvas {
+    background: var(--color-canvas);
+    color: var(--color-text-primary);
+}
+
+.ds-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+}
+
+.ds-panel {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-panel);
+    padding: var(--space-16);
+    box-shadow: var(--shadow-page);
+}
+
+.ds-overlay {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-panel);
+    padding: var(--space-16);
+    box-shadow: var(--shadow-overlay);
+}

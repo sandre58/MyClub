@@ -1,0 +1,74 @@
+/*
+ * Action foundations — not a Button library.
+ * Primary = ink fill. Brand is not a CTA fill.
+ * No pills, no glow, no per-action colour fills.
+ */
+
+.ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    min-height: var(--control-height);
+    padding: 0 var(--space-16);
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-ink);
+    font-family: inherit;
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background-color var(--motion-duration) var(--motion-easing),
+        border-color var(--motion-duration) var(--motion-easing),
+        color var(--motion-duration) var(--motion-easing);
+}
+
+.ds-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+.ds-btn--primary {
+    background: var(--color-ink);
+    color: var(--color-on-ink);
+}
+
+.ds-btn--primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-ink) 88%, var(--color-on-ink));
+}
+
+.ds-btn--secondary {
+    background: var(--color-surface);
+    border-color: var(--color-border-strong);
+}
+
+.ds-btn--secondary:hover:not(:disabled) {
+    background: var(--color-surface-secondary);
+}
+
+.ds-btn--ghost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+}
+
+.ds-btn--destructive {
+    color: var(--color-error);
+    border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
+}
+
+.ds-btn--destructive:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
+}
+
+.ds-icon-button {
+    width: var(--control-height);
+    min-width: var(--control-height);
+    padding: 0;
+}
+
+.ds-icon-button svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}

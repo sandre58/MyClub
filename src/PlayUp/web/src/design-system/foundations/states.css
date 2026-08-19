@@ -1,0 +1,79 @@
+/*
+ * D9 recipe: figure + icon + short label + colour.
+ * Colour never carries the state alone. Attention ≠ error.
+ * State fills are recipes (color-mix), not *-soft / *-border tokens.
+ */
+
+.ds-state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    color: var(--color-text-primary);
+}
+
+.ds-state__figure {
+    font-size: var(--text-display);
+    font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+}
+
+.ds-state__icon {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.ds-state__label {
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.ds-state--neutral {
+    color: var(--color-text-primary);
+}
+
+.ds-state--info {
+    color: var(--color-info);
+}
+
+.ds-state--success {
+    color: var(--color-success);
+}
+
+.ds-state--attention {
+    color: var(--color-attention);
+}
+
+.ds-state--error {
+    color: var(--color-error);
+}
+
+.ds-state--block {
+    padding: var(--space-12) var(--space-16);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-panel);
+}
+
+.ds-state--block.ds-state--info {
+    background: color-mix(in srgb, var(--color-info) 10%, var(--color-canvas));
+    border-color: color-mix(in srgb, var(--color-info) 32%, var(--color-border));
+}
+
+.ds-state--block.ds-state--success {
+    background: color-mix(in srgb, var(--color-success) 10%, var(--color-canvas));
+    border-color: color-mix(in srgb, var(--color-success) 32%, var(--color-border));
+}
+
+.ds-state--block.ds-state--attention {
+    background: color-mix(in srgb, var(--color-attention) 12%, var(--color-canvas));
+    border-color: color-mix(in srgb, var(--color-attention) 35%, var(--color-border));
+}
+
+.ds-state--block.ds-state--error {
+    background: color-mix(in srgb, var(--color-error) 10%, var(--color-canvas));
+    border-color: color-mix(in srgb, var(--color-error) 32%, var(--color-border));
+}

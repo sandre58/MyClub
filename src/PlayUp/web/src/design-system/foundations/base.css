@@ -1,0 +1,32 @@
+.ds-root {
+    box-sizing: border-box;
+    min-height: 100vh;
+    background: var(--color-canvas);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+}
+
+.ds-root *,
+.ds-root *::before,
+.ds-root *::after {
+    box-sizing: border-box;
+}
+
+.ds-root :is(h1, h2, h3, h4, p) {
+    margin: 0;
+}
+
+.ds-root a {
+    color: var(--color-ink);
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+}
+
+.ds-root a:hover {
+    color: var(--color-ink);
+    text-decoration-thickness: 0.12em;
+}

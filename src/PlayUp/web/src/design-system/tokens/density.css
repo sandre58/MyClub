@@ -1,0 +1,21 @@
+/*
+ * Control / row heights. Breathing comes from group gaps, not extra padding.
+ */
+.ds-root {
+    --control-height-compact: 32px;
+    --control-height-standard: 36px;
+    --control-height-comfortable: 40px;
+    --control-height: var(--control-height-standard);
+}
+
+.ds-root[data-density='compact'] {
+    --control-height: var(--control-height-compact);
+}
+
+.ds-root[data-density='standard'] {
+    --control-height: var(--control-height-standard);
+}
+
+.ds-root[data-density='comfortable'] {
+    --control-height: var(--control-height-comfortable);
+}

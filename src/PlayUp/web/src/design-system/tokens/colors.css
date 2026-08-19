@@ -1,0 +1,22 @@
+/*
+ * Semantic color roles. Foundations and UI must use these names only.
+ * Values come from palette primitives — never from a hardcoded hex here.
+ */
+.ds-root {
+    --color-canvas: var(--primitive-canvas);
+    --color-surface: var(--primitive-surface);
+    --color-surface-secondary: var(--primitive-surface-secondary);
+    --color-ink: var(--primitive-ink);
+    --color-text-primary: var(--primitive-text-primary);
+    --color-text-secondary: var(--primitive-text-secondary);
+    --color-border: var(--primitive-border);
+    --color-border-strong: var(--primitive-border-strong);
+    --color-brand: var(--primitive-brand);
+    --color-brand-hover: var(--primitive-brand-hover);
+    --color-success: var(--primitive-success);
+    --color-attention: var(--primitive-attention);
+    --color-error: var(--primitive-error);
+    --color-info: var(--primitive-info);
+    --color-focus: var(--primitive-focus);
+    --color-on-ink: var(--primitive-on-ink);
+}

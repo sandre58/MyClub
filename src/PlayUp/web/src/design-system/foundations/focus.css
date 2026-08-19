@@ -1,0 +1,8 @@
+.ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus {
+    outline: none;
+}
+
+.ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-ring-offset);
+}
