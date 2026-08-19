@@ -23,7 +23,7 @@ const FoundationsPlayground = lazy(async () => {
  * /dev/foundations is outside AppLayout: 14.5 validation terrain,
  * not organizer chrome. Lazy so Plex/Inter and DS CSS stay off the 13.5 bundle.
  *
- * Nested under AppLayout so Outlet swaps page content while the 13.5 shell stays.
+ * Nested under AppLayout so Outlet swaps page content while the 14.6 shell stays.
  * Params (:competitionId, :stageId, :matchId) are opaque ids — not business fields.
  */
 export default function App() {
