@@ -6,6 +6,7 @@
 .shell {
     --shell-sidebar-width-expanded: 12rem;
     --shell-sidebar-width-collapsed: 3rem;
+    --shell-header-height: calc(var(--control-height) + var(--space-16));
 
     position: relative;
     display: flex;
@@ -224,24 +225,75 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-8) var(--space-16);
-    min-height: var(--control-height);
+    min-height: var(--shell-header-height);
     padding: var(--space-8) var(--space-16);
     border-bottom: var(--border-width) solid var(--color-border);
     background: var(--color-surface);
 }
 
-.shell-header__brand {
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-bold);
+.shell-header__identity {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8) var(--space-12);
+    min-width: 0;
+}
+
+.shell-header__wordmark {
+    flex: none;
     color: var(--color-text-primary);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.04em;
+    line-height: var(--leading-tight);
+}
+
+.shell-header__separator {
+    flex: none;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    line-height: 1;
 }
 
 .shell-header__context {
+    display: flex;
     flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8) var(--space-12);
     min-width: 0;
-    font-size: var(--text-label);
+}
+
+.shell-header__competition-name {
+    min-width: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.shell-header__context-message,
+.shell-header__context-loading {
+    min-width: 0;
     color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.shell-header__change {
+    flex: none;
+    min-height: calc(var(--control-height) - var(--space-8));
+    padding-inline: var(--space-12);
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+}
+
+.shell-header__change:hover {
+    color: var(--color-text-primary);
 }
 
 .shell-header__actions {
@@ -251,9 +303,50 @@
     gap: var(--space-8);
 }
 
-.shell-header__slot {
-    font-size: var(--text-label);
+.shell-header__attention {
+    min-height: var(--control-height);
+    padding-inline: var(--space-12);
+    color: inherit;
+}
+
+.shell-header__attention .ds-state__figure {
+    font-size: var(--text-body);
+}
+
+.shell-header__attention--active .ds-state__figure {
+    font-weight: var(--font-weight-bold);
+}
+
+.shell-header__icon-action {
     color: var(--color-text-secondary);
+}
+
+.shell-header__icon-action:disabled {
+    cursor: default;
+    opacity: 0.56;
+}
+
+.shell-header__user-action {
+    gap: var(--space-8);
+    min-height: var(--control-height);
+    padding-inline: var(--space-12);
+    color: var(--color-text-secondary);
+}
+
+.shell-header__user-action:disabled {
+    cursor: default;
+    opacity: 0.56;
+}
+
+.shell-header__user-icon {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.shell-header__user-label {
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
 }
 
 /* ---------------------------------------------------------------- main viewport */
