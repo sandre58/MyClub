@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useRef, type RefObject, type SVGProps } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   fetchCompetitionOverview,
@@ -31,6 +32,7 @@ export function AttentionDrawer({
   onClose,
   returnFocusRef,
 }: AttentionDrawerProps) {
+  const { t } = useTranslation(['shell', 'common'])
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -130,7 +132,7 @@ export function AttentionDrawer({
       <button
         type="button"
         className="shell-attention-drawer__backdrop"
-        aria-label="Fermer À traiter"
+        aria-label={t('shell:attention.closeDrawer')}
         onClick={onClose}
         tabIndex={-1}
       />
@@ -146,7 +148,7 @@ export function AttentionDrawer({
         <header className="shell-attention-drawer__head">
           <div className="shell-attention-drawer__title-group">
             <h2 id={titleId} className="shell-attention-drawer__title">
-              À traiter
+              {t('shell:attention.label')}
             </h2>
             {competitionName ? (
               <p className="shell-attention-drawer__subtitle ds-meta">
@@ -157,7 +159,7 @@ export function AttentionDrawer({
                 className="shell-attention-drawer__subtitle shell-attention-drawer__subtitle--loading ds-meta"
                 aria-busy="true"
               >
-                Chargement
+                {t('shell:competition.loading')}
               </p>
             ) : null}
           </div>
@@ -165,7 +167,7 @@ export function AttentionDrawer({
             ref={closeButtonRef}
             type="button"
             className="ds-btn ds-btn--ghost ds-icon-button shell-attention-drawer__close"
-            aria-label="Fermer"
+            aria-label={t('common:close')}
             onClick={onClose}
           >
             <CloseIcon aria-hidden="true" />
@@ -205,11 +207,13 @@ function AttentionDrawerContent({
   matchRows: AttentionMatchRow[]
   onNavigate: () => void
 }) {
+  const { t } = useTranslation('shell')
+
   if (!competitionId) {
     if (contextState === 'loading') {
       return (
         <p className="shell-attention-drawer__message" aria-busy="true">
-          Chargement
+          {t('competition.loading')}
         </p>
       )
     }
@@ -232,7 +236,7 @@ function AttentionDrawerContent({
   if (contextState === 'loading' || pending) {
     return (
       <p className="shell-attention-drawer__message" aria-busy="true">
-        Chargement
+        {t('competition.loading')}
       </p>
     )
   }

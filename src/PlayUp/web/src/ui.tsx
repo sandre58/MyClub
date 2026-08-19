@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { ApiError } from './api'
@@ -201,11 +202,14 @@ const drawResolutionTone: Record<DrawResolutionState, StatusTone> = {
   NoSolution: 'danger',
 }
 
-export function LoadingState({ label = 'Loading…' }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
+  const { t } = useTranslation('common')
+  const text = label ?? t('loading')
+
   return (
     <p className="loading-state" role="status" aria-live="polite">
       <span className="spinner" aria-hidden="true" />
-      {label}
+      {text}
     </p>
   )
 }

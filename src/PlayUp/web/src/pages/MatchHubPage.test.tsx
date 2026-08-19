@@ -111,7 +111,7 @@ describe('MatchHubPage', () => {
 
     renderMatchHub()
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading…')
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
   it('renders empty when stages exist but no matches', async () => {

@@ -61,7 +61,7 @@ describe('CompetitionsPage', () => {
 
     renderCompetitionsPage()
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading…')
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
   it('shows an empty state when the Host returns no competitions', async () => {

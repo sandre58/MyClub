@@ -79,7 +79,7 @@ describe('CompetitionWorkspacePage', () => {
 
     renderWorkspacePage()
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading…')
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
   it('renders the workspace summary from the Host DTO', async () => {

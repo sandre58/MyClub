@@ -1,0 +1,23 @@
+{
+  "navigation": {
+    "cockpit": "Cockpit",
+    "organisation": "Organisation",
+    "matches": "Matchs",
+    "consultation": "Consultation"
+  },
+  "competition": {
+    "change": "Changer",
+    "choose": "Choisir une compétition",
+    "none": "Aucune compétition",
+    "loading": "Chargement",
+    "unavailable": "Contexte indisponible",
+    "list": "Liste"
+  },
+  "attention": {
+    "label": "À traiter",
+    "trigger_zero": "À traiter, aucun élément",
+    "trigger_one": "À traiter, {{count}} élément",
+    "trigger_other": "À traiter, {{count}} éléments",
+    "closeDrawer": "Fermer À traiter"
+  }
+}

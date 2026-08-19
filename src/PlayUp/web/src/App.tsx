@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
+import { LoadingState } from './ui'
 import { CompetitionPage } from './pages/CompetitionPage'
 import { CompetitionWorkspacePage } from './pages/CompetitionWorkspacePage'
 import { CompetitionsPage } from './pages/CompetitionsPage'
@@ -32,7 +33,7 @@ export default function App() {
       <Route
         path="/dev/foundations"
         element={
-          <Suspense fallback={<p>Chargement…</p>}>
+          <Suspense fallback={<LoadingState />}>
             <FoundationsPlayground />
           </Suspense>
         }

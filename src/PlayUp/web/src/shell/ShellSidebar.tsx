@@ -1,4 +1,5 @@
 import type { ReactElement, SVGProps } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import {
   resolveActiveDestination,
@@ -20,12 +21,12 @@ type NavDestination = {
 }
 
 const destinationDefinitions: Array<
-  Omit<NavDestination, 'to'> & { key: ShellDestinationKey }
+  Omit<NavDestination, 'to' | 'label'> & { key: ShellDestinationKey }
 > = [
-  { key: 'cockpit', label: 'Cockpit', icon: HomeIcon },
-  { key: 'organisation', label: 'Organisation', icon: OrganisationIcon },
-  { key: 'matches', label: 'Matchs', icon: MatchesIcon },
-  { key: 'consultation', label: 'Consultation', icon: ConsultationIcon },
+  { key: 'cockpit', icon: HomeIcon },
+  { key: 'organisation', icon: OrganisationIcon },
+  { key: 'matches', icon: MatchesIcon },
+  { key: 'consultation', icon: ConsultationIcon },
 ]
 
 /**
@@ -35,6 +36,7 @@ export function ShellSidebar({
   collapsed,
   onToggleCollapse,
 }: ShellSidebarProps) {
+  const { t } = useTranslation('shell')
   const { stageId, matchId } = useParams()
   const { competitionId } = useShellCompetitionContext()
   const location = useLocation()
@@ -42,6 +44,7 @@ export function ShellSidebar({
   const hrefs = shellDestinationHrefs({ competitionId, stageId, matchId })
   const destinations = destinationDefinitions.map((item) => ({
     ...item,
+    label: t(`navigation.${item.key}`),
     to: hrefs[item.key],
   }))
   const cockpitHref = hrefs.cockpit

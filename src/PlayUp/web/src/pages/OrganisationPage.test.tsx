@@ -156,7 +156,7 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading…')
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
   it('renders organisation summary from the Host DTO', async () => {

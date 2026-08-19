@@ -1,4 +1,5 @@
 import type { RefObject, SVGProps } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchNeedsAttention } from '../api'
@@ -86,6 +87,8 @@ function ShellHeaderCompetitionContext({
   competitionName?: string
   state: ReturnType<typeof useShellCompetitionContext>['state']
 }) {
+  const { t } = useTranslation('shell')
+
   if (state === 'loading') {
     return (
       <div
@@ -93,7 +96,9 @@ function ShellHeaderCompetitionContext({
         aria-busy="true"
         aria-label="Competition context"
       >
-        <span className="shell-header__context-loading">Chargement</span>
+        <span className="shell-header__context-loading">
+          {t('competition.loading')}
+        </span>
       </div>
     )
   }
@@ -106,7 +111,7 @@ function ShellHeaderCompetitionContext({
           className="ds-btn ds-btn--ghost shell-header__change"
           to="/competitions"
         >
-          Changer
+          {t('competition.change')}
         </Link>
       </div>
     )
@@ -116,13 +121,13 @@ function ShellHeaderCompetitionContext({
     return (
       <div className="shell-header__context" aria-label="Competition context">
         <span className="shell-header__context-message">
-          Contexte indisponible
+          {t('competition.unavailable')}
         </span>
         <Link
           className="ds-btn ds-btn--ghost shell-header__change"
           to="/competitions"
         >
-          Changer
+          {t('competition.change')}
         </Link>
       </div>
     )
@@ -131,12 +136,14 @@ function ShellHeaderCompetitionContext({
   if (state === 'empty') {
     return (
       <div className="shell-header__context" aria-label="Competition context">
-        <span className="shell-header__context-message">Aucune compétition</span>
+        <span className="shell-header__context-message">
+          {t('competition.none')}
+        </span>
         <Link
           className="ds-btn ds-btn--ghost shell-header__change"
           to="/competitions"
         >
-          Liste
+          {t('competition.list')}
         </Link>
       </div>
     )
@@ -145,13 +152,13 @@ function ShellHeaderCompetitionContext({
   return (
     <div className="shell-header__context" aria-label="Competition context">
       <span className="shell-header__context-message">
-        Choisir une compétition
+        {t('competition.choose')}
       </span>
       <Link
         className="ds-btn ds-btn--ghost shell-header__change"
         to="/competitions"
       >
-        Changer
+        {t('competition.change')}
       </Link>
     </div>
   )
@@ -170,13 +177,9 @@ function AttentionTrigger({
   onClick?: () => void
   buttonRef?: RefObject<HTMLButtonElement | null>
 }) {
+  const { t } = useTranslation('shell')
   const hasAttention = count > 0
-  const accessibleLabel =
-    count === 0
-      ? 'À traiter, aucun élément'
-      : count === 1
-        ? 'À traiter, 1 élément'
-        : `À traiter, ${count} éléments`
+  const accessibleLabel = t('attention.trigger', { count })
 
   return (
     <button
@@ -198,7 +201,7 @@ function AttentionTrigger({
       >
         <span className="ds-state__figure">{count}</span>
         <AttentionIcon className="ds-state__icon" aria-hidden="true" />
-        <span className="ds-state__label">À traiter</span>
+        <span className="ds-state__label">{t('attention.label')}</span>
       </span>
     </button>
   )

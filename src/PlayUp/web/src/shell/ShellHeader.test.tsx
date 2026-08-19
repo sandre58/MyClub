@@ -180,6 +180,24 @@ describe('ShellHeader', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
   })
 
+  it('uses plural aria-label when count is 2', async () => {
+    vi.mocked(fetchNeedsAttention).mockResolvedValue({
+      competitionId,
+      items: [
+        { source: 'a', reason: 'b', severity: 'c', targetType: null, targetId: null },
+        { source: 'd', reason: 'e', severity: 'f', targetType: null, targetId: null },
+      ],
+      count: 2,
+    })
+    renderWithShell(`/competitions/${competitionId}`)
+
+    const trigger = await screen.findByRole('button', {
+      name: 'À traiter, 2 éléments',
+    })
+    expect(trigger).toHaveAttribute('aria-label', 'À traiter, 2 éléments')
+    expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
   it('links the attention trigger to the drawer panel', async () => {
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)

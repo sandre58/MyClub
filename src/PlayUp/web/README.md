@@ -100,6 +100,10 @@ Re-seed after pulling DevSeed progression changes (`Winner` → slot `SF1-A`).
 | `npm run test:run` | Vitest single run (CI) |
 | `npm run preview` | Serve the production bundle |
 
+## Internationalization
+
+Default locale is **`fr`**. See [docs/i18n.md](./docs/i18n.md) for conventions, namespaces, and the rule that new UI strings must go through i18n.
+
 ## Out of scope (later)
 
 `features/` until more domains collide; Sass/Tailwind; UI libraries; OpenAPI; auth; Host CORS; Draw UI; Playwright.
