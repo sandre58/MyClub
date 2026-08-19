@@ -92,7 +92,7 @@ describe('MatchPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Alpha vs Beta' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Scheduled')).toBeInTheDocument()
+    expect(screen.getByText('Planifié')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Start match' }),
     ).toBeInTheDocument()
@@ -157,7 +157,7 @@ describe('MatchPage', () => {
 
     await waitFor(() => {
       expect(startMatch).toHaveBeenCalledWith(matchId)
-      expect(screen.getByText('Live')).toBeInTheDocument()
+      expect(screen.getByText('En direct')).toBeInTheDocument()
     })
     expect(fetchMatch.mock.calls.length).toBeGreaterThan(callsBeforeClick)
   })

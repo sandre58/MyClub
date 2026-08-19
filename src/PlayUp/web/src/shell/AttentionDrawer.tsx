@@ -221,14 +221,14 @@ function AttentionDrawerContent({
     if (contextState === 'empty') {
       return (
         <p className="shell-attention-drawer__message">
-          Aucune compétition n&apos;est disponible sur ce Host.
+          {t('attention.emptyHost')}
         </p>
       )
     }
 
     return (
       <p className="shell-attention-drawer__message">
-        Ouvrez une compétition pour voir ce qui demande votre attention.
+        {t('attention.noContext')}
       </p>
     )
   }
@@ -244,7 +244,7 @@ function AttentionDrawerContent({
   if (error) {
     return (
       <p className="shell-attention-drawer__message" role="alert">
-        Impossible de charger les éléments à traiter.
+        {t('attention.loadError')}
       </p>
     )
   }
@@ -252,13 +252,15 @@ function AttentionDrawerContent({
   if (items.length === 0) {
     return (
       <div className="shell-attention-drawer__empty">
-        <div className="ds-state ds-state--neutral" aria-label="Aucun élément à traiter">
+        <div
+          className="ds-state ds-state--neutral"
+          aria-label={t('attention.emptyAria')}
+        >
           <span className="ds-state__figure">0</span>
-          <span className="ds-state__label">Rien à traiter pour l&apos;instant</span>
+          <span className="ds-state__label">{t('attention.emptyTitle')}</span>
         </div>
         <p className="shell-attention-drawer__hint ds-meta">
-          Les éléments apparaissent ici lorsque le Host signale une étape bloquée
-          ou en attente.
+          {t('attention.emptyHint')}
         </p>
       </div>
     )
@@ -290,6 +292,7 @@ function AttentionDrawerItem({
   competitionId: string
   onNavigate: () => void
 }) {
+  const { t } = useTranslation('shell')
   const href =
     attentionItemHref(item, matchRows) ??
     (item.targetType === 'Fixture'
@@ -312,7 +315,7 @@ function AttentionDrawerItem({
       </div>
       {href && (
         <span className="shell-attention-drawer__item-action ds-meta">
-          Ouvrir →
+          {t('attention.open')}
         </span>
       )}
     </>

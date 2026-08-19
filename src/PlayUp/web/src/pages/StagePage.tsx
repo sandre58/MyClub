@@ -20,8 +20,8 @@ import {
   StageStatusBadge,
   StatusBadge,
 } from '../ui'
+import { drawResolutionKindLabel } from '../i18n/enumLabels'
 import {
-  drawResolutionKindLabel,
   type StageDraw,
   type StageOverview,
   type StageRound,
@@ -310,7 +310,7 @@ function DrawCard({
     <article className="draw-card">
       <header className="stack stack--tight">
         <h3 className="draw-card__title">
-          {drawResolutionKindLabel[draw.kind]} draw
+          {drawResolutionKindLabel(draw.kind)} draw
         </h3>
         <p className="badge-row">
           <DrawStatusBadge status={draw.status} />

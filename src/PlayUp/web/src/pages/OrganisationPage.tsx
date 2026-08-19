@@ -10,6 +10,7 @@ import {
   replaceCompetitionRegulation,
   withdrawCompetitionEntry,
 } from '../api'
+import { structureFormatKindLabel } from '../i18n/enumLabels'
 import {
   CompetitionStatusBadge,
   EmptyState,
@@ -22,7 +23,6 @@ import {
   StageStatusBadge,
 } from '../ui'
 import {
-  structureFormatKindLabel,
   type OrganisationEntry,
   type OrganisationView,
   type ReplaceRegulationRequest,
@@ -672,7 +672,7 @@ function StructureSection({
           Structure
         </h2>
         <p className="card__subtitle">
-          {formatKind ? structureFormatKindLabel[formatKind] : data.format.label}
+          {formatKind ? structureFormatKindLabel(formatKind) : data.format.label}
         </p>
       </div>
 

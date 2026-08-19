@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router-dom'
 import '../design-system/fonts'
 import '../design-system/index.css'
@@ -15,6 +16,7 @@ const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed'
  * Product shell (14.6.1) — global framing only. Business pages render via Outlet.
  */
 export function AppShell() {
+  const { t } = useTranslation('common')
   const attentionTriggerRef = useRef<HTMLButtonElement>(null)
   const [attentionDrawerOpen, setAttentionDrawerOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -40,7 +42,7 @@ export function AppShell() {
       data-density="standard"
     >
       <a className="shell-skip" href="#main">
-        Skip to content
+        {t('skipToContent')}
       </a>
 
       <div className="shell__frame" inert={attentionDrawerOpen || undefined}>

@@ -1,3 +1,7 @@
+import {
+  attentionSourceLabel,
+  attentionTargetTypeLabel,
+} from '../i18n/enumLabels'
 import type { MatchSummary, NeedsAttentionItem } from '../types'
 
 export interface AttentionMatchRow {
@@ -49,9 +53,9 @@ export function attentionItemHref(
 }
 
 export function attentionItemContextLabel(item: NeedsAttentionItem): string {
-  const parts = [item.source]
+  const parts = [attentionSourceLabel(item.source)]
   if (item.targetType) {
-    parts.push(item.targetType)
+    parts.push(attentionTargetTypeLabel(item.targetType))
   }
   return parts.join(' · ')
 }

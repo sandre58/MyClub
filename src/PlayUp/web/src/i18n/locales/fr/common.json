@@ -2,5 +2,10 @@
   "loading": "Chargement…",
   "close": "Fermer",
   "cancel": "Annuler",
-  "back": "Retour"
+  "back": "Retour",
+  "skipToContent": "Passer au contenu",
+  "notFound": "Introuvable. Vérifiez l'identifiant dans l'URL.",
+  "unknownError": "Erreur inconnue",
+  "errorWithStatus": "{{message}} ({{status}})",
+  "unknownEntry": "Entrée inconnue"
 }

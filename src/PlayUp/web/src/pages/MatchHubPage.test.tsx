@@ -138,7 +138,7 @@ describe('MatchHubPage', () => {
 
     expect(await screen.findByText(/Alpha vs Beta/i)).toBeInTheDocument()
     expect(screen.getByText('QF')).toBeInTheDocument()
-    expect(screen.getByText('Live')).toBeInTheDocument()
+    expect(screen.getByText('En direct')).toBeInTheDocument()
   })
 
   it('renders Host attention items', async () => {
@@ -176,7 +176,7 @@ describe('MatchHubPage', () => {
     renderMatchHub()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Not found. Check the id in the URL.',
+      "Introuvable. Vérifiez l'identifiant dans l'URL.",
     )
   })
 

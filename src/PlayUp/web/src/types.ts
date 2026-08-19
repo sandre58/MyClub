@@ -8,6 +8,8 @@
  * They do NOT validate JSON at runtime — a mismatched API still type-checks.
  */
 
+import i18n from './i18n'
+
 export type CompetitionStatus =
   | 'Draft'
   | 'Ready'
@@ -325,76 +327,6 @@ export interface StageOverview {
   draws: StageDraw[]
 }
 
-export const competitionStatusLabel: Record<CompetitionStatus, string> = {
-  Draft: 'Draft',
-  Ready: 'Ready',
-  Running: 'Running',
-  Suspended: 'Suspended',
-  Completed: 'Completed',
-  Archived: 'Archived',
-}
-
-export const completionModeLabel: Record<CompletionMode, string> = {
-  Normal: 'Normal',
-  Administrative: 'Administrative',
-  Abandoned: 'Abandoned',
-}
-
-export const entryStatusLabel: Record<EntryStatus, string> = {
-  Active: 'Active',
-  Qualified: 'Qualified',
-  Eliminated: 'Eliminated',
-  Withdrawn: 'Withdrawn',
-  Excluded: 'Excluded',
-}
-
-export const stageStatusLabel: Record<StageStatus, string> = {
-  Draft: 'Draft',
-  Ready: 'Ready',
-  Running: 'Running',
-  Suspended: 'Suspended',
-  Completed: 'Completed',
-}
-
-export const matchStatusLabel: Record<MatchStatus, string> = {
-  Scheduled: 'Scheduled',
-  Live: 'Live',
-  Finished: 'Finished',
-  Postponed: 'Postponed',
-  Cancelled: 'Cancelled',
-}
-
-export const resultTypeLabel: Record<ResultType, string> = {
-  Played: 'Played',
-  Forfeit: 'Forfeit',
-  WalkOver: 'Walk-over',
-  Administrative: 'Administrative',
-}
-
-export const drawStatusLabel: Record<DrawStatus, string> = {
-  Draft: 'Draft',
-  Published: 'Published',
-  Cancelled: 'Cancelled',
-}
-
-export const drawResolutionKindLabel: Record<DrawResolutionKind, string> = {
-  Slot: 'Slot',
-  Group: 'Group',
-  Pairing: 'Pairing',
-}
-
-export const drawResolutionStateLabel: Record<DrawResolutionState, string> = {
-  NotResolved: 'Not resolved',
-  Resolved: 'Resolved',
-  NoSolution: 'No solution',
-}
-
-export const structureFormatKindLabel: Record<StructureFormatKind, string> = {
-  Championship: 'Championship',
-  Groups: 'Groups',
-  Cup: 'Cup',
-}
-
 export const resultTypeOptions: readonly ResultType[] = [
   'Played',
   'Forfeit',
@@ -403,7 +335,7 @@ export const resultTypeOptions: readonly ResultType[] = [
 ] as const
 
 export function sideLabel(side: EntrySide): string {
-  return side.displayName?.trim() || 'Unknown entry'
+  return side.displayName?.trim() || i18n.t('unknownEntry')
 }
 
 export function formatScore(score: MatchScore): string {

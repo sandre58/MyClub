@@ -53,10 +53,14 @@ export function ShellSidebar({
     <aside
       className="shell-sidebar"
       data-collapsed={collapsed ? 'true' : 'false'}
-      aria-label="Primary shell sidebar"
+      aria-label={t('sidebar.label')}
     >
       <div className="shell-sidebar__brand-row">
-        <Link className="shell-sidebar__brand" to={cockpitHref} aria-label="Play'up home">
+        <Link
+          className="shell-sidebar__brand"
+          to={cockpitHref}
+          aria-label={t('sidebar.home')}
+        >
           <span className="shell-sidebar__brand-mark" aria-hidden="true">
             P
           </span>
@@ -67,7 +71,7 @@ export function ShellSidebar({
       <nav
         id="shell-sidebar-nav"
         className="shell-sidebar__nav"
-        aria-label="Primary"
+        aria-label={t('sidebar.primary')}
       >
         {destinations.map((item) => {
           const isActive = item.key === activeKey
@@ -95,7 +99,7 @@ export function ShellSidebar({
           className="ds-btn ds-btn--ghost ds-icon-button shell-sidebar__toggle"
           aria-expanded={!collapsed}
           aria-controls="shell-sidebar-nav"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
           onClick={onToggleCollapse}
         >
           {collapsed ? (
@@ -104,7 +108,7 @@ export function ShellSidebar({
             <CollapseIcon aria-hidden="true" />
           )}
           <span className="shell-sidebar__toggle-label">
-            {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            {collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
           </span>
         </button>
       </div>

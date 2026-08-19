@@ -17,9 +17,11 @@ import {
   PendingLabel,
 } from '../ui'
 import {
-  formatScore,
   matchStatusLabel,
   resultTypeLabel,
+} from '../i18n/enumLabels'
+import {
+  formatScore,
   resultTypeOptions,
   sideLabel,
   type FinishMatchRequest,
@@ -208,7 +210,7 @@ function MatchDetailView({
             <div className="fact">
               <dt className="fact__label">Type</dt>
               <dd className="fact__value">
-                {resultTypeLabel[data.result.type]}
+                {resultTypeLabel(data.result.type)}
               </dd>
             </div>
             <div className="fact">
@@ -235,7 +237,7 @@ function MatchDetailView({
             Actions
           </h2>
           <p className="card__subtitle">
-            Available steps for a {matchStatusLabel[data.status].toLowerCase()}{' '}
+            Available steps for a {matchStatusLabel(data.status).toLowerCase()}{' '}
             match
           </p>
         </div>
@@ -293,7 +295,7 @@ function MatchDetailView({
           data.status !== 'Live' &&
           data.status !== 'Finished' && (
             <p className="notice">
-              No organizer action for status {matchStatusLabel[data.status]}.
+              No organizer action for status {matchStatusLabel(data.status)}.
             </p>
           )}
 
@@ -475,7 +477,7 @@ function FinishMatchForm({
           >
             {resultTypeOptions.map((value) => (
               <option key={value} value={value}>
-                {resultTypeLabel[value]}
+                {resultTypeLabel(value)}
               </option>
             ))}
           </select>

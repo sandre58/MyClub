@@ -92,7 +92,7 @@ describe('CompetitionWorkspacePage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Workspace' }),
     ).toBeInTheDocument()
-    expect(await screen.findByText('Draft')).toBeInTheDocument()
+    expect(await screen.findByText('Brouillon')).toBeInTheDocument()
     expect(screen.getByText('Continuer la préparation')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
   })
@@ -105,7 +105,7 @@ describe('CompetitionWorkspacePage', () => {
     renderWorkspacePage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Not found. Check the id in the URL.',
+      "Introuvable. Vérifiez l'identifiant dans l'URL.",
     )
   })
 

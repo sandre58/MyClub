@@ -89,9 +89,9 @@ describe('CompetitionsPage', () => {
     expect(
       await screen.findByRole('link', { name: /Spring Cup/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Running')).toBeInTheDocument()
+    expect(screen.getByText('En cours')).toBeInTheDocument()
     expect(screen.getByText('Autumn League')).toBeInTheDocument()
-    expect(screen.getByText('Ready')).toBeInTheDocument()
+    expect(screen.getByText('Prêt')).toBeInTheDocument()
   })
 
   it('navigates to the competition workspace on row click', async () => {

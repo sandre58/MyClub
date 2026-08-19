@@ -5,19 +5,41 @@
     "matches": "Matchs",
     "consultation": "Consultation"
   },
+  "sidebar": {
+    "label": "Barre latérale principale",
+    "primary": "Navigation principale",
+    "expand": "Développer la barre latérale",
+    "collapse": "Réduire la barre latérale",
+    "home": "Accueil Play'up"
+  },
   "competition": {
     "change": "Changer",
     "choose": "Choisir une compétition",
     "none": "Aucune compétition",
     "loading": "Chargement",
     "unavailable": "Contexte indisponible",
-    "list": "Liste"
+    "list": "Liste",
+    "contextLabel": "Contexte compétition"
+  },
+  "actions": {
+    "settings": "Paramètres",
+    "user": "Utilisateur",
+    "comingSoon": "bientôt disponible",
+    "settingsAria": "Paramètres (bientôt disponible)",
+    "userAria": "Utilisateur (bientôt disponible)"
   },
   "attention": {
     "label": "À traiter",
     "trigger_zero": "À traiter, aucun élément",
     "trigger_one": "À traiter, {{count}} élément",
     "trigger_other": "À traiter, {{count}} éléments",
-    "closeDrawer": "Fermer À traiter"
+    "closeDrawer": "Fermer À traiter",
+    "emptyHost": "Aucune compétition n'est disponible sur ce Host.",
+    "noContext": "Ouvrez une compétition pour voir ce qui demande votre attention.",
+    "loadError": "Impossible de charger les éléments à traiter.",
+    "emptyAria": "Aucun élément à traiter",
+    "emptyTitle": "Rien à traiter pour l'instant",
+    "emptyHint": "Les éléments apparaissent ici lorsque le Host signale une étape bloquée ou en attente.",
+    "open": "Ouvrir →"
   }
 }

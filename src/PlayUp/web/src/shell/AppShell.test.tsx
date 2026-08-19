@@ -79,10 +79,10 @@ describe('AppShell', () => {
     renderWithShell('/')
 
     expect(
-      screen.getByRole('navigation', { name: 'Primary' }),
+      screen.getByRole('navigation', { name: 'Navigation principale' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Skip to content' }),
+      screen.getByRole('link', { name: 'Passer au contenu' }),
     ).toHaveAttribute('href', '#main')
   })
 
@@ -152,13 +152,13 @@ describe('AppShell', () => {
     const user = userEvent.setup()
     renderWithShell('/')
 
-    const toggle = screen.getByRole('button', { name: 'Collapse sidebar' })
+    const toggle = screen.getByRole('button', { name: 'Réduire la barre latérale' })
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
 
     await user.click(toggle)
 
     expect(
-      screen.getByRole('button', { name: 'Expand sidebar' }),
+      screen.getByRole('button', { name: 'Développer la barre latérale' }),
     ).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
   })

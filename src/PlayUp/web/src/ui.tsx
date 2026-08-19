@@ -17,7 +17,7 @@ import {
   entryStatusLabel,
   matchStatusLabel,
   stageStatusLabel,
-} from './types'
+} from './i18n/enumLabels'
 
 /**
  * Shared page primitives: header, status badges and the loading / error /
@@ -107,7 +107,7 @@ export function CompetitionStatusBadge({
 }) {
   return (
     <StatusBadge tone={competitionStatusTone[status]}>
-      {competitionStatusLabel[status]}
+      {competitionStatusLabel(status)}
     </StatusBadge>
   )
 }
@@ -115,7 +115,7 @@ export function CompetitionStatusBadge({
 export function StageStatusBadge({ status }: { status: StageStatus }) {
   return (
     <StatusBadge tone={stageStatusTone[status]}>
-      {stageStatusLabel[status]}
+      {stageStatusLabel(status)}
     </StatusBadge>
   )
 }
@@ -123,7 +123,7 @@ export function StageStatusBadge({ status }: { status: StageStatus }) {
 export function MatchStatusBadge({ status }: { status: MatchStatus }) {
   return (
     <StatusBadge tone={matchStatusTone[status]}>
-      {matchStatusLabel[status]}
+      {matchStatusLabel(status)}
     </StatusBadge>
   )
 }
@@ -131,7 +131,7 @@ export function MatchStatusBadge({ status }: { status: MatchStatus }) {
 export function EntryStatusBadge({ status }: { status: EntryStatus }) {
   return (
     <StatusBadge tone={entryStatusTone[status]}>
-      {entryStatusLabel[status]}
+      {entryStatusLabel(status)}
     </StatusBadge>
   )
 }
@@ -139,7 +139,7 @@ export function EntryStatusBadge({ status }: { status: EntryStatus }) {
 export function DrawStatusBadge({ status }: { status: DrawStatus }) {
   return (
     <StatusBadge tone={drawStatusTone[status]}>
-      {drawStatusLabel[status]}
+      {drawStatusLabel(status)}
     </StatusBadge>
   )
 }
@@ -151,7 +151,7 @@ export function DrawResolutionBadge({
 }) {
   return (
     <StatusBadge tone={drawResolutionTone[state]}>
-      {drawResolutionStateLabel[state]}
+      {drawResolutionStateLabel(state)}
     </StatusBadge>
   )
 }
@@ -215,20 +215,23 @@ export function LoadingState({ label }: { label?: string }) {
 }
 
 export function ErrorState({ error }: { error: unknown }) {
+  const { t } = useTranslation('common')
   const notFound = error instanceof ApiError && error.status === 404
 
   return (
     <p className="notice notice--danger" role="alert">
-      {notFound ? 'Not found. Check the id in the URL.' : formatError(error)}
+      {notFound ? t('notFound') : formatError(error, t)}
     </p>
   )
 }
 
 /** Inline failure of a write, next to the action that failed. */
 export function MutationError({ error }: { error: unknown }) {
+  const { t } = useTranslation('common')
+
   return (
     <p className="notice notice--danger" role="alert">
-      {formatError(error)}
+      {formatError(error, t)}
     </p>
   )
 }
@@ -265,14 +268,20 @@ export function PendingLabel({ children }: { children: ReactNode }) {
   )
 }
 
-function formatError(error: unknown): string {
+function formatError(
+  error: unknown,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
   if (error instanceof ApiError) {
-    return `${error.message} (${error.status})`
+    return t('errorWithStatus', {
+      message: error.message,
+      status: error.status,
+    })
   }
 
   if (error instanceof Error) {
     return error.message
   }
 
-  return 'Unknown error'
+  return t('unknownError')
 }

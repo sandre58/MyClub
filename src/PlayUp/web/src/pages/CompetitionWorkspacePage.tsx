@@ -7,7 +7,8 @@ import {
   LoadingState,
   PageHeader,
 } from '../ui'
-import { completionModeLabel, type WorkspaceSummary } from '../types'
+import { completionModeLabel } from '../i18n/enumLabels'
+import { type WorkspaceSummary } from '../types'
 
 /**
  * Competition Workspace — GET /competitions/{id}/workspace.
@@ -90,7 +91,7 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
             <p className="stat__label">Completion</p>
             <p className="stat__value stat__value--text">
               {data.completionMode
-                ? completionModeLabel[data.completionMode]
+                ? completionModeLabel(data.completionMode)
                 : data.canCompleteNormally
                   ? 'Ready to complete'
                   : 'Not completable yet'}

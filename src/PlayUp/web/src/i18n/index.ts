@@ -6,6 +6,7 @@ import {
   I18N_NAMESPACES,
 } from './config'
 import commonFr from './locales/fr/common.json'
+import enumsFr from './locales/fr/enums.json'
 import shellFr from './locales/fr/shell.json'
 
 function syncDocumentLang(locale: string) {
@@ -23,6 +24,7 @@ void i18n.use(initReactI18next).init({
     fr: {
       common: commonFr,
       shell: shellFr,
+      enums: enumsFr,
     },
   },
   interpolation: {

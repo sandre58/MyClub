@@ -1,0 +1,80 @@
+{
+  "competitionStatus": {
+    "Draft": "Brouillon",
+    "Ready": "Prêt",
+    "Running": "En cours",
+    "Suspended": "Suspendu",
+    "Completed": "Terminé",
+    "Archived": "Archivé"
+  },
+  "stageStatus": {
+    "Draft": "Brouillon",
+    "Ready": "Prêt",
+    "Running": "En cours",
+    "Suspended": "Suspendu",
+    "Completed": "Terminé"
+  },
+  "matchStatus": {
+    "Scheduled": "Planifié",
+    "Live": "En direct",
+    "Finished": "Terminé",
+    "Postponed": "Reporté",
+    "Cancelled": "Annulé"
+  },
+  "entryStatus": {
+    "Active": "Actif",
+    "Qualified": "Qualifié",
+    "Eliminated": "Éliminé",
+    "Withdrawn": "Retiré",
+    "Excluded": "Exclu"
+  },
+  "drawStatus": {
+    "Draft": "Brouillon",
+    "Published": "Publié",
+    "Cancelled": "Annulé"
+  },
+  "drawResolutionState": {
+    "NotResolved": "Non résolu",
+    "Resolved": "Résolu",
+    "NoSolution": "Aucune solution"
+  },
+  "drawResolutionKind": {
+    "Slot": "Emplacement",
+    "Group": "Groupe",
+    "Pairing": "Appariement"
+  },
+  "structureFormatKind": {
+    "Championship": "Championnat",
+    "Groups": "Groupes",
+    "Cup": "Coupe"
+  },
+  "resultType": {
+    "Played": "Joué",
+    "Forfeit": "Forfait",
+    "WalkOver": "Walk-over",
+    "Administrative": "Administratif"
+  },
+  "completionMode": {
+    "Normal": "Normal",
+    "Administrative": "Administratif",
+    "Abandoned": "Abandonné"
+  },
+  "attentionSource": {
+    "DrawNoSolution": "Tirage sans solution",
+    "QualificationPending": "Qualification en attente",
+    "QualificationConflict": "Conflit de qualification",
+    "ProgressionPending": "Progression en attente",
+    "ProgressionConflict": "Conflit de progression",
+    "DrawPending": "Tirage en attente",
+    "StageReady": "Phase prête"
+  },
+  "attentionTargetType": {
+    "Stage": "Phase",
+    "Slot": "Emplacement",
+    "Fixture": "Rencontre",
+    "Match": "Match",
+    "Competition": "Compétition",
+    "Organisation": "Organisation",
+    "Draw": "Tirage"
+  }
+}

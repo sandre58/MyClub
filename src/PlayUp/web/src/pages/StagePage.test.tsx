@@ -230,7 +230,7 @@ describe('StagePage prepare', () => {
     expect(
       await screen.findByRole('button', { name: 'Prepare stage' }),
     ).toBeEnabled()
-    expect(screen.getByText('Draft')).toBeInTheDocument()
+    expect(screen.getByText('Brouillon')).toBeInTheDocument()
   })
 
   it('hides Prepare stage when status is Ready', async () => {
@@ -239,7 +239,7 @@ describe('StagePage prepare', () => {
     renderStagePage()
 
     await waitFor(() => {
-      expect(screen.getByText('Ready')).toBeInTheDocument()
+      expect(screen.getByText('Prêt')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Prepare stage/i }),
@@ -252,7 +252,7 @@ describe('StagePage prepare', () => {
     renderStagePage()
 
     await waitFor(() => {
-      expect(screen.getByText('Running')).toBeInTheDocument()
+      expect(screen.getByText('En cours')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Prepare stage/i }),
@@ -277,7 +277,7 @@ describe('StagePage prepare', () => {
 
     await waitFor(() => {
       expect(prepareStage).toHaveBeenCalledWith(stageId)
-      expect(screen.getByText('Ready')).toBeInTheDocument()
+      expect(screen.getByText('Prêt')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Prepare stage/i }),
@@ -321,7 +321,7 @@ describe('StagePage prepare', () => {
     )
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Prepare blocked')
-    expect(screen.getByText('Draft')).toBeInTheDocument()
+    expect(screen.getByText('Brouillon')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Prepare stage' }),
     ).toBeEnabled()
@@ -352,7 +352,7 @@ describe('StagePage start', () => {
     expect(
       await screen.findByRole('button', { name: 'Start stage' }),
     ).toBeEnabled()
-    expect(screen.getByText('Ready')).toBeInTheDocument()
+    expect(screen.getByText('Prêt')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Prepare stage/i }),
     ).not.toBeInTheDocument()
@@ -364,7 +364,7 @@ describe('StagePage start', () => {
     renderStagePage()
 
     await waitFor(() => {
-      expect(screen.getByText('Draft')).toBeInTheDocument()
+      expect(screen.getByText('Brouillon')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Start stage/i }),
@@ -377,7 +377,7 @@ describe('StagePage start', () => {
     renderStagePage()
 
     await waitFor(() => {
-      expect(screen.getByText('Running')).toBeInTheDocument()
+      expect(screen.getByText('En cours')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Start stage/i }),
@@ -390,7 +390,7 @@ describe('StagePage start', () => {
     renderStagePage()
 
     await waitFor(() => {
-      expect(screen.getByText('Completed')).toBeInTheDocument()
+      expect(screen.getByText('Terminé')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Start stage/i }),
@@ -413,7 +413,7 @@ describe('StagePage start', () => {
 
     await waitFor(() => {
       expect(startStage).toHaveBeenCalledWith(stageId)
-      expect(screen.getByText('Running')).toBeInTheDocument()
+      expect(screen.getByText('En cours')).toBeInTheDocument()
     })
     expect(
       screen.queryByRole('button', { name: /Start stage/i }),
@@ -453,7 +453,7 @@ describe('StagePage start', () => {
     await user.click(await screen.findByRole('button', { name: 'Start stage' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Start blocked')
-    expect(screen.getByText('Ready')).toBeInTheDocument()
+    expect(screen.getByText('Prêt')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start stage' })).toBeEnabled()
   })
 })
@@ -487,9 +487,9 @@ describe('StagePage draws', () => {
       ).toBeInTheDocument()
     })
     expect(
-      screen.getByRole('heading', { name: 'Pairing draw' }),
+      screen.getByRole('heading', { name: /Appariement draw/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Resolved')).toBeInTheDocument()
+    expect(screen.getByText('Résolu')).toBeInTheDocument()
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
     expect(screen.getByText('vs')).toBeInTheDocument()
@@ -549,7 +549,7 @@ describe('StagePage draws', () => {
         'No admissible solution was found for this draw.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('No solution')).toBeInTheDocument()
+    expect(screen.getByText('Aucune solution')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Publish draw/i }),
     ).not.toBeInTheDocument()
@@ -577,7 +577,7 @@ describe('StagePage draws', () => {
         'This draw was cancelled. A new draw is required to run again.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Cancelled')).toBeInTheDocument()
+    expect(screen.getByText('Annulé')).toBeInTheDocument()
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Publish draw/i }),
@@ -600,7 +600,7 @@ describe('StagePage draws', () => {
     await waitFor(() => {
       expect(screen.getByText('Published draw.')).toBeInTheDocument()
     })
-    expect(screen.getByText('Published')).toBeInTheDocument()
+    expect(screen.getByText('Publié')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Publish draw/i }),
     ).not.toBeInTheDocument()
@@ -678,7 +678,7 @@ describe('StagePage draws', () => {
 
     await waitFor(() => {
       expect(publishDraw).toHaveBeenCalledWith(stageId, drawId)
-      expect(screen.getByText('Published')).toBeInTheDocument()
+      expect(screen.getByText('Publié')).toBeInTheDocument()
       expect(screen.getByText('Published draw.')).toBeInTheDocument()
     })
   })

@@ -22,6 +22,7 @@ export function ShellHeader({
   attentionTriggerRef,
   onAttentionClick,
 }: ShellHeaderProps) {
+  const { t } = useTranslation('shell')
   const { competitionId, competitionName, state } = useShellCompetitionContext()
 
   const attentionQuery = useQuery({
@@ -58,7 +59,7 @@ export function ShellHeader({
         <button
           type="button"
           className="ds-btn ds-btn--ghost ds-icon-button shell-header__icon-action"
-          aria-label="Paramètres (bientôt disponible)"
+          aria-label={t('actions.settingsAria')}
           aria-disabled="true"
           disabled
         >
@@ -67,12 +68,12 @@ export function ShellHeader({
         <button
           type="button"
           className="ds-btn ds-btn--ghost shell-header__user-action"
-          aria-label="Utilisateur (bientôt disponible)"
+          aria-label={t('actions.userAria')}
           aria-disabled="true"
           disabled
         >
           <UserIcon className="shell-header__user-icon" aria-hidden="true" />
-          <span className="shell-header__user-label">Utilisateur</span>
+          <span className="shell-header__user-label">{t('actions.user')}</span>
         </button>
       </div>
     </header>
@@ -94,7 +95,7 @@ function ShellHeaderCompetitionContext({
       <div
         className="shell-header__context"
         aria-busy="true"
-        aria-label="Competition context"
+        aria-label={t('competition.contextLabel')}
       >
         <span className="shell-header__context-loading">
           {t('competition.loading')}
@@ -105,7 +106,7 @@ function ShellHeaderCompetitionContext({
 
   if (state === 'selected' && competitionName) {
     return (
-      <div className="shell-header__context" aria-label="Competition context">
+      <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__competition-name">{competitionName}</span>
         <Link
           className="ds-btn ds-btn--ghost shell-header__change"
@@ -119,7 +120,7 @@ function ShellHeaderCompetitionContext({
 
   if (state === 'unavailable') {
     return (
-      <div className="shell-header__context" aria-label="Competition context">
+      <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__context-message">
           {t('competition.unavailable')}
         </span>
@@ -135,7 +136,7 @@ function ShellHeaderCompetitionContext({
 
   if (state === 'empty') {
     return (
-      <div className="shell-header__context" aria-label="Competition context">
+      <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__context-message">
           {t('competition.none')}
         </span>
@@ -150,7 +151,7 @@ function ShellHeaderCompetitionContext({
   }
 
   return (
-    <div className="shell-header__context" aria-label="Competition context">
+    <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
       <span className="shell-header__context-message">
         {t('competition.choose')}
       </span>

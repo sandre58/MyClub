@@ -147,7 +147,7 @@ describe('AttentionDrawer', () => {
     )
 
     expect(await screen.findByText('Progression en attente')).toBeInTheDocument()
-    expect(screen.getByText(/ProgressionPending · Stage/i)).toBeInTheDocument()
+    expect(screen.getByText(/Progression en attente · Phase/i)).toBeInTheDocument()
   })
 
   it('closes via the close button', async () => {

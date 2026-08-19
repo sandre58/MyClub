@@ -169,7 +169,7 @@ describe('OrganisationPage', () => {
     ).toBeInTheDocument()
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     // Entry status is a badge next to the name (13.5), no longer “Alpha (Active)”.
-    expect(screen.getByText('Active')).toBeInTheDocument()
+    expect(screen.getByText('Actif')).toBeInTheDocument()
     expect(screen.getByText('InsufficientParticipants')).toBeInTheDocument()
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
   })
@@ -210,7 +210,7 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Not found. Check the id in the URL.',
+      "Introuvable. Vérifiez l'identifiant dans l'URL.",
     )
   })
 
