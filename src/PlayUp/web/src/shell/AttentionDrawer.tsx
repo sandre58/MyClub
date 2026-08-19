@@ -145,11 +145,18 @@ export function AttentionDrawer({
             <h2 id={titleId} className="shell-attention-drawer__title">
               À traiter
             </h2>
-            {competitionId && competitionName && (
+            {competitionName ? (
               <p className="shell-attention-drawer__subtitle ds-meta">
                 {competitionName}
               </p>
-            )}
+            ) : contextState === 'loading' && competitionId ? (
+              <p
+                className="shell-attention-drawer__subtitle shell-attention-drawer__subtitle--loading ds-meta"
+                aria-busy="true"
+              >
+                Chargement
+              </p>
+            ) : null}
           </div>
           <button
             ref={closeButtonRef}
@@ -197,7 +204,19 @@ function AttentionDrawerContent({
 }) {
   if (!competitionId) {
     if (contextState === 'loading') {
-      return <p className="shell-attention-drawer__message">Chargement…</p>
+      return (
+        <p className="shell-attention-drawer__message" aria-busy="true">
+          Chargement
+        </p>
+      )
+    }
+
+    if (contextState === 'empty') {
+      return (
+        <p className="shell-attention-drawer__message">
+          Aucune compétition n&apos;est disponible sur ce Host.
+        </p>
+      )
     }
 
     return (
@@ -207,8 +226,12 @@ function AttentionDrawerContent({
     )
   }
 
-  if (pending) {
-    return <p className="shell-attention-drawer__message">Chargement…</p>
+  if (contextState === 'loading' || pending) {
+    return (
+      <p className="shell-attention-drawer__message" aria-busy="true">
+        Chargement
+      </p>
+    )
   }
 
   if (error) {

@@ -1,5 +1,11 @@
 import type { ReactElement, SVGProps } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import {
+  resolveActiveDestination,
+  shellDestinationHrefs,
+  type ShellDestinationKey,
+} from './shellDestinations'
+import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type ShellSidebarProps = {
   collapsed: boolean
@@ -7,24 +13,38 @@ type ShellSidebarProps = {
 }
 
 type NavDestination = {
-  key: string
+  key: ShellDestinationKey
   label: string
   to: string
   icon: (props: SVGProps<SVGSVGElement>) => ReactElement
 }
 
+const destinationDefinitions: Array<
+  Omit<NavDestination, 'to'> & { key: ShellDestinationKey }
+> = [
+  { key: 'cockpit', label: 'Cockpit', icon: HomeIcon },
+  { key: 'organisation', label: 'Organisation', icon: OrganisationIcon },
+  { key: 'matches', label: 'Matchs', icon: MatchesIcon },
+  { key: 'consultation', label: 'Consultation', icon: ConsultationIcon },
+]
+
 /**
- * Structural sidebar (14.6.1). Icons, active styling, and IA details come later.
+ * Structural sidebar (14.6.2+). Resolves competition context for safe hrefs.
  */
 export function ShellSidebar({
   collapsed,
   onToggleCollapse,
 }: ShellSidebarProps) {
-  const { competitionId, stageId, matchId } = useParams()
+  const { stageId, matchId } = useParams()
+  const { competitionId } = useShellCompetitionContext()
   const location = useLocation()
   const activeKey = resolveActiveDestination(location.pathname)
-  const destinations = shellDestinations({ competitionId, stageId, matchId })
-  const cockpitHref = destinations[0]?.to ?? '/'
+  const hrefs = shellDestinationHrefs({ competitionId, stageId, matchId })
+  const destinations = destinationDefinitions.map((item) => ({
+    ...item,
+    to: hrefs[item.key],
+  }))
+  const cockpitHref = hrefs.cockpit
 
   return (
     <aside
@@ -87,81 +107,6 @@ export function ShellSidebar({
       </div>
     </aside>
   )
-}
-
-function shellDestinations({
-  competitionId,
-  stageId,
-  matchId,
-}: {
-  competitionId?: string
-  stageId?: string
-  matchId?: string
-}): NavDestination[] {
-  const cockpitHref = competitionId ? `/competitions/${competitionId}` : '/'
-  const organisationHref = competitionId
-    ? `/competitions/${competitionId}/organisation`
-    : cockpitHref
-  const matchesHref = competitionId
-    ? `/competitions/${competitionId}/matches`
-    : stageId
-      ? `/stages/${stageId}/matches`
-      : matchId
-        ? `/matches/${matchId}`
-        : cockpitHref
-  const consultationHref = competitionId
-    ? `/competitions/${competitionId}/overview`
-    : stageId
-      ? `/stages/${stageId}`
-      : cockpitHref
-
-  return [
-    { key: 'cockpit', label: 'Cockpit', to: cockpitHref, icon: HomeIcon },
-    {
-      key: 'organisation',
-      label: 'Organisation',
-      to: organisationHref,
-      icon: OrganisationIcon,
-    },
-    { key: 'matches', label: 'Matchs', to: matchesHref, icon: MatchesIcon },
-    {
-      key: 'consultation',
-      label: 'Consultation',
-      to: consultationHref,
-      icon: ConsultationIcon,
-    },
-  ]
-}
-
-function resolveActiveDestination(pathname: string): NavDestination['key'] | null {
-  if (
-    pathname === '/' ||
-    pathname === '/competitions' ||
-    /^\/competitions\/[^/]+$/.test(pathname)
-  ) {
-    return 'cockpit'
-  }
-
-  if (/^\/competitions\/[^/]+\/organisation$/.test(pathname)) {
-    return 'organisation'
-  }
-
-  if (
-    /^\/competitions\/[^/]+\/matches$/.test(pathname) ||
-    /^\/stages\/[^/]+\/matches$/.test(pathname) ||
-    /^\/matches\/[^/]+$/.test(pathname)
-  ) {
-    return 'matches'
-  }
-
-  if (
-    /^\/competitions\/[^/]+\/overview$/.test(pathname) ||
-    /^\/stages\/[^/]+$/.test(pathname)
-  ) {
-    return 'consultation'
-  }
-
-  return null
 }
 
 function HomeIcon(props: SVGProps<SVGSVGElement>) {

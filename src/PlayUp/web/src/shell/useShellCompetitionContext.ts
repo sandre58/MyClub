@@ -12,6 +12,7 @@ export type ShellCompetitionContextState =
   | 'choose'
   | 'empty'
   | 'loading'
+  | 'unavailable'
 
 /**
  * Resolves the active competition for shell chrome only.
@@ -43,23 +44,27 @@ export function useShellCompetitionContext() {
     enabled: Boolean(resolvedCompetitionId),
   })
 
-  const competitionsListQuery = useQuery({
-    queryKey: ['competitions'],
-    queryFn: fetchCompetitions,
-    enabled: !resolvedCompetitionId,
-  })
-
   const isResolvingDeepLink =
     (Boolean(stageId) && !routeCompetitionId && stageQuery.isPending) ||
     (Boolean(matchId) && !routeCompetitionId && matchQuery.isPending)
 
-  const isLoadingSelected =
-    Boolean(resolvedCompetitionId) &&
-    (isResolvingDeepLink || overviewQuery.isPending)
+  const competitionsListQuery = useQuery({
+    queryKey: ['competitions'],
+    queryFn: fetchCompetitions,
+    enabled: !resolvedCompetitionId && !isResolvingDeepLink,
+  })
 
   let state: ShellCompetitionContextState
-  if (resolvedCompetitionId) {
-    state = isLoadingSelected ? 'loading' : 'selected'
+  if (isResolvingDeepLink && !resolvedCompetitionId) {
+    state = 'loading'
+  } else if (resolvedCompetitionId) {
+    if (isResolvingDeepLink || overviewQuery.isPending) {
+      state = 'loading'
+    } else if (overviewQuery.isError || !overviewQuery.data?.name) {
+      state = 'unavailable'
+    } else {
+      state = 'selected'
+    }
   } else if (competitionsListQuery.isPending) {
     state = 'loading'
   } else if (competitionsListQuery.data?.length === 0) {

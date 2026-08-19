@@ -266,10 +266,12 @@
     align-items: center;
     gap: var(--space-8) var(--space-12);
     min-width: 0;
+    min-height: calc(var(--text-body) * var(--leading-tight));
 }
 
 .shell-header__competition-name {
     min-width: 0;
+    min-height: calc(var(--text-body) * var(--leading-tight));
     color: var(--color-text-primary);
     font-size: var(--text-body);
     font-weight: var(--font-weight-semibold);
@@ -278,11 +280,16 @@
 
 .shell-header__context-message,
 .shell-header__context-loading {
-    min-width: 0;
+    min-width: 8rem;
+    min-height: calc(var(--text-label) * var(--leading-tight));
     color: var(--color-text-secondary);
     font-size: var(--text-label);
     font-weight: var(--font-weight-semibold);
     line-height: var(--leading-tight);
+}
+
+.shell-header__context-loading {
+    color: var(--color-text-secondary);
 }
 
 .shell-header__change {
@@ -425,6 +432,10 @@
 
 .shell-attention-drawer__subtitle {
     margin: var(--space-4) 0 0;
+}
+
+.shell-attention-drawer__subtitle--loading {
+    min-width: 6rem;
 }
 
 .shell-attention-drawer__close {

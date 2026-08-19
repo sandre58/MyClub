@@ -74,7 +74,6 @@ export function ShellHeader({
 }
 
 function ShellHeaderCompetitionContext({
-  competitionId,
   competitionName,
   state,
 }: {
@@ -84,17 +83,35 @@ function ShellHeaderCompetitionContext({
 }) {
   if (state === 'loading') {
     return (
-      <div className="shell-header__context" aria-label="Competition context">
-        <span className="shell-header__context-loading">…</span>
+      <div
+        className="shell-header__context"
+        aria-busy="true"
+        aria-label="Competition context"
+      >
+        <span className="shell-header__context-loading">Chargement</span>
       </div>
     )
   }
 
-  if (state === 'selected' && competitionId) {
+  if (state === 'selected' && competitionName) {
     return (
       <div className="shell-header__context" aria-label="Competition context">
-        <span className="shell-header__competition-name">
-          {competitionName ?? 'Compétition'}
+        <span className="shell-header__competition-name">{competitionName}</span>
+        <Link
+          className="ds-btn ds-btn--ghost shell-header__change"
+          to="/competitions"
+        >
+          Changer
+        </Link>
+      </div>
+    )
+  }
+
+  if (state === 'unavailable') {
+    return (
+      <div className="shell-header__context" aria-label="Competition context">
+        <span className="shell-header__context-message">
+          Contexte indisponible
         </span>
         <Link
           className="ds-btn ds-btn--ghost shell-header__change"
@@ -109,9 +126,7 @@ function ShellHeaderCompetitionContext({
   if (state === 'empty') {
     return (
       <div className="shell-header__context" aria-label="Competition context">
-        <span className="shell-header__context-message">
-          Aucune compétition — créez-en une sur le Host
-        </span>
+        <span className="shell-header__context-message">Aucune compétition</span>
         <Link
           className="ds-btn ds-btn--ghost shell-header__change"
           to="/competitions"

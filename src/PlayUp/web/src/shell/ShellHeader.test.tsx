@@ -131,7 +131,7 @@ describe('ShellHeader', () => {
     renderWithShell('/')
 
     expect(
-      await screen.findByText('Aucune compétition — créez-en une sur le Host'),
+      await screen.findByText('Aucune compétition'),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Liste' })).toHaveAttribute(
       'href',
