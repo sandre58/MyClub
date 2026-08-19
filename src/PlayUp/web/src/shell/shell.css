@@ -7,6 +7,7 @@
     --shell-sidebar-width-expanded: 12rem;
     --shell-sidebar-width-collapsed: 3rem;
     --shell-header-height: calc(var(--control-height) + var(--space-16));
+    --shell-attention-drawer-width: 22rem;
 
     position: relative;
     display: flex;
@@ -356,4 +357,161 @@
     min-height: 0;
     overflow: auto;
     background: var(--color-canvas);
+}
+
+/* --------------------------------------------------------- attention drawer */
+
+.shell-attention-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.shell-attention-drawer[data-open='true'] {
+    pointer-events: auto;
+}
+
+.shell-attention-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: color-mix(in srgb, var(--color-ink) 24%, transparent);
+    cursor: default;
+}
+
+.shell-attention-drawer__panel {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(100vw, var(--shell-attention-drawer-width));
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    border-inline-start: var(--border-width) solid var(--color-border-strong);
+    border-block: 0;
+    border-inline-end: 0;
+    transform: translateX(100%);
+    transition: transform var(--motion-duration) var(--motion-easing);
+}
+
+.shell-attention-drawer[data-open='true'] .shell-attention-drawer__panel {
+    transform: translateX(0);
+}
+
+.shell-attention-drawer__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-12);
+    padding: var(--space-16);
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.shell-attention-drawer__title-group {
+    min-width: 0;
+}
+
+.shell-attention-drawer__title {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+}
+
+.shell-attention-drawer__subtitle {
+    margin: var(--space-4) 0 0;
+}
+
+.shell-attention-drawer__close {
+    flex: none;
+    color: var(--color-text-secondary);
+}
+
+.shell-attention-drawer__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: var(--space-16);
+}
+
+.shell-attention-drawer__message {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    line-height: var(--leading-normal);
+}
+
+.shell-attention-drawer__empty {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+}
+
+.shell-attention-drawer__hint {
+    margin: 0;
+}
+
+.shell-attention-drawer__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.shell-attention-drawer__item-link,
+.shell-attention-drawer__item-static {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-12);
+    padding: var(--space-12);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    color: inherit;
+    text-decoration: none;
+    transition:
+        background-color var(--motion-duration) var(--motion-easing),
+        border-color var(--motion-duration) var(--motion-easing);
+}
+
+.shell-attention-drawer__item-link:hover {
+    background: var(--color-surface-secondary);
+    border-color: var(--color-border-strong);
+}
+
+.shell-attention-drawer__item-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.shell-attention-drawer__item-context {
+    margin: 0;
+}
+
+.shell-attention-drawer__item-action {
+    flex: none;
+    align-self: center;
+    font-weight: var(--font-weight-semibold);
+}
+
+.shell-attention-drawer__item-link .ds-state__label {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shell-attention-drawer__panel {
+        transition: none;
+    }
 }

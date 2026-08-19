@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import '../design-system/fonts'
 import '../design-system/index.css'
 import './shell.css'
+import { AttentionDrawer } from './AttentionDrawer'
 import { ShellHeader } from './ShellHeader'
 import { ShellMain } from './ShellMain'
 import { ShellSidebar } from './ShellSidebar'
@@ -13,6 +14,8 @@ const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed'
  * Product shell (14.6.1) — global framing only. Business pages render via Outlet.
  */
 export function AppShell() {
+  const attentionTriggerRef = useRef<HTMLButtonElement>(null)
+  const [attentionDrawerOpen, setAttentionDrawerOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -46,12 +49,22 @@ export function AppShell() {
         />
 
         <div className="shell__column">
-          <ShellHeader />
+          <ShellHeader
+            attentionDrawerOpen={attentionDrawerOpen}
+            attentionTriggerRef={attentionTriggerRef}
+            onAttentionClick={() => setAttentionDrawerOpen(true)}
+          />
           <ShellMain>
             <Outlet />
           </ShellMain>
         </div>
       </div>
+
+      <AttentionDrawer
+        open={attentionDrawerOpen}
+        onClose={() => setAttentionDrawerOpen(false)}
+        returnFocusRef={attentionTriggerRef}
+      />
     </div>
   )
 }

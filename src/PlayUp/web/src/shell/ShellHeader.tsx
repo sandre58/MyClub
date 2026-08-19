@@ -1,19 +1,24 @@
-import type { SVGProps } from 'react'
+import type { RefObject, SVGProps } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchNeedsAttention } from '../api'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type ShellHeaderProps = {
-  /** Reserved for 14.6.4 — opens the attention drawer when implemented. */
+  attentionDrawerOpen?: boolean
+  attentionTriggerRef?: RefObject<HTMLButtonElement | null>
   onAttentionClick?: () => void
 }
 
 /**
- * Shell header (14.6.3) — global context, attention trigger, shell actions.
- * Business navigation stays in the Sidebar; no drawer in this phase.
+ * Shell header (14.6.3+) — global context, attention trigger, shell actions.
+ * Opens the attention drawer via onAttentionClick; business nav stays in Sidebar.
  */
-export function ShellHeader({ onAttentionClick }: ShellHeaderProps) {
+export function ShellHeader({
+  attentionDrawerOpen = false,
+  attentionTriggerRef,
+  onAttentionClick,
+}: ShellHeaderProps) {
   const { competitionId, competitionName, state } = useShellCompetitionContext()
 
   const attentionQuery = useQuery({
@@ -41,7 +46,9 @@ export function ShellHeader({ onAttentionClick }: ShellHeaderProps) {
 
       <div className="shell-header__actions">
         <AttentionTrigger
+          buttonRef={attentionTriggerRef}
           count={attentionCount}
+          drawerOpen={attentionDrawerOpen}
           onClick={onAttentionClick}
         />
         <button
@@ -132,10 +139,14 @@ function ShellHeaderCompetitionContext({
 
 function AttentionTrigger({
   count,
+  drawerOpen,
   onClick,
+  buttonRef,
 }: {
   count: number
+  drawerOpen: boolean
   onClick?: () => void
+  buttonRef?: RefObject<HTMLButtonElement | null>
 }) {
   const hasAttention = count > 0
   const accessibleLabel =
@@ -147,10 +158,13 @@ function AttentionTrigger({
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={`shell-header__attention ds-btn ds-btn--ghost${
         hasAttention ? ' shell-header__attention--active' : ''
       }`}
+      aria-expanded={drawerOpen}
+      aria-haspopup="dialog"
       aria-label={accessibleLabel}
       onClick={onClick}
     >
