@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import '../design-system/fonts'
 import '../design-system/index.css'
@@ -7,11 +7,26 @@ import { ShellHeader } from './ShellHeader'
 import { ShellMain } from './ShellMain'
 import { ShellSidebar } from './ShellSidebar'
 
+const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed'
+
 /**
  * Product shell (14.6.1) — global framing only. Business pages render via Outlet.
  */
 export function AppShell() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    return window.localStorage.getItem(sidebarCollapsedStorageKey) === 'true'
+  })
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      sidebarCollapsedStorageKey,
+      String(sidebarCollapsed),
+    )
+  }, [sidebarCollapsed])
 
   return (
     <div

@@ -14,21 +14,45 @@ function renderWithShell(initialEntry: string) {
     },
   })
 
-  render(
+  return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route
-              path="/competitions/:competitionId"
-              element={<p>Workspace page</p>}
-            />
-            <Route path="/matches/:matchId" element={<p>Match deep link</p>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+      <AppShellRoutes initialEntry={initialEntry} />
     </QueryClientProvider>,
+  )
+}
+
+function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
+  return (
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/competitions" element={<p>Competition list</p>} />
+          <Route
+            path="/competitions/:competitionId"
+            element={<p>Workspace page</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/organisation"
+            element={<p>Organisation page</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/matches"
+            element={<p>Competition matches page</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/overview"
+            element={<p>Competition overview page</p>}
+          />
+          <Route path="/stages/:stageId" element={<p>Stage page</p>} />
+          <Route
+            path="/stages/:stageId/matches"
+            element={<p>Stage matches page</p>}
+          />
+          <Route path="/matches/:matchId" element={<p>Match deep link</p>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>
   )
 }
 
@@ -58,6 +82,68 @@ describe('AppShell', () => {
     ).toHaveAttribute('href', '#main')
   })
 
+  it('renders the four sidebar destinations', () => {
+    renderWithShell('/')
+
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Organisation' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Matchs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Consultation' })).toBeInTheDocument()
+  })
+
+  it('marks Cockpit active for workspace routes', () => {
+    renderWithShell('/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.getByRole('link', { name: 'Organisation' })).not.toHaveAttribute(
+      'aria-current',
+    )
+  })
+
+  it('marks Organisation active for organisation routes', () => {
+    renderWithShell(
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/organisation',
+    )
+
+    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  it('maps stage deep links to Consultation', () => {
+    renderWithShell('/stages/stage-id')
+
+    expect(screen.getByRole('link', { name: 'Consultation' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  it('maps match deep links to Matchs', () => {
+    renderWithShell('/matches/match-id')
+
+    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  it('sets aria-current on only one destination', () => {
+    renderWithShell(
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/overview',
+    )
+
+    expect(screen.getAllByRole('link', { current: 'page' })).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'Consultation' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
   it('toggles sidebar expanded/collapsed state', async () => {
     const user = userEvent.setup()
     renderWithShell('/')
@@ -70,6 +156,7 @@ describe('AppShell', () => {
     expect(
       screen.getByRole('button', { name: 'Expand sidebar' }),
     ).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
   })
 
   it('continues to render deep-link routes inside the shell', () => {
