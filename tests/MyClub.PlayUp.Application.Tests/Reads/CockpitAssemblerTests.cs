@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -33,7 +34,9 @@ public sealed class CockpitAssemblerTests
 
         view.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
         view.Status.Should().Be(CompetitionStatus.Draft);
-        view.ConstructionDimensions.Regulation.Facts.MinimumTeams.Should().BeGreaterThan(0);
+        view.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().BeGreaterThan(0);
+        view.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotBeEmpty();
         view.NaturalProgression.Should().NotBeNull();
         view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
         view.AvailableActions.Should().Contain(action => action.Code == OrganisationViewAssembler.ActionAddEntry);
@@ -310,6 +313,143 @@ public sealed class CockpitAssemblerTests
         view.ClosureHint.BlockerCodes.Should().Contain(CompletionAnalyzer.ReasonScheduledMatches);
         view.AttentionSummary.Items.Should().NotContain(item =>
             item.Source == CompletionAnalyzer.ReasonScheduledMatches);
+    }
+
+    [Fact]
+    public void Assemble_regulation_summary_exposes_competition_bootstrap_values()
+    {
+        var competition = Competition.Create(new CompetitionName("Reg"), SampleRegulations.Standard(), _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var regulation = view.ConstructionDimensions.Regulation;
+        regulation.Competition.MinimumTeams.Should().Be(2);
+        regulation.Competition.MaximumTeams.Should().Be(64);
+        regulation.Competition.DurationPerPeriod.Should().Be(45);
+        regulation.Competition.NumberOfPeriods.Should().Be(2);
+        regulation.Competition.WinPoints.Should().Be(3);
+        regulation.Competition.DrawPoints.Should().Be(1);
+        regulation.Competition.LossPoints.Should().Be(0);
+        regulation.Stage.Should().BeNull();
+        regulation.CompetitionRegulationMutable.Should().BeTrue();
+        regulation.TransitionReadiness.Should().Contain(item =>
+            item.Transition == CockpitAssembler.TransitionDraw && !item.Ready);
+        regulation.TransitionReadiness.Should().Contain(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeMatches && !item.Ready);
+        regulation.TransitionReadiness.Should().OnlyContain(item =>
+            item.BlockerCodes.Contains(OrganisationViewAssembler.BlockerInsufficientParticipants));
+    }
+
+    [Fact]
+    public void Assemble_regulation_stage_summary_and_championship_omits_draw_readiness()
+    {
+        var competition = CreateCompetition.Execute("Champ reg", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(2),
+            _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var regulation = view.ConstructionDimensions.Regulation;
+        regulation.Stage.Should().NotBeNull();
+        regulation.Stage!.StageId.Should().Be(configured.Stage.Id.Value);
+        regulation.Stage.HasDrawRules.Should().BeFalse();
+        regulation.Stage.HasQualificationRules.Should().BeFalse();
+        regulation.Stage.HasProgressionRules.Should().BeFalse();
+        regulation.Stage.HasTieFormat.Should().BeFalse();
+        regulation.TransitionReadiness.Should().NotContain(item =>
+            item.Transition == CockpitAssembler.TransitionDraw);
+        regulation.TransitionReadiness.Should().ContainSingle(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeMatches
+            && item.Ready
+            && item.BlockerCodes.Count == 0);
+    }
+
+    [Fact]
+    public void Assemble_regulation_groups_exposes_draw_rules_and_draw_readiness()
+    {
+        var competition = CreateCompetition.Execute("Groups reg", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var regulation = view.ConstructionDimensions.Regulation;
+        regulation.Stage.Should().NotBeNull();
+        regulation.Stage!.HasDrawRules.Should().BeTrue();
+        regulation.Stage.NumberOfPots.Should().Be(2);
+        regulation.TransitionReadiness.Should().Contain(item =>
+            item.Transition == CockpitAssembler.TransitionDraw && item.Ready);
+        regulation.TransitionReadiness.Should().Contain(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeMatches);
+    }
+
+    [Fact]
+    public void Assemble_regulation_readiness_empty_when_running()
+    {
+        var competition = Competition.Create(new CompetitionName("Running reg"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeFalse();
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().BeEmpty();
+        view.ConstructionDimensions.Regulation.Stage.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Assemble_regulation_reflects_replaced_competition_values()
+    {
+        var competition = Competition.Create(new CompetitionName("Mut reg"), SampleRegulations.Standard(), _clock);
+        var replaced = new Regulation(
+            new EntryRules(minimumTeams: 4, maximumTeams: 16),
+            new MatchRules(
+                new MatchDuration(durationPerPeriod: 40, numberOfPeriods: 2, halfTimeDuration: 10),
+                new AdministrativeResultPolicy(forfeitWinnerGoals: 3, forfeitLoserGoals: 0)),
+            new StandingRules(
+                new PointsPolicy(winPoints: 2, drawPoints: 1, lossPoints: 0),
+                [
+                    RankingCriterion.Points,
+                    RankingCriterion.GoalDifference,
+                    RankingCriterion.GoalsFor
+                ]));
+        competition.ReplaceRegulation(replaced, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().Be(4);
+        view.ConstructionDimensions.Regulation.Competition.MaximumTeams.Should().Be(16);
+        view.ConstructionDimensions.Regulation.Competition.DurationPerPeriod.Should().Be(40);
+        view.ConstructionDimensions.Regulation.Competition.WinPoints.Should().Be(2);
     }
 
     private (Competition Competition, Stage Stage, Match Match) CreateFinishedKnockoutWithProgression()

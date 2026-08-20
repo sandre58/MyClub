@@ -29,7 +29,26 @@
     },
     "regulation": {
       "title": "Règlement",
-      "summary": "{{periods}}×{{duration}} min · points {{win}}/{{draw}}/{{loss}} · équipes {{min}}–{{max}}"
+      "summary": "{{periods}}×{{duration}} min · points {{win}}/{{draw}}/{{loss}} · équipes {{min}}–{{max}}",
+      "stageHeading": "Règlement de phase",
+      "stageNone": "Aucune phase principale — règlement de phase non applicable.",
+      "stageSummary": "{{stageName}} · tirage {{draw}} · pots {{pots}} · qualification {{qualification}} · progression {{progression}} · format de confrontation {{tieFormat}}",
+      "flagYes": "oui",
+      "flagNo": "non",
+      "potsNone": "—",
+      "mutable": "Modifiable via Organisation (brouillon / prêt).",
+      "immutable": "Non modifiable dans l’état actuel (hors standing de phase démarrée).",
+      "readinessHeading": "Préparation relative aux transitions",
+      "readinessEmpty": "Aucune readiness de règlement pour ce cycle (focus construction).",
+      "ready": "Prêt",
+      "notReady": "Pas prêt",
+      "blockersHeading": "Bloqueurs",
+      "transitions": {
+        "Draw": "Tirage",
+        "MaterializeMatches": "Matérialisation des matchs"
+      },
+      "readinessReady": "Le règlement et la structure permettent d’envisager {{transition}}.",
+      "readinessNotReady": "Pour envisager {{transition}}, des conditions restent à lever."
     },
     "matches": {
       "title": "Matchs",

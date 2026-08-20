@@ -26,7 +26,7 @@ export function cockpitView(
       },
       regulation: {
         prominence: 'Present',
-        facts: {
+        competition: {
           minimumTeams: 2,
           maximumTeams: 64,
           durationPerPeriod: 45,
@@ -35,6 +35,30 @@ export function cockpitView(
           drawPoints: 1,
           lossPoints: 0,
         },
+        stage: {
+          stageId,
+          stageName: 'Phase 1',
+          hasDrawRules: false,
+          numberOfPots: null,
+          hasQualificationRules: false,
+          qualificationPathCount: 0,
+          hasProgressionRules: false,
+          progressionPathCount: 0,
+          hasTieFormat: false,
+        },
+        competitionRegulationMutable: true,
+        transitionReadiness: [
+          {
+            transition: 'Draw',
+            ready: false,
+            blockerCodes: ['InsufficientParticipants'],
+          },
+          {
+            transition: 'MaterializeMatches',
+            ready: false,
+            blockerCodes: ['InsufficientParticipants'],
+          },
+        ],
       },
       matches: {
         prominence: 'Absent',

@@ -142,7 +142,33 @@ export interface CockpitDimension {
 
 export interface CockpitRegulationDimension {
   prominence: CockpitProminence | string
-  facts: OrganisationRegulationSummary
+  /** Competition regulation factual summary (Entry / Match / Standing). */
+  competition: OrganisationRegulationSummary
+  /** Primary stage regulation flags when a primary stage exists. */
+  stage: CockpitStageRegulationSummary | null
+  /** Domain: ReplaceRegulation allowed in Draft/Ready. */
+  competitionRegulationMutable: boolean
+  /** Transition-relative readiness (construction only) — not a global isValid. */
+  transitionReadiness: CockpitTransitionReadiness[]
+}
+
+export interface CockpitStageRegulationSummary {
+  stageId: string
+  stageName: string
+  hasDrawRules: boolean
+  numberOfPots: number | null
+  hasQualificationRules: boolean
+  qualificationPathCount: number
+  hasProgressionRules: boolean
+  progressionPathCount: number
+  hasTieFormat: boolean
+}
+
+/** Ready for a named transition — not regulation validity. */
+export interface CockpitTransitionReadiness {
+  transition: string
+  ready: boolean
+  blockerCodes: string[]
 }
 
 export interface CockpitOperationalFocus {

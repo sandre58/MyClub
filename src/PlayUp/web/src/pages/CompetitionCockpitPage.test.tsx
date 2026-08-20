@@ -125,6 +125,11 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByText('Équipes')).toBeInTheDocument()
     expect(screen.getByText('Structure')).toBeInTheDocument()
     expect(screen.getByText('Règlement')).toBeInTheDocument()
+    expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
+    expect(screen.getByText(/Règlement de phase/)).toBeInTheDocument()
+    expect(screen.getByText(/Préparation relative aux transitions/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Tirage/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Matérialisation des matchs/).length).toBeGreaterThan(0)
     expect(
       screen.getByRole('heading', { name: 'Matchs', level: 3 }),
     ).toBeInTheDocument()
@@ -263,6 +268,61 @@ describe('CompetitionCockpitPage', () => {
     expect(
       await screen.findByRole('button', { name: /Démarrer la phase/i }),
     ).toBeInTheDocument()
+  })
+
+  it('renders regulation summary and Host readiness without inventing rules', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          regulation: {
+            prominence: 'Present',
+            competition: {
+              minimumTeams: 2,
+              maximumTeams: 64,
+              durationPerPeriod: 45,
+              numberOfPeriods: 2,
+              winPoints: 3,
+              drawPoints: 1,
+              lossPoints: 0,
+            },
+            stage: null,
+            competitionRegulationMutable: true,
+            transitionReadiness: [
+              {
+                transition: 'MaterializeMatches',
+                ready: true,
+                blockerCodes: [],
+              },
+            ],
+          },
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(await screen.findByText(/2×45 min/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Aucune phase principale/),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText(/Matérialisation des matchs/).length).toBeGreaterThan(0)
+    expect(screen.getByText(/· Prêt/)).toBeInTheDocument()
+    expect(screen.queryByText('Tirage')).not.toBeInTheDocument()
+  })
+
+  it('navigates to organisation from the regulation card', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(cockpitView())
+
+    renderCockpitPage()
+
+    const orgLinks = await screen.findAllByRole('link', {
+      name: /Ouvrir l’organisation/i,
+    })
+    await user.click(orgLinks[0])
+
+    expect(screen.getByText('Organisation route')).toBeInTheDocument()
   })
 
   it('shows an error when the cockpit read fails', async () => {

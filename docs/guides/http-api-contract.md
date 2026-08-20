@@ -47,7 +47,39 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
     "structure": { "prominence": "Present", "facts": { "formatKind": "None" } },
     "regulation": {
       "prominence": "Present",
-      "facts": { "minimumTeams": 2, "maximumTeams": 64, "durationPerPeriod": 45, "numberOfPeriods": 2, "winPoints": 3, "drawPoints": 1, "lossPoints": 0 }
+      "competition": {
+        "minimumTeams": 2,
+        "maximumTeams": 64,
+        "durationPerPeriod": 45,
+        "numberOfPeriods": 2,
+        "winPoints": 3,
+        "drawPoints": 1,
+        "lossPoints": 0
+      },
+      "stage": {
+        "stageId": "<guid>",
+        "stageName": "…",
+        "hasDrawRules": false,
+        "numberOfPots": null,
+        "hasQualificationRules": false,
+        "qualificationPathCount": 0,
+        "hasProgressionRules": false,
+        "progressionPathCount": 0,
+        "hasTieFormat": false
+      },
+      "competitionRegulationMutable": true,
+      "transitionReadiness": [
+        {
+          "transition": "Draw",
+          "ready": false,
+          "blockerCodes": ["InsufficientParticipants", "MissingStage"]
+        },
+        {
+          "transition": "MaterializeMatches",
+          "ready": false,
+          "blockerCodes": ["InsufficientParticipants", "MissingStage"]
+        }
+      ]
     },
     "matches": { "prominence": "Absent", "facts": { "total": "0" } }
   },
@@ -107,6 +139,11 @@ Contract notes:
 - `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking.
 - Organisation construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Cockpit situations only while competition is Draft/Ready.
+- `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
+- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` in V1 (construction only; empty when Running/Suspended/Completed/Archived). Championship omits `Draw` (format never uses draw path).
+- `transitionReadiness` reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system.
+- Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
+- Competition Prepare/Start remain Domain-only (Host OPEN) — never projected as executable actions or fake readiness.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start are **not** projected (Domain-only; Host exposure OPEN). Resume (Suspended) is Domain-only — not projected as an action.
 - `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only).

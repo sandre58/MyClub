@@ -145,18 +145,8 @@ function ConstructionDimensionsSection({ data }: { data: CockpitView }) {
           href={orgHref}
           hrefLabel={t('cockpit:dimensions.openOrganisation')}
         />
-        <DimensionCard
-          title={t('cockpit:dimensions.regulation.title')}
-          prominence={dims.regulation.prominence}
-          summary={t('cockpit:dimensions.regulation.summary', {
-            periods: dims.regulation.facts.numberOfPeriods,
-            duration: dims.regulation.facts.durationPerPeriod,
-            win: dims.regulation.facts.winPoints,
-            draw: dims.regulation.facts.drawPoints,
-            loss: dims.regulation.facts.lossPoints,
-            min: dims.regulation.facts.minimumTeams,
-            max: dims.regulation.facts.maximumTeams,
-          })}
+        <RegulationDimensionCard
+          regulation={dims.regulation}
           href={orgHref}
           hrefLabel={t('cockpit:dimensions.openOrganisation')}
         />
@@ -169,6 +159,134 @@ function ConstructionDimensionsSection({ data }: { data: CockpitView }) {
         />
       </div>
     </section>
+  )
+}
+
+function RegulationDimensionCard({
+  regulation,
+  href,
+  hrefLabel,
+}: {
+  regulation: CockpitView['constructionDimensions']['regulation']
+  href: string
+  hrefLabel: string
+}) {
+  const { t } = useTranslation(['cockpit', 'enums'])
+  const competition = regulation.competition
+  const stage = regulation.stage
+
+  return (
+    <article className="card">
+      <div className="card__head">
+        <h3 className="card__title">
+          {t('cockpit:dimensions.regulation.title')}
+        </h3>
+        <span className="muted">
+          {t(`cockpit:prominence.${regulation.prominence}`, {
+            defaultValue: regulation.prominence,
+          })}
+        </span>
+      </div>
+      <p>
+        {t('cockpit:dimensions.regulation.summary', {
+          periods: competition.numberOfPeriods,
+          duration: competition.durationPerPeriod,
+          win: competition.winPoints,
+          draw: competition.drawPoints,
+          loss: competition.lossPoints,
+          min: competition.minimumTeams,
+          max: competition.maximumTeams,
+        })}
+      </p>
+      <h4 className="stat__label">
+        {t('cockpit:dimensions.regulation.stageHeading')}
+      </h4>
+      {stage ? (
+        <p>
+          {t('cockpit:dimensions.regulation.stageSummary', {
+            stageName: stage.stageName,
+            draw: stage.hasDrawRules
+              ? t('cockpit:dimensions.regulation.flagYes')
+              : t('cockpit:dimensions.regulation.flagNo'),
+            pots:
+              stage.numberOfPots ??
+              t('cockpit:dimensions.regulation.potsNone'),
+            qualification: stage.hasQualificationRules
+              ? t('cockpit:dimensions.regulation.flagYes')
+              : t('cockpit:dimensions.regulation.flagNo'),
+            progression: stage.hasProgressionRules
+              ? t('cockpit:dimensions.regulation.flagYes')
+              : t('cockpit:dimensions.regulation.flagNo'),
+            tieFormat: stage.hasTieFormat
+              ? t('cockpit:dimensions.regulation.flagYes')
+              : t('cockpit:dimensions.regulation.flagNo'),
+          })}
+        </p>
+      ) : (
+        <p className="muted">{t('cockpit:dimensions.regulation.stageNone')}</p>
+      )}
+      <p className="caption">
+        {regulation.competitionRegulationMutable
+          ? t('cockpit:dimensions.regulation.mutable')
+          : t('cockpit:dimensions.regulation.immutable')}
+      </p>
+      <h4 className="stat__label">
+        {t('cockpit:dimensions.regulation.readinessHeading')}
+      </h4>
+      {regulation.transitionReadiness.length === 0 ? (
+        <p className="muted">
+          {t('cockpit:dimensions.regulation.readinessEmpty')}
+        </p>
+      ) : (
+        <ul className="stack">
+          {regulation.transitionReadiness.map((item) => {
+            const transitionLabel = t(
+              `cockpit:dimensions.regulation.transitions.${item.transition}`,
+              { defaultValue: item.transition },
+            )
+            return (
+              <li key={item.transition}>
+                <p>
+                  <strong>{transitionLabel}</strong>
+                  {' · '}
+                  {item.ready
+                    ? t('cockpit:dimensions.regulation.ready')
+                    : t('cockpit:dimensions.regulation.notReady')}
+                </p>
+                <p className="caption">
+                  {item.ready
+                    ? t('cockpit:dimensions.regulation.readinessReady', {
+                        transition: transitionLabel,
+                      })
+                    : t('cockpit:dimensions.regulation.readinessNotReady', {
+                        transition: transitionLabel,
+                      })}
+                </p>
+                {!item.ready && item.blockerCodes.length > 0 ? (
+                  <>
+                    <p className="stat__label">
+                      {t('cockpit:dimensions.regulation.blockersHeading')}
+                    </p>
+                    <ul>
+                      {item.blockerCodes.map((code) => (
+                        <li key={`${item.transition}-${code}`}>
+                          {situationTitle(code)}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <p>
+        <Link className="btn" to={href}>
+          {hrefLabel}
+        </Link>
+      </p>
+    </article>
   )
 }
 

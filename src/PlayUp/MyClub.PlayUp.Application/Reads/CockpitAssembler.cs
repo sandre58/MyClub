@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Globalization;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -47,6 +48,12 @@ public static class CockpitAssembler
 
     /// <summary>Impact: sporting progression / qualification cannot advance.</summary>
     public const string ImpactBlocksProgression = "BlocksProgression";
+
+    /// <summary>Transition readiness: materialize matches path.</summary>
+    public const string TransitionMaterializeMatches = "MaterializeMatches";
+
+    /// <summary>Transition readiness: draw path identifiable (structure/pots/bracket).</summary>
+    public const string TransitionDraw = "Draw";
 
     /// <summary>Source: competition suspended (operational, L11).</summary>
     public const string SourceCompetitionSuspended = "CompetitionSuspended";
@@ -139,7 +146,7 @@ public static class CockpitAssembler
 
         var matchCounts = BuildMatchCounts(matchesByStage);
         var operationalFocus = BuildOperationalFocus(competition, stages, matchesByStage, matchCounts);
-        var dimensions = BuildDimensions(competition, organisation, matchCounts);
+        var dimensions = BuildDimensions(competition, organisation, stages, matchCounts);
         var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
         var progression = ResolveNaturalProgression(competition, organisation, completion, attentionSummary.Count);
         var closure = new CockpitClosureHintDto(
@@ -176,6 +183,7 @@ public static class CockpitAssembler
     private static CockpitConstructionDimensionsDto BuildDimensions(
         Competition competition,
         OrganisationViewDto organisation,
+        IReadOnlyList<Stage> stages,
         CockpitMatchCountsDto matchCounts)
     {
         var inConstruction = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
@@ -206,8 +214,6 @@ public static class CockpitAssembler
                 ? matchCounts.Live > 0 ? ProminenceDominant : ProminencePresent
                 : ProminenceCondensed;
 
-        var regulation = organisation.Regulation;
-
         return new CockpitConstructionDimensionsDto(
             new CockpitDimensionDto(
                 teamsProminence,
@@ -216,8 +222,10 @@ public static class CockpitAssembler
                     ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
                     ["occupyingCount"] =
                         organisation.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
-                    ["minimumTeams"] = regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                    ["maximumTeams"] = regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
+                    ["minimumTeams"] =
+                        organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                    ["maximumTeams"] =
+                        organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                 }),
             new CockpitDimensionDto(
                 structureProminence,
@@ -226,10 +234,11 @@ public static class CockpitAssembler
                     ["formatKind"] = organisation.Format.Kind?.ToString() ?? "None",
                     ["groupCount"] = organisation.Structure.GroupCount.ToString(CultureInfo.InvariantCulture),
                     ["roundCount"] = organisation.Structure.RoundCount.ToString(CultureInfo.InvariantCulture),
-                    ["matchdayCount"] = organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
+                    ["matchdayCount"] =
+                        organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
                     ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
                 }),
-            new CockpitRegulationDimensionDto(regulationProminence, regulation),
+            BuildRegulationDimension(competition, organisation, stages, regulationProminence, inConstruction),
             new CockpitDimensionDto(
                 matchesProminence,
                 new Dictionary<string, string>
@@ -239,6 +248,91 @@ public static class CockpitAssembler
                     ["finished"] = matchCounts.Finished.ToString(CultureInfo.InvariantCulture),
                     ["total"] = matchCounts.Total.ToString(CultureInfo.InvariantCulture)
                 }));
+    }
+
+    /// <summary>
+    /// Builds the regulation dimension: factual Competition + Stage summaries and transition readiness.
+    /// </summary>
+    /// <remarks>
+    /// Reuses <see cref="OrganisationViewAssembler"/> readiness — does not invent Domain validation.
+    /// PrepareStage / StartStage are status transitions, not regulation content gates — not projected here.
+    /// Competition Prepare/Start remain Host-OPEN (gap D) — never claimed executable.
+    /// </remarks>
+    private static CockpitRegulationDimensionDto BuildRegulationDimension(
+        Competition competition,
+        OrganisationViewDto organisation,
+        IReadOnlyList<Stage> stages,
+        string prominence,
+        bool inConstruction)
+    {
+        var stageSummary = BuildStageRegulationSummary(organisation, stages);
+        var mutable = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
+        var readiness = inConstruction
+            ? BuildRegulationTransitionReadiness(organisation)
+            : [];
+
+        return new CockpitRegulationDimensionDto(
+            prominence,
+            organisation.Regulation,
+            stageSummary,
+            mutable,
+            readiness);
+    }
+
+    private static CockpitStageRegulationSummaryDto? BuildStageRegulationSummary(
+        OrganisationViewDto organisation,
+        IReadOnlyList<Stage> stages)
+    {
+        if (organisation.Format.PrimaryStageId is not { } primaryId)
+        {
+            return null;
+        }
+
+        var stage = stages.FirstOrDefault(candidate => candidate.Id.Value == primaryId);
+        if (stage is null)
+        {
+            return null;
+        }
+
+        var regulation = stage.Regulation;
+        var qualificationPaths = regulation.QualificationRules?.Paths.Count ?? 0;
+        var progressionPaths = regulation.ProgressionRules?.Paths.Count ?? 0;
+
+        return new CockpitStageRegulationSummaryDto(
+            stage.Id.Value,
+            stage.Name.Value,
+            HasDrawRules: regulation.DrawRules is not null,
+            NumberOfPots: regulation.DrawRules?.PotRules?.NumberOfPots,
+            HasQualificationRules: regulation.QualificationRules is not null,
+            QualificationPathCount: qualificationPaths,
+            HasProgressionRules: regulation.ProgressionRules is not null,
+            ProgressionPathCount: progressionPaths,
+            HasTieFormat: regulation.TieFormat is not null);
+    }
+
+    private static List<CockpitTransitionReadinessDto> BuildRegulationTransitionReadiness(
+        OrganisationViewDto organisation)
+    {
+        var blockers = organisation.Readiness.Blockers;
+        var readiness = new List<CockpitTransitionReadinessDto>();
+
+        // Championship never uses the draw path — omit Draw readiness (avoid ready=false with empty blockers).
+        if (organisation.Format.Kind is not StructureFormatKind.Championship)
+        {
+            readiness.Add(
+                new CockpitTransitionReadinessDto(
+                    TransitionDraw,
+                    organisation.Readiness.ReadyForDraw,
+                    organisation.Readiness.ReadyForDraw ? [] : blockers));
+        }
+
+        readiness.Add(
+            new CockpitTransitionReadinessDto(
+                TransitionMaterializeMatches,
+                organisation.Readiness.ReadyForMaterialization,
+                organisation.Readiness.ReadyForMaterialization ? [] : blockers));
+
+        return readiness;
     }
 
     private static CockpitOperationalFocusDto BuildOperationalFocus(

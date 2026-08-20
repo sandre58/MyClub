@@ -178,7 +178,11 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.Status.Should().Be(CompetitionStatus.Draft);
         body.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
         body.ConstructionDimensions.Teams.Should().NotBeNull();
-        body.ConstructionDimensions.Regulation.Facts.MinimumTeams.Should().BeGreaterThan(0);
+        body.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().BeGreaterThan(0);
+        body.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
+        body.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotBeEmpty();
+        body.ConstructionDimensions.Regulation.Stage.Should().NotBeNull();
+        body.ConstructionDimensions.Regulation.Stage!.StageId.Should().Be(seed.StageId.Value);
         body.OperationalFocus.Stages.Should().Contain(stage => stage.StageId == seed.StageId.Value);
         body.OperationalFocus.Draws.Should().ContainSingle(draw => !draw.IsApplied);
         body.Situations.Should().NotBeNull();

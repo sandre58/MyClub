@@ -63,10 +63,54 @@ public sealed record CockpitDimensionDto(
     string Prominence,
     IReadOnlyDictionary<string, string> Facts);
 
-/// <summary>Regulation dimension with factual summary only (no satisfaction claim).</summary>
+/// <summary>
+/// Regulation dimension: factual Competition + Stage summaries and transition-relative readiness.
+/// </summary>
+/// <remarks>
+/// No global isValid / isSatisfactory. Readiness is always relative to a named transition.
+/// Competition Regulation (Entry/Match/Standing) ≠ Stage Regulation (Draw/Qualification/Progression/TieFormat).
+/// </remarks>
+/// <param name="Prominence">Present | Condensed | Dominant | Absent.</param>
+/// <param name="Competition">Competition regulation factual summary (always present — Domain requires it).</param>
+/// <param name="Stage">Primary stage regulation factual flags when a primary stage exists; otherwise null.</param>
+/// <param name="CompetitionRegulationMutable">True when Domain allows ReplaceRegulation (Draft/Ready).</param>
+/// <param name="TransitionReadiness">Readiness relative to identified Host-relevant transitions (construction only).</param>
 public sealed record CockpitRegulationDimensionDto(
     string Prominence,
-    OrganisationRegulationSummaryDto Facts);
+    OrganisationRegulationSummaryDto Competition,
+    CockpitStageRegulationSummaryDto? Stage,
+    bool CompetitionRegulationMutable,
+    IReadOnlyList<CockpitTransitionReadinessDto> TransitionReadiness);
+
+/// <summary>Primary stage regulation facts (presence flags — null optional family ≠ invalid).</summary>
+/// <param name="StageId">Primary stage identity.</param>
+/// <param name="StageName">Display name.</param>
+/// <param name="HasDrawRules">Whether DrawRules are set.</param>
+/// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
+/// <param name="HasQualificationRules">Whether QualificationRules are set.</param>
+/// <param name="QualificationPathCount">Path count when qualification rules exist.</param>
+/// <param name="HasProgressionRules">Whether ProgressionRules are set.</param>
+/// <param name="ProgressionPathCount">Path count when progression rules exist.</param>
+/// <param name="HasTieFormat">Whether default TieFormat is set.</param>
+public sealed record CockpitStageRegulationSummaryDto(
+    Guid StageId,
+    string StageName,
+    bool HasDrawRules,
+    int? NumberOfPots,
+    bool HasQualificationRules,
+    int QualificationPathCount,
+    bool HasProgressionRules,
+    int ProgressionPathCount,
+    bool HasTieFormat);
+
+/// <summary>Readiness relative to a concrete transition (R5) — not a global regulation validity claim.</summary>
+/// <param name="Transition">Stable code (e.g. MaterializeMatches, Draw).</param>
+/// <param name="Ready">True when Organisation readiness says the transition path is identifiable.</param>
+/// <param name="BlockerCodes">Same machine codes as Organisation / Situations when not ready.</param>
+public sealed record CockpitTransitionReadinessDto(
+    string Transition,
+    bool Ready,
+    IReadOnlyList<string> BlockerCodes);
 
 /// <summary>Operational focus across stages (no single “active stage” fiction).</summary>
 public sealed record CockpitOperationalFocusDto(
