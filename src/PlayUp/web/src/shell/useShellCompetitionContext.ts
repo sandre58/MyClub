@@ -6,6 +6,7 @@ import {
   fetchMatchDetail,
   fetchStageOverview,
 } from '../api'
+import { queryKeys } from '../queryKeys'
 
 export type ShellCompetitionContextState =
   | 'selected'
@@ -22,13 +23,13 @@ export function useShellCompetitionContext() {
   const { competitionId: routeCompetitionId, stageId, matchId } = useParams()
 
   const stageQuery = useQuery({
-    queryKey: ['stages', stageId ?? ''],
+    queryKey: queryKeys.stages.detail(stageId ?? ''),
     queryFn: () => fetchStageOverview(stageId!),
     enabled: Boolean(stageId) && !routeCompetitionId,
   })
 
   const matchQuery = useQuery({
-    queryKey: ['matches', matchId ?? ''],
+    queryKey: queryKeys.matches.detail(matchId ?? ''),
     queryFn: () => fetchMatchDetail(matchId!),
     enabled: Boolean(matchId) && !routeCompetitionId,
   })
@@ -39,7 +40,7 @@ export function useShellCompetitionContext() {
     matchQuery.data?.competitionId
 
   const overviewQuery = useQuery({
-    queryKey: ['competitions', resolvedCompetitionId ?? ''],
+    queryKey: queryKeys.competitions.detail(resolvedCompetitionId ?? ''),
     queryFn: () => fetchCompetitionOverview(resolvedCompetitionId!),
     enabled: Boolean(resolvedCompetitionId),
   })
@@ -49,7 +50,7 @@ export function useShellCompetitionContext() {
     (Boolean(matchId) && !routeCompetitionId && matchQuery.isPending)
 
   const competitionsListQuery = useQuery({
-    queryKey: ['competitions'],
+    queryKey: queryKeys.competitions.all,
     queryFn: fetchCompetitions,
     enabled: !resolvedCompetitionId && !isResolvingDeepLink,
   })

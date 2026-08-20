@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchNeedsAttention } from '../api'
+import { queryKeys } from '../queryKeys'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type ShellHeaderProps = {
@@ -26,7 +27,7 @@ export function ShellHeader({
   const { competitionId, competitionName, state } = useShellCompetitionContext()
 
   const attentionQuery = useQuery({
-    queryKey: ['competitions', competitionId ?? '', 'attention'],
+    queryKey: queryKeys.competitions.attention(competitionId ?? ''),
     queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: Boolean(competitionId),
   })

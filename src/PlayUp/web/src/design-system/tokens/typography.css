@@ -1,14 +1,10 @@
 /*
- * One grotesque family at a time. Bake-off via [data-font], not a second face.
+ * One grotesque family. Product face = IBM Plex Sans (14.5).
  * Five roles — not a 7-step type scale. No mono, no display sportif.
  */
 .ds-root,
 .ds-root[data-font='plex'] {
     --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-}
-
-.ds-root[data-font='inter'] {
-    --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 .ds-root {

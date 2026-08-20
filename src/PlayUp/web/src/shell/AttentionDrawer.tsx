@@ -7,6 +7,7 @@ import {
   fetchMatchesByStage,
   fetchNeedsAttention,
 } from '../api'
+import { queryKeys } from '../queryKeys'
 import type { NeedsAttentionItem } from '../types'
 import {
   attentionItemContextLabel,
@@ -42,7 +43,7 @@ export function AttentionDrawer({
     useShellCompetitionContext()
 
   const attentionQuery = useQuery({
-    queryKey: ['competitions', competitionId ?? '', 'attention'],
+    queryKey: queryKeys.competitions.attention(competitionId ?? ''),
     queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: open && Boolean(competitionId),
   })
@@ -51,7 +52,7 @@ export function AttentionDrawer({
   const hasFixtureItems = items.some((item) => item.targetType === 'Fixture')
 
   const overviewQuery = useQuery({
-    queryKey: ['competitions', competitionId ?? ''],
+    queryKey: queryKeys.competitions.detail(competitionId ?? ''),
     queryFn: () => fetchCompetitionOverview(competitionId!),
     enabled: open && Boolean(competitionId) && hasFixtureItems,
   })
@@ -60,7 +61,7 @@ export function AttentionDrawer({
 
   const matchQueries = useQueries({
     queries: stages.map((stage) => ({
-      queryKey: ['matches', 'by-stage', stage.stageId],
+      queryKey: queryKeys.matches.byStage(stage.stageId),
       queryFn: () => fetchMatchesByStage(stage.stageId),
       enabled: open && overviewQuery.isSuccess && stages.length > 0,
     })),

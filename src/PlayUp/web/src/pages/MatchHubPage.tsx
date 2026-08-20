@@ -5,6 +5,7 @@ import {
   fetchMatchesByStage,
   fetchNeedsAttention,
 } from '../api'
+import { queryKeys } from '../queryKeys'
 import {
   EmptyState,
   ErrorState,
@@ -32,13 +33,13 @@ export function MatchHubPage() {
   const { competitionId = '' } = useParams()
 
   const overviewQuery = useQuery({
-    queryKey: ['competitions', competitionId],
+    queryKey: queryKeys.competitions.detail(competitionId),
     queryFn: () => fetchCompetitionOverview(competitionId),
     enabled: competitionId.length > 0,
   })
 
   const attentionQuery = useQuery({
-    queryKey: ['competitions', competitionId, 'attention'],
+    queryKey: queryKeys.competitions.attention(competitionId),
     queryFn: () => fetchNeedsAttention(competitionId),
     enabled: competitionId.length > 0,
   })
@@ -47,7 +48,7 @@ export function MatchHubPage() {
 
   const matchQueries = useQueries({
     queries: stages.map((stage) => ({
-      queryKey: ['matches', 'by-stage', stage.stageId],
+      queryKey: queryKeys.matches.byStage(stage.stageId),
       queryFn: () => fetchMatchesByStage(stage.stageId),
       enabled: overviewQuery.isSuccess && stages.length > 0,
     })),

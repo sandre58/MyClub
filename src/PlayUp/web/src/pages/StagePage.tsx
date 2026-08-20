@@ -8,6 +8,7 @@ import {
   publishDraw,
   startStage,
 } from '../api'
+import { queryKeys } from '../queryKeys'
 import {
   DrawResolutionBadge,
   DrawStatusBadge,
@@ -35,7 +36,7 @@ export function StagePage() {
   // SERVER STATE: StageOverview lives in TanStack Query — one cache entry for the stage.
   // Draw UI below only reads this result; it never copies draws into useState.
   const stageQuery = useQuery({
-    queryKey: ['stages', stageId],
+    queryKey: queryKeys.stages.detail(stageId),
     queryFn: () => fetchStageOverview(stageId),
     enabled: stageId.length > 0,
   })
@@ -43,7 +44,7 @@ export function StagePage() {
   // Same query key as CompetitionPage → cache reuse when navigating Competition → Stage.
   const competitionId = stageQuery.data?.competitionId
   const competitionQuery = useQuery({
-    queryKey: ['competitions', competitionId ?? ''],
+    queryKey: queryKeys.competitions.detail(competitionId ?? ''),
     queryFn: () => fetchCompetitionOverview(competitionId!),
     enabled: Boolean(competitionId),
   })
@@ -91,11 +92,13 @@ function StageOverviewView({ data }: { data: StageOverview }) {
     mutationFn: () => prepareStage(data.id),
     onSuccess: async () => {
       // Invalidate → active observers refetch → badge shows Ready from GET.
-      await queryClient.invalidateQueries({ queryKey: ['stages', data.id] })
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stages.detail(data.id),
+      })
       // CompetitionOverview.stages[].status would stay Draft for staleTime (30s)
       // after Back → Competition; Prepare changes that field, so invalidate it.
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId],
+        queryKey: queryKeys.competitions.detail(data.competitionId),
       })
     },
   })
@@ -103,10 +106,12 @@ function StageOverviewView({ data }: { data: StageOverview }) {
   const startMutation = useMutation({
     mutationFn: () => startStage(data.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['stages', data.id] })
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stages.detail(data.id),
+      })
       // Same field as Prepare: CompetitionPage shows stage status from overview.
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId],
+        queryKey: queryKeys.competitions.detail(data.competitionId),
       })
     },
   })
@@ -421,7 +426,9 @@ function DrawActions({
       // invalidateQueries marks cache stale → active queries refetch.
       // Prefer this over refetchQueries: only mounted observers refetch;
       // inactive keys refresh when next used.
-      await queryClient.invalidateQueries({ queryKey: ['stages', stageId] })
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stages.detail(stageId),
+      })
     },
   })
 
@@ -444,10 +451,12 @@ function DrawActions({
       throw new Error('Apply is not available for this draw kind.')
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['stages', stageId] })
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stages.detail(stageId),
+      })
       if (draw.kind === 'Pairing') {
         await queryClient.invalidateQueries({
-          queryKey: ['matches', 'by-stage', stageId],
+          queryKey: queryKeys.matches.byStage(stageId),
         })
       }
     },

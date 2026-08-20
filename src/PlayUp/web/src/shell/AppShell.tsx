@@ -5,6 +5,7 @@ import '../design-system/fonts'
 import '../design-system/index.css'
 import './shell.css'
 import { AttentionDrawer } from './AttentionDrawer'
+import { PageErrorBoundary } from './PageErrorBoundary'
 import { ShellHeader } from './ShellHeader'
 import { ShellMain } from './ShellMain'
 import { ShellSidebar } from './ShellSidebar'
@@ -59,7 +60,9 @@ export function AppShell() {
             onAttentionClick={() => setAttentionDrawerOpen(true)}
           />
           <ShellMain>
-            <Outlet />
+            <PageErrorBoundary>
+              <Outlet />
+            </PageErrorBoundary>
           </ShellMain>
         </div>
       </div>

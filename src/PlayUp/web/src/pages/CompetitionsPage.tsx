@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchCompetitions } from '../api'
+import { queryKeys } from '../queryKeys'
 import {
   CompetitionStatusBadge,
   EmptyState,
@@ -16,7 +17,7 @@ import { type CompetitionListItem } from '../types'
  */
 export function CompetitionsPage() {
   const query = useQuery({
-    queryKey: ['competitions'],
+    queryKey: queryKeys.competitions.all,
     queryFn: fetchCompetitions,
   })
 

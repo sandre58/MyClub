@@ -5,6 +5,19 @@
   "back": "Retour",
   "skipToContent": "Passer au contenu",
   "notFound": "Introuvable. Vérifiez l'identifiant dans l'URL.",
+  "notFoundPage": {
+    "eyebrow": "Erreur 404",
+    "title": "Page introuvable",
+    "lede": "Cette route n’existe pas dans l’application organisateur.",
+    "home": "Retour à l’accueil"
+  },
+  "unexpectedError": {
+    "eyebrow": "Erreur",
+    "title": "Impossible d’afficher cette page",
+    "lede": "Une erreur inattendue s’est produite. Vous pouvez réessayer ou revenir à l’accueil.",
+    "retry": "Réessayer",
+    "home": "Retour à l’accueil"
+  },
   "unknownError": "Erreur inconnue",
   "errorWithStatus": "{{message}} ({{status}})",
   "unknownEntry": "Entrée inconnue"

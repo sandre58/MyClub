@@ -104,6 +104,19 @@ Re-seed after pulling DevSeed progression changes (`Winner` → slot `SF1-A`).
 
 Default locale is **`fr`**. See [docs/i18n.md](./docs/i18n.md) for conventions, namespaces, and the rule that new UI strings must go through i18n.
 
-## Out of scope (later)
+## Page migration (13.5 → Design System)
 
-`features/` until more domains collide; Sass/Tailwind; UI libraries; OpenAPI; auth; Host CORS; Draw UI; Playwright.
+When reworking a business page, follow [docs/page-migration.md](./docs/page-migration.md). Pilot: `NotFoundPage`. Do not mass-migrate.
+
+## Out of scope (later — explicit trigger only)
+
+| Item | Trigger |
+|---|---|
+| `features/` | Domain collision / ownership pain in `pages/` |
+| OpenAPI / generated types | Frequent DTO drift or a second HTTP consumer |
+| Playwright E2E | Stable critical paths + unit CI already green |
+| Storybook | Reused DS components across many screens |
+| Sass / Tailwind / UI libraries | Notion decision to reopen styling stack |
+| Auth / Host CORS / deploy prod | Product/platform need |
+
+Until then: Vitest + RTL, manual DTO mirrors in `types.ts`, progressive `pages/`.

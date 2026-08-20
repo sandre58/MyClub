@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionWorkspace } from '../api'
+import { queryKeys } from '../queryKeys'
 import {
   CompetitionStatusBadge,
   ErrorState,
@@ -19,7 +20,7 @@ export function CompetitionWorkspacePage() {
   const { competitionId = '' } = useParams()
 
   const query = useQuery({
-    queryKey: ['competitions', competitionId, 'workspace'],
+    queryKey: queryKeys.competitions.workspace(competitionId),
     queryFn: () => fetchCompetitionWorkspace(competitionId),
     enabled: competitionId.length > 0,
   })

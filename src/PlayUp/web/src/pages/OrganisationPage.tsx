@@ -11,6 +11,7 @@ import {
   withdrawCompetitionEntry,
 } from '../api'
 import { structureFormatKindLabel } from '../i18n/enumLabels'
+import { queryKeys } from '../queryKeys'
 import {
   CompetitionStatusBadge,
   EmptyState,
@@ -29,9 +30,6 @@ import {
   type StructureFormatKind,
 } from '../types'
 
-const organisationQueryKey = (competitionId: string) =>
-  ['competitions', competitionId, 'organisation'] as const
-
 /**
  * Organisation Hub — GET /competitions/{id}/organisation + Slice 2 mutations.
  */
@@ -39,7 +37,7 @@ export function OrganisationPage() {
   const { competitionId = '' } = useParams()
 
   const query = useQuery({
-    queryKey: organisationQueryKey(competitionId),
+    queryKey: queryKeys.competitions.organisation(competitionId),
     queryFn: () => fetchOrganisationView(competitionId),
     enabled: competitionId.length > 0,
   })
@@ -185,13 +183,13 @@ function ParticipantsSection({
 
   const invalidateOrganisation = async () => {
     await queryClient.invalidateQueries({
-      queryKey: organisationQueryKey(competitionId),
+      queryKey: queryKeys.competitions.organisation(competitionId),
     })
     await queryClient.invalidateQueries({
-      queryKey: ['competitions', competitionId],
+      queryKey: queryKeys.competitions.detail(competitionId),
     })
     await queryClient.invalidateQueries({
-      queryKey: ['competitions', competitionId, 'workspace'],
+      queryKey: queryKeys.competitions.workspace(competitionId),
     })
   }
 
@@ -444,10 +442,10 @@ function RegulationSection({
     mutationFn: () => replaceCompetitionRegulation(data.competitionId, form),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: organisationQueryKey(data.competitionId),
+        queryKey: queryKeys.competitions.organisation(data.competitionId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId, 'workspace'],
+        queryKey: queryKeys.competitions.workspace(data.competitionId),
       })
     },
   })
@@ -651,13 +649,13 @@ function StructureSection({
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: organisationQueryKey(data.competitionId),
+        queryKey: queryKeys.competitions.organisation(data.competitionId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId],
+        queryKey: queryKeys.competitions.detail(data.competitionId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId, 'workspace'],
+        queryKey: queryKeys.competitions.workspace(data.competitionId),
       })
     },
   })

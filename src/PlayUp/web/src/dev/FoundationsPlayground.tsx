@@ -3,16 +3,15 @@ import '../design-system/fonts'
 import '../design-system/index.css'
 import './foundations-playground.css'
 
-type Font = 'plex' | 'inter'
 type Palette = 'warm-ink' | 'teal' | 'slate'
 type Density = 'compact' | 'standard' | 'comfortable'
 
 /**
  * Visual validation terrain for Design System foundations (14.5).
  * Not a component library and not the Shell.
+ * Product face is fixed to IBM Plex Sans (bake-off closed).
  */
 export function FoundationsPlayground() {
-  const [font, setFont] = useState<Font>('plex')
   const [palette, setPalette] = useState<Palette>('warm-ink')
   const [grayscale, setGrayscale] = useState(false)
   const [density, setDensity] = useState<Density>('standard')
@@ -20,7 +19,7 @@ export function FoundationsPlayground() {
   return (
     <div
       className="ds-root"
-      data-font={font}
+      data-font="plex"
       data-palette={palette}
       data-density={density}
     >
@@ -32,27 +31,6 @@ export function FoundationsPlayground() {
         aria-label="Bake-off"
         onSubmit={(event) => event.preventDefault()}
       >
-        <fieldset className="ds-toolbar__group">
-          <legend>Police</legend>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="font"
-              checked={font === 'plex'}
-              onChange={() => setFont('plex')}
-            />
-            IBM Plex Sans
-          </label>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="font"
-              checked={font === 'inter'}
-              onChange={() => setFont('inter')}
-            />
-            Inter
-          </label>
-        </fieldset>
         <fieldset className="ds-toolbar__group">
           <legend>Palette</legend>
           <label className="ds-toolbar__option">

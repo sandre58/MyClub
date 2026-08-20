@@ -8,6 +8,7 @@ import {
   fetchMatchDetail,
   fetchStageOverview,
 } from '../api'
+import { queryKeys } from '../queryKeys'
 import {
   ErrorState,
   LoadingState,
@@ -34,14 +35,14 @@ export function MatchPage() {
 
   // SERVER STATE: the match lives in TanStack Query cache, not in React useState.
   const matchQuery = useQuery({
-    queryKey: ['matches', matchId],
+    queryKey: queryKeys.matches.detail(matchId),
     queryFn: () => fetchMatchDetail(matchId),
     enabled: matchId.length > 0,
   })
 
   const stageId = matchQuery.data?.stageId
   const stageQuery = useQuery({
-    queryKey: ['stages', stageId ?? ''],
+    queryKey: queryKeys.stages.detail(stageId ?? ''),
     queryFn: () => fetchStageOverview(stageId!),
     enabled: Boolean(stageId),
   })
@@ -105,10 +106,10 @@ function MatchDetailView({
     mutationFn: () => startMatch(data.matchId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['matches', data.matchId],
+        queryKey: queryKeys.matches.detail(data.matchId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['matches', 'by-stage', data.stageId],
+        queryKey: queryKeys.matches.byStage(data.stageId),
       })
     },
   })
@@ -118,10 +119,10 @@ function MatchDetailView({
       finishMatch(data.matchId, request),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['matches', data.matchId],
+        queryKey: queryKeys.matches.detail(data.matchId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['matches', 'by-stage', data.stageId],
+        queryKey: queryKeys.matches.byStage(data.stageId),
       })
     },
   })
@@ -135,19 +136,19 @@ function MatchDetailView({
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['matches', data.matchId],
+        queryKey: queryKeys.matches.detail(data.matchId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['matches', 'by-stage', data.stageId],
+        queryKey: queryKeys.matches.byStage(data.stageId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['stages', data.stageId],
+        queryKey: queryKeys.stages.detail(data.stageId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId, 'attention'],
+        queryKey: queryKeys.competitions.attention(data.competitionId),
       })
       await queryClient.invalidateQueries({
-        queryKey: ['competitions', data.competitionId, 'workspace'],
+        queryKey: queryKeys.competitions.workspace(data.competitionId),
       })
     },
   })

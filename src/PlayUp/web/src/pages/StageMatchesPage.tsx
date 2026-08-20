@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { fetchMatchesByStage, fetchStageOverview } from '../api'
+import { queryKeys } from '../queryKeys'
 import {
   EmptyState,
   ErrorState,
@@ -13,15 +14,15 @@ import { formatScore, sideLabel, type MatchSummary } from '../types'
 export function StageMatchesPage() {
   const { stageId = '' } = useParams()
 
-  // Stage overview shares ['stages', stageId] with StagePage (cache when coming from there).
+  // Stage overview shares queryKeys.stages.detail with StagePage (cache when coming from there).
   const stageQuery = useQuery({
-    queryKey: ['stages', stageId],
+    queryKey: queryKeys.stages.detail(stageId),
     queryFn: () => fetchStageOverview(stageId),
     enabled: stageId.length > 0,
   })
 
   const matchesQuery = useQuery({
-    queryKey: ['matches', 'by-stage', stageId],
+    queryKey: queryKeys.matches.byStage(stageId),
     queryFn: () => fetchMatchesByStage(stageId),
     enabled: stageId.length > 0,
   })
