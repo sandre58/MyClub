@@ -31,13 +31,24 @@ const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
-function attentionCockpit(items: CockpitSituation[]) {
+function attentionCockpit(items: Partial<CockpitSituation>[]) {
+  const normalized: CockpitSituation[] = items.map((item) => ({
+    source: item.source ?? 'InsufficientParticipants',
+    nature: item.nature ?? 'Blocking',
+    targetType: item.targetType ?? null,
+    targetId: item.targetId ?? null,
+    matchId: item.matchId ?? null,
+    actionable: item.actionable ?? Boolean(item.actionCode),
+    actionCode: item.actionCode ?? null,
+    impactCode: item.impactCode ?? null,
+    params: item.params ?? {},
+  }))
   return cockpitView({
     competitionId,
     name: 'Coupe U18',
     status: 'Running',
-    attentionSummary: { count: items.length, items },
-    situations: items,
+    attentionSummary: { count: normalized.length, items: normalized },
+    situations: normalized,
   })
 }
 

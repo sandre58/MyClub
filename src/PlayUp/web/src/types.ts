@@ -191,7 +191,11 @@ export interface CockpitSituation {
   targetType: string | null
   targetId: string | null
   matchId: string | null
+  /** Host-projected; do not infer from source in React. */
+  actionable: boolean
   actionCode: string | null
+  /** Optional impact code for i18n; omit/null when not provided. */
+  impactCode: string | null
   params: Record<string, string>
 }
 

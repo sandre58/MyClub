@@ -73,6 +73,23 @@ export function cockpitView(
   }
 }
 
+export function cockpitSituation(
+  overrides: Partial<CockpitView['situations'][number]> = {},
+): CockpitView['situations'][number] {
+  return {
+    source: 'InsufficientParticipants',
+    nature: 'Blocking',
+    targetType: 'Organisation',
+    targetId: competitionId,
+    matchId: null,
+    actionable: true,
+    actionCode: 'AddEntry',
+    impactCode: 'BlocksConstruction',
+    params: { minimumTeams: '2', activeCount: '0' },
+    ...overrides,
+  }
+}
+
 export const cockpitIds = {
   competitionId,
   stageId,

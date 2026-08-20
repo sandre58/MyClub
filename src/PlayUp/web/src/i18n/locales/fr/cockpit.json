@@ -60,7 +60,14 @@
   "situations": {
     "heading": "Situations",
     "empty": "Aucune situation à signaler",
-    "open": "Ouvrir"
+    "open": "Ouvrir",
+    "actionable": "Action possible",
+    "notActionable": "Sans action directe"
+  },
+  "impact": {
+    "BlocksConstruction": "Bloque la construction",
+    "BlocksDraw": "Bloque le tirage",
+    "BlocksProgression": "Bloque la progression sportive"
   },
   "attention": {
     "heading": "À traiter",

@@ -182,7 +182,15 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.OperationalFocus.Stages.Should().Contain(stage => stage.StageId == seed.StageId.Value);
         body.OperationalFocus.Draws.Should().ContainSingle(draw => !draw.IsApplied);
         body.Situations.Should().NotBeNull();
+        body.Situations.Should().OnlyContain(item =>
+            item.Nature is CockpitAssembler.NatureBlocking or CockpitAssembler.NatureInformational);
         body.AttentionSummary.Count.Should().Be(body.AttentionSummary.Items.Count);
+        body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == CockpitAssembler.NatureBlocking);
+        body.AttentionSummary.Items.Should().OnlyContain(item =>
+            body.Situations.Any(situation =>
+                situation.Source == item.Source
+                && situation.TargetType == item.TargetType
+                && situation.TargetId == item.TargetId));
         body.AvailableActions.Should().NotBeNull();
         body.NaturalProgression.Should().NotBeNull();
         body.ClosureHint.Should().NotBeNull();

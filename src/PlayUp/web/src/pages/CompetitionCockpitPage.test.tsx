@@ -9,7 +9,7 @@ import {
   prepareStage,
 } from '../api'
 import { CompetitionCockpitPage } from './CompetitionCockpitPage'
-import { cockpitIds, cockpitView } from '../test/cockpitFixtures'
+import { cockpitIds, cockpitSituation, cockpitView } from '../test/cockpitFixtures'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -76,28 +76,24 @@ describe('CompetitionCockpitPage', () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         situations: [
-          {
+          cockpitSituation({
             source: 'InsufficientParticipants',
-            nature: 'Blocking',
-            targetType: 'Organisation',
-            targetId: competitionId,
-            matchId: null,
             actionCode: 'AddEntry',
+            actionable: true,
+            impactCode: 'BlocksConstruction',
             params: { minimumTeams: '2', activeCount: '1' },
-          },
+          }),
         ],
         attentionSummary: {
           count: 1,
           items: [
-            {
+            cockpitSituation({
               source: 'InsufficientParticipants',
-              nature: 'Blocking',
-              targetType: 'Organisation',
-              targetId: competitionId,
-              matchId: null,
               actionCode: 'AddEntry',
+              actionable: true,
+              impactCode: 'BlocksConstruction',
               params: { minimumTeams: '2', activeCount: '1' },
-            },
+            }),
           ],
         },
         availableActions: [
@@ -200,15 +196,17 @@ describe('CompetitionCockpitPage', () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         situations: [
-          {
+          cockpitSituation({
             source: 'ProgressionPending',
             nature: 'Blocking',
             targetType: 'Fixture',
             targetId: fixtureId,
             matchId: cockpitIds.matchId,
+            actionable: true,
             actionCode: 'ApplyProgression',
+            impactCode: 'BlocksProgression',
             params: {},
-          },
+          }),
         ],
       }),
     )

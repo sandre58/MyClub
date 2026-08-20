@@ -54,13 +54,35 @@ public sealed class CockpitAssemblerTests
 
         view.Situations.Should().Contain(item =>
             item.Source == OrganisationViewAssembler.BlockerInsufficientParticipants
-            && item.Nature == CockpitAssembler.NatureBlocking);
+            && item.Nature == CockpitAssembler.NatureBlocking
+            && item.Actionable
+            && item.ActionCode == OrganisationViewAssembler.ActionAddEntry
+            && item.ImpactCode == CockpitAssembler.ImpactBlocksConstruction);
         view.AttentionSummary.Count.Should().Be(view.AttentionSummary.Items.Count);
         view.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == CockpitAssembler.NatureBlocking);
     }
 
     [Fact]
-    public void Assemble_detects_draw_no_solution_and_exposes_draw_focus()
+    public void Assemble_does_not_project_org_blockers_as_situations_when_running()
+    {
+        var competition = Competition.Create(new CompetitionName("Running thin"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Only", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.Situations.Should().NotContain(item =>
+            item.Source == OrganisationViewAssembler.BlockerInsufficientParticipants);
+    }
+
+    [Fact]
+    public void Assemble_detects_draw_no_solution_blocking_not_actionable()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
@@ -73,7 +95,16 @@ public sealed class CockpitAssemblerTests
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.Situations.Should().Contain(item => item.Source == NeedsAttentionAssembler.SourceDrawNoSolution);
+        var noSolution = view.Situations.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceDrawNoSolution).Subject;
+        noSolution.Nature.Should().Be(CockpitAssembler.NatureBlocking);
+        noSolution.Actionable.Should().BeFalse();
+        noSolution.ActionCode.Should().BeNull();
+        noSolution.ImpactCode.Should().Be(CockpitAssembler.ImpactBlocksDraw);
+        noSolution.TargetType.Should().Be("Draw");
+        noSolution.TargetId.Should().Be(draw.Id.Value.ToString());
+        view.AttentionSummary.Items.Should().Contain(item =>
+            item.Source == NeedsAttentionAssembler.SourceDrawNoSolution);
         view.OperationalFocus.Draws.Should().ContainSingle(item =>
             item.DrawId == draw.Id.Value
             && item.ResolutionState == DrawResolutionState.NoSolution
@@ -122,9 +153,103 @@ public sealed class CockpitAssemblerTests
         var progression = view.Situations.Should().ContainSingle(item =>
             item.Source == NeedsAttentionAssembler.SourceProgressionPending).Subject;
         progression.MatchId.Should().Be(ctx.Match.Id.Value);
+        progression.Nature.Should().Be(CockpitAssembler.NatureBlocking);
+        progression.Actionable.Should().BeTrue();
+        progression.ActionCode.Should().Be(CockpitAssembler.ActionApplyProgression);
+        progression.ImpactCode.Should().Be(CockpitAssembler.ImpactBlocksProgression);
         view.NavigationHints.Should().Contain(hint =>
             hint.TargetType == "Fixture" && hint.MatchId == ctx.Match.Id.Value);
         view.AvailableActions.Should().Contain(action => action.Code == CockpitAssembler.ActionApplyProgression);
+    }
+
+    [Fact]
+    public void Assemble_progression_conflict_is_blocking_and_actionable()
+    {
+        var ctx = CreateFinishedKnockoutWithProgression();
+        ctx.Stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+
+        var view = CockpitAssembler.Assemble(
+            ctx.Competition,
+            [ctx.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [ctx.Stage.Id] = [ctx.Match] });
+
+        var conflict = view.Situations.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceProgressionConflict).Subject;
+        conflict.Nature.Should().Be(CockpitAssembler.NatureBlocking);
+        conflict.Actionable.Should().BeTrue();
+        conflict.ActionCode.Should().Be(CockpitAssembler.ActionApplyProgression);
+        conflict.ImpactCode.Should().Be(CockpitAssembler.ImpactBlocksProgression);
+    }
+
+    [Fact]
+    public void Assemble_suspended_is_informational_not_in_attention_and_not_actionable()
+    {
+        var competition = Competition.Create(new CompetitionName("Paused"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Suspend(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var suspended = view.Situations.Should().ContainSingle(item =>
+            item.Source == CockpitAssembler.SourceCompetitionSuspended).Subject;
+        suspended.Nature.Should().Be(CockpitAssembler.NatureInformational);
+        suspended.Actionable.Should().BeFalse();
+        suspended.ActionCode.Should().BeNull();
+        suspended.ImpactCode.Should().BeNull();
+        view.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == CockpitAssembler.SourceCompetitionSuspended);
+        view.AvailableActions.Should().NotContain(action => action.Code == "ResumeCompetition");
+    }
+
+    [Fact]
+    public void Assemble_does_not_treat_finished_match_alone_as_situation()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "A", _clock);
+        var away = competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
+
+        view.Situations.Should().BeEmpty();
+        view.AttentionSummary.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public void Assemble_situations_have_stable_identity_and_no_duplicates()
+    {
+        var competition = Competition.Create(new CompetitionName("Thin"), SampleRegulations.Standard(), _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var keys = view.Situations
+            .Select(item => $"{item.Source}|{item.TargetType}|{item.TargetId}")
+            .ToList();
+        keys.Should().OnlyHaveUniqueItems();
+        view.Situations.Should().OnlyContain(item =>
+            !string.IsNullOrWhiteSpace(item.Source));
     }
 
     [Fact]

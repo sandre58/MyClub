@@ -106,12 +106,19 @@ public sealed record CockpitUpcomingMatchDto(
     string AwayDisplayName);
 
 /// <summary>Derived situation unit (R8–R9) — codes + targets; copy in SPA i18n.</summary>
-/// <param name="Source">Stable source kind.</param>
-/// <param name="Nature">Blocking | Informational (minimal V1 — richer natures OPEN).</param>
+/// <remarks>
+/// Stable identity = <see cref="Source"/> + <see cref="TargetType"/> + <see cref="TargetId"/> (not translated text).
+/// Reason copy = SPA i18n keyed by <see cref="Source"/> (+ <see cref="Params"/>).
+/// AttentionSummary V1 = situations with <see cref="Nature"/> = Blocking only.
+/// </remarks>
+/// <param name="Source">Stable source kind (identity + reason key).</param>
+/// <param name="Nature">Blocking | Informational (V1 — Opportunity / richer natures OPEN).</param>
 /// <param name="TargetType">Optional target kind.</param>
 /// <param name="TargetId">Optional target identity.</param>
 /// <param name="MatchId">Resolved match when Fixture target maps to an attachment.</param>
+/// <param name="Actionable">True when <see cref="ActionCode"/> is projected (Host opportunity — not an execution guarantee).</param>
 /// <param name="ActionCode">Optional related semantic action code.</param>
+/// <param name="ImpactCode">Optional machine impact code for SPA i18n; omit when not reliably derivable.</param>
 /// <param name="Params">Optional structured params for SPA templates (e.g. slotKey, stageName).</param>
 public sealed record CockpitSituationDto(
     string Source,
@@ -119,7 +126,9 @@ public sealed record CockpitSituationDto(
     string? TargetType,
     string? TargetId,
     Guid? MatchId,
+    bool Actionable,
     string? ActionCode,
+    string? ImpactCode,
     IReadOnlyDictionary<string, string> Params);
 
 /// <summary>Attention view derived from situations (not a parallel list).</summary>

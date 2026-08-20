@@ -72,7 +72,9 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
     "targetType": "Organisation",
     "targetId": "<guid>",
     "matchId": null,
+    "actionable": true,
     "actionCode": "AddEntry",
+    "impactCode": "BlocksConstruction",
     "params": { "minimumTeams": "2", "activeCount": "0" }
   }],
   "attentionSummary": { "count": 1, "items": ["…same situation objects…"] },
@@ -97,11 +99,16 @@ Contract notes:
 
 - `status` is the Domain lifecycle status — distinct from `situations` / attention.
 - `cycleReading.code`: `Construction` | `InProgress` | `Completed` | `Archived` (Suspended → `InProgress` + informational situation `CompetitionSuspended`).
-- No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy.
+- No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy (`source` + `params` → reason templates; `impactCode` → impact copy).
+- Situation identity = `source` + `targetType` + `targetId` (stable; not translated text).
+- `actionable` is Host-projected (`true` iff `actionCode` is set). SPA must not infer actionability from `source`.
+- `impactCode` is optional (`BlocksConstruction` | `BlocksDraw` | `BlocksProgression` in V1). Omit when not reliably derivable.
+- Nature V1: `Blocking` | `Informational` only. Richer natures (e.g. Opportunity) remain OPEN — opportunities live in `availableActions` / `naturalProgression`.
 - `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
-- `attentionSummary` is a **derived subset** of `situations` (blocking natures) — not a second independent list.
-- `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations.
-- `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start are **not** projected (Domain-only; Host exposure OPEN).
+- `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking.
+- Organisation construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Cockpit situations only while competition is Draft/Ready.
+- `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
+- `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start are **not** projected (Domain-only; Host exposure OPEN). Resume (Suspended) is Domain-only — not projected as an action.
 - `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only).
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 

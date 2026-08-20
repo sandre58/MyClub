@@ -22,7 +22,10 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 /// <remarks>
 /// Normal incomplete stages / Finished matches without pending consequences are not attentions.
+/// Scheduled / Live / Finished matches are not attentions by themselves.
+/// Draw Draft / Published / Resolved / Applied / Cancelled are normal states — only NoSolution is attention.
 /// Schedule NoSolution is not persisted today — omitted until a durable diagnostic exists.
+/// Completion blockers are not Needs Attention (see <see cref="CompletionAnalyzer"/>).
 /// </remarks>
 public static class NeedsAttentionAssembler
 {

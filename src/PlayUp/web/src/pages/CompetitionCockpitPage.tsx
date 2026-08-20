@@ -365,7 +365,7 @@ function SituationsSection({
         <ul className="plain-list">
           {situations.map((situation) => {
             const href = situationHref(situation, competitionId)
-            const key = `${situation.source}:${situation.targetType}:${situation.targetId}:${situation.matchId}`
+            const key = `${situation.source}:${situation.targetType}:${situation.targetId}`
             return (
               <li key={key} className="row">
                 <div>
@@ -374,10 +374,24 @@ function SituationsSection({
                     {t(`nature.${situation.nature}`, {
                       defaultValue: situation.nature,
                     })}
-                    {situation.actionCode && (
+                    {situation.impactCode && (
+                      <>
+                        {' '}
+                        ·{' '}
+                        {t(`impact.${situation.impactCode}`, {
+                          defaultValue: situation.impactCode,
+                        })}
+                      </>
+                    )}
+                    {situation.actionable && situation.actionCode ? (
                       <>
                         {' '}
                         · {actionLabel(situation.actionCode, situation.params)}
+                      </>
+                    ) : (
+                      <>
+                        {' '}
+                        · {t('situations.notActionable')}
                       </>
                     )}
                   </p>
@@ -426,6 +440,18 @@ function AttentionSummarySection({ data }: { data: CockpitView }) {
                     {t(`nature.${situation.nature}`, {
                       defaultValue: situation.nature,
                     })}
+                    {situation.impactCode && (
+                      <>
+                        {' '}
+                        ·{' '}
+                        {t(`impact.${situation.impactCode}`, {
+                          defaultValue: situation.impactCode,
+                        })}
+                      </>
+                    )}
+                    {situation.actionable && situation.actionCode
+                      ? ` · ${actionLabel(situation.actionCode, situation.params)}`
+                      : ` · ${t('situations.notActionable')}`}
                   </p>
                 </div>
                 {href && (

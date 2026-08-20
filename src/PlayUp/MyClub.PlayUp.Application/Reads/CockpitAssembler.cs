@@ -39,6 +39,18 @@ public static class CockpitAssembler
     /// <summary>Situation nature: informational (minimal V1).</summary>
     public const string NatureInformational = "Informational";
 
+    /// <summary>Impact: construction / organisation progress blocked.</summary>
+    public const string ImpactBlocksConstruction = "BlocksConstruction";
+
+    /// <summary>Impact: draw pipeline cannot produce a usable result.</summary>
+    public const string ImpactBlocksDraw = "BlocksDraw";
+
+    /// <summary>Impact: sporting progression / qualification cannot advance.</summary>
+    public const string ImpactBlocksProgression = "BlocksProgression";
+
+    /// <summary>Source: competition suspended (operational, L11).</summary>
+    public const string SourceCompetitionSuspended = "CompetitionSuspended";
+
     /// <summary>Prominence: present.</summary>
     public const string ProminencePresent = "Present";
 
@@ -50,9 +62,6 @@ public static class CockpitAssembler
 
     /// <summary>Prominence: absent.</summary>
     public const string ProminenceAbsent = "Absent";
-
-    /// <summary>Source: competition suspended (operational, L11).</summary>
-    public const string SourceCompetitionSuspended = "CompetitionSuspended";
 
     /// <summary>Action codes (semantic — Host use cases already exist unless noted).</summary>
     public const string ActionPrepareStage = "PrepareStage";
@@ -126,9 +135,7 @@ public static class CockpitAssembler
 
         var fixtureToMatch = BuildFixtureToMatchMap(stages);
         var situations = BuildSituations(competition, organisation, attention, stages, fixtureToMatch);
-        var attentionSummary = new CockpitAttentionSummaryDto(
-            situations.Count(situation => situation.Nature == NatureBlocking),
-            [.. situations.Where(situation => situation.Nature == NatureBlocking)]);
+        var attentionSummary = BuildAttentionSummary(situations);
 
         var matchCounts = BuildMatchCounts(matchesByStage);
         var operationalFocus = BuildOperationalFocus(competition, stages, matchesByStage, matchCounts);
@@ -329,6 +336,25 @@ public static class CockpitAssembler
             live + scheduled + finished + postponed + cancelled);
     }
 
+    /// <summary>
+    /// AttentionSummary V1 = Blocking situations only (subset of Situations — not a parallel list).
+    /// </summary>
+    private static CockpitAttentionSummaryDto BuildAttentionSummary(
+        IReadOnlyList<CockpitSituationDto> situations)
+    {
+        var blocking = situations.Where(situation => situation.Nature == NatureBlocking).ToArray();
+        return new CockpitAttentionSummaryDto(blocking.Length, blocking);
+    }
+
+    /// <summary>
+    /// Builds pilotage situations from Needs Attention + construction blockers + Suspended.
+    /// </summary>
+    /// <remarks>
+    /// AttentionSummary V1 = Blocking only (not a second calculation).
+    /// Organisation readiness blockers become situations only during Draft/Ready (construction).
+    /// Completion blockers stay on ClosureHint — never merged here.
+    /// Identity = Source + TargetType + TargetId; duplicates collapsed.
+    /// </remarks>
     private static List<CockpitSituationDto> BuildSituations(
         Competition competition,
         OrganisationViewDto organisation,
@@ -336,40 +362,112 @@ public static class CockpitAssembler
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
-        var items = (from item in attention.Items
-            let matchId = ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch)
-            let actionCode = item.Source switch
-            {
-                NeedsAttentionAssembler.SourceProgressionPending or NeedsAttentionAssembler.SourceProgressionConflict =>
-                    ActionApplyProgression,
-                NeedsAttentionAssembler.SourceQualificationPending
-                    or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
-                _ => null
-            }
-            select new CockpitSituationDto(
+        var items = new List<CockpitSituationDto>();
+
+        foreach (var item in attention.Items)
+        {
+            var actionCode = MapAttentionAction(item.Source);
+            items.Add(CreateSituation(
                 item.Source,
                 NatureBlocking,
                 item.TargetType,
                 item.TargetId,
-                matchId,
+                ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch),
                 actionCode,
-                BuildSituationParams(item))).ToList();
-        items.AddRange(organisation.Readiness.Blockers.Select(blocker => new CockpitSituationDto(blocker, NatureBlocking, "Organisation", competition.Id.Value.ToString(), MatchId: null, ActionCode: MapOrgBlockerAction(blocker), Params: new Dictionary<string, string> { ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture), ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture) })));
+                MapAttentionImpact(item.Source),
+                BuildSituationParams(item)));
+        }
+
+        if (competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready)
+        {
+            foreach (var blocker in organisation.Readiness.Blockers)
+            {
+                var actionCode = MapOrgBlockerAction(blocker);
+                items.Add(CreateSituation(
+                    blocker,
+                    NatureBlocking,
+                    "Organisation",
+                    competition.Id.Value.ToString(),
+                    null,
+                    actionCode,
+                    ImpactBlocksConstruction,
+                    new Dictionary<string, string>
+                    {
+                        ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                        ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                    }));
+            }
+        }
 
         if (competition.Status == CompetitionStatus.Suspended)
         {
-            items.Add(new CockpitSituationDto(
+            // Domain Resume exists; Host exposure OPEN — informational, not actionable.
+            items.Add(CreateSituation(
                 SourceCompetitionSuspended,
                 NatureInformational,
                 "Competition",
                 competition.Id.Value.ToString(),
-                MatchId: null,
-                ActionCode: null,
-                Params: new Dictionary<string, string>()));
+                null,
+                null,
+                null,
+                new Dictionary<string, string>()));
         }
 
-        return items;
+        return DeduplicateSituations(items);
     }
+
+    private static CockpitSituationDto CreateSituation(
+        string source,
+        string nature,
+        string? targetType,
+        string? targetId,
+        Guid? matchId,
+        string? actionCode,
+        string? impactCode,
+        IReadOnlyDictionary<string, string> parameters) =>
+        new(
+            source,
+            nature,
+            targetType,
+            targetId,
+            matchId,
+            Actionable: actionCode is not null,
+            actionCode,
+            impactCode,
+            parameters);
+
+    private static string? MapAttentionAction(string source) =>
+        source switch
+        {
+            NeedsAttentionAssembler.SourceProgressionPending
+                or NeedsAttentionAssembler.SourceProgressionConflict => ActionApplyProgression,
+            NeedsAttentionAssembler.SourceQualificationPending
+                or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
+
+            // DrawNoSolution: regenerate/reconfigure lives on Stage — no Host action projected here.
+            _ => null,
+        };
+
+    private static string? MapAttentionImpact(string source) =>
+        source switch
+        {
+            NeedsAttentionAssembler.SourceDrawNoSolution => ImpactBlocksDraw,
+            NeedsAttentionAssembler.SourceProgressionPending
+                or NeedsAttentionAssembler.SourceProgressionConflict
+                or NeedsAttentionAssembler.SourceQualificationPending
+                or NeedsAttentionAssembler.SourceQualificationConflict => ImpactBlocksProgression,
+            _ => null,
+        };
+
+    private static List<CockpitSituationDto> DeduplicateSituations(List<CockpitSituationDto> items) =>
+    [
+        .. items
+            .GroupBy(situation => (
+                situation.Source,
+                situation.TargetType ?? string.Empty,
+                situation.TargetId ?? string.Empty))
+            .Select(group => group.First())
+    ];
 
     private static Dictionary<string, string> BuildSituationParams(NeedsAttentionItemDto item)
     {
