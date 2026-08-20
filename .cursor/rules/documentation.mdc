@@ -1,0 +1,35 @@
+---
+description: Notion vs Git documentation rules for MyClub
+alwaysApply: true
+---
+
+# Documentation MyClub
+
+## SoT
+- Notion: product, domain, UX, durable decisions summary on reference pages.
+- Git: code, HTTP contract, local persistence, active i18n conventions.
+- Both: Notion = intent; Git = operational detail; cross-link required.
+- One normative truth = one SoT elsewhere = link only.
+
+## Reference pages
+- Describe current truth + active constraints. No phase numbers in titles.
+- Reference pages = current product truth; phase capitalization lives in Tasks / Decisions (not on reference pages).
+- Extra nesting only for large autonomous topics (e.g. Cockpit, Domaine).
+- Do not create a page if SoT already exists; enrich instead.
+
+## When to update docs
+- Code-only change, truth unchanged → Git only.
+- Product/domain/UX/architecture truth changes → update Notion reference page.
+- Durable trade-off → Decision DB row + `SoT → [[page]]` in body + update reference.
+- Not every task requires doc updates.
+
+## Tasks & phases
+- Tasks = short action + SoT link. Optional `[Play'up][Phase X.Y]` in title.
+- Phases never structure product navigation.
+
+## Archive
+- Old phase pages: ARCHIVE banner, remove from sidebars, no archive index.
+- Delete only after human review confirms SoT migrated.
+
+## On close
+- Fix Play'up status paragraph if false; fix README if public summary false.

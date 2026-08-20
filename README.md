@@ -55,9 +55,9 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** (Host R2 + Read Surface MVP: Competition/Stage/Match GET) |
-| **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned |
-| **Train'in** | Training session design and follow-up. | Future |
+| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, workspace, organisation, match hub). Cockpit UX/Read design capitalized; detailed Cockpit UI not opened. See Notion Play'up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
+| **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned (not started) |
+| **Train'in** | Training session design and follow-up. | Future (not started) |
 
 **Play'up** is designed to work **autonomously**: participants can be managed without requiring personal accounts. Catalog/templates are an application capability for bootstrapping competitions — not a separate bounded context.
 
@@ -67,7 +67,7 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs. Write surface: `PrepareStage`, `PublishDraw`, `ApplyDraw`, `StartMatch`, `FinishMatch`, `ApplyProgressionOutcome`. Read surface MVP (11.1.b): `GET /competitions/{id}`, `GET /stages/{id}`, `GET /stages/{id}/matches`, `GET /matches/{id}`. Host R2 vertical proven end-to-end (commands → observable reads). Catalog bootstrap remains a later tranche.
+**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs + React SPA (`src/PlayUp/web`). Host exposes organizer write/read surfaces (stage prepare, draw publish/apply, match lifecycle, progression, competition/stage/match reads, and additional workspace/organisation/attention reads). Contract details: [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). Catalog bootstrap remains a later tranche.
 
 ```text
 src/
@@ -75,7 +75,8 @@ src/
     ├── MyClub.PlayUp.Domain/           # Competition · Stage · Match · Common · Rules · Scheduling
     ├── MyClub.PlayUp.Application/      # Use cases + ports + UseCaseExecutor (named methods)
     ├── MyClub.PlayUp.Infrastructure/   # PlayUpDbContext, AR mappings, migrations, PostgreSQL DI
-    └── MyClub.PlayUp.Host/             # Composition root · Minimal APIs
+    ├── MyClub.PlayUp.Host/             # Composition root · Minimal APIs
+    └── web/                            # React SPA (Vite · TypeScript · TanStack Query)
 tests/
     ├── MyClub.PlayUp.Domain.Tests/
     ├── MyClub.PlayUp.Application.Tests/
@@ -103,9 +104,10 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 | :--- | :----- |
 | Runtime | .NET 10 LTS |
 | Style | DDD, Modular Monolith |
-| API | ASP.NET Core Minimal APIs (Host R2 vertical: Prepare → PublishDraw → ApplyDraw → Start/Finish Match → ApplyProgression) |
+| API | ASP.NET Core Minimal APIs |
+| Frontend | React SPA · TypeScript · Vite · React Router · TanStack Query (`src/PlayUp/web`) |
 | Persistence | EF Core 10 + PostgreSQL 18 (Compose for local Host; Testcontainers for integration tests) |
-| Tests | xUnit, FluentAssertions, Moq (via Central Package Management) |
+| Tests | xUnit, FluentAssertions, Moq (via Central Package Management); Vitest/RTL on the web app |
 | Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
 | Versioning | GitVersion + SemVer + Conventional Commits |
 
@@ -116,6 +118,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see [`global.json`](global.json))
 - Git
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) — required for local PostgreSQL (`compose.yml`) and for Testcontainers integration tests
+- Node.js (LTS) + npm — for the Play'up web SPA in [`src/PlayUp/web`](src/PlayUp/web) (see that folder's README)
 
 ---
 
@@ -161,7 +164,7 @@ dotnet test /p:CollectCoverage=true
 
 | Path | Purpose |
 | :--- | :------ |
-| `src/PlayUp/` | Play'up product projects |
+| `src/PlayUp/` | Play'up product projects (Domain / Application / Infrastructure / Host + `web/` SPA) |
 | `tests/` | Test projects (`*Tests`) |
 | `build/` | Shared MSBuild props |
 | `compose.yml` | Local PostgreSQL 18 (Docker Compose) |
