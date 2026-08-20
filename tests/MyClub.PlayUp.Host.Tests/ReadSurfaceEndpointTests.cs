@@ -162,6 +162,78 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         GetCode(problem!).Should().Be(ApplicationErrorCodes.MatchNotFound);
     }
 
+    [IntegrationFact]
+    public async Task Get_cockpit_returns_200_projectionAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedCompetitionWithStageAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        body.Should().NotBeNull();
+        body.CompetitionId.Should().Be(seed.CompetitionId.Value);
+        body.Name.Should().Be("Read Cup");
+        body.Status.Should().Be(CompetitionStatus.Draft);
+        body.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
+        body.ConstructionDimensions.Teams.Should().NotBeNull();
+        body.ConstructionDimensions.Regulation.Facts.MinimumTeams.Should().BeGreaterThan(0);
+        body.OperationalFocus.Stages.Should().Contain(stage => stage.StageId == seed.StageId.Value);
+        body.OperationalFocus.Draws.Should().ContainSingle(draw => !draw.IsApplied);
+        body.Situations.Should().NotBeNull();
+        body.AttentionSummary.Count.Should().Be(body.AttentionSummary.Items.Count);
+        body.AvailableActions.Should().NotBeNull();
+        body.NaturalProgression.Should().NotBeNull();
+        body.ClosureHint.Should().NotBeNull();
+        body.NavigationHints.Should().Contain(hint => hint.TargetType == "Competition");
+        await AssertNoWinnerPropertyAsync(response);
+    }
+
+    [IntegrationFact]
+    public async Task Get_cockpit_unknown_returns_404Async()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/cockpit");
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionNotFound);
+    }
+
+    [IntegrationFact]
+    public async Task Get_cockpit_resolves_fixture_to_match_navigationAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedCompetitionWithStageAsync(factory);
+
+        MatchId matchId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+            var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var stage = await stages.GetByIdAsync(seed.StageId);
+            var match = Match.Create(seed.CompetitionId, seed.StageId, seed.HomeEntryId, seed.AwayEntryId, _clock);
+            matchId = match.Id;
+            matches.Add(match);
+            stage!.AttachMatch(seed.FixtureId, match.Id, legIndex: 1, _clock);
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        body.Should().NotBeNull();
+        body.NavigationHints.Should().Contain(hint =>
+            hint.TargetType == "Fixture"
+            && hint.TargetId == seed.FixtureId.Value.ToString()
+            && hint.MatchId == matchId.Value);
+        body.OperationalFocus.MatchCounts.Scheduled.Should().Be(1);
+    }
+
     private async Task<ReadSeed> SeedCompetitionWithStageAsync(PlayUpWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();

@@ -60,6 +60,16 @@ app.MapGet(
     });
 
 app.MapGet(
+    "/competitions/{competitionId:guid}/cockpit",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var cockpit = await executor
+            .GetCockpitViewAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(cockpit);
+    });
+
+app.MapGet(
     "/competitions/{competitionId:guid}/organisation",
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
     {

@@ -76,6 +76,7 @@
     <File Path=".cursor/rules/cross-design-review.mdc" />
     <File Path=".cursor/rules/csharp.mdc" />
     <File Path=".cursor/rules/developer-knowledge-profile.mdc" />
+    <File Path=".cursor/rules/documentation.mdc" />
     <File Path=".cursor/rules/general.mdc" />
     <File Path=".cursor/rules/git.mdc" />
     <File Path=".cursor/rules/knowledge-capitalization.mdc" />

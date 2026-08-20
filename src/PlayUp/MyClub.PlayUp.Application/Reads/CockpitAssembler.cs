@@ -1,0 +1,856 @@
+// -----------------------------------------------------------------------
+// <copyright file="CockpitAssembler.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using System.Globalization;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
+
+namespace MyClub.PlayUp.Application.Reads;
+
+/// <summary>
+/// Assembles the Cockpit Read projection from competition state (Phase 16.1).
+/// </summary>
+/// <remarks>
+/// Composes existing Application diagnostics — does not re-implement Domain invariants.
+/// Competition Prepare/Start are Domain-only today and are intentionally not projected as actions.
+/// </remarks>
+public static class CockpitAssembler
+{
+    /// <summary>Cycle reading: construction (Draft/Ready).</summary>
+    public const string CycleConstruction = "Construction";
+
+    /// <summary>Cycle reading: competition in progress (Running/Suspended).</summary>
+    public const string CycleInProgress = "InProgress";
+
+    /// <summary>Cycle reading: completed.</summary>
+    public const string CycleCompleted = "Completed";
+
+    /// <summary>Cycle reading: archived.</summary>
+    public const string CycleArchived = "Archived";
+
+    /// <summary>Situation nature: blocking attention.</summary>
+    public const string NatureBlocking = "Blocking";
+
+    /// <summary>Situation nature: informational (minimal V1).</summary>
+    public const string NatureInformational = "Informational";
+
+    /// <summary>Prominence: present.</summary>
+    public const string ProminencePresent = "Present";
+
+    /// <summary>Prominence: condensed.</summary>
+    public const string ProminenceCondensed = "Condensed";
+
+    /// <summary>Prominence: dominant.</summary>
+    public const string ProminenceDominant = "Dominant";
+
+    /// <summary>Prominence: absent.</summary>
+    public const string ProminenceAbsent = "Absent";
+
+    /// <summary>Source: competition suspended (operational, L11).</summary>
+    public const string SourceCompetitionSuspended = "CompetitionSuspended";
+
+    /// <summary>Action codes (semantic — Host use cases already exist unless noted).</summary>
+    public const string ActionPrepareStage = "PrepareStage";
+
+    /// <summary>Start stage.</summary>
+    public const string ActionStartStage = "StartStage";
+
+    /// <summary>Publish draw.</summary>
+    public const string ActionPublishDraw = "PublishDraw";
+
+    /// <summary>Apply draw.</summary>
+    public const string ActionApplyDraw = "ApplyDraw";
+
+    /// <summary>Materialize matches.</summary>
+    public const string ActionMaterializeMatches = "MaterializeMatches";
+
+    /// <summary>Generate schedule proposal.</summary>
+    public const string ActionGenerateSchedule = "GenerateSchedule";
+
+    /// <summary>Apply schedule.</summary>
+    public const string ActionApplySchedule = "ApplySchedule";
+
+    /// <summary>Start match.</summary>
+    public const string ActionStartMatch = "StartMatch";
+
+    /// <summary>Finish match.</summary>
+    public const string ActionFinishMatch = "FinishMatch";
+
+    /// <summary>Apply progression.</summary>
+    public const string ActionApplyProgression = "ApplyProgression";
+
+    /// <summary>Apply qualification.</summary>
+    public const string ActionApplyQualification = "ApplyQualification";
+
+    /// <summary>Complete competition.</summary>
+    public const string ActionCompleteCompetition = "CompleteCompetition";
+
+    /// <summary>Archive competition.</summary>
+    public const string ActionArchiveCompetition = "ArchiveCompetition";
+
+    /// <summary>Continue organisation (natural progression).</summary>
+    public const string ProgressionContinueOrganisation = "ContinueOrganisation";
+
+    /// <summary>Open matches (natural progression).</summary>
+    public const string ProgressionOpenMatches = "OpenMatches";
+
+    /// <summary>Open consultation (natural progression).</summary>
+    public const string ProgressionOpenConsultation = "OpenConsultation";
+
+    /// <summary>
+    /// Builds the Cockpit view.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Stages in competition order.</param>
+    /// <param name="matchesByStage">Matches keyed by stage.</param>
+    /// <returns>Cockpit projection DTO.</returns>
+    public static CockpitViewDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+        ArgumentNullException.ThrowIfNull(matchesByStage);
+
+        var organisation = OrganisationViewAssembler.Assemble(competition, stages);
+        var attention = NeedsAttentionAssembler.Assemble(competition, stages, matchesByStage);
+        var completion = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended
+            ? CompletionAnalyzer.Analyze(competition, stages, matchesByStage)
+            : null;
+
+        var fixtureToMatch = BuildFixtureToMatchMap(stages);
+        var situations = BuildSituations(competition, organisation, attention, stages, fixtureToMatch);
+        var attentionSummary = new CockpitAttentionSummaryDto(
+            situations.Count(situation => situation.Nature == NatureBlocking),
+            [.. situations.Where(situation => situation.Nature == NatureBlocking)]);
+
+        var matchCounts = BuildMatchCounts(matchesByStage);
+        var operationalFocus = BuildOperationalFocus(competition, stages, matchesByStage, matchCounts);
+        var dimensions = BuildDimensions(competition, organisation, matchCounts);
+        var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
+        var progression = ResolveNaturalProgression(competition, organisation, completion, attentionSummary.Count);
+        var closure = new CockpitClosureHintDto(
+            completion?.CanCompleteNormally ?? false,
+            completion?.Reasons.Select(reason => reason.Code).ToArray() ?? []);
+        var navigation = BuildNavigationHints(competition, situations, stages, fixtureToMatch);
+
+        return new CockpitViewDto(
+            competition.Id.Value,
+            competition.Name.Value,
+            competition.Status,
+            competition.CompletionMode,
+            BuildCycleReading(competition.Status),
+            dimensions,
+            operationalFocus,
+            situations,
+            attentionSummary,
+            actions,
+            progression,
+            closure,
+            navigation);
+    }
+
+    private static CockpitCycleReadingDto BuildCycleReading(CompetitionStatus status) =>
+        status switch
+        {
+            CompetitionStatus.Draft or CompetitionStatus.Ready => new CockpitCycleReadingDto(
+                CycleConstruction,
+                null),
+            CompetitionStatus.Running => new CockpitCycleReadingDto(CycleInProgress, null),
+            CompetitionStatus.Suspended => new CockpitCycleReadingDto(
+                CycleInProgress,
+                "Interruption temporaire — situation opérationnelle (pas un badge de cycle distinct)."),
+            CompetitionStatus.Completed => new CockpitCycleReadingDto(CycleCompleted, null),
+            CompetitionStatus.Archived => new CockpitCycleReadingDto(CycleArchived, null),
+            _ => new CockpitCycleReadingDto(CycleConstruction, null)
+        };
+
+    private static CockpitConstructionDimensionsDto BuildDimensions(
+        Competition competition,
+        OrganisationViewDto organisation,
+        CockpitMatchCountsDto matchCounts)
+    {
+        var inConstruction = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
+        var running = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
+        var hasOrgBlockers = organisation.Readiness.Blockers.Count > 0;
+
+        var teamsProminence = inConstruction
+            ? hasOrgBlockers &&
+              organisation.Readiness.Blockers.Contains(OrganisationViewAssembler.BlockerInsufficientParticipants)
+                ? ProminenceDominant
+                : ProminencePresent
+            : ProminenceCondensed;
+
+        var structureProminence = inConstruction
+            ? organisation.Readiness.Blockers.Any(blocker =>
+                blocker is OrganisationViewAssembler.BlockerMissingStage
+                    or OrganisationViewAssembler.BlockerMissingStructure
+                    or OrganisationViewAssembler.BlockerMissingPotRules
+                    or OrganisationViewAssembler.BlockerCupBracketInvalid)
+                ? ProminenceDominant
+                : ProminencePresent
+            : ProminenceCondensed;
+
+        var regulationProminence = inConstruction ? ProminencePresent : ProminenceCondensed;
+        var matchesProminence = matchCounts.Total == 0
+            ? inConstruction ? ProminenceCondensed : ProminenceAbsent
+            : running
+                ? matchCounts.Live > 0 ? ProminenceDominant : ProminencePresent
+                : ProminenceCondensed;
+
+        var teamsSummary =
+            $"{organisation.Participants.ActiveCount} actif(s) / min {organisation.Regulation.MinimumTeams}";
+        var structureSummary = organisation.Format.Label;
+        var regulation = organisation.Regulation;
+        var regulationSummary =
+            $"{regulation.NumberOfPeriods}×{regulation.DurationPerPeriod} · {regulation.WinPoints}/{regulation.DrawPoints}/{regulation.LossPoints}";
+        var matchesSummary = matchCounts.Total == 0
+            ? "Aucun match"
+            : $"{matchCounts.Live} live · {matchCounts.Scheduled} planifié(s) · {matchCounts.Finished} terminé(s)";
+
+        return new CockpitConstructionDimensionsDto(
+            new CockpitDimensionDto(
+                teamsSummary,
+                teamsProminence,
+                new Dictionary<string, string>
+                {
+                    ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                    ["occupyingCount"] =
+                        organisation.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
+                    ["minimumTeams"] = regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                    ["maximumTeams"] = regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
+                }),
+            new CockpitDimensionDto(
+                structureSummary,
+                structureProminence,
+                new Dictionary<string, string>
+                {
+                    ["formatKind"] = organisation.Format.Kind?.ToString() ?? "None",
+                    ["groupCount"] = organisation.Structure.GroupCount.ToString(CultureInfo.InvariantCulture),
+                    ["roundCount"] = organisation.Structure.RoundCount.ToString(CultureInfo.InvariantCulture),
+                    ["matchdayCount"] = organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
+                    ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
+                }),
+            new CockpitRegulationDimensionDto(regulationSummary, regulationProminence, regulation),
+            new CockpitDimensionDto(
+                matchesSummary,
+                matchesProminence,
+                new Dictionary<string, string>
+                {
+                    ["live"] = matchCounts.Live.ToString(CultureInfo.InvariantCulture),
+                    ["scheduled"] = matchCounts.Scheduled.ToString(CultureInfo.InvariantCulture),
+                    ["finished"] = matchCounts.Finished.ToString(CultureInfo.InvariantCulture),
+                    ["total"] = matchCounts.Total.ToString(CultureInfo.InvariantCulture)
+                }));
+    }
+
+    private static CockpitOperationalFocusDto BuildOperationalFocus(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        CockpitMatchCountsDto matchCounts)
+    {
+        var names = EntryDisplayNames.ToMap(competition);
+        var stageFocus = stages
+            .Select(stage => new CockpitStageFocusDto(stage.Id.Value, stage.Name.Value, stage.Status))
+            .ToArray();
+
+        var draws = stages
+            .SelectMany(stage => stage.Draws
+                .Where(draw => draw.Status != DrawStatus.Cancelled)
+                .Select(draw => new CockpitDrawFocusDto(
+                    stage.Id.Value,
+                    draw.Id.Value,
+                    draw.Kind,
+                    draw.Status,
+                    draw.Resolution.State,
+                    DrawAppliedState.IsApplied(draw, stage))))
+            .ToArray();
+
+        var upcoming = matchesByStage
+            .SelectMany(pair => pair.Value
+                .Where(match => match.Status == MatchStatus.Scheduled)
+                .Select(match =>
+                {
+                    DateTimeOffset? scheduledAt = null;
+                    var stage = stages.First(candidate => candidate.Id.Equals(pair.Key));
+                    if (stage.TryGetMatchPlacement(match.Id, out var placement))
+                    {
+                        scheduledAt = placement.Start;
+                    }
+
+                    return new CockpitUpcomingMatchDto(
+                        match.Id.Value,
+                        pair.Key.Value,
+                        scheduledAt,
+                        EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
+                        EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString());
+                }))
+            .OrderBy(item => item.ScheduledAt ?? DateTimeOffset.MaxValue)
+            .ThenBy(item => item.MatchId)
+            .Take(8)
+            .ToArray();
+
+        return new CockpitOperationalFocusDto(stageFocus, draws, matchCounts, upcoming);
+    }
+
+    private static CockpitMatchCountsDto BuildMatchCounts(
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        var live = 0;
+        var scheduled = 0;
+        var finished = 0;
+        var postponed = 0;
+        var cancelled = 0;
+
+        foreach (var matches in matchesByStage.Values)
+        {
+            foreach (var match in matches)
+            {
+                switch (match.Status)
+                {
+                    case MatchStatus.Live:
+                        live++;
+                        break;
+                    case MatchStatus.Scheduled:
+                        scheduled++;
+                        break;
+                    case MatchStatus.Finished:
+                        finished++;
+                        break;
+                    case MatchStatus.Postponed:
+                        postponed++;
+                        break;
+                    case MatchStatus.Cancelled:
+                        cancelled++;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(matchesByStage));
+                }
+            }
+        }
+
+        return new CockpitMatchCountsDto(
+            live,
+            scheduled,
+            finished,
+            postponed,
+            cancelled,
+            live + scheduled + finished + postponed + cancelled);
+    }
+
+    private static List<CockpitSituationDto> BuildSituations(
+        Competition competition,
+        OrganisationViewDto organisation,
+        NeedsAttentionDto attention,
+        IReadOnlyList<Stage> stages,
+        Dictionary<Guid, Guid> fixtureToMatch)
+    {
+        var items = (from item in attention.Items
+            let matchId = ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch)
+            let actionCode = item.Source switch
+            {
+                NeedsAttentionAssembler.SourceProgressionPending or NeedsAttentionAssembler.SourceProgressionConflict =>
+                    ActionApplyProgression,
+                NeedsAttentionAssembler.SourceQualificationPending
+                    or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
+                _ => null
+            }
+            select new CockpitSituationDto(item.Source, item.Reason, NatureBlocking, item.TargetType, item.TargetId, matchId, actionCode)).ToList();
+
+        for (var index = 0; index < organisation.Readiness.Blockers.Count; index++)
+        {
+            var blocker = organisation.Readiness.Blockers[index];
+            var reason = index < organisation.Readiness.Hints.Count
+                ? organisation.Readiness.Hints[index]
+                : $"Organisation : {blocker}";
+            items.Add(new CockpitSituationDto(
+                blocker,
+                reason,
+                NatureBlocking,
+                "Organisation",
+                competition.Id.Value.ToString(),
+                MatchId: null,
+                ActionCode: MapOrgBlockerAction(blocker)));
+        }
+
+        if (competition.Status == CompetitionStatus.Suspended)
+        {
+            items.Add(new CockpitSituationDto(
+                SourceCompetitionSuspended,
+                "La compétition est temporairement interrompue.",
+                NatureInformational,
+                "Competition",
+                competition.Id.Value.ToString(),
+                MatchId: null,
+                ActionCode: null));
+        }
+
+        return items;
+    }
+
+    private static string? MapOrgBlockerAction(string blocker) =>
+        blocker switch
+        {
+            OrganisationViewAssembler.BlockerInsufficientParticipants => OrganisationViewAssembler.ActionAddEntry,
+            OrganisationViewAssembler.BlockerMissingStage
+                or OrganisationViewAssembler.BlockerMissingStructure
+                or OrganisationViewAssembler.BlockerMissingPotRules
+                or OrganisationViewAssembler.BlockerCupBracketInvalid =>
+                OrganisationViewAssembler.ActionConfigureStructure,
+            _ => null
+        };
+
+    private static IReadOnlyList<CockpitActionDto> BuildActions(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        OrganisationViewDto organisation,
+        NeedsAttentionDto attention,
+        CompletionAnalysis? completion,
+        Dictionary<Guid, Guid> fixtureToMatch)
+    {
+        var competitionOpen = competition.Status is not (CompetitionStatus.Completed or CompetitionStatus.Archived);
+
+        var actions = organisation.Actions.Select(code => new CockpitActionDto(code, LabelForOrgAction(code), Guaranteed: false, StageId: organisation.Format.PrimaryStageId)).ToList();
+
+        if (!competitionOpen)
+        {
+            if (competition.Status == CompetitionStatus.Completed)
+            {
+                actions.Add(new CockpitActionDto(
+                    ActionArchiveCompetition,
+                    "Archiver la compétition",
+                    Guaranteed: false));
+            }
+
+            return DeduplicateActions(actions);
+        }
+
+        foreach (var stage in stages)
+        {
+            switch (stage.Status)
+            {
+                case StageStatus.Draft:
+                    actions.Add(new CockpitActionDto(
+                        ActionPrepareStage,
+                        $"Préparer la phase « {stage.Name.Value} »",
+                        Guaranteed: false,
+                        stage.Id.Value));
+                    break;
+                case StageStatus.Ready:
+                    actions.Add(new CockpitActionDto(
+                        ActionStartStage,
+                        $"Démarrer la phase « {stage.Name.Value} »",
+                        Guaranteed: false,
+                        stage.Id.Value));
+                    break;
+                case StageStatus.Running:
+                case StageStatus.Suspended:
+                case StageStatus.Completed:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(stages));
+            }
+
+            foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
+            {
+                if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved })
+                {
+                    actions.Add(new CockpitActionDto(
+                        ActionPublishDraw,
+                        "Publier le tirage",
+                        Guaranteed: false,
+                        stage.Id.Value,
+                        draw.Id.Value));
+                }
+
+                if (draw is
+                    {
+                        Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved,
+                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Pairing
+                    }
+
+                    && !DrawAppliedState.IsApplied(draw, stage))
+                {
+                    actions.Add(new CockpitActionDto(
+                        ActionApplyDraw,
+                        "Appliquer le tirage",
+                        Guaranteed: false,
+                        stage.Id.Value,
+                        draw.Id.Value));
+                }
+            }
+        }
+
+        if (organisation.Readiness.ReadyForMaterialization
+            && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
+            && organisation.Format.PrimaryStageId is { } materializeStageId)
+        {
+            actions.Add(new CockpitActionDto(
+                ActionMaterializeMatches,
+                "Matérialiser les matchs",
+                Guaranteed: false,
+                materializeStageId));
+        }
+
+        if (organisation.Readiness.ReadyForSchedule
+            && organisation.Format.PrimaryStageId is { } scheduleStageId)
+        {
+            actions.Add(new CockpitActionDto(
+                ActionGenerateSchedule,
+                "Générer un calendrier",
+                Guaranteed: false,
+                scheduleStageId));
+            actions.Add(new CockpitActionDto(
+                ActionApplySchedule,
+                "Appliquer un calendrier",
+                Guaranteed: false,
+                scheduleStageId));
+        }
+
+        var liveMatches = matchesByStage
+            .SelectMany(pair => pair.Value
+                .Where(match => match.Status == MatchStatus.Live)
+                .Select(match => (StageId: pair.Key.Value, Match: match)))
+            .Take(3);
+        foreach (var (stageId, match) in liveMatches)
+        {
+            actions.Add(new CockpitActionDto(
+                ActionFinishMatch,
+                "Terminer un match",
+                Guaranteed: false,
+                stageId,
+                MatchId: match.Id.Value));
+        }
+
+        var scheduledMatches = matchesByStage
+            .SelectMany(pair => pair.Value
+                .Where(match => match.Status == MatchStatus.Scheduled)
+                .Select(match => (StageId: pair.Key.Value, Match: match)))
+            .Take(3);
+        foreach (var (stageId, match) in scheduledMatches)
+        {
+            actions.Add(new CockpitActionDto(
+                ActionStartMatch,
+                "Démarrer un match",
+                Guaranteed: false,
+                stageId,
+                MatchId: match.Id.Value));
+        }
+
+        foreach (var item in attention.Items)
+        {
+            switch (item.Source)
+            {
+                case NeedsAttentionAssembler.SourceProgressionPending
+                    or NeedsAttentionAssembler.SourceProgressionConflict:
+                    {
+                        var fixtureId = ResolveSourceFixtureIdForAttentionItem(item, stages);
+                        Guid? matchId = fixtureId is not null &&
+                                        fixtureToMatch.TryGetValue(fixtureId.Value, out var mid)
+                            ? mid
+                            : null;
+                        var stageId = ResolveStageIdFromAttention(item, stages);
+                        actions.Add(new CockpitActionDto(
+                            ActionApplyProgression,
+                            "Appliquer la progression",
+                            Guaranteed: false,
+                            stageId,
+                            MatchId: matchId,
+                            FixtureId: fixtureId));
+                        break;
+                    }
+
+                case NeedsAttentionAssembler.SourceQualificationPending
+                    or NeedsAttentionAssembler.SourceQualificationConflict:
+                    {
+                        var stageId = ResolveStageIdFromAttention(item, stages);
+                        actions.Add(new CockpitActionDto(
+                            ActionApplyQualification,
+                            "Appliquer la qualification",
+                            Guaranteed: false,
+                            stageId));
+                        break;
+                    }
+            }
+        }
+
+        if (completion?.CanCompleteNormally == true)
+        {
+            actions.Add(new CockpitActionDto(
+                ActionCompleteCompetition,
+                "Clôturer la compétition",
+                Guaranteed: false));
+        }
+
+        return DeduplicateActions(actions);
+    }
+
+    private static Guid? ResolveStageIdFromAttention(NeedsAttentionItemDto item, IReadOnlyList<Stage> stages)
+    {
+        if (item.TargetType == "Stage" && Guid.TryParse(item.TargetId, out var stageId))
+        {
+            return stageId;
+        }
+
+        if (item is { TargetType: "Slot", TargetId: not null })
+        {
+            var prefix = item.TargetId.Split(':', 2)[0];
+            if (Guid.TryParse(prefix, out var fromSlot))
+            {
+                return fromSlot;
+            }
+        }
+
+        switch (item.TargetType)
+        {
+            case "Fixture" when Guid.TryParse(item.TargetId, out var fixtureId):
+                {
+                    foreach (var stage in stages)
+                    {
+                        if (stage.Rounds.SelectMany(round => round.Fixtures)
+                                .Any(fixture => fixture.Id.Value == fixtureId)
+                            || stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
+                                .Any(fixture => fixture.Id.Value == fixtureId))
+                        {
+                            return stage.Id.Value;
+                        }
+                    }
+
+                    break;
+                }
+
+            case "Draw" when Guid.TryParse(item.TargetId, out var drawId):
+                {
+                    foreach (var stage in stages)
+                    {
+                        if (stage.Draws.Any(draw => draw.Id.Value == drawId))
+                        {
+                            return stage.Id.Value;
+                        }
+                    }
+
+                    break;
+                }
+        }
+
+        return stages.Count > 0 ? stages[0].Id.Value : null;
+    }
+
+    private static IReadOnlyList<CockpitActionDto> DeduplicateActions(List<CockpitActionDto> actions) =>
+    [
+        .. actions
+            .GroupBy(action => (
+                action.Code,
+                action.StageId,
+                action.DrawId,
+                action.MatchId,
+                action.FixtureId))
+            .Select(group => group.First())
+    ];
+
+    private static string LabelForOrgAction(string code) =>
+        code switch
+        {
+            OrganisationViewAssembler.ActionAddEntry => "Ajouter une équipe",
+            OrganisationViewAssembler.ActionConfigureStructure => "Configurer la structure",
+            OrganisationViewAssembler.ActionReplaceRegulation => "Modifier le règlement",
+            "RenameEntry" => "Renommer une équipe",
+            "WithdrawEntry" => "Retirer une équipe",
+            "ExcludeEntry" => "Exclure une équipe",
+            _ => code
+        };
+
+    private static CockpitNaturalProgressionDto? ResolveNaturalProgression(
+        Competition competition,
+        OrganisationViewDto organisation,
+        CompletionAnalysis? completion,
+        int attentionCount) =>
+        competition.Status switch
+        {
+            CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForMaterialization =>
+                new CockpitNaturalProgressionDto(ActionMaterializeMatches, "Matérialiser les matchs"),
+            CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForDraw =>
+                new CockpitNaturalProgressionDto(ActionPublishDraw, "Poursuivre le tirage"),
+            CompetitionStatus.Draft or CompetitionStatus.Ready => new CockpitNaturalProgressionDto(
+                ProgressionContinueOrganisation, "Continuer la préparation"),
+            CompetitionStatus.Running or CompetitionStatus.Suspended when completion?.CanCompleteNormally == true =>
+                new CockpitNaturalProgressionDto(ActionCompleteCompetition, "Clôturer la compétition"),
+            CompetitionStatus.Running or CompetitionStatus.Suspended when attentionCount > 0 => new
+                CockpitNaturalProgressionDto(ProgressionOpenMatches, "Traiter les situations en attente"),
+            CompetitionStatus.Running or CompetitionStatus.Suspended => new CockpitNaturalProgressionDto(
+                ProgressionOpenMatches, "Suivre les matchs"),
+            CompetitionStatus.Completed or CompetitionStatus.Archived => new CockpitNaturalProgressionDto(
+                ProgressionOpenConsultation, "Consulter les résultats"),
+            _ => null
+        };
+
+    private static IReadOnlyList<CockpitNavigationHintDto> BuildNavigationHints(
+        Competition competition,
+        IReadOnlyList<CockpitSituationDto> situations,
+        IReadOnlyList<Stage> stages,
+        Dictionary<Guid, Guid> fixtureToMatch)
+    {
+        var hints = new List<CockpitNavigationHintDto>
+        {
+            new("Competition", competition.Id.Value.ToString(), null, null, competition.Id.Value),
+            new("Organisation", competition.Id.Value.ToString(), null, null, competition.Id.Value)
+        };
+        hints.AddRange(stages.Select(stage =>
+            new CockpitNavigationHintDto("Stage", stage.Id.Value.ToString(), null, stage.Id.Value, competition.Id.Value)));
+
+        foreach (var situation in situations)
+        {
+            if (situation.TargetType is null || situation.TargetId is null)
+            {
+                continue;
+            }
+
+            Guid? stageId = null;
+            switch (situation.TargetType)
+            {
+                case "Slot":
+                    {
+                        var prefix = situation.TargetId.Split(':', 2)[0];
+                        if (Guid.TryParse(prefix, out var parsed))
+                        {
+                            stageId = parsed;
+                        }
+
+                        break;
+                    }
+
+                case "Stage" when Guid.TryParse(situation.TargetId, out var sid):
+                    stageId = sid;
+                    break;
+                case "Fixture" when Guid.TryParse(situation.TargetId, out var fixtureId):
+                    stageId = FindStageIdForFixture(stages, fixtureId);
+                    break;
+            }
+
+            hints.Add(new CockpitNavigationHintDto(
+                situation.TargetType,
+                situation.TargetId,
+                situation.MatchId,
+                stageId,
+                competition.Id.Value));
+        }
+
+        // Explicit Fixture → Match navigation when attachments are known (avoids SPA join).
+        foreach (var (fixtureId, matchId) in fixtureToMatch)
+        {
+            hints.Add(new CockpitNavigationHintDto(
+                "Fixture",
+                fixtureId.ToString(),
+                matchId,
+                FindStageIdForFixture(stages, fixtureId),
+                competition.Id.Value));
+        }
+
+        return
+        [
+            .. hints
+                .GroupBy(hint => (hint.TargetType, hint.TargetId, hint.MatchId))
+                .Select(group => group.First())
+        ];
+    }
+
+    private static Guid? ResolveMatchIdForAttentionItem(
+        NeedsAttentionItemDto item,
+        IReadOnlyList<Stage> stages,
+        Dictionary<Guid, Guid> fixtureToMatch)
+    {
+        var fixtureId = ResolveSourceFixtureIdForAttentionItem(item, stages);
+        return fixtureId is not null && fixtureToMatch.TryGetValue(fixtureId.Value, out var matchId) ? matchId : null;
+    }
+
+    /// <summary>
+    /// Resolves the source fixture for a Needs Attention item when TargetType is Fixture,
+    /// or when a Slot-targeted progression item maps back through ProgressionRules.
+    /// </summary>
+    private static Guid? ResolveSourceFixtureIdForAttentionItem(
+        NeedsAttentionItemDto item,
+        IReadOnlyList<Stage> stages)
+    {
+        if (item is { TargetType: "Fixture", TargetId: not null }
+            && Guid.TryParse(item.TargetId, out var fixtureId))
+        {
+            return fixtureId;
+        }
+
+        if (item is not
+            {
+                TargetType: "Slot", TargetId: not null, Source: NeedsAttentionAssembler.SourceProgressionPending
+                or NeedsAttentionAssembler.SourceProgressionConflict
+            })
+        {
+            return null;
+        }
+
+        var parts = item.TargetId.Split(':', 2);
+        if (parts.Length != 2
+            || !Guid.TryParse(parts[0], out var destinationStageId)) return null;
+        var slotKey = parts[1];
+        foreach (var stage in stages)
+        {
+            var rules = stage.Regulation.ProgressionRules;
+            if (rules is null)
+            {
+                continue;
+            }
+
+            foreach (var path in rules.Paths)
+            {
+                if (path.Destination.StageId.Value == destinationStageId
+                    && string.Equals(path.Destination.SlotKey, slotKey, StringComparison.Ordinal))
+                {
+                    return path.SourceFixtureId.Value;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static Guid? FindStageIdForFixture(IReadOnlyList<Stage> stages, Guid fixtureId)
+    {
+        foreach (var stage in stages)
+        {
+            if (stage.Rounds.SelectMany(round => round.Fixtures).Any(fixture => fixture.Id.Value == fixtureId)
+                || stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
+                    .Any(fixture => fixture.Id.Value == fixtureId))
+            {
+                return stage.Id.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private static Dictionary<Guid, Guid> BuildFixtureToMatchMap(IReadOnlyList<Stage> stages)
+    {
+        var map = new Dictionary<Guid, Guid>();
+        foreach (var stage in stages)
+        {
+            var fixtures = stage.Rounds.SelectMany(round => round.Fixtures)
+                .Concat(stage.Matchdays.SelectMany(matchday => matchday.Fixtures));
+            foreach (var fixture in fixtures)
+            {
+                var attachment = fixture.Attachments.OrderBy(item => item.LegIndex).FirstOrDefault();
+                if (attachment is not null)
+                {
+                    map[fixture.Id.Value] = attachment.MatchId.Value;
+                }
+            }
+        }
+
+        return map;
+    }
+}

@@ -16,18 +16,78 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 
 | Enum | Typical fields |
 | :--- | :--- |
-| `CompetitionStatus` | workspace / overview / organisation / consultation `status` |
-| `CompletionMode` | completion mode on workspace / overview / consultation |
+| `CompetitionStatus` | workspace / overview / organisation / consultation / cockpit `status` |
+| `CompletionMode` | completion mode on workspace / overview / consultation / cockpit |
 | `EntryStatus` | entry rows |
-| `StageStatus` | stage / organisation format |
+| `StageStatus` | stage / organisation format / cockpit operational focus |
 | `MatchStatus` | match list / detail / consultation results |
 | `ResultType` | match detail / finish request / consultation |
-| `DrawResolutionKind` | draw summaries / stage overview |
-| `DrawStatus` | draw summaries / stage overview |
-| `DrawResolutionState` | draw summaries / stage overview |
+| `DrawResolutionKind` | draw summaries / stage overview / cockpit draws |
+| `DrawStatus` | draw summaries / stage overview / cockpit draws |
+| `DrawResolutionState` | draw summaries / stage overview / cockpit draws |
 | `StructureFormatKind` | organisation / consultation format |
 
 ## Named response contracts (Phase 12.8)
+
+### `GET /competitions/{competitionId}/cockpit` → `CockpitViewDto` (Phase 16.1)
+
+Aggregated Cockpit Read projection (Application interpretation). Does **not** replace workspace / organisation / attention endpoints.
+
+```json
+{
+  "competitionId": "<guid>",
+  "name": "…",
+  "status": "Draft",
+  "completionMode": null,
+  "cycleReading": { "code": "Construction", "note": null },
+  "constructionDimensions": {
+    "teams": { "summary": "…", "prominence": "Present", "facts": { } },
+    "structure": { "summary": "…", "prominence": "Present", "facts": { } },
+    "regulation": {
+      "summary": "…",
+      "prominence": "Present",
+      "facts": { "minimumTeams": 2, "maximumTeams": 64, "…": "…" }
+    },
+    "matches": { "summary": "…", "prominence": "Absent", "facts": { } }
+  },
+  "operationalFocus": {
+    "stages": [{ "stageId": "<guid>", "name": "…", "status": "Draft" }],
+    "draws": [{
+      "stageId": "<guid>",
+      "drawId": "<guid>",
+      "kind": "Pairing",
+      "status": "Draft",
+      "resolutionState": "Resolved",
+      "isApplied": false
+    }],
+    "matchCounts": {
+      "live": 0, "scheduled": 0, "finished": 0, "postponed": 0, "cancelled": 0, "total": 0
+    },
+    "upcomingMatches": []
+  },
+  "situations": [],
+  "attentionSummary": { "count": 0, "items": [] },
+  "availableActions": [],
+  "naturalProgression": { "code": "ContinueOrganisation", "label": "…" },
+  "closureHint": { "canCompleteNormally": false, "blockerCodes": [] },
+  "navigationHints": [
+    { "targetType": "Fixture", "targetId": "<guid>", "matchId": "<guid>", "stageId": "<guid>", "competitionId": "<guid>" }
+  ]
+}
+```
+
+Contract notes:
+
+- `status` is the Domain lifecycle status — distinct from `situations` / attention.
+- `cycleReading.code`: `Construction` | `InProgress` | `Completed` | `Archived` (Suspended → `InProgress` + note / informational situation).
+- `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
+- `attentionSummary` is a **derived subset** of `situations` (blocking natures) — not a second independent list.
+- `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations.
+- `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start are **not** projected (Domain-only; Host exposure OPEN).
+- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption.
+- Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
+
+DTO source: `MyClub.PlayUp.Application.Reads.CockpitViewDto`.
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 

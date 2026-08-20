@@ -840,6 +840,26 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Assembles the Cockpit Read projection for a competition (Phase 16.1).
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Cockpit view DTO.</returns>
+    public async Task<CockpitViewDto> GetCockpitViewAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+        return CockpitAssembler.Assemble(competition, competitionStages, matchesByStage);
+    }
+
+    /// <summary>
     /// Assembles Consultation (Results / Standings / Structure) for a competition.
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>
