@@ -113,19 +113,14 @@ public static class OrganisationViewAssembler
             regulation.StandingRules.Points.LossPoints);
     }
 
-    private static OrganisationFormatSummaryDto BuildFormatSummary(Stage? primary)
-    {
-        if (primary is null)
-        {
-            return new OrganisationFormatSummaryDto(null, null, null, null);
-        }
-
-        return new OrganisationFormatSummaryDto(
-            InferFormat(primary),
-            primary.Id.Value,
-            primary.Name.Value,
-            primary.Status);
-    }
+    private static OrganisationFormatSummaryDto BuildFormatSummary(Stage? primary) =>
+        primary is null
+            ? new OrganisationFormatSummaryDto(null, null, null, null)
+            : new OrganisationFormatSummaryDto(
+                InferFormat(primary),
+                primary.Id.Value,
+                primary.Name.Value,
+                primary.Status);
 
     private static StructureFormatKind? InferFormat(Stage stage) =>
         stage.Rounds.Count > 0

@@ -8,11 +8,12 @@ import {
   fetchCompetitionOverview,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchNeedsAttention,
+  fetchCompetitionCockpit,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
 import { HomePage } from '../pages/HomePage'
+import { cockpitView } from '../test/cockpitFixtures'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -22,7 +23,7 @@ vi.mock('../api', async (importOriginal) => {
     fetchCompetitionOverview: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchMatchDetail: vi.fn(),
-    fetchNeedsAttention: vi.fn(),
+    fetchCompetitionCockpit: vi.fn(),
   }
 })
 
@@ -70,11 +71,14 @@ describe('Shell chrome context states', () => {
       entries: [],
       stages: [],
     })
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      items: [],
-      count: 0,
-    })
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        competitionId,
+        name: 'Coupe U18',
+        status: 'Running',
+        attentionSummary: { count: 0, items: [] },
+      }),
+    )
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,

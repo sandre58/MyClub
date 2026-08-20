@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
 import { LoadingState } from './ui'
+import { CompetitionCockpitPage } from './pages/CompetitionCockpitPage'
 import { CompetitionPage } from './pages/CompetitionPage'
-import { CompetitionWorkspacePage } from './pages/CompetitionWorkspacePage'
 import { CompetitionsPage } from './pages/CompetitionsPage'
 import { HomePage } from './pages/HomePage'
 import { MatchHubPage } from './pages/MatchHubPage'
@@ -43,7 +43,7 @@ export default function App() {
         <Route path="/competitions" element={<CompetitionsPage />} />
         <Route
           path="/competitions/:competitionId"
-          element={<CompetitionWorkspacePage />}
+          element={<CompetitionCockpitPage />}
         />
         <Route
           path="/competitions/:competitionId/organisation"

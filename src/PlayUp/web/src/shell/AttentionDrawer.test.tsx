@@ -7,25 +7,39 @@ import {
   fetchCompetitionOverview,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchMatchesByStage,
-  fetchNeedsAttention,
+  fetchCompetitionCockpit,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
 import { HomePage } from '../pages/HomePage'
+import { cockpitView } from '../test/cockpitFixtures'
+import type { CockpitSituation } from '../types'
 
-vi.mock('../api', () => ({
-  fetchCompetitions: vi.fn(),
-  fetchCompetitionOverview: vi.fn(),
-  fetchStageOverview: vi.fn(),
-  fetchMatchDetail: vi.fn(),
-  fetchNeedsAttention: vi.fn(),
-  fetchMatchesByStage: vi.fn(),
-}))
+vi.mock('../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api')>()
+  return {
+    ...actual,
+    fetchCompetitions: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
+    fetchStageOverview: vi.fn(),
+    fetchMatchDetail: vi.fn(),
+    fetchCompetitionCockpit: vi.fn(),
+  }
+})
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+
+function attentionCockpit(items: CockpitSituation[]) {
+  return cockpitView({
+    competitionId,
+    name: 'Coupe U18',
+    status: 'Running',
+    attentionSummary: { count: items.length, items },
+    situations: items,
+  })
+}
 
 function renderWithShell(initialEntry: string) {
   const queryClient = new QueryClient({
@@ -66,11 +80,7 @@ describe('AttentionDrawer', () => {
       entries: [],
       stages: [{ stageId, name: 'Group stage', status: 'Running' }],
     })
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      items: [],
-      count: 0,
-    })
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -91,7 +101,6 @@ describe('AttentionDrawer', () => {
       fixtureId: null,
       legIndex: null,
     })
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([])
   })
 
   it('is closed by default', () => {
@@ -120,23 +129,24 @@ describe('AttentionDrawer', () => {
     )
 
     expect(
-      await screen.findByText('Rien à traiter pour l\'instant'),
+      await screen.findByText("Rien à traiter pour l'instant"),
     ).toBeInTheDocument()
   })
 
   it('lists attention items when count is greater than 0', async () => {
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      count: 1,
-      items: [
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
         {
           source: 'ProgressionPending',
-          severity: 'Blocking',
+          nature: 'Blocking',
           targetType: 'Stage',
           targetId: stageId,
+          matchId: null,
+          actionCode: 'ApplyProgression',
+          params: {},
         },
-      ],
-    })
+      ]),
+    )
 
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)
@@ -146,7 +156,7 @@ describe('AttentionDrawer', () => {
     )
 
     expect(await screen.findByText('Progression en attente')).toBeInTheDocument()
-    expect(screen.getByText(/Progression en attente · Phase/i)).toBeInTheDocument()
+    expect(screen.getByText(/Bloquant · Phase/i)).toBeInTheDocument()
   })
 
   it('closes via the close button', async () => {
@@ -178,18 +188,19 @@ describe('AttentionDrawer', () => {
   })
 
   it('navigates to an item route and closes the drawer', async () => {
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      count: 1,
-      items: [
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
         {
           source: 'StageReady',
-          severity: 'Warning',
+          nature: 'Informational',
           targetType: 'Stage',
           targetId: stageId,
+          matchId: null,
+          actionCode: null,
+          params: {},
         },
-      ],
-    })
+      ]),
+    )
 
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)
@@ -248,18 +259,19 @@ describe('AttentionDrawer', () => {
   })
 
   it('works on a stage deep link with resolved competition context', async () => {
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      count: 1,
-      items: [
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
         {
           source: 'DrawPending',
-          severity: 'Warning',
+          nature: 'Informational',
           targetType: 'Stage',
           targetId: stageId,
+          matchId: null,
+          actionCode: null,
+          params: {},
         },
-      ],
-    })
+      ]),
+    )
 
     const user = userEvent.setup()
     renderWithShell(`/stages/${stageId}`)
@@ -311,5 +323,34 @@ describe('AttentionDrawer', () => {
 
     expect(screen.getByText('Workspace page')).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'À traiter' })).toBeInTheDocument()
+  })
+
+  it('uses Host matchId for Fixture items without N+1 match joins', async () => {
+    const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
+        {
+          source: 'ProgressionPending',
+          nature: 'Blocking',
+          targetType: 'Fixture',
+          targetId: fixtureId,
+          matchId,
+          actionCode: 'ApplyProgression',
+          params: {},
+        },
+      ]),
+    )
+
+    const user = userEvent.setup()
+    renderWithShell(`/competitions/${competitionId}`)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
+    )
+    await user.click(
+      await screen.findByRole('link', { name: /Progression en attente/i }),
+    )
+
+    expect(await screen.findByText('Match page')).toBeInTheDocument()
   })
 })

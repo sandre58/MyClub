@@ -87,6 +87,146 @@ export interface WorkspaceSummary {
   completionBlockers: string[] | null
 }
 
+/** Cycle reading codes from CockpitAssembler (string on wire). */
+export type CockpitCycleCode =
+  | 'Construction'
+  | 'InProgress'
+  | 'Completed'
+  | 'Archived'
+
+/** Prominence codes from CockpitAssembler (string on wire). */
+export type CockpitProminence =
+  | 'Present'
+  | 'Condensed'
+  | 'Dominant'
+  | 'Absent'
+
+/** Situation nature — minimal V1 (string on wire). */
+export type CockpitSituationNature = 'Blocking' | 'Informational'
+
+/**
+ * GET /competitions/{id}/cockpit — Phase 16.1 aggregated Cockpit Read.
+ * Codes + facts only; organizer copy lives in SPA i18n.
+ */
+export interface CockpitView {
+  competitionId: string
+  name: string
+  status: CompetitionStatus
+  completionMode: CompletionMode | null
+  cycleReading: CockpitCycleReading
+  constructionDimensions: CockpitConstructionDimensions
+  operationalFocus: CockpitOperationalFocus
+  situations: CockpitSituation[]
+  attentionSummary: CockpitAttentionSummary
+  availableActions: CockpitAction[]
+  naturalProgression: CockpitNaturalProgression | null
+  closureHint: CockpitClosureHint
+  navigationHints: CockpitNavigationHint[]
+}
+
+export interface CockpitCycleReading {
+  code: CockpitCycleCode | string
+}
+
+export interface CockpitConstructionDimensions {
+  teams: CockpitDimension
+  structure: CockpitDimension
+  regulation: CockpitRegulationDimension
+  matches: CockpitDimension
+}
+
+export interface CockpitDimension {
+  prominence: CockpitProminence | string
+  facts: Record<string, string>
+}
+
+export interface CockpitRegulationDimension {
+  prominence: CockpitProminence | string
+  facts: OrganisationRegulationSummary
+}
+
+export interface CockpitOperationalFocus {
+  stages: CockpitStageFocus[]
+  draws: CockpitDrawFocus[]
+  matchCounts: CockpitMatchCounts
+  upcomingMatches: CockpitUpcomingMatch[]
+}
+
+export interface CockpitStageFocus {
+  stageId: string
+  name: string
+  status: StageStatus
+}
+
+export interface CockpitDrawFocus {
+  stageId: string
+  drawId: string
+  kind: DrawResolutionKind
+  status: DrawStatus
+  resolutionState: DrawResolutionState
+  /** Application-derived (Publish ≠ Apply). Do not recompute in React. */
+  isApplied: boolean
+}
+
+export interface CockpitMatchCounts {
+  live: number
+  scheduled: number
+  finished: number
+  postponed: number
+  cancelled: number
+  total: number
+}
+
+export interface CockpitUpcomingMatch {
+  matchId: string
+  stageId: string
+  scheduledAt: string | null
+  homeDisplayName: string
+  awayDisplayName: string
+}
+
+export interface CockpitSituation {
+  source: string
+  nature: CockpitSituationNature | string
+  targetType: string | null
+  targetId: string | null
+  matchId: string | null
+  actionCode: string | null
+  params: Record<string, string>
+}
+
+export interface CockpitAttentionSummary {
+  count: number
+  items: CockpitSituation[]
+}
+
+export interface CockpitAction {
+  code: string
+  guaranteed: boolean
+  stageId?: string | null
+  drawId?: string | null
+  matchId?: string | null
+  fixtureId?: string | null
+  params?: Record<string, string> | null
+}
+
+export interface CockpitNaturalProgression {
+  code: string
+}
+
+export interface CockpitClosureHint {
+  canCompleteNormally: boolean
+  blockerCodes: string[]
+}
+
+export interface CockpitNavigationHint {
+  targetType: string
+  targetId: string
+  matchId: string | null
+  stageId: string | null
+  competitionId: string | null
+}
+
 /** GET /competitions/{id}/attention — derived Needs Attention hub. */
 export interface NeedsAttention {
   competitionId: string

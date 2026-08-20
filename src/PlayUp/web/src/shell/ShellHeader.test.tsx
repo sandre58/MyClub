@@ -7,19 +7,35 @@ import {
   fetchCompetitionOverview,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchNeedsAttention,
+  fetchCompetitionCockpit,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
 import { HomePage } from '../pages/HomePage'
+import { cockpitView } from '../test/cockpitFixtures'
+import type { CockpitSituation } from '../types'
 
-vi.mock('../api', () => ({
-  fetchCompetitions: vi.fn(),
-  fetchCompetitionOverview: vi.fn(),
-  fetchStageOverview: vi.fn(),
-  fetchMatchDetail: vi.fn(),
-  fetchNeedsAttention: vi.fn(),
-}))
+vi.mock('../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api')>()
+  return {
+    ...actual,
+    fetchCompetitions: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
+    fetchStageOverview: vi.fn(),
+    fetchMatchDetail: vi.fn(),
+    fetchCompetitionCockpit: vi.fn(),
+  }
+})
+
+function attentionCockpit(items: CockpitSituation[]) {
+  return cockpitView({
+    competitionId,
+    name: 'Coupe U18',
+    status: 'Running',
+    attentionSummary: { count: items.length, items },
+    situations: items,
+  })
+}
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
@@ -68,11 +84,7 @@ describe('ShellHeader', () => {
       entries: [],
       stages: [],
     })
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      items: [],
-      count: 0,
-    })
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -166,11 +178,19 @@ describe('ShellHeader', () => {
   })
 
   it('shows attention state when count is greater than 0', async () => {
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      items: [{ source: 'x', severity: 'z', targetType: null, targetId: null }],
-      count: 1,
-    })
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
+        {
+          source: 'InsufficientParticipants',
+          nature: 'Blocking',
+          targetType: 'Organisation',
+          targetId: competitionId,
+          matchId: null,
+          actionCode: 'AddEntry',
+          params: {},
+        },
+      ]),
+    )
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
@@ -181,14 +201,28 @@ describe('ShellHeader', () => {
   })
 
   it('uses plural aria-label when count is 2', async () => {
-    vi.mocked(fetchNeedsAttention).mockResolvedValue({
-      competitionId,
-      items: [
-        { source: 'a', severity: 'c', targetType: null, targetId: null },
-        { source: 'd', severity: 'f', targetType: null, targetId: null },
-      ],
-      count: 2,
-    })
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
+        {
+          source: 'InsufficientParticipants',
+          nature: 'Blocking',
+          targetType: 'Organisation',
+          targetId: competitionId,
+          matchId: null,
+          actionCode: 'AddEntry',
+          params: {},
+        },
+        {
+          source: 'MissingStructure',
+          nature: 'Blocking',
+          targetType: 'Organisation',
+          targetId: competitionId,
+          matchId: null,
+          actionCode: 'ConfigureStructure',
+          params: {},
+        },
+      ]),
+    )
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {

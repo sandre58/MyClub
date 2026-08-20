@@ -1,21 +1,13 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useRef, type RefObject, type SVGProps } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import {
-  fetchCompetitionOverview,
-  fetchMatchesByStage,
-  fetchNeedsAttention,
-} from '../api'
+import { fetchCompetitionCockpit } from '../api'
 import { queryKeys } from '../queryKeys'
-import type { NeedsAttentionItem } from '../types'
-import {
-  attentionItemContextLabel,
-  attentionItemHref,
-  attentionSeverityStateClass,
-  type AttentionMatchRow,
-} from './attentionItemHref'
+import type { CockpitSituation } from '../types'
 import { situationTitle } from '../i18n/situationCopy'
+import { attentionTargetTypeLabel } from '../i18n/enumLabels'
+import { situationHref } from '../pages/cockpitNavigation'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type AttentionDrawerProps = {
@@ -27,6 +19,7 @@ type AttentionDrawerProps = {
 
 /**
  * Temporary triage surface (14.6.4) — not navigation, not a generic drawer primitive.
+ * Phase 16.2: consumes Cockpit attentionSummary (same métier source as the Cockpit page).
  */
 export function AttentionDrawer({
   open,
@@ -43,48 +36,13 @@ export function AttentionDrawer({
   const { competitionId, competitionName, state: contextState } =
     useShellCompetitionContext()
 
-  const attentionQuery = useQuery({
-    queryKey: queryKeys.competitions.attention(competitionId ?? ''),
-    queryFn: () => fetchNeedsAttention(competitionId!),
+  const cockpitQuery = useQuery({
+    queryKey: queryKeys.competitions.cockpit(competitionId ?? ''),
+    queryFn: () => fetchCompetitionCockpit(competitionId!),
     enabled: open && Boolean(competitionId),
   })
 
-  const items = attentionQuery.data?.items ?? []
-  const hasFixtureItems = items.some((item) => item.targetType === 'Fixture')
-
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.competitions.detail(competitionId ?? ''),
-    queryFn: () => fetchCompetitionOverview(competitionId!),
-    enabled: open && Boolean(competitionId) && hasFixtureItems,
-  })
-
-  const stages = overviewQuery.data?.stages ?? []
-
-  const matchQueries = useQueries({
-    queries: stages.map((stage) => ({
-      queryKey: queryKeys.matches.byStage(stage.stageId),
-      queryFn: () => fetchMatchesByStage(stage.stageId),
-      enabled: open && overviewQuery.isSuccess && stages.length > 0,
-    })),
-  })
-
-  const matchRows: AttentionMatchRow[] = []
-  stages.forEach((stage, index) => {
-    const matches = matchQueries[index]?.data
-    if (!matches) {
-      return
-    }
-    for (const match of matches) {
-      matchRows.push({ match, stageName: stage.name })
-    }
-  })
-
-  const pending =
-    Boolean(competitionId) &&
-    (attentionQuery.isPending ||
-      (hasFixtureItems &&
-        (overviewQuery.isPending ||
-          matchQueries.some((query) => query.isPending))))
+  const items = cockpitQuery.data?.attentionSummary.items ?? []
 
   useEffect(() => {
     if (!open) {
@@ -180,10 +138,9 @@ export function AttentionDrawer({
           <AttentionDrawerContent
             contextState={contextState}
             competitionId={competitionId}
-            pending={pending}
-            error={attentionQuery.error}
+            pending={Boolean(competitionId) && cockpitQuery.isPending}
+            error={cockpitQuery.error}
             items={items}
-            matchRows={matchRows}
             onNavigate={onClose}
           />
         </div>
@@ -198,15 +155,13 @@ function AttentionDrawerContent({
   pending,
   error,
   items,
-  matchRows,
   onNavigate,
 }: {
   contextState: ReturnType<typeof useShellCompetitionContext>['state']
   competitionId?: string
   pending: boolean
   error: unknown
-  items: NeedsAttentionItem[]
-  matchRows: AttentionMatchRow[]
+  items: CockpitSituation[]
   onNavigate: () => void
 }) {
   const { t } = useTranslation('shell')
@@ -272,9 +227,8 @@ function AttentionDrawerContent({
     <ul className="shell-attention-drawer__list">
       {items.map((item) => (
         <AttentionDrawerItem
-          key={`${item.source}:${item.targetType}:${item.targetId}`}
+          key={`${item.source}:${item.targetType}:${item.targetId}:${item.matchId}`}
           item={item}
-          matchRows={matchRows}
           competitionId={competitionId}
           onNavigate={onNavigate}
         />
@@ -285,31 +239,34 @@ function AttentionDrawerContent({
 
 function AttentionDrawerItem({
   item,
-  matchRows,
   competitionId,
   onNavigate,
 }: {
-  item: NeedsAttentionItem
-  matchRows: AttentionMatchRow[]
+  item: CockpitSituation
   competitionId: string
   onNavigate: () => void
 }) {
-  const { t } = useTranslation('shell')
-  const href =
-    attentionItemHref(item, matchRows) ??
-    (item.targetType === 'Fixture'
-      ? `/competitions/${competitionId}/matches`
-      : null)
-
-  const severityClass = attentionSeverityStateClass(item.severity)
-  const contextLabel = attentionItemContextLabel(item)
+  const { t } = useTranslation(['shell', 'cockpit'])
+  const href = situationHref(item, competitionId)
+  const natureClass =
+    item.nature === 'Blocking' ? 'ds-state--error' : 'ds-state--info'
+  const natureLabel = t(`cockpit:nature.${item.nature}`, {
+    defaultValue: item.nature,
+  })
+  const contextParts = [natureLabel]
+  if (item.targetType) {
+    contextParts.push(attentionTargetTypeLabel(item.targetType))
+  }
+  const contextLabel = contextParts.join(' · ')
 
   const content = (
     <>
       <div className="shell-attention-drawer__item-main">
-        <div className={`ds-state ${severityClass}`}>
+        <div className={`ds-state ${natureClass}`}>
           <AttentionMarkIcon className="ds-state__icon" aria-hidden="true" />
-          <span className="ds-state__label">{situationTitle(item.source)}</span>
+          <span className="ds-state__label">
+            {situationTitle(item.source, item.params)}
+          </span>
         </div>
         <p className="shell-attention-drawer__item-context ds-meta">
           {contextLabel}
@@ -317,7 +274,7 @@ function AttentionDrawerItem({
       </div>
       {href && (
         <span className="shell-attention-drawer__item-action ds-meta">
-          {t('attention.open')}
+          {t('shell:attention.open')}
         </span>
       )}
     </>

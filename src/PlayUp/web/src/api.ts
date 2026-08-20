@@ -1,6 +1,7 @@
 import type {
   AddEntryRequest,
   ApplyDrawRequest,
+  CockpitView,
   CompetitionListItem,
   CompetitionOverview,
   ConfigureStructureRequest,
@@ -121,6 +122,13 @@ export function fetchCompetitionWorkspace(
   competitionId: string,
 ): Promise<WorkspaceSummary> {
   return getJson(`/competitions/${competitionId}/workspace`)
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/cockpit */
+export function fetchCompetitionCockpit(
+  competitionId: string,
+): Promise<CockpitView> {
+  return getJson(`/competitions/${competitionId}/cockpit`)
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id} */
@@ -269,4 +277,31 @@ export function applyDraw(
   request: ApplyDrawRequest,
 ): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`, request)
+}
+
+/** POST /stages/{stageId}/matches/materialize → MaterializeMatchesResponse */
+export function materializeMatches(
+  stageId: string,
+): Promise<{ createdCount: number; attachedMatchIds: string[]; alreadyComplete: boolean }> {
+  return sendJson('POST', `/stages/${stageId}/matches/materialize`)
+}
+
+/** POST /stages/{stageId}/qualification/apply → QualificationApplyResponse */
+export function applyQualification(
+  stageId: string,
+): Promise<{ appliedCount: number; assignments: unknown[] }> {
+  return sendJson('POST', `/stages/${stageId}/qualification/apply`)
+}
+
+/** POST /competitions/{id}/complete → 204 */
+export function completeCompetition(
+  competitionId: string,
+  mode: 'Normal' | 'Administrative' | 'Abandoned' = 'Normal',
+): Promise<void> {
+  return postNoContent(`/competitions/${competitionId}/complete`, { mode })
+}
+
+/** POST /competitions/{id}/archive → 204 */
+export function archiveCompetition(competitionId: string): Promise<void> {
+  return postNoContent(`/competitions/${competitionId}/archive`)
 }

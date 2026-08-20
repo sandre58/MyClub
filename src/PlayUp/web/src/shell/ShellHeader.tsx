@@ -2,7 +2,7 @@ import type { RefObject, SVGProps } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchNeedsAttention } from '../api'
+import { fetchCompetitionCockpit } from '../api'
 import { queryKeys } from '../queryKeys'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
@@ -26,14 +26,13 @@ export function ShellHeader({
   const { t } = useTranslation('shell')
   const { competitionId, competitionName, state } = useShellCompetitionContext()
 
-  const attentionQuery = useQuery({
-    queryKey: queryKeys.competitions.attention(competitionId ?? ''),
-    queryFn: () => fetchNeedsAttention(competitionId!),
+  const cockpitQuery = useQuery({
+    queryKey: queryKeys.competitions.cockpit(competitionId ?? ''),
+    queryFn: () => fetchCompetitionCockpit(competitionId!),
     enabled: Boolean(competitionId),
   })
 
-  const attentionCount =
-    attentionQuery.data?.count ?? attentionQuery.data?.items.length ?? 0
+  const attentionCount = cockpitQuery.data?.attentionSummary.count ?? 0
 
   return (
     <header className="shell-header">

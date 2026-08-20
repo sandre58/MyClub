@@ -1,9 +1,14 @@
 {
+  "eyebrow": "Cockpit",
+  "titleFallback": "Cockpit",
+  "back": "Retour aux compétitions",
   "cycle": {
     "Construction": "Construction",
     "InProgress": "En cours",
     "Completed": "Terminée",
-    "Archived": "Archivée"
+    "Archived": "Archivée",
+    "heading": "Lecture de cycle",
+    "lede": "Où en est cette compétition dans son cycle de vie."
   },
   "prominence": {
     "Present": "Présent",
@@ -11,12 +16,89 @@
     "Dominant": "Dominant",
     "Absent": "Absent"
   },
-  "dimension": {
-    "teams": "{{activeCount}} actif(s) / min {{minimumTeams}}",
-    "structureNone": "Non configuré",
-    "matchesEmpty": "Aucun match",
-    "matchesSummary": "{{live}} en direct · {{scheduled}} planifié(s) · {{finished}} terminé(s)",
-    "regulation": "{{periods}}×{{duration}} · {{win}}/{{draw}}/{{loss}}"
+  "dimensions": {
+    "heading": "Socle de construction",
+    "teams": {
+      "title": "Équipes",
+      "summary": "{{activeCount}} actif(s) · minimum {{minimumTeams}}"
+    },
+    "structure": {
+      "title": "Structure",
+      "none": "Non configurée",
+      "summary": "{{formatKind}}"
+    },
+    "regulation": {
+      "title": "Règlement",
+      "summary": "{{periods}}×{{duration}} min · points {{win}}/{{draw}}/{{loss}} · équipes {{min}}–{{max}}"
+    },
+    "matches": {
+      "title": "Matchs",
+      "empty": "Aucun match",
+      "summary": "{{live}} en direct · {{scheduled}} planifié(s) · {{finished}} terminé(s) · total {{total}}"
+    },
+    "openOrganisation": "Ouvrir l’organisation",
+    "openMatches": "Ouvrir le hub matchs"
+  },
+  "operational": {
+    "heading": "Focus opérationnel",
+    "stagesHeading": "Phases",
+    "stagesEmpty": "Aucune phase",
+    "drawsHeading": "Tirages",
+    "drawsEmpty": "Aucun tirage",
+    "drawApplied": "Appliqué",
+    "drawNotApplied": "Non appliqué",
+    "upcomingHeading": "Prochains matchs",
+    "upcomingEmpty": "Aucun prochain match",
+    "countsHeading": "Compteurs matchs",
+    "countLive": "En direct",
+    "countScheduled": "Planifiés",
+    "countFinished": "Terminés",
+    "countTotal": "Total",
+    "openStage": "Ouvrir la phase",
+    "openMatch": "Ouvrir le match"
+  },
+  "situations": {
+    "heading": "Situations",
+    "empty": "Aucune situation à signaler",
+    "open": "Ouvrir"
+  },
+  "attention": {
+    "heading": "À traiter",
+    "count": "{{count}} situation(s)",
+    "empty": "Rien à traiter pour le moment",
+    "hint": "Même source métier que le drawer shell."
+  },
+  "progression": {
+    "heading": "Progression naturelle",
+    "none": "Aucune progression suggérée — situation normale"
+  },
+  "actions": {
+    "heading": "Actions disponibles",
+    "empty": "Aucune action disponible pour le moment",
+    "busy": "Exécution…",
+    "openSpace": "Continuer dans l’espace métier"
+  },
+  "closure": {
+    "heading": "Clôture",
+    "ready": "Clôture normale possible",
+    "notReady": "Clôture normale impossible pour le moment",
+    "blockersHeading": "Bloqueurs de clôture",
+    "noBlockers": "Aucun bloqueur de clôture"
+  },
+  "nav": {
+    "heading": "Espaces métier",
+    "organisation": {
+      "title": "Organisation",
+      "desc": "Participants, règlement et structure."
+    },
+    "matches": {
+      "title": "Hub matchs",
+      "desc": "Matchs et situations opérationnelles."
+    },
+    "overview": {
+      "title": "Consultation",
+      "desc": "Phases, inscrits et lecture d’ensemble."
+    }
   },
   "nature": {
     "Blocking": "Bloquant",

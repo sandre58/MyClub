@@ -354,22 +354,7 @@ public static class CockpitAssembler
                 matchId,
                 actionCode,
                 BuildSituationParams(item))).ToList();
-
-        foreach (var blocker in organisation.Readiness.Blockers)
-        {
-            items.Add(new CockpitSituationDto(
-                blocker,
-                NatureBlocking,
-                "Organisation",
-                competition.Id.Value.ToString(),
-                MatchId: null,
-                ActionCode: MapOrgBlockerAction(blocker),
-                Params: new Dictionary<string, string>
-                {
-                    ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                    ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture)
-                }));
-        }
+        items.AddRange(organisation.Readiness.Blockers.Select(blocker => new CockpitSituationDto(blocker, NatureBlocking, "Organisation", competition.Id.Value.ToString(), MatchId: null, ActionCode: MapOrgBlockerAction(blocker), Params: new Dictionary<string, string> { ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture), ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture) })));
 
         if (competition.Status == CompetitionStatus.Suspended)
         {
@@ -389,15 +374,11 @@ public static class CockpitAssembler
     private static Dictionary<string, string> BuildSituationParams(NeedsAttentionItemDto item)
     {
         var parameters = new Dictionary<string, string>();
-        if (item is { TargetType: "Slot", TargetId: not null })
-        {
-            var parts = item.TargetId.Split(':', 2);
-            if (parts.Length == 2)
-            {
-                parameters["slotKey"] = parts[1];
-                parameters["destinationStageId"] = parts[0];
-            }
-        }
+        if (item is not { TargetType: "Slot", TargetId: not null }) return parameters;
+        var parts = item.TargetId.Split(':', 2);
+        if (parts.Length != 2) return parameters;
+        parameters["slotKey"] = parts[1];
+        parameters["destinationStageId"] = parts[0];
 
         return parameters;
     }
@@ -480,8 +461,7 @@ public static class CockpitAssembler
                         draw.Id.Value));
                 }
 
-                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved }
-                    && draw.Kind is DrawResolutionKind.Slot or DrawResolutionKind.Pairing
+                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Pairing }
                     && !DrawAppliedState.IsApplied(draw, stage))
                 {
                     actions.Add(new CockpitActionDto(
