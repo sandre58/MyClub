@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchMatchesByStage, fetchStageOverview } from '../api'
 import { queryKeys } from '../queryKeys'
@@ -13,6 +14,7 @@ import { formatScore, sideLabel, type MatchSummary } from '../types'
 
 export function StageMatchesPage() {
   const { stageId = '' } = useParams()
+  const { t } = useTranslation('matches')
 
   // Stage overview shares queryKeys.stages.detail with StagePage (cache when coming from there).
   const stageQuery = useQuery({
@@ -33,15 +35,15 @@ export function StageMatchesPage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Matches"
+        eyebrow={t('stageList.eyebrow')}
         title={
           stageQuery.data
-            ? `${stageQuery.data.name} · matches`
-            : 'Stage matches'
+            ? t('stageList.titleNamed', { name: stageQuery.data.name })
+            : t('stageList.titleFallback')
         }
         back={
           stageId
-            ? { to: `/stages/${stageId}`, label: 'Back to stage' }
+            ? { to: `/stages/${stageId}`, label: t('stageList.back') }
             : undefined
         }
       />
@@ -54,11 +56,12 @@ export function StageMatchesPage() {
 }
 
 function MatchList({ matches }: { matches: MatchSummary[] }) {
+  const { t } = useTranslation('matches')
+
   if (matches.length === 0) {
     return (
-      <EmptyState title="No matches for this stage yet">
-        Structure may exist without attached matches. Prepare the draw on the
-        stage to materialize them.
+      <EmptyState title={t('stageList.emptyTitle')}>
+        {t('stageList.emptyBody')}
       </EmptyState>
     )
   }
@@ -70,7 +73,8 @@ function MatchList({ matches }: { matches: MatchSummary[] }) {
           <Link to={`/matches/${match.matchId}`} className="match-row">
             <span className="row__main">
               <span className="match-row__sides">
-                {sideLabel(match.home)} vs {sideLabel(match.away)}
+                {sideLabel(match.home)} {t('stageList.vs')}{' '}
+                {sideLabel(match.away)}
               </span>
             </span>
             <span className="match-row__aside">

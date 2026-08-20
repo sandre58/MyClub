@@ -168,7 +168,7 @@ describe('ShellHeader', () => {
   it('shows attention state when count is greater than 0', async () => {
     vi.mocked(fetchNeedsAttention).mockResolvedValue({
       competitionId,
-      items: [{ source: 'x', reason: 'y', severity: 'z', targetType: null, targetId: null }],
+      items: [{ source: 'x', severity: 'z', targetType: null, targetId: null }],
       count: 1,
     })
     renderWithShell(`/competitions/${competitionId}`)
@@ -184,8 +184,8 @@ describe('ShellHeader', () => {
     vi.mocked(fetchNeedsAttention).mockResolvedValue({
       competitionId,
       items: [
-        { source: 'a', reason: 'b', severity: 'c', targetType: null, targetId: null },
-        { source: 'd', reason: 'e', severity: 'f', targetType: null, targetId: null },
+        { source: 'a', severity: 'c', targetType: null, targetId: null },
+        { source: 'd', severity: 'f', targetType: null, targetId: null },
       ],
       count: 2,
     })
@@ -224,6 +224,6 @@ describe('ShellHeader', () => {
     await waitFor(() => {
       expect(screen.getByText('Choisir une compétition')).toBeInTheDocument()
     })
-    expect(screen.getByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Bienvenue' })).toBeInTheDocument()
   })
 })

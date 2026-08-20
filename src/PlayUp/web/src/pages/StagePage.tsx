@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   applyDraw,
@@ -32,6 +33,7 @@ import { getDrawUiProjection, resolvePairingFixtureIds } from './drawUi'
 
 export function StagePage() {
   const { stageId = '' } = useParams()
+  const { t } = useTranslation('stage')
 
   // SERVER STATE: StageOverview lives in TanStack Query — one cache entry for the stage.
   // Draw UI below only reads this result; it never copies draws into useState.
@@ -52,15 +54,15 @@ export function StagePage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Stage"
-        title={stageQuery.data?.name ?? 'Stage'}
+        eyebrow={t('eyebrow')}
+        title={stageQuery.data?.name ?? t('titleFallback')}
         back={
           competitionId
             ? {
                 to: `/competitions/${competitionId}/overview`,
                 label: competitionQuery.data?.name
-                  ? `Back to ${competitionQuery.data.name}`
-                  : 'Back to competition',
+                  ? t('backNamed', { name: competitionQuery.data.name })
+                  : t('back'),
               }
             : undefined
         }
@@ -77,6 +79,7 @@ export function StagePage() {
 }
 
 function StageOverviewView({ data }: { data: StageOverview }) {
+  const { t } = useTranslation('stage')
   const queryClient = useQueryClient()
   const fixtureCount = data.rounds.reduce(
     (sum, round) => sum + round.fixtures.length,
@@ -126,7 +129,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       <section className="card" aria-labelledby="stage-heading">
         <div className="card__head">
           <h2 className="card__title" id="stage-heading">
-            Stage operations
+            {t('operations.heading')}
           </h2>
           <span className="id-chip">{data.id}</span>
         </div>
@@ -142,9 +145,9 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                   onClick={() => prepareMutation.mutate()}
                 >
                   {prepareMutation.isPending ? (
-                    <PendingLabel>Preparing stage…</PendingLabel>
+                    <PendingLabel>{t('operations.preparing')}</PendingLabel>
                   ) : (
-                    'Prepare stage'
+                    t('operations.prepare')
                   )}
                 </button>
               )}
@@ -156,16 +159,16 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                   onClick={() => startMutation.mutate()}
                 >
                   {startMutation.isPending ? (
-                    <PendingLabel>Starting stage…</PendingLabel>
+                    <PendingLabel>{t('operations.starting')}</PendingLabel>
                   ) : (
-                    'Start stage'
+                    t('operations.start')
                   )}
                 </button>
               )}
             </span>
           )}
           <Link className="btn" to={`/stages/${data.id}/matches`}>
-            View matches
+            {t('operations.viewMatches')}
           </Link>
         </div>
 
@@ -175,16 +178,15 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       <section className="card" aria-labelledby="rounds-heading">
         <div className="card__head">
           <h2 className="card__title" id="rounds-heading">
-            Rounds ({data.rounds.length})
+            {t('rounds.heading', { count: data.rounds.length })}
           </h2>
           <p className="card__subtitle">
-            {fixtureCount} fixture{fixtureCount === 1 ? '' : 's'} total · match
-            list is a separate read
+            {t('rounds.subtitle', { count: fixtureCount })}
           </p>
         </div>
         {data.rounds.length === 0 ? (
-          <EmptyState title="No rounds defined">
-            Preparing the stage creates its rounds and fixtures.
+          <EmptyState title={t('rounds.emptyTitle')}>
+            {t('rounds.emptyBody')}
           </EmptyState>
         ) : (
           <ul className="plain-list">
@@ -193,8 +195,9 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                 <strong>{round.name}</strong>
                 <span className="muted">
                   {' '}
-                  · {round.fixtures.length} fixture
-                  {round.fixtures.length === 1 ? '' : 's'}
+                  · {t('rounds.fixtureCount', {
+                    count: round.fixtures.length,
+                  })}
                 </span>
                 {round.fixtures.length > 0 && (
                   <ul className="nested-list">
@@ -206,7 +209,9 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                             {' '}
                             (
                             {fixture.attachments
-                              .map((a) => `leg ${a.legIndex}`)
+                              .map((a) =>
+                                t('rounds.leg', { index: a.legIndex }),
+                              )
                               .join(', ')}
                             )
                           </span>
@@ -223,11 +228,11 @@ function StageOverviewView({ data }: { data: StageOverview }) {
 
       <section className="card" aria-labelledby="slots-heading">
         <h2 className="card__title" id="slots-heading">
-          Slots ({data.slots.length})
+          {t('slots.heading', { count: data.slots.length })}
         </h2>
         {data.slots.length === 0 ? (
-          <EmptyState title="No slots on this stage">
-            Slots appear once the structure defines placement positions.
+          <EmptyState title={t('slots.emptyTitle')}>
+            {t('slots.emptyBody')}
           </EmptyState>
         ) : (
           <ul className="plain-list">
@@ -237,7 +242,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                 {slot.displayName ? (
                   <> — {slot.displayName}</>
                 ) : (
-                  <span className="muted"> — empty</span>
+                  <span className="muted"> — {t('slots.empty')}</span>
                 )}
               </li>
             ))}
@@ -270,14 +275,15 @@ function DrawSection({
   slots: StageSlot[]
   rounds: StageRound[]
 }) {
+  const { t } = useTranslation('stage')
   return (
     <section className="card" aria-labelledby="draws-heading">
       <h2 id="draws-heading" className="card__title">
-        Draws ({draws.length})
+        {t('draws.heading', { count: draws.length })}
       </h2>
       {draws.length === 0 ? (
-        <EmptyState title="No draws yet">
-          A draw appears once the stage structure requires one.
+        <EmptyState title={t('draws.emptyTitle')}>
+          {t('draws.emptyBody')}
         </EmptyState>
       ) : (
         <ul className="draw-list">
@@ -308,6 +314,7 @@ function DrawCard({
   slots: StageSlot[]
   rounds: StageRound[]
 }) {
+  const { t } = useTranslation('draw')
   // DERIVED UI: computed each render from props (server state), never useState.
   const ui = getDrawUiProjection(draw, slots, rounds)
 
@@ -315,22 +322,22 @@ function DrawCard({
     <article className="draw-card">
       <header className="stack stack--tight">
         <h3 className="draw-card__title">
-          {drawResolutionKindLabel(draw.kind)} draw
+          {t('title', { kind: drawResolutionKindLabel(draw.kind) })}
         </h3>
         <p className="badge-row">
           <DrawStatusBadge status={draw.status} />
           <DrawResolutionBadge state={draw.resolutionState} />
-          {ui.isApplied && <StatusBadge tone="ok">Applied</StatusBadge>}
+          {ui.isApplied && <StatusBadge tone="ok">{t('applied')}</StatusBadge>}
         </p>
       </header>
 
       <p className="draw-card__message" role="status">
-        {ui.message}
+        {t(ui.messageKey)}
       </p>
 
       {ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0 && (
         <div className="stack stack--tight">
-          <h4 className="draw-card__results-title">Result</h4>
+          <h4 className="draw-card__results-title">{t('result')}</h4>
           <ul className="draw-pairing-list">
             {draw.pairings.map((pairing) => (
               <li
@@ -338,11 +345,11 @@ function DrawCard({
                 className="draw-pairing"
               >
                 <span className="draw-pairing__side">
-                  {pairing.entryADisplayName?.trim() || 'Unknown entry'}
+                  {pairing.entryADisplayName?.trim() || t('unknownEntry', { ns: 'common' })}
                 </span>
-                <span className="draw-pairing__vs">vs</span>
+                <span className="draw-pairing__vs">{t('vs')}</span>
                 <span className="draw-pairing__side">
-                  {pairing.entryBDisplayName?.trim() || 'Unknown entry'}
+                  {pairing.entryBDisplayName?.trim() || t('unknownEntry', { ns: 'common' })}
                 </span>
               </li>
             ))}
@@ -352,7 +359,7 @@ function DrawCard({
 
       {ui.showResults && draw.kind === 'Slot' && draw.slotPlacements.length > 0 && (
         <div className="stack stack--tight">
-          <h4 className="draw-card__results-title">Placements</h4>
+          <h4 className="draw-card__results-title">{t('placements')}</h4>
           <ul className="draw-placement-list">
             {draw.slotPlacements.map((placement) => (
               <li
@@ -364,7 +371,8 @@ function DrawCard({
                   →
                 </span>
                 <span className="draw-placement__entry">
-                  {placement.displayName?.trim() || 'Unknown entry'}
+                  {placement.displayName?.trim() ||
+                    t('unknownEntry', { ns: 'common' })}
                 </span>
               </li>
             ))}
@@ -375,10 +383,10 @@ function DrawCard({
       {ui.showResults &&
         draw.kind === 'Group' &&
         draw.resolutionState === 'Resolved' && (
-        <p className="hint" role="status">
-          Group placements are not shown in this overview yet.
-        </p>
-      )}
+          <p className="hint" role="status">
+            {t('groupPlacementsHint')}
+          </p>
+        )}
 
       <DrawActions
         stageId={stageId}
@@ -405,6 +413,7 @@ function DrawActions({
   rounds: StageRound[]
   isApplied: boolean
 }) {
+  const { t } = useTranslation('draw')
   const queryClient = useQueryClient()
 
   const canPublish =
@@ -473,9 +482,7 @@ function DrawActions({
     // CLIENT STATE: confirmation is local UI intent, not server state.
     // window.confirm is acceptable for this phase — replace with a small
     // accessible dialog later if organizers need richer UX.
-    const confirmed = window.confirm(
-      'Apply this draw? This will update the stage and may create matches.',
-    )
+    const confirmed = window.confirm(t('confirmApply'))
     if (!confirmed) {
       return
     }
@@ -496,9 +503,9 @@ function DrawActions({
           onClick={handlePublish}
         >
           {publishMutation.isPending ? (
-            <PendingLabel>Publishing draw…</PendingLabel>
+            <PendingLabel>{t('publishing')}</PendingLabel>
           ) : (
-            'Publish draw'
+            t('publish')
           )}
         </button>
       )}
@@ -511,9 +518,9 @@ function DrawActions({
           onClick={handleApply}
         >
           {applyMutation.isPending ? (
-            <PendingLabel>Applying draw…</PendingLabel>
+            <PendingLabel>{t('applying')}</PendingLabel>
           ) : (
-            'Apply draw'
+            t('apply')
           )}
         </button>
       )}
@@ -526,17 +533,16 @@ function DrawActions({
           onClick={handleApply}
         >
           {applyMutation.isPending ? (
-            <PendingLabel>Applying draw…</PendingLabel>
+            <PendingLabel>{t('applying')}</PendingLabel>
           ) : (
-            'Apply draw'
+            t('apply')
           )}
         </button>
       )}
 
       {pairingMapBlocked && (
         <p className="notice notice--warning" role="status">
-          Apply is unavailable: the number of pairings must equal the number of
-          stage fixtures for a 1:1 mapping.
+          {t('pairingMapBlocked')}
         </p>
       )}
 

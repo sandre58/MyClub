@@ -53,7 +53,6 @@ function organisationView(
     },
     format: {
       kind: null,
-      label: 'Non configuré',
       primaryStageId: null,
       primaryStageName: null,
       primaryStageStatus: null,
@@ -92,7 +91,6 @@ function organisationView(
       readyForSchedulePath: false,
       attachedMatchCount: 0,
       blockers: ['InsufficientParticipants', 'MissingStage'],
-      hints: ['Add more teams', 'Configure structure'],
     },
     ...overrides,
   }
@@ -142,7 +140,6 @@ describe('OrganisationPage', () => {
       organisationView({
         format: {
           kind: 'Championship',
-          label: 'Championnat',
           primaryStageId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
           primaryStageName: 'League',
           primaryStageStatus: 'Draft',
@@ -170,7 +167,7 @@ describe('OrganisationPage', () => {
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     // Entry status is a badge next to the name (13.5), no longer “Alpha (Active)”.
     expect(screen.getByText('Actif')).toBeInTheDocument()
-    expect(screen.getByText('InsufficientParticipants')).toBeInTheDocument()
+    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
   })
 
@@ -199,7 +196,7 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    expect(await screen.findByText(/No entries yet/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Aucune inscription/i)).toBeInTheDocument()
   })
 
   it('shows an error when organisation read fails', async () => {
@@ -221,7 +218,9 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     await user.click(
-      await screen.findByRole('link', { name: /Back to workspace/i }),
+      await screen.findByRole('link', {
+        name: /Retour à l’espace de travail/i,
+      }),
     )
 
     expect(screen.getByText('Workspace route')).toBeInTheDocument()
@@ -253,10 +252,10 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     await user.type(
-      await screen.findByLabelText(/New entry name/i),
+      await screen.findByLabelText(/Nom de la nouvelle inscription/i),
       'Beta',
     )
-    await user.click(screen.getByRole('button', { name: 'Add entry' }))
+    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
 
     await waitFor(() => {
       expect(addCompetitionEntry).toHaveBeenCalledWith(competitionId, {
@@ -279,13 +278,13 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     await user.type(
-      await screen.findByLabelText(/New entry name/i),
+      await screen.findByLabelText(/Nom de la nouvelle inscription/i),
       'Beta',
     )
-    await user.click(screen.getByRole('button', { name: 'Add entry' }))
+    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
 
     expect(
-      await screen.findByRole('button', { name: 'Adding…' }),
+      await screen.findByRole('button', { name: 'Ajout…' }),
     ).toBeDisabled()
 
     resolveAdd(organisationView())
@@ -301,10 +300,10 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     await user.type(
-      await screen.findByLabelText(/New entry name/i),
+      await screen.findByLabelText(/Nom de la nouvelle inscription/i),
       'Overflow',
     )
-    await user.click(screen.getByRole('button', { name: 'Add entry' }))
+    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Entry capacity exceeded (400)',
@@ -317,10 +316,10 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    const renameInput = await screen.findByLabelText(/Rename/i)
+    const renameInput = await screen.findByLabelText(/Renommer/i)
     await user.clear(renameInput)
     await user.type(renameInput, 'Alpha FC')
-    await user.click(screen.getByRole('button', { name: 'Rename' }))
+    await user.click(screen.getByRole('button', { name: 'Renommer' }))
 
     await waitFor(() => {
       expect(renameCompetitionEntry).toHaveBeenCalledWith(
@@ -338,7 +337,7 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Withdraw' }))
+    await user.click(await screen.findByRole('button', { name: 'Retirer' }))
 
     await waitFor(() => {
       expect(withdrawCompetitionEntry).toHaveBeenCalledWith(
@@ -355,7 +354,7 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Exclude' }))
+    await user.click(await screen.findByRole('button', { name: 'Exclure' }))
 
     await waitFor(() => {
       expect(excludeCompetitionEntry).toHaveBeenCalledWith(
@@ -371,10 +370,12 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    const minTeams = await screen.findByLabelText(/Minimum teams/i)
+    const minTeams = await screen.findByLabelText(/Minimum d’équipes/i)
     await user.clear(minTeams)
     await user.type(minTeams, '4')
-    await user.click(screen.getByRole('button', { name: 'Save regulation' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Enregistrer le règlement' }),
+    )
 
     await waitFor(() => {
       expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
@@ -403,10 +404,10 @@ describe('OrganisationPage', () => {
       await screen.findByLabelText(/^Format$/i),
       'Championship',
     )
-    const matchdays = screen.getByLabelText(/Matchday count/i)
+    const matchdays = screen.getByLabelText(/Nombre de journées/i)
     fireEvent.change(matchdays, { target: { value: '2' } })
     await user.click(
-      screen.getByRole('button', { name: 'Configure structure' }),
+      screen.getByRole('button', { name: 'Configurer la structure' }),
     )
 
     await waitFor(() => {
@@ -434,13 +435,13 @@ describe('OrganisationPage', () => {
       await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Add entry' }),
+      screen.queryByRole('button', { name: 'Ajouter' }),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Save regulation' }),
+      screen.queryByRole('button', { name: 'Enregistrer le règlement' }),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Configure structure' }),
+      screen.queryByRole('button', { name: 'Configurer la structure' }),
     ).not.toBeInTheDocument()
   })
 })

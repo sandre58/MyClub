@@ -18,18 +18,21 @@ import type {
 export class ApiError extends Error {
   readonly status: number
   readonly detail?: string
+  /** ProblemDetails extensions.code when present. */
+  readonly code?: string
 
-  constructor(status: number, message: string, detail?: string) {
+  constructor(status: number, message: string, detail?: string, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
+    this.code = code
   }
 }
 
 /**
  * Shared failure path for GET and POST.
- * Prefer ProblemDetails.detail, then title, then a generic HTTP status message.
+ * Prefer ProblemDetails.extensions.code for SPA i18n; keep detail as diagnostic fallback.
  */
 async function throwIfNotOk(response: Response): Promise<void> {
   if (response.ok) {
@@ -37,12 +40,15 @@ async function throwIfNotOk(response: Response): Promise<void> {
   }
 
   let detail: string | undefined
+  let code: string | undefined
   try {
     const problem = (await response.json()) as {
       title?: string
       detail?: string
+      code?: string
     }
     detail = problem.detail ?? problem.title
+    code = typeof problem.code === 'string' ? problem.code : undefined
   } catch {
     // Non-JSON body (rare)
   }
@@ -51,6 +57,7 @@ async function throwIfNotOk(response: Response): Promise<void> {
     response.status,
     detail ?? `HTTP ${response.status}`,
     detail,
+    code,
   )
 }
 

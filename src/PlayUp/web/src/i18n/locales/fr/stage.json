@@ -1,0 +1,35 @@
+{
+  "eyebrow": "Phase",
+  "titleFallback": "Phase",
+  "backNamed": "Retour à {{name}}",
+  "back": "Retour à la compétition",
+  "operations": {
+    "heading": "Opérations de phase",
+    "prepare": "Préparer la phase",
+    "preparing": "Préparation…",
+    "start": "Démarrer la phase",
+    "starting": "Démarrage…",
+    "viewMatches": "Voir les matchs"
+  },
+  "rounds": {
+    "heading": "Tours ({{count}})",
+    "subtitle_one": "{{count}} rencontre au total · la liste des matchs est une lecture séparée",
+    "subtitle_other": "{{count}} rencontres au total · la liste des matchs est une lecture séparée",
+    "emptyTitle": "Aucun tour défini",
+    "emptyBody": "La préparation de la phase crée ses tours et rencontres.",
+    "fixtureCount_one": "{{count}} rencontre",
+    "fixtureCount_other": "{{count}} rencontres",
+    "leg": "manche {{index}}"
+  },
+  "slots": {
+    "heading": "Emplacements ({{count}})",
+    "emptyTitle": "Aucun emplacement sur cette phase",
+    "emptyBody": "Les emplacements apparaissent une fois que la structure définit les positions.",
+    "empty": "vide"
+  },
+  "draws": {
+    "heading": "Tirages ({{count}})",
+    "emptyTitle": "Aucun tirage",
+    "emptyBody": "Un tirage apparaît lorsque la structure de phase en nécessite un."
+  }
+}

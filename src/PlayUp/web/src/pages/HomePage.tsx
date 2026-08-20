@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../ui'
 
@@ -10,44 +11,46 @@ const seedCompetitionId = import.meta.env.VITE_SEED_COMPETITION_ID as
  * Primary path is Competition List; seed remains an optional local shortcut.
  */
 export function HomePage() {
+  const { t } = useTranslation('home')
+
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Play’up · Organizer"
-        title="Welcome"
-        lede="Open a competition to prepare its organisation, follow the matches that need you, and record results."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lede={t('lede')}
       />
 
       <div className="card-grid">
         <Link className="nav-card" to="/competitions">
           <span className="nav-card__title">
-            Competition list
+            {t('competitions.title')}
             <span className="row__chevron" aria-hidden="true">
               →
             </span>
           </span>
-          <span className="nav-card__desc">
-            Browse every competition on this Host and open its workspace.
-          </span>
+          <span className="nav-card__desc">{t('competitions.desc')}</span>
         </Link>
         {seedCompetitionId && (
           <Link className="nav-card" to={`/competitions/${seedCompetitionId}`}>
             <span className="nav-card__title">
-              Seed competition
+              {t('seed.title')}
               <span className="row__chevron" aria-hidden="true">
                 →
               </span>
             </span>
             <span className="nav-card__desc">
-              Development shortcut configured in <code>.env.local</code>.
+              {t('seed.descBefore')} <code>.env.local</code>
+              {t('seed.descAfter')}
             </span>
           </Link>
         )}
       </div>
 
       <p className="caption">
-        Deep links also work for <code>/stages/:id</code>,{' '}
-        <code>/stages/:id/matches</code>, and <code>/matches/:id</code>.
+        {t('deepLinksBefore')} <code>/stages/:id</code>,{' '}
+        <code>/stages/:id/matches</code> {t('deepLinksAnd')}{' '}
+        <code>/matches/:id</code>.
       </p>
     </main>
   )

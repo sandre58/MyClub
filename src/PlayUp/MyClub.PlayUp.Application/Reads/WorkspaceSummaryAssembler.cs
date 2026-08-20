@@ -40,49 +40,26 @@ public static class WorkspaceSummaryAssembler
 
         var canCompleteNormally = analysis?.CanCompleteNormally ?? false;
         var blockers = analysis?.Reasons.Select(reason => reason.Code).ToArray() ?? [];
-        var (code, label) = ResolveNextStub(competition.Status, canCompleteNormally);
 
         return new WorkspaceSummaryDto(
             competition.Id.Value,
             competition.Name.Value,
             competition.Status,
-            code,
-            label,
+            ResolveNextStub(competition.Status, canCompleteNormally),
             attentionCount,
             competition.CompletionMode,
             canCompleteNormally,
             blockers);
     }
 
-    private static (string? Code, string? Label) ResolveNextStub(
-        CompetitionStatus status,
-        bool canCompleteNormally) =>
+    private static string? ResolveNextStub(CompetitionStatus status, bool canCompleteNormally) =>
         status switch
         {
-            CompetitionStatus.Draft => (
-                ContinueOrganisationCode,
-                "Continuer la préparation"),
-            CompetitionStatus.Ready => (
-                ContinueOrganisationCode,
-                "Continuer la préparation"),
-            CompetitionStatus.Running when canCompleteNormally => (
-                CompleteCompetitionCode,
-                "Clôturer la compétition"),
-            CompetitionStatus.Suspended when canCompleteNormally => (
-                CompleteCompetitionCode,
-                "Clôturer la compétition"),
-            CompetitionStatus.Running => (
-                "OpenMatches",
-                "Voir les matchs"),
-            CompetitionStatus.Suspended => (
-                "OpenMatches",
-                "Voir les matchs"),
-            CompetitionStatus.Completed => (
-                "OpenConsultation",
-                "Consulter les résultats"),
-            CompetitionStatus.Archived => (
-                "OpenConsultation",
-                "Consulter l’archive"),
-            _ => (null, null)
+            CompetitionStatus.Draft or CompetitionStatus.Ready => ContinueOrganisationCode,
+            CompetitionStatus.Running when canCompleteNormally => CompleteCompetitionCode,
+            CompetitionStatus.Suspended when canCompleteNormally => CompleteCompetitionCode,
+            CompetitionStatus.Running or CompetitionStatus.Suspended => "OpenMatches",
+            CompetitionStatus.Completed or CompetitionStatus.Archived => "OpenConsultation",
+            _ => null
         };
 }

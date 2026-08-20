@@ -15,6 +15,7 @@ import {
   attentionSeverityStateClass,
   type AttentionMatchRow,
 } from './attentionItemHref'
+import { situationTitle } from '../i18n/situationCopy'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type AttentionDrawerProps = {
@@ -271,7 +272,7 @@ function AttentionDrawerContent({
     <ul className="shell-attention-drawer__list">
       {items.map((item) => (
         <AttentionDrawerItem
-          key={`${item.source}:${item.targetType}:${item.targetId}:${item.reason}`}
+          key={`${item.source}:${item.targetType}:${item.targetId}`}
           item={item}
           matchRows={matchRows}
           competitionId={competitionId}
@@ -308,7 +309,7 @@ function AttentionDrawerItem({
       <div className="shell-attention-drawer__item-main">
         <div className={`ds-state ${severityClass}`}>
           <AttentionMarkIcon className="ds-state__icon" aria-hidden="true" />
-          <span className="ds-state__label">{item.reason}</span>
+          <span className="ds-state__label">{situationTitle(item.source)}</span>
         </div>
         <p className="shell-attention-drawer__item-context ds-meta">
           {contextLabel}

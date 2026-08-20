@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   addCompetitionEntry,
@@ -10,7 +11,10 @@ import {
   replaceCompetitionRegulation,
   withdrawCompetitionEntry,
 } from '../api'
-import { structureFormatKindLabel } from '../i18n/enumLabels'
+import {
+  attentionSourceLabel,
+  structureFormatKindLabel,
+} from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import {
   CompetitionStatusBadge,
@@ -35,6 +39,7 @@ import {
  */
 export function OrganisationPage() {
   const { competitionId = '' } = useParams()
+  const { t } = useTranslation('organisation')
 
   const query = useQuery({
     queryKey: queryKeys.competitions.organisation(competitionId),
@@ -45,13 +50,13 @@ export function OrganisationPage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Organisation"
-        title="Organisation"
+        eyebrow={t('eyebrow')}
+        title={t('title')}
         back={
           competitionId
             ? {
                 to: `/competitions/${competitionId}`,
-                label: 'Back to workspace',
+                label: t('back'),
               }
             : undefined
         }
@@ -91,58 +96,48 @@ function ReadinessSection({
 }: {
   readiness: OrganisationView['readiness']
 }) {
+  const { t } = useTranslation('organisation')
   const ready = readiness.readyForNextSlice
 
   return (
     <section className="card" aria-labelledby="readiness-heading">
       <div className="card__head">
         <h2 className="card__title" id="readiness-heading">
-          Readiness
+          {t('readiness.heading')}
         </h2>
         <span className={`status-badge status-badge--${ready ? 'ok' : 'warn'}`}>
           <span className="status-badge__dot" aria-hidden="true" />
-          {ready ? 'Ready for next slice' : 'Preparation in progress'}
+          {ready ? t('readiness.ready') : t('readiness.inProgress')}
         </span>
       </div>
 
       <ul className="check-list">
-        <Check ok={readiness.readyForNextSlice}>Ready for next slice</Check>
-        <Check ok={readiness.readyForDraw}>Ready for draw</Check>
+        <Check ok={readiness.readyForNextSlice}>
+          {t('readiness.readyForNextSlice')}
+        </Check>
+        <Check ok={readiness.readyForDraw}>{t('readiness.readyForDraw')}</Check>
         <li className="check">
           <span className="check__mark" aria-hidden="true">
             ·
           </span>
-          <span>Attached matches</span>
+          <span>{t('readiness.attachedMatches')}</span>
           <span className="caption">{readiness.attachedMatchCount}</span>
         </li>
       </ul>
 
       {readiness.blockers.length > 0 && (
         <div className="stack stack--tight">
-          <h3 className="stat__label">Blockers</h3>
+          <h3 className="stat__label">{t('readiness.blockersHeading')}</h3>
           <ul className="check-list">
             {readiness.blockers.map((code) => (
               <li key={code} className="check check--no">
                 <span className="check__mark" aria-hidden="true">
                   !
                 </span>
-                <span className="mono">{code}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {readiness.hints.length > 0 && (
-        <div className="stack stack--tight">
-          <h3 className="stat__label">Hints</h3>
-          <ul className="check-list">
-            {readiness.hints.map((hint) => (
-              <li key={hint} className="check">
-                <span className="check__mark" aria-hidden="true">
-                  →
+                <span>
+                  {attentionSourceLabel(code)}{' '}
+                  <span className="mono">({code})</span>
                 </span>
-                <span className="muted">{hint}</span>
               </li>
             ))}
           </ul>
@@ -153,13 +148,14 @@ function ReadinessSection({
 }
 
 function Check({ ok, children }: { ok: boolean; children: string }) {
+  const { t } = useTranslation('organisation')
   return (
     <li className={`check ${ok ? 'check--yes' : 'check--no'}`}>
       <span className="check__mark" aria-hidden="true">
         {ok ? '✓' : '·'}
       </span>
       <span>{children}</span>
-      <span className="caption">{ok ? 'Yes' : 'No'}</span>
+      <span className="caption">{ok ? t('yes') : t('no')}</span>
     </li>
   )
 }
@@ -177,6 +173,7 @@ function ParticipantsSection({
   canWithdraw: boolean
   canExclude: boolean
 }) {
+  const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
   const [displayName, setDisplayName] = useState('')
   const competitionId = data.competitionId
@@ -206,17 +203,19 @@ function ParticipantsSection({
     <section className="card" aria-labelledby="participants-heading">
       <div className="card__head">
         <h2 className="card__title" id="participants-heading">
-          Participants
+          {t('participants.heading')}
         </h2>
         <p className="card__subtitle">
-          {data.participants.activeCount} active ·{' '}
-          {data.participants.occupyingCount} occupying a slot
+          {t('participants.subtitle', {
+            active: data.participants.activeCount,
+            occupying: data.participants.occupyingCount,
+          })}
         </p>
       </div>
 
       {data.participants.entries.length === 0 ? (
-        <EmptyState title="No entries yet">
-          Add the teams taking part; the structure and the draw need them.
+        <EmptyState title={t('participants.emptyTitle')}>
+          {t('participants.emptyBody')}
         </EmptyState>
       ) : (
         <ul className="row-list">
@@ -247,12 +246,12 @@ function ParticipantsSection({
           }}
         >
           <label className="field">
-            New entry name
+            {t('participants.newEntryName')}
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
               disabled={addMutation.isPending}
-              placeholder="e.g. Alpha FC"
+              placeholder={t('participants.newEntryPlaceholder')}
               required
             />
           </label>
@@ -262,9 +261,9 @@ function ParticipantsSection({
             disabled={addMutation.isPending || displayName.trim().length === 0}
           >
             {addMutation.isPending ? (
-              <PendingLabel>Adding…</PendingLabel>
+              <PendingLabel>{t('participants.adding')}</PendingLabel>
             ) : (
-              'Add entry'
+              t('participants.add')
             )}
           </button>
           {addMutation.isError && <MutationError error={addMutation.error} />}
@@ -289,8 +288,9 @@ function EntryRow({
   canExclude: boolean
   onChanged: () => Promise<void>
 }) {
+  const { t } = useTranslation('organisation')
   const [name, setName] = useState(entry.displayName)
-  const busyLabel = 'Working…'
+  const busyLabel = t('working')
 
   const renameMutation = useMutation({
     mutationFn: () =>
@@ -338,7 +338,7 @@ function EntryRow({
               }}
             >
               <label className="field">
-                Rename
+                {t('participants.rename')}
                 <input
                   value={name}
                   onChange={(event) => setName(event.target.value)}
@@ -354,7 +354,7 @@ function EntryRow({
                 {renameMutation.isPending ? (
                   <PendingLabel>{busyLabel}</PendingLabel>
                 ) : (
-                  'Rename'
+                  t('participants.rename')
                 )}
               </button>
             </form>
@@ -367,7 +367,9 @@ function EntryRow({
               onClick={() => {
                 if (
                   !window.confirm(
-                    `Withdraw “${entry.displayName}” from this competition?`,
+                    t('participants.confirmWithdraw', {
+                      name: entry.displayName,
+                    }),
                   )
                 ) {
                   return
@@ -378,7 +380,7 @@ function EntryRow({
               {withdrawMutation.isPending ? (
                 <PendingLabel>{busyLabel}</PendingLabel>
               ) : (
-                'Withdraw'
+                t('participants.withdraw')
               )}
             </button>
           )}
@@ -390,7 +392,9 @@ function EntryRow({
               onClick={() => {
                 if (
                   !window.confirm(
-                    `Exclude “${entry.displayName}” from this competition?`,
+                    t('participants.confirmExclude', {
+                      name: entry.displayName,
+                    }),
                   )
                 ) {
                   return
@@ -401,7 +405,7 @@ function EntryRow({
               {excludeMutation.isPending ? (
                 <PendingLabel>{busyLabel}</PendingLabel>
               ) : (
-                'Exclude'
+                t('participants.exclude')
               )}
             </button>
           )}
@@ -423,6 +427,7 @@ function RegulationSection({
   data: OrganisationView
   canReplace: boolean
 }) {
+  const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
   const regulation = data.regulation
   const [form, setForm] = useState<ReplaceRegulationRequest>({
@@ -464,25 +469,25 @@ function RegulationSection({
     <section className="card" aria-labelledby="regulation-heading">
       <div className="card__head">
         <h2 className="card__title" id="regulation-heading">
-          Regulation
+          {t('regulation.heading')}
         </h2>
       </div>
 
       <dl className="fact-list">
         <div className="fact">
-          <dt className="fact__label">Teams</dt>
+          <dt className="fact__label">{t('regulation.teams')}</dt>
           <dd className="fact__value">
             {regulation.minimumTeams}–{regulation.maximumTeams}
           </dd>
         </div>
         <div className="fact">
-          <dt className="fact__label">Match</dt>
+          <dt className="fact__label">{t('regulation.match')}</dt>
           <dd className="fact__value">
             {regulation.numberOfPeriods}×{regulation.durationPerPeriod}′
           </dd>
         </div>
         <div className="fact">
-          <dt className="fact__label">Points W / D / L</dt>
+          <dt className="fact__label">{t('regulation.points')}</dt>
           <dd className="fact__value">
             {regulation.winPoints} / {regulation.drawPoints} /{' '}
             {regulation.lossPoints}
@@ -502,10 +507,12 @@ function RegulationSection({
           }}
         >
           <fieldset className="fieldset" disabled={mutation.isPending}>
-            <legend className="fieldset__legend">Replace regulation</legend>
+            <legend className="fieldset__legend">
+              {t('regulation.replaceLegend')}
+            </legend>
             <div className="form-row">
               <label className="field">
-                Minimum teams
+                {t('regulation.minimumTeams')}
                 <input
                   type="number"
                   value={form.minimumTeams}
@@ -516,7 +523,7 @@ function RegulationSection({
                 />
               </label>
               <label className="field">
-                Maximum teams
+                {t('regulation.maximumTeams')}
                 <input
                   type="number"
                   value={form.maximumTeams}
@@ -529,7 +536,7 @@ function RegulationSection({
             </div>
             <div className="form-row">
               <label className="field">
-                Duration per period
+                {t('regulation.durationPerPeriod')}
                 <input
                   type="number"
                   value={form.durationPerPeriod}
@@ -540,7 +547,7 @@ function RegulationSection({
                 />
               </label>
               <label className="field">
-                Number of periods
+                {t('regulation.numberOfPeriods')}
                 <input
                   type="number"
                   value={form.numberOfPeriods}
@@ -551,7 +558,7 @@ function RegulationSection({
                 />
               </label>
               <label className="field">
-                Half-time duration
+                {t('regulation.halfTimeDuration')}
                 <input
                   type="number"
                   value={form.halfTimeDuration}
@@ -564,7 +571,7 @@ function RegulationSection({
             </div>
             <div className="form-row">
               <label className="field">
-                Win points
+                {t('regulation.winPoints')}
                 <input
                   type="number"
                   value={form.winPoints}
@@ -575,7 +582,7 @@ function RegulationSection({
                 />
               </label>
               <label className="field">
-                Draw points
+                {t('regulation.drawPoints')}
                 <input
                   type="number"
                   value={form.drawPoints}
@@ -586,7 +593,7 @@ function RegulationSection({
                 />
               </label>
               <label className="field">
-                Loss points
+                {t('regulation.lossPoints')}
                 <input
                   type="number"
                   value={form.lossPoints}
@@ -605,14 +612,12 @@ function RegulationSection({
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (
-                <PendingLabel>Saving…</PendingLabel>
+                <PendingLabel>{t('regulation.saving')}</PendingLabel>
               ) : (
-                'Save regulation'
+                t('regulation.save')
               )}
             </button>
-            <span className="caption">
-              Replaces the whole regulation of the competition.
-            </span>
+            <span className="caption">{t('regulation.saveHint')}</span>
           </div>
           {mutation.isError && <MutationError error={mutation.error} />}
         </form>
@@ -628,6 +633,7 @@ function StructureSection({
   data: OrganisationView
   canConfigure: boolean
 }) {
+  const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
   const [format, setFormat] = useState<StructureFormatKind>('Championship')
   const [stageName, setStageName] = useState('')
@@ -667,33 +673,35 @@ function StructureSection({
     <section className="card" aria-labelledby="structure-heading">
       <div className="card__head">
         <h2 className="card__title" id="structure-heading">
-          Structure
+          {t('structure.heading')}
         </h2>
         <p className="card__subtitle">
-          {formatKind ? structureFormatKindLabel(formatKind) : data.format.label}
+          {formatKind
+            ? structureFormatKindLabel(formatKind)
+            : t('structure.formatNotConfigured')}
         </p>
       </div>
 
       <dl className="fact-list">
         <div className="fact">
-          <dt className="fact__label">Groups</dt>
+          <dt className="fact__label">{t('structure.groups')}</dt>
           <dd className="fact__value">{data.structure.groupCount}</dd>
         </div>
         <div className="fact">
-          <dt className="fact__label">Rounds</dt>
+          <dt className="fact__label">{t('structure.rounds')}</dt>
           <dd className="fact__value">{data.structure.roundCount}</dd>
         </div>
         <div className="fact">
-          <dt className="fact__label">Matchdays</dt>
+          <dt className="fact__label">{t('structure.matchdays')}</dt>
           <dd className="fact__value">{data.structure.matchdayCount}</dd>
         </div>
         <div className="fact">
-          <dt className="fact__label">Slots</dt>
+          <dt className="fact__label">{t('structure.slots')}</dt>
           <dd className="fact__value">{data.structure.slotCount}</dd>
         </div>
         {data.structure.numberOfPots != null && (
           <div className="fact">
-            <dt className="fact__label">Pots</dt>
+            <dt className="fact__label">{t('structure.pots')}</dt>
             <dd className="fact__value">{data.structure.numberOfPots}</dd>
           </div>
         )}
@@ -703,9 +711,10 @@ function StructureSection({
         <Link className="row" to={`/stages/${primaryStageId}`}>
           <span className="row__main">
             <span className="row__title">
-              {data.format.primaryStageName ?? 'Primary stage'}
+              {data.format.primaryStageName ??
+                t('structure.primaryStageFallback')}
             </span>
-            <span className="row__meta">Prepare the draw and the matches</span>
+            <span className="row__meta">{t('structure.primaryStageMeta')}</span>
           </span>
           <span className="row__aside">
             {data.format.primaryStageStatus && (
@@ -730,31 +739,37 @@ function StructureSection({
           }}
         >
           <fieldset className="fieldset" disabled={mutation.isPending}>
-            <legend className="fieldset__legend">Configure structure</legend>
+            <legend className="fieldset__legend">
+              {t('structure.configureLegend')}
+            </legend>
             <label className="field">
-              Format
+              {t('structure.format')}
               <select
                 value={format}
                 onChange={(event) =>
                   setFormat(event.target.value as StructureFormatKind)
                 }
               >
-                <option value="Championship">Championship</option>
-                <option value="Groups">Groups</option>
-                <option value="Cup">Cup</option>
+                <option value="Championship">
+                  {structureFormatKindLabel('Championship')}
+                </option>
+                <option value="Groups">
+                  {structureFormatKindLabel('Groups')}
+                </option>
+                <option value="Cup">{structureFormatKindLabel('Cup')}</option>
               </select>
             </label>
             <label className="field">
-              Stage name (optional)
+              {t('structure.stageName')}
               <input
                 value={stageName}
                 onChange={(event) => setStageName(event.target.value)}
-                placeholder="e.g. Regular season"
+                placeholder={t('structure.stageNamePlaceholder')}
               />
             </label>
             {format === 'Championship' && (
               <label className="field">
-                Matchday count
+                {t('structure.matchdayCount')}
                 <input
                   type="number"
                   min={1}
@@ -769,7 +784,7 @@ function StructureSection({
             {format === 'Groups' && (
               <div className="form-row">
                 <label className="field">
-                  Group count
+                  {t('structure.groupCount')}
                   <input
                     type="number"
                     min={1}
@@ -781,7 +796,7 @@ function StructureSection({
                   />
                 </label>
                 <label className="field">
-                  Participants per group
+                  {t('structure.participantsPerGroup')}
                   <input
                     type="number"
                     min={1}
@@ -796,7 +811,7 @@ function StructureSection({
             )}
             {format === 'Cup' && (
               <label className="field">
-                Bracket size (power of two)
+                {t('structure.bracketSize')}
                 <input
                   type="number"
                   min={2}
@@ -816,14 +831,12 @@ function StructureSection({
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (
-                <PendingLabel>Configuring…</PendingLabel>
+                <PendingLabel>{t('structure.configuring')}</PendingLabel>
               ) : (
-                'Configure structure'
+                t('structure.configure')
               )}
             </button>
-            <span className="caption">
-              Rebuilds the stage structure of the competition.
-            </span>
+            <span className="caption">{t('structure.configureHint')}</span>
           </div>
           {mutation.isError && <MutationError error={mutation.error} />}
         </form>

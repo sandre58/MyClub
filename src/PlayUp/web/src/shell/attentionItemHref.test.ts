@@ -5,7 +5,6 @@ import { attentionItemHref } from './attentionItemHref'
 describe('attentionItemHref', () => {
   const baseItem: NeedsAttentionItem = {
     source: 'Test',
-    reason: 'Reason',
     severity: 'Warning',
     targetType: null,
     targetId: null,

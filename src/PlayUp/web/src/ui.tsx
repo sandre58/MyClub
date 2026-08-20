@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { ApiError } from './api'
+import { apiErrorLabel } from './i18n/apiErrorLabel'
 import type {
   CompetitionStatus,
   DrawResolutionState,
@@ -273,8 +274,9 @@ function formatError(
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   if (error instanceof ApiError) {
+    const localized = apiErrorLabel(error)
     return t('errorWithStatus', {
-      message: error.message,
+      message: localized ?? error.detail ?? error.message,
       status: error.status,
     })
   }

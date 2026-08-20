@@ -25,7 +25,6 @@ function workspace(
     name: 'Spring Cup',
     status: 'Draft',
     nextActionCode: 'ContinueOrganisation',
-    nextActionLabel: 'Continuer la préparation',
     attentionCount: 0,
     completionMode: null,
     canCompleteNormally: false,
@@ -90,7 +89,7 @@ describe('CompetitionWorkspacePage', () => {
     renderWorkspacePage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Workspace' }),
+      await screen.findByRole('heading', { name: 'Espace de travail' }),
     ).toBeInTheDocument()
     expect(await screen.findByText('Brouillon')).toBeInTheDocument()
     expect(screen.getByText('Continuer la préparation')).toBeInTheDocument()
@@ -116,7 +115,7 @@ describe('CompetitionWorkspacePage', () => {
     renderWorkspacePage()
 
     await user.click(
-      await screen.findByRole('link', { name: /Stages & entries/i }),
+      await screen.findByRole('link', { name: /Phases & inscrits/i }),
     )
 
     expect(screen.getByText('Overview route')).toBeInTheDocument()
@@ -141,7 +140,7 @@ describe('CompetitionWorkspacePage', () => {
 
     renderWorkspacePage()
 
-    await user.click(await screen.findByRole('link', { name: /Match hub/i }))
+    await user.click(await screen.findByRole('link', { name: /Hub matchs/i }))
 
     expect(screen.getByText('Match hub route')).toBeInTheDocument()
   })
@@ -166,7 +165,7 @@ describe('CompetitionWorkspacePage', () => {
     renderWorkspacePage()
 
     await user.click(
-      await screen.findByRole('link', { name: /Back to competitions/i }),
+      await screen.findByRole('link', { name: /Retour aux compétitions/i }),
     )
 
     expect(screen.getByText('List route')).toBeInTheDocument()

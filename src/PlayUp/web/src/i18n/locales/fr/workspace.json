@@ -1,0 +1,39 @@
+{
+  "eyebrow": "Espace de travail",
+  "title": "Espace de travail",
+  "back": "Retour aux compétitions",
+  "stateHeading": "Où en est cette compétition",
+  "attention": {
+    "label": "À traiter",
+    "hintOpen": "Ouvrir le hub pour les résoudre",
+    "hintClear": "Rien à résoudre pour le moment"
+  },
+  "nextStep": {
+    "label": "Prochaine étape",
+    "none": "Aucune étape suggérée"
+  },
+  "completion": {
+    "label": "Clôture",
+    "ready": "Prête à clôturer",
+    "notReady": "Pas encore clôturable",
+    "blocker_one": "{{count}} bloqueur",
+    "blocker_other": "{{count}} bloqueurs",
+    "noBlockers": "Aucun bloqueur de clôture",
+    "blockersHeading": "Bloqueurs de clôture"
+  },
+  "continue": "Continuer",
+  "nav": {
+    "organisation": {
+      "title": "Organisation",
+      "desc": "Participants, règlement et structure de la compétition."
+    },
+    "matches": {
+      "title": "Hub matchs",
+      "desc": "Situations à traiter et tous les matchs de la compétition."
+    },
+    "overview": {
+      "title": "Phases & inscrits",
+      "desc": "Vue en lecture seule des phases et des inscrits."
+    }
+  }
+}

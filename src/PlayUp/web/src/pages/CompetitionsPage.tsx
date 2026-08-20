@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { fetchCompetitions } from '../api'
 import { queryKeys } from '../queryKeys'
@@ -16,6 +17,7 @@ import { type CompetitionListItem } from '../types'
  * Selecting a row opens that competition’s workspace.
  */
 export function CompetitionsPage() {
+  const { t } = useTranslation('competitions')
   const query = useQuery({
     queryKey: queryKeys.competitions.all,
     queryFn: fetchCompetitions,
@@ -24,12 +26,12 @@ export function CompetitionsPage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Competitions"
-        title="Competition list"
-        back={{ to: '/', label: 'Back to home' }}
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        back={{ to: '/', label: t('back') }}
         lede={
           query.data
-            ? `${query.data.length} competition${query.data.length === 1 ? '' : 's'} on this Host.`
+            ? t('lede', { count: query.data.length })
             : undefined
         }
       />
@@ -42,11 +44,11 @@ export function CompetitionsPage() {
 }
 
 function CompetitionList({ items }: { items: CompetitionListItem[] }) {
+  const { t } = useTranslation('competitions')
+
   if (items.length === 0) {
     return (
-      <EmptyState title="No competitions yet">
-        Create a competition on the Host, then refresh this list.
-      </EmptyState>
+      <EmptyState title={t('emptyTitle')}>{t('emptyBody')}</EmptyState>
     )
   }
 

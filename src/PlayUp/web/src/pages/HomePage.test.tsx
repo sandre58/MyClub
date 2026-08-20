@@ -20,10 +20,10 @@ describe('HomePage', () => {
     renderHome()
 
     expect(
-      screen.getByRole('heading', { name: 'Welcome' }),
+      screen.getByRole('heading', { name: 'Bienvenue' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Competition list/i }),
+      screen.getByRole('link', { name: /Liste des compétitions/i }),
     ).toHaveAttribute('href', '/competitions')
   })
 
@@ -32,7 +32,7 @@ describe('HomePage', () => {
     renderHome()
 
     await user.click(
-      screen.getByRole('link', { name: /Competition list/i }),
+      screen.getByRole('link', { name: /Liste des compétitions/i }),
     )
 
     expect(screen.getByText('Competitions list')).toBeInTheDocument()

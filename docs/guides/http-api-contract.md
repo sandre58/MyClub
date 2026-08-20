@@ -33,22 +33,23 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 
 Aggregated Cockpit Read projection (Application interpretation). Does **not** replace workspace / organisation / attention endpoints.
 
+**String strategy:** organizer-facing copy is **not** on the wire. The API exposes **codes + structured facts** only; the SPA maps codes to i18n labels. Exception diagnostics remain English on ProblemDetails.
+
 ```json
 {
   "competitionId": "<guid>",
   "name": "…",
   "status": "Draft",
   "completionMode": null,
-  "cycleReading": { "code": "Construction", "note": null },
+  "cycleReading": { "code": "Construction" },
   "constructionDimensions": {
-    "teams": { "summary": "…", "prominence": "Present", "facts": { } },
-    "structure": { "summary": "…", "prominence": "Present", "facts": { } },
+    "teams": { "prominence": "Present", "facts": { "activeCount": "1", "minimumTeams": "2" } },
+    "structure": { "prominence": "Present", "facts": { "formatKind": "None" } },
     "regulation": {
-      "summary": "…",
       "prominence": "Present",
-      "facts": { "minimumTeams": 2, "maximumTeams": 64, "…": "…" }
+      "facts": { "minimumTeams": 2, "maximumTeams": 64, "durationPerPeriod": 45, "numberOfPeriods": 2, "winPoints": 3, "drawPoints": 1, "lossPoints": 0 }
     },
-    "matches": { "summary": "…", "prominence": "Absent", "facts": { } }
+    "matches": { "prominence": "Absent", "facts": { "total": "0" } }
   },
   "operationalFocus": {
     "stages": [{ "stageId": "<guid>", "name": "…", "status": "Draft" }],
@@ -65,10 +66,26 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
     },
     "upcomingMatches": []
   },
-  "situations": [],
-  "attentionSummary": { "count": 0, "items": [] },
-  "availableActions": [],
-  "naturalProgression": { "code": "ContinueOrganisation", "label": "…" },
+  "situations": [{
+    "source": "InsufficientParticipants",
+    "nature": "Blocking",
+    "targetType": "Organisation",
+    "targetId": "<guid>",
+    "matchId": null,
+    "actionCode": "AddEntry",
+    "params": { "minimumTeams": "2", "activeCount": "0" }
+  }],
+  "attentionSummary": { "count": 1, "items": ["…same situation objects…"] },
+  "availableActions": [{
+    "code": "AddEntry",
+    "guaranteed": false,
+    "stageId": null,
+    "drawId": null,
+    "matchId": null,
+    "fixtureId": null,
+    "params": null
+  }],
+  "naturalProgression": { "code": "ContinueOrganisation" },
   "closureHint": { "canCompleteNormally": false, "blockerCodes": [] },
   "navigationHints": [
     { "targetType": "Fixture", "targetId": "<guid>", "matchId": "<guid>", "stageId": "<guid>", "competitionId": "<guid>" }
@@ -79,15 +96,26 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
 Contract notes:
 
 - `status` is the Domain lifecycle status — distinct from `situations` / attention.
-- `cycleReading.code`: `Construction` | `InProgress` | `Completed` | `Archived` (Suspended → `InProgress` + note / informational situation).
+- `cycleReading.code`: `Construction` | `InProgress` | `Completed` | `Archived` (Suspended → `InProgress` + informational situation `CompetitionSuspended`).
+- No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy.
 - `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
 - `attentionSummary` is a **derived subset** of `situations` (blocking natures) — not a second independent list.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations.
 - `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start are **not** projected (Domain-only; Host exposure OPEN).
-- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption.
+- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only).
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 
 DTO source: `MyClub.PlayUp.Application.Reads.CockpitViewDto`.
+
+### Organizer copy on Read endpoints
+
+All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **codes + structured facts** only:
+
+- Workspace: `nextActionCode` (no `nextActionLabel`)
+- Organisation: `format.kind`, `readiness.blockers` (no `format.label`, no `hints`)
+- Needs Attention: `source` / `severity` / targets (no `reason`)
+- Completion: reason `code` only (no `message`)
+- Cockpit: codes + facts only (already)
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 
@@ -123,7 +151,7 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 
 ProblemDetails extensions:
 
-- `code` — machine-readable string
+- `code` — machine-readable string (SPA maps via `errors` i18n namespace; English `detail` is diagnostic fallback)
 - `reasons` — optional string array (e.g. completion blockers)
 
 ### Application codes mapped to 409

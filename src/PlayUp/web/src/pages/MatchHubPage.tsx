@@ -1,4 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   fetchCompetitionOverview,
@@ -15,6 +16,7 @@ import {
   StatusBadge,
   type StatusTone,
 } from '../ui'
+import { situationMeta, situationTitle } from '../i18n/situationCopy'
 import {
   formatScore,
   sideLabel,
@@ -31,6 +33,7 @@ import {
  */
 export function MatchHubPage() {
   const { competitionId = '' } = useParams()
+  const { t } = useTranslation('matches')
 
   const overviewQuery = useQuery({
     queryKey: queryKeys.competitions.detail(competitionId),
@@ -68,13 +71,13 @@ export function MatchHubPage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Match hub"
-        title="Matches"
+        eyebrow={t('eyebrow')}
+        title={t('title')}
         back={
           competitionId
             ? {
                 to: `/competitions/${competitionId}`,
-                label: 'Back to workspace',
+                label: t('back'),
               }
             : undefined
         }
@@ -124,20 +127,22 @@ function AttentionSection({
   items: NeedsAttentionItem[]
   matches: MatchHubRow[]
 }) {
+  const { t } = useTranslation(['matches', 'enums'])
+
   if (items.length === 0) {
     return (
       <section className="card" aria-labelledby="attention-heading">
         <div className="card__head">
           <h2 className="card__title" id="attention-heading">
-            Attention
+            {t('attention.heading')}
           </h2>
           <span className="status-badge status-badge--ok">
             <span className="status-badge__dot" aria-hidden="true" />
-            Clear
+            {t('attention.clear')}
           </span>
         </div>
-        <EmptyState title="Nothing needs attention right now">
-          Items appear here when the Host reports a blocked or pending step.
+        <EmptyState title={t('attention.emptyTitle')}>
+          {t('attention.emptyBody')}
         </EmptyState>
       </section>
     )
@@ -147,28 +152,31 @@ function AttentionSection({
     <section className="card" aria-labelledby="attention-heading">
       <div className="card__head">
         <h2 className="card__title" id="attention-heading">
-          Attention
+          {t('attention.heading')}
         </h2>
         <span className="status-badge status-badge--warn">
           <span className="status-badge__dot" aria-hidden="true" />
-          {items.length} to review
+          {t('attention.toReview', { count: items.length })}
         </span>
       </div>
       <ul className="row-list">
         {items.map((item) => {
           const href = attentionHref(item, matches)
+          const title = situationTitle(item.source)
           const body = (
             <>
               <span className="row__main">
-                <span className="row__title">{item.reason}</span>
+                <span className="row__title">{title}</span>
                 <span className="row__meta">
-                  {item.source}
-                  {item.targetType ? ` · ${item.targetType}` : ''}
+                  {situationMeta(item.source, item.targetType)}
                 </span>
               </span>
               <span className="row__aside">
                 <StatusBadge tone={severityTone(item.severity)}>
-                  {item.severity}
+                  {t(`attentionSeverity.${item.severity}`, {
+                    ns: 'enums',
+                    defaultValue: item.severity,
+                  })}
                 </StatusBadge>
                 {href && (
                   <span className="row__chevron" aria-hidden="true">
@@ -181,7 +189,7 @@ function AttentionSection({
 
           return (
             <li
-              key={`${item.source}:${item.targetType}:${item.targetId}:${item.reason}`}
+              key={`${item.source}:${item.targetType}:${item.targetId}`}
             >
               {href ? (
                 <Link className="row" to={href}>
@@ -238,14 +246,6 @@ function attentionHref(
   return null
 }
 
-/** Reading order for the organizer: what is running, then what is next. */
-const matchGroups: { title: string; statuses: MatchStatus[] }[] = [
-  { title: 'Live now', statuses: ['Live'] },
-  { title: 'Upcoming', statuses: ['Scheduled'] },
-  { title: 'Finished', statuses: ['Finished'] },
-  { title: 'Postponed or cancelled', statuses: ['Postponed', 'Cancelled'] },
-]
-
 function MatchHubList({
   rows,
   stages,
@@ -253,28 +253,35 @@ function MatchHubList({
   rows: MatchHubRow[]
   stages: CompetitionStageSummary[]
 }) {
+  const { t } = useTranslation('matches')
+
+  const matchGroups: { titleKey: string; statuses: MatchStatus[] }[] = [
+    { titleKey: 'list.groupLive', statuses: ['Live'] },
+    { titleKey: 'list.groupUpcoming', statuses: ['Scheduled'] },
+    { titleKey: 'list.groupFinished', statuses: ['Finished'] },
+    { titleKey: 'list.groupOther', statuses: ['Postponed', 'Cancelled'] },
+  ]
+
   return (
     <section className="card" aria-labelledby="matches-heading">
       <div className="card__head">
         <h2 className="card__title" id="matches-heading">
-          Matches
+          {t('list.heading')}
         </h2>
         {rows.length > 0 && (
           <p className="card__subtitle">
-            {rows.length} match{rows.length === 1 ? '' : 'es'} across{' '}
-            {stages.length} stage{stages.length === 1 ? '' : 's'}
+            {t('list.subtitle', { count: rows.length, stages: stages.length })}
           </p>
         )}
       </div>
 
       {stages.length === 0 ? (
-        <EmptyState title="No stages yet">
-          No stages yet. Configure organisation structure first.
+        <EmptyState title={t('list.noStagesTitle')}>
+          {t('list.noStagesBody')}
         </EmptyState>
       ) : rows.length === 0 ? (
-        <EmptyState title="No matches yet">
-          No matches attached yet. Open a stage to prepare draws and materialize
-          matches.
+        <EmptyState title={t('list.noMatchesTitle')}>
+          {t('list.noMatchesBody')}
         </EmptyState>
       ) : (
         <div className="section-stack">
@@ -287,9 +294,9 @@ function MatchHubList({
             }
 
             return (
-              <div className="match-group" key={group.title}>
+              <div className="match-group" key={group.titleKey}>
                 <h3 className="match-group__title">
-                  {group.title}
+                  {t(group.titleKey)}
                   <span className="match-group__count">
                     {groupRows.length}
                   </span>

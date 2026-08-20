@@ -1,0 +1,25 @@
+{
+  "eyebrow": "Compétitions",
+  "title": "Liste des compétitions",
+  "back": "Retour à l’accueil",
+  "lede_one": "{{count}} compétition sur cet hôte.",
+  "lede_other": "{{count}} compétitions sur cet hôte.",
+  "emptyTitle": "Aucune compétition",
+  "emptyBody": "Créez une compétition sur l’hôte, puis actualisez cette liste.",
+  "overview": {
+    "eyebrow": "Compétition",
+    "title": "Phases & inscrits",
+    "back": "Retour à l’espace de travail",
+    "stagesHeading": "Phases",
+    "stagesSubtitle_one": "{{count}} phase",
+    "stagesSubtitle_other": "{{count}} phases",
+    "stagesEmptyTitle": "Aucune phase dans cette compétition",
+    "stagesEmptyBody": "Configurez la structure depuis le hub Organisation pour en créer une.",
+    "entriesHeading": "Inscrits",
+    "entriesSubtitle_one": "{{count}} inscrit",
+    "entriesSubtitle_other": "{{count}} inscrits",
+    "entriesEmptyTitle": "Aucune inscription",
+    "entriesEmptyBody": "Ajoutez des participants depuis le hub Organisation.",
+    "caption": "Compétition"
+  }
+}

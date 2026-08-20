@@ -70,7 +70,7 @@ describe('CompetitionsPage', () => {
     renderCompetitionsPage()
 
     expect(
-      await screen.findByText(/No competitions yet/i),
+      await screen.findByText(/Aucune compétition/i),
     ).toBeInTheDocument()
   })
 

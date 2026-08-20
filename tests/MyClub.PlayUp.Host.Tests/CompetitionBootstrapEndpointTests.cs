@@ -55,7 +55,7 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
         workspace.Id.Should().Be(created.Id);
         workspace.Name.Should().Be(name);
         workspace.Status.Should().Be(CompetitionStatus.Draft);
-        workspace.NextActionLabel.Should().Be("Continuer la préparation");
+        workspace.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueOrganisationCode);
     }
 
     [IntegrationFact]

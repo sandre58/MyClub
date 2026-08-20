@@ -6,7 +6,7 @@ import {
   matchStatusLabel,
 } from '../i18n/enumLabels'
 import i18n from '../i18n'
-import { ErrorState, LoadingState } from '../ui'
+import { ErrorState, LoadingState, MutationError } from '../ui'
 import { renderWithI18n } from './renderWithI18n'
 
 describe('i18n foundation', () => {
@@ -70,6 +70,22 @@ describe('ui ErrorState', () => {
     renderWithI18n(<ErrorState error={new ApiError(404, 'missing')} />)
     expect(screen.getByRole('alert')).toHaveTextContent(
       "Introuvable. Vérifiez l'identifiant dans l'URL.",
+    )
+  })
+
+  it('maps ProblemDetails code to organizer copy for non-404 errors', () => {
+    renderWithI18n(
+      <MutationError
+        error={new ApiError(
+          400,
+          'Entry capacity exceeded',
+          'Entry capacity exceeded',
+          'Application.EntryCapacityExceeded',
+        )}
+      />,
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Capacité d’inscriptions dépassée. (400)',
     )
   })
 })

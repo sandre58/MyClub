@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionWorkspace } from '../api'
+import { actionLabel } from '../i18n/actionLabels'
+import { completionModeLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import {
   CompetitionStatusBadge,
@@ -8,7 +11,6 @@ import {
   LoadingState,
   PageHeader,
 } from '../ui'
-import { completionModeLabel } from '../i18n/enumLabels'
 import { type WorkspaceSummary } from '../types'
 
 /**
@@ -18,6 +20,7 @@ import { type WorkspaceSummary } from '../types'
  */
 export function CompetitionWorkspacePage() {
   const { competitionId = '' } = useParams()
+  const { t } = useTranslation('workspace')
 
   const query = useQuery({
     queryKey: queryKeys.competitions.workspace(competitionId),
@@ -28,9 +31,9 @@ export function CompetitionWorkspacePage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Workspace"
-        title="Workspace"
-        back={{ to: '/competitions', label: 'Back to competitions' }}
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        back={{ to: '/competitions', label: t('back') }}
         badges={
           query.data && <CompetitionStatusBadge status={query.data.status} />
         }
@@ -44,22 +47,27 @@ export function CompetitionWorkspacePage() {
 }
 
 function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
+  const { t } = useTranslation(['workspace', 'enums'])
   const hasAttention = data.attentionCount > 0
   const blockers = data.completionBlockers ?? []
+
+  const nextStepLabel = data.nextActionCode
+    ? actionLabel(data.nextActionCode)
+    : t('nextStep.none')
 
   return (
     <div className="section-stack">
       <section className="card" aria-labelledby="workspace-state">
         <div className="card__head">
           <h2 className="card__title" id="workspace-state">
-            Where this competition stands
+            {t('stateHeading')}
           </h2>
           <span className="id-chip">{data.id}</span>
         </div>
 
         <div className="stat-grid">
           <div className={`stat${hasAttention ? ' stat--attention' : ''}`}>
-            <p className="stat__label">Needs attention</p>
+            <p className="stat__label">{t('attention.label')}</p>
             <p className="stat__value">
               {hasAttention ? (
                 <Link to={`/competitions/${data.id}/matches`}>
@@ -70,17 +78,13 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
               )}
             </p>
             <p className="stat__hint">
-              {hasAttention
-                ? 'Open the hub to resolve them'
-                : 'Nothing to resolve right now'}
+              {hasAttention ? t('attention.hintOpen') : t('attention.hintClear')}
             </p>
           </div>
 
           <div className="stat">
-            <p className="stat__label">Next step</p>
-            <p className="stat__value stat__value--text">
-              {data.nextActionLabel ?? 'No suggested step'}
-            </p>
+            <p className="stat__label">{t('nextStep.label')}</p>
+            <p className="stat__value stat__value--text">{nextStepLabel}</p>
             {data.nextActionCode && (
               <p className="stat__hint">
                 <span className="mono">{data.nextActionCode}</span>
@@ -89,32 +93,38 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
           </div>
 
           <div className={`stat${data.canCompleteNormally ? ' stat--ok' : ''}`}>
-            <p className="stat__label">Completion</p>
+            <p className="stat__label">{t('completion.label')}</p>
             <p className="stat__value stat__value--text">
               {data.completionMode
                 ? completionModeLabel(data.completionMode)
                 : data.canCompleteNormally
-                  ? 'Ready to complete'
-                  : 'Not completable yet'}
+                  ? t('completion.ready')
+                  : t('completion.notReady')}
             </p>
             <p className="stat__hint">
               {blockers.length > 0
-                ? `${blockers.length} blocker${blockers.length === 1 ? '' : 's'}`
-                : 'No completion blocker'}
+                ? t('completion.blocker', { count: blockers.length })
+                : t('completion.noBlockers')}
             </p>
           </div>
         </div>
 
         {blockers.length > 0 && (
           <div className="stack stack--tight">
-            <h3 className="stat__label">Completion blockers</h3>
+            <h3 className="stat__label">{t('completion.blockersHeading')}</h3>
             <ul className="check-list">
               {blockers.map((code) => (
                 <li key={code} className="check check--no">
                   <span className="check__mark" aria-hidden="true">
                     !
                   </span>
-                  <span className="mono">{code}</span>
+                  <span>
+                    {t(`completionBlocker.${code}`, {
+                      ns: 'enums',
+                      defaultValue: code,
+                    })}{' '}
+                    <span className="mono">({code})</span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -124,7 +134,7 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
 
       <section className="section-stack" aria-labelledby="workspace-continue">
         <h2 className="card__title" id="workspace-continue">
-          Continue
+          {t('continue')}
         </h2>
         <div className="card-grid">
           <Link
@@ -132,36 +142,30 @@ function WorkspaceSummaryView({ data }: { data: WorkspaceSummary }) {
             to={`/competitions/${data.id}/organisation`}
           >
             <span className="nav-card__title">
-              Organisation
+              {t('nav.organisation.title')}
               <span className="row__chevron" aria-hidden="true">
                 →
               </span>
             </span>
-            <span className="nav-card__desc">
-              Participants, regulation and structure of the competition.
-            </span>
+            <span className="nav-card__desc">{t('nav.organisation.desc')}</span>
           </Link>
           <Link className="nav-card" to={`/competitions/${data.id}/matches`}>
             <span className="nav-card__title">
-              Match hub
+              {t('nav.matches.title')}
               <span className="row__chevron" aria-hidden="true">
                 →
               </span>
             </span>
-            <span className="nav-card__desc">
-              Attention items and every match of the competition.
-            </span>
+            <span className="nav-card__desc">{t('nav.matches.desc')}</span>
           </Link>
           <Link className="nav-card" to={`/competitions/${data.id}/overview`}>
             <span className="nav-card__title">
-              Stages &amp; entries
+              {t('nav.overview.title')}
               <span className="row__chevron" aria-hidden="true">
                 →
               </span>
             </span>
-            <span className="nav-card__desc">
-              Read-only overview of stages and registered entries.
-            </span>
+            <span className="nav-card__desc">{t('nav.overview.desc')}</span>
           </Link>
         </div>
       </section>

@@ -5,13 +5,14 @@ import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types'
  * Status colours come from the shared badge tones (see ui.tsx).
  */
 export type DrawUiProjection = {
-  message: string
+  /** i18n key under the `draw` namespace (SPA owns copy). */
+  messageKey: string
   showResults: boolean
   isApplied: boolean
 }
 
 /**
- * Pure projection: server enums → copy + flags for conditional rendering.
+ * Pure projection: server enums → message key + flags for conditional rendering.
  * Not a Domain state machine — only helps the component avoid nested if spaghetti.
  *
  * Domain state = authoritative rules in .NET.
@@ -30,8 +31,7 @@ export function getDrawUiProjection(
 
   if (draw.status === 'Cancelled') {
     return {
-      message:
-        'This draw was cancelled. A new draw is required to run again.',
+      messageKey: 'cancelled',
       showResults: draw.resolutionState === 'Resolved',
       isApplied: false,
     }
@@ -39,7 +39,7 @@ export function getDrawUiProjection(
 
   if (draw.status === 'Draft' && draw.resolutionState === 'NotResolved') {
     return {
-      message: 'Draw in preparation — no result yet.',
+      messageKey: 'draftNotResolved',
       showResults: false,
       isApplied: false,
     }
@@ -47,7 +47,7 @@ export function getDrawUiProjection(
 
   if (draw.status === 'Draft' && draw.resolutionState === 'Resolved') {
     return {
-      message: 'Draw resolved but not published.',
+      messageKey: 'draftResolved',
       showResults: true,
       isApplied: false,
     }
@@ -55,31 +55,29 @@ export function getDrawUiProjection(
 
   if (draw.status === 'Draft' && draw.resolutionState === 'NoSolution') {
     return {
-      message: 'No admissible solution was found for this draw.',
+      messageKey: 'noSolution',
       showResults: false,
       isApplied: false,
     }
   }
 
   if (draw.status === 'Published' && draw.resolutionState === 'Resolved') {
-    let appliedMessage = 'Published draw.'
+    let messageKey = 'published'
     if (isApplied && draw.kind === 'Slot') {
-      appliedMessage =
-        'Published draw. Placements match the current stage slots.'
+      messageKey = 'publishedSlotApplied'
     } else if (isApplied && draw.kind === 'Pairing') {
-      appliedMessage =
-        'Published draw. Target fixtures already have attached matches.'
+      messageKey = 'publishedPairingApplied'
     }
 
     return {
-      message: appliedMessage,
+      messageKey,
       showResults: true,
       isApplied,
     }
   }
 
   return {
-    message: 'Draw status is available below.',
+    messageKey: 'fallback',
     showResults: draw.resolutionState === 'Resolved',
     isApplied: false,
   }

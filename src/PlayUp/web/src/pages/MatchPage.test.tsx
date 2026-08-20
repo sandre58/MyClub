@@ -94,10 +94,10 @@ describe('MatchPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Planifié')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Start match' }),
+      screen.getByRole('button', { name: 'Démarrer le match' }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Finish match' }),
+      screen.queryByRole('button', { name: 'Terminer le match' }),
     ).not.toBeInTheDocument()
   })
 
@@ -108,7 +108,7 @@ describe('MatchPage', () => {
     renderMatchPage()
 
     await user.click(
-      await screen.findByRole('button', { name: 'Start match' }),
+      await screen.findByRole('button', { name: 'Démarrer le match' }),
     )
 
     await waitFor(() => {
@@ -122,15 +122,15 @@ describe('MatchPage', () => {
 
     renderMatchPage()
 
-    await screen.findByRole('button', { name: 'Finish match' })
+    await screen.findByRole('button', { name: 'Terminer le match' })
 
-    const homeGoals = screen.getByLabelText(/Alpha goals/i)
-    const awayGoals = screen.getByLabelText(/Beta goals/i)
+    const homeGoals = screen.getByLabelText(/Alpha buts/i)
+    const awayGoals = screen.getByLabelText(/Beta buts/i)
     await user.clear(homeGoals)
     await user.type(homeGoals, '2')
     await user.clear(awayGoals)
     await user.type(awayGoals, '1')
-    await user.click(screen.getByRole('button', { name: 'Finish match' }))
+    await user.click(screen.getByRole('button', { name: 'Terminer le match' }))
 
     await waitFor(() => {
       expect(finishMatch).toHaveBeenCalledWith(matchId, {
@@ -148,12 +148,12 @@ describe('MatchPage', () => {
     fetchMatch.mockImplementation(async () => baseMatch({ status: 'Scheduled' }))
 
     renderMatchPage()
-    await screen.findByRole('button', { name: 'Start match' })
+    await screen.findByRole('button', { name: 'Démarrer le match' })
     const callsBeforeClick = fetchMatch.mock.calls.length
 
     fetchMatch.mockImplementation(async () => baseMatch({ status: 'Live' }))
 
-    await user.click(screen.getByRole('button', { name: 'Start match' }))
+    await user.click(screen.getByRole('button', { name: 'Démarrer le match' }))
 
     await waitFor(() => {
       expect(startMatch).toHaveBeenCalledWith(matchId)
@@ -200,7 +200,7 @@ describe('MatchPage', () => {
     renderMatchPage()
 
     await user.click(
-      await screen.findByRole('button', { name: 'Apply progression' }),
+      await screen.findByRole('button', { name: 'Appliquer la progression' }),
     )
 
     await waitFor(() => {
@@ -209,7 +209,7 @@ describe('MatchPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Progression applied: slot SF1-A/i),
+        screen.getByText(/Progression appliquée : emplacement SF1-A/i),
       ).toBeInTheDocument()
       expect(screen.getByText('Alpha', { selector: 'strong' })).toBeInTheDocument()
     })

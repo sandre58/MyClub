@@ -65,7 +65,7 @@ describe('AppShell', () => {
     renderWithShell('/')
 
     expect(
-      screen.getByRole('heading', { name: 'Welcome' }),
+      screen.getByRole('heading', { name: 'Bienvenue' }),
     ).toBeInTheDocument()
   })
 

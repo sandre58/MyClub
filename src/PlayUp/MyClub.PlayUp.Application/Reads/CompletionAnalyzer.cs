@@ -62,7 +62,7 @@ public static class CompletionAnalyzer
                 continue;
             }
 
-            reasons.Add(new CompletionReasonDto(item.Source, item.Reason));
+            reasons.Add(new CompletionReasonDto(item.Source));
         }
 
         var sportivelyComplete = reasons.Count == 0;
@@ -106,25 +106,17 @@ public static class CompletionAnalyzer
 
         if (scheduled > 0)
         {
-            var message = scheduled == 1
-                ? "1 match est encore planifié."
-                : $"{scheduled} matchs sont encore planifiés.";
-            reasons.Add(new CompletionReasonDto(ReasonScheduledMatches, message));
+            reasons.Add(new CompletionReasonDto(ReasonScheduledMatches));
         }
 
         if (live > 0)
         {
-            var message = live == 1
-                ? "1 match est encore en cours."
-                : $"{live} matchs sont encore en cours.";
-            reasons.Add(new CompletionReasonDto(ReasonLiveMatches, message));
+            reasons.Add(new CompletionReasonDto(ReasonLiveMatches));
         }
 
-        if (postponed <= 0) return;
-
-        var msg = postponed == 1
-            ? "1 match est encore reporté."
-            : $"{postponed} matchs sont encore reportés.";
-        reasons.Add(new CompletionReasonDto(ReasonPostponedMatches, msg));
+        if (postponed > 0)
+        {
+            reasons.Add(new CompletionReasonDto(ReasonPostponedMatches));
+        }
     }
 }

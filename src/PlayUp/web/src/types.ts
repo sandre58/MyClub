@@ -74,14 +74,13 @@ export interface CompetitionListItem {
 
 /**
  * GET /competitions/{id}/workspace — Accueil / competition landing.
- * nextAction* and attention/completion fields are Read hints from the Host.
+ * nextActionCode and attention/completion fields are Read facts from the Host.
  */
 export interface WorkspaceSummary {
   id: string
   name: string
   status: CompetitionStatus
   nextActionCode: string | null
-  nextActionLabel: string | null
   attentionCount: number
   completionMode: CompletionMode | null
   canCompleteNormally: boolean
@@ -98,7 +97,6 @@ export interface NeedsAttention {
 
 export interface NeedsAttentionItem {
   source: string
-  reason: string
   severity: string
   targetType: string | null
   targetId: string | null
@@ -139,7 +137,6 @@ export interface OrganisationEntry {
 
 export interface OrganisationFormatSummary {
   kind: StructureFormatKind | null
-  label: string
   primaryStageId: string | null
   primaryStageName: string | null
   primaryStageStatus: StageStatus | null
@@ -173,7 +170,6 @@ export interface OrganisationReadiness {
   readyForSchedulePath: boolean
   attachedMatchCount: number
   blockers: string[]
-  hints: string[]
 }
 
 /** POST /competitions/{id}/entries */

@@ -1,0 +1,48 @@
+{
+  "Application": {
+    "CompetitionNotFound": "Compétition introuvable.",
+    "StageNotFound": "Phase introuvable.",
+    "MatchNotFound": "Match introuvable.",
+    "MatchOperationNotAllowed": "Cette opération de match n’est pas autorisée.",
+    "ConsequenceOperationNotAllowed": "Cette opération de conséquence n’est pas autorisée.",
+    "SlotOccupancyConflict": "Le slot de destination est déjà occupé.",
+    "CompletionNotAllowed": "La clôture normale n’est pas possible pour le moment.",
+    "CompetitionClosed": "La compétition est clôturée ou archivée.",
+    "EntryCapacityExceeded": "Capacité d’inscriptions dépassée.",
+    "OrganisationNotMutable": "L’organisation n’est plus modifiable dans cet état.",
+    "InvalidStructureIntent": "Paramètres de structure invalides.",
+    "CupBracketNotPowerOfTwo": "Le tableau de coupe doit avoir une taille puissance de 2.",
+    "DrawApplyFailure": "Impossible d’appliquer le tirage.",
+    "DrawKindNotSupported": "Ce type de tirage n’est pas supporté.",
+    "DrawGenerationFailure": "Impossible de générer le tirage.",
+    "ScheduleGenerationFailure": "Impossible de générer le calendrier.",
+    "ScheduleApplyFailure": "Impossible d’appliquer le calendrier.",
+    "MaterializationFailure": "Impossible de matérialiser les matchs.",
+    "InvalidCompletionMode": "Mode de clôture invalide.",
+    "SlotFeedsInvalid": "Les alimentations de slots sont invalides.",
+    "FixtureInvalid": "La confrontation est incohérente.",
+    "TieFormatRequired": "Un format de confrontation (TieFormat) est requis.",
+    "DanglingFeedTarget": "La cible d’alimentation est introuvable.",
+    "StageNotInCompetition": "La phase n’appartient pas à cette compétition."
+  },
+  "Competition": {
+    "NameInvalid": "Le nom de la compétition est invalide.",
+    "DuplicateTeam": "Cette équipe est déjà inscrite.",
+    "InvalidTransition": "Transition de cycle interdite.",
+    "EntryNotFound": "Participant introuvable.",
+    "InvalidDisplayName": "Le nom affiché est invalide."
+  },
+  "Match": {
+    "InvalidTransition": "Transition de match interdite.",
+    "SameParticipant": "Les deux participants doivent être distincts.",
+    "InvalidResult": "Résultat de match invalide.",
+    "ResultAlreadyRecorded": "Un résultat est déjà enregistré."
+  },
+  "Stage": {
+    "InvalidTransition": "Transition de phase interdite.",
+    "NotReady": "La phase n’est pas prête.",
+    "StructureLocked": "La structure est verrouillée.",
+    "DrawNotFound": "Tirage introuvable.",
+    "DrawInvalidTransition": "Transition de tirage interdite."
+  }
+}

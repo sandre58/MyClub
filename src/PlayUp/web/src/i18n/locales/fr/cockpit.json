@@ -1,0 +1,25 @@
+{
+  "cycle": {
+    "Construction": "Construction",
+    "InProgress": "En cours",
+    "Completed": "Terminée",
+    "Archived": "Archivée"
+  },
+  "prominence": {
+    "Present": "Présent",
+    "Condensed": "Condensé",
+    "Dominant": "Dominant",
+    "Absent": "Absent"
+  },
+  "dimension": {
+    "teams": "{{activeCount}} actif(s) / min {{minimumTeams}}",
+    "structureNone": "Non configuré",
+    "matchesEmpty": "Aucun match",
+    "matchesSummary": "{{live}} en direct · {{scheduled}} planifié(s) · {{finished}} terminé(s)",
+    "regulation": "{{periods}}×{{duration}} · {{win}}/{{draw}}/{{loss}}"
+  },
+  "nature": {
+    "Blocking": "Bloquant",
+    "Informational": "Information"
+  }
+}

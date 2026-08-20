@@ -159,16 +159,11 @@ public static class CockpitAssembler
     private static CockpitCycleReadingDto BuildCycleReading(CompetitionStatus status) =>
         status switch
         {
-            CompetitionStatus.Draft or CompetitionStatus.Ready => new CockpitCycleReadingDto(
-                CycleConstruction,
-                null),
-            CompetitionStatus.Running => new CockpitCycleReadingDto(CycleInProgress, null),
-            CompetitionStatus.Suspended => new CockpitCycleReadingDto(
-                CycleInProgress,
-                "Interruption temporaire — situation opérationnelle (pas un badge de cycle distinct)."),
-            CompetitionStatus.Completed => new CockpitCycleReadingDto(CycleCompleted, null),
-            CompetitionStatus.Archived => new CockpitCycleReadingDto(CycleArchived, null),
-            _ => new CockpitCycleReadingDto(CycleConstruction, null)
+            CompetitionStatus.Draft or CompetitionStatus.Ready => new CockpitCycleReadingDto(CycleConstruction),
+            CompetitionStatus.Running or CompetitionStatus.Suspended => new CockpitCycleReadingDto(CycleInProgress),
+            CompetitionStatus.Completed => new CockpitCycleReadingDto(CycleCompleted),
+            CompetitionStatus.Archived => new CockpitCycleReadingDto(CycleArchived),
+            _ => new CockpitCycleReadingDto(CycleConstruction)
         };
 
     private static CockpitConstructionDimensionsDto BuildDimensions(
@@ -204,19 +199,10 @@ public static class CockpitAssembler
                 ? matchCounts.Live > 0 ? ProminenceDominant : ProminencePresent
                 : ProminenceCondensed;
 
-        var teamsSummary =
-            $"{organisation.Participants.ActiveCount} actif(s) / min {organisation.Regulation.MinimumTeams}";
-        var structureSummary = organisation.Format.Label;
         var regulation = organisation.Regulation;
-        var regulationSummary =
-            $"{regulation.NumberOfPeriods}×{regulation.DurationPerPeriod} · {regulation.WinPoints}/{regulation.DrawPoints}/{regulation.LossPoints}";
-        var matchesSummary = matchCounts.Total == 0
-            ? "Aucun match"
-            : $"{matchCounts.Live} live · {matchCounts.Scheduled} planifié(s) · {matchCounts.Finished} terminé(s)";
 
         return new CockpitConstructionDimensionsDto(
             new CockpitDimensionDto(
-                teamsSummary,
                 teamsProminence,
                 new Dictionary<string, string>
                 {
@@ -227,7 +213,6 @@ public static class CockpitAssembler
                     ["maximumTeams"] = regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                 }),
             new CockpitDimensionDto(
-                structureSummary,
                 structureProminence,
                 new Dictionary<string, string>
                 {
@@ -237,9 +222,8 @@ public static class CockpitAssembler
                     ["matchdayCount"] = organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
                     ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
                 }),
-            new CockpitRegulationDimensionDto(regulationSummary, regulationProminence, regulation),
+            new CockpitRegulationDimensionDto(regulationProminence, regulation),
             new CockpitDimensionDto(
-                matchesSummary,
                 matchesProminence,
                 new Dictionary<string, string>
                 {
@@ -362,37 +346,60 @@ public static class CockpitAssembler
                     or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
                 _ => null
             }
-            select new CockpitSituationDto(item.Source, item.Reason, NatureBlocking, item.TargetType, item.TargetId, matchId, actionCode)).ToList();
+            select new CockpitSituationDto(
+                item.Source,
+                NatureBlocking,
+                item.TargetType,
+                item.TargetId,
+                matchId,
+                actionCode,
+                BuildSituationParams(item))).ToList();
 
-        for (var index = 0; index < organisation.Readiness.Blockers.Count; index++)
+        foreach (var blocker in organisation.Readiness.Blockers)
         {
-            var blocker = organisation.Readiness.Blockers[index];
-            var reason = index < organisation.Readiness.Hints.Count
-                ? organisation.Readiness.Hints[index]
-                : $"Organisation : {blocker}";
             items.Add(new CockpitSituationDto(
                 blocker,
-                reason,
                 NatureBlocking,
                 "Organisation",
                 competition.Id.Value.ToString(),
                 MatchId: null,
-                ActionCode: MapOrgBlockerAction(blocker)));
+                ActionCode: MapOrgBlockerAction(blocker),
+                Params: new Dictionary<string, string>
+                {
+                    ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                    ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture)
+                }));
         }
 
         if (competition.Status == CompetitionStatus.Suspended)
         {
             items.Add(new CockpitSituationDto(
                 SourceCompetitionSuspended,
-                "La compétition est temporairement interrompue.",
                 NatureInformational,
                 "Competition",
                 competition.Id.Value.ToString(),
                 MatchId: null,
-                ActionCode: null));
+                ActionCode: null,
+                Params: new Dictionary<string, string>()));
         }
 
         return items;
+    }
+
+    private static Dictionary<string, string> BuildSituationParams(NeedsAttentionItemDto item)
+    {
+        var parameters = new Dictionary<string, string>();
+        if (item is { TargetType: "Slot", TargetId: not null })
+        {
+            var parts = item.TargetId.Split(':', 2);
+            if (parts.Length == 2)
+            {
+                parameters["slotKey"] = parts[1];
+                parameters["destinationStageId"] = parts[0];
+            }
+        }
+
+        return parameters;
     }
 
     private static string? MapOrgBlockerAction(string blocker) =>
@@ -418,16 +425,18 @@ public static class CockpitAssembler
     {
         var competitionOpen = competition.Status is not (CompetitionStatus.Completed or CompetitionStatus.Archived);
 
-        var actions = organisation.Actions.Select(code => new CockpitActionDto(code, LabelForOrgAction(code), Guaranteed: false, StageId: organisation.Format.PrimaryStageId)).ToList();
+        var actions = organisation.Actions
+            .Select(code => new CockpitActionDto(
+                code,
+                Guaranteed: false,
+                StageId: organisation.Format.PrimaryStageId))
+            .ToList();
 
         if (!competitionOpen)
         {
             if (competition.Status == CompetitionStatus.Completed)
             {
-                actions.Add(new CockpitActionDto(
-                    ActionArchiveCompetition,
-                    "Archiver la compétition",
-                    Guaranteed: false));
+                actions.Add(new CockpitActionDto(ActionArchiveCompetition, Guaranteed: false));
             }
 
             return DeduplicateActions(actions);
@@ -435,21 +444,22 @@ public static class CockpitAssembler
 
         foreach (var stage in stages)
         {
+            var stageParams = new Dictionary<string, string> { ["stageName"] = stage.Name.Value };
             switch (stage.Status)
             {
                 case StageStatus.Draft:
                     actions.Add(new CockpitActionDto(
                         ActionPrepareStage,
-                        $"Préparer la phase « {stage.Name.Value} »",
                         Guaranteed: false,
-                        stage.Id.Value));
+                        stage.Id.Value,
+                        Params: stageParams));
                     break;
                 case StageStatus.Ready:
                     actions.Add(new CockpitActionDto(
                         ActionStartStage,
-                        $"Démarrer la phase « {stage.Name.Value} »",
                         Guaranteed: false,
-                        stage.Id.Value));
+                        stage.Id.Value,
+                        Params: stageParams));
                     break;
                 case StageStatus.Running:
                 case StageStatus.Suspended:
@@ -465,23 +475,17 @@ public static class CockpitAssembler
                 {
                     actions.Add(new CockpitActionDto(
                         ActionPublishDraw,
-                        "Publier le tirage",
                         Guaranteed: false,
                         stage.Id.Value,
                         draw.Id.Value));
                 }
 
-                if (draw is
-                    {
-                        Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved,
-                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Pairing
-                    }
-
+                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved }
+                    && draw.Kind is DrawResolutionKind.Slot or DrawResolutionKind.Pairing
                     && !DrawAppliedState.IsApplied(draw, stage))
                 {
                     actions.Add(new CockpitActionDto(
                         ActionApplyDraw,
-                        "Appliquer le tirage",
                         Guaranteed: false,
                         stage.Id.Value,
                         draw.Id.Value));
@@ -495,7 +499,6 @@ public static class CockpitAssembler
         {
             actions.Add(new CockpitActionDto(
                 ActionMaterializeMatches,
-                "Matérialiser les matchs",
                 Guaranteed: false,
                 materializeStageId));
         }
@@ -505,12 +508,10 @@ public static class CockpitAssembler
         {
             actions.Add(new CockpitActionDto(
                 ActionGenerateSchedule,
-                "Générer un calendrier",
                 Guaranteed: false,
                 scheduleStageId));
             actions.Add(new CockpitActionDto(
                 ActionApplySchedule,
-                "Appliquer un calendrier",
                 Guaranteed: false,
                 scheduleStageId));
         }
@@ -524,7 +525,6 @@ public static class CockpitAssembler
         {
             actions.Add(new CockpitActionDto(
                 ActionFinishMatch,
-                "Terminer un match",
                 Guaranteed: false,
                 stageId,
                 MatchId: match.Id.Value));
@@ -539,7 +539,6 @@ public static class CockpitAssembler
         {
             actions.Add(new CockpitActionDto(
                 ActionStartMatch,
-                "Démarrer un match",
                 Guaranteed: false,
                 stageId,
                 MatchId: match.Id.Value));
@@ -560,7 +559,6 @@ public static class CockpitAssembler
                         var stageId = ResolveStageIdFromAttention(item, stages);
                         actions.Add(new CockpitActionDto(
                             ActionApplyProgression,
-                            "Appliquer la progression",
                             Guaranteed: false,
                             stageId,
                             MatchId: matchId,
@@ -574,7 +572,6 @@ public static class CockpitAssembler
                         var stageId = ResolveStageIdFromAttention(item, stages);
                         actions.Add(new CockpitActionDto(
                             ActionApplyQualification,
-                            "Appliquer la qualification",
                             Guaranteed: false,
                             stageId));
                         break;
@@ -584,10 +581,7 @@ public static class CockpitAssembler
 
         if (completion?.CanCompleteNormally == true)
         {
-            actions.Add(new CockpitActionDto(
-                ActionCompleteCompetition,
-                "Clôturer la compétition",
-                Guaranteed: false));
+            actions.Add(new CockpitActionDto(ActionCompleteCompetition, Guaranteed: false));
         }
 
         return DeduplicateActions(actions);
@@ -656,18 +650,6 @@ public static class CockpitAssembler
             .Select(group => group.First())
     ];
 
-    private static string LabelForOrgAction(string code) =>
-        code switch
-        {
-            OrganisationViewAssembler.ActionAddEntry => "Ajouter une équipe",
-            OrganisationViewAssembler.ActionConfigureStructure => "Configurer la structure",
-            OrganisationViewAssembler.ActionReplaceRegulation => "Modifier le règlement",
-            "RenameEntry" => "Renommer une équipe",
-            "WithdrawEntry" => "Retirer une équipe",
-            "ExcludeEntry" => "Exclure une équipe",
-            _ => code
-        };
-
     private static CockpitNaturalProgressionDto? ResolveNaturalProgression(
         Competition competition,
         OrganisationViewDto organisation,
@@ -676,19 +658,19 @@ public static class CockpitAssembler
         competition.Status switch
         {
             CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForMaterialization =>
-                new CockpitNaturalProgressionDto(ActionMaterializeMatches, "Matérialiser les matchs"),
+                new CockpitNaturalProgressionDto(ActionMaterializeMatches),
             CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForDraw =>
-                new CockpitNaturalProgressionDto(ActionPublishDraw, "Poursuivre le tirage"),
-            CompetitionStatus.Draft or CompetitionStatus.Ready => new CockpitNaturalProgressionDto(
-                ProgressionContinueOrganisation, "Continuer la préparation"),
+                new CockpitNaturalProgressionDto(ActionPublishDraw),
+            CompetitionStatus.Draft or CompetitionStatus.Ready =>
+                new CockpitNaturalProgressionDto(ProgressionContinueOrganisation),
             CompetitionStatus.Running or CompetitionStatus.Suspended when completion?.CanCompleteNormally == true =>
-                new CockpitNaturalProgressionDto(ActionCompleteCompetition, "Clôturer la compétition"),
-            CompetitionStatus.Running or CompetitionStatus.Suspended when attentionCount > 0 => new
-                CockpitNaturalProgressionDto(ProgressionOpenMatches, "Traiter les situations en attente"),
-            CompetitionStatus.Running or CompetitionStatus.Suspended => new CockpitNaturalProgressionDto(
-                ProgressionOpenMatches, "Suivre les matchs"),
-            CompetitionStatus.Completed or CompetitionStatus.Archived => new CockpitNaturalProgressionDto(
-                ProgressionOpenConsultation, "Consulter les résultats"),
+                new CockpitNaturalProgressionDto(ActionCompleteCompetition),
+            CompetitionStatus.Running or CompetitionStatus.Suspended when attentionCount > 0 =>
+                new CockpitNaturalProgressionDto(ProgressionOpenMatches),
+            CompetitionStatus.Running or CompetitionStatus.Suspended =>
+                new CockpitNaturalProgressionDto(ProgressionOpenMatches),
+            CompetitionStatus.Completed or CompetitionStatus.Archived =>
+                new CockpitNaturalProgressionDto(ProgressionOpenConsultation),
             _ => null
         };
 

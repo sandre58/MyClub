@@ -1,0 +1,23 @@
+{
+  "cancelled": "Ce tirage a été annulé. Un nouveau tirage est nécessaire pour recommencer.",
+  "draftNotResolved": "Tirage en préparation — pas encore de résultat.",
+  "draftResolved": "Tirage résolu mais non publié.",
+  "noSolution": "Aucune solution admissible n’a été trouvée pour ce tirage.",
+  "published": "Tirage publié.",
+  "publishedSlotApplied": "Tirage publié. Les placements correspondent aux emplacements de la phase.",
+  "publishedPairingApplied": "Tirage publié. Les rencontres cibles ont déjà des matchs attachés.",
+  "fallback": "L’état du tirage est disponible ci-dessous.",
+  "title": "Tirage {{kind}}",
+  "applied": "Appliqué",
+  "result": "Résultat",
+  "placements": "Placements",
+  "vs": "vs",
+  "groupPlacementsHint": "Les placements de groupes ne sont pas encore affichés dans cet aperçu.",
+  "publish": "Publier le tirage",
+  "publishing": "Publication…",
+  "apply": "Appliquer le tirage",
+  "applying": "Application…",
+  "confirmApply": "Appliquer ce tirage ? Cela mettra à jour la phase et peut créer des matchs.",
+  "pairingMapBlocked": "Application indisponible : le nombre d’appariements doit égaler le nombre de rencontres de la phase pour une correspondance 1:1."
+}
+

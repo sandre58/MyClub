@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import {
   applyProgressionOutcome,
@@ -32,6 +33,7 @@ import {
 
 export function MatchPage() {
   const { matchId = '' } = useParams()
+  const { t } = useTranslation('matches')
 
   // SERVER STATE: the match lives in TanStack Query cache, not in React useState.
   const matchQuery = useQuery({
@@ -50,19 +52,26 @@ export function MatchPage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow={stageQuery.data?.name ? `Match · ${stageQuery.data.name}` : 'Match'}
+        eyebrow={
+          stageQuery.data?.name
+            ? t('detail.eyebrowNamed', { name: stageQuery.data.name })
+            : t('detail.eyebrow')
+        }
         title={
           matchQuery.data
-            ? `${sideLabel(matchQuery.data.home)} vs ${sideLabel(matchQuery.data.away)}`
-            : 'Match'
+            ? t('detail.titleVs', {
+                home: sideLabel(matchQuery.data.home),
+                away: sideLabel(matchQuery.data.away),
+              })
+            : t('detail.titleFallback')
         }
         back={
           stageId
             ? {
                 to: `/stages/${stageId}/matches`,
                 label: stageQuery.data?.name
-                  ? `Back to ${stageQuery.data.name} matches`
-                  : 'Back to match list',
+                  ? t('detail.backNamed', { name: stageQuery.data.name })
+                  : t('detail.back'),
               }
             : undefined
         }
@@ -97,6 +106,7 @@ function MatchDetailView({
     displayName: string | null
   }[]
 }) {
+  const { t } = useTranslation('matches')
   const queryClient = useQueryClient()
   const homeName = sideLabel(data.home)
   const awayName = sideLabel(data.away)
@@ -162,19 +172,33 @@ function MatchDetailView({
     finishMutation.isPending ||
     progressionMutation.isPending
 
+  const homeGoalsLabel =
+    data.result?.homeGoals != null
+      ? String(data.result.homeGoals)
+      : t('detail.scoreNone')
+  const awayGoalsLabel =
+    data.result?.awayGoals != null
+      ? String(data.result.awayGoals)
+      : t('detail.scoreNone')
+
   return (
     <div className="section-stack">
       <section className="card card--hero" aria-labelledby="scoreboard-heading">
         <h2 className="card__title" id="scoreboard-heading">
-          Scoreboard
+          {t('detail.scoreboard')}
         </h2>
         <div
           className="scoreboard"
           aria-live="polite"
-          aria-label={`Score ${homeName} ${data.result?.homeGoals ?? 'none'} to ${awayName} ${data.result?.awayGoals ?? 'none'}`}
+          aria-label={t('detail.scoreAria', {
+            home: homeName,
+            away: awayName,
+            homeGoals: homeGoalsLabel,
+            awayGoals: awayGoalsLabel,
+          })}
         >
           <div className="scoreboard__side">
-            <span className="scoreboard__role">Home</span>
+            <span className="scoreboard__role">{t('detail.home')}</span>
             <span className="scoreboard__name">{homeName}</span>
           </div>
           <p className="scoreboard__score">
@@ -201,7 +225,7 @@ function MatchDetailView({
             </span>
           </p>
           <div className="scoreboard__side">
-            <span className="scoreboard__role">Away</span>
+            <span className="scoreboard__role">{t('detail.away')}</span>
             <span className="scoreboard__name">{awayName}</span>
           </div>
         </div>
@@ -209,20 +233,20 @@ function MatchDetailView({
         {data.status === 'Finished' && data.result && (
           <dl className="fact-list">
             <div className="fact">
-              <dt className="fact__label">Type</dt>
+              <dt className="fact__label">{t('detail.type')}</dt>
               <dd className="fact__value">
                 {resultTypeLabel(data.result.type)}
               </dd>
             </div>
             <div className="fact">
-              <dt className="fact__label">Extra time</dt>
+              <dt className="fact__label">{t('detail.extraTime')}</dt>
               <dd className="fact__value">
-                {data.result.extraTimePlayed ? 'Yes' : 'No'}
+                {data.result.extraTimePlayed ? t('detail.yes') : t('detail.no')}
               </dd>
             </div>
             {data.result.shootout && (
               <div className="fact">
-                <dt className="fact__label">Shootout</dt>
+                <dt className="fact__label">{t('detail.shootout')}</dt>
                 <dd className="fact__value">
                   {formatScore(data.result.shootout)}
                 </dd>
@@ -235,11 +259,12 @@ function MatchDetailView({
       <section className="card" aria-labelledby="actions-heading" aria-busy={busy}>
         <div className="card__head">
           <h2 className="card__title" id="actions-heading">
-            Actions
+            {t('detail.actions')}
           </h2>
           <p className="card__subtitle">
-            Available steps for a {matchStatusLabel(data.status).toLowerCase()}{' '}
-            match
+            {t('detail.actionsSubtitle', {
+              status: matchStatusLabel(data.status).toLowerCase(),
+            })}
           </p>
         </div>
 
@@ -252,14 +277,12 @@ function MatchDetailView({
               onClick={() => startMutation.mutate()}
             >
               {startMutation.isPending ? (
-                <PendingLabel>Starting…</PendingLabel>
+                <PendingLabel>{t('detail.starting')}</PendingLabel>
               ) : (
-                'Start match'
+                t('detail.start')
               )}
             </button>
-            <span className="caption">
-              Kicks the match off and unlocks the result form.
-            </span>
+            <span className="caption">{t('detail.startHint')}</span>
           </div>
         )}
 
@@ -281,14 +304,12 @@ function MatchDetailView({
               onClick={() => progressionMutation.mutate()}
             >
               {progressionMutation.isPending ? (
-                <PendingLabel>Applying progression…</PendingLabel>
+                <PendingLabel>{t('detail.applyingProgression')}</PendingLabel>
               ) : (
-                'Apply progression'
+                t('detail.applyProgression')
               )}
             </button>
-            <span className="caption">
-              Moves the qualified entry into its next slot.
-            </span>
+            <span className="caption">{t('detail.progressionHint')}</span>
           </div>
         )}
 
@@ -296,7 +317,9 @@ function MatchDetailView({
           data.status !== 'Live' &&
           data.status !== 'Finished' && (
             <p className="notice">
-              No organizer action for status {matchStatusLabel(data.status)}.
+              {t('detail.noAction', {
+                status: matchStatusLabel(data.status),
+              })}
             </p>
           )}
 
@@ -304,7 +327,7 @@ function MatchDetailView({
 
         {progressionMutation.isSuccess && sf1a?.entryId && (
           <p className="notice notice--success" role="status">
-            Progression applied: slot SF1-A →{' '}
+            {t('detail.progressionApplied')}{' '}
             <strong>{sf1a.displayName ?? sf1a.entryId}</strong>
           </p>
         )}
@@ -312,17 +335,17 @@ function MatchDetailView({
 
       <section className="card" aria-labelledby="context-heading">
         <h2 className="card__title" id="context-heading">
-          Context
+          {t('detail.context')}
         </h2>
         <dl className="fact-list">
           <div className="fact">
-            <dt className="fact__label">Stage</dt>
+            <dt className="fact__label">{t('detail.stage')}</dt>
             <dd className="fact__value">
               {stageName ?? <span className="mono">{data.stageId}</span>}
             </dd>
           </div>
           <div className="fact">
-            <dt className="fact__label">Competition</dt>
+            <dt className="fact__label">{t('detail.competition')}</dt>
             <dd className="fact__value">
               <span className="mono">{data.competitionId}</span>
             </dd>
@@ -330,7 +353,9 @@ function MatchDetailView({
           {data.fixtureId && (
             <div className="fact">
               <dt className="fact__label">
-                Fixture{data.legIndex != null ? ` · leg ${data.legIndex}` : ''}
+                {data.legIndex != null
+                  ? t('detail.fixtureLeg', { leg: data.legIndex })
+                  : t('detail.fixture')}
               </dt>
               <dd className="fact__value">
                 <span className="mono">{data.fixtureId}</span>
@@ -339,15 +364,17 @@ function MatchDetailView({
           )}
           {sf1a && (
             <div className="fact">
-              <dt className="fact__label">Slot SF1-A</dt>
+              <dt className="fact__label">{t('detail.slotSf1a')}</dt>
               <dd className="fact__value">
-                {sf1a.entryId ? (sf1a.displayName ?? sf1a.entryId) : 'empty'}
+                {sf1a.entryId
+                  ? (sf1a.displayName ?? sf1a.entryId)
+                  : t('detail.empty')}
               </dd>
             </div>
           )}
         </dl>
         <p className="caption">
-          Match <span className="id-chip">{data.matchId}</span>
+          {t('detail.matchId')} <span className="id-chip">{data.matchId}</span>
         </p>
       </section>
     </div>
@@ -369,6 +396,7 @@ function FinishMatchForm({
   pending: boolean
   onSubmit: (request: FinishMatchRequest) => void
 }) {
+  const { t } = useTranslation('matches')
   const [homeGoals, setHomeGoals] = useState('0')
   const [awayGoals, setAwayGoals] = useState('0')
   const [type, setType] = useState<ResultType>('Played')
@@ -389,7 +417,7 @@ function FinishMatchForm({
       home < 0 ||
       away < 0
     ) {
-      setLocalError('Goals must be non-negative whole numbers.')
+      setLocalError(t('detail.errorGoals'))
       return
     }
 
@@ -399,7 +427,7 @@ function FinishMatchForm({
     const hasAwayShoot = awayShoot.length > 0
 
     if (hasHomeShoot !== hasAwayShoot) {
-      setLocalError('Provide both shootout values, or leave both empty.')
+      setLocalError(t('detail.errorShootoutPair'))
       return
     }
 
@@ -415,7 +443,7 @@ function FinishMatchForm({
         sh < 0 ||
         sa < 0
       ) {
-        setLocalError('Shootout kicks must be non-negative whole numbers.')
+        setLocalError(t('detail.errorShootoutValues'))
         return
       }
       penaltyShootoutHomeGoals = sh
@@ -438,10 +466,10 @@ function FinishMatchForm({
   return (
     <form className="form form--wide" onSubmit={handleSubmit} noValidate>
       <fieldset className="fieldset" disabled={pending}>
-        <legend className="fieldset__legend">Final score</legend>
+        <legend className="fieldset__legend">{t('detail.finalScore')}</legend>
         <div className="form-row">
           <label className="field" htmlFor="homeGoals">
-            {homeName} goals
+            {t('detail.goals', { name: homeName })}
             <input
               id="homeGoals"
               type="number"
@@ -453,7 +481,7 @@ function FinishMatchForm({
             />
           </label>
           <label className="field" htmlFor="awayGoals">
-            {awayName} goals
+            {t('detail.goals', { name: awayName })}
             <input
               id="awayGoals"
               type="number"
@@ -469,7 +497,7 @@ function FinishMatchForm({
 
       <div className="form-row">
         <label className="field" htmlFor="resultType">
-          Result type
+          {t('detail.resultType')}
           <select
             id="resultType"
             value={type}
@@ -491,17 +519,15 @@ function FinishMatchForm({
             disabled={pending}
             onChange={(e) => setExtraTimePlayed(e.target.checked)}
           />
-          Extra time played
+          {t('detail.extraTimePlayed')}
         </label>
       </div>
 
       <fieldset className="fieldset" disabled={pending}>
-        <legend className="fieldset__legend">
-          Penalty shootout (optional)
-        </legend>
+        <legend className="fieldset__legend">{t('detail.shootoutOptional')}</legend>
         <div className="form-row">
           <label className="field" htmlFor="shootoutHome">
-            {homeName} kicks
+            {t('detail.kicks', { name: homeName })}
             <input
               id="shootoutHome"
               type="number"
@@ -513,7 +539,7 @@ function FinishMatchForm({
             />
           </label>
           <label className="field" htmlFor="shootoutAway">
-            {awayName} kicks
+            {t('detail.kicks', { name: awayName })}
             <input
               id="shootoutAway"
               type="number"
@@ -525,7 +551,7 @@ function FinishMatchForm({
             />
           </label>
         </div>
-        <p className="field__hint">Leave both empty when there was no shootout.</p>
+        <p className="field__hint">{t('detail.shootoutHint')}</p>
       </fieldset>
 
       {localError && (
@@ -540,9 +566,13 @@ function FinishMatchForm({
           className="btn btn--primary btn--lg"
           disabled={pending}
         >
-          {pending ? <PendingLabel>Finishing…</PendingLabel> : 'Finish match'}
+          {pending ? (
+            <PendingLabel>{t('detail.finishing')}</PendingLabel>
+          ) : (
+            t('detail.finish')
+          )}
         </button>
-        <span className="caption">Records the result and closes the match.</span>
+        <span className="caption">{t('detail.finishHint')}</span>
       </div>
     </form>
   )

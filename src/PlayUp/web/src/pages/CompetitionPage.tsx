@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionOverview } from '../api'
 import { queryKeys } from '../queryKeys'
@@ -19,6 +20,7 @@ import { type CompetitionOverview } from '../types'
  */
 export function CompetitionPage() {
   const { competitionId = '' } = useParams()
+  const { t } = useTranslation('competitions')
 
   const query = useQuery({
     queryKey: queryKeys.competitions.detail(competitionId),
@@ -29,13 +31,13 @@ export function CompetitionPage() {
   return (
     <main id="main" className="page">
       <PageHeader
-        eyebrow="Competition"
-        title="Stages & entries"
+        eyebrow={t('overview.eyebrow')}
+        title={t('overview.title')}
         back={
           competitionId
             ? {
                 to: `/competitions/${competitionId}`,
-                label: 'Back to workspace',
+                label: t('overview.back'),
               }
             : undefined
         }
@@ -52,20 +54,22 @@ export function CompetitionPage() {
 }
 
 function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
+  const { t } = useTranslation('competitions')
+
   return (
     <div className="section-stack">
       <section className="card" aria-labelledby="stages-heading">
         <div className="card__head">
           <h2 className="card__title" id="stages-heading">
-            Stages
+            {t('overview.stagesHeading')}
           </h2>
           <p className="card__subtitle">
-            {data.stages.length} stage{data.stages.length === 1 ? '' : 's'}
+            {t('overview.stagesSubtitle', { count: data.stages.length })}
           </p>
         </div>
         {data.stages.length === 0 ? (
-          <EmptyState title="No stages in this competition">
-            Configure the structure from the Organisation hub to create one.
+          <EmptyState title={t('overview.stagesEmptyTitle')}>
+            {t('overview.stagesEmptyBody')}
           </EmptyState>
         ) : (
           <ul className="row-list">
@@ -91,15 +95,15 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
       <section className="card" aria-labelledby="entries-heading">
         <div className="card__head">
           <h2 className="card__title" id="entries-heading">
-            Entries
+            {t('overview.entriesHeading')}
           </h2>
           <p className="card__subtitle">
-            {data.entries.length} entr{data.entries.length === 1 ? 'y' : 'ies'}
+            {t('overview.entriesSubtitle', { count: data.entries.length })}
           </p>
         </div>
         {data.entries.length === 0 ? (
-          <EmptyState title="No entries yet">
-            Add participants from the Organisation hub.
+          <EmptyState title={t('overview.entriesEmptyTitle')}>
+            {t('overview.entriesEmptyBody')}
           </EmptyState>
         ) : (
           <ul className="row-list">
@@ -114,7 +118,7 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
       </section>
 
       <p className="caption">
-        Competition <span className="id-chip">{data.id}</span>
+        {t('overview.caption')} <span className="id-chip">{data.id}</span>
       </p>
     </div>
   )

@@ -48,14 +48,12 @@ public sealed record OrganisationParticipantsSummaryDto(
 public sealed record OrganisationEntryDto(Guid EntryId, string DisplayName, EntryStatus Status);
 
 /// <summary>Format summary (Application inference — not Domain Format aggregate).</summary>
-/// <param name="Kind">Inferred format, or null when structure empty.</param>
-/// <param name="Label">Human label.</param>
+/// <param name="Kind">Inferred format, or null when structure empty (authoritative for SPA i18n).</param>
 /// <param name="PrimaryStageId">Primary stage id when present.</param>
 /// <param name="PrimaryStageName">Primary stage name when present.</param>
 /// <param name="PrimaryStageStatus">Primary stage status when present.</param>
 public sealed record OrganisationFormatSummaryDto(
     StructureFormatKind? Kind,
-    string Label,
     Guid? PrimaryStageId,
     string? PrimaryStageName,
     StageStatus? PrimaryStageStatus);
@@ -100,8 +98,7 @@ public sealed record OrganisationStructureSummaryDto(
 /// <param name="ReadyForMatchOperation">True when Slice 4 can start (Matches attached; schedule optional).</param>
 /// <param name="ReadyForSchedulePath">Legacy Slice 2 hint: championship schedule path identifiable from structure.</param>
 /// <param name="AttachedMatchCount">Matches attached to the primary stage.</param>
-/// <param name="Blockers">Machine-readable blocker codes.</param>
-/// <param name="Hints">Human-readable hints.</param>
+/// <param name="Blockers">Machine-readable blocker codes (authoritative for SPA i18n).</param>
 public sealed record OrganisationReadinessDto(
     bool ReadyForNextSlice,
     bool ReadyForDraw,
@@ -110,5 +107,4 @@ public sealed record OrganisationReadinessDto(
     bool ReadyForMatchOperation,
     bool ReadyForSchedulePath,
     int AttachedMatchCount,
-    IReadOnlyList<string> Blockers,
-    IReadOnlyList<string> Hints);
+    IReadOnlyList<string> Blockers);

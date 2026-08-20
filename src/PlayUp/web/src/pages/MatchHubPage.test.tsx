@@ -121,10 +121,10 @@ describe('MatchHubPage', () => {
     renderMatchHub()
 
     expect(
-      await screen.findByText(/No matches attached yet/i),
+      await screen.findByText(/Aucun match/i),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/Nothing needs attention right now/i),
+      screen.getByText(/Rien à traiter pour le moment/i),
     ).toBeInTheDocument()
   })
 
@@ -138,7 +138,7 @@ describe('MatchHubPage', () => {
 
     expect(await screen.findByText(/Alpha vs Beta/i)).toBeInTheDocument()
     expect(screen.getByText('QF')).toBeInTheDocument()
-    expect(screen.getByText('En direct')).toBeInTheDocument()
+    expect(screen.getAllByText('En direct').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders Host attention items', async () => {
@@ -149,7 +149,6 @@ describe('MatchHubPage', () => {
         items: [
           {
             source: 'ProgressionPending',
-            reason: 'Progression en attente pour le fixture source.',
             severity: 'Blocking',
             targetType: 'Fixture',
             targetId: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
@@ -161,11 +160,13 @@ describe('MatchHubPage', () => {
     renderMatchHub()
 
     expect(
-      await screen.findByText(/Progression en attente/i),
-    ).toBeInTheDocument()
+      await screen.findAllByText(/Progression en attente/i),
+    ).not.toHaveLength(0)
     // Severity is a badge (13.5); source and target stay in the row meta line.
-    expect(screen.getByText('Blocking')).toBeInTheDocument()
-    expect(screen.getByText(/ProgressionPending · Fixture/i)).toBeInTheDocument()
+    expect(screen.getByText('Bloquant')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Progression en attente · Rencontre/i),
+    ).toBeInTheDocument()
   })
 
   it('shows an error when overview read fails', async () => {
@@ -200,7 +201,9 @@ describe('MatchHubPage', () => {
     renderMatchHub()
 
     await user.click(
-      await screen.findByRole('link', { name: /Back to workspace/i }),
+      await screen.findByRole('link', {
+        name: /Retour à l’espace de travail/i,
+      }),
     )
 
     expect(screen.getByText('Workspace route')).toBeInTheDocument()

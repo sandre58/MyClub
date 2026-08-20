@@ -5,9 +5,19 @@ import {
   FALLBACK_LOCALE,
   I18N_NAMESPACES,
 } from './config'
+import actionsFr from './locales/fr/actions.json'
+import cockpitFr from './locales/fr/cockpit.json'
 import commonFr from './locales/fr/common.json'
+import competitionsFr from './locales/fr/competitions.json'
+import drawFr from './locales/fr/draw.json'
 import enumsFr from './locales/fr/enums.json'
+import errorsFr from './locales/fr/errors.json'
+import homeFr from './locales/fr/home.json'
+import matchesFr from './locales/fr/matches.json'
+import organisationFr from './locales/fr/organisation.json'
 import shellFr from './locales/fr/shell.json'
+import stageFr from './locales/fr/stage.json'
+import workspaceFr from './locales/fr/workspace.json'
 
 function syncDocumentLang(locale: string) {
   if (typeof document !== 'undefined') {
@@ -25,6 +35,16 @@ void i18n.use(initReactI18next).init({
       common: commonFr,
       shell: shellFr,
       enums: enumsFr,
+      errors: errorsFr,
+      actions: actionsFr,
+      cockpit: cockpitFr,
+      workspace: workspaceFr,
+      matches: matchesFr,
+      draw: drawFr,
+      organisation: organisationFr,
+      stage: stageFr,
+      home: homeFr,
+      competitions: competitionsFr,
     },
   },
   interpolation: {

@@ -9,6 +9,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <summary>
 /// Explains why a competition is not sportively complete (Application/Read — not Domain).
 /// </summary>
+/// <remarks>
+/// Organizer copy lives in the SPA i18n layer keyed by <see cref="Code"/>.
+/// </remarks>
 /// <param name="Code">Stable machine code (e.g. ScheduledMatches).</param>
-/// <param name="Message">Organizer-facing explanation.</param>
-public sealed record CompletionReasonDto(string Code, string Message);
+public sealed record CompletionReasonDto(string Code);

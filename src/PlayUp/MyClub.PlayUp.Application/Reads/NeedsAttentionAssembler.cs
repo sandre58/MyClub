@@ -72,7 +72,16 @@ public static class NeedsAttentionAssembler
         return new NeedsAttentionDto(competition.Id.Value, items);
     }
 
-    private static void CollectDrawNoSolutions(Stage stage, List<NeedsAttentionItemDto> items) => items.AddRange(from draw in stage.Draws where draw.Status != DrawStatus.Cancelled where draw.Resolution.State == DrawResolutionState.NoSolution select new NeedsAttentionItemDto(SourceDrawNoSolution, $"Le tirage '{draw.Id}' n’a pas de solution.", SeverityBlocking, "Draw", draw.Id.Value.ToString()));
+    private static void CollectDrawNoSolutions(Stage stage, List<NeedsAttentionItemDto> items) =>
+        items.AddRange(
+            from draw in stage.Draws
+            where draw.Status != DrawStatus.Cancelled
+            where draw.Resolution.State == DrawResolutionState.NoSolution
+            select new NeedsAttentionItemDto(
+                SourceDrawNoSolution,
+                SeverityBlocking,
+                "Draw",
+                draw.Id.Value.ToString()));
 
     private static void CollectQualificationAttentions(
         Stage source,
@@ -131,7 +140,6 @@ public static class NeedsAttentionAssembler
             {
                 items.Add(new NeedsAttentionItemDto(
                     SourceQualificationPending,
-                    $"Destination de qualification '{path.Destination.SlotKey}' introuvable.",
                     SeverityBlocking,
                     "Stage",
                     path.Destination.StageId.Value.ToString()));
@@ -142,7 +150,6 @@ public static class NeedsAttentionAssembler
             {
                 items.Add(new NeedsAttentionItemDto(
                     SourceQualificationPending,
-                    $"Qualification en attente pour le slot '{path.Destination.SlotKey}'.",
                     SeverityBlocking,
                     "Slot",
                     $"{destination.Id.Value}:{path.Destination.SlotKey}"));
@@ -151,7 +158,6 @@ public static class NeedsAttentionAssembler
             {
                 items.Add(new NeedsAttentionItemDto(
                     SourceQualificationConflict,
-                    $"Conflit de qualification sur le slot '{path.Destination.SlotKey}'.",
                     SeverityBlocking,
                     "Slot",
                     $"{destination.Id.Value}:{path.Destination.SlotKey}"));
@@ -225,7 +231,6 @@ public static class NeedsAttentionAssembler
                 {
                     items.Add(new NeedsAttentionItemDto(
                         SourceProgressionPending,
-                        $"Destination de progression '{instruction.SlotKey}' introuvable.",
                         SeverityBlocking,
                         "Fixture",
                         fixtureId.Value.ToString()));
@@ -236,7 +241,6 @@ public static class NeedsAttentionAssembler
                 {
                     items.Add(new NeedsAttentionItemDto(
                         SourceProgressionPending,
-                        $"Progression en attente pour le slot '{instruction.SlotKey}'.",
                         SeverityBlocking,
                         "Slot",
                         $"{destination.Id.Value}:{instruction.SlotKey}"));
@@ -245,7 +249,6 @@ public static class NeedsAttentionAssembler
                 {
                     items.Add(new NeedsAttentionItemDto(
                         SourceProgressionConflict,
-                        $"Conflit de progression sur le slot '{instruction.SlotKey}'.",
                         SeverityBlocking,
                         "Slot",
                         $"{destination.Id.Value}:{instruction.SlotKey}"));

@@ -131,7 +131,6 @@ describe('AttentionDrawer', () => {
       items: [
         {
           source: 'ProgressionPending',
-          reason: 'Progression en attente',
           severity: 'Blocking',
           targetType: 'Stage',
           targetId: stageId,
@@ -185,7 +184,6 @@ describe('AttentionDrawer', () => {
       items: [
         {
           source: 'StageReady',
-          reason: 'Stage needs preparation',
           severity: 'Warning',
           targetType: 'Stage',
           targetId: stageId,
@@ -199,7 +197,7 @@ describe('AttentionDrawer', () => {
     await user.click(
       await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
-    await user.click(await screen.findByRole('link', { name: /Stage needs preparation/i }))
+    await user.click(await screen.findByRole('link', { name: /Phase prête/i }))
 
     expect(await screen.findByText('Stage page')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -256,7 +254,6 @@ describe('AttentionDrawer', () => {
       items: [
         {
           source: 'DrawPending',
-          reason: 'Draw pending',
           severity: 'Warning',
           targetType: 'Stage',
           targetId: stageId,
@@ -271,7 +268,7 @@ describe('AttentionDrawer', () => {
       await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
 
-    expect(await screen.findByText('Draw pending')).toBeInTheDocument()
+    expect(await screen.findByText('Tirage en attente')).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'À traiter' })).toHaveTextContent(
       'Coupe U18',
     )

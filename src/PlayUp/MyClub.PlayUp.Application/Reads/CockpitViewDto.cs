@@ -15,12 +15,13 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <remarks>
 /// One projection among several Read Surfaces (R22). Does not replace workspace / organisation / attention endpoints.
 /// Available actions are opportunities based on known state (R19) — not execution guarantees.
+/// Organizer-facing copy lives in the SPA i18n layer (codes + facts only on the wire).
 /// </remarks>
 /// <param name="CompetitionId">Competition identity.</param>
 /// <param name="Name">Display name.</param>
 /// <param name="Status">Official Domain lifecycle status (distinct from situations).</param>
 /// <param name="CompletionMode">Completion mode when Completed/Archived.</param>
-/// <param name="CycleReading">Minimal cycle interpretation for pilotage (not UX copy).</param>
+/// <param name="CycleReading">Minimal cycle interpretation for pilotage (machine codes only).</param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, upcoming matches.</param>
 /// <param name="Situations">Derived pilotage situations (not persisted alerts).</param>
@@ -44,10 +45,9 @@ public sealed record CockpitViewDto(
     CockpitClosureHintDto ClosureHint,
     IReadOnlyList<CockpitNavigationHintDto> NavigationHints);
 
-/// <summary>Minimal cycle reading (machine codes — UX labels remain OPEN).</summary>
+/// <summary>Minimal cycle reading (machine codes — UX labels in SPA i18n).</summary>
 /// <param name="Code">Construction | InProgress | Completed | Archived.</param>
-/// <param name="Note">Optional clarifying note (e.g. suspended interruption).</param>
-public sealed record CockpitCycleReadingDto(string Code, string? Note);
+public sealed record CockpitCycleReadingDto(string Code);
 
 /// <summary>Four construction dimensions (R2).</summary>
 public sealed record CockpitConstructionDimensionsDto(
@@ -56,18 +56,15 @@ public sealed record CockpitConstructionDimensionsDto(
     CockpitRegulationDimensionDto Regulation,
     CockpitDimensionDto Matches);
 
-/// <summary>Fact summary + suggested prominence.</summary>
-/// <param name="Summary">Short factual summary.</param>
+/// <summary>Prominence + machine-readable facts (no organizer prose).</summary>
 /// <param name="Prominence">Present | Condensed | Dominant | Absent.</param>
-/// <param name="Facts">Optional machine-readable facts.</param>
+/// <param name="Facts">Optional machine-readable facts for SPA templates.</param>
 public sealed record CockpitDimensionDto(
-    string Summary,
     string Prominence,
     IReadOnlyDictionary<string, string> Facts);
 
 /// <summary>Regulation dimension with factual summary only (no satisfaction claim).</summary>
 public sealed record CockpitRegulationDimensionDto(
-    string Summary,
     string Prominence,
     OrganisationRegulationSummaryDto Facts);
 
@@ -108,45 +105,45 @@ public sealed record CockpitUpcomingMatchDto(
     string HomeDisplayName,
     string AwayDisplayName);
 
-/// <summary>Derived situation unit (R8–R9).</summary>
+/// <summary>Derived situation unit (R8–R9) — codes + targets; copy in SPA i18n.</summary>
 /// <param name="Source">Stable source kind.</param>
-/// <param name="Reason">Organizer-facing explanation.</param>
 /// <param name="Nature">Blocking | Informational (minimal V1 — richer natures OPEN).</param>
 /// <param name="TargetType">Optional target kind.</param>
 /// <param name="TargetId">Optional target identity.</param>
 /// <param name="MatchId">Resolved match when Fixture target maps to an attachment.</param>
 /// <param name="ActionCode">Optional related semantic action code.</param>
+/// <param name="Params">Optional structured params for SPA templates (e.g. slotKey, stageName).</param>
 public sealed record CockpitSituationDto(
     string Source,
-    string Reason,
     string Nature,
     string? TargetType,
     string? TargetId,
     Guid? MatchId,
-    string? ActionCode);
+    string? ActionCode,
+    IReadOnlyDictionary<string, string> Params);
 
 /// <summary>Attention view derived from situations (not a parallel list).</summary>
 public sealed record CockpitAttentionSummaryDto(int Count, IReadOnlyList<CockpitSituationDto> Items);
 
-/// <summary>Semantic action / transition opportunity (R6, R19).</summary>
+/// <summary>Semantic action / transition opportunity (R6, R19) — label via SPA i18n.</summary>
 /// <param name="Code">Stable machine code.</param>
-/// <param name="Label">Organizer-facing label.</param>
 /// <param name="Guaranteed">Always false — Domain/Application remain authoritative.</param>
 /// <param name="StageId">Optional stage context.</param>
 /// <param name="DrawId">Optional draw context.</param>
 /// <param name="MatchId">Optional match context.</param>
 /// <param name="FixtureId">Optional fixture context.</param>
+/// <param name="Params">Optional structured params for SPA templates (e.g. stageName).</param>
 public sealed record CockpitActionDto(
     string Code,
-    string Label,
     bool Guaranteed,
     Guid? StageId = null,
     Guid? DrawId = null,
     Guid? MatchId = null,
-    Guid? FixtureId = null);
+    Guid? FixtureId = null,
+    IReadOnlyDictionary<string, string>? Params = null);
 
-/// <summary>Natural progression hint (R18) — guide without prescribing.</summary>
-public sealed record CockpitNaturalProgressionDto(string Code, string Label);
+/// <summary>Natural progression hint (R18) — guide without prescribing; label via SPA i18n.</summary>
+public sealed record CockpitNaturalProgressionDto(string Code);
 
 /// <summary>Closure synthesis — distinct from Attention (Completion blockers ≠ À traiter).</summary>
 public sealed record CockpitClosureHintDto(
