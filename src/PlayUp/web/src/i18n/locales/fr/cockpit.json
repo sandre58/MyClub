@@ -102,6 +102,13 @@
       "CompleteCompetition": "La clôture normale de la compétition est envisageable."
     }
   },
+  "materializeFollowUp": {
+    "heading": "Matchs matérialisés",
+    "created": "{{created}} match(s) créé(s) · {{total}} attaché(s).",
+    "alreadyComplete": "Les matchs étaient déjà matérialisés ({{count}} attaché(s)).",
+    "openMatches": "Voir les matchs",
+    "dismiss": "Fermer"
+  },
   "actions": {
     "heading": "Actions disponibles",
     "secondaryHeading": "Autres capacités",

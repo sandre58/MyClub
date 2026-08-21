@@ -444,4 +444,125 @@ describe('OrganisationPage', () => {
       screen.queryByRole('button', { name: 'Configurer la structure' }),
     ).not.toBeInTheDocument()
   })
+
+  it('shows materialize readiness and Cockpit CTA for a ready Championship', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        structure: {
+          groupCount: 0,
+          roundCount: 0,
+          matchdayCount: 1,
+          slotCount: 0,
+          hasDrawRules: false,
+          numberOfPots: null,
+        },
+        participants: {
+          activeCount: 2,
+          occupyingCount: 2,
+          entries: [
+            { entryId, displayName: 'Alpha', status: 'Active' },
+            {
+              entryId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+              displayName: 'Beta',
+              status: 'Active',
+            },
+          ],
+        },
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: false,
+          readyForMaterialization: true,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: true,
+          attachedMatchCount: 0,
+          blockers: [],
+        },
+      }),
+    )
+
+    renderOrganisationPage()
+
+    expect(
+      await screen.findByText(
+        /La compétition est prête à matérialiser les matchs/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Aller au Cockpit pour matérialiser/i }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}`)
+    expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument()
+  })
+
+  it('shows blockers and hides Cockpit CTA when not ready to materialize', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderOrganisationPage()
+
+    expect(
+      await screen.findByText(
+        /n’est pas encore prête à matérialiser les matchs/i,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', {
+        name: /Aller au Cockpit pour matérialiser/i,
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows draw readiness for Groups but not as Championship next step', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          primaryStageName: 'Groups',
+          primaryStageStatus: 'Draft',
+        },
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: true,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: [],
+        },
+      }),
+    )
+
+    renderOrganisationPage()
+
+    expect(await screen.findByText(/Prêt pour le tirage/i)).toBeInTheDocument()
+  })
+
+  it('invalidates cockpit query after adding an entry', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    const { queryClient } = renderOrganisationPage()
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    await user.type(
+      await screen.findByPlaceholderText(/Alpha FC/i),
+      'Beta',
+    )
+    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: ['competitions', competitionId, 'cockpit'],
+        }),
+      )
+    })
+  })
 })

@@ -96,6 +96,7 @@ export function CompetitionCockpitPage() {
 
 function CockpitViewBody({ data }: { data: CockpitView }) {
   const { t } = useTranslation('cockpit')
+  const actionRunner = useCockpitActionRunner(data)
   const situationActionCodes = useMemo(() => {
     const codes = new Set<string>()
     for (const situation of data.situations) {
@@ -119,8 +120,6 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
     }
     return base
   }
-
-  const actionRunner = useCockpitActionRunner(data)
 
   const renderedKeys = useMemo(() => {
     const keys = new Set<string>()
@@ -183,6 +182,14 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
 
       <NaturalProgressionSection data={data} actionRunner={actionRunner} />
 
+      {actionRunner.materializeFollowUp && (
+        <MaterializeFollowUpBanner
+          competitionId={data.competitionId}
+          followUp={actionRunner.materializeFollowUp}
+          onDismiss={actionRunner.clearMaterializeFollowUp}
+        />
+      )}
+
       <ConstructionDimensionsSection
         data={data}
         slots={slots}
@@ -224,10 +231,24 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
 
 type ActionRunner = ReturnType<typeof useCockpitActionRunner>
 
+type MaterializeFollowUp = {
+  createdCount: number
+  attachedCount: number
+  alreadyComplete: boolean
+}
+
+type MaterializeResult = {
+  createdCount: number
+  attachedMatchIds: string[]
+  alreadyComplete: boolean
+}
+
 function useCockpitActionRunner(data: CockpitView) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeKey, setActiveKey] = useState<string | null>(null)
+  const [materializeFollowUp, setMaterializeFollowUp] =
+    useState<MaterializeFollowUp | null>(null)
 
   const mutation = useMutation({
     mutationFn: async (action: CockpitAction) => {
@@ -237,7 +258,7 @@ function useCockpitActionRunner(data: CockpitView) {
       }
       return intent.run()
     },
-    onSuccess: async () => {
+    onSuccess: async (result, action) => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.cockpit(data.competitionId),
       })
@@ -247,6 +268,31 @@ function useCockpitActionRunner(data: CockpitView) {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.workspace(data.competitionId),
       })
+
+      if (action.code === 'MaterializeMatches') {
+        const materialize = result as MaterializeResult
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.competitions.detail(data.competitionId),
+        })
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.competitions.organisation(data.competitionId),
+        })
+        if (action.stageId) {
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.matches.byStage(action.stageId),
+          })
+        } else {
+          await queryClient.invalidateQueries({
+            queryKey: ['matches', 'by-stage'],
+          })
+        }
+        setMaterializeFollowUp({
+          createdCount: materialize.createdCount,
+          attachedCount: materialize.attachedMatchIds.length,
+          alreadyComplete: materialize.alreadyComplete,
+        })
+      }
+
       setActiveKey(null)
     },
     onError: () => {
@@ -266,7 +312,61 @@ function useCockpitActionRunner(data: CockpitView) {
     }
   }
 
-  return { onActionClick, mutation, activeKey }
+  return {
+    onActionClick,
+    mutation,
+    activeKey,
+    materializeFollowUp,
+    clearMaterializeFollowUp: () => setMaterializeFollowUp(null),
+  }
+}
+
+function MaterializeFollowUpBanner({
+  competitionId,
+  followUp,
+  onDismiss,
+}: {
+  competitionId: string
+  followUp: MaterializeFollowUp
+  onDismiss: () => void
+}) {
+  const { t } = useTranslation('cockpit')
+  const matchesHref = `/competitions/${competitionId}/matches`
+  const hasMatches = followUp.attachedCount > 0
+
+  return (
+    <section
+      className="card"
+      aria-labelledby="cockpit-materialize-followup"
+      role="status"
+    >
+      <div className="card__head">
+        <h2 className="card__title" id="cockpit-materialize-followup">
+          {t('materializeFollowUp.heading')}
+        </h2>
+      </div>
+      <p className="stat__value stat__value--text">
+        {followUp.alreadyComplete && followUp.createdCount === 0
+          ? t('materializeFollowUp.alreadyComplete', {
+              count: followUp.attachedCount,
+            })
+          : t('materializeFollowUp.created', {
+              created: followUp.createdCount,
+              total: followUp.attachedCount,
+            })}
+      </p>
+      {hasMatches && (
+        <p>
+          <Link className="btn btn--primary" to={matchesHref}>
+            {t('materializeFollowUp.openMatches')}
+          </Link>{' '}
+          <button type="button" className="btn" onClick={onDismiss}>
+            {t('materializeFollowUp.dismiss')}
+          </button>
+        </p>
+      )}
+    </section>
+  )
 }
 
 function CycleReadingSection({ data }: { data: CockpitView }) {

@@ -8,9 +8,14 @@
   "readiness": {
     "heading": "Préparation",
     "ready": "Prêt pour la suite",
+    "readyToMaterializeBadge": "Prête à matérialiser",
     "inProgress": "Préparation en cours",
     "readyForNextSlice": "Prêt pour la suite",
     "readyForDraw": "Prêt pour le tirage",
+    "readyForMaterialization": "La compétition est prête à matérialiser les matchs",
+    "notReadyForMaterialization": "La compétition n’est pas encore prête à matérialiser les matchs",
+    "materializeHint": "Passez au Cockpit pour matérialiser les matchs (création du calendrier sportif).",
+    "goToCockpit": "Aller au Cockpit pour matérialiser",
     "attachedMatches": "Matchs attachés",
     "blockersHeading": "Bloqueurs"
   },

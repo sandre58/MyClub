@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
   fetchCompetitionCockpit,
+  materializeMatches,
   prepareCompetition,
   prepareStage,
   startCompetition,
@@ -21,6 +22,7 @@ vi.mock('../api', async (importOriginal) => {
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
+    materializeMatches: vi.fn(),
   }
 })
 
@@ -488,5 +490,76 @@ describe('CompetitionCockpitPage', () => {
     await user.click(links[links.length - 1])
 
     expect(screen.getByText('Organisation route')).toBeInTheDocument()
+  })
+
+  it('materializes matches then offers Voir les matchs and invalidates match lists', async () => {
+    const user = userEvent.setup()
+    const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        availableActions: [
+          {
+            code: 'MaterializeMatches',
+            guaranteed: false,
+            stageId,
+            drawId: null,
+            matchId: null,
+            fixtureId: null,
+          },
+        ],
+        naturalProgression: { code: 'MaterializeMatches' },
+      }),
+    )
+    vi.mocked(materializeMatches).mockResolvedValue({
+      createdCount: 1,
+      attachedMatchIds: [matchId],
+      alreadyComplete: false,
+    })
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    })
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={[`/competitions/${competitionId}`]}>
+          <Routes>
+            <Route
+              path="/competitions/:competitionId"
+              element={<CompetitionCockpitPage />}
+            />
+            <Route
+              path="/competitions/:competitionId/matches"
+              element={<p>Match hub route</p>}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const materializeButtons = await screen.findAllByRole('button', {
+      name: /Matérialiser les matchs/i,
+    })
+    await user.click(materializeButtons[0])
+
+    await waitFor(() => {
+      expect(materializeMatches).toHaveBeenCalledWith(stageId)
+    })
+
+    expect(
+      await screen.findByRole('heading', { name: /Matchs matérialisés/i }),
+    ).toBeInTheDocument()
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ['matches', 'by-stage', stageId],
+      }),
+    )
+
+    await user.click(screen.getByRole('link', { name: /Voir les matchs/i }))
+    expect(screen.getByText('Match hub route')).toBeInTheDocument()
   })
 })

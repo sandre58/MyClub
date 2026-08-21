@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
@@ -33,6 +38,30 @@ import {
   type ReplaceRegulationRequest,
   type StructureFormatKind,
 } from '../types'
+
+/**
+ * After Organisation writes that change readiness, refresh Organisation + Cockpit.
+ * Cockpit projects Materialize from ReadyForMaterialization — must not stay stale.
+ */
+async function invalidateAfterOrganisationMutation(
+  queryClient: QueryClient,
+  competitionId: string,
+) {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.organisation(competitionId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.detail(competitionId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.workspace(competitionId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.cockpit(competitionId),
+    }),
+  ])
+}
 
 /**
  * Organisation Hub — GET /competitions/{id}/organisation + Slice 2 mutations.
@@ -77,7 +106,7 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
 
   return (
     <div className="section-stack">
-      <ReadinessSection readiness={data.readiness} />
+      <ReadinessSection data={data} />
       <ParticipantsSection
         data={data}
         canAdd={can('AddEntry')}
@@ -91,13 +120,16 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
   )
 }
 
-function ReadinessSection({
-  readiness,
-}: {
-  readiness: OrganisationView['readiness']
-}) {
+function ReadinessSection({ data }: { data: OrganisationView }) {
   const { t } = useTranslation('organisation')
-  const ready = readiness.readyForNextSlice
+  const readiness = data.readiness
+  const formatKind = data.format.kind
+  const isChampionship = formatKind === 'Championship'
+  const needsDraw = formatKind === 'Groups' || formatKind === 'Cup'
+  const readyToMaterialize = readiness.readyForMaterialization
+  const badgeReady = isChampionship
+    ? readyToMaterialize
+    : readiness.readyForNextSlice
 
   return (
     <section className="card" aria-labelledby="readiness-heading">
@@ -105,17 +137,29 @@ function ReadinessSection({
         <h2 className="card__title" id="readiness-heading">
           {t('readiness.heading')}
         </h2>
-        <span className={`status-badge status-badge--${ready ? 'ok' : 'warn'}`}>
+        <span
+          className={`status-badge status-badge--${badgeReady ? 'ok' : 'warn'}`}
+        >
           <span className="status-badge__dot" aria-hidden="true" />
-          {ready ? t('readiness.ready') : t('readiness.inProgress')}
+          {badgeReady
+            ? readyToMaterialize
+              ? t('readiness.readyToMaterializeBadge')
+              : t('readiness.ready')
+            : t('readiness.inProgress')}
         </span>
       </div>
 
       <ul className="check-list">
-        <Check ok={readiness.readyForNextSlice}>
-          {t('readiness.readyForNextSlice')}
+        <Check ok={readyToMaterialize}>
+          {readyToMaterialize
+            ? t('readiness.readyForMaterialization')
+            : t('readiness.notReadyForMaterialization')}
         </Check>
-        <Check ok={readiness.readyForDraw}>{t('readiness.readyForDraw')}</Check>
+        {needsDraw && (
+          <Check ok={readiness.readyForDraw}>
+            {t('readiness.readyForDraw')}
+          </Check>
+        )}
         <li className="check">
           <span className="check__mark" aria-hidden="true">
             ·
@@ -142,6 +186,18 @@ function ReadinessSection({
             ))}
           </ul>
         </div>
+      )}
+
+      {readyToMaterialize && (
+        <p className="stack stack--tight">
+          <span className="caption">{t('readiness.materializeHint')}</span>
+          <Link
+            className="btn btn--primary"
+            to={`/competitions/${data.competitionId}`}
+          >
+            {t('readiness.goToCockpit')}
+          </Link>
+        </p>
       )}
     </section>
   )
@@ -178,17 +234,8 @@ function ParticipantsSection({
   const [displayName, setDisplayName] = useState('')
   const competitionId = data.competitionId
 
-  const invalidateOrganisation = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.organisation(competitionId),
-    })
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.detail(competitionId),
-    })
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.workspace(competitionId),
-    })
-  }
+  const invalidateOrganisation = () =>
+    invalidateAfterOrganisationMutation(queryClient, competitionId)
 
   const addMutation = useMutation({
     mutationFn: () =>
@@ -446,12 +493,10 @@ function RegulationSection({
   const mutation = useMutation({
     mutationFn: () => replaceCompetitionRegulation(data.competitionId, form),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.organisation(data.competitionId),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.workspace(data.competitionId),
-      })
+      await invalidateAfterOrganisationMutation(
+        queryClient,
+        data.competitionId,
+      )
     },
   })
 
@@ -654,15 +699,10 @@ function StructureSection({
         bracketSize: format === 'Cup' ? bracketSize : null,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.organisation(data.competitionId),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.detail(data.competitionId),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.workspace(data.competitionId),
-      })
+      await invalidateAfterOrganisationMutation(
+        queryClient,
+        data.competitionId,
+      )
     },
   })
 
