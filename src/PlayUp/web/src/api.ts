@@ -6,6 +6,7 @@ import type {
   CompetitionOverview,
   ConfigureStructureRequest,
   ConsultationView,
+  CreateCompetitionRequest,
   FinishMatchRequest,
   MatchDetail,
   MatchSummary,
@@ -116,6 +117,16 @@ async function postNoContent(
 /** Relative URL → Vite proxy → Host GET /competitions */
 export function fetchCompetitions(): Promise<CompetitionListItem[]> {
   return getJson('/competitions')
+}
+
+/**
+ * POST /competitions → WorkspaceSummary (201).
+ * Host Location points at legacy /workspace; SPA navigates to Organisation.
+ */
+export function createCompetition(
+  request: CreateCompetitionRequest,
+): Promise<WorkspaceSummary> {
+  return sendJson('POST', '/competitions', request)
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/workspace */

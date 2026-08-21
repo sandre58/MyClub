@@ -72,6 +72,14 @@ export interface CompetitionListItem {
   status: CompetitionStatus
 }
 
+/** POST /competitions — create Draft competition (name only). */
+export interface CreateCompetitionRequest {
+  name: string
+}
+
+/** Domain CompetitionName.MaxLength — client hint; Host remains authority. */
+export const COMPETITION_NAME_MAX_LENGTH = 100
+
 /**
  * GET /competitions/{id}/workspace — Accueil / competition landing.
  * nextActionCode and attention/completion fields are Read facts from the Host.

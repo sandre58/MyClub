@@ -5,7 +5,16 @@
   "lede_one": "{{count}} compétition sur cet hôte.",
   "lede_other": "{{count}} compétitions sur cet hôte.",
   "emptyTitle": "Aucune compétition",
-  "emptyBody": "Créez une compétition sur l’hôte, puis actualisez cette liste.",
+  "emptyBody": "Créez votre première compétition pour commencer l’organisation.",
+  "create": {
+    "cta": "Créer une compétition",
+    "heading": "Nouvelle compétition",
+    "subtitle": "Un nom suffit. Vous configurerez équipes et format ensuite.",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Ex. Tournoi printemps",
+    "submit": "Créer",
+    "submitting": "Création…"
+  },
   "overview": {
     "eyebrow": "Compétition",
     "title": "Phases & inscrits",

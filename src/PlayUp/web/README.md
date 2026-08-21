@@ -6,9 +6,9 @@ Independent Vite + React + TypeScript app under `src/PlayUp/web/`. **Not** a .NE
 
 1. PostgreSQL with Play’up schema (local compose).
 2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`).
-3. A competition in the database (KEEP SEED) that includes at least one stage with an attached match.
+3. Host reachable (create competitions from the SPA list — Phase 19.1). DevSeed remains optional for deep-link / ops demos.
 
-### Seed a competition (local)
+### Seed a competition (optional, local)
 
 Requires Host User Secrets `ConnectionStrings:PlayUp` (same as running the Host — see [local persistence](../../../docs/guides/local-persistence.md)).
 
@@ -16,7 +16,7 @@ Requires Host User Secrets `ConnectionStrings:PlayUp` (same as running the Host 
 dotnet run --project ../MyClub.PlayUp.DevSeed
 ```
 
-Copy the printed `competitionId` into `.env.local` as `VITE_SEED_COMPETITION_ID`. The seed also prints `stageId` and `matchId` for deep-link checks.
+Copy the printed `competitionId` into `.env.local` as `VITE_SEED_COMPETITION_ID` for a Home shortcut. The seed also prints `stageId` and `matchId` for deep-link checks.
 
 ## Dev
 

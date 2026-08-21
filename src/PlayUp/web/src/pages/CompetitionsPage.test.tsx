@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, fetchCompetitions } from '../api'
-import type { CompetitionListItem } from '../types'
+import { ApiError, createCompetition, fetchCompetitions } from '../api'
+import type { CompetitionListItem, WorkspaceSummary } from '../types'
 import { CompetitionsPage } from './CompetitionsPage'
 
 vi.mock('../api', async (importOriginal) => {
@@ -12,6 +12,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchCompetitions: vi.fn(),
+    createCompetition: vi.fn(),
   }
 })
 
@@ -24,6 +25,22 @@ function listItem(
     id: competitionId,
     name: 'Spring Cup',
     status: 'Draft',
+    ...overrides,
+  }
+}
+
+function createdSummary(
+  overrides: Partial<WorkspaceSummary> = {},
+): WorkspaceSummary {
+  return {
+    id: competitionId,
+    name: 'New Cup',
+    status: 'Draft',
+    nextActionCode: 'ContinueOrganisation',
+    attentionCount: 0,
+    completionMode: null,
+    canCompleteNormally: false,
+    completionBlockers: null,
     ...overrides,
   }
 }
@@ -43,7 +60,15 @@ function renderCompetitionsPage() {
           <Route path="/competitions" element={<CompetitionsPage />} />
           <Route
             path="/competitions/:competitionId"
-            element={<p>Workspace route</p>}
+            element={<p>Cockpit route</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/organisation"
+            element={<p>Organisation route</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/overview"
+            element={<p>Overview route</p>}
           />
         </Routes>
       </MemoryRouter>
@@ -64,7 +89,7 @@ describe('CompetitionsPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
-  it('shows an empty state when the Host returns no competitions', async () => {
+  it('shows an empty state with create CTA when the Host returns no competitions', async () => {
     vi.mocked(fetchCompetitions).mockResolvedValue([])
 
     renderCompetitionsPage()
@@ -72,6 +97,10 @@ describe('CompetitionsPage', () => {
     expect(
       await screen.findByText(/Aucune compétition/i),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Créer une compétition/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Nom$/i)).toBeInTheDocument()
   })
 
   it('renders competition rows with string status labels', async () => {
@@ -92,9 +121,12 @@ describe('CompetitionsPage', () => {
     expect(screen.getByText('En cours')).toBeInTheDocument()
     expect(screen.getByText('Autumn League')).toBeInTheDocument()
     expect(screen.getByText('Prêt')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /Nouvelle compétition/i }),
+    ).toBeInTheDocument()
   })
 
-  it('navigates to the competition workspace on row click', async () => {
+  it('navigates to the competition cockpit on row click', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchCompetitions).mockResolvedValue([listItem()])
 
@@ -104,7 +136,7 @@ describe('CompetitionsPage', () => {
       await screen.findByRole('link', { name: /Spring Cup/i }),
     )
 
-    expect(screen.getByText('Workspace route')).toBeInTheDocument()
+    expect(screen.getByText('Cockpit route')).toBeInTheDocument()
   })
 
   it('shows an error when the list read fails', async () => {
@@ -117,5 +149,77 @@ describe('CompetitionsPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Host unavailable (500)',
     )
+  })
+
+  it('creates a competition and navigates to Organisation', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    vi.mocked(createCompetition).mockResolvedValue(
+      createdSummary({ name: 'Tournoi printemps' }),
+    )
+
+    renderCompetitionsPage()
+
+    const nameInput = await screen.findByLabelText(/^Nom$/i)
+    await user.type(nameInput, 'Tournoi printemps')
+    await user.click(screen.getByRole('button', { name: /^Créer$/i }))
+
+    await waitFor(() => {
+      expect(createCompetition).toHaveBeenCalledWith({
+        name: 'Tournoi printemps',
+      })
+    })
+
+    expect(await screen.findByText('Organisation route')).toBeInTheDocument()
+    expect(screen.queryByText('Overview route')).not.toBeInTheDocument()
+    expect(screen.queryByText('Cockpit route')).not.toBeInTheDocument()
+  })
+
+  it('shows API error and does not navigate on create failure', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    vi.mocked(createCompetition).mockRejectedValue(
+      new ApiError(400, 'Competition name cannot be empty.'),
+    )
+
+    renderCompetitionsPage()
+
+    await user.type(await screen.findByLabelText(/^Nom$/i), 'X')
+    await user.click(screen.getByRole('button', { name: /^Créer$/i }))
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Organisation route')).not.toBeInTheDocument()
+  })
+
+  it('disables submit while create is pending (no double submit)', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    let resolveCreate: (value: WorkspaceSummary) => void = () => {}
+    vi.mocked(createCompetition).mockReturnValue(
+      new Promise((resolve) => {
+        resolveCreate = resolve
+      }),
+    )
+
+    renderCompetitionsPage()
+
+    await user.type(await screen.findByLabelText(/^Nom$/i), 'Pending Cup')
+    await user.click(screen.getByRole('button', { name: /^Créer$/i }))
+
+    expect(
+      await screen.findByRole('button', { name: /Création/i }),
+    ).toBeDisabled()
+    expect(createCompetition).toHaveBeenCalledTimes(1)
+
+    resolveCreate(createdSummary({ name: 'Pending Cup' }))
+    expect(await screen.findByText('Organisation route')).toBeInTheDocument()
+  })
+
+  it('keeps submit disabled when the name is blank', async () => {
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+
+    renderCompetitionsPage()
+
+    expect(await screen.findByRole('button', { name: /^Créer$/i })).toBeDisabled()
   })
 })
