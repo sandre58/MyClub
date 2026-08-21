@@ -43,32 +43,26 @@ public static class MatchReadAssembler
                 .Select(match =>
                 {
                     ResolveCalendarPlacement(stage, match.Id, out var scheduledAt, out var resourceId);
+                    placement.TryGetValue(match.Id, out var info);
 
-                    return !placement.TryGetValue(match.Id, out var info)
-                        ? new MatchSummaryDto(
-                            match.Id.Value,
-                            match.StageId.Value,
-                            match.Status,
-                            new EntrySideDto(match.HomeEntryId.Value,
-                                EntryDisplayNames.Resolve(names, match.HomeEntryId)),
-                            new EntrySideDto(match.AwayEntryId.Value,
-                                EntryDisplayNames.Resolve(names, match.AwayEntryId)),
-                            MapScore(match.Result),
-                            FixtureId: null,
-                            RoundId: null,
-                            scheduledAt,
-                            resourceId)
-                        : new MatchSummaryDto(
+                    return new MatchSummaryDto(
                         match.Id.Value,
                         match.StageId.Value,
                         match.Status,
-                        new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
-                        new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
+                        new EntrySideDto(
+                            match.HomeEntryId.Value,
+                            EntryDisplayNames.Resolve(names, match.HomeEntryId)),
+                        new EntrySideDto(
+                            match.AwayEntryId.Value,
+                            EntryDisplayNames.Resolve(names, match.AwayEntryId)),
                         MapScore(match.Result),
-                        info.FixtureId.Value,
+                        info.FixtureId?.Value,
                         info.RoundId?.Value,
                         scheduledAt,
-                        resourceId);
+                        resourceId,
+                        info.MatchdayNumber,
+                        info.RoundName,
+                        match.Result?.Type);
                 })
         ];
     }
@@ -137,6 +131,24 @@ public static class MatchReadAssembler
             resourceId);
     }
 
+    /// <summary>
+    /// Builds Consultation-compatible context label from projected summary fields.
+    /// Matchday labels stay FR for wire stability of <see cref="ConsultationResultDto"/>.
+    /// </summary>
+    public static string? ConsultationContextLabel(MatchSummaryDto summary)
+    {
+        ArgumentNullException.ThrowIfNull(summary);
+
+        if (summary.RoundName is { Length: > 0 })
+        {
+            return summary.RoundName;
+        }
+
+        return summary.MatchdayNumber is { } number
+            ? $"Journée {number}"
+            : null;
+    }
+
     private static void ResolveCalendarPlacement(
         Stage stage,
         MatchId matchId,
@@ -190,7 +202,9 @@ public static class MatchReadAssembler
                     index[attachment.MatchId] = new FixturePlacement(
                         sequence++,
                         fixture.Id,
-                        round.Id);
+                        round.Id,
+                        MatchdayNumber: null,
+                        round.Name);
                 }
             }
         }
@@ -206,7 +220,9 @@ public static class MatchReadAssembler
                         index[attachment.MatchId] = new FixturePlacement(
                             sequence++,
                             fixture.Id,
-                            RoundId: null);
+                            RoundId: null,
+                            matchday.Number,
+                            RoundName: null);
                     }
                 }
             }
@@ -248,5 +264,10 @@ public static class MatchReadAssembler
         return null;
     }
 
-    private readonly record struct FixturePlacement(int Sequence, FixtureId FixtureId, RoundId? RoundId);
+    private readonly record struct FixturePlacement(
+        int Sequence,
+        FixtureId? FixtureId,
+        RoundId? RoundId,
+        int? MatchdayNumber,
+        string? RoundName);
 }

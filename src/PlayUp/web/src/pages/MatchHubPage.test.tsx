@@ -141,6 +141,47 @@ describe('MatchHubPage', () => {
     expect(screen.getAllByText('En direct').length).toBeGreaterThanOrEqual(1)
   })
 
+  it('shows Read context, scheduled time, score and result type without inventing values', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchMatchesByStage).mockResolvedValue([
+      matchSummary({
+        status: 'Finished',
+        score: { homeGoals: 2, awayGoals: 1 },
+        matchdayNumber: 3,
+        resultType: 'Played',
+        scheduledAt: '2026-09-01T15:00:00.000Z',
+      }),
+    ])
+
+    renderMatchHub()
+
+    expect(await screen.findByText(/Alpha vs Beta/i)).toBeInTheDocument()
+    expect(screen.getByText('Journée 3')).toBeInTheDocument()
+    expect(screen.getByText('2–1')).toBeInTheDocument()
+    expect(screen.getByText(/Joué|Played/i)).toBeInTheDocument()
+    // Score comes from the Read — no Diff / Pts reconstruction.
+    expect(screen.queryByText('Consultation')).not.toBeInTheDocument()
+  })
+
+  it('prefers roundName from the Read over matchday formatting', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchMatchesByStage).mockResolvedValue([
+      matchSummary({
+        status: 'Finished',
+        score: { homeGoals: 1, awayGoals: 0 },
+        roundName: 'Demi-finale',
+        matchdayNumber: 99,
+        resultType: 'Forfeit',
+      }),
+    ])
+
+    renderMatchHub()
+
+    expect(await screen.findByText('Demi-finale')).toBeInTheDocument()
+    expect(screen.queryByText('Journée 99')).not.toBeInTheDocument()
+    expect(screen.getByText(/Forfait|Forfeit/i)).toBeInTheDocument()
+  })
+
   it('renders Host attention items', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([])

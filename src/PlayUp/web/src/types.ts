@@ -478,6 +478,13 @@ export interface MatchSummary {
   score: MatchScore | null
   fixtureId: string | null
   roundId: string | null
+  /** Kickoff from Stage placement when scheduled. */
+  scheduledAt?: string | null
+  matchdayNumber?: number | null
+  /** Knockout round display name from the Read. */
+  roundName?: string | null
+  /** Present when Domain has a result; never inferred in React. */
+  resultType?: ResultType | null
 }
 
 export interface MatchDetail {

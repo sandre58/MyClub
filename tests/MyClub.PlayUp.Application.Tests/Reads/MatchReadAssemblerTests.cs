@@ -52,13 +52,42 @@ public sealed class MatchReadAssemblerTests
         summaries[0].Away.DisplayName.Should().Be("Away");
         summaries[0].Score.Should().Be(new MatchScoreDto(3, 1));
         summaries[0].Status.Should().Be(MatchStatus.Finished);
+        summaries[0].ResultType.Should().Be(ResultType.Played);
+        summaries[0].RoundName.Should().Be("R1");
+        summaries[0].MatchdayNumber.Should().BeNull();
         summaries[1].MatchId.Should().Be(match2.Id.Value);
         summaries[1].Score.Should().BeNull();
         summaries[1].Status.Should().Be(MatchStatus.Scheduled);
+        summaries[1].ResultType.Should().BeNull();
+        summaries[1].RoundName.Should().Be("R1");
         summaries[0].ScheduledAt.Should().BeNull();
         summaries[0].ResourceId.Should().BeNull();
         summaries[1].ScheduledAt.Should().BeNull();
         summaries[1].ResourceId.Should().BeNull();
+    }
+
+    [Fact]
+    public void AssembleSummaries_maps_matchday_number_for_championship_fixtures()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        var matchday = stage.AddMatchday(2, _clock);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Forfeit, new Score(3, 0)), _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var summaries = MatchReadAssembler.AssembleSummaries(stage, competition, [match]);
+
+        summaries.Should().ContainSingle();
+        summaries[0].MatchdayNumber.Should().Be(2);
+        summaries[0].RoundName.Should().BeNull();
+        summaries[0].RoundId.Should().BeNull();
+        summaries[0].ResultType.Should().Be(ResultType.Forfeit);
+        MatchReadAssembler.ConsultationContextLabel(summaries[0]).Should().Be("Journée 2");
     }
 
     [Fact]

@@ -52,6 +52,9 @@ public sealed class ConsultationAssemblerTests
         view.Results.Should().HaveCount(3);
         view.Results.Should().OnlyContain(result => result.Status == MatchStatus.Finished && result.Score != null);
         view.Results.Should().OnlyContain(result => result.MatchId != Guid.Empty);
+        view.Results.Should().OnlyContain(result =>
+            result.MatchdayNumber == 1 && result.ContextLabel == "Journée 1");
+        view.Results.Should().OnlyContain(result => result.ResultType == ResultType.Played);
         view.Standings.Applicable.Should().BeTrue();
         view.Standings.Tables.Should().ContainSingle(table => table.Scope == ConsultationAssembler.ScopeOverall);
         view.Standings.Tables[0].Rows.Should().HaveCount(3);

@@ -21,6 +21,9 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="RoundId">Owning round when the fixture is in a round.</param>
 /// <param name="ScheduledAt">Optional calendar start from Stage placement.</param>
 /// <param name="ResourceId">Optional scheduling resource from Stage placement.</param>
+/// <param name="MatchdayNumber">Championship/groups matchday number when attached to a matchday.</param>
+/// <param name="RoundName">Cup/knockout round display name when attached to a round.</param>
+/// <param name="ResultType">Result kind when a result exists; otherwise <see langword="null"/>.</param>
 public sealed record MatchSummaryDto(
     Guid MatchId,
     Guid StageId,
@@ -31,4 +34,7 @@ public sealed record MatchSummaryDto(
     Guid? FixtureId,
     Guid? RoundId,
     DateTimeOffset? ScheduledAt = null,
-    Guid? ResourceId = null);
+    Guid? ResourceId = null,
+    int? MatchdayNumber = null,
+    string? RoundName = null,
+    ResultType? ResultType = null);

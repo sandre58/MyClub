@@ -11,6 +11,11 @@ import {
   PageHeader,
 } from '../ui'
 import { formatScore, sideLabel, type MatchSummary } from '../types'
+import {
+  matchResultTypeLabel,
+  matchScheduledLabel,
+  matchSportingContext,
+} from './matchListMeta'
 
 export function StageMatchesPage() {
   const { stageId = '' } = useParams()
@@ -68,29 +73,42 @@ function MatchList({ matches }: { matches: MatchSummary[] }) {
 
   return (
     <ul className="row-list">
-      {matches.map((match) => (
-        <li key={match.matchId}>
-          <Link to={`/matches/${match.matchId}`} className="match-row">
-            <span className="row__main">
-              <span className="match-row__sides">
-                {sideLabel(match.home)} {t('stageList.vs')}{' '}
-                {sideLabel(match.away)}
-              </span>
-            </span>
-            <span className="match-row__aside">
-              {match.score ? (
-                <span className="match-row__score">
-                  {formatScore(match.score)}
+      {matches.map((match) => {
+        const sporting = matchSportingContext(match, t, 'stageList.matchday')
+        const when = matchScheduledLabel(match)
+        const resultKind = matchResultTypeLabel(match)
+
+        return (
+          <li key={match.matchId}>
+            <Link to={`/matches/${match.matchId}`} className="match-row">
+              <span className="row__main">
+                <span className="match-row__sides">
+                  {sideLabel(match.home)} {t('stageList.vs')}{' '}
+                  {sideLabel(match.away)}
                 </span>
-              ) : null}
-              <MatchStatusBadge status={match.status} />
-              <span className="row__chevron" aria-hidden="true">
-                →
+                {(sporting || when || resultKind) && (
+                  <span className="match-row__meta">
+                    {sporting ? <span>{sporting}</span> : null}
+                    {when ? <span>{when}</span> : null}
+                    {resultKind ? <span>{resultKind}</span> : null}
+                  </span>
+                )}
               </span>
-            </span>
-          </Link>
-        </li>
-      ))}
+              <span className="match-row__aside">
+                {match.score ? (
+                  <span className="match-row__score">
+                    {formatScore(match.score)}
+                  </span>
+                ) : null}
+                <MatchStatusBadge status={match.status} />
+                <span className="row__chevron" aria-hidden="true">
+                  →
+                </span>
+              </span>
+            </Link>
+          </li>
+        )
+      })}
     </ul>
   )
 }

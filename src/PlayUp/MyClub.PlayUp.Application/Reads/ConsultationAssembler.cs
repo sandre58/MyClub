@@ -108,8 +108,6 @@ public static class ConsultationAssembler
         {
             var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
             var summaries = MatchReadAssembler.AssembleSummaries(stage, competition, matches);
-            var matchdayByFixture = BuildMatchdayIndex(stage);
-            var roundNameById = stage.Rounds.ToDictionary(round => round.Id, round => round.Name);
 
             foreach (var summary in summaries)
             {
@@ -118,55 +116,23 @@ public static class ConsultationAssembler
                     continue;
                 }
 
-                var match = matches.First(candidate => candidate.Id.Value == summary.MatchId);
-                int? matchdayNumber = null;
-                string? contextLabel = null;
-                if (summary.FixtureId is { } fixtureGuid)
-                {
-                    var fixtureId = new FixtureId(fixtureGuid);
-                    if (matchdayByFixture.TryGetValue(fixtureId, out var number))
-                    {
-                        matchdayNumber = number;
-                        contextLabel = $"Journée {number}";
-                    }
-                    else if (summary.RoundId is { } roundGuid
-                             && roundNameById.TryGetValue(new RoundId(roundGuid), out var roundName))
-                    {
-                        contextLabel = roundName;
-                    }
-                }
-
                 results.Add(new ConsultationResultDto(
                     summary.MatchId,
                     summary.StageId,
                     summary.FixtureId,
                     summary.RoundId,
-                    matchdayNumber,
-                    contextLabel,
+                    summary.MatchdayNumber,
+                    MatchReadAssembler.ConsultationContextLabel(summary),
                     summary.Status,
                     summary.Home,
                     summary.Away,
                     summary.Score,
-                    match.Result?.Type,
+                    summary.ResultType,
                     summary.ScheduledAt));
             }
         }
 
         return results;
-    }
-
-    private static Dictionary<FixtureId, int> BuildMatchdayIndex(Stage stage)
-    {
-        var index = new Dictionary<FixtureId, int>();
-        foreach (var matchday in stage.Matchdays)
-        {
-            foreach (var fixture in matchday.Fixtures)
-            {
-                index[fixture.Id] = matchday.Number;
-            }
-        }
-
-        return index;
     }
 
     private static ConsultationStandingsSectionDto AssembleStandings(

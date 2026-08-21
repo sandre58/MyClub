@@ -25,6 +25,11 @@ import {
   type MatchSummary,
   type NeedsAttentionItem,
 } from '../types'
+import {
+  matchResultTypeLabel,
+  matchScheduledLabel,
+  matchSportingContext,
+} from './matchListMeta'
 
 /**
  * Competition Match Hub — remaining 13.4.
@@ -302,34 +307,44 @@ function MatchHubList({
                   </span>
                 </h3>
                 <ul className="row-list">
-                  {groupRows.map(({ match, stageName }) => (
-                    <li key={match.matchId}>
-                      <Link
-                        to={`/matches/${match.matchId}`}
-                        className="match-row"
-                      >
-                        <span className="row__main">
-                          <span className="match-row__sides">
-                            {sideLabel(match.home)} vs {sideLabel(match.away)}
-                          </span>
-                          <span className="match-row__meta">
-                            <span>{stageName}</span>
-                          </span>
-                        </span>
-                        <span className="match-row__aside">
-                          {match.score ? (
-                            <span className="match-row__score">
-                              {formatScore(match.score)}
+                  {groupRows.map(({ match, stageName }) => {
+                    const sporting = matchSportingContext(match, t)
+                    const when = matchScheduledLabel(match)
+                    const resultKind = matchResultTypeLabel(match)
+
+                    return (
+                      <li key={match.matchId}>
+                        <Link
+                          to={`/matches/${match.matchId}`}
+                          className="match-row"
+                        >
+                          <span className="row__main">
+                            <span className="match-row__sides">
+                              {sideLabel(match.home)} {t('list.vs')}{' '}
+                              {sideLabel(match.away)}
                             </span>
-                          ) : null}
-                          <MatchStatusBadge status={match.status} />
-                          <span className="row__chevron" aria-hidden="true">
-                            →
+                            <span className="match-row__meta">
+                              <span>{stageName}</span>
+                              {sporting ? <span>{sporting}</span> : null}
+                              {when ? <span>{when}</span> : null}
+                              {resultKind ? <span>{resultKind}</span> : null}
+                            </span>
                           </span>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                          <span className="match-row__aside">
+                            {match.score ? (
+                              <span className="match-row__score">
+                                {formatScore(match.score)}
+                              </span>
+                            ) : null}
+                            <MatchStatusBadge status={match.status} />
+                            <span className="row__chevron" aria-hidden="true">
+                              →
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             )

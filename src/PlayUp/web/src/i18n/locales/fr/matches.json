@@ -21,7 +21,9 @@
     "groupLive": "En direct",
     "groupUpcoming": "À venir",
     "groupFinished": "Terminés",
-    "groupOther": "Reportés ou annulés"
+    "groupOther": "Reportés ou annulés",
+    "matchday": "Journée {{number}}",
+    "vs": "vs"
   },
   "stageList": {
     "eyebrow": "Matchs",
@@ -30,7 +32,8 @@
     "back": "Retour à la phase",
     "emptyTitle": "Aucun match pour cette phase",
     "emptyBody": "La structure peut exister sans matchs attachés. Préparez le tirage sur la phase pour les matérialiser.",
-    "vs": "vs"
+    "vs": "vs",
+    "matchday": "Journée {{number}}"
   },
   "detail": {
     "eyebrow": "Match",
