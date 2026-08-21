@@ -21,9 +21,10 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
 /// (CreateCompetition, Organisation Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
-/// PublishDraw, ApplyDraw, StartMatch, FinishMatch, CompleteCompetition, ArchiveCompetition,
-/// ListCompetitions, GetWorkspaceSummary, GetCompetitionOverview, GetOrganisationView,
-/// GetStageOverview, ListMatchesByStage, GetMatchDetail, GetConsultation).
+/// PublishDraw, ApplyDraw, StartMatch, FinishMatch, PrepareCompetition, StartCompetition,
+/// CompleteCompetition, ArchiveCompetition, ListCompetitions, GetWorkspaceSummary,
+/// GetCompetitionOverview, GetOrganisationView, GetStageOverview, ListMatchesByStage,
+/// GetMatchDetail, GetConsultation).
 /// </summary>
 /// <remarks>
 /// Command methods load aggregates via ports, run the static use case, then commit once via <see cref="IUnitOfWork"/>.
@@ -363,6 +364,38 @@ public sealed class UseCaseExecutor(
             .ConfigureAwait(false);
 
         FinishMatch.Execute(match, result, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Prepares a competition (Draft → Ready). Domain owns preconditions.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the competition is prepared and persisted.</returns>
+    public async Task PrepareCompetitionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+        PrepareCompetition.Execute(competition, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Starts a competition (Ready → Running). Domain owns preconditions.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the competition is started and persisted.</returns>
+    public async Task StartCompetitionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+        StartCompetition.Execute(competition, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

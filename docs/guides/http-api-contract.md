@@ -143,9 +143,9 @@ Contract notes:
 - `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` in V1 (construction only; empty when Running/Suspended/Completed/Archived). Championship omits `Draw` (format never uses draw path).
 - `transitionReadiness` reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system.
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
-- Competition Prepare/Start remain Domain-only (Host OPEN) — never projected as executable actions or fake readiness.
+- Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) but **not** projected yet as Cockpit `availableActions` (Read projection = Phase 17.2). Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
-- `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start are **not** projected (Domain-only; Host exposure OPEN). Resume (Suspended) is Domain-only — not projected as an action.
+- `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start action codes are **not** projected yet (Host exists; Read projection OPEN until 17.2). Resume (Suspended) is Domain-only — not projected as an action.
 - `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only).
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 
@@ -160,6 +160,26 @@ All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **cod
 - Needs Attention: `source` / `severity` / targets (no `reason`)
 - Completion: reason `code` only (no `message`)
 - Cockpit: codes + facts only (already)
+
+### `POST /competitions/{competitionId}/prepare` → 204 No Content
+
+Competition lifecycle: Domain `Draft → Ready`. No request body.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Prepared successfully |
+| **404** | Competition not found (`Application.CompetitionNotFound`) |
+| **409** | Invalid transition / closed competition (`Competition.InvalidTransition` or `Application.CompetitionClosed`) |
+
+### `POST /competitions/{competitionId}/start` → 204 No Content
+
+Competition lifecycle: Domain `Ready → Running`. No request body.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Started successfully |
+| **404** | Competition not found (`Application.CompetitionNotFound`) |
+| **409** | Invalid transition / closed competition (`Competition.InvalidTransition` or `Application.CompetitionClosed`) |
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 

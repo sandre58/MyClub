@@ -286,6 +286,26 @@ app.MapGet(
     });
 
 app.MapPost(
+    "/competitions/{competitionId:guid}/prepare",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        await executor
+            .PrepareCompetitionAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/start",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        await executor
+            .StartCompetitionAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
+app.MapPost(
     "/competitions/{competitionId:guid}/complete",
     async (
         Guid competitionId,
