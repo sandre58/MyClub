@@ -30,25 +30,19 @@
     "regulation": {
       "title": "Règlement",
       "summary": "{{periods}}×{{duration}} min · points {{win}}/{{draw}}/{{loss}} · équipes {{min}}–{{max}}",
-      "stageHeading": "Règlement de phase",
-      "stageNone": "Aucune phase principale — règlement de phase non applicable.",
-      "stageSummary": "{{stageName}} · tirage {{draw}} · pots {{pots}} · qualification {{qualification}} · progression {{progression}} · format de confrontation {{tieFormat}}",
+      "summaryCompact": "{{min}}–{{max}} équipes · {{periods}}×{{duration}} min · {{win}}/{{draw}}/{{loss}} pts",
       "flagYes": "oui",
       "flagNo": "non",
       "potsNone": "—",
-      "mutable": "Modifiable via Organisation (brouillon / prêt).",
-      "immutable": "Non modifiable dans l’état actuel (hors standing de phase démarrée).",
-      "readinessHeading": "Préparation relative aux transitions",
-      "readinessEmpty": "Aucune readiness de règlement pour ce cycle (focus construction).",
+      "allReady": "Configuration compatible avec les prochaines transitions de construction.",
       "ready": "Prêt",
       "notReady": "Pas prêt",
-      "blockersHeading": "Bloqueurs",
       "transitions": {
         "Draw": "Tirage",
         "MaterializeMatches": "Matérialisation des matchs"
       },
       "readinessReady": "Le règlement et la structure permettent d’envisager {{transition}}.",
-      "readinessNotReady": "Pour envisager {{transition}}, des conditions restent à lever."
+      "readinessNotReady": "Pour envisager {{transition}}, des conditions restent à lever — détail dans Organisation."
     },
     "matches": {
       "title": "Matchs",
@@ -92,14 +86,25 @@
     "heading": "À traiter",
     "count": "{{count}} situation(s)",
     "empty": "Rien à traiter pour le moment",
-    "hint": "Même source métier que le drawer shell."
+    "hint": "Même source métier que le drawer shell.",
+    "triageHint": "{{count}} situation(s) à traiter — ouvrir le panneau À traiter dans l’en-tête."
   },
   "progression": {
     "heading": "Progression naturelle",
-    "none": "Aucune progression suggérée — situation normale"
+    "none": "Aucune progression suggérée — situation normale",
+    "hint": "Orientation proposée par le Read à partir de l’état connu.",
+    "codes": {
+      "ContinueOrganisation": "Continuer la préparation dans Organisation (équipes, structure, règlement).",
+      "OpenMatches": "Suivre les matchs et situations opérationnelles dans le hub matchs.",
+      "OpenConsultation": "Consulter résultats, classements et structure.",
+      "MaterializeMatches": "Matérialiser les matchs — prochaine étape naturelle.",
+      "PublishDraw": "Publier le tirage — prochaine étape naturelle.",
+      "CompleteCompetition": "La clôture normale de la compétition est envisageable."
+    }
   },
   "actions": {
     "heading": "Actions disponibles",
+    "secondaryHeading": "Autres capacités",
     "empty": "Aucune action disponible pour le moment",
     "busy": "Exécution…",
     "openSpace": "Continuer dans l’espace métier"
@@ -108,6 +113,7 @@
     "heading": "Clôture",
     "ready": "Clôture normale possible",
     "notReady": "Clôture normale impossible pour le moment",
+    "notRelevant": "Pas le sujet du moment — la clôture n’est pas pertinente dans cet état.",
     "blockersHeading": "Bloqueurs de clôture",
     "noBlockers": "Aucun bloqueur de clôture"
   },

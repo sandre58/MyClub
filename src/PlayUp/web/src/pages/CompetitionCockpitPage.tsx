@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchCompetitionCockpit } from '../api'
@@ -34,10 +34,28 @@ import {
   resolveCockpitActionIntent,
 } from './cockpitActions'
 import { situationHref } from './cockpitNavigation'
+import {
+  actionsForDraw,
+  actionsForSlot,
+  actionsForStage,
+  cardProminenceClass,
+  closurePresentation,
+  findActionByCode,
+  isProminenceCondensed,
+  isTeamAdminAction,
+  operationalBlocks,
+  orderSituationsForDisplay,
+  primaryTeamActions,
+  secondaryActions,
+  shouldShowOperationalSection,
+  sortConstructionSlots,
+  stageWideOperationalActions,
+  type ConstructionSlot,
+} from './cockpitComposition'
 
 /**
  * Competition Cockpit — GET /competitions/{id}/cockpit.
- * Presents Read Surface facts; does not recompute readiness, blockers, or draw applied.
+ * Composes Read facts (prominence, situations, actions); does not recompute métier rules.
  */
 export function CompetitionCockpitPage() {
   const { competitionId = '' } = useParams()
@@ -77,535 +95,136 @@ export function CompetitionCockpitPage() {
 }
 
 function CockpitViewBody({ data }: { data: CockpitView }) {
-  const { t } = useTranslation(['cockpit', 'enums', 'actions'])
+  const { t } = useTranslation('cockpit')
+  const situationActionCodes = useMemo(() => {
+    const codes = new Set<string>()
+    for (const situation of data.situations) {
+      if (situation.actionCode) {
+        codes.add(situation.actionCode)
+      }
+    }
+    return codes
+  }, [data.situations])
+
+  const slotActions = (slot: Parameters<typeof actionsForSlot>[1]) => {
+    const base = actionsForSlot(data.availableActions, slot).filter(
+      (action) => !situationActionCodes.has(action.code),
+    )
+    if (slot === 'teams') {
+      return primaryTeamActions(base)
+    }
+    if (slot === 'operational') {
+      // Stage/draw row actions are attached per object — not dumped here.
+      return stageWideOperationalActions(base)
+    }
+    return base
+  }
+
+  const actionRunner = useCockpitActionRunner(data)
+
+  const renderedKeys = useMemo(() => {
+    const keys = new Set<string>()
+    const mark = (actions: CockpitAction[]) => {
+      for (const action of actions) {
+        keys.add(cockpitActionKey(action))
+      }
+    }
+    mark(slotActions('teams'))
+    mark(slotActions('structure'))
+    mark(slotActions('regulation'))
+    mark(slotActions('matches'))
+    mark(slotActions('operational'))
+    mark(slotActions('closure'))
+    for (const stage of data.operationalFocus.stages) {
+      mark(actionsForStage(data.availableActions, stage.stageId))
+    }
+    for (const draw of data.operationalFocus.draws) {
+      mark(actionsForDraw(data.availableActions, draw.stageId, draw.drawId))
+    }
+    for (const action of data.availableActions) {
+      if (isTeamAdminAction(action.code)) {
+        keys.add(cockpitActionKey(action))
+      }
+    }
+    const progression = data.naturalProgression?.code
+      ? findActionByCode(data.availableActions, data.naturalProgression.code)
+      : undefined
+    if (progression) {
+      keys.add(cockpitActionKey(progression))
+    }
+    for (const situation of data.situations) {
+      if (situation.actionCode) {
+        const match = findActionByCode(data.availableActions, situation.actionCode)
+        if (match) {
+          keys.add(cockpitActionKey(match))
+        }
+      }
+    }
+    return keys
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from data
+  }, [data, situationActionCodes])
+
+  const leftover = secondaryActions(data.availableActions, renderedKeys)
+  const slots = sortConstructionSlots(data)
+  const closureMode = closurePresentation(data)
 
   return (
     <div className="section-stack">
       <CycleReadingSection data={data} />
-      <ConstructionDimensionsSection data={data} />
-      <OperationalFocusSection data={data} />
+
       <SituationsSection
-        heading={t('cockpit:situations.heading')}
-        empty={t('cockpit:situations.empty')}
-        situations={data.situations}
+        situations={orderSituationsForDisplay(data.situations)}
         competitionId={data.competitionId}
+        availableActions={data.availableActions}
+        actionRunner={actionRunner}
       />
-      <AttentionSummarySection data={data} />
-      <NaturalProgressionSection data={data} />
-      <AvailableActionsSection data={data} />
-      <ClosureHintSection data={data} />
+
+      <AttentionTriageHint count={data.attentionSummary.count} />
+
+      <NaturalProgressionSection data={data} actionRunner={actionRunner} />
+
+      <ConstructionDimensionsSection
+        data={data}
+        slots={slots}
+        actionRunner={actionRunner}
+        actionsFor={slotActions}
+      />
+
+      {shouldShowOperationalSection(data) && (
+        <OperationalFocusSection
+          data={data}
+          actionRunner={actionRunner}
+          opsActions={slotActions('operational')}
+        />
+      )}
+
+      <ClosureHintSection
+        data={data}
+        mode={closureMode}
+        actionRunner={actionRunner}
+        closureActions={slotActions('closure')}
+      />
+
+      {leftover.length > 0 && (
+        <SecondaryActionsSection
+          actions={leftover}
+          actionRunner={actionRunner}
+          heading={t('actions.secondaryHeading')}
+        />
+      )}
+
       <SpacesNavSection competitionId={data.competitionId} />
+
+      {actionRunner.mutation.isError && (
+        <MutationError error={actionRunner.mutation.error} />
+      )}
     </div>
   )
 }
 
-function CycleReadingSection({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const code = data.cycleReading.code
+type ActionRunner = ReturnType<typeof useCockpitActionRunner>
 
-  return (
-    <section className="card" aria-labelledby="cockpit-cycle">
-      <div className="card__head">
-        <h2 className="card__title" id="cockpit-cycle">
-          {t('cycle.heading')}
-        </h2>
-        <span className="id-chip">{data.competitionId}</span>
-      </div>
-      <p className="lede">{t('cycle.lede')}</p>
-      <p className="stat__value stat__value--text">
-        {t(`cycle.${code}`, { defaultValue: code })}
-      </p>
-    </section>
-  )
-}
-
-function ConstructionDimensionsSection({ data }: { data: CockpitView }) {
-  const { t } = useTranslation(['cockpit', 'enums'])
-  const dims = data.constructionDimensions
-  const orgHref = `/competitions/${data.competitionId}/organisation`
-  const matchesHref = `/competitions/${data.competitionId}/matches`
-
-  return (
-    <section className="section-stack" aria-labelledby="cockpit-dimensions">
-      <h2 className="card__title" id="cockpit-dimensions">
-        {t('cockpit:dimensions.heading')}
-      </h2>
-      <div className="card-grid">
-        <DimensionCard
-          title={t('cockpit:dimensions.teams.title')}
-          prominence={dims.teams.prominence}
-          summary={dimensionTeamsSummary(dims.teams, t)}
-          href={orgHref}
-          hrefLabel={t('cockpit:dimensions.openOrganisation')}
-        />
-        <DimensionCard
-          title={t('cockpit:dimensions.structure.title')}
-          prominence={dims.structure.prominence}
-          summary={dimensionStructureSummary(dims.structure, t)}
-          href={orgHref}
-          hrefLabel={t('cockpit:dimensions.openOrganisation')}
-        />
-        <RegulationDimensionCard
-          regulation={dims.regulation}
-          href={orgHref}
-          hrefLabel={t('cockpit:dimensions.openOrganisation')}
-        />
-        <DimensionCard
-          title={t('cockpit:dimensions.matches.title')}
-          prominence={dims.matches.prominence}
-          summary={dimensionMatchesSummary(dims.matches, t)}
-          href={matchesHref}
-          hrefLabel={t('cockpit:dimensions.openMatches')}
-        />
-      </div>
-    </section>
-  )
-}
-
-function RegulationDimensionCard({
-  regulation,
-  href,
-  hrefLabel,
-}: {
-  regulation: CockpitView['constructionDimensions']['regulation']
-  href: string
-  hrefLabel: string
-}) {
-  const { t } = useTranslation(['cockpit', 'enums'])
-  const competition = regulation.competition
-  const stage = regulation.stage
-
-  return (
-    <article className="card">
-      <div className="card__head">
-        <h3 className="card__title">
-          {t('cockpit:dimensions.regulation.title')}
-        </h3>
-        <span className="muted">
-          {t(`cockpit:prominence.${regulation.prominence}`, {
-            defaultValue: regulation.prominence,
-          })}
-        </span>
-      </div>
-      <p>
-        {t('cockpit:dimensions.regulation.summary', {
-          periods: competition.numberOfPeriods,
-          duration: competition.durationPerPeriod,
-          win: competition.winPoints,
-          draw: competition.drawPoints,
-          loss: competition.lossPoints,
-          min: competition.minimumTeams,
-          max: competition.maximumTeams,
-        })}
-      </p>
-      <h4 className="stat__label">
-        {t('cockpit:dimensions.regulation.stageHeading')}
-      </h4>
-      {stage ? (
-        <p>
-          {t('cockpit:dimensions.regulation.stageSummary', {
-            stageName: stage.stageName,
-            draw: stage.hasDrawRules
-              ? t('cockpit:dimensions.regulation.flagYes')
-              : t('cockpit:dimensions.regulation.flagNo'),
-            pots:
-              stage.numberOfPots ??
-              t('cockpit:dimensions.regulation.potsNone'),
-            qualification: stage.hasQualificationRules
-              ? t('cockpit:dimensions.regulation.flagYes')
-              : t('cockpit:dimensions.regulation.flagNo'),
-            progression: stage.hasProgressionRules
-              ? t('cockpit:dimensions.regulation.flagYes')
-              : t('cockpit:dimensions.regulation.flagNo'),
-            tieFormat: stage.hasTieFormat
-              ? t('cockpit:dimensions.regulation.flagYes')
-              : t('cockpit:dimensions.regulation.flagNo'),
-          })}
-        </p>
-      ) : (
-        <p className="muted">{t('cockpit:dimensions.regulation.stageNone')}</p>
-      )}
-      <p className="caption">
-        {regulation.competitionRegulationMutable
-          ? t('cockpit:dimensions.regulation.mutable')
-          : t('cockpit:dimensions.regulation.immutable')}
-      </p>
-      <h4 className="stat__label">
-        {t('cockpit:dimensions.regulation.readinessHeading')}
-      </h4>
-      {regulation.transitionReadiness.length === 0 ? (
-        <p className="muted">
-          {t('cockpit:dimensions.regulation.readinessEmpty')}
-        </p>
-      ) : (
-        <ul className="stack">
-          {regulation.transitionReadiness.map((item) => {
-            const transitionLabel = t(
-              `cockpit:dimensions.regulation.transitions.${item.transition}`,
-              { defaultValue: item.transition },
-            )
-            return (
-              <li key={item.transition}>
-                <p>
-                  <strong>{transitionLabel}</strong>
-                  {' · '}
-                  {item.ready
-                    ? t('cockpit:dimensions.regulation.ready')
-                    : t('cockpit:dimensions.regulation.notReady')}
-                </p>
-                <p className="caption">
-                  {item.ready
-                    ? t('cockpit:dimensions.regulation.readinessReady', {
-                        transition: transitionLabel,
-                      })
-                    : t('cockpit:dimensions.regulation.readinessNotReady', {
-                        transition: transitionLabel,
-                      })}
-                </p>
-                {!item.ready && item.blockerCodes.length > 0 ? (
-                  <>
-                    <p className="stat__label">
-                      {t('cockpit:dimensions.regulation.blockersHeading')}
-                    </p>
-                    <ul>
-                      {item.blockerCodes.map((code) => (
-                        <li key={`${item.transition}-${code}`}>
-                          {situationTitle(code)}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-      <p>
-        <Link className="btn" to={href}>
-          {hrefLabel}
-        </Link>
-      </p>
-    </article>
-  )
-}
-
-function DimensionCard({
-  title,
-  prominence,
-  summary,
-  href,
-  hrefLabel,
-}: {
-  title: string
-  prominence: string
-  summary: string
-  href: string
-  hrefLabel: string
-}) {
-  const { t } = useTranslation('cockpit')
-
-  return (
-    <article className="card">
-      <div className="card__head">
-        <h3 className="card__title">{title}</h3>
-        <span className="muted">
-          {t(`prominence.${prominence}`, { defaultValue: prominence })}
-        </span>
-      </div>
-      <p>{summary}</p>
-      <p>
-        <Link className="btn" to={href}>
-          {hrefLabel}
-        </Link>
-      </p>
-    </article>
-  )
-}
-
-function OperationalFocusSection({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const focus = data.operationalFocus
-
-  return (
-    <section className="section-stack" aria-labelledby="cockpit-operational">
-      <h2 className="card__title" id="cockpit-operational">
-        {t('cockpit:operational.heading')}
-      </h2>
-
-      <section className="card" aria-labelledby="cockpit-stages">
-        <h3 className="card__title" id="cockpit-stages">
-          {t('cockpit:operational.stagesHeading')}
-        </h3>
-        {focus.stages.length === 0 ? (
-          <p className="muted">{t('cockpit:operational.stagesEmpty')}</p>
-        ) : (
-          <ul className="plain-list">
-            {focus.stages.map((stage) => (
-              <li key={stage.stageId} className="row">
-                <div>
-                  <strong>{stage.name}</strong>{' '}
-                  <StageStatusBadge status={stage.status} />
-                  <span className="muted"> · {stageStatusLabel(stage.status)}</span>
-                </div>
-                <Link className="btn" to={`/stages/${stage.stageId}`}>
-                  {t('cockpit:operational.openStage')}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="card" aria-labelledby="cockpit-draws">
-        <h3 className="card__title" id="cockpit-draws">
-          {t('cockpit:operational.drawsHeading')}
-        </h3>
-        {focus.draws.length === 0 ? (
-          <p className="muted">{t('cockpit:operational.drawsEmpty')}</p>
-        ) : (
-          <ul className="plain-list">
-            {focus.draws.map((draw) => (
-              <DrawFocusRow key={draw.drawId} draw={draw} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="card" aria-labelledby="cockpit-match-counts">
-        <h3 className="card__title" id="cockpit-match-counts">
-          {t('cockpit:operational.countsHeading')}
-        </h3>
-        <div className="stat-grid">
-          <CountStat
-            label={t('cockpit:operational.countLive')}
-            value={focus.matchCounts.live}
-          />
-          <CountStat
-            label={t('cockpit:operational.countScheduled')}
-            value={focus.matchCounts.scheduled}
-          />
-          <CountStat
-            label={t('cockpit:operational.countFinished')}
-            value={focus.matchCounts.finished}
-          />
-          <CountStat
-            label={t('cockpit:operational.countTotal')}
-            value={focus.matchCounts.total}
-          />
-        </div>
-      </section>
-
-      <section className="card" aria-labelledby="cockpit-upcoming">
-        <h3 className="card__title" id="cockpit-upcoming">
-          {t('cockpit:operational.upcomingHeading')}
-        </h3>
-        {focus.upcomingMatches.length === 0 ? (
-          <p className="muted">{t('cockpit:operational.upcomingEmpty')}</p>
-        ) : (
-          <ul className="plain-list">
-            {focus.upcomingMatches.map((match) => (
-              <li key={match.matchId} className="row">
-                <div>
-                  <strong>
-                    {match.homeDisplayName} – {match.awayDisplayName}
-                  </strong>
-                  {match.scheduledAt && (
-                    <p className="muted mono">{match.scheduledAt}</p>
-                  )}
-                </div>
-                <Link className="btn" to={`/matches/${match.matchId}`}>
-                  {t('cockpit:operational.openMatch')}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </section>
-  )
-}
-
-function DrawFocusRow({ draw }: { draw: CockpitDrawFocus }) {
-  const { t } = useTranslation('cockpit')
-
-  return (
-    <li className="row">
-      <div>
-        <strong>{drawResolutionKindLabel(draw.kind)}</strong>
-        <span className="muted">
-          {' '}
-          · {drawStatusLabel(draw.status)} ·{' '}
-          {drawResolutionStateLabel(draw.resolutionState)} ·{' '}
-          {draw.isApplied
-            ? t('operational.drawApplied')
-            : t('operational.drawNotApplied')}
-        </span>
-      </div>
-      <Link className="btn" to={`/stages/${draw.stageId}`}>
-        {t('operational.openStage')}
-      </Link>
-    </li>
-  )
-}
-
-function CountStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="stat">
-      <p className="stat__label">{label}</p>
-      <p className="stat__value">{value}</p>
-    </div>
-  )
-}
-
-function SituationsSection({
-  heading,
-  empty,
-  situations,
-  competitionId,
-}: {
-  heading: string
-  empty: string
-  situations: CockpitSituation[]
-  competitionId: string
-}) {
-  const { t } = useTranslation('cockpit')
-  const headingId = 'cockpit-situations'
-
-  return (
-    <section className="card" aria-labelledby={headingId}>
-      <h2 className="card__title" id={headingId}>
-        {heading}
-      </h2>
-      {situations.length === 0 ? (
-        <p className="muted">{empty}</p>
-      ) : (
-        <ul className="plain-list">
-          {situations.map((situation) => {
-            const href = situationHref(situation, competitionId)
-            const key = `${situation.source}:${situation.targetType}:${situation.targetId}`
-            return (
-              <li key={key} className="row">
-                <div>
-                  <strong>{situationTitle(situation.source, situation.params)}</strong>
-                  <p className="muted">
-                    {t(`nature.${situation.nature}`, {
-                      defaultValue: situation.nature,
-                    })}
-                    {situation.impactCode && (
-                      <>
-                        {' '}
-                        ·{' '}
-                        {t(`impact.${situation.impactCode}`, {
-                          defaultValue: situation.impactCode,
-                        })}
-                      </>
-                    )}
-                    {situation.actionable && situation.actionCode ? (
-                      <>
-                        {' '}
-                        · {actionLabel(situation.actionCode, situation.params)}
-                      </>
-                    ) : (
-                      <>
-                        {' '}
-                        · {t('situations.notActionable')}
-                      </>
-                    )}
-                  </p>
-                </div>
-                {href && (
-                  <Link className="btn" to={href}>
-                    {t('situations.open')}
-                  </Link>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-function AttentionSummarySection({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const summary = data.attentionSummary
-
-  return (
-    <section className="card" aria-labelledby="cockpit-attention">
-      <div className="card__head">
-        <h2 className="card__title" id="cockpit-attention">
-          {t('attention.heading')}
-        </h2>
-        <span className="stat__value">{summary.count}</span>
-      </div>
-      <p className="muted">{t('attention.hint')}</p>
-      {summary.items.length === 0 ? (
-        <p className="muted">{t('attention.empty')}</p>
-      ) : (
-        <ul className="plain-list">
-          {summary.items.map((situation) => {
-            const href = situationHref(situation, data.competitionId)
-            const key = `attention:${situation.source}:${situation.targetType}:${situation.targetId}`
-            return (
-              <li key={key} className="row">
-                <div>
-                  <strong>
-                    {situationTitle(situation.source, situation.params)}
-                  </strong>
-                  <p className="muted">
-                    {t(`nature.${situation.nature}`, {
-                      defaultValue: situation.nature,
-                    })}
-                    {situation.impactCode && (
-                      <>
-                        {' '}
-                        ·{' '}
-                        {t(`impact.${situation.impactCode}`, {
-                          defaultValue: situation.impactCode,
-                        })}
-                      </>
-                    )}
-                    {situation.actionable && situation.actionCode
-                      ? ` · ${actionLabel(situation.actionCode, situation.params)}`
-                      : ` · ${t('situations.notActionable')}`}
-                  </p>
-                </div>
-                {href && (
-                  <Link className="btn" to={href}>
-                    {t('situations.open')}
-                  </Link>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-function NaturalProgressionSection({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const code = data.naturalProgression?.code
-
-  return (
-    <section className="card" aria-labelledby="cockpit-progression">
-      <h2 className="card__title" id="cockpit-progression">
-        {t('progression.heading')}
-      </h2>
-      {code ? (
-        <p className="stat__value stat__value--text">{actionLabel(code)}</p>
-      ) : (
-        <p className="muted">{t('progression.none')}</p>
-      )}
-    </section>
-  )
-}
-
-function AvailableActionsSection({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
+function useCockpitActionRunner(data: CockpitView) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeKey, setActiveKey] = useState<string | null>(null)
@@ -647,54 +266,595 @@ function AvailableActionsSection({ data }: { data: CockpitView }) {
     }
   }
 
+  return { onActionClick, mutation, activeKey }
+}
+
+function CycleReadingSection({ data }: { data: CockpitView }) {
+  const { t } = useTranslation('cockpit')
+  const code = data.cycleReading.code
+
   return (
-    <section className="card" aria-labelledby="cockpit-actions">
-      <h2 className="card__title" id="cockpit-actions">
-        {t('actions.heading')}
-      </h2>
-      {data.availableActions.length === 0 ? (
-        <p className="muted">{t('actions.empty')}</p>
-      ) : (
-        <div className="button-row" aria-busy={mutation.isPending}>
-          {data.availableActions.map((action) => {
-            const key = cockpitActionKey(action)
-            const intent = resolveCockpitActionIntent(action, data)
-            const busy = mutation.isPending && activeKey === key
-            const label = actionLabel(action.code, {
-              name: action.params?.stageName,
-              ...action.params,
-            })
-
-            if (intent.kind === 'unsupported') {
-              return (
-                <span key={key} className="muted">
-                  {label}
-                </span>
-              )
-            }
-
-            return (
-              <button
-                key={key}
-                type="button"
-                className="btn btn--primary"
-                disabled={mutation.isPending}
-                onClick={() => onActionClick(action)}
-              >
-                {busy ? <PendingLabel>{t('actions.busy')}</PendingLabel> : label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-      {mutation.isError && <MutationError error={mutation.error} />}
+    <section className="card card--condensed" aria-labelledby="cockpit-cycle">
+      <div className="card__head">
+        <h2 className="card__title" id="cockpit-cycle">
+          {t('cycle.heading')}
+        </h2>
+      </div>
+      <p className="stat__value stat__value--text">
+        {t(`cycle.${code}`, { defaultValue: code })}
+      </p>
     </section>
   )
 }
 
-function ClosureHintSection({ data }: { data: CockpitView }) {
+function AttentionTriageHint({ count }: { count: number }) {
+  const { t } = useTranslation('cockpit')
+
+  if (count <= 0) {
+    return null
+  }
+
+  return (
+    <p className="caption" role="note">
+      {t('attention.triageHint', { count })}
+    </p>
+  )
+}
+
+function ConstructionDimensionsSection({
+  data,
+  slots,
+  actionRunner,
+  actionsFor,
+}: {
+  data: CockpitView
+  slots: ConstructionSlot[]
+  actionRunner: ActionRunner
+  actionsFor: (slot: Parameters<typeof actionsForSlot>[1]) => CockpitAction[]
+}) {
+  const { t } = useTranslation('cockpit')
+  const dims = data.constructionDimensions
+  const orgHref = `/competitions/${data.competitionId}/organisation`
+  const matchesHref = `/competitions/${data.competitionId}/matches`
+
+  if (slots.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="section-stack" aria-labelledby="cockpit-dimensions">
+      <h2 className="card__title" id="cockpit-dimensions">
+        {t('dimensions.heading')}
+      </h2>
+      <div className="card-grid">
+        {slots.map((slot) => {
+          if (slot === 'teams') {
+            return (
+              <DimensionCard
+                key={slot}
+                title={t('dimensions.teams.title')}
+                prominence={dims.teams.prominence}
+                summary={dimensionTeamsSummary(dims.teams, t)}
+                href={orgHref}
+                hrefLabel={t('dimensions.openOrganisation')}
+                actions={actionsFor('teams')}
+                actionRunner={actionRunner}
+              />
+            )
+          }
+          if (slot === 'structure') {
+            return (
+              <DimensionCard
+                key={slot}
+                title={t('dimensions.structure.title')}
+                prominence={dims.structure.prominence}
+                summary={dimensionStructureSummary(dims.structure, t)}
+                href={orgHref}
+                hrefLabel={t('dimensions.openOrganisation')}
+                actions={actionsFor('structure')}
+                actionRunner={actionRunner}
+              />
+            )
+          }
+          if (slot === 'regulation') {
+            return (
+              <RegulationDimensionCard
+                key={slot}
+                regulation={dims.regulation}
+                href={orgHref}
+                hrefLabel={t('dimensions.openOrganisation')}
+                actions={actionsFor('regulation')}
+                actionRunner={actionRunner}
+              />
+            )
+          }
+          return (
+            <DimensionCard
+              key={slot}
+              title={t('dimensions.matches.title')}
+              prominence={dims.matches.prominence}
+              summary={dimensionMatchesSummary(dims.matches, t)}
+              href={matchesHref}
+              hrefLabel={t('dimensions.openMatches')}
+              actions={actionsFor('matches')}
+              actionRunner={actionRunner}
+            />
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function RegulationDimensionCard({
+  regulation,
+  href,
+  hrefLabel,
+  actions,
+  actionRunner,
+}: {
+  regulation: CockpitView['constructionDimensions']['regulation']
+  href: string
+  hrefLabel: string
+  actions: CockpitAction[]
+  actionRunner: ActionRunner
+}) {
+  const { t } = useTranslation('cockpit')
+  const competition = regulation.competition
+  const condensed = isProminenceCondensed(regulation.prominence)
+  const primaryGap = regulation.transitionReadiness.find((item) => !item.ready)
+
+  return (
+    <article className={cardProminenceClass(regulation.prominence)}>
+      <div className="card__head">
+        <h3 className="card__title">{t('dimensions.regulation.title')}</h3>
+      </div>
+      <p>
+        {t('dimensions.regulation.summaryCompact', {
+          periods: competition.numberOfPeriods,
+          duration: competition.durationPerPeriod,
+          win: competition.winPoints,
+          draw: competition.drawPoints,
+          loss: competition.lossPoints,
+          min: competition.minimumTeams,
+          max: competition.maximumTeams,
+        })}
+      </p>
+      {!condensed && primaryGap && (
+        <p className="caption">
+          {t('dimensions.regulation.readinessNotReady', {
+            transition: t(
+              `dimensions.regulation.transitions.${primaryGap.transition}`,
+              { defaultValue: primaryGap.transition },
+            ),
+          })}
+        </p>
+      )}
+      {!condensed && !primaryGap && regulation.transitionReadiness.length > 0 && (
+        <p className="caption">{t('dimensions.regulation.allReady')}</p>
+      )}
+      <ActionButtons actions={actions} actionRunner={actionRunner} />
+      <p>
+        <Link className="btn" to={href}>
+          {hrefLabel}
+        </Link>
+      </p>
+    </article>
+  )
+}
+
+function DimensionCard({
+  title,
+  prominence,
+  summary,
+  href,
+  hrefLabel,
+  actions,
+  actionRunner,
+}: {
+  title: string
+  prominence: string
+  summary: string
+  href: string
+  hrefLabel: string
+  actions: CockpitAction[]
+  actionRunner: ActionRunner
+}) {
+  return (
+    <article className={cardProminenceClass(prominence)}>
+      <div className="card__head">
+        <h3 className="card__title">{title}</h3>
+      </div>
+      <p>{summary}</p>
+      <ActionButtons actions={actions} actionRunner={actionRunner} />
+      <p>
+        <Link className="btn" to={href}>
+          {hrefLabel}
+        </Link>
+      </p>
+    </article>
+  )
+}
+
+function ActionButtons({
+  actions,
+  actionRunner,
+}: {
+  actions: CockpitAction[]
+  actionRunner: ActionRunner
+}) {
+  const { t } = useTranslation('cockpit')
+  if (actions.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="button-row" aria-busy={actionRunner.mutation.isPending}>
+      {actions.map((action) => {
+        const key = cockpitActionKey(action)
+        const busy =
+          actionRunner.mutation.isPending && actionRunner.activeKey === key
+        const label = actionLabel(action.code, {
+          name: action.params?.stageName,
+          ...action.params,
+        })
+        return (
+          <button
+            key={key}
+            type="button"
+            className="btn btn--primary"
+            disabled={actionRunner.mutation.isPending}
+            onClick={() => actionRunner.onActionClick(action)}
+          >
+            {busy ? <PendingLabel>{t('actions.busy')}</PendingLabel> : label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function OperationalFocusSection({
+  data,
+  actionRunner,
+  opsActions,
+}: {
+  data: CockpitView
+  actionRunner: ActionRunner
+  opsActions: CockpitAction[]
+}) {
+  const { t } = useTranslation('cockpit')
+  const focus = data.operationalFocus
+  const blocks = operationalBlocks(data)
+
+  return (
+    <section className="section-stack" aria-labelledby="cockpit-operational">
+      <h2 className="card__title" id="cockpit-operational">
+        {t('operational.heading')}
+      </h2>
+
+      {blocks.includes('stages') && (
+        <section className="card" aria-labelledby="cockpit-stages">
+          <h3 className="card__title" id="cockpit-stages">
+            {t('operational.stagesHeading')}
+          </h3>
+          <ul className="plain-list">
+            {focus.stages.map((stage) => (
+              <li key={stage.stageId} className="row">
+                <div>
+                  <strong>{stage.name}</strong>{' '}
+                  <StageStatusBadge status={stage.status} />
+                  <span className="muted"> · {stageStatusLabel(stage.status)}</span>
+                  <ActionButtons
+                    actions={actionsForStage(data.availableActions, stage.stageId)}
+                    actionRunner={actionRunner}
+                  />
+                </div>
+                <Link className="btn" to={`/stages/${stage.stageId}`}>
+                  {t('operational.openStage')}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {blocks.includes('draws') && (
+        <section className="card" aria-labelledby="cockpit-draws">
+          <h3 className="card__title" id="cockpit-draws">
+            {t('operational.drawsHeading')}
+          </h3>
+          <ul className="plain-list">
+            {focus.draws.map((draw) => (
+              <DrawFocusRow
+                key={draw.drawId}
+                draw={draw}
+                actions={actionsForDraw(
+                  data.availableActions,
+                  draw.stageId,
+                  draw.drawId,
+                )}
+                actionRunner={actionRunner}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {blocks.includes('counts') && (
+        <section className="card" aria-labelledby="cockpit-match-counts">
+          <h3 className="card__title" id="cockpit-match-counts">
+            {t('operational.countsHeading')}
+          </h3>
+          <div className="stat-grid">
+            <CountStat label={t('operational.countLive')} value={focus.matchCounts.live} />
+            <CountStat
+              label={t('operational.countScheduled')}
+              value={focus.matchCounts.scheduled}
+            />
+            <CountStat
+              label={t('operational.countFinished')}
+              value={focus.matchCounts.finished}
+            />
+            <CountStat label={t('operational.countTotal')} value={focus.matchCounts.total} />
+          </div>
+        </section>
+      )}
+
+      {blocks.includes('upcoming') && (
+        <section className="card" aria-labelledby="cockpit-upcoming">
+          <h3 className="card__title" id="cockpit-upcoming">
+            {t('operational.upcomingHeading')}
+          </h3>
+          <ul className="plain-list">
+            {focus.upcomingMatches.map((match) => (
+              <li key={match.matchId} className="row">
+                <div>
+                  <strong>
+                    {match.homeDisplayName} – {match.awayDisplayName}
+                  </strong>
+                  {match.scheduledAt && (
+                    <p className="muted">{match.scheduledAt}</p>
+                  )}
+                </div>
+                <Link className="btn" to={`/matches/${match.matchId}`}>
+                  {t('operational.openMatch')}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {opsActions.length > 0 && (
+        <ActionButtons actions={opsActions} actionRunner={actionRunner} />
+      )}
+    </section>
+  )
+}
+
+function DrawFocusRow({
+  draw,
+  actions,
+  actionRunner,
+}: {
+  draw: CockpitDrawFocus
+  actions: CockpitAction[]
+  actionRunner: ActionRunner
+}) {
+  const { t } = useTranslation('cockpit')
+
+  return (
+    <li className="row">
+      <div>
+        <strong>{drawResolutionKindLabel(draw.kind)}</strong>
+        <p className="muted">
+          {drawStatusLabel(draw.status)} · {drawResolutionStateLabel(draw.resolutionState)} ·{' '}
+          {draw.isApplied ? t('operational.drawApplied') : t('operational.drawNotApplied')}
+        </p>
+        <ActionButtons actions={actions} actionRunner={actionRunner} />
+      </div>
+      <Link className="btn" to={`/stages/${draw.stageId}`}>
+        {t('operational.openStage')}
+      </Link>
+    </li>
+  )
+}
+
+function CountStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="stat">
+      <p className="stat__label">{label}</p>
+      <p className="stat__value">{value}</p>
+    </div>
+  )
+}
+
+function SituationsSection({
+  situations,
+  competitionId,
+  availableActions,
+  actionRunner,
+}: {
+  situations: CockpitSituation[]
+  competitionId: string
+  availableActions: CockpitAction[]
+  actionRunner: ActionRunner
+}) {
+  const { t } = useTranslation('cockpit')
+
+  return (
+    <section className="card" aria-labelledby="cockpit-situations">
+      <h2 className="card__title" id="cockpit-situations">
+        {t('situations.heading')}
+      </h2>
+      {situations.length === 0 ? (
+        <p className="muted">{t('situations.empty')}</p>
+      ) : (
+        <ul className="plain-list">
+          {situations.map((situation) => {
+            const href = situationHref(situation, competitionId)
+            const key = `${situation.source}:${situation.targetType}:${situation.targetId}`
+            const linkedAction = situation.actionCode
+              ? findActionByCode(availableActions, situation.actionCode)
+              : undefined
+            return (
+              <li key={key} className="row">
+                <div>
+                  <strong>{situationTitle(situation.source, situation.params)}</strong>
+                  <p className="muted">
+                    {t(`nature.${situation.nature}`, {
+                      defaultValue: situation.nature,
+                    })}
+                    {situation.impactCode && (
+                      <>
+                        {' '}
+                        ·{' '}
+                        {t(`impact.${situation.impactCode}`, {
+                          defaultValue: situation.impactCode,
+                        })}
+                      </>
+                    )}
+                    {!situation.actionable && (
+                      <>
+                        {' '}
+                        · {t('situations.notActionable')}
+                      </>
+                    )}
+                  </p>
+                  {linkedAction && (
+                    <ActionButtons
+                      actions={[linkedAction]}
+                      actionRunner={actionRunner}
+                    />
+                  )}
+                </div>
+                {href && !linkedAction && (
+                  <Link className="btn" to={href}>
+                    {t('situations.open')}
+                  </Link>
+                )}
+                {href && linkedAction && (
+                  <Link className="btn" to={href}>
+                    {t('situations.open')}
+                  </Link>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function NaturalProgressionSection({
+  data,
+  actionRunner,
+}: {
+  data: CockpitView
+  actionRunner: ActionRunner
+}) {
+  const { t } = useTranslation('cockpit')
+  const code = data.naturalProgression?.code
+  const matched = code ? findActionByCode(data.availableActions, code) : undefined
+  const orgHref = `/competitions/${data.competitionId}/organisation`
+  const matchesHref = `/competitions/${data.competitionId}/matches`
+  const overviewHref = `/competitions/${data.competitionId}/overview`
+
+  return (
+    <section className="card" aria-labelledby="cockpit-progression">
+      <h2 className="card__title" id="cockpit-progression">
+        {t('progression.heading')}
+      </h2>
+      {code ? (
+        <>
+          <p className="stat__value stat__value--text">
+            {t(`progression.codes.${code}`, {
+              defaultValue: actionLabel(code),
+            })}
+          </p>
+          {matched ? (
+            <ActionButtons actions={[matched]} actionRunner={actionRunner} />
+          ) : code === 'ContinueOrganisation' ? (
+            <p>
+              <Link className="btn" to={orgHref}>
+                {t('dimensions.openOrganisation')}
+              </Link>
+            </p>
+          ) : code === 'OpenMatches' ? (
+            <p>
+              <Link className="btn" to={matchesHref}>
+                {t('dimensions.openMatches')}
+              </Link>
+            </p>
+          ) : code === 'OpenConsultation' ? (
+            <p>
+              <Link className="btn" to={overviewHref}>
+                {t('nav.overview.title')}
+              </Link>
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <p className="muted">{t('progression.none')}</p>
+      )}
+    </section>
+  )
+}
+
+function SecondaryActionsSection({
+  actions,
+  actionRunner,
+  heading,
+}: {
+  actions: CockpitAction[]
+  actionRunner: ActionRunner
+  heading: string
+}) {
+  return (
+    <section className="card card--condensed" aria-labelledby="cockpit-actions-secondary">
+      <h2 className="card__title" id="cockpit-actions-secondary">
+        {heading}
+      </h2>
+      <ActionButtons actions={actions} actionRunner={actionRunner} />
+    </section>
+  )
+}
+
+function ClosureHintSection({
+  data,
+  mode,
+  actionRunner,
+  closureActions,
+}: {
+  data: CockpitView
+  mode: 'full' | 'condensed' | 'hidden'
+  actionRunner: ActionRunner
+  closureActions: CockpitAction[]
+}) {
   const { t } = useTranslation(['cockpit', 'enums'])
   const hint = data.closureHint
+
+  if (mode === 'hidden') {
+    return null
+  }
+
+  if (mode === 'condensed') {
+    return (
+      <section className="card card--condensed" aria-labelledby="cockpit-closure">
+        <h2 className="card__title" id="cockpit-closure">
+          {t('cockpit:closure.heading')}
+        </h2>
+        <p className="caption">
+          {hint.canCompleteNormally
+            ? t('cockpit:closure.ready')
+            : t('cockpit:closure.notRelevant')}
+        </p>
+        <ActionButtons actions={closureActions} actionRunner={actionRunner} />
+      </section>
+    )
+  }
 
   return (
     <section className="card" aria-labelledby="cockpit-closure">
@@ -708,7 +868,7 @@ function ClosureHintSection({ data }: { data: CockpitView }) {
           ? t('cockpit:closure.ready')
           : t('cockpit:closure.notReady')}
       </p>
-      {hint.blockerCodes.length > 0 ? (
+      {hint.blockerCodes.length > 0 && (
         <div className="stack stack--tight">
           <h3 className="stat__label">{t('cockpit:closure.blockersHeading')}</h3>
           <ul className="check-list">
@@ -721,16 +881,14 @@ function ClosureHintSection({ data }: { data: CockpitView }) {
                   {t(`completionBlocker.${code}`, {
                     ns: 'enums',
                     defaultValue: code,
-                  })}{' '}
-                  <span className="mono">({code})</span>
+                  })}
                 </span>
               </li>
             ))}
           </ul>
         </div>
-      ) : (
-        <p className="muted">{t('cockpit:closure.noBlockers')}</p>
       )}
+      <ActionButtons actions={closureActions} actionRunner={actionRunner} />
     </section>
   )
 }
@@ -789,7 +947,7 @@ function dimensionTeamsSummary(
   dimension: CockpitDimension,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
-  return t('cockpit:dimensions.teams.summary', {
+  return t('dimensions.teams.summary', {
     activeCount: dimension.facts.activeCount ?? '0',
     minimumTeams: dimension.facts.minimumTeams ?? '—',
   })
@@ -801,9 +959,9 @@ function dimensionStructureSummary(
 ): string {
   const formatKind = dimension.facts.formatKind
   if (!formatKind || formatKind === 'None') {
-    return t('cockpit:dimensions.structure.none')
+    return t('dimensions.structure.none')
   }
-  return t('cockpit:dimensions.structure.summary', { formatKind })
+  return t('dimensions.structure.summary', { formatKind })
 }
 
 function dimensionMatchesSummary(
@@ -812,9 +970,9 @@ function dimensionMatchesSummary(
 ): string {
   const total = Number(dimension.facts.total ?? '0')
   if (total === 0) {
-    return t('cockpit:dimensions.matches.empty')
+    return t('dimensions.matches.empty')
   }
-  return t('cockpit:dimensions.matches.summary', {
+  return t('dimensions.matches.summary', {
     live: dimension.facts.live ?? '0',
     scheduled: dimension.facts.scheduled ?? '0',
     finished: dimension.facts.finished ?? '0',

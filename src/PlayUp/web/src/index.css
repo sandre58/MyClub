@@ -271,6 +271,22 @@ a:hover {
     padding: var(--space-md);
 }
 
+/* Functional hierarchy (composition) — not visual polish. */
+.card--dominant {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    box-shadow: var(--shadow-md, var(--shadow-sm));
+}
+
+.card--condensed {
+    gap: var(--space-sm);
+    padding: var(--space-md);
+}
+
+.card--condensed .card__title {
+    font-size: var(--text-secondary);
+    font-weight: 600;
+}
+
 .card--hero {
     gap: var(--space-lg);
     background:

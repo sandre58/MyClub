@@ -126,30 +126,34 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByText('Structure')).toBeInTheDocument()
     expect(screen.getByText('Règlement')).toBeInTheDocument()
     expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
-    expect(screen.getByText(/Règlement de phase/)).toBeInTheDocument()
-    expect(screen.getByText(/Préparation relative aux transitions/)).toBeInTheDocument()
-    expect(screen.getAllByText(/Tirage/).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Matérialisation des matchs/).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('heading', { name: 'À traiter' })).not.toBeInTheDocument()
+    expect(screen.getByText(/situation\(s\) à traiter/i)).toBeInTheDocument()
+    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
     expect(
-      screen.getByRole('heading', { name: 'Matchs', level: 3 }),
+      screen.getByText(
+        /Continuer la préparation dans Organisation/,
+      ),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('Participants insuffisants').length).toBeGreaterThan(0)
-    expect(screen.getByText('Continuer la préparation')).toBeInTheDocument()
     expect(screen.getByText(/Non appliqué/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Clôture' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Pas le sujet du moment/)).not.toBeInTheDocument()
     expect(
-      screen.getByText('Clôture normale impossible pour le moment'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(/Des matchs sont encore planifiés/),
-    ).toBeInTheDocument()
+      screen.queryByText(/Des matchs sont encore planifiés/),
+    ).not.toBeInTheDocument()
 
-    // Action comes from availableActions — not reconstructed from status.
+    // Action comes from availableActions — contextualized, not a dominant palette heading.
+    expect(
+      screen.queryByRole('heading', { name: 'Actions disponibles' }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Préparer la phase/i }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Ajouter une équipe/i }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Renommer une équipe/i }),
+    ).not.toBeInTheDocument()
   })
 
   it('does not invent actions absent from availableActions', async () => {
@@ -304,11 +308,57 @@ describe('CompetitionCockpitPage', () => {
 
     expect(await screen.findByText(/2×45 min/)).toBeInTheDocument()
     expect(
-      screen.getByText(/Aucune phase principale/),
+      screen.getByText(/Configuration compatible avec les prochaines transitions/),
     ).toBeInTheDocument()
-    expect(screen.getAllByText(/Matérialisation des matchs/).length).toBeGreaterThan(0)
-    expect(screen.getByText(/· Prêt/)).toBeInTheDocument()
     expect(screen.queryByText('Tirage')).not.toBeInTheDocument()
+  })
+
+  it('does not duplicate attentionSummary as a second Situations list', async () => {
+    const situation = cockpitSituation()
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        situations: [situation],
+        attentionSummary: { count: 1, items: [situation] },
+      }),
+    )
+
+    renderCockpitPage()
+
+    await screen.findByRole('heading', { name: 'Situations' })
+    expect(screen.queryByRole('heading', { name: 'À traiter' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
+  })
+
+  it('hides Absent match dimension and empty operational match blocks', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          matches: { prominence: 'Absent', facts: { total: '0' } },
+        },
+        operationalFocus: {
+          stages: [],
+          draws: [],
+          matchCounts: {
+            live: 0,
+            scheduled: 0,
+            finished: 0,
+            postponed: 0,
+            cancelled: 0,
+            total: 0,
+          },
+          upcomingMatches: [],
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    await screen.findByRole('heading', { name: 'Spring Cup' })
+    expect(
+      screen.queryByRole('heading', { name: 'Matchs', level: 3 }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
   })
 
   it('navigates to organisation from the regulation card', async () => {
