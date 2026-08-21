@@ -42,6 +42,9 @@ describe('cockpitComposition', () => {
     expect(actionPresentationSlot('ConfigureStructure')).toBe('structure')
     expect(actionPresentationSlot('PublishDraw')).toBe('operational')
     expect(actionPresentationSlot('CompleteCompetition')).toBe('closure')
+    // Lifecycle Prepare/Start stay secondary — closure slot is hidden during Construction.
+    expect(actionPresentationSlot('PrepareCompetition')).toBe('secondary')
+    expect(actionPresentationSlot('StartCompetition')).toBe('secondary')
   })
 
   it('hides closure in Construction when not completable', () => {

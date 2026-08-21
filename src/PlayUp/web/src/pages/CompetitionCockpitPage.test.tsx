@@ -6,7 +6,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
   fetchCompetitionCockpit,
+  prepareCompetition,
   prepareStage,
+  startCompetition,
 } from '../api'
 import { CompetitionCockpitPage } from './CompetitionCockpitPage'
 import { cockpitIds, cockpitSituation, cockpitView } from '../test/cockpitFixtures'
@@ -17,6 +19,8 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchCompetitionCockpit: vi.fn(),
     prepareStage: vi.fn(),
+    prepareCompetition: vi.fn(),
+    startCompetition: vi.fn(),
   }
 })
 
@@ -173,6 +177,89 @@ describe('CompetitionCockpitPage', () => {
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Préparer la compétition/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Démarrer la compétition/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders PrepareCompetition only when projected by availableActions', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        availableActions: [
+          { code: 'PrepareCompetition', guaranteed: false },
+        ],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('button', { name: /Préparer la compétition/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Démarrer la compétition/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('executes PrepareCompetition then StartCompetition via Host and invalidates cockpit', async () => {
+    const user = userEvent.setup()
+    vi.mocked(prepareCompetition).mockResolvedValue(undefined)
+    vi.mocked(startCompetition).mockResolvedValue(undefined)
+    vi.mocked(fetchCompetitionCockpit)
+      .mockResolvedValueOnce(
+        cockpitView({
+          status: 'Draft',
+          availableActions: [
+            { code: 'PrepareCompetition', guaranteed: false },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        cockpitView({
+          status: 'Ready',
+          availableActions: [
+            { code: 'StartCompetition', guaranteed: false },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        cockpitView({
+          status: 'Running',
+          cycleReading: { code: 'InProgress' },
+          availableActions: [],
+        }),
+      )
+
+    renderCockpitPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Préparer la compétition/i }),
+    )
+
+    await waitFor(() => {
+      expect(prepareCompetition).toHaveBeenCalledWith(competitionId)
+    })
+
+    await user.click(
+      await screen.findByRole('button', { name: /Démarrer la compétition/i }),
+    )
+
+    await waitFor(() => {
+      expect(startCompetition).toHaveBeenCalledWith(competitionId)
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /Préparer la compétition/i }),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /Démarrer la compétition/i }),
+      ).not.toBeInTheDocument()
+    })
+    expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)
   })
 
   it('uses Host isApplied and does not recompute draw applied state', async () => {

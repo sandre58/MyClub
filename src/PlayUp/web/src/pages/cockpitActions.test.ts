@@ -18,6 +18,30 @@ describe('resolveCockpitActionIntent', () => {
     expect(intent.kind).toBe('execute')
   })
 
+  it('executes PrepareCompetition as a bodyless Host command', () => {
+    const intent = resolveCockpitActionIntent(
+      { code: 'PrepareCompetition', guaranteed: false },
+      cockpitView(),
+    )
+    expect(intent.kind).toBe('execute')
+  })
+
+  it('executes StartCompetition as a bodyless Host command', () => {
+    const intent = resolveCockpitActionIntent(
+      { code: 'StartCompetition', guaranteed: false },
+      cockpitView(),
+    )
+    expect(intent.kind).toBe('execute')
+  })
+
+  it('keeps unknown action codes unsupported', () => {
+    const intent = resolveCockpitActionIntent(
+      { code: 'InventedAction', guaranteed: false },
+      cockpitView(),
+    )
+    expect(intent).toEqual({ kind: 'unsupported' })
+  })
+
   it('navigates organisation actions instead of inventing POST bodies', () => {
     const intent = resolveCockpitActionIntent(
       { code: 'AddEntry', guaranteed: false },

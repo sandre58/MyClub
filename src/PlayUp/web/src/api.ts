@@ -293,6 +293,16 @@ export function applyQualification(
   return sendJson('POST', `/stages/${stageId}/qualification/apply`)
 }
 
+/** POST /competitions/{id}/prepare → 204 (bodyless; Draft → Ready) */
+export function prepareCompetition(competitionId: string): Promise<void> {
+  return postNoContent(`/competitions/${competitionId}/prepare`)
+}
+
+/** POST /competitions/{id}/start → 204 (bodyless; Ready → Running) */
+export function startCompetition(competitionId: string): Promise<void> {
+  return postNoContent(`/competitions/${competitionId}/start`)
+}
+
 /** POST /competitions/{id}/complete → 204 */
 export function completeCompetition(
   competitionId: string,

@@ -5,8 +5,10 @@ import {
   archiveCompetition,
   completeCompetition,
   materializeMatches,
+  prepareCompetition,
   prepareStage,
   publishDraw,
+  startCompetition,
   startMatch,
   startStage,
 } from '../api'
@@ -103,6 +105,18 @@ export function resolveCockpitActionIntent(
       return stageId
         ? { kind: 'execute', run: () => applyQualification(stageId) }
         : { kind: 'unsupported' }
+
+    case 'PrepareCompetition':
+      return {
+        kind: 'execute',
+        run: () => prepareCompetition(competitionId),
+      }
+
+    case 'StartCompetition':
+      return {
+        kind: 'execute',
+        run: () => startCompetition(competitionId),
+      }
 
     case 'CompleteCompetition':
       return {
