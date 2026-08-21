@@ -623,23 +623,15 @@ public static class CockpitAssembler
             return DeduplicateActions(actions);
         }
 
-        switch (competition.Status)
+        if (competition is { Status: CompetitionStatus.Draft, StageIds.Count: > 0 }
+            && competition.Entries.Any(entry => entry.Status == EntryStatus.Active))
         {
-            case CompetitionStatus.Draft
-                when competition.StageIds.Count > 0
-                     && competition.Entries.Any(entry => entry.Status == EntryStatus.Active):
-                actions.Add(new CockpitActionDto(ActionPrepareCompetition, Guaranteed: false));
-                break;
-            case CompetitionStatus.Ready:
-                actions.Add(new CockpitActionDto(ActionStartCompetition, Guaranteed: false));
-                break;
-            case CompetitionStatus.Running:
-            case CompetitionStatus.Suspended:
-            case CompetitionStatus.Completed:
-            case CompetitionStatus.Archived:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(competition));
+            actions.Add(new CockpitActionDto(ActionPrepareCompetition, Guaranteed: false));
+        }
+
+        if (competition.Status == CompetitionStatus.Ready)
+        {
+            actions.Add(new CockpitActionDto(ActionStartCompetition, Guaranteed: false));
         }
 
         foreach (var stage in stages)
