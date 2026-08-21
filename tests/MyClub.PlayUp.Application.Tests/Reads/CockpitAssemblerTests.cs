@@ -40,9 +40,150 @@ public sealed class CockpitAssemblerTests
         view.NaturalProgression.Should().NotBeNull();
         view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
         view.AvailableActions.Should().Contain(action => action.Code == OrganisationViewAssembler.ActionAddEntry);
-        view.AvailableActions.Should().NotContain(action => action.Code == "PrepareCompetition");
-        view.AvailableActions.Should().NotContain(action => action.Code == "StartCompetition");
+
+        // Entry without stage — PrepareCompetition must not be projected (Domain precondition).
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
         view.ClosureHint.CanCompleteNormally.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Assemble_draft_with_stage_and_active_entry_projects_PrepareCompetition()
+    {
+        var competition = Competition.Create(new CompetitionName("Ready to prepare"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().Contain(action =>
+            action.Code == CockpitAssembler.ActionPrepareCompetition && !action.Guaranteed);
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+
+        // Intentional lifecycle stays in availableActions — not naturalProgression (L7 / Option B).
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
+    }
+
+    [Fact]
+    public void Assemble_draft_without_stage_does_not_project_PrepareCompetition()
+    {
+        var competition = Competition.Create(new CompetitionName("No stage"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Alpha", _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+    }
+
+    [Fact]
+    public void Assemble_draft_without_active_entry_does_not_project_PrepareCompetition()
+    {
+        var competition = Competition.Create(new CompetitionName("No entry"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+    }
+
+    [Fact]
+    public void Assemble_ready_projects_StartCompetition_not_Prepare()
+    {
+        var competition = Competition.Create(new CompetitionName("Ready Cup"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.Status.Should().Be(CompetitionStatus.Ready);
+        view.AvailableActions.Should().Contain(action =>
+            action.Code == CockpitAssembler.ActionStartCompetition && !action.Guaranteed);
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+
+        // Ready without materialize/draw readiness — operational tip unchanged (Option B).
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
+    }
+
+    [Fact]
+    public void Assemble_running_does_not_project_Prepare_or_Start()
+    {
+        var competition = Competition.Create(new CompetitionName("Running Cup"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+    }
+
+    [Fact]
+    public void Assemble_suspended_does_not_project_Prepare_or_Start()
+    {
+        var competition = Competition.Create(new CompetitionName("Suspended Cup"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Suspend(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+    }
+
+    [Fact]
+    public void Assemble_completed_and_archived_do_not_project_Prepare_or_Start()
+    {
+        var competition = Competition.Create(new CompetitionName("Closed Cup"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Complete(CompletionMode.Administrative, _clock);
+
+        var completed = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        completed.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        completed.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+
+        competition.Archive(_clock);
+        var archived = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
     }
 
     [Fact]

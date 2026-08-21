@@ -18,7 +18,9 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 /// <remarks>
 /// Composes existing Application diagnostics — does not re-implement Domain invariants.
-/// Competition Prepare/Start are Domain-only today and are intentionally not projected as actions.
+/// Competition Prepare/Start are Host-executable and projected as available actions
+/// opportunities when Domain preconditions appear satisfied (R19 — not execution guarantees).
+/// They are intentional lifecycle transitions (L7) — not automatically elevated to naturalProgression.
 /// </remarks>
 public static class CockpitAssembler
 {
@@ -108,6 +110,12 @@ public static class CockpitAssembler
 
     /// <summary>Archive competition.</summary>
     public const string ActionArchiveCompetition = "ArchiveCompetition";
+
+    /// <summary>Prepare competition (Draft → Ready).</summary>
+    public const string ActionPrepareCompetition = "PrepareCompetition";
+
+    /// <summary>Start competition (Ready → Running).</summary>
+    public const string ActionStartCompetition = "StartCompetition";
 
     /// <summary>Continue organisation (natural progression).</summary>
     public const string ProgressionContinueOrganisation = "ContinueOrganisation";
@@ -256,7 +264,7 @@ public static class CockpitAssembler
     /// <remarks>
     /// Reuses <see cref="OrganisationViewAssembler"/> readiness — does not invent Domain validation.
     /// PrepareStage / StartStage are status transitions, not regulation content gates — not projected here.
-    /// Competition Prepare/Start remain Host-OPEN (gap D) — never claimed executable.
+    /// Competition Prepare/Start are projected in <see cref="BuildActions"/>, not as regulation readiness.
     /// </remarks>
     private static CockpitRegulationDimensionDto BuildRegulationDimension(
         Competition competition,
@@ -613,6 +621,25 @@ public static class CockpitAssembler
             }
 
             return DeduplicateActions(actions);
+        }
+
+        switch (competition.Status)
+        {
+            case CompetitionStatus.Draft
+                when competition.StageIds.Count > 0
+                     && competition.Entries.Any(entry => entry.Status == EntryStatus.Active):
+                actions.Add(new CockpitActionDto(ActionPrepareCompetition, Guaranteed: false));
+                break;
+            case CompetitionStatus.Ready:
+                actions.Add(new CockpitActionDto(ActionStartCompetition, Guaranteed: false));
+                break;
+            case CompetitionStatus.Running:
+            case CompetitionStatus.Suspended:
+            case CompetitionStatus.Completed:
+            case CompetitionStatus.Archived:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(competition));
         }
 
         foreach (var stage in stages)

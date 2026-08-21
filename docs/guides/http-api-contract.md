@@ -143,9 +143,9 @@ Contract notes:
 - `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` in V1 (construction only; empty when Running/Suspended/Completed/Archived). Championship omits `Draw` (format never uses draw path).
 - `transitionReadiness` reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system.
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
-- Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) but **not** projected yet as Cockpit `availableActions` (Read projection = Phase 17.2). Resume (Suspended) remains Domain-only — not projected as an action.
+- Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
-- `availableActions` are opportunities from known state — not execution guarantees. Competition Prepare/Start action codes are **not** projected yet (Host exists; Read projection OPEN until 17.2). Resume (Suspended) is Domain-only — not projected as an action.
+- `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
 - `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only).
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 
