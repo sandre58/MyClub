@@ -2,5 +2,35 @@
   "eyebrow": "Espace métier",
   "title": "Classements",
   "back": "Retour au Cockpit",
-  "stub": "Le contenu des classements sera disponible dans la phase suivante."
+  "context": {
+    "format": "Format",
+    "status": "Statut"
+  },
+  "loading": "Chargement des classements…",
+  "error": "Impossible de charger les classements.",
+  "empty": "Aucun classement à afficher pour le moment.",
+  "emptyHint": "Les matchs joués alimenteront le classement lorsqu’ils seront disponibles.",
+  "notApplicable": {
+    "title": "Classement non applicable",
+    "CupFormat": "Ce format (coupe) ne produit pas de classement.",
+    "NoStructure": "Aucune structure sportive ne permet encore de calculer un classement.",
+    "unknown": "Le classement n’est pas applicable à cette compétition."
+  },
+  "table": {
+    "overall": "Classement général",
+    "group": "{{name}}",
+    "stage": "{{name}}"
+  },
+  "columns": {
+    "position": "Pos.",
+    "team": "Équipe",
+    "played": "PJ",
+    "wins": "V",
+    "draws": "N",
+    "losses": "D",
+    "goalsFor": "BP",
+    "goalsAgainst": "BC",
+    "goalDifference": "Diff.",
+    "points": "Pts"
+  }
 }

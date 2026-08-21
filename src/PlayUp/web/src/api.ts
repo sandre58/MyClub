@@ -5,6 +5,7 @@ import type {
   CompetitionListItem,
   CompetitionOverview,
   ConfigureStructureRequest,
+  ConsultationView,
   FinishMatchRequest,
   MatchDetail,
   MatchSummary,
@@ -143,6 +144,13 @@ export function fetchOrganisationView(
   competitionId: string,
 ): Promise<OrganisationView> {
   return getJson(`/competitions/${competitionId}/organisation`)
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/consultation */
+export function fetchConsultation(
+  competitionId: string,
+): Promise<ConsultationView> {
+  return getJson(`/competitions/${competitionId}/consultation`)
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/attention */

@@ -1330,6 +1330,48 @@ fieldset:disabled {
     }
 }
 
+/* ---------------------------------------------------------------- standings (Classements) */
+
+.standings-block {
+    overflow: hidden;
+}
+
+.standings-table-wrap {
+    overflow-x: auto;
+    margin-top: var(--space-sm);
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.standings-table th,
+.standings-table td {
+    padding: var(--space-xs) var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.standings-table th {
+    color: var(--color-text-secondary);
+    font-size: var(--text-eyebrow);
+    font-weight: 700;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+}
+
+.standings-table__num,
+.standings-table__pts {
+    text-align: right;
+}
+
+.standings-table__pts {
+    font-weight: 700;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
