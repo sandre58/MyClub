@@ -11,7 +11,7 @@ describe('shellDestinationHrefs', () => {
       cockpit: '/',
       organisation: '/competitions',
       matches: '/competitions',
-      consultation: '/competitions',
+      classements: '/competitions',
     })
   })
 
@@ -20,7 +20,7 @@ describe('shellDestinationHrefs', () => {
       cockpit: `/competitions/${competitionId}`,
       organisation: `/competitions/${competitionId}/organisation`,
       matches: `/competitions/${competitionId}/matches`,
-      consultation: `/competitions/${competitionId}/overview`,
+      classements: `/competitions/${competitionId}/classements`,
     })
   })
 
@@ -29,7 +29,7 @@ describe('shellDestinationHrefs', () => {
       cockpit: '/',
       organisation: '/competitions',
       matches: `/stages/${stageId}/matches`,
-      consultation: `/stages/${stageId}`,
+      classements: '/competitions',
     })
   })
 
@@ -38,7 +38,7 @@ describe('shellDestinationHrefs', () => {
       cockpit: '/',
       organisation: '/competitions',
       matches: `/matches/${matchId}`,
-      consultation: '/competitions',
+      classements: '/competitions',
     })
   })
 })
@@ -60,7 +60,7 @@ describe('resolveActiveDestination', () => {
     ).toBe('organisation')
   })
 
-  it('maps match hub routes to Matchs', () => {
+  it('maps match hub and stage routes to Matchs', () => {
     expect(
       resolveActiveDestination(`/competitions/${competitionId}/matches`),
     ).toBe('matches')
@@ -68,13 +68,19 @@ describe('resolveActiveDestination', () => {
       'matches',
     )
     expect(resolveActiveDestination(`/matches/${matchId}`)).toBe('matches')
+    expect(resolveActiveDestination(`/stages/${stageId}`)).toBe('matches')
   })
 
-  it('maps consultation routes to Consultation', () => {
+  it('maps classements routes to Classements', () => {
+    expect(
+      resolveActiveDestination(`/competitions/${competitionId}/classements`),
+    ).toBe('classements')
+  })
+
+  it('does not treat overview as a shell destination', () => {
     expect(
       resolveActiveDestination(`/competitions/${competitionId}/overview`),
-    ).toBe('consultation')
-    expect(resolveActiveDestination(`/stages/${stageId}`)).toBe('consultation')
+    ).toBeNull()
   })
 
   it('returns null for routes outside the shell destinations', () => {

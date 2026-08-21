@@ -2,7 +2,7 @@ export type ShellDestinationKey =
   | 'cockpit'
   | 'organisation'
   | 'matches'
-  | 'consultation'
+  | 'classements'
 
 export type ShellDestinationHrefs = Record<ShellDestinationKey, string>
 
@@ -33,11 +33,9 @@ export function shellDestinationHrefs({
         : matchId
           ? `/matches/${matchId}`
           : competitionListHref,
-    consultation: competitionId
-      ? `/competitions/${competitionId}/overview`
-      : stageId
-        ? `/stages/${stageId}`
-        : competitionListHref,
+    classements: competitionId
+      ? `/competitions/${competitionId}/classements`
+      : competitionListHref,
   }
 }
 
@@ -57,16 +55,14 @@ export function resolveActiveDestination(pathname: string): ShellDestinationKey 
   if (
     /^\/competitions\/[^/]+\/matches$/.test(pathname) ||
     /^\/stages\/[^/]+\/matches$/.test(pathname) ||
-    /^\/matches\/[^/]+$/.test(pathname)
+    /^\/matches\/[^/]+$/.test(pathname) ||
+    /^\/stages\/[^/]+$/.test(pathname)
   ) {
     return 'matches'
   }
 
-  if (
-    /^\/competitions\/[^/]+\/overview$/.test(pathname) ||
-    /^\/stages\/[^/]+$/.test(pathname)
-  ) {
-    return 'consultation'
+  if (/^\/competitions\/[^/]+\/classements$/.test(pathname)) {
+    return 'classements'
   }
 
   return null

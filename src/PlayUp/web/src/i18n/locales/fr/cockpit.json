@@ -96,7 +96,7 @@
     "codes": {
       "ContinueOrganisation": "Continuer la préparation dans Organisation (équipes, structure, règlement).",
       "OpenMatches": "Suivre les matchs et situations opérationnelles dans le hub matchs.",
-      "OpenConsultation": "Consulter résultats, classements et structure.",
+      "OpenConsultation": "Consulter les classements de la compétition.",
       "MaterializeMatches": "Matérialiser les matchs — prochaine étape naturelle.",
       "PublishDraw": "Publier le tirage — prochaine étape naturelle.",
       "CompleteCompetition": "La clôture normale de la compétition est envisageable."
@@ -127,9 +127,9 @@
       "title": "Hub matchs",
       "desc": "Matchs et situations opérationnelles."
     },
-    "overview": {
-      "title": "Consultation",
-      "desc": "Phases, inscrits et lecture d’ensemble."
+    "classements": {
+      "title": "Classements",
+      "desc": "Standings et tables de la compétition."
     }
   },
   "nature": {

@@ -51,6 +51,10 @@ function renderCockpitPage() {
             element={<p>Match hub route</p>}
           />
           <Route
+            path="/competitions/:competitionId/classements"
+            element={<p>Classements route</p>}
+          />
+          <Route
             path="/competitions/:competitionId/overview"
             element={<p>Overview route</p>}
           />

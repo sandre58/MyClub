@@ -760,7 +760,7 @@ function NaturalProgressionSection({
   const matched = code ? findActionByCode(data.availableActions, code) : undefined
   const orgHref = `/competitions/${data.competitionId}/organisation`
   const matchesHref = `/competitions/${data.competitionId}/matches`
-  const overviewHref = `/competitions/${data.competitionId}/overview`
+  const classementsHref = `/competitions/${data.competitionId}/classements`
 
   return (
     <section className="card" aria-labelledby="cockpit-progression">
@@ -790,8 +790,8 @@ function NaturalProgressionSection({
             </p>
           ) : code === 'OpenConsultation' ? (
             <p>
-              <Link className="btn" to={overviewHref}>
-                {t('nav.overview.title')}
+              <Link className="btn" to={classementsHref}>
+                {t('nav.classements.title')}
               </Link>
             </p>
           ) : null}
@@ -928,15 +928,15 @@ function SpacesNavSection({ competitionId }: { competitionId: string }) {
         </Link>
         <Link
           className="nav-card"
-          to={`/competitions/${competitionId}/overview`}
+          to={`/competitions/${competitionId}/classements`}
         >
           <span className="nav-card__title">
-            {t('nav.overview.title')}
+            {t('nav.classements.title')}
             <span className="row__chevron" aria-hidden="true">
               →
             </span>
           </span>
-          <span className="nav-card__desc">{t('nav.overview.desc')}</span>
+          <span className="nav-card__desc">{t('nav.classements.desc')}</span>
         </Link>
       </div>
     </section>

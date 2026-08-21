@@ -157,7 +157,7 @@ export function resolveCockpitActionIntent(
     case 'OpenConsultation':
       return {
         kind: 'navigate',
-        to: `/competitions/${competitionId}/overview`,
+        to: `/competitions/${competitionId}/classements`,
       }
 
     default:

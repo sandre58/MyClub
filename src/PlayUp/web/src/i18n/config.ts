@@ -19,6 +19,7 @@ export const I18N_NAMESPACES = [
   'stage',
   'home',
   'competitions',
+  'classements',
   'errors',
 ] as const
 

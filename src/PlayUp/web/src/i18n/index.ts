@@ -6,6 +6,7 @@ import {
   I18N_NAMESPACES,
 } from './config'
 import actionsFr from './locales/fr/actions.json'
+import classementsFr from './locales/fr/classements.json'
 import cockpitFr from './locales/fr/cockpit.json'
 import commonFr from './locales/fr/common.json'
 import competitionsFr from './locales/fr/competitions.json'
@@ -45,6 +46,7 @@ void i18n.use(initReactI18next).init({
       stage: stageFr,
       home: homeFr,
       competitions: competitionsFr,
+      classements: classementsFr,
     },
   },
   interpolation: {

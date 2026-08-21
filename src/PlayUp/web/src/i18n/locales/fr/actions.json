@@ -22,6 +22,6 @@
   "ArchiveCompetition": "Archiver la compétition",
   "ContinueOrganisation": "Continuer la préparation",
   "OpenMatches": "Suivre les matchs",
-  "OpenConsultation": "Consulter les résultats",
+  "OpenConsultation": "Consulter les classements",
   "fallback": "{{code}}"
 }

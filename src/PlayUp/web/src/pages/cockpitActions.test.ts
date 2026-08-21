@@ -53,6 +53,17 @@ describe('resolveCockpitActionIntent', () => {
     })
   })
 
+  it('navigates OpenConsultation to Classements', () => {
+    const intent = resolveCockpitActionIntent(
+      { code: 'OpenConsultation', guaranteed: false },
+      cockpitView(),
+    )
+    expect(intent).toEqual({
+      kind: 'navigate',
+      to: `/competitions/${competitionId}/classements`,
+    })
+  })
+
   it('navigates Pairing ApplyDraw to the stage workspace', () => {
     const view = cockpitView({
       operationalFocus: {

@@ -41,6 +41,10 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             element={<p>Competition matches page</p>}
           />
           <Route
+            path="/competitions/:competitionId/classements"
+            element={<p>Classements page</p>}
+          />
+          <Route
             path="/competitions/:competitionId/overview"
             element={<p>Competition overview page</p>}
           />
@@ -92,7 +96,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Organisation' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Matchs' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Consultation' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
   })
 
   it('marks Cockpit active for workspace routes', () => {
@@ -118,10 +122,10 @@ describe('AppShell', () => {
     )
   })
 
-  it('maps stage deep links to Consultation', () => {
+  it('maps stage deep links to Matchs', () => {
     renderWithShell('/stages/stage-id')
 
-    expect(screen.getByRole('link', { name: 'Consultation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -136,16 +140,23 @@ describe('AppShell', () => {
     )
   })
 
-  it('sets aria-current on only one destination', () => {
+  it('marks Classements active for classements routes', () => {
+    renderWithShell(
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/classements',
+    )
+
+    expect(screen.getByRole('link', { name: 'Classements' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  it('does not mark a sidebar destination for overview', () => {
     renderWithShell(
       '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/overview',
     )
 
-    expect(screen.getAllByRole('link', { current: 'page' })).toHaveLength(1)
-    expect(screen.getByRole('link', { name: 'Consultation' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
+    expect(screen.queryByRole('link', { current: 'page' })).not.toBeInTheDocument()
   })
 
   it('toggles sidebar expanded/collapsed state', async () => {

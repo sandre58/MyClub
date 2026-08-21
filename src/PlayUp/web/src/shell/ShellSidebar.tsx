@@ -26,7 +26,7 @@ const destinationDefinitions: Array<
   { key: 'cockpit', icon: HomeIcon },
   { key: 'organisation', icon: OrganisationIcon },
   { key: 'matches', icon: MatchesIcon },
-  { key: 'consultation', icon: ConsultationIcon },
+  { key: 'classements', icon: ClassementsIcon },
 ]
 
 /**
@@ -177,7 +177,7 @@ function MatchesIcon(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function ConsultationIcon(props: SVGProps<SVGSVGElement>) {
+function ClassementsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 20 20" {...props}>
       <path

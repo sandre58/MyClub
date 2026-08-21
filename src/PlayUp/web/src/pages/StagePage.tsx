@@ -59,7 +59,7 @@ export function StagePage() {
         back={
           competitionId
             ? {
-                to: `/competitions/${competitionId}/overview`,
+                to: `/competitions/${competitionId}/organisation`,
                 label: competitionQuery.data?.name
                   ? t('backNamed', { name: competitionQuery.data.name })
                   : t('back'),

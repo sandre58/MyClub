@@ -5,6 +5,7 @@ import { LoadingState } from './ui'
 import { CompetitionCockpitPage } from './pages/CompetitionCockpitPage'
 import { CompetitionPage } from './pages/CompetitionPage'
 import { CompetitionsPage } from './pages/CompetitionsPage'
+import { ClassementsPage } from './pages/ClassementsPage'
 import { HomePage } from './pages/HomePage'
 import { MatchHubPage } from './pages/MatchHubPage'
 import { MatchPage } from './pages/MatchPage'
@@ -48,6 +49,10 @@ export default function App() {
         <Route
           path="/competitions/:competitionId/organisation"
           element={<OrganisationPage />}
+        />
+        <Route
+          path="/competitions/:competitionId/classements"
+          element={<ClassementsPage />}
         />
         <Route
           path="/competitions/:competitionId/overview"
