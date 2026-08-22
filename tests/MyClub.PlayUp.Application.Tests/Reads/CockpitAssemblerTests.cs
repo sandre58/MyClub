@@ -45,6 +45,7 @@ public sealed class CockpitAssemblerTests
         view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
         view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
         view.ClosureHint.CanCompleteNormally.Should().BeFalse();
+        view.Period.Should().BeNull();
     }
 
     [Fact]
@@ -66,6 +67,43 @@ public sealed class CockpitAssemblerTests
 
         // Intentional lifecycle stays in availableActions — not naturalProgression (L7 / Option B).
         view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
+    }
+
+    [Fact]
+    public void Assemble_period_is_min_max_of_match_placement_starts()
+    {
+        var competition = Competition.Create(new CompetitionName("Dated Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+
+        var early = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        var late = Match.Create(competition.Id, stage.Id, away.Id, home.Id, _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var fixtureEarly = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var fixtureLate = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        stage.AttachMatch(fixtureEarly.Id, early.Id, legIndex: 1, _clock);
+        stage.AttachMatch(fixtureLate.Id, late.Id, legIndex: 1, _clock);
+
+        var start = new DateTimeOffset(2026, 3, 1, 15, 0, 0, TimeSpan.Zero);
+        var end = new DateTimeOffset(2026, 6, 15, 18, 0, 0, TimeSpan.Zero);
+        var resourceId = ResourceId.New();
+        stage.ApplyMatchPlacements(
+            [
+                new MatchPlacement(early.Id, start, resourceId),
+                new MatchPlacement(late.Id, end, resourceId),
+            ],
+            [early.Id, late.Id]);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [early, late] });
+
+        view.Period.Should().NotBeNull();
+        view.Period!.Start.Should().Be(start);
+        view.Period.End.Should().Be(end);
     }
 
     [Fact]

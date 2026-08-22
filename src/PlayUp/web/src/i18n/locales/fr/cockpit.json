@@ -3,12 +3,18 @@
   "titleFallback": "Cockpit",
   "back": "Retour aux compétitions",
   "cycle": {
-    "Construction": "Construction",
+    "Construction": "Préparation",
     "InProgress": "En cours",
     "Completed": "Terminée",
-    "Archived": "Archivée",
-    "heading": "Lecture de cycle",
+    "Archived": "Terminée",
+    "heading": "Où en est-on ?",
     "lede": "Où en est cette compétition dans son cycle de vie."
+  },
+  "cycleUi": {
+    "Preparation": "Préparation",
+    "Calendar": "Calendrier",
+    "InProgress": "En cours",
+    "Completed": "Terminée"
   },
   "prominence": {
     "Present": "Présent",
@@ -39,7 +45,7 @@
       "notReady": "Pas prêt",
       "transitions": {
         "Draw": "Tirage",
-        "MaterializeMatches": "Matérialisation des matchs"
+        "MaterializeMatches": "Création des matchs"
       },
       "readinessReady": "Le règlement et la structure permettent d’envisager {{transition}}.",
       "readinessNotReady": "Pour envisager {{transition}}, des conditions restent à lever — détail dans Organisation."
@@ -71,7 +77,7 @@
     "openMatch": "Ouvrir le match"
   },
   "situations": {
-    "heading": "Situations",
+    "heading": "À traiter",
     "empty": "Aucune situation à signaler",
     "open": "Ouvrir",
     "actionable": "Action possible",
@@ -90,14 +96,14 @@
     "triageHint": "{{count}} situation(s) à traiter — ouvrir le panneau À traiter dans l’en-tête."
   },
   "progression": {
-    "heading": "Progression naturelle",
+    "heading": "Prochaine action",
     "none": "Aucune progression suggérée — situation normale",
     "hint": "Orientation proposée par le Read à partir de l’état connu.",
     "codes": {
       "ContinueOrganisation": "Continuer la préparation dans Organisation (équipes, structure, règlement).",
       "OpenMatches": "Suivre les matchs et situations opérationnelles dans le hub matchs.",
       "OpenConsultation": "Consulter les classements de la compétition.",
-      "MaterializeMatches": "Matérialiser les matchs — prochaine étape naturelle.",
+      "MaterializeMatches": "Créer les matchs — prochaine étape naturelle.",
       "PublishDraw": "Publier le tirage — prochaine étape naturelle.",
       "CompleteCompetition": "La clôture normale de la compétition est envisageable."
     }

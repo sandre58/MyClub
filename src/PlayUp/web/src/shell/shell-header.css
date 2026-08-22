@@ -1,0 +1,153 @@
+/*
+ * Shell header chrome (20.2) — competition context, attention trigger.
+ * Header-scoped layout tokens live on .shell-header.
+ */
+
+.shell-header {
+    --shell-header-min-height: calc(var(--space-12) + 3.5rem + var(--space-12));
+    --shell-header-crest-size: 3.5rem;
+
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12) var(--space-16);
+    min-height: var(--shell-header-min-height);
+    padding: var(--space-12) var(--shell-pad-normal);
+    border-bottom: 0;
+    background: var(--color-surface);
+    box-shadow: var(--shell-elevation-header);
+    z-index: 2;
+}
+
+.shell-header__context {
+    display: flex;
+    flex: 1;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+}
+
+.shell-header__crest {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: var(--shell-header-crest-size);
+    height: var(--shell-header-crest-size);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-secondary);
+    color: var(--color-text-secondary);
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.shell-header__identity {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.shell-header__competition-name {
+    min-width: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-heading);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.shell-header__meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+}
+
+.shell-header__meta-separator {
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    line-height: 1;
+}
+
+.shell-header__period {
+    margin: 0;
+    color: var(--color-text-secondary);
+}
+
+.shell-header__context-message,
+.shell-header__context-loading {
+    min-width: 8rem;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-tight);
+}
+
+.shell-header__context-loading {
+    color: var(--color-text-secondary);
+}
+
+.shell-header__change {
+    flex: none;
+    align-self: center;
+    color: var(--color-text-secondary);
+}
+
+.shell-header__change:hover {
+    color: var(--color-text-primary);
+}
+
+/* Icon-only chrome controls — shared hit area + glyph size. */
+.shell-header__icon-control {
+    width: var(--shell-icon-hit);
+    min-width: var(--shell-icon-hit);
+    height: var(--shell-icon-hit);
+}
+
+.shell-header__icon-control svg {
+    width: var(--shell-icon-glyph);
+    height: var(--shell-icon-glyph);
+}
+
+.shell-header__attention {
+    position: relative;
+    color: var(--color-text-primary);
+}
+
+.shell-header__attention:disabled {
+    cursor: default;
+}
+
+.shell-header__attention-badge {
+    position: absolute;
+    inset-block-start: 0.125rem;
+    inset-inline-end: 0.125rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1rem;
+    height: 1rem;
+    padding-inline: var(--space-4);
+    /* Chrome-only full radius (not a DS pill primitive). */
+    border-radius: 999px;
+    background: var(--shell-attention-count-bg-solid);
+    color: var(--shell-attention-count-on-solid);
+    font-size: 0.625rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+}
+
+.shell-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+}

@@ -235,14 +235,19 @@ export function orderSituationsForDisplay(
   })
 }
 
-export function cardProminenceClass(prominence: string): string {
+export function panelProminenceClass(prominence: string): string {
   if (isProminenceDominant(prominence)) {
-    return 'card card--dominant'
+    return 'ds-panel overview-dimension--dominant'
   }
   if (isProminenceCondensed(prominence)) {
-    return 'card card--condensed'
+    return 'ds-panel overview-dimension--condensed'
   }
-  return 'card'
+  return 'ds-panel'
+}
+
+/** @deprecated Use panelProminenceClass — legacy card classes during migration. */
+export function cardProminenceClass(prominence: string): string {
+  return panelProminenceClass(prominence)
 }
 
 export type { CockpitProminence }

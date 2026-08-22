@@ -126,18 +126,15 @@ describe('CompetitionCockpitPage', () => {
     renderCockpitPage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Spring Cup' }),
+      await screen.findByRole('heading', { name: 'Où en est-on ?' }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'Lecture de cycle' }),
-    ).toBeInTheDocument()
-    expect(screen.getAllByText('Construction').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Préparation').length).toBeGreaterThan(0)
     expect(screen.getByText('Équipes')).toBeInTheDocument()
     expect(screen.getByText('Structure')).toBeInTheDocument()
     expect(screen.getByText('Règlement')).toBeInTheDocument()
     expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'À traiter' })).not.toBeInTheDocument()
-    expect(screen.getByText(/situation\(s\) à traiter/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'À traiter' })).toBeInTheDocument()
+    expect(screen.queryByText(/situation\(s\) à traiter/i)).not.toBeInTheDocument()
     expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
     expect(
       screen.getByText(
@@ -179,7 +176,7 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await screen.findByRole('heading', { name: 'Spring Cup' })
+    await screen.findByRole('heading', { name: 'Où en est-on ?' })
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
     ).not.toBeInTheDocument()
@@ -310,12 +307,28 @@ describe('CompetitionCockpitPage', () => {
             params: {},
           }),
         ],
+        attentionSummary: {
+          count: 1,
+          items: [
+            cockpitSituation({
+              source: 'ProgressionPending',
+              nature: 'Blocking',
+              targetType: 'Fixture',
+              targetId: fixtureId,
+              matchId: cockpitIds.matchId,
+              actionable: true,
+              actionCode: 'ApplyProgression',
+              impactCode: 'BlocksProgression',
+              params: {},
+            }),
+          ],
+        },
       }),
     )
 
     renderCockpitPage()
 
-    await user.click(await screen.findByRole('link', { name: 'Ouvrir' }))
+    await user.click(await screen.findByRole('link', { name: 'Ouvrir →' }))
     expect(screen.getByText('Match route')).toBeInTheDocument()
   })
 
@@ -406,7 +419,7 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.queryByText('Tirage')).not.toBeInTheDocument()
   })
 
-  it('does not duplicate attentionSummary as a second Situations list', async () => {
+  it('lists attention items once on the inline À traiter section', async () => {
     const situation = cockpitSituation()
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
@@ -417,8 +430,9 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await screen.findByRole('heading', { name: 'Situations' })
-    expect(screen.queryByRole('heading', { name: 'À traiter' })).not.toBeInTheDocument()
+    expect(
+      (await screen.findAllByRole('heading', { name: 'À traiter' })).length,
+    ).toBe(1)
     expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
   })
 
@@ -447,7 +461,7 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await screen.findByRole('heading', { name: 'Spring Cup' })
+    await screen.findByRole('heading', { name: 'Où en est-on ?' })
     expect(
       screen.queryByRole('heading', { name: 'Matchs', level: 3 }),
     ).not.toBeInTheDocument()
@@ -542,7 +556,7 @@ describe('CompetitionCockpitPage', () => {
     )
 
     const materializeButtons = await screen.findAllByRole('button', {
-      name: /Matérialiser les matchs/i,
+      name: /Créer les matchs/i,
     })
     await user.click(materializeButtons[0])
 

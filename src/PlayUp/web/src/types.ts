@@ -121,6 +121,8 @@ export interface CockpitView {
   name: string
   status: CompetitionStatus
   completionMode: CompletionMode | null
+  /** Optional competition period — populated when Read exposes boundaries. */
+  period?: CockpitCompetitionPeriod | null
   cycleReading: CockpitCycleReading
   constructionDimensions: CockpitConstructionDimensions
   operationalFocus: CockpitOperationalFocus
@@ -134,6 +136,12 @@ export interface CockpitView {
 
 export interface CockpitCycleReading {
   code: CockpitCycleCode | string
+}
+
+/** ISO date boundaries when exposed by Cockpit Read (optional). */
+export interface CockpitCompetitionPeriod {
+  start?: string | null
+  end?: string | null
 }
 
 export interface CockpitConstructionDimensions {

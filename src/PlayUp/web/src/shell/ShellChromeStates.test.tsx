@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -153,44 +153,30 @@ describe('Shell chrome context states', () => {
     )
   })
 
-  it('keeps À traiter visible at 0 without competition context', async () => {
+  it('keeps À traiter visible but disabled at 0 without competition context', async () => {
     renderWithShell('/')
 
     expect(
       await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
-    ).toBeInTheDocument()
+    ).toBeDisabled()
   })
 
-  it('shows a calm drawer message when no competition exists', async () => {
+  it('keeps À traiter disabled when the host has no competitions', async () => {
     vi.mocked(fetchCompetitions).mockResolvedValue([])
-    const user = userEvent.setup()
     renderWithShell('/')
 
     await screen.findByText('Aucune compétition')
-    await user.click(
-      screen.getByRole('button', { name: 'À traiter, aucun élément' }),
-    )
-
     expect(
-      await screen.findByText(
-        "Aucune compétition n'est disponible sur ce Host.",
-      ),
-    ).toBeInTheDocument()
+      screen.getByRole('button', { name: 'À traiter, aucun élément' }),
+    ).toBeDisabled()
   })
 
-  it('shows drawer loading while deep-link competition context resolves', async () => {
+  it('keeps À traiter disabled while deep-link competition context resolves', async () => {
     vi.mocked(fetchStageOverview).mockReturnValue(new Promise(() => {}))
-    const user = userEvent.setup()
     renderWithShell(`/stages/${stageId}`)
 
-    await user.click(
+    expect(
       await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
-    )
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('dialog', { name: 'À traiter' }),
-      ).toHaveTextContent('Chargement')
-    })
+    ).toBeDisabled()
   })
 })

@@ -52,6 +52,16 @@ function attentionCockpit(items: Partial<CockpitSituation>[]) {
   })
 }
 
+const oneItem = {
+  source: 'ProgressionPending' as const,
+  nature: 'Blocking' as const,
+  targetType: 'Stage' as const,
+  targetId: stageId,
+  matchId: null,
+  actionCode: 'ApplyProgression' as const,
+  params: {},
+}
+
 function renderWithShell(initialEntry: string) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -91,7 +101,7 @@ describe('AttentionDrawer', () => {
       entries: [],
       stages: [{ stageId, name: 'Group stage', status: 'Running' }],
     })
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([oneItem]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -120,45 +130,32 @@ describe('AttentionDrawer', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('opens from the header trigger', async () => {
-    const user = userEvent.setup()
+  it('disables the header trigger when count is 0', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
     renderWithShell(`/competitions/${competitionId}`)
 
-    await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
-    )
-
-    expect(screen.getByRole('dialog', { name: 'À traiter' })).toBeInTheDocument()
+    const trigger = await screen.findByRole('button', {
+      name: 'À traiter, aucun élément',
+    })
+    expect(trigger).toBeDisabled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('shows the empty state at count 0', async () => {
+  it('opens from the header trigger when count is greater than 0', async () => {
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)
 
     await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
 
+    expect(screen.getByRole('dialog', { name: /À traiter/ })).toBeInTheDocument()
     expect(
-      await screen.findByText("Rien à traiter pour l'instant"),
-    ).toBeInTheDocument()
+      document.querySelector('.shell-attention-drawer__count'),
+    ).toHaveTextContent('1')
   })
 
   it('lists attention items when count is greater than 0', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
-        {
-          source: 'ProgressionPending',
-          nature: 'Blocking',
-          targetType: 'Stage',
-          targetId: stageId,
-          matchId: null,
-          actionCode: 'ApplyProgression',
-          params: {},
-        },
-      ]),
-    )
-
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)
 
@@ -167,7 +164,8 @@ describe('AttentionDrawer', () => {
     )
 
     expect(await screen.findByText('Progression en attente')).toBeInTheDocument()
-    expect(screen.getByText(/Bloquant · Phase/i)).toBeInTheDocument()
+    expect(screen.getByText('Bloquant')).toBeInTheDocument()
+    expect(screen.getByText(/Phase/i)).toBeInTheDocument()
   })
 
   it('closes via the close button', async () => {
@@ -175,7 +173,7 @@ describe('AttentionDrawer', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
     await user.click(screen.getByRole('button', { name: 'Fermer' }))
 
@@ -189,7 +187,7 @@ describe('AttentionDrawer', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
     await user.keyboard('{Escape}')
 
@@ -222,7 +220,9 @@ describe('AttentionDrawer', () => {
     await user.click(await screen.findByRole('link', { name: /Phase prête/i }))
 
     expect(await screen.findByText('Stage page')).toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
   })
 
   it('moves focus into the drawer when opened', async () => {
@@ -230,7 +230,7 @@ describe('AttentionDrawer', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
-      name: 'À traiter, aucun élément',
+      name: 'À traiter, 1 élément',
     })
     await user.click(trigger)
 
@@ -244,7 +244,7 @@ describe('AttentionDrawer', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
-      name: 'À traiter, aucun élément',
+      name: 'À traiter, 1 élément',
     })
     await user.click(trigger)
     await user.click(screen.getByRole('button', { name: 'Fermer' }))
@@ -254,19 +254,12 @@ describe('AttentionDrawer', () => {
     })
   })
 
-  it('explains the absence of competition context calmly', async () => {
-    const user = userEvent.setup()
+  it('keeps the trigger disabled without competition context', async () => {
     renderWithShell('/')
 
-    await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
-    )
-
     expect(
-      await screen.findByText(
-        'Ouvrez une compétition pour voir ce qui demande votre attention.',
-      ),
-    ).toBeInTheDocument()
+      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+    ).toBeDisabled()
   })
 
   it('works on a stage deep link with resolved competition context', async () => {
@@ -292,9 +285,9 @@ describe('AttentionDrawer', () => {
     )
 
     expect(await screen.findByText('Tirage en attente')).toBeInTheDocument()
-    expect(screen.getByRole('dialog', { name: 'À traiter' })).toHaveTextContent(
-      'Coupe U18',
-    )
+    expect(
+      document.querySelector('.shell-attention-drawer__count'),
+    ).toHaveTextContent('1')
   })
 
   it('closes via the backdrop', async () => {
@@ -302,7 +295,7 @@ describe('AttentionDrawer', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
     await user.click(screen.getByRole('button', { name: 'Fermer À traiter' }))
 
@@ -318,7 +311,7 @@ describe('AttentionDrawer', () => {
     expect(document.querySelector('.shell__frame')).not.toHaveAttribute('inert')
 
     await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
 
     expect(document.querySelector('.shell__frame')).toHaveAttribute('inert')
@@ -329,11 +322,11 @@ describe('AttentionDrawer', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     await user.click(
-      await screen.findByRole('button', { name: 'À traiter, aucun élément' }),
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
 
     expect(screen.getByText('Workspace page')).toBeInTheDocument()
-    expect(screen.getByRole('dialog', { name: 'À traiter' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: /À traiter/ })).toBeInTheDocument()
   })
 
   it('uses Host matchId for Fixture items without N+1 match joins', async () => {

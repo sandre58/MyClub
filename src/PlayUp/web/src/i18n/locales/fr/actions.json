@@ -9,7 +9,7 @@
   "StartStage": "Démarrer la phase « {{name}} »",
   "PublishDraw": "Publier le tirage",
   "ApplyDraw": "Appliquer le tirage",
-  "MaterializeMatches": "Matérialiser les matchs",
+  "MaterializeMatches": "Créer les matchs",
   "GenerateSchedule": "Générer un calendrier",
   "ApplySchedule": "Appliquer un calendrier",
   "StartMatch": "Démarrer un match",

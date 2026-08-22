@@ -12,6 +12,10 @@ import {
 } from '../i18n/enumLabels'
 import { situationTitle } from '../i18n/situationCopy'
 import { queryKeys } from '../queryKeys'
+import {
+  activeUiCyclePhaseIndex,
+  UI_CYCLE_PHASES,
+} from '../shell/cycleUi'
 import type {
   CockpitAction,
   CockpitDimension,
@@ -20,14 +24,11 @@ import type {
   CockpitView,
 } from '../types'
 import {
-  CompetitionStatusBadge,
   ErrorState,
   LoadingState,
   MutationError,
-  PageHeader,
   PendingLabel,
   StageStatusBadge,
-  StatusBadge,
 } from '../ui'
 import {
   cockpitActionKey,
@@ -38,13 +39,13 @@ import {
   actionsForDraw,
   actionsForSlot,
   actionsForStage,
-  cardProminenceClass,
   closurePresentation,
   findActionByCode,
   isProminenceCondensed,
   isTeamAdminAction,
   operationalBlocks,
   orderSituationsForDisplay,
+  panelProminenceClass,
   primaryTeamActions,
   secondaryActions,
   shouldShowOperationalSection,
@@ -52,6 +53,7 @@ import {
   stageWideOperationalActions,
   type ConstructionSlot,
 } from './cockpitComposition'
+import './overview.css'
 
 /**
  * Competition Cockpit — GET /competitions/{id}/cockpit.
@@ -59,7 +61,6 @@ import {
  */
 export function CompetitionCockpitPage() {
   const { competitionId = '' } = useParams()
-  const { t } = useTranslation('cockpit')
 
   const query = useQuery({
     queryKey: queryKeys.competitions.cockpit(competitionId),
@@ -69,26 +70,8 @@ export function CompetitionCockpitPage() {
 
   return (
     <main id="main" className="page">
-      <PageHeader
-        eyebrow={t('eyebrow')}
-        title={query.data?.name ?? t('titleFallback')}
-        back={{ to: '/competitions', label: t('back') }}
-        badges={
-          query.data && (
-            <>
-              <CompetitionStatusBadge status={query.data.status} />
-              <StatusBadge tone="info">
-                {t(`cycle.${query.data.cycleReading.code}`, {
-                  defaultValue: query.data.cycleReading.code,
-                })}
-              </StatusBadge>
-            </>
-          )
-        }
-      />
-
-      {query.isPending && <LoadingState />}
-      {query.isError && <ErrorState error={query.error} />}
+      {query.isPending && !query.data && <LoadingState />}
+      {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <CockpitViewBody data={query.data} />}
     </main>
   )
@@ -168,19 +151,20 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const closureMode = closurePresentation(data)
 
   return (
-    <div className="section-stack">
-      <CycleReadingSection data={data} />
+    <div className="overview">
+      <CycleLineSection data={data} />
+
+      <div className="overview__pilotage">
+        <WhereAreWePanel data={data} />
+        <NaturalProgressionSection data={data} actionRunner={actionRunner} />
+      </div>
 
       <SituationsSection
-        situations={orderSituationsForDisplay(data.situations)}
+        situations={orderSituationsForDisplay(data.attentionSummary.items)}
         competitionId={data.competitionId}
         availableActions={data.availableActions}
         actionRunner={actionRunner}
       />
-
-      <AttentionTriageHint count={data.attentionSummary.count} />
-
-      <NaturalProgressionSection data={data} actionRunner={actionRunner} />
 
       {actionRunner.materializeFollowUp && (
         <MaterializeFollowUpBanner
@@ -336,16 +320,14 @@ function MaterializeFollowUpBanner({
 
   return (
     <section
-      className="card"
+      className="ds-panel"
       aria-labelledby="cockpit-materialize-followup"
       role="status"
     >
-      <div className="card__head">
-        <h2 className="card__title" id="cockpit-materialize-followup">
-          {t('materializeFollowUp.heading')}
-        </h2>
-      </div>
-      <p className="stat__value stat__value--text">
+      <h2 className="overview-panel__title" id="cockpit-materialize-followup">
+        {t('materializeFollowUp.heading')}
+      </h2>
+      <p className="overview-panel__lede">
         {followUp.alreadyComplete && followUp.createdCount === 0
           ? t('materializeFollowUp.alreadyComplete', {
               count: followUp.attachedCount,
@@ -357,10 +339,10 @@ function MaterializeFollowUpBanner({
       </p>
       {hasMatches && (
         <p>
-          <Link className="btn btn--primary" to={matchesHref}>
+          <Link className="ds-btn ds-btn--primary" to={matchesHref}>
             {t('materializeFollowUp.openMatches')}
           </Link>{' '}
-          <button type="button" className="btn" onClick={onDismiss}>
+          <button type="button" className="ds-btn ds-btn--secondary" onClick={onDismiss}>
             {t('materializeFollowUp.dismiss')}
           </button>
         </p>
@@ -369,35 +351,47 @@ function MaterializeFollowUpBanner({
   )
 }
 
-function CycleReadingSection({ data }: { data: CockpitView }) {
+function CycleLineSection({ data }: { data: CockpitView }) {
+  const { t } = useTranslation('cockpit')
+  const activeIndex = activeUiCyclePhaseIndex(data.cycleReading.code)
+
+  return (
+    <nav aria-label={t('cycle.lede')}>
+      <ol className="overview-cycle-line">
+        {UI_CYCLE_PHASES.map((phase, index) => (
+          <li key={phase} className="overview-cycle-line__item">
+            {index > 0 && (
+              <span className="overview-cycle-line__sep" aria-hidden="true">
+                ·
+              </span>
+            )}
+            <span
+              className="overview-cycle-line__phase"
+              data-active={index === activeIndex ? 'true' : 'false'}
+              aria-current={index === activeIndex ? 'step' : undefined}
+            >
+              {t(`cycleUi.${phase}`, { defaultValue: phase })}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+function WhereAreWePanel({ data }: { data: CockpitView }) {
   const { t } = useTranslation('cockpit')
   const code = data.cycleReading.code
 
   return (
-    <section className="card card--condensed" aria-labelledby="cockpit-cycle">
-      <div className="card__head">
-        <h2 className="card__title" id="cockpit-cycle">
-          {t('cycle.heading')}
-        </h2>
-      </div>
-      <p className="stat__value stat__value--text">
+    <section className="ds-panel" aria-labelledby="cockpit-where">
+      <h2 className="overview-panel__title" id="cockpit-where">
+        {t('cycle.heading')}
+      </h2>
+      <p className="overview-panel__lede">
         {t(`cycle.${code}`, { defaultValue: code })}
       </p>
     </section>
-  )
-}
-
-function AttentionTriageHint({ count }: { count: number }) {
-  const { t } = useTranslation('cockpit')
-
-  if (count <= 0) {
-    return null
-  }
-
-  return (
-    <p className="caption" role="note">
-      {t('attention.triageHint', { count })}
-    </p>
   )
 }
 
@@ -422,11 +416,11 @@ function ConstructionDimensionsSection({
   }
 
   return (
-    <section className="section-stack" aria-labelledby="cockpit-dimensions">
-      <h2 className="card__title" id="cockpit-dimensions">
+    <section className="ds-group" aria-labelledby="cockpit-dimensions">
+      <h2 className="overview-panel__title" id="cockpit-dimensions">
         {t('dimensions.heading')}
       </h2>
-      <div className="card-grid">
+      <div className="overview-dimensions">
         {slots.map((slot) => {
           if (slot === 'teams') {
             return (
@@ -505,10 +499,8 @@ function RegulationDimensionCard({
   const primaryGap = regulation.transitionReadiness.find((item) => !item.ready)
 
   return (
-    <article className={cardProminenceClass(regulation.prominence)}>
-      <div className="card__head">
-        <h3 className="card__title">{t('dimensions.regulation.title')}</h3>
-      </div>
+    <article className={panelProminenceClass(regulation.prominence)}>
+      <h3 className="overview-dimension__title">{t('dimensions.regulation.title')}</h3>
       <p>
         {t('dimensions.regulation.summaryCompact', {
           periods: competition.numberOfPeriods,
@@ -535,7 +527,7 @@ function RegulationDimensionCard({
       )}
       <ActionButtons actions={actions} actionRunner={actionRunner} />
       <p>
-        <Link className="btn" to={href}>
+        <Link className="ds-btn ds-btn--ghost" to={href}>
           {hrefLabel}
         </Link>
       </p>
@@ -561,14 +553,12 @@ function DimensionCard({
   actionRunner: ActionRunner
 }) {
   return (
-    <article className={cardProminenceClass(prominence)}>
-      <div className="card__head">
-        <h3 className="card__title">{title}</h3>
-      </div>
+    <article className={panelProminenceClass(prominence)}>
+      <h3 className="overview-dimension__title">{title}</h3>
       <p>{summary}</p>
       <ActionButtons actions={actions} actionRunner={actionRunner} />
       <p>
-        <Link className="btn" to={href}>
+        <Link className="ds-btn ds-btn--ghost" to={href}>
           {hrefLabel}
         </Link>
       </p>
@@ -602,7 +592,7 @@ function ActionButtons({
           <button
             key={key}
             type="button"
-            className="btn btn--primary"
+            className="ds-btn ds-btn--primary"
             disabled={actionRunner.mutation.isPending}
             onClick={() => actionRunner.onActionClick(action)}
           >
@@ -629,13 +619,13 @@ function OperationalFocusSection({
 
   return (
     <section className="section-stack" aria-labelledby="cockpit-operational">
-      <h2 className="card__title" id="cockpit-operational">
+      <h2 className="overview-panel__title" id="cockpit-operational">
         {t('operational.heading')}
       </h2>
 
       {blocks.includes('stages') && (
-        <section className="card" aria-labelledby="cockpit-stages">
-          <h3 className="card__title" id="cockpit-stages">
+        <section className="ds-panel" aria-labelledby="cockpit-stages">
+          <h3 className="overview-dimension__title" id="cockpit-stages">
             {t('operational.stagesHeading')}
           </h3>
           <ul className="plain-list">
@@ -650,7 +640,7 @@ function OperationalFocusSection({
                     actionRunner={actionRunner}
                   />
                 </div>
-                <Link className="btn" to={`/stages/${stage.stageId}`}>
+                <Link className="ds-btn ds-btn--ghost" to={`/stages/${stage.stageId}`}>
                   {t('operational.openStage')}
                 </Link>
               </li>
@@ -660,8 +650,8 @@ function OperationalFocusSection({
       )}
 
       {blocks.includes('draws') && (
-        <section className="card" aria-labelledby="cockpit-draws">
-          <h3 className="card__title" id="cockpit-draws">
+        <section className="ds-panel" aria-labelledby="cockpit-draws">
+          <h3 className="overview-dimension__title" id="cockpit-draws">
             {t('operational.drawsHeading')}
           </h3>
           <ul className="plain-list">
@@ -682,8 +672,8 @@ function OperationalFocusSection({
       )}
 
       {blocks.includes('counts') && (
-        <section className="card" aria-labelledby="cockpit-match-counts">
-          <h3 className="card__title" id="cockpit-match-counts">
+        <section className="ds-panel" aria-labelledby="cockpit-match-counts">
+          <h3 className="overview-dimension__title" id="cockpit-match-counts">
             {t('operational.countsHeading')}
           </h3>
           <div className="stat-grid">
@@ -702,8 +692,8 @@ function OperationalFocusSection({
       )}
 
       {blocks.includes('upcoming') && (
-        <section className="card" aria-labelledby="cockpit-upcoming">
-          <h3 className="card__title" id="cockpit-upcoming">
+        <section className="ds-panel" aria-labelledby="cockpit-upcoming">
+          <h3 className="overview-dimension__title" id="cockpit-upcoming">
             {t('operational.upcomingHeading')}
           </h3>
           <ul className="plain-list">
@@ -717,7 +707,7 @@ function OperationalFocusSection({
                     <p className="muted">{match.scheduledAt}</p>
                   )}
                 </div>
-                <Link className="btn" to={`/matches/${match.matchId}`}>
+                <Link className="ds-btn ds-btn--ghost" to={`/matches/${match.matchId}`}>
                   {t('operational.openMatch')}
                 </Link>
               </li>
@@ -754,7 +744,7 @@ function DrawFocusRow({
         </p>
         <ActionButtons actions={actions} actionRunner={actionRunner} />
       </div>
-      <Link className="btn" to={`/stages/${draw.stageId}`}>
+      <Link className="ds-btn ds-btn--ghost" to={`/stages/${draw.stageId}`}>
         {t('operational.openStage')}
       </Link>
     </li>
@@ -784,14 +774,14 @@ function SituationsSection({
   const { t } = useTranslation('cockpit')
 
   return (
-    <section className="card" aria-labelledby="cockpit-situations">
-      <h2 className="card__title" id="cockpit-situations">
+    <section className="ds-group" aria-labelledby="cockpit-situations">
+      <h2 className="overview-panel__title" id="cockpit-situations">
         {t('situations.heading')}
       </h2>
       {situations.length === 0 ? (
-        <p className="muted">{t('situations.empty')}</p>
+        <p className="overview-panel__muted">{t('situations.empty')}</p>
       ) : (
-        <ul className="plain-list">
+        <div className="ds-group">
           {situations.map((situation) => {
             const href = situationHref(situation, competitionId)
             const key = `${situation.source}:${situation.targetType}:${situation.targetId}`
@@ -799,10 +789,10 @@ function SituationsSection({
               ? findActionByCode(availableActions, situation.actionCode)
               : undefined
             return (
-              <li key={key} className="row">
-                <div>
+              <div key={key} className="overview-treat-item">
+                <div className="overview-treat-item__main">
                   <strong>{situationTitle(situation.source, situation.params)}</strong>
-                  <p className="muted">
+                  <p className="overview-panel__muted">
                     {t(`nature.${situation.nature}`, {
                       defaultValue: situation.nature,
                     })}
@@ -829,20 +819,15 @@ function SituationsSection({
                     />
                   )}
                 </div>
-                {href && !linkedAction && (
-                  <Link className="btn" to={href}>
-                    {t('situations.open')}
+                {href && (
+                  <Link className="ds-btn ds-btn--ghost" to={href}>
+                    {t('situations.open')} →
                   </Link>
                 )}
-                {href && linkedAction && (
-                  <Link className="btn" to={href}>
-                    {t('situations.open')}
-                  </Link>
-                )}
-              </li>
+              </div>
             )
           })}
-        </ul>
+        </div>
       )}
     </section>
   )
@@ -863,13 +848,13 @@ function NaturalProgressionSection({
   const classementsHref = `/competitions/${data.competitionId}/classements`
 
   return (
-    <section className="card" aria-labelledby="cockpit-progression">
-      <h2 className="card__title" id="cockpit-progression">
+    <section className="ds-panel" aria-labelledby="cockpit-progression">
+      <h2 className="overview-panel__title" id="cockpit-progression">
         {t('progression.heading')}
       </h2>
       {code ? (
         <>
-          <p className="stat__value stat__value--text">
+          <p className="overview-panel__lede">
             {t(`progression.codes.${code}`, {
               defaultValue: actionLabel(code),
             })}
@@ -878,26 +863,26 @@ function NaturalProgressionSection({
             <ActionButtons actions={[matched]} actionRunner={actionRunner} />
           ) : code === 'ContinueOrganisation' ? (
             <p>
-              <Link className="btn" to={orgHref}>
+              <Link className="ds-btn ds-btn--ghost" to={orgHref}>
                 {t('dimensions.openOrganisation')}
               </Link>
             </p>
           ) : code === 'OpenMatches' ? (
             <p>
-              <Link className="btn" to={matchesHref}>
+              <Link className="ds-btn ds-btn--ghost" to={matchesHref}>
                 {t('dimensions.openMatches')}
               </Link>
             </p>
           ) : code === 'OpenConsultation' ? (
             <p>
-              <Link className="btn" to={classementsHref}>
+              <Link className="ds-btn ds-btn--ghost" to={classementsHref}>
                 {t('nav.classements.title')}
               </Link>
             </p>
           ) : null}
         </>
       ) : (
-        <p className="muted">{t('progression.none')}</p>
+        <p className="overview-panel__muted">{t('progression.none')}</p>
       )}
     </section>
   )
@@ -913,8 +898,8 @@ function SecondaryActionsSection({
   heading: string
 }) {
   return (
-    <section className="card card--condensed" aria-labelledby="cockpit-actions-secondary">
-      <h2 className="card__title" id="cockpit-actions-secondary">
+    <section className="ds-panel overview-dimension--condensed" aria-labelledby="cockpit-actions-secondary">
+      <h2 className="overview-panel__title" id="cockpit-actions-secondary">
         {heading}
       </h2>
       <ActionButtons actions={actions} actionRunner={actionRunner} />
@@ -942,8 +927,8 @@ function ClosureHintSection({
 
   if (mode === 'condensed') {
     return (
-      <section className="card card--condensed" aria-labelledby="cockpit-closure">
-        <h2 className="card__title" id="cockpit-closure">
+      <section className="ds-panel overview-dimension--condensed" aria-labelledby="cockpit-closure">
+        <h2 className="overview-panel__title" id="cockpit-closure">
           {t('cockpit:closure.heading')}
         </h2>
         <p className="caption">
@@ -957,8 +942,8 @@ function ClosureHintSection({
   }
 
   return (
-    <section className="card" aria-labelledby="cockpit-closure">
-      <h2 className="card__title" id="cockpit-closure">
+    <section className="ds-panel" aria-labelledby="cockpit-closure">
+      <h2 className="overview-panel__title" id="cockpit-closure">
         {t('cockpit:closure.heading')}
       </h2>
       <p
@@ -997,46 +982,40 @@ function SpacesNavSection({ competitionId }: { competitionId: string }) {
   const { t } = useTranslation('cockpit')
 
   return (
-    <section className="section-stack" aria-labelledby="cockpit-spaces">
-      <h2 className="card__title" id="cockpit-spaces">
+    <section className="ds-group" aria-labelledby="cockpit-spaces">
+      <h2 className="overview-panel__title" id="cockpit-spaces">
         {t('nav.heading')}
       </h2>
-      <div className="card-grid">
+      <div className="overview-dimensions">
         <Link
-          className="nav-card"
+          className="overview-nav-card"
           to={`/competitions/${competitionId}/organisation`}
         >
-          <span className="nav-card__title">
+          <span className="overview-nav-card__title">
             {t('nav.organisation.title')}
-            <span className="row__chevron" aria-hidden="true">
-              →
-            </span>
+            <span aria-hidden="true">→</span>
           </span>
-          <span className="nav-card__desc">{t('nav.organisation.desc')}</span>
+          <span className="overview-nav-card__desc">{t('nav.organisation.desc')}</span>
         </Link>
         <Link
-          className="nav-card"
+          className="overview-nav-card"
           to={`/competitions/${competitionId}/matches`}
         >
-          <span className="nav-card__title">
+          <span className="overview-nav-card__title">
             {t('nav.matches.title')}
-            <span className="row__chevron" aria-hidden="true">
-              →
-            </span>
+            <span aria-hidden="true">→</span>
           </span>
-          <span className="nav-card__desc">{t('nav.matches.desc')}</span>
+          <span className="overview-nav-card__desc">{t('nav.matches.desc')}</span>
         </Link>
         <Link
-          className="nav-card"
+          className="overview-nav-card"
           to={`/competitions/${competitionId}/classements`}
         >
-          <span className="nav-card__title">
+          <span className="overview-nav-card__title">
             {t('nav.classements.title')}
-            <span className="row__chevron" aria-hidden="true">
-              →
-            </span>
+            <span aria-hidden="true">→</span>
           </span>
-          <span className="nav-card__desc">{t('nav.classements.desc')}</span>
+          <span className="overview-nav-card__desc">{t('nav.classements.desc')}</span>
         </Link>
       </div>
     </section>

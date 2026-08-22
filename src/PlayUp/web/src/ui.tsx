@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { ApiError } from './api'
 import { apiErrorLabel } from './i18n/apiErrorLabel'
+import {
+  Status,
+  statusToneFromLegacy,
+} from './design-system/components/Status'
 import type {
   CompetitionStatus,
   DrawResolutionState,
@@ -89,15 +93,23 @@ export function BackLink({
 export function StatusBadge({
   tone,
   children,
+  variant = 'soft',
+  shape = 'rounded',
 }: {
   tone: StatusTone
   children: ReactNode
+  variant?: 'soft' | 'outline'
+  shape?: 'rounded' | 'pill'
 }) {
   return (
-    <span className={`status-badge status-badge--${tone}`}>
-      <span className="status-badge__dot" aria-hidden="true" />
+    <Status
+      density="context"
+      tone={statusToneFromLegacy(tone)}
+      variant={variant}
+      shape={shape}
+    >
       {children}
-    </span>
+    </Status>
   )
 }
 
@@ -159,7 +171,7 @@ export function DrawResolutionBadge({
 
 /** One colour vocabulary for every status family across the app. */
 const competitionStatusTone: Record<CompetitionStatus, StatusTone> = {
-  Draft: 'neutral',
+  Draft: 'info',
   Ready: 'info',
   Running: 'live',
   Suspended: 'warn',

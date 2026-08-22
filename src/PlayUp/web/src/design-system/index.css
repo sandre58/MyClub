@@ -22,5 +22,8 @@
 @import './foundations/surfaces.css';
 @import './foundations/focus.css';
 @import './foundations/states.css';
+@import './foundations/status.css';
+@import './foundations/icons.css';
 @import './foundations/actions.css';
 @import './foundations/controls.css';
+@import './foundations/visually-hidden.css';

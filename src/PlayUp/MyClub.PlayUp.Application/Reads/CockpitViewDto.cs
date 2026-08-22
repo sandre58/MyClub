@@ -21,6 +21,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Name">Display name.</param>
 /// <param name="Status">Official Domain lifecycle status (distinct from situations).</param>
 /// <param name="CompletionMode">Completion mode when Completed/Archived.</param>
+/// <param name="Period">Operational calendar span from match placements (null when none scheduled).</param>
 /// <param name="CycleReading">Minimal cycle interpretation for pilotage (machine codes only).</param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, upcoming matches.</param>
@@ -35,6 +36,7 @@ public sealed record CockpitViewDto(
     string Name,
     CompetitionStatus Status,
     CompletionMode? CompletionMode,
+    CockpitCompetitionPeriodDto? Period,
     CockpitCycleReadingDto CycleReading,
     CockpitConstructionDimensionsDto ConstructionDimensions,
     CockpitOperationalFocusDto OperationalFocus,
@@ -44,6 +46,13 @@ public sealed record CockpitViewDto(
     CockpitNaturalProgressionDto? NaturalProgression,
     CockpitClosureHintDto ClosureHint,
     IReadOnlyList<CockpitNavigationHintDto> NavigationHints);
+
+/// <summary>
+/// Operational competition period derived from placed match starts (Read fact, not Domain season dates).
+/// </summary>
+/// <param name="Start">Earliest match placement start, if any.</param>
+/// <param name="End">Latest match placement start, if any.</param>
+public sealed record CockpitCompetitionPeriodDto(DateTimeOffset? Start, DateTimeOffset? End);
 
 /// <summary>Minimal cycle reading (machine codes — UX labels in SPA i18n).</summary>
 /// <param name="Code">Construction | InProgress | Completed | Archived.</param>

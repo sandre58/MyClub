@@ -167,6 +167,7 @@ public static class CockpitAssembler
             competition.Name.Value,
             competition.Status,
             competition.CompletionMode,
+            BuildPeriod(stages),
             BuildCycleReading(competition.Status),
             dimensions,
             operationalFocus,
@@ -176,6 +177,40 @@ public static class CockpitAssembler
             progression,
             closure,
             navigation);
+    }
+
+    /// <summary>
+    /// Derives operational calendar bounds from match placements (min/max start).
+    /// Null when no placement exists — not declared competition season dates.
+    /// </summary>
+    private static CockpitCompetitionPeriodDto? BuildPeriod(IReadOnlyList<Stage> stages)
+    {
+        DateTimeOffset? earliest = null;
+        DateTimeOffset? latest = null;
+
+        foreach (var stage in stages)
+        {
+            foreach (var placement in stage.MatchPlacements)
+            {
+                var start = placement.Start;
+                if (earliest is null || start < earliest)
+                {
+                    earliest = start;
+                }
+
+                if (latest is null || start > latest)
+                {
+                    latest = start;
+                }
+            }
+        }
+
+        if (earliest is null && latest is null)
+        {
+            return null;
+        }
+
+        return new CockpitCompetitionPeriodDto(earliest, latest);
     }
 
     private static CockpitCycleReadingDto BuildCycleReading(CompetitionStatus status) =>

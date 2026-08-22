@@ -1,9 +1,14 @@
-import type { RefObject, SVGProps } from 'react'
+import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCompetitionCockpit } from '../api'
+import { Status, type StatusTone } from '../design-system/components/Status'
+import { AttentionBellIcon, SwapIcon } from '../design-system/icons/shellIcons'
+import { competitionStatusLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
+import type { CompetitionStatus } from '../types'
+import { formatCompetitionPeriod } from './competitionPeriod'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type ShellHeaderProps = {
@@ -14,8 +19,8 @@ type ShellHeaderProps = {
 }
 
 /**
- * Shell header (14.6.3+) — global context, attention trigger, shell actions.
- * Opens the attention drawer via onAttentionClick; business nav stays in Sidebar.
+ * Shell header (20.2) — competition context, status, attention trigger.
+ * No wordmark; settings live in sidebar footer.
  */
 export function ShellHeader({
   attentionDrawerId,
@@ -23,7 +28,6 @@ export function ShellHeader({
   attentionTriggerRef,
   onAttentionClick,
 }: ShellHeaderProps) {
-  const { t } = useTranslation('shell')
   const { competitionId, competitionName, state } = useShellCompetitionContext()
 
   const cockpitQuery = useQuery({
@@ -33,20 +37,20 @@ export function ShellHeader({
   })
 
   const attentionCount = cockpitQuery.data?.attentionSummary.count ?? 0
+  const competitionStatus = cockpitQuery.data?.status
+  const periodLabel = formatCompetitionPeriod(
+    cockpitQuery.data?.period?.start,
+    cockpitQuery.data?.period?.end,
+  )
 
   return (
     <header className="shell-header">
-      <div className="shell-header__identity">
-        <span className="shell-header__wordmark">PLAY&apos;UP</span>
-        <span className="shell-header__separator" aria-hidden="true">
-          ·
-        </span>
-        <ShellHeaderCompetitionContext
-          competitionId={competitionId}
-          competitionName={competitionName}
-          state={state}
-        />
-      </div>
+      <ShellHeaderCompetitionContext
+        competitionName={competitionName}
+        competitionStatus={competitionStatus}
+        periodLabel={periodLabel}
+        state={state}
+      />
 
       <div className="shell-header__actions">
         <AttentionTrigger
@@ -56,25 +60,6 @@ export function ShellHeader({
           drawerOpen={attentionDrawerOpen}
           onClick={onAttentionClick}
         />
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-icon-button shell-header__icon-action"
-          aria-label={t('actions.settingsAria')}
-          aria-disabled="true"
-          disabled
-        >
-          <SettingsIcon aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost shell-header__user-action"
-          aria-label={t('actions.userAria')}
-          aria-disabled="true"
-          disabled
-        >
-          <UserIcon className="shell-header__user-icon" aria-hidden="true" />
-          <span className="shell-header__user-label">{t('actions.user')}</span>
-        </button>
       </div>
     </header>
   )
@@ -82,10 +67,13 @@ export function ShellHeader({
 
 function ShellHeaderCompetitionContext({
   competitionName,
+  competitionStatus,
+  periodLabel,
   state,
 }: {
-  competitionId?: string
   competitionName?: string
+  competitionStatus?: CompetitionStatus
+  periodLabel?: string | null
   state: ReturnType<typeof useShellCompetitionContext>['state']
 }) {
   const { t } = useTranslation('shell')
@@ -105,63 +93,91 @@ function ShellHeaderCompetitionContext({
   }
 
   if (state === 'selected' && competitionName) {
+    const statusLabel =
+      competitionStatus && competitionStatusLabel(competitionStatus)
+    const statusTone =
+      competitionStatus && headerCompetitionStatusTone[competitionStatus]
+    const changeLabel = t('competition.changeAria')
+
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
-        <span className="shell-header__competition-name">{competitionName}</span>
-        <Link
-          className="ds-btn ds-btn--ghost shell-header__change"
-          to="/competitions"
-        >
-          {t('competition.change')}
-        </Link>
+        <span className="shell-header__crest" aria-hidden="true">
+          {t('competition.crestPlaceholder').charAt(0)}
+        </span>
+
+        <div className="shell-header__identity">
+          <span className="shell-header__competition-name">{competitionName}</span>
+
+          {(statusLabel || periodLabel) && (
+            <div className="shell-header__meta-row">
+              {statusLabel && statusTone && (
+                <Status density="context" tone={statusTone} variant="soft" shape="rounded">
+                  {statusLabel}
+                </Status>
+              )}
+              {statusLabel && periodLabel && (
+                <span className="shell-header__meta-separator" aria-hidden="true">
+                  ·
+                </span>
+              )}
+              {periodLabel && (
+                <span className="shell-header__period ds-meta">{periodLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <CompetitionSwapLink label={changeLabel} />
       </div>
     )
   }
 
   if (state === 'unavailable') {
+    const changeLabel = t('competition.changeAria')
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__context-message">
           {t('competition.unavailable')}
         </span>
-        <Link
-          className="ds-btn ds-btn--ghost shell-header__change"
-          to="/competitions"
-        >
-          {t('competition.change')}
-        </Link>
+        <CompetitionSwapLink label={changeLabel} />
       </div>
     )
   }
 
   if (state === 'empty') {
+    const listLabel = t('competition.listAria')
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__context-message">
           {t('competition.none')}
         </span>
-        <Link
-          className="ds-btn ds-btn--ghost shell-header__change"
-          to="/competitions"
-        >
-          {t('competition.list')}
-        </Link>
+        <CompetitionSwapLink label={listLabel} />
       </div>
     )
   }
 
+  const chooseLabel = t('competition.changeAria')
   return (
     <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
       <span className="shell-header__context-message">
         {t('competition.choose')}
       </span>
-      <Link
-        className="ds-btn ds-btn--ghost shell-header__change"
-        to="/competitions"
-      >
-        {t('competition.change')}
-      </Link>
+      <CompetitionSwapLink label={chooseLabel} />
     </div>
+  )
+}
+
+/** Icon-only competition switch — aria-label + native title tooltip. */
+function CompetitionSwapLink({ label }: { label: string }) {
+  return (
+    <Link
+      className="ds-btn ds-btn--ghost ds-icon-button shell-header__change shell-header__icon-control"
+      to="/competitions"
+      aria-label={label}
+      title={label}
+    >
+      <SwapIcon size="lg" aria-hidden="true" />
+    </Link>
   )
 }
 
@@ -181,94 +197,41 @@ function AttentionTrigger({
   const { t } = useTranslation('shell')
   const hasAttention = count > 0
   const accessibleLabel = t('attention.trigger', { count })
+  const tooltipLabel = t('attention.label')
 
   return (
     <button
       ref={buttonRef}
       type="button"
-      className={`shell-header__attention ds-btn ds-btn--ghost${
-        hasAttention ? ' shell-header__attention--active' : ''
-      }`}
-      aria-expanded={drawerOpen}
-      aria-haspopup="dialog"
-      aria-controls={drawerId}
+      className="shell-header__attention shell-header__icon-control ds-btn ds-btn--ghost ds-icon-button"
+      aria-expanded={hasAttention ? drawerOpen : undefined}
+      aria-haspopup={hasAttention ? 'dialog' : undefined}
+      aria-controls={hasAttention ? drawerId : undefined}
       aria-label={accessibleLabel}
-      onClick={onClick}
+      title={tooltipLabel}
+      disabled={!hasAttention}
+      onClick={hasAttention ? onClick : undefined}
     >
-      <span
-        className={`ds-state${
-          hasAttention ? ' ds-state--attention' : ' ds-state--neutral'
-        }`}
-      >
-        <span className="ds-state__figure">{count}</span>
-        <AttentionIcon className="ds-state__icon" aria-hidden="true" />
-        <span className="ds-state__label">{t('attention.label')}</span>
-      </span>
+      <AttentionBellIcon
+        size="lg"
+        className="shell-header__attention-icon"
+        aria-hidden="true"
+      />
+      {hasAttention && (
+        <span className="shell-header__attention-badge" aria-hidden="true">
+          {count}
+        </span>
+      )}
     </button>
   )
 }
 
-function AttentionIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" {...props}>
-      <path
-        d="M10 3.5 17.5 16.5H2.5L10 3.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 8.5v4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-      <circle cx="10" cy="14.25" r="0.8" fill="currentColor" />
-    </svg>
-  )
-}
-
-function SettingsIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" {...props}>
-      <circle
-        cx="10"
-        cy="10"
-        r="2.25"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <path
-        d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.6 4.6l1.4 1.4M14 14l1.4 1.4M4.6 15.4l1.4-1.4M14 6l1.4-1.4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function UserIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" {...props}>
-      <circle
-        cx="10"
-        cy="7"
-        r="2.75"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <path
-        d="M4.5 16.5c.75-2.75 2.75-4 5.5-4s4.75 1.25 5.5 4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
+/** Official lifecycle tone — Draft/Ready = info (not neutral gray). */
+const headerCompetitionStatusTone: Record<CompetitionStatus, StatusTone> = {
+  Draft: 'info',
+  Ready: 'info',
+  Running: 'live',
+  Suspended: 'attention',
+  Completed: 'done',
+  Archived: 'neutral',
 }

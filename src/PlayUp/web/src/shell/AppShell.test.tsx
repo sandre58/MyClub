@@ -93,16 +93,16 @@ describe('AppShell', () => {
   it('renders the four sidebar destinations', () => {
     renderWithShell('/')
 
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Organisation' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
   })
 
-  it('marks Cockpit active for workspace routes', () => {
+  it('marks Vue d\'ensemble active for workspace routes', () => {
     renderWithShell('/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -171,7 +171,7 @@ describe('AppShell', () => {
     expect(
       screen.getByRole('button', { name: 'Développer la barre latérale' }),
     ).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
   })
 
   it('maps stage matches deep links to Matchs', () => {

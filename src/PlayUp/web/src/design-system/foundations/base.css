@@ -10,6 +10,17 @@
     -webkit-font-smoothing: antialiased;
 }
 
+html:has(.shell),
+body:has(.shell),
+#root:has(.shell) {
+    height: 100%;
+    overflow: hidden;
+}
+
+.shell {
+    height: 100dvh;
+}
+
 .ds-root *,
 .ds-root *::before,
 .ds-root *::after {

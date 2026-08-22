@@ -1,14 +1,21 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useId, useRef, type RefObject, type SVGProps } from 'react'
+import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { fetchCompetitionCockpit } from '../api'
+import {
+  AttentionMarkIcon,
+  ChevronRightIcon,
+  CloseIcon,
+} from '../design-system/icons/shellIcons'
+import { Status } from '../design-system/components/Status'
 import { queryKeys } from '../queryKeys'
 import type { CockpitSituation } from '../types'
 import { situationTitle } from '../i18n/situationCopy'
 import { attentionTargetTypeLabel } from '../i18n/enumLabels'
 import { situationHref } from '../pages/cockpitNavigation'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
+import { SHELL_MOTION_EXIT_MS } from './shellMotion'
 
 type AttentionDrawerProps = {
   open: boolean
@@ -31,21 +38,39 @@ export function AttentionDrawer({
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const wasOpenRef = useRef(false)
+  const hadOpenedRef = useRef(false)
+  const [mounted, setMounted] = useState(open)
+  const [visible, setVisible] = useState(open)
 
-  const { competitionId, competitionName, state: contextState } =
-    useShellCompetitionContext()
+  const { competitionId, state: contextState } = useShellCompetitionContext()
 
   const cockpitQuery = useQuery({
     queryKey: queryKeys.competitions.cockpit(competitionId ?? ''),
     queryFn: () => fetchCompetitionCockpit(competitionId!),
-    enabled: open && Boolean(competitionId),
+    enabled: (open || mounted) && Boolean(competitionId),
   })
 
   const items = cockpitQuery.data?.attentionSummary.items ?? []
+  const count = cockpitQuery.data?.attentionSummary.count ?? items.length
+  const titleLabel = t('shell:attention.label')
+  const showCount = !cockpitQuery.isPending && count > 0
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setMounted(true)
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true))
+      })
+      return () => cancelAnimationFrame(frame)
+    }
+
+    setVisible(false)
+    const timeout = window.setTimeout(() => setMounted(false), SHELL_MOTION_EXIT_MS)
+    return () => window.clearTimeout(timeout)
+  }, [open])
+
+  useEffect(() => {
+    if (!open || !visible) {
       return
     }
 
@@ -56,14 +81,20 @@ export function AttentionDrawer({
     return () => {
       document.body.style.overflow = previousOverflow
     }
+  }, [open, visible])
+
+  useEffect(() => {
+    if (open) {
+      hadOpenedRef.current = true
+    }
   }, [open])
 
   useEffect(() => {
-    if (wasOpenRef.current && !open) {
+    if (hadOpenedRef.current && !mounted) {
+      hadOpenedRef.current = false
       returnFocusRef.current?.focus()
     }
-    wasOpenRef.current = open
-  }, [open, returnFocusRef])
+  }, [mounted, returnFocusRef])
 
   useEffect(() => {
     if (!open) {
@@ -81,14 +112,17 @@ export function AttentionDrawer({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [open, onClose])
 
-  useFocusTrap(panelRef, open)
+  useFocusTrap(panelRef, open && visible)
 
-  if (!open) {
+  if (!mounted) {
     return null
   }
 
   return (
-    <div className="shell-attention-drawer" data-open="true">
+    <div
+      className="shell-attention-drawer"
+      data-open={visible ? 'true' : 'false'}
+    >
       <button
         type="button"
         className="shell-attention-drawer__backdrop"
@@ -106,31 +140,21 @@ export function AttentionDrawer({
         aria-labelledby={titleId}
       >
         <header className="shell-attention-drawer__head">
-          <div className="shell-attention-drawer__title-group">
-            <h2 id={titleId} className="shell-attention-drawer__title">
-              {t('shell:attention.label')}
-            </h2>
-            {competitionName ? (
-              <p className="shell-attention-drawer__subtitle ds-meta">
-                {competitionName}
-              </p>
-            ) : contextState === 'loading' && competitionId ? (
-              <p
-                className="shell-attention-drawer__subtitle shell-attention-drawer__subtitle--loading ds-meta"
-                aria-busy="true"
-              >
-                {t('shell:competition.loading')}
-              </p>
-            ) : null}
-          </div>
+          <h2 id={titleId} className="shell-attention-drawer__title-row">
+            <span className="shell-attention-drawer__title">{titleLabel}</span>
+            {showCount && (
+              <span className="shell-attention-drawer__count">{count}</span>
+            )}
+          </h2>
           <button
             ref={closeButtonRef}
             type="button"
             className="ds-btn ds-btn--ghost ds-icon-button shell-attention-drawer__close"
             aria-label={t('common:close')}
+            title={t('common:close')}
             onClick={onClose}
           >
-            <CloseIcon aria-hidden="true" />
+            <CloseIcon size="md" aria-hidden="true" />
           </button>
         </header>
 
@@ -209,13 +233,9 @@ function AttentionDrawerContent({
   if (items.length === 0) {
     return (
       <div className="shell-attention-drawer__empty">
-        <div
-          className="ds-state ds-state--neutral"
-          aria-label={t('attention.emptyAria')}
-        >
-          <span className="ds-state__figure">0</span>
-          <span className="ds-state__label">{t('attention.emptyTitle')}</span>
-        </div>
+        <p className="shell-attention-drawer__empty-title">
+          {t('attention.emptyTitle')}
+        </p>
         <p className="shell-attention-drawer__hint ds-meta">
           {t('attention.emptyHint')}
         </p>
@@ -248,34 +268,52 @@ function AttentionDrawerItem({
 }) {
   const { t } = useTranslation(['shell', 'cockpit'])
   const href = situationHref(item, competitionId)
-  const natureClass =
-    item.nature === 'Blocking' ? 'ds-state--error' : 'ds-state--info'
+  const isBlocking = item.nature === 'Blocking'
+  const natureTone = isBlocking ? 'error' : 'info'
   const natureLabel = t(`cockpit:nature.${item.nature}`, {
     defaultValue: item.nature,
   })
-  const contextParts = [natureLabel]
-  if (item.targetType) {
-    contextParts.push(attentionTargetTypeLabel(item.targetType))
-  }
-  const contextLabel = contextParts.join(' · ')
+  const targetLabel = item.targetType
+    ? attentionTargetTypeLabel(item.targetType)
+    : null
+  const toneClass = isBlocking
+    ? 'shell-attention-drawer__item-link--blocking'
+    : 'shell-attention-drawer__item-link--info'
+  const staticToneClass = isBlocking
+    ? 'shell-attention-drawer__item-static--blocking'
+    : 'shell-attention-drawer__item-static--info'
 
   const content = (
     <>
+      <span
+        className={`shell-attention-drawer__item-mark${
+          isBlocking ? ' shell-attention-drawer__item-mark--blocking' : ''
+        }`}
+        aria-hidden="true"
+      >
+        <AttentionMarkIcon size="lg" />
+      </span>
       <div className="shell-attention-drawer__item-main">
-        <div className={`ds-state ${natureClass}`}>
-          <AttentionMarkIcon className="ds-state__icon" aria-hidden="true" />
-          <span className="ds-state__label">
-            {situationTitle(item.source, item.params)}
-          </span>
-        </div>
-        <p className="shell-attention-drawer__item-context ds-meta">
-          {contextLabel}
+        <p className="shell-attention-drawer__item-title">
+          {situationTitle(item.source, item.params)}
         </p>
+        <div className="shell-attention-drawer__item-meta">
+          <Status density="context" tone={natureTone} variant="soft" shape="rounded">
+            {natureLabel}
+          </Status>
+          {targetLabel && (
+            <span className="shell-attention-drawer__item-target ds-meta">
+              {targetLabel}
+            </span>
+          )}
+        </div>
       </div>
       {href && (
-        <span className="shell-attention-drawer__item-action ds-meta">
-          {t('shell:attention.open')}
-        </span>
+        <ChevronRightIcon
+          size="md"
+          className="shell-attention-drawer__item-chevron"
+          aria-hidden="true"
+        />
       )}
     </>
   )
@@ -284,14 +322,16 @@ function AttentionDrawerItem({
     <li className="shell-attention-drawer__item">
       {href ? (
         <Link
-          className="shell-attention-drawer__item-link"
+          className={`shell-attention-drawer__item-link ${toneClass}`}
           to={href}
           onClick={onNavigate}
         >
           {content}
         </Link>
       ) : (
-        <div className="shell-attention-drawer__item-static">{content}</div>
+        <div className={`shell-attention-drawer__item-static ${staticToneClass}`}>
+          {content}
+        </div>
       )}
     </li>
   )
@@ -342,39 +382,4 @@ function useFocusTrap(
     container.addEventListener('keydown', onKeyDown)
     return () => container.removeEventListener('keydown', onKeyDown)
   }, [active, containerRef])
-}
-
-function CloseIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" {...props}>
-      <path
-        d="m5 5 10 10M15 5 5 15"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.75"
-      />
-    </svg>
-  )
-}
-
-function AttentionMarkIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" {...props}>
-      <path
-        d="M10 3.5 17.5 16.5H2.5L10 3.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="1.75"
-      />
-      <path
-        d="M10 8.5v4"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.75"
-      />
-      <circle cx="10" cy="14.25" fill="currentColor" r="0.8" />
-    </svg>
-  )
 }

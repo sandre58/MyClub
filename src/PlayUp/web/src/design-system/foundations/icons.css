@@ -1,0 +1,39 @@
+/*
+ * Icon style (20.2) — stroke monocolor, currentColor only.
+ *
+ * Scale:
+ *   sm 16px — dense rows, badges
+ *   md 20px — nav, header actions (default)
+ *   lg 24px — empty states, emphasis
+ *
+ * No duotone in chrome; semantic colour comes from parent, not fills inside SVG.
+ */
+
+.ds-icon {
+    display: block;
+    flex: none;
+    width: var(--icon-size-md);
+    height: var(--icon-size-md);
+}
+
+.ds-icon--sm {
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
+}
+
+.ds-icon--md {
+    width: var(--icon-size-md);
+    height: var(--icon-size-md);
+}
+
+.ds-icon--lg {
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+}
+
+.ds-root {
+    --icon-size-sm: 1rem;
+    --icon-size-md: 1.25rem;
+    --icon-size-lg: 1.5rem;
+    --icon-stroke-width: 1.75;
+}

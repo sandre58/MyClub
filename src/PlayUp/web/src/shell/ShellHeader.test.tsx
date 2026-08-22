@@ -124,30 +124,29 @@ describe('ShellHeader', () => {
     expect(document.querySelector('.shell-header')).toBeInTheDocument()
   })
 
-  it('shows the PLAY\'UP wordmark', () => {
+  it('does not show the PLAY\'UP wordmark in the header', () => {
     renderWithShell('/')
 
-    expect(screen.getByText("PLAY'UP")).toBeInTheDocument()
+    expect(screen.queryByText("PLAY'UP")).not.toBeInTheDocument()
   })
 
   it('shows the current competition when available', async () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     expect(await screen.findByText('Coupe U18')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Changer' })).toHaveAttribute(
-      'href',
-      '/competitions',
-    )
+    expect(await screen.findByText('En cours')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Changer de compétition' }),
+    ).toHaveAttribute('href', '/competitions')
   })
 
   it('renders the no-selection state when competitions exist', async () => {
     renderWithShell('/')
 
     expect(await screen.findByText('Choisir une compétition')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Changer' })).toHaveAttribute(
-      'href',
-      '/competitions',
-    )
+    expect(
+      screen.getByRole('link', { name: 'Changer de compétition' }),
+    ).toHaveAttribute('href', '/competitions')
   })
 
   it('renders the empty-host state when no competitions exist', async () => {
@@ -157,10 +156,9 @@ describe('ShellHeader', () => {
     expect(
       await screen.findByText('Aucune compétition'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Liste' })).toHaveAttribute(
-      'href',
-      '/competitions',
-    )
+    expect(
+      screen.getByRole('link', { name: 'Ouvrir la liste des compétitions' }),
+    ).toHaveAttribute('href', '/competitions')
   })
 
   it('resolves competition context from a stage deep link', async () => {
@@ -177,15 +175,15 @@ describe('ShellHeader', () => {
     expect(fetchMatchDetail).toHaveBeenCalledWith(matchId)
   })
 
-  it('keeps À traiter visible when count is 0', async () => {
+  it('keeps À traiter visible but disabled when count is 0', async () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
       name: 'À traiter, aucun élément',
     })
     expect(trigger).toBeInTheDocument()
-    expect(trigger).not.toHaveClass('shell-header__attention--active')
-    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(trigger).toBeDisabled()
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
   })
 
   it('shows attention state when count is greater than 0', async () => {
@@ -207,7 +205,7 @@ describe('ShellHeader', () => {
     const trigger = await screen.findByRole('button', {
       name: 'À traiter, 1 élément',
     })
-    expect(trigger).toHaveClass('shell-header__attention--active')
+    expect(trigger).toBeEnabled()
     expect(screen.getByText('1')).toBeInTheDocument()
   })
 
@@ -244,11 +242,24 @@ describe('ShellHeader', () => {
   })
 
   it('links the attention trigger to the drawer panel', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      attentionCockpit([
+        {
+          source: 'InsufficientParticipants',
+          nature: 'Blocking',
+          targetType: 'Organisation',
+          targetId: competitionId,
+          matchId: null,
+          actionCode: 'AddEntry',
+          params: {},
+        },
+      ]),
+    )
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
-      name: 'À traiter, aucun élément',
+      name: 'À traiter, 1 élément',
     })
     expect(trigger).toHaveAttribute(
       'aria-controls',

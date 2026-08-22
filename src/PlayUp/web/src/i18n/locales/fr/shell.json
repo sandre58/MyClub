@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "cockpit": "Cockpit",
+    "cockpit": "Vue d'ensemble",
     "organisation": "Organisation",
     "matches": "Matchs",
     "classements": "Classements"
@@ -14,19 +14,25 @@
   },
   "competition": {
     "change": "Changer",
+    "changeAria": "Changer de compétition",
     "choose": "Choisir une compétition",
     "none": "Aucune compétition",
     "loading": "Chargement",
     "unavailable": "Contexte indisponible",
     "list": "Liste",
-    "contextLabel": "Contexte compétition"
+    "listAria": "Ouvrir la liste des compétitions",
+    "contextLabel": "Contexte compétition",
+    "crestPlaceholder": "Blason"
+  },
+  "cycleUi": {
+    "Construction": "Préparation",
+    "InProgress": "En cours",
+    "Completed": "Terminée",
+    "Archived": "Terminée"
   },
   "actions": {
     "settings": "Paramètres",
-    "user": "Utilisateur",
-    "comingSoon": "bientôt disponible",
-    "settingsAria": "Paramètres (bientôt disponible)",
-    "userAria": "Utilisateur (bientôt disponible)"
+    "settingsAria": "Paramètres (bientôt disponible)"
   },
   "attention": {
     "label": "À traiter",
