@@ -1,7 +1,6 @@
 {
-  "eyebrow": "Espace métier",
   "title": "Classements",
-  "back": "Retour au Cockpit",
+  "back": "Vue d'ensemble",
   "context": {
     "format": "Format",
     "status": "Statut"
@@ -32,5 +31,37 @@
     "goalsAgainst": "BC",
     "goalDifference": "Diff.",
     "points": "Pts"
+  },
+  "lastMatchday": {
+    "title": "Dernière journée",
+    "matchday": "Journée {{n}}",
+    "empty": "Aucun résultat à afficher pour le moment.",
+    "pending": "—",
+    "openMatches": "Voir tous les matchs",
+    "columns": {
+      "match": "Match",
+      "score": "Score"
+    },
+    "resultType": {
+      "Forfeit": "Forfait",
+      "WalkOver": "Walkover"
+    }
+  },
+  "regulation": {
+    "title": "Règlement du classement",
+    "lede": "Barème et paramètres de match issus de l’organisation — le classement affiché ci-dessus est calculé par le moteur métier.",
+    "pointsHeading": "Barème de points",
+    "pointsValue": "{{value}} pts",
+    "pointsWin": "Victoire",
+    "pointsDraw": "Nul",
+    "pointsLoss": "Défaite",
+    "match": "Durée du match",
+    "matchValue": "{{periods}} × {{duration}} min",
+    "teams": "Effectif prévu",
+    "teamsValue": "{{min}} – {{max}} équipes",
+    "rankingHint": "Les critères de départage (différence de buts, etc.) restent ceux du Domain ; ils ne sont pas recalculés ici.",
+    "loading": "Chargement du règlement…",
+    "unavailable": "Le détail du règlement n’est pas disponible pour le moment.",
+    "openOrganisation": "Voir l’organisation"
   }
 }

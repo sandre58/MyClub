@@ -33,16 +33,21 @@ body:has(.shell),
 
 /*
  * Liens de contenu uniquement. Les actions (.ds-btn) et liens de sortie
- * overview portent leur propre couleur — sans ça, l’encre / le soulignement
- * UA écrasent brand et primaire.
+ * overview / classements portent leur propre couleur — sans ça, l’encre /
+ * le soulignement UA écrasent brand et primaire.
  */
-.ds-root a:not(.ds-btn):not(.overview-link) {
+.ds-root a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
+        .classements__back
+    ):not(.classements-result) {
     color: var(--color-ink);
     text-decoration-thickness: 0.08em;
     text-underline-offset: 0.18em;
 }
 
-.ds-root a:not(.ds-btn):not(.overview-link):hover {
+.ds-root
+    a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
+        .classements__back
+    ):not(.classements-result):hover {
     color: var(--color-ink);
     text-decoration-thickness: 0.12em;
 }

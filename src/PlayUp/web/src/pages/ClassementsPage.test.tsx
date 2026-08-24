@@ -2,11 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, fetchConsultation } from '../api'
+import { ApiError, fetchConsultation, fetchOrganisationView } from '../api'
 import { queryKeys } from '../queryKeys'
 import type {
   ConsultationStandingRow,
   ConsultationView,
+  OrganisationView,
 } from '../types'
 import { ClassementsPage } from './ClassementsPage'
 
@@ -15,6 +16,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchConsultation: vi.fn(),
+    fetchOrganisationView: vi.fn(),
   }
 })
 
@@ -23,6 +25,56 @@ const entryA = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const entryB = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 const entryC = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 const stageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+
+function organisationView(
+  overrides: Partial<OrganisationView> = {},
+): OrganisationView {
+  return {
+    competitionId,
+    name: 'Ligue Printemps',
+    status: 'InProgress',
+    participants: {
+      activeCount: 2,
+      occupyingCount: 2,
+      entries: [],
+    },
+    format: {
+      kind: 'Championship',
+      primaryStageId: stageId,
+      primaryStageName: 'Phase 1',
+      primaryStageStatus: 'InProgress',
+    },
+    regulation: {
+      minimumTeams: 2,
+      maximumTeams: 64,
+      durationPerPeriod: 45,
+      numberOfPeriods: 2,
+      winPoints: 3,
+      drawPoints: 1,
+      lossPoints: 0,
+    },
+    structure: {
+      groupCount: 0,
+      roundCount: 0,
+      matchdayCount: 1,
+      slotCount: 0,
+      hasDrawRules: false,
+      numberOfPots: null,
+    },
+    actions: [],
+    readiness: {
+      readyForNextSlice: true,
+      readyForDraw: false,
+      readyForMaterialization: true,
+      readyForSchedule: true,
+      readyForMatchOperation: true,
+      readyForSchedulePath: true,
+      attachedMatchCount: 1,
+      blockers: [],
+    },
+    ...overrides,
+  }
+}
 
 function standingRow(
   overrides: Partial<ConsultationStandingRow> &
@@ -131,6 +183,10 @@ function renderClassementsPage() {
             path="/competitions/:competitionId"
             element={<p>Cockpit route</p>}
           />
+          <Route
+            path="/competitions/:competitionId/organisation"
+            element={<p>Organisation route</p>}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -142,6 +198,7 @@ function renderClassementsPage() {
 describe('ClassementsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
   })
 
   it('shows loading while consultation is pending', () => {
@@ -168,7 +225,7 @@ describe('ClassementsPage', () => {
     vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
     const client = renderClassementsPage()
 
-    await screen.findByText('Alpha')
+    await screen.findByTestId(`standing-row-${entryA}`)
 
     expect(fetchConsultation).toHaveBeenCalledTimes(1)
     expect(fetchConsultation).toHaveBeenCalledWith(competitionId)
@@ -183,8 +240,12 @@ describe('ClassementsPage', () => {
     renderClassementsPage()
 
     expect(await screen.findByText('Classement général')).toBeInTheDocument()
-    expect(screen.getByText('Alpha')).toBeInTheDocument()
-    expect(screen.getByText('Beta')).toBeInTheDocument()
+    expect(screen.getByTestId(`standing-row-${entryA}`)).toHaveTextContent(
+      'Alpha',
+    )
+    expect(screen.getByTestId(`standing-row-${entryB}`)).toHaveTextContent(
+      'Beta',
+    )
     expect(screen.getByText('Ligue Printemps')).toBeInTheDocument()
   })
 
@@ -400,15 +461,55 @@ describe('ClassementsPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('does not render detailed results from the composite payload', async () => {
+  it('renders the last matchday slice from consultation results', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
 
     renderClassementsPage()
 
-    await screen.findByText('Alpha')
-
-    expect(screen.queryByText('Journée 1')).not.toBeInTheDocument()
-    expect(screen.queryByText('3–1')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Journée 1' })).toBeInTheDocument()
+    const score = document.querySelector('.classements-result__score')
+    expect(score).toHaveTextContent('3–1')
     expect(screen.queryByText('Finished')).not.toBeInTheDocument()
+
+    const matchLink = document.querySelector(
+      'a.classements-result',
+    ) as HTMLAnchorElement | null
+    expect(matchLink?.getAttribute('href')).toBe(
+      '/matches/ffffffff-ffff-ffff-ffff-ffffffffffff',
+    )
+
+    const allMatches = screen.getByRole('link', {
+      name: /Voir tous les matchs/i,
+    })
+    expect(allMatches).toHaveAttribute(
+      'href',
+      `/competitions/${competitionId}/matches`,
+    )
+  })
+
+  it('renders regulation points from organisation', async () => {
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
+
+    renderClassementsPage()
+
+    expect(await screen.findByText('3 pts')).toBeInTheDocument()
+    expect(screen.getByText('1 pts')).toBeInTheDocument()
+    expect(screen.getByText('0 pts')).toBeInTheDocument()
+    expect(screen.getByText('2 × 45 min')).toBeInTheDocument()
+    expect(screen.getByText('2 – 64 équipes')).toBeInTheDocument()
+  })
+
+  it('links the regulation panel to organisation', async () => {
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
+
+    renderClassementsPage()
+
+    const link = await screen.findByRole('link', {
+      name: /Voir l’organisation/i,
+    })
+    expect(link).toHaveAttribute(
+      'href',
+      `/competitions/${competitionId}/organisation`,
+    )
   })
 })

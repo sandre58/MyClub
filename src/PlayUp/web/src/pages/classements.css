@@ -1,0 +1,541 @@
+/*
+ * Classements (20.5) — même langage de surface que Vue d'ensemble :
+ * panneaux blancs aérés, ombre légère, titre + contenu avec gap.
+ * Composition V3 : bandeau · tableau · [Dernière journée | Règlement].
+ */
+
+.page.page--classements {
+    --classements-shadow:
+        0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
+        0 2px 10px color-mix(in srgb, var(--color-ink) 6%, transparent);
+
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding: var(--space-16);
+    gap: 0;
+}
+
+.classements {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+}
+
+.page--classements .ds-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    border: none;
+    border-radius: var(--radius-panel);
+    padding: var(--space-24);
+    box-shadow: var(--classements-shadow);
+}
+
+/* ---------- En-tête de page ---------- */
+
+.classements__page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-12) var(--space-16);
+}
+
+.classements__back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    color: var(--color-info);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+}
+
+.ds-root a.classements__back,
+.ds-root a.classements__back:hover {
+    color: var(--color-info);
+    text-decoration: none;
+}
+
+.ds-root a.classements__back:hover {
+    color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
+}
+
+.classements__title {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-heading);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+}
+
+/* ---------- En-tête de panneau (comme overview) ---------- */
+
+.classements-panel__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin: 0;
+    padding-bottom: var(--space-8);
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.classements-panel__icon {
+    display: inline-flex;
+    flex: none;
+    color: var(--color-text-secondary);
+}
+
+.classements-panel__muted {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    line-height: var(--leading-normal);
+}
+
+.classements-panel__footer {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+}
+
+.page--classements .ds-panel .classements-panel__footer {
+    margin-top: auto;
+    padding-top: var(--space-8);
+}
+
+.classements-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    color: var(--color-info);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+}
+
+.ds-root a.classements-link,
+.ds-root a.classements-link:hover {
+    color: var(--color-info);
+    text-decoration: none;
+}
+
+.ds-root a.classements-link:hover {
+    color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
+}
+
+/* ---------- Bandeau contexte ---------- */
+
+.classements-band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.classements-band__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+    box-shadow: var(--classements-shadow);
+    color: var(--color-text-primary);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.classements-band__chip--muted {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-regular);
+}
+
+.classements-band__chip--status {
+    background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
+    color: var(--color-brand);
+}
+
+/* ---------- Tables (plusieurs groupes) ---------- */
+
+.classements__tables {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+}
+
+/* ---------- Bas de page ---------- */
+
+.classements__bottom {
+    display: grid;
+    gap: var(--space-16);
+}
+
+@media (min-width: 52rem) {
+    .classements__bottom {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        align-items: stretch;
+    }
+}
+
+/* ---------- Tableau (mode grille) ---------- */
+
+.classements-table-wrap {
+    overflow-x: auto;
+}
+
+.classements-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.classements-table th,
+.classements-table td {
+    padding: var(--space-12) var(--space-8);
+    text-align: start;
+    border-bottom: var(--border-width) solid var(--color-border);
+    font-size: var(--text-body);
+    line-height: var(--leading-tight);
+}
+
+.classements-table th {
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.classements-table__num,
+.classements-table__pts {
+    text-align: end;
+}
+
+.classements-table__pts {
+    font-weight: var(--font-weight-bold);
+}
+
+.classements-table__row--leader td {
+    background: color-mix(in srgb, var(--color-brand) 5%, var(--color-surface));
+}
+
+.classements-table__team {
+    font-weight: var(--font-weight-semibold);
+}
+
+.classements-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ---------- Dernière journée (réf. mockup V3 — lignes Match / Score) ---------- */
+
+.classements-results {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+.classements-results__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-12);
+    align-items: baseline;
+    padding: 0 0 var(--space-8);
+    border-bottom: var(--border-width) solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+    letter-spacing: 0.02em;
+}
+
+.classements-results__head > span:last-child {
+    min-width: 4.5rem;
+    text-align: end;
+    padding-inline-end: 1.25rem;
+}
+
+.classements-results__list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.classements-result {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-12) var(--space-16);
+    align-items: center;
+    padding: var(--space-12) 0;
+    border-bottom: var(--border-width) solid var(--color-border);
+    color: inherit;
+    text-decoration: none;
+}
+
+.classements-results__list > li:last-child .classements-result {
+    border-bottom: none;
+}
+
+.ds-root a.classements-result,
+.ds-root a.classements-result:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.ds-root a.classements-result:hover .classements-result__name {
+    color: var(--color-ink);
+}
+
+.ds-root a.classements-result:hover .classements-result__chevron {
+    color: var(--color-info);
+}
+
+.classements-result__match {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8) var(--space-12);
+    min-width: 0;
+}
+
+.classements-result__team {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+}
+
+.classements-result__vs {
+    flex: none;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    line-height: 1;
+}
+
+.classements-crest {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.75rem;
+}
+
+.classements-crest__shield {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.classements-crest__initial {
+    position: relative;
+    z-index: 1;
+    color: var(--color-surface);
+    font-size: 0.625rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+}
+
+.classements-crest--a {
+    color: color-mix(in srgb, var(--color-brand) 82%, var(--color-ink));
+}
+
+.classements-crest--b {
+    color: color-mix(in srgb, var(--color-info) 78%, var(--color-ink));
+}
+
+.classements-crest--c {
+    color: color-mix(in srgb, var(--color-attention) 75%, var(--color-ink));
+}
+
+.classements-crest--d {
+    color: color-mix(in srgb, #7c5cbf 80%, var(--color-ink));
+}
+
+.classements-crest--e {
+    color: color-mix(in srgb, var(--color-ink) 55%, var(--color-text-secondary));
+}
+
+.classements-result__name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-tight);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.classements-result__aside {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-8);
+    min-width: 4.5rem;
+}
+
+.classements-result__score {
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.classements-result__score--pending {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.classements-result__note {
+    flex-basis: 100%;
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    line-height: var(--leading-tight);
+    text-align: end;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.classements-result__chevron {
+    color: var(--color-text-secondary);
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-regular);
+    line-height: 1;
+}
+
+.classements-panel__footer--start {
+    justify-content: flex-start;
+}
+
+/* ---------- Règlement ---------- */
+
+.classements-panel__lede {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    line-height: var(--leading-normal);
+}
+
+.classements-panel__section-label {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.classements-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.classements-chip {
+    flex: 1 1 4rem;
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-panel);
+    text-align: center;
+}
+
+.classements-chip--win {
+    background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+}
+
+.classements-chip--win .classements-chip__value {
+    color: var(--color-success);
+}
+
+.classements-chip--draw {
+    background: color-mix(in srgb, var(--color-info) 10%, var(--color-surface));
+}
+
+.classements-chip--draw .classements-chip__value {
+    color: var(--color-info);
+}
+
+.classements-chip--loss {
+    background: color-mix(in srgb, var(--color-ink) 6%, var(--color-surface));
+}
+
+.classements-chip--loss .classements-chip__value {
+    color: var(--color-text-secondary);
+}
+
+.classements-chip__value {
+    display: block;
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--leading-tight);
+}
+
+.classements-chip__label {
+    display: block;
+    margin-top: var(--space-4);
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    line-height: var(--leading-tight);
+}
+
+.classements-facts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+}
+
+.classements-fact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-8) var(--space-16);
+    padding: var(--space-8) 0;
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.classements-fact:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.classements-fact dt {
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    line-height: var(--leading-tight);
+}
+
+.classements-fact dd {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+    font-variant-numeric: tabular-nums;
+}

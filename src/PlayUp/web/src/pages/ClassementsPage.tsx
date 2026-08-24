@@ -1,7 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
-import { fetchConsultation } from '../api'
+import { Link, useParams } from 'react-router-dom'
+import { fetchConsultation, fetchOrganisationView } from '../api'
+import { RegulationIcon } from '../design-system/icons/overviewIcons'
+import {
+  ClassementsNavIcon,
+  MatchesNavIcon,
+} from '../design-system/icons/shellIcons'
 import {
   completionModeLabel,
   competitionStatusLabel,
@@ -9,22 +15,19 @@ import {
 } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import type {
+  ConsultationResult,
   ConsultationStandingRow,
   ConsultationStandingTable,
   ConsultationStandingsSection,
   ConsultationView,
+  OrganisationRegulationSummary,
 } from '../types'
-import {
-  CompetitionStatusBadge,
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  PageHeader,
-} from '../ui'
+import { EmptyState, ErrorState, LoadingState } from '../ui'
+import './classements.css'
 
 /**
- * Classements workspace — GET /consultation, display standings only.
- * Domain → Read projects rows; React never recalculates or reorders.
+ * Classements workspace — GET /consultation (+ organisation for standing barème).
+ * Presents Read facts only. Never recalculates rank or invents points.
  */
 export function ClassementsPage() {
   const { competitionId = '' } = useParams()
@@ -37,40 +40,54 @@ export function ClassementsPage() {
   })
 
   return (
-    <main id="main" className="page">
-      <PageHeader
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        back={
-          competitionId
-            ? {
-                to: `/competitions/${competitionId}`,
-                label: t('back'),
-              }
-            : undefined
-        }
-        badges={
-          query.data && <CompetitionStatusBadge status={query.data.status} />
-        }
-      />
-
-      {query.isPending && <LoadingState label={t('loading')} />}
-      {query.isError && <ErrorState error={query.error} />}
+    <main id="main" className="page page--classements">
+      {query.isPending && !query.data && <LoadingState label={t('loading')} />}
+      {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <ClassementsView data={query.data} />}
     </main>
   )
 }
 
 function ClassementsView({ data }: { data: ConsultationView }) {
+  const { t } = useTranslation('classements')
+  const overviewHref = `/competitions/${data.competitionId}`
+  const organisationHref = `/competitions/${data.competitionId}/organisation`
+
+  const orgQuery = useQuery({
+    queryKey: queryKeys.competitions.organisation(data.competitionId),
+    queryFn: () => fetchOrganisationView(data.competitionId),
+  })
+
   return (
-    <div className="section-stack">
-      <CompetitionContext data={data} />
+    <div className="classements">
+      <header className="classements__page-head">
+        <Link className="classements__back" to={overviewHref}>
+          <span aria-hidden="true">←</span>
+          {t('back')}
+        </Link>
+        <h1 className="classements__title">{t('title')}</h1>
+      </header>
+
+      <ContextBand data={data} />
+
       <StandingsSection standings={data.standings} />
+
+      <div className="classements__bottom">
+        <LastMatchdayPanel
+          results={data.results}
+          matchesHref={`/competitions/${data.competitionId}/matches`}
+        />
+        <RegulationPanel
+          href={organisationHref}
+          regulation={orgQuery.data?.regulation ?? null}
+          loading={orgQuery.isPending}
+        />
+      </div>
     </div>
   )
 }
 
-function CompetitionContext({ data }: { data: ConsultationView }) {
+function ContextBand({ data }: { data: ConsultationView }) {
   const { t } = useTranslation('classements')
   const formatText =
     data.formatKind != null
@@ -78,19 +95,20 @@ function CompetitionContext({ data }: { data: ConsultationView }) {
       : data.formatLabel
 
   return (
-    <section className="card card--condensed" aria-label={data.name}>
-      <div className="card__head">
-        <h2 className="card__title">{data.name}</h2>
-        <p className="card__subtitle">
-          {competitionStatusLabel(data.status)}
-          {data.completionMode != null
-            ? ` · ${completionModeLabel(data.completionMode)}`
-            : null}
-          {' · '}
-          {t('context.format')}: {formatText}
-        </p>
-      </div>
-    </section>
+    <ul className="classements-band" aria-label={data.name}>
+      <li className="classements-band__chip">{data.name}</li>
+      <li className="classements-band__chip classements-band__chip--status">
+        {competitionStatusLabel(data.status)}
+      </li>
+      <li className="classements-band__chip classements-band__chip--muted">
+        {t('context.format')}: {formatText}
+      </li>
+      {data.completionMode != null ? (
+        <li className="classements-band__chip classements-band__chip--muted">
+          {completionModeLabel(data.completionMode)}
+        </li>
+      ) : null}
+    </ul>
   )
 }
 
@@ -108,15 +126,29 @@ function StandingsSection({
         ? t(`notApplicable.${reasonKey}`)
         : t('notApplicable.unknown')
 
-    return <EmptyState title={t('notApplicable.title')}>{reason}</EmptyState>
+    return (
+      <section className="ds-panel" aria-labelledby="classements-na">
+        <PanelHead id="classements-na" icon={<ClassementsNavIcon size="md" />}>
+          {t('notApplicable.title')}
+        </PanelHead>
+        <EmptyState>{reason}</EmptyState>
+      </section>
+    )
   }
 
   if (standings.tables.length === 0) {
-    return <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
+    return (
+      <section className="ds-panel" aria-labelledby="classements-empty">
+        <PanelHead id="classements-empty" icon={<ClassementsNavIcon size="md" />}>
+          {t('table.overall')}
+        </PanelHead>
+        <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
+      </section>
+    )
   }
 
   return (
-    <div className="section-stack" data-testid="standings-tables">
+    <div className="classements__tables" data-testid="standings-tables">
       {standings.tables.map((table) => (
         <StandingTableBlock key={tableKey(table)} table={table} />
       ))}
@@ -138,31 +170,50 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
         : t('table.stage', { name: table.stageName })
 
   return (
-    <section className="card standings-block">
-      <div className="card__head">
-        <h3 className="card__title">{heading}</h3>
-        {table.stageName ? (
-          <p className="card__subtitle">{table.stageName}</p>
-        ) : null}
-      </div>
+    <section className="ds-panel" aria-labelledby={`standings-${tableKey(table)}`}>
+      <PanelHead
+        id={`standings-${tableKey(table)}`}
+        icon={<ClassementsNavIcon size="md" />}
+      >
+        {heading}
+      </PanelHead>
+      {table.stageName && table.scope === 'Group' ? (
+        <p className="classements-panel__muted">{table.stageName}</p>
+      ) : null}
 
       {table.rows.length === 0 ? (
         <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
       ) : (
-        <div className="standings-table-wrap">
-          <table className="standings-table">
+        <div className="classements-table-wrap">
+          <table className="classements-table">
             <thead>
               <tr>
                 <th scope="col">{t('columns.position')}</th>
                 <th scope="col">{t('columns.team')}</th>
-                <th scope="col">{t('columns.played')}</th>
-                <th scope="col">{t('columns.wins')}</th>
-                <th scope="col">{t('columns.draws')}</th>
-                <th scope="col">{t('columns.losses')}</th>
-                <th scope="col">{t('columns.goalsFor')}</th>
-                <th scope="col">{t('columns.goalsAgainst')}</th>
-                <th scope="col">{t('columns.goalDifference')}</th>
-                <th scope="col">{t('columns.points')}</th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.played')}
+                </th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.wins')}
+                </th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.draws')}
+                </th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.losses')}
+                </th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.goalsFor')}
+                </th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.goalsAgainst')}
+                </th>
+                <th scope="col" className="classements-table__num">
+                  {t('columns.goalDifference')}
+                </th>
+                <th scope="col" className="classements-table__pts">
+                  {t('columns.points')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -179,21 +230,334 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
 
 function StandingRow({ row }: { row: ConsultationStandingRow }) {
   return (
-    <tr data-testid={`standing-row-${row.entryId}`}>
-      <td className="standings-table__num">{row.position}</td>
-      <td>{row.displayName}</td>
-      <td className="standings-table__num">{row.played}</td>
-      <td className="standings-table__num">{row.wins}</td>
-      <td className="standings-table__num">{row.draws}</td>
-      <td className="standings-table__num">{row.losses}</td>
-      <td className="standings-table__num">{row.goalsFor}</td>
-      <td className="standings-table__num">{row.goalsAgainst}</td>
-      <td className="standings-table__num">
+    <tr
+      className={
+        row.position === 1 ? 'classements-table__row--leader' : undefined
+      }
+      data-testid={`standing-row-${row.entryId}`}
+    >
+      <td className="classements-table__num">{row.position}</td>
+      <td className="classements-table__team">{row.displayName}</td>
+      <td className="classements-table__num">{row.played}</td>
+      <td className="classements-table__num">{row.wins}</td>
+      <td className="classements-table__num">{row.draws}</td>
+      <td className="classements-table__num">{row.losses}</td>
+      <td className="classements-table__num">{row.goalsFor}</td>
+      <td className="classements-table__num">{row.goalsAgainst}</td>
+      <td className="classements-table__num">
         {formatSigned(row.goalDifference)}
       </td>
-      <td className="standings-table__pts">{row.points}</td>
+      <td className="classements-table__pts">{row.points}</td>
     </tr>
   )
+}
+
+function LastMatchdayPanel({
+  results,
+  matchesHref,
+}: {
+  results: ConsultationResult[]
+  matchesHref: string
+}) {
+  const { t } = useTranslation('classements')
+  const slice = selectLastMatchday(results)
+  const heading =
+    slice == null
+      ? t('lastMatchday.title')
+      : (slice.contextLabel ??
+        (slice.matchdayNumber != null
+          ? t('lastMatchday.matchday', { n: slice.matchdayNumber })
+          : t('lastMatchday.title')))
+
+  return (
+    <section className="ds-panel" aria-labelledby="classements-last-matchday">
+      <PanelHead
+        id="classements-last-matchday"
+        icon={<MatchesNavIcon size="md" />}
+      >
+        {heading}
+      </PanelHead>
+
+      {!slice || slice.matches.length === 0 ? (
+        <EmptyState>{t('lastMatchday.empty')}</EmptyState>
+      ) : (
+        <div className="classements-results">
+          <div className="classements-results__head" aria-hidden="true">
+            <span>{t('lastMatchday.columns.match')}</span>
+            <span>{t('lastMatchday.columns.score')}</span>
+          </div>
+          <ul className="classements-results__list">
+            {slice.matches.map((match) => (
+              <li key={match.matchId}>
+                <MatchResultRow match={match} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="classements-panel__footer classements-panel__footer--start">
+        <Link className="classements-link" to={matchesHref}>
+          {t('lastMatchday.openMatches')}
+          <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+function MatchResultRow({ match }: { match: ConsultationResult }) {
+  const { t } = useTranslation('classements')
+  const homeName = match.home.displayName?.trim() || '—'
+  const awayName = match.away.displayName?.trim() || '—'
+  const note =
+    match.resultType === 'Forfeit' || match.resultType === 'WalkOver'
+      ? t(`lastMatchday.resultType.${match.resultType}`)
+      : null
+  const scoreLabel =
+    match.score != null
+      ? `${match.score.homeGoals}–${match.score.awayGoals}`
+      : t('lastMatchday.pending')
+
+  return (
+    <Link
+      className="classements-result"
+      to={`/matches/${match.matchId}`}
+      aria-label={`${homeName} – ${awayName}, ${scoreLabel}`}
+    >
+      <span className="classements-result__match">
+        <span className="classements-result__team">
+          <TeamCrest name={homeName} />
+          <span className="classements-result__name">{homeName}</span>
+        </span>
+        <span className="classements-result__vs" aria-hidden="true">
+          –
+        </span>
+        <span className="classements-result__team">
+          <TeamCrest name={awayName} />
+          <span className="classements-result__name">{awayName}</span>
+        </span>
+      </span>
+
+      <span className="classements-result__aside">
+        {match.score != null ? (
+          <span className="classements-result__score">
+            {match.score.homeGoals}–{match.score.awayGoals}
+          </span>
+        ) : (
+          <span className="classements-result__score classements-result__score--pending">
+            {t('lastMatchday.pending')}
+          </span>
+        )}
+        {note ? <span className="classements-result__note">{note}</span> : null}
+        <span className="classements-result__chevron" aria-hidden="true">
+          ›
+        </span>
+      </span>
+    </Link>
+  )
+}
+
+function TeamCrest({ name }: { name: string }) {
+  const initial = teamInitial(name)
+  const tone = crestTone(name)
+
+  return (
+    <span
+      className={`classements-crest classements-crest--${tone}`}
+      aria-hidden="true"
+    >
+      <svg className="classements-crest__shield" viewBox="0 0 24 28" focusable="false">
+        <path d="M12 1.5 21 5.2v8.4c0 6.1-3.9 10.6-9 12.4-5.1-1.8-9-6.3-9-12.4V5.2L12 1.5Z" />
+      </svg>
+      <span className="classements-crest__initial">{initial}</span>
+    </span>
+  )
+}
+
+function teamInitial(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed || trimmed === '—') {
+    return '?'
+  }
+  return trimmed.charAt(0).toLocaleUpperCase()
+}
+
+/** Stable presentation tone from display name — not a métier rule. */
+function crestTone(name: string): 'a' | 'b' | 'c' | 'd' | 'e' {
+  let hash = 0
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5
+  }
+  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]
+}
+
+function RegulationPanel({
+  href,
+  regulation,
+  loading,
+}: {
+  href: string
+  regulation: OrganisationRegulationSummary | null
+  loading: boolean
+}) {
+  const { t } = useTranslation('classements')
+
+  return (
+    <section className="ds-panel" aria-labelledby="classements-regulation">
+      <PanelHead
+        id="classements-regulation"
+        icon={<RegulationIcon size="md" />}
+      >
+        {t('regulation.title')}
+      </PanelHead>
+
+      <p className="classements-panel__lede">{t('regulation.lede')}</p>
+
+      {regulation ? (
+        <>
+          <p className="classements-panel__section-label">
+            {t('regulation.pointsHeading')}
+          </p>
+          <ul className="classements-chips">
+            <PointsChip
+              tone="win"
+              value={regulation.winPoints}
+              label={t('regulation.pointsWin')}
+            />
+            <PointsChip
+              tone="draw"
+              value={regulation.drawPoints}
+              label={t('regulation.pointsDraw')}
+            />
+            <PointsChip
+              tone="loss"
+              value={regulation.lossPoints}
+              label={t('regulation.pointsLoss')}
+            />
+          </ul>
+          <dl className="classements-facts">
+            <div className="classements-fact">
+              <dt>{t('regulation.match')}</dt>
+              <dd>
+                {t('regulation.matchValue', {
+                  periods: regulation.numberOfPeriods,
+                  duration: regulation.durationPerPeriod,
+                })}
+              </dd>
+            </div>
+            <div className="classements-fact">
+              <dt>{t('regulation.teams')}</dt>
+              <dd>
+                {t('regulation.teamsValue', {
+                  min: regulation.minimumTeams,
+                  max: regulation.maximumTeams,
+                })}
+              </dd>
+            </div>
+          </dl>
+          <p className="classements-panel__muted">{t('regulation.rankingHint')}</p>
+        </>
+      ) : loading ? (
+        <p className="classements-panel__muted" role="status">
+          {t('regulation.loading')}
+        </p>
+      ) : (
+        <p className="classements-panel__muted">{t('regulation.unavailable')}</p>
+      )}
+
+      <div className="classements-panel__footer">
+        <Link className="classements-link" to={href}>
+          {t('regulation.openOrganisation')}
+          <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+function PointsChip({
+  value,
+  label,
+  tone,
+}: {
+  value: number
+  label: string
+  tone: 'win' | 'draw' | 'loss'
+}) {
+  const { t } = useTranslation('classements')
+
+  return (
+    <li className={`classements-chip classements-chip--${tone}`}>
+      <span className="classements-chip__value">
+        {t('regulation.pointsValue', { value })}
+      </span>
+      <span className="classements-chip__label">{label}</span>
+    </li>
+  )
+}
+
+function PanelHead({
+  id,
+  icon,
+  children,
+}: {
+  id: string
+  icon: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <h2 id={id} className="classements-panel__head">
+      <span className="classements-panel__icon" aria-hidden="true">
+        {icon}
+      </span>
+      {children}
+    </h2>
+  )
+}
+
+/**
+ * Last matchday slice — presentation only.
+ * Uses the highest matchdayNumber from the Read payload when present;
+ * otherwise groups by the last contextLabel in Read order.
+ */
+function selectLastMatchday(results: ConsultationResult[]): {
+  matchdayNumber: number | null
+  contextLabel: string | null
+  matches: ConsultationResult[]
+} | null {
+  if (results.length === 0) {
+    return null
+  }
+
+  const numbered = results.filter((r) => r.matchdayNumber != null)
+  if (numbered.length > 0) {
+    const maxDay = Math.max(
+      ...numbered.map((r) => r.matchdayNumber as number),
+    )
+    const matches = results.filter((r) => r.matchdayNumber === maxDay)
+    return {
+      matchdayNumber: maxDay,
+      contextLabel: matches.find((m) => m.contextLabel)?.contextLabel ?? null,
+      matches,
+    }
+  }
+
+  const last = results[results.length - 1]
+  const label = last.contextLabel
+  if (label) {
+    return {
+      matchdayNumber: null,
+      contextLabel: label,
+      matches: results.filter((r) => r.contextLabel === label),
+    }
+  }
+
+  return {
+    matchdayNumber: null,
+    contextLabel: null,
+    matches: results,
+  }
 }
 
 /** Display helper only — does not recompute Diff from BP/BC. */
