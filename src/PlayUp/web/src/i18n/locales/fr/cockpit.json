@@ -1,6 +1,6 @@
 {
-  "eyebrow": "Cockpit",
-  "titleFallback": "Cockpit",
+  "eyebrow": "Vue d'ensemble",
+  "titleFallback": "Vue d'ensemble",
   "back": "Retour aux compétitions",
   "cycle": {
     "Construction": "Préparation",
@@ -8,7 +8,13 @@
     "Completed": "Terminée",
     "Archived": "Terminée",
     "heading": "Où en est-on ?",
-    "lede": "Où en est cette compétition dans son cycle de vie."
+    "lede": "Cycle de la compétition"
+  },
+  "cycleDesc": {
+    "Construction": "Équipes, structure et règlement se mettent en place.",
+    "InProgress": "Les rencontres se jouent et les résultats arrivent.",
+    "Completed": "La compétition est allée au bout de son cycle.",
+    "Archived": "La compétition est allée au bout de son cycle."
   },
   "cycleUi": {
     "Preparation": "Préparation",
@@ -23,15 +29,37 @@
     "Absent": "Absent"
   },
   "dimensions": {
-    "heading": "Socle de construction",
+    "heading": "Préparation",
     "teams": {
       "title": "Équipes",
-      "summary": "{{activeCount}} actif(s) · minimum {{minimumTeams}}"
+      "figureLabel": "équipes inscrites",
+      "crestsLabel": "Équipes inscrites",
+      "minimum": "Minimum {{minimumTeams}} pour démarrer",
+      "complete_one": "{{count}} complète",
+      "complete_other": "{{count}} complètes",
+      "capacity": "Max. {{max}}"
     },
     "structure": {
       "title": "Structure",
-      "none": "Non configurée",
-      "summary": "{{formatKind}}"
+      "none": "Format non configuré",
+      "summary": "{{formatKind}}",
+      "phases_one": "{{count}} phase",
+      "phases_other": "{{count}} phases",
+      "phasesDetail_one": "{{count}} phase · {{names}}",
+      "phasesDetail_other": "{{count}} phases · {{names}}",
+      "groups_one": "{{count}} groupe",
+      "groups_other": "{{count}} groupes",
+      "rounds_one": "{{count}} tour",
+      "rounds_other": "{{count}} tours",
+      "matchdays_one": "{{count}} journée",
+      "matchdays_other": "{{count}} journées",
+      "slots_one": "{{count}} emplacement",
+      "slots_other": "{{count}} emplacements",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matchs",
+      "matchesNone": "Aucun match créé",
+      "matchesPending_one": "{{count}} match à créer",
+      "matchesPending_other": "{{count}} matchs à créer"
     },
     "regulation": {
       "title": "Règlement",
@@ -40,15 +68,20 @@
       "flagYes": "oui",
       "flagNo": "non",
       "potsNone": "—",
-      "allReady": "Configuration compatible avec les prochaines transitions de construction.",
+      "allReady": "Règlement prêt pour la suite",
       "ready": "Prêt",
       "notReady": "Pas prêt",
       "transitions": {
         "Draw": "Tirage",
         "MaterializeMatches": "Création des matchs"
       },
-      "readinessReady": "Le règlement et la structure permettent d’envisager {{transition}}.",
-      "readinessNotReady": "Pour envisager {{transition}}, des conditions restent à lever — détail dans Organisation."
+      "readinessReady": "Le règlement permet d’envisager {{transition}}.",
+      "readinessNotReady": "{{transition}} : conditions à lever",
+      "pointsValue": "{{value}} pts",
+      "pointsWin": "Victoire",
+      "pointsDraw": "Nul",
+      "pointsLoss": "Défaite",
+      "formatMeta": "{{periods}}×{{duration}} min · {{min}}–{{max}} équipes"
     },
     "matches": {
       "title": "Matchs",
@@ -56,7 +89,10 @@
       "summary": "{{live}} en direct · {{scheduled}} planifié(s) · {{finished}} terminé(s) · total {{total}}"
     },
     "openOrganisation": "Ouvrir l’organisation",
-    "openMatches": "Ouvrir le hub matchs"
+    "openMatches": "Voir les matchs",
+    "openTeams": "Voir les équipes",
+    "openRegulation": "Voir le règlement",
+    "openStructure": "Voir la structure"
   },
   "operational": {
     "heading": "Focus opérationnel",
@@ -78,13 +114,13 @@
   },
   "situations": {
     "heading": "À traiter",
-    "empty": "Aucune situation à signaler",
+    "empty": "Rien à traiter pour le moment",
     "open": "Ouvrir",
     "actionable": "Action possible",
     "notActionable": "Sans action directe"
   },
   "impact": {
-    "BlocksConstruction": "Bloque la construction",
+    "BlocksConstruction": "Bloque la préparation",
     "BlocksDraw": "Bloque le tirage",
     "BlocksProgression": "Bloque la progression sportive"
   },
@@ -92,35 +128,38 @@
     "heading": "À traiter",
     "count": "{{count}} situation(s)",
     "empty": "Rien à traiter pour le moment",
-    "hint": "Même source métier que le drawer shell.",
-    "triageHint": "{{count}} situation(s) à traiter — ouvrir le panneau À traiter dans l’en-tête."
+    "hint": "Ouvrir le panneau À traiter dans l’en-tête.",
+    "triageHint": "{{count}} situation(s) — détail dans le panneau À traiter (en-tête)."
   },
   "progression": {
     "heading": "Prochaine action",
     "none": "Aucune progression suggérée — situation normale",
-    "hint": "Orientation proposée par le Read à partir de l’état connu.",
+    "hint": "Orientation proposée à partir de l’état connu.",
     "codes": {
-      "ContinueOrganisation": "Continuer la préparation dans Organisation (équipes, structure, règlement).",
-      "OpenMatches": "Suivre les matchs et situations opérationnelles dans le hub matchs.",
-      "OpenConsultation": "Consulter les classements de la compétition.",
-      "MaterializeMatches": "Créer les matchs — prochaine étape naturelle.",
-      "PublishDraw": "Publier le tirage — prochaine étape naturelle.",
+      "ContinueOrganisation": "Complétez les équipes, la structure et le règlement.",
+      "OpenMatches": "Suivez les rencontres et saisissez les résultats.",
+      "OpenConsultation": "Consultez les classements de la compétition.",
+      "MaterializeMatches": "Générez le calendrier pour passer à l’étape suivante.",
+      "PublishDraw": "Publiez le tirage pour figer la composition.",
+      "PrepareCompetition": "Passez la compétition en état prêt.",
+      "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",
       "CompleteCompetition": "La clôture normale de la compétition est envisageable."
     }
   },
   "materializeFollowUp": {
-    "heading": "Matchs matérialisés",
+    "heading": "Matchs créés",
     "created": "{{created}} match(s) créé(s) · {{total}} attaché(s).",
-    "alreadyComplete": "Les matchs étaient déjà matérialisés ({{count}} attaché(s)).",
+    "alreadyComplete": "Les matchs étaient déjà créés ({{count}} attaché(s)).",
     "openMatches": "Voir les matchs",
     "dismiss": "Fermer"
   },
   "actions": {
     "heading": "Actions disponibles",
     "secondaryHeading": "Autres capacités",
+    "lifecycleHeading": "Transitions",
     "empty": "Aucune action disponible pour le moment",
     "busy": "Exécution…",
-    "openSpace": "Continuer dans l’espace métier"
+    "openSpace": "Continuer"
   },
   "closure": {
     "heading": "Clôture",
@@ -131,18 +170,18 @@
     "noBlockers": "Aucun bloqueur de clôture"
   },
   "nav": {
-    "heading": "Espaces métier",
+    "heading": "Espaces",
     "organisation": {
       "title": "Organisation",
       "desc": "Participants, règlement et structure."
     },
     "matches": {
-      "title": "Hub matchs",
+      "title": "Matchs",
       "desc": "Matchs et situations opérationnelles."
     },
     "classements": {
       "title": "Classements",
-      "desc": "Standings et tables de la compétition."
+      "desc": "Classements de la compétition."
     }
   },
   "nature": {

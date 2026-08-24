@@ -1,7 +1,7 @@
 /*
  * Action foundations — not a Button library.
- * Primary = ink fill. Brand is not a CTA fill.
- * No pills, no glow, no per-action colour fills.
+ * Primary = brand fill (moins sombre que l’encre ; Identité §11).
+ * One primary max per region. No pills, no glow, no underline on actions.
  */
 
 .ds-btn {
@@ -19,6 +19,7 @@
     font-size: var(--text-body);
     font-weight: var(--font-weight-semibold);
     line-height: 1;
+    text-decoration: none;
     cursor: pointer;
     transition:
         background-color var(--motion-duration) var(--motion-easing),
@@ -32,17 +33,52 @@
 }
 
 .ds-btn--primary {
-    background: var(--color-ink);
-    color: var(--color-on-ink);
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: var(--color-on-brand);
 }
 
 .ds-btn--primary:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-ink) 88%, var(--color-on-ink));
+    background: var(--color-brand-hover);
+    border-color: var(--color-brand-hover);
+    color: var(--color-on-brand);
+}
+
+/* Ancres stylées en bouton — ne jamais hériter du lien de contenu. */
+.ds-root a.ds-btn,
+.ds-root a.ds-btn:hover {
+    text-decoration: none;
+}
+
+.ds-root a.ds-btn--primary,
+.ds-root a.ds-btn--primary:hover {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: var(--color-on-brand);
+}
+
+.ds-root a.ds-btn--primary:hover:not(:disabled) {
+    background: var(--color-brand-hover);
+    border-color: var(--color-brand-hover);
+    color: var(--color-on-brand);
+}
+
+.ds-root a.ds-btn--secondary,
+.ds-root a.ds-btn--secondary:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+}
+
+.ds-root a.ds-btn--destructive,
+.ds-root a.ds-btn--destructive:hover {
+    color: var(--color-error);
+    text-decoration: none;
 }
 
 .ds-btn--secondary {
     background: var(--color-surface);
     border-color: var(--color-border-strong);
+    color: var(--color-ink);
 }
 
 .ds-btn--secondary:hover:not(:disabled) {

@@ -19,4 +19,5 @@
     --color-info: var(--primitive-info);
     --color-focus: var(--primitive-focus);
     --color-on-ink: var(--primitive-on-ink);
+    --color-on-brand: var(--primitive-on-brand);
 }

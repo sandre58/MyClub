@@ -1,22 +1,24 @@
 /*
- * Palette piste: slate / neutres froids.
- * Distincte du teal et du bleu 13.5 (#3452d8). Pas une 3e marque figée.
+ * Palette piste: slate / neutres froids + accent vert Play'up (réf. V9).
+ * Distincte du teal et du bleu 13.5 (#3452d8).
+ * Brand = vert sportif (action) · success = vert d'état, même famille.
  */
 .ds-root[data-palette='slate'] {
-    --primitive-canvas: #f2f3f5;
+    --primitive-canvas: #f6f7f9;
     --primitive-surface: #ffffff;
-    --primitive-surface-secondary: #e8eaee;
+    --primitive-surface-secondary: #eff1f4;
     --primitive-ink: #14171c;
     --primitive-text-primary: #14171c;
-    --primitive-text-secondary: #4a515c;
-    --primitive-border: #d3d6dc;
-    --primitive-border-strong: #bdc2ca;
-    --primitive-brand: #3d4a5c;
-    --primitive-brand-hover: #2f3948;
+    --primitive-text-secondary: #5a6270;
+    --primitive-border: #e3e6ea;
+    --primitive-border-strong: #c9ced6;
+    --primitive-brand: #1c67c4;
+    --primitive-brand-hover: #0b52a6;
     --primitive-success: #1b6b44;
     --primitive-attention: #8a5200;
     --primitive-error: #b4232c;
     --primitive-info: #215a86;
-    --primitive-focus: #3d4a5c;
+    --primitive-focus: #1b8f5a;
     --primitive-on-ink: #f4f5f7;
+    --primitive-on-brand: #f3faf6;
 }

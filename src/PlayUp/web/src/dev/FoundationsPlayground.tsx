@@ -243,7 +243,7 @@ export function FoundationsPlayground() {
         <section className="ds-section" aria-labelledby="section-actions">
           <p className="ds-section__kicker">E — Actions</p>
           <h2 id="section-actions" className="ds-heading">
-            Primaire = encre
+            Primaire = brand
           </h2>
           <div className="ds-group">
             <p className="ds-label">Une région · une primaire</p>

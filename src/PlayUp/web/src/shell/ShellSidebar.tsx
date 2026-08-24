@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import type { ComponentType, SVGProps } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import {
@@ -26,7 +26,7 @@ type NavDestination = {
   key: ShellDestinationKey
   label: string
   to: string
-  icon: () => ReactElement
+  icon: ComponentType<SVGProps<SVGSVGElement>>
 }
 
 const destinationDefinitions: Array<

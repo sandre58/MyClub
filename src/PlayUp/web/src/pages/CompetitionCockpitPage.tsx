@@ -1,14 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { fetchCompetitionCockpit } from '../api'
+import { fetchCompetitionCockpit, fetchOrganisationView } from '../api'
+import { Status } from '../design-system/components/Status'
+import {
+  AttentionMarkIcon,
+  ChevronRightIcon,
+} from '../design-system/icons/shellIcons'
 import { actionLabel } from '../i18n/actionLabels'
 import {
-  drawResolutionKindLabel,
-  drawResolutionStateLabel,
-  drawStatusLabel,
-  stageStatusLabel,
+  attentionTargetTypeLabel,
+  structureFormatKindLabel,
 } from '../i18n/enumLabels'
 import { situationTitle } from '../i18n/situationCopy'
 import { queryKeys } from '../queryKeys'
@@ -19,16 +22,16 @@ import {
 import type {
   CockpitAction,
   CockpitDimension,
-  CockpitDrawFocus,
   CockpitSituation,
   CockpitView,
+  OrganisationEntry,
+  StructureFormatKind,
 } from '../types'
 import {
   ErrorState,
   LoadingState,
   MutationError,
   PendingLabel,
-  StageStatusBadge,
 } from '../ui'
 import {
   cockpitActionKey,
@@ -39,21 +42,32 @@ import {
   actionsForDraw,
   actionsForSlot,
   actionsForStage,
-  closurePresentation,
   findActionByCode,
   isProminenceCondensed,
   isTeamAdminAction,
-  operationalBlocks,
   orderSituationsForDisplay,
   panelProminenceClass,
   primaryTeamActions,
   secondaryActions,
-  shouldShowOperationalSection,
   sortConstructionSlots,
   stageWideOperationalActions,
-  type ConstructionSlot,
 } from './cockpitComposition'
 import './overview.css'
+import {
+  CalendarIcon,
+  CheckIcon,
+  CompletedIcon,
+  CreateMatchesIcon,
+  InProgressIcon,
+  NextActionIcon,
+  OverviewAttentionIcon,
+  PendingCircleIcon,
+  PreparationIcon,
+  RegulationIcon,
+  StructureIcon,
+  TeamsIcon,
+  WhereAreWeIcon,
+} from '../design-system/icons/overviewIcons'
 
 /**
  * Competition Cockpit — GET /competitions/{id}/cockpit.
@@ -69,7 +83,7 @@ export function CompetitionCockpitPage() {
   })
 
   return (
-    <main id="main" className="page">
+    <main id="main" className="page page--overview">
       {query.isPending && !query.data && <LoadingState />}
       {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <CockpitViewBody data={query.data} />}
@@ -80,20 +94,14 @@ export function CompetitionCockpitPage() {
 function CockpitViewBody({ data }: { data: CockpitView }) {
   const { t } = useTranslation('cockpit')
   const actionRunner = useCockpitActionRunner(data)
-  const situationActionCodes = useMemo(() => {
-    const codes = new Set<string>()
-    for (const situation of data.situations) {
-      if (situation.actionCode) {
-        codes.add(situation.actionCode)
-      }
-    }
-    return codes
-  }, [data.situations])
+
+  const orgQuery = useQuery({
+    queryKey: queryKeys.competitions.organisation(data.competitionId),
+    queryFn: () => fetchOrganisationView(data.competitionId),
+  })
 
   const slotActions = (slot: Parameters<typeof actionsForSlot>[1]) => {
-    const base = actionsForSlot(data.availableActions, slot).filter(
-      (action) => !situationActionCodes.has(action.code),
-    )
+    const base = actionsForSlot(data.availableActions, slot)
     if (slot === 'teams') {
       return primaryTeamActions(base)
     }
@@ -134,37 +142,73 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
     if (progression) {
       keys.add(cockpitActionKey(progression))
     }
-    for (const situation of data.situations) {
-      if (situation.actionCode) {
-        const match = findActionByCode(data.availableActions, situation.actionCode)
-        if (match) {
-          keys.add(cockpitActionKey(match))
-        }
-      }
-    }
     return keys
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from data
-  }, [data, situationActionCodes])
+  }, [data])
 
   const leftover = secondaryActions(data.availableActions, renderedKeys)
-  const slots = sortConstructionSlots(data)
-  const closureMode = closurePresentation(data)
+  const lifecycleActions = leftover.filter(
+    (action) =>
+      action.code === 'PrepareCompetition' || action.code === 'StartCompetition',
+  )
+  const slots = sortConstructionSlots(data).filter((slot) => slot !== 'matches')
+  const teamsVisible = slots.includes('teams')
+  const regulationVisible = slots.includes('regulation')
+  const structureVisible = slots.includes('structure')
+  const stageActions = data.operationalFocus.stages.flatMap((stage) =>
+    actionsForStage(data.availableActions, stage.stageId),
+  )
+  const orgHref = `/competitions/${data.competitionId}/organisation`
 
   return (
     <div className="overview">
-      <CycleLineSection data={data} />
-
       <div className="overview__pilotage">
         <WhereAreWePanel data={data} />
-        <NaturalProgressionSection data={data} actionRunner={actionRunner} />
+        <NaturalProgressionSection
+          data={data}
+          actionRunner={actionRunner}
+          lifecycleActions={lifecycleActions}
+        />
       </div>
 
-      <SituationsSection
-        situations={orderSituationsForDisplay(data.attentionSummary.items)}
-        competitionId={data.competitionId}
-        availableActions={data.availableActions}
-        actionRunner={actionRunner}
-      />
+      <div className="overview__mid">
+        <AttentionSignalSection
+          items={orderSituationsForDisplay(data.attentionSummary.items)}
+          count={data.attentionSummary.count}
+          competitionId={data.competitionId}
+        />
+        {teamsVisible && (
+          <TeamsPanel
+            dimension={data.constructionDimensions.teams}
+            entries={orgQuery.data?.participants.entries ?? []}
+            href={orgHref}
+            hrefLabel={t('dimensions.openTeams')}
+            actions={slotActions('teams')}
+            actionRunner={actionRunner}
+          />
+        )}
+        {regulationVisible && (
+          <RegulationDimensionCard
+            regulation={data.constructionDimensions.regulation}
+            href={orgHref}
+            hrefLabel={t('dimensions.openRegulation')}
+            actions={slotActions('regulation')}
+            actionRunner={actionRunner}
+          />
+        )}
+      </div>
+
+      {structureVisible && (
+        <StructurePanel
+          dimension={data.constructionDimensions.structure}
+          stages={data.operationalFocus.stages}
+          matchTotal={data.operationalFocus.matchCounts.total}
+          href={orgHref}
+          hrefLabel={t('dimensions.openStructure')}
+          actions={[...slotActions('structure'), ...stageActions]}
+          actionRunner={actionRunner}
+        />
+      )}
 
       {actionRunner.materializeFollowUp && (
         <MaterializeFollowUpBanner
@@ -173,38 +217,6 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
           onDismiss={actionRunner.clearMaterializeFollowUp}
         />
       )}
-
-      <ConstructionDimensionsSection
-        data={data}
-        slots={slots}
-        actionRunner={actionRunner}
-        actionsFor={slotActions}
-      />
-
-      {shouldShowOperationalSection(data) && (
-        <OperationalFocusSection
-          data={data}
-          actionRunner={actionRunner}
-          opsActions={slotActions('operational')}
-        />
-      )}
-
-      <ClosureHintSection
-        data={data}
-        mode={closureMode}
-        actionRunner={actionRunner}
-        closureActions={slotActions('closure')}
-      />
-
-      {leftover.length > 0 && (
-        <SecondaryActionsSection
-          actions={leftover}
-          actionRunner={actionRunner}
-          heading={t('actions.secondaryHeading')}
-        />
-      )}
-
-      <SpacesNavSection competitionId={data.competitionId} />
 
       {actionRunner.mutation.isError && (
         <MutationError error={actionRunner.mutation.error} />
@@ -324,9 +336,9 @@ function MaterializeFollowUpBanner({
       aria-labelledby="cockpit-materialize-followup"
       role="status"
     >
-      <h2 className="overview-panel__title" id="cockpit-materialize-followup">
+      <PanelHead id="cockpit-materialize-followup" icon={<NextActionIcon size="md" />}>
         {t('materializeFollowUp.heading')}
-      </h2>
+      </PanelHead>
       <p className="overview-panel__lede">
         {followUp.alreadyComplete && followUp.createdCount === 0
           ? t('materializeFollowUp.alreadyComplete', {
@@ -351,7 +363,7 @@ function MaterializeFollowUpBanner({
   )
 }
 
-function CycleLineSection({ data }: { data: CockpitView }) {
+function CycleLine({ data }: { data: CockpitView }) {
   const { t } = useTranslation('cockpit')
   const activeIndex = activeUiCyclePhaseIndex(data.cycleReading.code)
 
@@ -362,7 +374,7 @@ function CycleLineSection({ data }: { data: CockpitView }) {
           <li key={phase} className="overview-cycle-line__item">
             {index > 0 && (
               <span className="overview-cycle-line__sep" aria-hidden="true">
-                ·
+                →
               </span>
             )}
             <span
@@ -379,104 +391,176 @@ function CycleLineSection({ data }: { data: CockpitView }) {
   )
 }
 
+function PanelHead({
+  id,
+  icon,
+  children,
+}: {
+  id: string
+  icon: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <h2 className="overview-panel__head" id={id}>
+      <span className="overview-panel__icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="overview-panel__title-text">{children}</span>
+    </h2>
+  )
+}
+
+/** Cycle glyph — presentation of the known phase, no readiness claim. */
+function cycleBadgeIcon(code: string) {
+  if (code === 'Calendar') {
+    return <CalendarIcon />
+  }
+  if (code === 'InProgress') {
+    return <InProgressIcon />
+  }
+  if (code === 'Completed' || code === 'Archived') {
+    return <CompletedIcon />
+  }
+  return <PreparationIcon />
+}
+
 function WhereAreWePanel({ data }: { data: CockpitView }) {
   const { t } = useTranslation('cockpit')
   const code = data.cycleReading.code
 
   return (
     <section className="ds-panel" aria-labelledby="cockpit-where">
-      <h2 className="overview-panel__title" id="cockpit-where">
+      <PanelHead id="cockpit-where" icon={<WhereAreWeIcon size="md" />}>
         {t('cycle.heading')}
-      </h2>
-      <p className="overview-panel__lede">
-        {t(`cycle.${code}`, { defaultValue: code })}
-      </p>
+      </PanelHead>
+      <div className="overview-hero">
+        <span className="overview-badge overview-badge--tint" aria-hidden="true">
+          {cycleBadgeIcon(code)}
+        </span>
+        <div className="overview-hero__body">
+          <p className="overview-hero__title">
+            {t(`cycle.${code}`, { defaultValue: code })}
+          </p>
+          <p className="overview-hero__sub">
+            {t(`cycleDesc.${code}`, { defaultValue: t('cycle.lede') })}
+          </p>
+        </div>
+      </div>
+      <CycleLine data={data} />
     </section>
   )
 }
 
-function ConstructionDimensionsSection({
-  data,
-  slots,
-  actionRunner,
-  actionsFor,
+function AttentionSignalSection({
+  items,
+  count,
+  competitionId,
 }: {
-  data: CockpitView
-  slots: ConstructionSlot[]
-  actionRunner: ActionRunner
-  actionsFor: (slot: Parameters<typeof actionsForSlot>[1]) => CockpitAction[]
+  items: CockpitSituation[]
+  count: number
+  competitionId: string
 }) {
   const { t } = useTranslation('cockpit')
-  const dims = data.constructionDimensions
-  const orgHref = `/competitions/${data.competitionId}/organisation`
-  const matchesHref = `/competitions/${data.competitionId}/matches`
-
-  if (slots.length === 0) {
-    return null
-  }
+  const preview = items.slice(0, 2)
 
   return (
-    <section className="ds-group" aria-labelledby="cockpit-dimensions">
-      <h2 className="overview-panel__title" id="cockpit-dimensions">
-        {t('dimensions.heading')}
-      </h2>
-      <div className="overview-dimensions">
-        {slots.map((slot) => {
-          if (slot === 'teams') {
-            return (
-              <DimensionCard
-                key={slot}
-                title={t('dimensions.teams.title')}
-                prominence={dims.teams.prominence}
-                summary={dimensionTeamsSummary(dims.teams, t)}
-                href={orgHref}
-                hrefLabel={t('dimensions.openOrganisation')}
-                actions={actionsFor('teams')}
-                actionRunner={actionRunner}
+    <section className="overview-attention" aria-labelledby="cockpit-situations">
+      <PanelHead id="cockpit-situations" icon={<OverviewAttentionIcon size="md" />}>
+        {t('situations.heading')}
+      </PanelHead>
+      {count === 0 || preview.length === 0 ? (
+        <p className="overview-panel__muted">{t('attention.empty')}</p>
+      ) : (
+        <>
+          <ul className="shell-attention-drawer__list">
+            {preview.map((situation) => (
+              <OverviewAttentionItem
+                key={`${situation.source}:${situation.targetType}:${situation.targetId}`}
+                situation={situation}
+                competitionId={competitionId}
               />
-            )
-          }
-          if (slot === 'structure') {
-            return (
-              <DimensionCard
-                key={slot}
-                title={t('dimensions.structure.title')}
-                prominence={dims.structure.prominence}
-                summary={dimensionStructureSummary(dims.structure, t)}
-                href={orgHref}
-                hrefLabel={t('dimensions.openOrganisation')}
-                actions={actionsFor('structure')}
-                actionRunner={actionRunner}
-              />
-            )
-          }
-          if (slot === 'regulation') {
-            return (
-              <RegulationDimensionCard
-                key={slot}
-                regulation={dims.regulation}
-                href={orgHref}
-                hrefLabel={t('dimensions.openOrganisation')}
-                actions={actionsFor('regulation')}
-                actionRunner={actionRunner}
-              />
-            )
-          }
-          return (
-            <DimensionCard
-              key={slot}
-              title={t('dimensions.matches.title')}
-              prominence={dims.matches.prominence}
-              summary={dimensionMatchesSummary(dims.matches, t)}
-              href={matchesHref}
-              hrefLabel={t('dimensions.openMatches')}
-              actions={actionsFor('matches')}
-              actionRunner={actionRunner}
-            />
-          )
-        })}
-      </div>
+            ))}
+          </ul>
+          {count > preview.length && (
+            <p className="overview-panel__muted">
+              {t('attention.triageHint', { count })}
+            </p>
+          )}
+        </>
+      )}
     </section>
+  )
+}
+
+/** Same visual recipe as AttentionDrawerItem — shared CSS classes, light preview. */
+function OverviewAttentionItem({
+  situation,
+  competitionId,
+}: {
+  situation: CockpitSituation
+  competitionId: string
+}) {
+  const { t } = useTranslation('cockpit')
+  const href = situationHref(situation, competitionId)
+  const isBlocking = situation.nature === 'Blocking'
+  const natureTone = isBlocking ? 'error' : 'info'
+  const toneClass = isBlocking
+    ? 'shell-attention-drawer__item-link--blocking'
+    : 'shell-attention-drawer__item-link--info'
+  const staticToneClass = isBlocking
+    ? 'shell-attention-drawer__item-static--blocking'
+    : 'shell-attention-drawer__item-static--info'
+  const targetLabel = situation.targetType
+    ? attentionTargetTypeLabel(situation.targetType)
+    : null
+
+  const content = (
+    <>
+      <span
+        className={`shell-attention-drawer__item-mark${
+          isBlocking ? ' shell-attention-drawer__item-mark--blocking' : ''
+        }`}
+        aria-hidden="true"
+      >
+        <AttentionMarkIcon size="lg" />
+      </span>
+      <div className="shell-attention-drawer__item-main">
+        <p className="shell-attention-drawer__item-title">
+          {situationTitle(situation.source, situation.params)}
+        </p>
+        <div className="shell-attention-drawer__item-meta">
+          <Status density="context" tone={natureTone} variant="soft" shape="rounded">
+            {t(`nature.${situation.nature}`, { defaultValue: situation.nature })}
+          </Status>
+          {targetLabel && (
+            <span className="shell-attention-drawer__item-target ds-meta">
+              {targetLabel}
+            </span>
+          )}
+        </div>
+      </div>
+      {href && (
+        <ChevronRightIcon
+          size="md"
+          className="shell-attention-drawer__item-chevron"
+          aria-hidden="true"
+        />
+      )}
+    </>
+  )
+
+  return (
+    <li className="shell-attention-drawer__item">
+      {href ? (
+        <Link className={`shell-attention-drawer__item-link ${toneClass}`} to={href}>
+          {content}
+        </Link>
+      ) : (
+        <div className={`shell-attention-drawer__item-static ${staticToneClass}`}>
+          {content}
+        </div>
+      )}
+    </li>
   )
 }
 
@@ -499,21 +583,16 @@ function RegulationDimensionCard({
   const primaryGap = regulation.transitionReadiness.find((item) => !item.ready)
 
   return (
-    <article className={panelProminenceClass(regulation.prominence)}>
-      <h3 className="overview-dimension__title">{t('dimensions.regulation.title')}</h3>
-      <p>
-        {t('dimensions.regulation.summaryCompact', {
-          periods: competition.numberOfPeriods,
-          duration: competition.durationPerPeriod,
-          win: competition.winPoints,
-          draw: competition.drawPoints,
-          loss: competition.lossPoints,
-          min: competition.minimumTeams,
-          max: competition.maximumTeams,
-        })}
-      </p>
+    <article
+      className={panelProminenceClass(regulation.prominence)}
+      aria-labelledby="overview-regulation"
+    >
+      <PanelHead id="overview-regulation" icon={<RegulationIcon size="md" />}>
+        {t('dimensions.regulation.title')}
+      </PanelHead>
       {!condensed && primaryGap && (
-        <p className="caption">
+        <p className="overview-status overview-status--attention">
+          <OverviewAttentionIcon size="sm" aria-hidden="true" />
           {t('dimensions.regulation.readinessNotReady', {
             transition: t(
               `dimensions.regulation.transitions.${primaryGap.transition}`,
@@ -523,55 +602,307 @@ function RegulationDimensionCard({
         </p>
       )}
       {!condensed && !primaryGap && regulation.transitionReadiness.length > 0 && (
-        <p className="caption">{t('dimensions.regulation.allReady')}</p>
+        <p className="overview-status">
+          <span className="overview-status__icon" aria-hidden="true">
+            <CheckIcon />
+          </span>
+          {t('dimensions.regulation.allReady')}
+        </p>
       )}
+      <ul className="overview-chips">
+        <PointsChip
+          tone="win"
+          value={competition.winPoints}
+          label={t('dimensions.regulation.pointsWin')}
+        />
+        <PointsChip
+          tone="draw"
+          value={competition.drawPoints}
+          label={t('dimensions.regulation.pointsDraw')}
+        />
+        <PointsChip
+          tone="loss"
+          value={competition.lossPoints}
+          label={t('dimensions.regulation.pointsLoss')}
+        />
+      </ul>
+      <p className="overview-panel__muted">
+        {t('dimensions.regulation.formatMeta', {
+          periods: competition.numberOfPeriods,
+          duration: competition.durationPerPeriod,
+          min: competition.minimumTeams,
+          max: competition.maximumTeams,
+        })}
+      </p>
       <ActionButtons actions={actions} actionRunner={actionRunner} />
-      <p>
-        <Link className="ds-btn ds-btn--ghost" to={href}>
-          {hrefLabel}
-        </Link>
+      <p className="overview-panel__footer">
+        <OverviewLink to={href}>{hrefLabel}</OverviewLink>
       </p>
     </article>
   )
 }
 
-function DimensionCard({
-  title,
-  prominence,
-  summary,
+function PointsChip({
+  value,
+  label,
+  tone,
+}: {
+  value: number
+  label: string
+  tone: 'win' | 'draw' | 'loss'
+}) {
+  const { t } = useTranslation('cockpit')
+
+  return (
+    <li className={`overview-chip overview-chip--${tone}`}>
+      <span className="overview-chip__value">
+        {t('dimensions.regulation.pointsValue', { value })}
+      </span>
+      <span className="overview-chip__label">{label}</span>
+    </li>
+  )
+}
+
+/** Exit link toward the owning workspace — right-aligned, réf. V9. */
+function OverviewLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link className="overview-link" to={to}>
+      {children}
+      <span className="overview-link__arrow" aria-hidden="true">
+        →
+      </span>
+    </Link>
+  )
+}
+
+function TeamsPanel({
+  dimension,
+  entries,
   href,
   hrefLabel,
   actions,
   actionRunner,
 }: {
-  title: string
-  prominence: string
-  summary: string
+  dimension: CockpitDimension
+  entries: OrganisationEntry[]
   href: string
   hrefLabel: string
   actions: CockpitAction[]
   actionRunner: ActionRunner
 }) {
+  const { t } = useTranslation('cockpit')
+  const activeCount = Number(dimension.facts.activeCount ?? '0')
+  const minimumTeams = Number(dimension.facts.minimumTeams ?? '0')
+  const maximumTeams = dimension.facts.maximumTeams
+  const activeEntries = entries.filter((entry) => entry.status === 'Active')
+  const preview = activeEntries.slice(0, 6)
+  const overflow = Math.max(0, activeCount - preview.length)
+  const meetsMinimum = activeCount >= minimumTeams && minimumTeams > 0
+
   return (
-    <article className={panelProminenceClass(prominence)}>
-      <h3 className="overview-dimension__title">{title}</h3>
-      <p>{summary}</p>
+    <article
+      className={panelProminenceClass(dimension.prominence)}
+      aria-labelledby="overview-teams"
+    >
+      <PanelHead id="overview-teams" icon={<TeamsIcon size="md" />}>
+        {t('dimensions.teams.title')}
+      </PanelHead>
+      <p className="overview-figure">
+        <span className="overview-figure__value">{activeCount}</span>
+        <span className="overview-figure__label">
+          {t('dimensions.teams.figureLabel')}
+        </span>
+      </p>
+      {preview.length > 0 && (
+        <ul className="overview-crests" aria-label={t('dimensions.teams.crestsLabel')}>
+          {preview.map((entry) => (
+            <li
+              key={entry.entryId}
+              className="overview-crest"
+              title={entry.displayName}
+            >
+              {crestInitials(entry.displayName)}
+            </li>
+          ))}
+          {overflow > 0 && (
+            <li className="overview-crest overview-crest--more">+{overflow}</li>
+          )}
+        </ul>
+      )}
+      <div className="overview-flags">
+        {meetsMinimum ? (
+          <span className="overview-flag overview-flag--ok">
+            <CheckIcon size="sm" aria-hidden="true" />
+            {t('dimensions.teams.complete', { count: activeCount })}
+          </span>
+        ) : (
+          <span className="overview-flag overview-flag--warn">
+            <OverviewAttentionIcon size="sm" aria-hidden="true" />
+            {t('dimensions.teams.minimum', { minimumTeams })}
+          </span>
+        )}
+        {maximumTeams && (
+          <span className="overview-flag">
+            {t('dimensions.teams.capacity', { max: maximumTeams })}
+          </span>
+        )}
+      </div>
       <ActionButtons actions={actions} actionRunner={actionRunner} />
-      <p>
-        <Link className="ds-btn ds-btn--ghost" to={href}>
-          {hrefLabel}
-        </Link>
+      <p className="overview-panel__footer">
+        <OverviewLink to={href}>{hrefLabel}</OverviewLink>
       </p>
     </article>
+  )
+}
+
+/** Letter mark — Host has no crest asset yet; placeholders until logos exist. */
+function crestInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) {
+    return '?'
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+  return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase()
+}
+
+/**
+ * Structure — editorial rows from Cockpit facts (format · groups · rounds ·
+ * matchdays · slots · matches). Journées détaillées / noms de groupes absents
+ * du Read — pas inventés ici.
+ */
+function StructurePanel({
+  dimension,
+  stages,
+  matchTotal,
+  href,
+  hrefLabel,
+  actions,
+  actionRunner,
+}: {
+  dimension: CockpitDimension
+  stages: CockpitView['operationalFocus']['stages']
+  matchTotal: number
+  href: string
+  hrefLabel: string
+  actions: CockpitAction[]
+  actionRunner: ActionRunner
+}) {
+  const { t } = useTranslation('cockpit')
+  const formatKind = dimension.facts.formatKind
+  const formatConfigured = Boolean(formatKind) && formatKind !== 'None'
+  const groupCount = Number(dimension.facts.groupCount ?? '0')
+  const roundCount = Number(dimension.facts.roundCount ?? '0')
+  const matchdayCount = Number(dimension.facts.matchdayCount ?? '0')
+  const slotCount = Number(dimension.facts.slotCount ?? '0')
+  const stageNames = stages.map((stage) => stage.name).filter(Boolean)
+
+  return (
+    <article
+      className={panelProminenceClass(dimension.prominence)}
+      aria-labelledby="overview-structure"
+    >
+      <PanelHead id="overview-structure" icon={<StructureIcon size="md" />}>
+        {t('dimensions.structure.title')}
+      </PanelHead>
+      <ul className="overview-rows">
+        <StructureRow
+          done={formatConfigured}
+          label={
+            formatConfigured
+              ? structureFormatKindLabel(formatKind as StructureFormatKind)
+              : t('dimensions.structure.none')
+          }
+          detail={
+            stageNames.length > 0
+              ? t('dimensions.structure.phasesDetail', {
+                  count: stages.length,
+                  names: stageNames.join(' · '),
+                })
+              : undefined
+          }
+        />
+        {groupCount > 0 && (
+          <StructureRow
+            done
+            label={t('dimensions.structure.groups', { count: groupCount })}
+          />
+        )}
+        {roundCount > 0 && (
+          <StructureRow
+            done
+            label={t('dimensions.structure.rounds', { count: roundCount })}
+          />
+        )}
+        {matchdayCount > 0 && (
+          <StructureRow
+            done
+            label={t('dimensions.structure.matchdays', { count: matchdayCount })}
+          />
+        )}
+        {slotCount > 0 && (
+          <StructureRow
+            done
+            label={t('dimensions.structure.slots', { count: slotCount })}
+          />
+        )}
+        <StructureRow
+          done={matchTotal > 0}
+          label={
+            matchTotal > 0
+              ? t('dimensions.structure.matches', { count: matchTotal })
+              : t('dimensions.structure.matchesNone')
+          }
+          detail={
+            matchTotal === 0 && slotCount > 0
+              ? t('dimensions.structure.matchesPending', { count: slotCount })
+              : undefined
+          }
+        />
+      </ul>
+      <ActionButtons actions={actions} actionRunner={actionRunner} />
+      <p className="overview-panel__footer">
+        <OverviewLink to={href}>{hrefLabel}</OverviewLink>
+      </p>
+    </article>
+  )
+}
+
+function StructureRow({
+  done,
+  label,
+  detail,
+}: {
+  done: boolean
+  label: string
+  detail?: string
+}) {
+  return (
+    <li className="overview-row">
+      <span
+        className={`overview-row__mark ${
+          done ? 'overview-row__mark--done' : 'overview-row__mark--pending'
+        }`}
+        aria-hidden="true"
+      >
+        {done ? <CheckIcon /> : <PendingCircleIcon />}
+      </span>
+      <span className="overview-row__label">{label}</span>
+      {detail && <span className="overview-row__detail">{detail}</span>}
+    </li>
   )
 }
 
 function ActionButtons({
   actions,
   actionRunner,
+  emphasizeFirst = false,
 }: {
   actions: CockpitAction[]
   actionRunner: ActionRunner
+  /** Primary only when this region owns the single CTA — Identité §11. */
+  emphasizeFirst?: boolean
 }) {
   const { t } = useTranslation('cockpit')
   if (actions.length === 0) {
@@ -579,8 +910,8 @@ function ActionButtons({
   }
 
   return (
-    <div className="button-row" aria-busy={actionRunner.mutation.isPending}>
-      {actions.map((action) => {
+    <div className="overview-actions" aria-busy={actionRunner.mutation.isPending}>
+      {actions.map((action, index) => {
         const key = cockpitActionKey(action)
         const busy =
           actionRunner.mutation.isPending && actionRunner.activeKey === key
@@ -588,11 +919,15 @@ function ActionButtons({
           name: action.params?.stageName,
           ...action.params,
         })
+        const variant =
+          emphasizeFirst && index === 0
+            ? 'ds-btn--primary'
+            : 'ds-btn--secondary'
         return (
           <button
             key={key}
             type="button"
-            className="ds-btn ds-btn--primary"
+            className={`ds-btn ${variant}`}
             disabled={actionRunner.mutation.isPending}
             onClick={() => actionRunner.onActionClick(action)}
           >
@@ -604,241 +939,15 @@ function ActionButtons({
   )
 }
 
-function OperationalFocusSection({
-  data,
-  actionRunner,
-  opsActions,
-}: {
-  data: CockpitView
-  actionRunner: ActionRunner
-  opsActions: CockpitAction[]
-}) {
-  const { t } = useTranslation('cockpit')
-  const focus = data.operationalFocus
-  const blocks = operationalBlocks(data)
-
-  return (
-    <section className="section-stack" aria-labelledby="cockpit-operational">
-      <h2 className="overview-panel__title" id="cockpit-operational">
-        {t('operational.heading')}
-      </h2>
-
-      {blocks.includes('stages') && (
-        <section className="ds-panel" aria-labelledby="cockpit-stages">
-          <h3 className="overview-dimension__title" id="cockpit-stages">
-            {t('operational.stagesHeading')}
-          </h3>
-          <ul className="plain-list">
-            {focus.stages.map((stage) => (
-              <li key={stage.stageId} className="row">
-                <div>
-                  <strong>{stage.name}</strong>{' '}
-                  <StageStatusBadge status={stage.status} />
-                  <span className="muted"> · {stageStatusLabel(stage.status)}</span>
-                  <ActionButtons
-                    actions={actionsForStage(data.availableActions, stage.stageId)}
-                    actionRunner={actionRunner}
-                  />
-                </div>
-                <Link className="ds-btn ds-btn--ghost" to={`/stages/${stage.stageId}`}>
-                  {t('operational.openStage')}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {blocks.includes('draws') && (
-        <section className="ds-panel" aria-labelledby="cockpit-draws">
-          <h3 className="overview-dimension__title" id="cockpit-draws">
-            {t('operational.drawsHeading')}
-          </h3>
-          <ul className="plain-list">
-            {focus.draws.map((draw) => (
-              <DrawFocusRow
-                key={draw.drawId}
-                draw={draw}
-                actions={actionsForDraw(
-                  data.availableActions,
-                  draw.stageId,
-                  draw.drawId,
-                )}
-                actionRunner={actionRunner}
-              />
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {blocks.includes('counts') && (
-        <section className="ds-panel" aria-labelledby="cockpit-match-counts">
-          <h3 className="overview-dimension__title" id="cockpit-match-counts">
-            {t('operational.countsHeading')}
-          </h3>
-          <div className="stat-grid">
-            <CountStat label={t('operational.countLive')} value={focus.matchCounts.live} />
-            <CountStat
-              label={t('operational.countScheduled')}
-              value={focus.matchCounts.scheduled}
-            />
-            <CountStat
-              label={t('operational.countFinished')}
-              value={focus.matchCounts.finished}
-            />
-            <CountStat label={t('operational.countTotal')} value={focus.matchCounts.total} />
-          </div>
-        </section>
-      )}
-
-      {blocks.includes('upcoming') && (
-        <section className="ds-panel" aria-labelledby="cockpit-upcoming">
-          <h3 className="overview-dimension__title" id="cockpit-upcoming">
-            {t('operational.upcomingHeading')}
-          </h3>
-          <ul className="plain-list">
-            {focus.upcomingMatches.map((match) => (
-              <li key={match.matchId} className="row">
-                <div>
-                  <strong>
-                    {match.homeDisplayName} – {match.awayDisplayName}
-                  </strong>
-                  {match.scheduledAt && (
-                    <p className="muted">{match.scheduledAt}</p>
-                  )}
-                </div>
-                <Link className="ds-btn ds-btn--ghost" to={`/matches/${match.matchId}`}>
-                  {t('operational.openMatch')}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {opsActions.length > 0 && (
-        <ActionButtons actions={opsActions} actionRunner={actionRunner} />
-      )}
-    </section>
-  )
-}
-
-function DrawFocusRow({
-  draw,
-  actions,
-  actionRunner,
-}: {
-  draw: CockpitDrawFocus
-  actions: CockpitAction[]
-  actionRunner: ActionRunner
-}) {
-  const { t } = useTranslation('cockpit')
-
-  return (
-    <li className="row">
-      <div>
-        <strong>{drawResolutionKindLabel(draw.kind)}</strong>
-        <p className="muted">
-          {drawStatusLabel(draw.status)} · {drawResolutionStateLabel(draw.resolutionState)} ·{' '}
-          {draw.isApplied ? t('operational.drawApplied') : t('operational.drawNotApplied')}
-        </p>
-        <ActionButtons actions={actions} actionRunner={actionRunner} />
-      </div>
-      <Link className="ds-btn ds-btn--ghost" to={`/stages/${draw.stageId}`}>
-        {t('operational.openStage')}
-      </Link>
-    </li>
-  )
-}
-
-function CountStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="stat">
-      <p className="stat__label">{label}</p>
-      <p className="stat__value">{value}</p>
-    </div>
-  )
-}
-
-function SituationsSection({
-  situations,
-  competitionId,
-  availableActions,
-  actionRunner,
-}: {
-  situations: CockpitSituation[]
-  competitionId: string
-  availableActions: CockpitAction[]
-  actionRunner: ActionRunner
-}) {
-  const { t } = useTranslation('cockpit')
-
-  return (
-    <section className="ds-group" aria-labelledby="cockpit-situations">
-      <h2 className="overview-panel__title" id="cockpit-situations">
-        {t('situations.heading')}
-      </h2>
-      {situations.length === 0 ? (
-        <p className="overview-panel__muted">{t('situations.empty')}</p>
-      ) : (
-        <div className="ds-group">
-          {situations.map((situation) => {
-            const href = situationHref(situation, competitionId)
-            const key = `${situation.source}:${situation.targetType}:${situation.targetId}`
-            const linkedAction = situation.actionCode
-              ? findActionByCode(availableActions, situation.actionCode)
-              : undefined
-            return (
-              <div key={key} className="overview-treat-item">
-                <div className="overview-treat-item__main">
-                  <strong>{situationTitle(situation.source, situation.params)}</strong>
-                  <p className="overview-panel__muted">
-                    {t(`nature.${situation.nature}`, {
-                      defaultValue: situation.nature,
-                    })}
-                    {situation.impactCode && (
-                      <>
-                        {' '}
-                        ·{' '}
-                        {t(`impact.${situation.impactCode}`, {
-                          defaultValue: situation.impactCode,
-                        })}
-                      </>
-                    )}
-                    {!situation.actionable && (
-                      <>
-                        {' '}
-                        · {t('situations.notActionable')}
-                      </>
-                    )}
-                  </p>
-                  {linkedAction && (
-                    <ActionButtons
-                      actions={[linkedAction]}
-                      actionRunner={actionRunner}
-                    />
-                  )}
-                </div>
-                {href && (
-                  <Link className="ds-btn ds-btn--ghost" to={href}>
-                    {t('situations.open')} →
-                  </Link>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </section>
-  )
-}
-
 function NaturalProgressionSection({
   data,
   actionRunner,
+  lifecycleActions,
 }: {
   data: CockpitView
   actionRunner: ActionRunner
+  /** Prepare/Start leftovers — folded here (no separate Transitions card, réf. V9). */
+  lifecycleActions: CockpitAction[]
 }) {
   const { t } = useTranslation('cockpit')
   const code = data.naturalProgression?.code
@@ -846,215 +955,111 @@ function NaturalProgressionSection({
   const orgHref = `/competitions/${data.competitionId}/organisation`
   const matchesHref = `/competitions/${data.competitionId}/matches`
   const classementsHref = `/competitions/${data.competitionId}/classements`
+  const hasPrimary = Boolean(code)
+  const showLifecycle = lifecycleActions.length > 0
 
   return (
-    <section className="ds-panel" aria-labelledby="cockpit-progression">
-      <h2 className="overview-panel__title" id="cockpit-progression">
+    <section
+      className="ds-panel overview-panel--next"
+      aria-labelledby="cockpit-progression"
+    >
+      <PanelHead id="cockpit-progression" icon={<NextActionIcon size="md" />}>
         {t('progression.heading')}
-      </h2>
-      {code ? (
+      </PanelHead>
+      {hasPrimary ? (
         <>
-          <p className="overview-panel__lede">
-            {t(`progression.codes.${code}`, {
-              defaultValue: actionLabel(code),
-            })}
-          </p>
+          <div className="overview-hero">
+            <span className="overview-badge overview-badge--brand" aria-hidden="true">
+              {progressionBadgeIcon(code!)}
+            </span>
+            <div className="overview-hero__body">
+              <p className="overview-hero__title">{actionLabel(code!)}</p>
+              <p className="overview-hero__sub">
+                {t(`progression.codes.${code}`, {
+                  defaultValue: actionLabel(code!),
+                })}
+              </p>
+            </div>
+          </div>
           {matched ? (
-            <ActionButtons actions={[matched]} actionRunner={actionRunner} />
+            <ActionButtons
+              actions={[matched]}
+              actionRunner={actionRunner}
+              emphasizeFirst
+            />
           ) : code === 'ContinueOrganisation' ? (
-            <p>
-              <Link className="ds-btn ds-btn--ghost" to={orgHref}>
+            <p className="overview-actions">
+              <Link className="ds-btn ds-btn--primary" to={orgHref}>
                 {t('dimensions.openOrganisation')}
               </Link>
             </p>
           ) : code === 'OpenMatches' ? (
-            <p>
-              <Link className="ds-btn ds-btn--ghost" to={matchesHref}>
+            <p className="overview-actions">
+              <Link className="ds-btn ds-btn--primary" to={matchesHref}>
                 {t('dimensions.openMatches')}
               </Link>
             </p>
           ) : code === 'OpenConsultation' ? (
-            <p>
-              <Link className="ds-btn ds-btn--ghost" to={classementsHref}>
+            <p className="overview-actions">
+              <Link className="ds-btn ds-btn--primary" to={classementsHref}>
                 {t('nav.classements.title')}
               </Link>
             </p>
           ) : null}
         </>
+      ) : showLifecycle ? (
+        <>
+          <div className="overview-hero">
+            <span className="overview-badge overview-badge--brand" aria-hidden="true">
+              {progressionBadgeIcon(lifecycleActions[0].code)}
+            </span>
+            <div className="overview-hero__body">
+              <p className="overview-hero__title">
+                {actionLabel(lifecycleActions[0].code)}
+              </p>
+              <p className="overview-hero__sub">
+                {t(`progression.codes.${lifecycleActions[0].code}`, {
+                  defaultValue: actionLabel(lifecycleActions[0].code),
+                })}
+              </p>
+            </div>
+          </div>
+          <ActionButtons
+            actions={lifecycleActions}
+            actionRunner={actionRunner}
+            emphasizeFirst
+          />
+        </>
       ) : (
         <p className="overview-panel__muted">{t('progression.none')}</p>
       )}
-    </section>
-  )
-}
-
-function SecondaryActionsSection({
-  actions,
-  actionRunner,
-  heading,
-}: {
-  actions: CockpitAction[]
-  actionRunner: ActionRunner
-  heading: string
-}) {
-  return (
-    <section className="ds-panel overview-dimension--condensed" aria-labelledby="cockpit-actions-secondary">
-      <h2 className="overview-panel__title" id="cockpit-actions-secondary">
-        {heading}
-      </h2>
-      <ActionButtons actions={actions} actionRunner={actionRunner} />
-    </section>
-  )
-}
-
-function ClosureHintSection({
-  data,
-  mode,
-  actionRunner,
-  closureActions,
-}: {
-  data: CockpitView
-  mode: 'full' | 'condensed' | 'hidden'
-  actionRunner: ActionRunner
-  closureActions: CockpitAction[]
-}) {
-  const { t } = useTranslation(['cockpit', 'enums'])
-  const hint = data.closureHint
-
-  if (mode === 'hidden') {
-    return null
-  }
-
-  if (mode === 'condensed') {
-    return (
-      <section className="ds-panel overview-dimension--condensed" aria-labelledby="cockpit-closure">
-        <h2 className="overview-panel__title" id="cockpit-closure">
-          {t('cockpit:closure.heading')}
-        </h2>
-        <p className="caption">
-          {hint.canCompleteNormally
-            ? t('cockpit:closure.ready')
-            : t('cockpit:closure.notRelevant')}
-        </p>
-        <ActionButtons actions={closureActions} actionRunner={actionRunner} />
-      </section>
-    )
-  }
-
-  return (
-    <section className="ds-panel" aria-labelledby="cockpit-closure">
-      <h2 className="overview-panel__title" id="cockpit-closure">
-        {t('cockpit:closure.heading')}
-      </h2>
-      <p
-        className={`stat__value stat__value--text${hint.canCompleteNormally ? ' stat--ok' : ''}`}
-      >
-        {hint.canCompleteNormally
-          ? t('cockpit:closure.ready')
-          : t('cockpit:closure.notReady')}
-      </p>
-      {hint.blockerCodes.length > 0 && (
-        <div className="stack stack--tight">
-          <h3 className="stat__label">{t('cockpit:closure.blockersHeading')}</h3>
-          <ul className="check-list">
-            {hint.blockerCodes.map((code) => (
-              <li key={code} className="check check--no">
-                <span className="check__mark" aria-hidden="true">
-                  !
-                </span>
-                <span>
-                  {t(`completionBlocker.${code}`, {
-                    ns: 'enums',
-                    defaultValue: code,
-                  })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {hasPrimary && showLifecycle && (
+        <ActionButtons actions={lifecycleActions} actionRunner={actionRunner} />
       )}
-      <ActionButtons actions={closureActions} actionRunner={actionRunner} />
     </section>
   )
 }
 
-function SpacesNavSection({ competitionId }: { competitionId: string }) {
-  const { t } = useTranslation('cockpit')
-
-  return (
-    <section className="ds-group" aria-labelledby="cockpit-spaces">
-      <h2 className="overview-panel__title" id="cockpit-spaces">
-        {t('nav.heading')}
-      </h2>
-      <div className="overview-dimensions">
-        <Link
-          className="overview-nav-card"
-          to={`/competitions/${competitionId}/organisation`}
-        >
-          <span className="overview-nav-card__title">
-            {t('nav.organisation.title')}
-            <span aria-hidden="true">→</span>
-          </span>
-          <span className="overview-nav-card__desc">{t('nav.organisation.desc')}</span>
-        </Link>
-        <Link
-          className="overview-nav-card"
-          to={`/competitions/${competitionId}/matches`}
-        >
-          <span className="overview-nav-card__title">
-            {t('nav.matches.title')}
-            <span aria-hidden="true">→</span>
-          </span>
-          <span className="overview-nav-card__desc">{t('nav.matches.desc')}</span>
-        </Link>
-        <Link
-          className="overview-nav-card"
-          to={`/competitions/${competitionId}/classements`}
-        >
-          <span className="overview-nav-card__title">
-            {t('nav.classements.title')}
-            <span aria-hidden="true">→</span>
-          </span>
-          <span className="overview-nav-card__desc">{t('nav.classements.desc')}</span>
-        </Link>
-      </div>
-    </section>
-  )
-}
-
-function dimensionTeamsSummary(
-  dimension: CockpitDimension,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  return t('dimensions.teams.summary', {
-    activeCount: dimension.facts.activeCount ?? '0',
-    minimumTeams: dimension.facts.minimumTeams ?? '—',
-  })
-}
-
-function dimensionStructureSummary(
-  dimension: CockpitDimension,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const formatKind = dimension.facts.formatKind
-  if (!formatKind || formatKind === 'None') {
-    return t('dimensions.structure.none')
+/** Content glyph of the suggested step — flag when unmapped. */
+function progressionBadgeIcon(code: string) {
+  if (code === 'MaterializeMatches') {
+    return <CreateMatchesIcon />
   }
-  return t('dimensions.structure.summary', { formatKind })
+  if (code === 'ContinueOrganisation') {
+    return <TeamsIcon />
+  }
+  if (code === 'OpenMatches') {
+    return <CalendarIcon />
+  }
+  if (code === 'OpenConsultation') {
+    return <CompletedIcon />
+  }
+  if (code === 'CompleteCompetition' || code === 'PrepareCompetition') {
+    return <CheckIcon />
+  }
+  if (code === 'StartCompetition') {
+    return <InProgressIcon />
+  }
+  return <NextActionIcon />
 }
 
-function dimensionMatchesSummary(
-  dimension: CockpitDimension,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const total = Number(dimension.facts.total ?? '0')
-  if (total === 0) {
-    return t('dimensions.matches.empty')
-  }
-  return t('dimensions.matches.summary', {
-    live: dimension.facts.live ?? '0',
-    scheduled: dimension.facts.scheduled ?? '0',
-    finished: dimension.facts.finished ?? '0',
-    total: dimension.facts.total ?? '0',
-  })
-}

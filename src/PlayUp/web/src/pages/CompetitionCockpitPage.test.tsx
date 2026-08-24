@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
   fetchCompetitionCockpit,
+  fetchOrganisationView,
   materializeMatches,
   prepareCompetition,
   prepareStage,
@@ -19,6 +20,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchCompetitionCockpit: vi.fn(),
+    fetchOrganisationView: vi.fn(),
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
@@ -72,6 +74,56 @@ function renderCockpitPage() {
 describe('CompetitionCockpitPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchOrganisationView).mockResolvedValue({
+      competitionId,
+      name: 'Spring Cup',
+      status: 'Draft',
+      participants: {
+        activeCount: 1,
+        occupyingCount: 1,
+        entries: [
+          {
+            entryId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+            displayName: 'FC Test',
+            status: 'Active',
+          },
+        ],
+      },
+      format: {
+        kind: null,
+        primaryStageId: null,
+        primaryStageName: null,
+        primaryStageStatus: null,
+      },
+      regulation: {
+        minimumTeams: 2,
+        maximumTeams: 64,
+        durationPerPeriod: 45,
+        numberOfPeriods: 2,
+        winPoints: 3,
+        drawPoints: 1,
+        lossPoints: 0,
+      },
+      structure: {
+        groupCount: 0,
+        roundCount: 0,
+        matchdayCount: 0,
+        slotCount: 0,
+        hasDrawRules: false,
+        numberOfPots: null,
+      },
+      actions: [],
+      readiness: {
+        readyForNextSlice: false,
+        readyForDraw: false,
+        readyForMaterialization: false,
+        readyForSchedule: false,
+        readyForMatchOperation: false,
+        readyForSchedulePath: false,
+        attachedMatchCount: 0,
+        blockers: [],
+      },
+    })
   })
 
   it('shows loading while the cockpit is pending', () => {
@@ -82,7 +134,7 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
-  it('renders cycle, dimensions, progression and closure from the Host DTO', async () => {
+  it('renders V9 overview structure without console blocks', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         situations: [
@@ -128,27 +180,25 @@ describe('CompetitionCockpitPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Où en est-on ?' }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Prochaine action' }),
+    ).toBeInTheDocument()
     expect(screen.getAllByText('Préparation').length).toBeGreaterThan(0)
-    expect(screen.getByText('Équipes')).toBeInTheDocument()
-    expect(screen.getByText('Structure')).toBeInTheDocument()
-    expect(screen.getByText('Règlement')).toBeInTheDocument()
-    expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Structure' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'À traiter' })).toBeInTheDocument()
+    expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
     expect(screen.queryByText(/situation\(s\) à traiter/i)).not.toBeInTheDocument()
     expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
+    expect(screen.queryByText(/Bloque la préparation/)).not.toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Continuer la préparation dans Organisation/,
-      ),
+      screen.getByText(/Complétez les équipes, la structure et le règlement/),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Non appliqué/)).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Clôture' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Pas le sujet du moment/)).not.toBeInTheDocument()
-    expect(
-      screen.queryByText(/Des matchs sont encore planifiés/),
-    ).not.toBeInTheDocument()
-
-    // Action comes from availableActions — contextualized, not a dominant palette heading.
+    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
+    expect(screen.queryByText('Espaces métier')).not.toBeInTheDocument()
+    expect(screen.queryByText('Socle de construction')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Actions disponibles' }),
     ).not.toBeInTheDocument()
@@ -265,7 +315,7 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)
   })
 
-  it('uses Host isApplied and does not recompute draw applied state', async () => {
+  it('uses Host readiness copy without inventing draw chrome on overview', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         operationalFocus: {
@@ -286,7 +336,9 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    expect(await screen.findByText(/Appliqué/)).toBeInTheDocument()
+    await screen.findByRole('heading', { name: 'Où en est-on ?' })
+    expect(screen.queryByText(/Appliqué/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
   })
 
   it('navigates Fixture targets via Host matchId without client join', async () => {
@@ -328,7 +380,9 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await user.click(await screen.findByRole('link', { name: 'Ouvrir →' }))
+    await user.click(
+      await screen.findByRole('link', { name: /Progression en attente/i }),
+    )
     expect(screen.getByText('Match route')).toBeInTheDocument()
   })
 
@@ -413,18 +467,19 @@ describe('CompetitionCockpitPage', () => {
     renderCockpitPage()
 
     expect(await screen.findByText(/2×45 min/)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Configuration compatible avec les prochaines transitions/),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Règlement prêt pour la suite/)).toBeInTheDocument()
     expect(screen.queryByText('Tirage')).not.toBeInTheDocument()
   })
 
-  it('lists attention items once on the inline À traiter section', async () => {
+  it('previews attention with the same item recipe as the drawer', async () => {
     const situation = cockpitSituation()
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
-        situations: [situation],
-        attentionSummary: { count: 1, items: [situation] },
+        situations: [situation, situation],
+        attentionSummary: {
+          count: 3,
+          items: [situation, situation, situation],
+        },
       }),
     )
 
@@ -433,10 +488,14 @@ describe('CompetitionCockpitPage', () => {
     expect(
       (await screen.findAllByRole('heading', { name: 'À traiter' })).length,
     ).toBe(1)
-    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
+    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(2)
+    expect(screen.getAllByText('Bloquant').length).toBeGreaterThan(0)
+    expect(
+      screen.getByText(/3 situation\(s\) — détail dans le panneau À traiter/),
+    ).toBeInTheDocument()
   })
 
-  it('hides Absent match dimension and empty operational match blocks', async () => {
+  it('hides Absent match dimension and console operational chrome', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         constructionDimensions: {
@@ -468,16 +527,15 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
   })
 
-  it('navigates to organisation from the regulation card', async () => {
+  it('navigates to organisation from a dimension panel', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(cockpitView())
 
     renderCockpitPage()
 
-    const orgLinks = await screen.findAllByRole('link', {
-      name: /Ouvrir l’organisation/i,
-    })
-    await user.click(orgLinks[0])
+    await user.click(
+      await screen.findByRole('link', { name: /Voir les équipes/i }),
+    )
 
     expect(screen.getByText('Organisation route')).toBeInTheDocument()
   })
@@ -492,18 +550,6 @@ describe('CompetitionCockpitPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "Introuvable. Vérifiez l'identifiant dans l'URL.",
     )
-  })
-
-  it('navigates to organisation from spaces', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(cockpitView())
-
-    renderCockpitPage()
-
-    const links = await screen.findAllByRole('link', { name: /Organisation/i })
-    await user.click(links[links.length - 1])
-
-    expect(screen.getByText('Organisation route')).toBeInTheDocument()
   })
 
   it('materializes matches then offers Voir les matchs and invalidates match lists', async () => {
@@ -565,7 +611,7 @@ describe('CompetitionCockpitPage', () => {
     })
 
     expect(
-      await screen.findByRole('heading', { name: /Matchs matérialisés/i }),
+      await screen.findByRole('heading', { name: /Matchs créés/i }),
     ).toBeInTheDocument()
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
