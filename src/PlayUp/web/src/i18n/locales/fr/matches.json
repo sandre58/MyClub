@@ -1,27 +1,58 @@
 {
-  "eyebrow": "Hub matchs",
   "title": "Matchs",
-  "back": "Retour à l’espace de travail",
-  "attention": {
-    "heading": "À traiter",
-    "clear": "RAS",
-    "toReview_one": "{{count}} à revoir",
-    "toReview_other": "{{count}} à revoir",
-    "emptyTitle": "Rien à traiter pour le moment",
-    "emptyBody": "Les éléments apparaissent ici lorsque l’hôte signale une étape bloquée ou en attente."
+  "back": "Vue d'ensemble",
+  "loading": "Chargement des matchs…",
+  "band": {
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matchs"
+  },
+  "calendar": {
+    "heading": "Calendrier des matchs",
+    "meta_one": "{{matches}} match · {{days}} journée · {{stages}} phase",
+    "meta_other": "{{matches}} matchs · {{days}} journées · {{stages}} phases",
+    "columns": {
+      "match": "Match",
+      "score": "Score"
+    },
+    "pending": "—",
+    "live": "En cours",
+    "upcoming": "À venir",
+    "postponed": "Reporté",
+    "cancelled": "Annulé",
+    "needsResult": "Résultat à saisir",
+    "dayStatus": {
+      "upcoming": "À venir",
+      "live": "En cours",
+      "finished": "Terminée",
+      "partial": "Partiellement jouée",
+      "other": "—"
+    },
+    "breakdown": {
+      "finished_one": "{{count}} terminé",
+      "finished_other": "{{count}} terminés",
+      "live_one": "{{count}} en cours",
+      "live_other": "{{count}} en cours",
+      "upcoming_one": "{{count}} à venir",
+      "upcoming_other": "{{count}} à venir"
+    }
+  },
+  "needsResult": {
+    "heading": "Résultats à saisir",
+    "clear": "RAS · tous les résultats sont saisis.",
+    "count_one": "{{count}} match sans résultat",
+    "count_other": "{{count}} matchs sans résultat"
+  },
+  "classements": {
+    "heading": "Classement actuel",
+    "body": "Consultez le classement alimenté par les matchs terminés.",
+    "empty": "Le classement apparaîtra dès que des matchs seront terminés.",
+    "open": "Voir le classement"
   },
   "list": {
-    "heading": "Matchs",
-    "subtitle_one": "{{count}} match sur {{stages}} phase",
-    "subtitle_other": "{{count}} matchs sur {{stages}} phases",
     "noStagesTitle": "Aucune phase",
     "noStagesBody": "Configurez d’abord la structure dans Organisation.",
     "noMatchesTitle": "Aucun match",
-    "noMatchesBody": "Ouvrez une phase pour préparer les tirages et matérialiser les matchs.",
-    "groupLive": "En direct",
-    "groupUpcoming": "À venir",
-    "groupFinished": "Terminés",
-    "groupOther": "Reportés ou annulés",
+    "noMatchesBody": "Ouvrez une phase pour préparer les tirages et créer les matchs.",
     "matchday": "Journée {{number}}",
     "vs": "vs"
   },
@@ -31,7 +62,7 @@
     "titleFallback": "Matchs de la phase",
     "back": "Retour à la phase",
     "emptyTitle": "Aucun match pour cette phase",
-    "emptyBody": "La structure peut exister sans matchs attachés. Préparez le tirage sur la phase pour les matérialiser.",
+    "emptyBody": "La structure peut exister sans matchs attachés. Préparez le tirage sur la phase pour les créer.",
     "vs": "vs",
     "matchday": "Journée {{number}}"
   },
@@ -85,4 +116,3 @@
     "errorShootoutValues": "Les tirs au but doivent être des entiers positifs ou nuls."
   }
 }
-

@@ -1,54 +1,44 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
+import { fetchCompetitionOverview, fetchMatchesByStage } from '../api'
 import {
-  fetchCompetitionOverview,
-  fetchMatchesByStage,
-  fetchNeedsAttention,
-} from '../api'
+  ClassementsNavIcon,
+  MatchesNavIcon,
+} from '../design-system/icons/shellIcons'
+import { competitionStatusLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import {
   EmptyState,
   ErrorState,
   LoadingState,
-  MatchStatusBadge,
-  PageHeader,
-  StatusBadge,
-  type StatusTone,
 } from '../ui'
-import { situationMeta, situationTitle } from '../i18n/situationCopy'
 import {
   formatScore,
   sideLabel,
+  type CompetitionOverview,
   type CompetitionStageSummary,
   type MatchStatus,
   type MatchSummary,
-  type NeedsAttentionItem,
 } from '../types'
 import {
   matchResultTypeLabel,
   matchScheduledLabel,
   matchSportingContext,
 } from './matchListMeta'
+import './matches.css'
 
 /**
- * Competition Match Hub — remaining 13.4.
- * Host has no competition-wide match list (V1 = stage-scoped).
- * Hub composes: overview stages + GET /stages/{id}/matches + GET …/attention.
+ * Matchs workspace — overview stages + stage match lists.
+ * Presents Read facts by journée (V3). No page-level « À traiter » (Shell drawer).
  */
 export function MatchHubPage() {
   const { competitionId = '' } = useParams()
-  const { t } = useTranslation('matches')
 
   const overviewQuery = useQuery({
     queryKey: queryKeys.competitions.detail(competitionId),
     queryFn: () => fetchCompetitionOverview(competitionId),
-    enabled: competitionId.length > 0,
-  })
-
-  const attentionQuery = useQuery({
-    queryKey: queryKeys.competitions.attention(competitionId),
-    queryFn: () => fetchNeedsAttention(competitionId),
     enabled: competitionId.length > 0,
   })
 
@@ -67,37 +57,23 @@ export function MatchHubPage() {
     stages.length > 0 &&
     matchQueries.some((query) => query.isPending)
   const matchesError = matchQueries.find((query) => query.error)?.error
-  const pending =
-    overviewQuery.isPending || attentionQuery.isPending || matchesPending
-  const error = overviewQuery.error ?? attentionQuery.error ?? matchesError
+  const pending = overviewQuery.isPending
+  const error = overviewQuery.error
 
   const rows = buildMatchRows(stages, matchQueries.map((query) => query.data))
 
   return (
-    <main id="main" className="page">
-      <PageHeader
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        back={
-          competitionId
-            ? {
-                to: `/competitions/${competitionId}`,
-                label: t('back'),
-              }
-            : undefined
-        }
-      />
-
-      {pending && <LoadingState />}
-      {error && <ErrorState error={error} />}
-      {!pending && !error && overviewQuery.data && (
-        <div className="section-stack">
-          <AttentionSection
-            items={attentionQuery.data?.items ?? []}
-            matches={rows}
-          />
-          <MatchHubList rows={rows} stages={stages} />
-        </div>
+    <main id="main" className="page page--matches">
+      {pending && !overviewQuery.data && <LoadingState />}
+      {error && !overviewQuery.data && <ErrorState error={error} />}
+      {overviewQuery.data && (
+        <MatchesView
+          data={overviewQuery.data}
+          rows={rows}
+          stages={stages}
+          matchesPending={matchesPending}
+          matchesError={matchesError}
+        />
       )}
     </main>
   )
@@ -125,232 +101,473 @@ function buildMatchRows(
   return rows
 }
 
-function AttentionSection({
-  items,
-  matches,
+function MatchesView({
+  data,
+  rows,
+  stages,
+  matchesPending,
+  matchesError,
 }: {
-  items: NeedsAttentionItem[]
-  matches: MatchHubRow[]
+  data: CompetitionOverview
+  rows: MatchHubRow[]
+  stages: CompetitionStageSummary[]
+  matchesPending: boolean
+  matchesError: unknown
 }) {
-  const { t } = useTranslation(['matches', 'enums'])
-
-  if (items.length === 0) {
-    return (
-      <section className="card" aria-labelledby="attention-heading">
-        <div className="card__head">
-          <h2 className="card__title" id="attention-heading">
-            {t('attention.heading')}
-          </h2>
-          <span className="status-badge status-badge--ok">
-            <span className="status-badge__dot" aria-hidden="true" />
-            {t('attention.clear')}
-          </span>
-        </div>
-        <EmptyState title={t('attention.emptyTitle')}>
-          {t('attention.emptyBody')}
-        </EmptyState>
-      </section>
-    )
-  }
+  const { t } = useTranslation('matches')
+  const overviewHref = `/competitions/${data.id}`
+  const classementsHref = `/competitions/${data.id}/classements`
+  const buckets = groupMatchesBySportingBucket(rows, t)
+  const needsResult = rows.filter(
+    (row) => row.match.status === 'Finished' && row.match.score == null,
+  )
 
   return (
-    <section className="card" aria-labelledby="attention-heading">
-      <div className="card__head">
-        <h2 className="card__title" id="attention-heading">
-          {t('attention.heading')}
-        </h2>
-        <span className="status-badge status-badge--warn">
-          <span className="status-badge__dot" aria-hidden="true" />
-          {t('attention.toReview', { count: items.length })}
-        </span>
-      </div>
-      <ul className="row-list">
-        {items.map((item) => {
-          const href = attentionHref(item, matches)
-          const title = situationTitle(item.source)
-          const body = (
-            <>
-              <span className="row__main">
-                <span className="row__title">{title}</span>
-                <span className="row__meta">
-                  {situationMeta(item.source, item.targetType)}
-                </span>
-              </span>
-              <span className="row__aside">
-                <StatusBadge tone={severityTone(item.severity)}>
-                  {t(`attentionSeverity.${item.severity}`, {
-                    ns: 'enums',
-                    defaultValue: item.severity,
-                  })}
-                </StatusBadge>
-                {href && (
-                  <span className="row__chevron" aria-hidden="true">
-                    →
-                  </span>
-                )}
-              </span>
-            </>
-          )
+    <div className="matches">
+      <header className="matches__page-head">
+        <Link className="matches__back" to={overviewHref}>
+          <span aria-hidden="true">←</span>
+          {t('back')}
+        </Link>
+        <h1 className="matches__title">{t('title')}</h1>
+      </header>
 
-          return (
-            <li
-              key={`${item.source}:${item.targetType}:${item.targetId}`}
-            >
-              {href ? (
-                <Link className="row" to={href}>
-                  {body}
-                </Link>
-              ) : (
-                <div className="row">{body}</div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </section>
+      <ContextBand data={data} matchCount={rows.length} />
+
+      {matchesPending ? <LoadingState label={t('loading')} /> : null}
+      {matchesError ? <ErrorState error={matchesError} /> : null}
+      {!matchesPending && !matchesError ? (
+        <CalendarPanel
+          buckets={buckets}
+          stages={stages}
+          matchCount={rows.length}
+        />
+      ) : null}
+
+      {!matchesPending && !matchesError ? (
+        <div className="matches__bottom">
+          <NeedsResultPanel items={needsResult} />
+          <ClassementsCrossLink href={classementsHref} rows={rows} />
+        </div>
+      ) : null}
+    </div>
   )
 }
 
-/** Host severity strings are free-form; map the known ones, stay neutral otherwise. */
-function severityTone(severity: string): StatusTone {
-  switch (severity.toLowerCase()) {
-    case 'blocking':
-    case 'error':
-      return 'danger'
-    case 'warning':
-      return 'warn'
-    default:
-      return 'info'
-  }
-}
-
-function attentionHref(
-  item: NeedsAttentionItem,
-  matches: MatchHubRow[],
-): string | null {
-  if (!item.targetId) {
-    return null
-  }
-
-  if (item.targetType === 'Stage') {
-    return `/stages/${item.targetId}`
-  }
-
-  if (item.targetType === 'Slot') {
-    const stageId = item.targetId.split(':')[0]
-    return stageId ? `/stages/${stageId}` : null
-  }
-
-  if (item.targetType === 'Fixture') {
-    const row = matches.find(
-      (candidate) => candidate.match.fixtureId === item.targetId,
-    )
-    return row ? `/matches/${row.match.matchId}` : null
-  }
-
-  return null
-}
-
-function MatchHubList({
-  rows,
-  stages,
+function ContextBand({
+  data,
+  matchCount,
 }: {
-  rows: MatchHubRow[]
+  data: CompetitionOverview
+  matchCount: number
+}) {
+  const { t } = useTranslation('matches')
+  const primaryStage = data.stages[0]
+
+  return (
+    <ul className="matches-band" aria-label={data.name}>
+      <li className="matches-band__chip">{data.name}</li>
+      <li className="matches-band__chip matches-band__chip--status">
+        {competitionStatusLabel(data.status)}
+      </li>
+      {primaryStage ? (
+        <li className="matches-band__chip matches-band__chip--muted">
+          {primaryStage.name}
+        </li>
+      ) : null}
+      <li className="matches-band__chip matches-band__chip--muted">
+        {t('band.matches', { count: matchCount })}
+      </li>
+    </ul>
+  )
+}
+
+function CalendarPanel({
+  buckets,
+  stages,
+  matchCount,
+}: {
+  buckets: SportingBucket[]
   stages: CompetitionStageSummary[]
+  matchCount: number
 }) {
   const { t } = useTranslation('matches')
 
-  const matchGroups: { titleKey: string; statuses: MatchStatus[] }[] = [
-    { titleKey: 'list.groupLive', statuses: ['Live'] },
-    { titleKey: 'list.groupUpcoming', statuses: ['Scheduled'] },
-    { titleKey: 'list.groupFinished', statuses: ['Finished'] },
-    { titleKey: 'list.groupOther', statuses: ['Postponed', 'Cancelled'] },
-  ]
-
   return (
-    <section className="card" aria-labelledby="matches-heading">
-      <div className="card__head">
-        <h2 className="card__title" id="matches-heading">
-          {t('list.heading')}
-        </h2>
-        {rows.length > 0 && (
-          <p className="card__subtitle">
-            {t('list.subtitle', { count: rows.length, stages: stages.length })}
-          </p>
-        )}
-      </div>
+    <section className="ds-panel" aria-labelledby="matches-calendar">
+      <PanelHead id="matches-calendar" icon={<MatchesNavIcon size="md" />}>
+        {t('calendar.heading')}
+      </PanelHead>
+      <p className="matches-panel__meta">
+        {t('calendar.meta', {
+          count: matchCount,
+          matches: matchCount,
+          days: buckets.length,
+          stages: stages.length,
+        })}
+      </p>
 
       {stages.length === 0 ? (
         <EmptyState title={t('list.noStagesTitle')}>
           {t('list.noStagesBody')}
         </EmptyState>
-      ) : rows.length === 0 ? (
+      ) : matchCount === 0 ? (
         <EmptyState title={t('list.noMatchesTitle')}>
           {t('list.noMatchesBody')}
         </EmptyState>
       ) : (
-        <div className="section-stack">
-          {matchGroups.map((group) => {
-            const groupRows = rows.filter((row) =>
-              group.statuses.includes(row.match.status),
-            )
-            if (groupRows.length === 0) {
-              return null
-            }
-
-            return (
-              <div className="match-group" key={group.titleKey}>
-                <h3 className="match-group__title">
-                  {t(group.titleKey)}
-                  <span className="match-group__count">
-                    {groupRows.length}
-                  </span>
-                </h3>
-                <ul className="row-list">
-                  {groupRows.map(({ match, stageName }) => {
-                    const sporting = matchSportingContext(match, t)
-                    const when = matchScheduledLabel(match)
-                    const resultKind = matchResultTypeLabel(match)
-
-                    return (
-                      <li key={match.matchId}>
-                        <Link
-                          to={`/matches/${match.matchId}`}
-                          className="match-row"
-                        >
-                          <span className="row__main">
-                            <span className="match-row__sides">
-                              {sideLabel(match.home)} {t('list.vs')}{' '}
-                              {sideLabel(match.away)}
-                            </span>
-                            <span className="match-row__meta">
-                              <span>{stageName}</span>
-                              {sporting ? <span>{sporting}</span> : null}
-                              {when ? <span>{when}</span> : null}
-                              {resultKind ? <span>{resultKind}</span> : null}
-                            </span>
-                          </span>
-                          <span className="match-row__aside">
-                            {match.score ? (
-                              <span className="match-row__score">
-                                {formatScore(match.score)}
-                              </span>
-                            ) : null}
-                            <MatchStatusBadge status={match.status} />
-                            <span className="row__chevron" aria-hidden="true">
-                              →
-                            </span>
-                          </span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )
-          })}
-        </div>
+        buckets.map((bucket) => (
+          <MatchdaySection key={bucket.key} bucket={bucket} />
+        ))
       )}
     </section>
   )
+}
+
+function MatchdaySection({ bucket }: { bucket: SportingBucket }) {
+  const { t } = useTranslation('matches')
+  const status = journéeStatus(bucket.rows.map((row) => row.match.status))
+  const breakdown = journéeBreakdown(bucket.rows.map((row) => row.match.status), t)
+
+  return (
+    <section className="matches-day" aria-labelledby={`day-${bucket.key}`}>
+      <div className="matches-day__head">
+        <h3 id={`day-${bucket.key}`} className="matches-day__title">
+          {bucket.label}
+        </h3>
+        <span className="matches-day__status">{t(`calendar.dayStatus.${status}`)}</span>
+      </div>
+      {breakdown ? (
+        <p className="matches-day__breakdown">{breakdown}</p>
+      ) : null}
+
+      <div className="matches-day__list">
+        <div className="matches-day__list-head" aria-hidden="true">
+          <span>{t('calendar.columns.match')}</span>
+          <span>{t('calendar.columns.score')}</span>
+        </div>
+        <ul className="matches-day__rows">
+          {bucket.rows.map(({ match, stageName }) => (
+            <li key={match.matchId}>
+              <MatchResultRow match={match} stageName={stageName} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+function MatchResultRow({
+  match,
+  stageName,
+}: {
+  match: MatchSummary
+  stageName: string
+}) {
+  const { t } = useTranslation('matches')
+  const homeName = sideLabel(match.home)
+  const awayName = sideLabel(match.away)
+  const when = matchScheduledLabel(match)
+  const resultKind = matchResultTypeLabel(match)
+  const sporting = matchSportingContext(match, t)
+  const needsResult = match.status === 'Finished' && match.score == null
+
+  const asideLabel =
+    match.score != null
+      ? formatScore(match.score)
+      : needsResult
+        ? t('calendar.needsResult')
+        : (when ?? t('calendar.pending'))
+
+  return (
+    <Link
+      className="matches-result"
+      to={`/matches/${match.matchId}`}
+      aria-label={`${homeName} – ${awayName}, ${asideLabel}`}
+    >
+      <span className="matches-result__match">
+        <span className="matches-result__team">
+          <TeamCrest name={homeName} />
+          <span className="matches-result__name">{homeName}</span>
+        </span>
+        <span className="matches-result__vs" aria-hidden="true">
+          –
+        </span>
+        <span className="matches-result__team">
+          <TeamCrest name={awayName} />
+          <span className="matches-result__name">{awayName}</span>
+        </span>
+      </span>
+
+      <span className="matches-result__aside">
+        {match.score != null ? (
+          <span className="matches-result__score">{formatScore(match.score)}</span>
+        ) : needsResult ? (
+          <span className="matches-result__pill">{t('calendar.needsResult')}</span>
+        ) : match.status === 'Live' ? (
+          <>
+            <span className="matches-result__pill matches-result__pill--live">
+              {t('calendar.live')}
+            </span>
+            {when ? <span className="matches-result__meta">{when}</span> : null}
+          </>
+        ) : match.status === 'Scheduled' ? (
+          <>
+            {when ? (
+              <span className="matches-result__meta">{when}</span>
+            ) : (
+              <span className="matches-result__score matches-result__score--pending">
+                {t('calendar.pending')}
+              </span>
+            )}
+            <span className="matches-result__pill matches-result__pill--muted">
+              {t('calendar.upcoming')}
+            </span>
+          </>
+        ) : match.status === 'Postponed' || match.status === 'Cancelled' ? (
+          <span className="matches-result__pill matches-result__pill--muted">
+            {match.status === 'Postponed'
+              ? t('calendar.postponed')
+              : t('calendar.cancelled')}
+          </span>
+        ) : (
+          <span className="matches-result__score matches-result__score--pending">
+            {t('calendar.pending')}
+          </span>
+        )}
+        {resultKind && match.status === 'Finished' ? (
+          <span className="matches-result__meta">{resultKind}</span>
+        ) : null}
+        {sporting && match.roundName == null && match.matchdayNumber == null ? (
+          <span className="matches-result__meta">{stageName}</span>
+        ) : null}
+        <span className="matches-result__chevron" aria-hidden="true">
+          ›
+        </span>
+      </span>
+    </Link>
+  )
+}
+
+function NeedsResultPanel({ items }: { items: MatchHubRow[] }) {
+  const { t } = useTranslation('matches')
+
+  return (
+    <section className="ds-panel" aria-labelledby="matches-needs-result">
+      <PanelHead id="matches-needs-result" icon={<MatchesNavIcon size="md" />}>
+        {t('needsResult.heading')}
+      </PanelHead>
+      {items.length === 0 ? (
+        <p className="matches-panel__meta">{t('needsResult.clear')}</p>
+      ) : (
+        <>
+          <p className="matches-panel__meta">
+            {t('needsResult.count', { count: items.length })}
+          </p>
+          <ul className="matches-need__list">
+            {items.slice(0, 5).map(({ match }) => (
+              <li key={match.matchId} className="matches-need__item">
+                <Link className="matches-link" to={`/matches/${match.matchId}`}>
+                  {sideLabel(match.home)} – {sideLabel(match.away)}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  )
+}
+
+function ClassementsCrossLink({
+  href,
+  rows,
+}: {
+  href: string
+  rows: MatchHubRow[]
+}) {
+  const { t } = useTranslation('matches')
+  const hasFinished = rows.some((row) => row.match.status === 'Finished')
+
+  if (!hasFinished) {
+    return (
+      <section className="ds-panel" aria-labelledby="matches-classements">
+        <PanelHead
+          id="matches-classements"
+          icon={<ClassementsNavIcon size="md" />}
+        >
+          {t('classements.heading')}
+        </PanelHead>
+        <p className="matches-panel__meta">{t('classements.empty')}</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="ds-panel" aria-labelledby="matches-classements">
+      <PanelHead
+        id="matches-classements"
+        icon={<ClassementsNavIcon size="md" />}
+      >
+        {t('classements.heading')}
+      </PanelHead>
+      <p className="matches-panel__meta">{t('classements.body')}</p>
+      <div className="matches-panel__footer">
+        <Link className="matches-link" to={href}>
+          {t('classements.open')}
+          <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+function PanelHead({
+  id,
+  icon,
+  children,
+}: {
+  id: string
+  icon: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <h2 id={id} className="matches-panel__head">
+      <span className="matches-panel__icon" aria-hidden="true">
+        {icon}
+      </span>
+      {children}
+    </h2>
+  )
+}
+
+function TeamCrest({ name }: { name: string }) {
+  const initial = teamInitial(name)
+  const tone = crestTone(name)
+
+  return (
+    <span
+      className={`matches-crest matches-crest--${tone}`}
+      aria-hidden="true"
+    >
+      <svg
+        className="matches-crest__shield"
+        viewBox="0 0 24 28"
+        focusable="false"
+      >
+        <path d="M12 1.5 21 5.2v8.4c0 6.1-3.9 10.6-9 12.4-5.1-1.8-9-6.3-9-12.4V5.2L12 1.5Z" />
+      </svg>
+      <span className="matches-crest__initial">{initial}</span>
+    </span>
+  )
+}
+
+function teamInitial(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed || trimmed === '—') {
+    return '?'
+  }
+  return trimmed.charAt(0).toLocaleUpperCase()
+}
+
+function crestTone(name: string): 'a' | 'b' | 'c' | 'd' | 'e' {
+  let hash = 0
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5
+  }
+  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]
+}
+
+interface SportingBucket {
+  key: string
+  label: string
+  sort: number
+  rows: MatchHubRow[]
+}
+
+/**
+ * Groups matches for calendar display — presentation only.
+ * Prefer Read roundName, then matchdayNumber, else a residual bucket.
+ */
+function groupMatchesBySportingBucket(
+  rows: MatchHubRow[],
+  t: ReturnType<typeof useTranslation<'matches'>>['t'],
+): SportingBucket[] {
+  const map = new Map<string, SportingBucket>()
+
+  for (const row of rows) {
+    const round = row.match.roundName?.trim()
+    let key: string
+    let label: string
+    let sort: number
+
+    if (round) {
+      key = `round:${round}`
+      label = round
+      sort = 10_000
+    } else if (row.match.matchdayNumber != null) {
+      key = `day:${row.match.matchdayNumber}`
+      label = t('list.matchday', { number: row.match.matchdayNumber })
+      sort = row.match.matchdayNumber
+    } else {
+      key = `stage:${row.match.stageId}`
+      label = row.stageName
+      sort = 20_000
+    }
+
+    const bucket = map.get(key)
+    if (bucket) {
+      bucket.rows.push(row)
+    } else {
+      map.set(key, { key, label, sort, rows: [row] })
+    }
+  }
+
+  return [...map.values()].sort((a, b) => a.sort - b.sort || a.label.localeCompare(b.label))
+}
+
+type DayStatus = 'upcoming' | 'live' | 'finished' | 'partial' | 'other'
+
+function journéeStatus(statuses: MatchStatus[]): DayStatus {
+  if (statuses.length === 0) {
+    return 'other'
+  }
+  if (statuses.every((status) => status === 'Finished')) {
+    return 'finished'
+  }
+  if (statuses.some((status) => status === 'Live')) {
+    return 'live'
+  }
+  if (statuses.every((status) => status === 'Scheduled')) {
+    return 'upcoming'
+  }
+  if (
+    statuses.some((status) => status === 'Finished') &&
+    statuses.some((status) => status === 'Scheduled' || status === 'Live')
+  ) {
+    return 'partial'
+  }
+  return 'other'
+}
+
+function journéeBreakdown(
+  statuses: MatchStatus[],
+  t: ReturnType<typeof useTranslation<'matches'>>['t'],
+): string | null {
+  const finished = statuses.filter((status) => status === 'Finished').length
+  const live = statuses.filter((status) => status === 'Live').length
+  const upcoming = statuses.filter((status) => status === 'Scheduled').length
+  const parts: string[] = []
+  if (finished > 0) {
+    parts.push(t('calendar.breakdown.finished', { count: finished }))
+  }
+  if (live > 0) {
+    parts.push(t('calendar.breakdown.live', { count: live }))
+  }
+  if (upcoming > 0) {
+    parts.push(t('calendar.breakdown.upcoming', { count: upcoming }))
+  }
+  return parts.length > 0 ? parts.join(' · ') : null
 }

@@ -38,7 +38,11 @@ body:has(.shell),
  */
 .ds-root a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
-    ):not(.classements-result) {
+    ):not(.classements-result):not(.matches-link):not(.matches__back):not(
+        .matches-result
+    ):not(.organisation-link):not(.organisation__back):not(
+        .organisation-stage-link
+    ) {
     color: var(--color-ink);
     text-decoration-thickness: 0.08em;
     text-underline-offset: 0.18em;
@@ -47,7 +51,11 @@ body:has(.shell),
 .ds-root
     a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
-    ):not(.classements-result):hover {
+    ):not(.classements-result):not(.matches-link):not(.matches__back):not(
+        .matches-result
+    ):not(.organisation-link):not(.organisation__back):not(
+        .organisation-stage-link
+    ):hover {
     color: var(--color-ink);
     text-decoration-thickness: 0.12em;
 }

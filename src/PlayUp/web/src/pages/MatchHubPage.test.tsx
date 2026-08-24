@@ -7,13 +7,8 @@ import {
   ApiError,
   fetchCompetitionOverview,
   fetchMatchesByStage,
-  fetchNeedsAttention,
 } from '../api'
-import type {
-  CompetitionOverview,
-  MatchSummary,
-  NeedsAttention,
-} from '../types'
+import type { CompetitionOverview, MatchSummary } from '../types'
 import { MatchHubPage } from './MatchHubPage'
 
 vi.mock('../api', async (importOriginal) => {
@@ -22,7 +17,6 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchCompetitionOverview: vi.fn(),
     fetchMatchesByStage: vi.fn(),
-    fetchNeedsAttention: vi.fn(),
   }
 })
 
@@ -57,16 +51,6 @@ function matchSummary(overrides: Partial<MatchSummary> = {}): MatchSummary {
   }
 }
 
-function attention(
-  overrides: Partial<NeedsAttention> = {},
-): NeedsAttention {
-  return {
-    competitionId,
-    items: [],
-    ...overrides,
-  }
-}
-
 function renderMatchHub() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -93,6 +77,10 @@ function renderMatchHub() {
             path="/competitions/:competitionId"
             element={<p>Workspace route</p>}
           />
+          <Route
+            path="/competitions/:competitionId/classements"
+            element={<p>Classements route</p>}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -102,12 +90,10 @@ function renderMatchHub() {
 describe('MatchHubPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchNeedsAttention).mockResolvedValue(attention())
   })
 
   it('shows loading while hub reads are pending', () => {
     vi.mocked(fetchCompetitionOverview).mockReturnValue(new Promise(() => {}))
-    vi.mocked(fetchNeedsAttention).mockReturnValue(new Promise(() => {}))
 
     renderMatchHub()
 
@@ -120,15 +106,11 @@ describe('MatchHubPage', () => {
 
     renderMatchHub()
 
-    expect(
-      await screen.findByText(/Aucun match/i),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(/Rien à traiter pour le moment/i),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/Aucun match/i)).toBeInTheDocument()
+    expect(screen.getByText(/RAS · tous les résultats/i)).toBeInTheDocument()
   })
 
-  it('renders competition matches with stage labels', async () => {
+  it('renders competition matches grouped in the calendar', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([
       matchSummary({ status: 'Live' }),
@@ -136,9 +118,11 @@ describe('MatchHubPage', () => {
 
     renderMatchHub()
 
-    expect(await screen.findByText(/Alpha vs Beta/i)).toBeInTheDocument()
-    expect(screen.getByText('QF')).toBeInTheDocument()
-    expect(screen.getAllByText('En direct').length).toBeGreaterThanOrEqual(1)
+    expect(await screen.findByText('Calendrier des matchs')).toBeInTheDocument()
+    expect(screen.getByText('Alpha')).toBeInTheDocument()
+    expect(screen.getByText('Beta')).toBeInTheDocument()
+    expect(screen.getAllByText('QF').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('En cours').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows Read context, scheduled time, score and result type without inventing values', async () => {
@@ -155,11 +139,9 @@ describe('MatchHubPage', () => {
 
     renderMatchHub()
 
-    expect(await screen.findByText(/Alpha vs Beta/i)).toBeInTheDocument()
-    expect(screen.getByText('Journée 3')).toBeInTheDocument()
+    expect(await screen.findByText('Journée 3')).toBeInTheDocument()
     expect(screen.getByText('2–1')).toBeInTheDocument()
     expect(screen.getByText(/Joué|Played/i)).toBeInTheDocument()
-    // Score comes from the Read — no Diff / Pts reconstruction.
     expect(screen.queryByText('Consultation')).not.toBeInTheDocument()
   })
 
@@ -182,32 +164,16 @@ describe('MatchHubPage', () => {
     expect(screen.getByText(/Forfait|Forfeit/i)).toBeInTheDocument()
   })
 
-  it('renders Host attention items', async () => {
+  it('does not render a page-level attention card', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([])
-    vi.mocked(fetchNeedsAttention).mockResolvedValue(
-      attention({
-        items: [
-          {
-            source: 'ProgressionPending',
-            severity: 'Blocking',
-            targetType: 'Fixture',
-            targetId: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
-          },
-        ],
-      }),
-    )
 
     renderMatchHub()
 
-    expect(
-      await screen.findAllByText(/Progression en attente/i),
-    ).not.toHaveLength(0)
-    // Severity is a badge (13.5); source and target stay in the row meta line.
-    expect(screen.getByText('Bloquant')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Progression en attente · Rencontre/i),
-    ).toBeInTheDocument()
+    await screen.findByText(/Aucun match/i)
+
+    expect(screen.queryByText(/Rien à traiter pour le moment/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Progression en attente/i)).not.toBeInTheDocument()
   })
 
   it('shows an error when overview read fails', async () => {
@@ -229,12 +195,14 @@ describe('MatchHubPage', () => {
 
     renderMatchHub()
 
-    await user.click(await screen.findByRole('link', { name: /Alpha vs Beta/i }))
+    await user.click(
+      await screen.findByRole('link', { name: /Alpha – Beta/i }),
+    )
 
     expect(screen.getByText('Match detail route')).toBeInTheDocument()
   })
 
-  it('navigates back to workspace', async () => {
+  it('navigates back to vue d’ensemble', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([])
@@ -243,10 +211,31 @@ describe('MatchHubPage', () => {
 
     await user.click(
       await screen.findByRole('link', {
-        name: /Retour à l’espace de travail/i,
+        name: /Vue d'ensemble/i,
       }),
     )
 
     expect(screen.getByText('Workspace route')).toBeInTheDocument()
+  })
+
+  it('links to classements when finished matches exist', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchMatchesByStage).mockResolvedValue([
+      matchSummary({
+        status: 'Finished',
+        score: { homeGoals: 1, awayGoals: 0 },
+        matchdayNumber: 1,
+      }),
+    ])
+
+    renderMatchHub()
+
+    const link = await screen.findByRole('link', {
+      name: /Voir le classement/i,
+    })
+    expect(link).toHaveAttribute(
+      'href',
+      `/competitions/${competitionId}/classements`,
+    )
   })
 })

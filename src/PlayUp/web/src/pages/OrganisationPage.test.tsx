@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -126,6 +126,24 @@ function renderOrganisationPage() {
   return { queryClient }
 }
 
+async function openTeamsAddDialog(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await user.click(
+    await screen.findByRole('button', { name: /Ajouter une équipe/i }),
+  )
+  return screen.findByRole('dialog')
+}
+
+async function openTeamsManageDialog(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await user.click(
+    await screen.findByRole('button', { name: /Gérer les équipes/i }),
+  )
+  return screen.findByRole('dialog')
+}
+
 describe('OrganisationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -165,10 +183,14 @@ describe('OrganisationPage', () => {
       await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
-    // Entry status is a badge next to the name (13.5), no longer “Alpha (Active)”.
-    expect(screen.getByText('Actif')).toBeInTheDocument()
+    expect(
+      screen.getByLabelText('Inscription complète'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Encore 2 éléments avant de démarrer/i),
+    ).toBeInTheDocument()
   })
 
   it('does not render redundant competition section navigation', async () => {
@@ -211,7 +233,7 @@ describe('OrganisationPage', () => {
     )
   })
 
-  it('navigates back to workspace', async () => {
+  it('navigates back to vue d’ensemble', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
@@ -219,7 +241,7 @@ describe('OrganisationPage', () => {
 
     await user.click(
       await screen.findByRole('link', {
-        name: /Retour à l’espace de travail/i,
+        name: /Vue d'ensemble/i,
       }),
     )
 
@@ -251,18 +273,19 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
+    const dialog = await openTeamsAddDialog(user)
     await user.type(
-      await screen.findByLabelText(/Nom de la nouvelle inscription/i),
+      await within(dialog).findByLabelText(/Nom de la nouvelle inscription/i),
       'Beta',
     )
-    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
     await waitFor(() => {
       expect(addCompetitionEntry).toHaveBeenCalledWith(competitionId, {
         displayName: 'Beta',
       })
     })
-    expect(await screen.findByText('Beta')).toBeInTheDocument()
+    expect((await screen.findAllByText('Beta')).length).toBeGreaterThan(0)
   })
 
   it('shows pending state while adding an entry', async () => {
@@ -277,14 +300,15 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
+    const dialog = await openTeamsAddDialog(user)
     await user.type(
-      await screen.findByLabelText(/Nom de la nouvelle inscription/i),
+      await within(dialog).findByLabelText(/Nom de la nouvelle inscription/i),
       'Beta',
     )
-    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
     expect(
-      await screen.findByRole('button', { name: 'Ajout…' }),
+      await within(dialog).findByRole('button', { name: 'Ajout…' }),
     ).toBeDisabled()
 
     resolveAdd(organisationView())
@@ -299,13 +323,14 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
+    const dialog = await openTeamsAddDialog(user)
     await user.type(
-      await screen.findByLabelText(/Nom de la nouvelle inscription/i),
+      await within(dialog).findByLabelText(/Nom de la nouvelle inscription/i),
       'Overflow',
     )
-    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
       'Entry capacity exceeded (400)',
     )
   })
@@ -316,10 +341,11 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    const renameInput = await screen.findByLabelText(/Renommer/i)
+    const dialog = await openTeamsManageDialog(user)
+    const renameInput = await within(dialog).findByLabelText(/Renommer/i)
     await user.clear(renameInput)
     await user.type(renameInput, 'Alpha FC')
-    await user.click(screen.getByRole('button', { name: 'Renommer' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Renommer' }))
 
     await waitFor(() => {
       expect(renameCompetitionEntry).toHaveBeenCalledWith(
@@ -337,7 +363,8 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Retirer' }))
+    const dialog = await openTeamsManageDialog(user)
+    await user.click(within(dialog).getByRole('button', { name: 'Retirer' }))
 
     await waitFor(() => {
       expect(withdrawCompetitionEntry).toHaveBeenCalledWith(
@@ -354,7 +381,8 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Exclure' }))
+    const dialog = await openTeamsManageDialog(user)
+    await user.click(within(dialog).getByRole('button', { name: 'Exclure' }))
 
     await waitFor(() => {
       expect(excludeCompetitionEntry).toHaveBeenCalledWith(
@@ -370,11 +398,15 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    const minTeams = await screen.findByLabelText(/Minimum d’équipes/i)
+    await user.click(
+      await screen.findByRole('button', { name: /Modifier le règlement/i }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    const minTeams = await within(dialog).findByLabelText(/Minimum d’équipes/i)
     await user.clear(minTeams)
     await user.type(minTeams, '4')
     await user.click(
-      screen.getByRole('button', { name: 'Enregistrer le règlement' }),
+      within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
     )
 
     await waitFor(() => {
@@ -400,14 +432,18 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
+    await user.click(
+      await screen.findByRole('button', { name: /Configurer la structure/i }),
+    )
+    const dialog = await screen.findByRole('dialog')
     await user.selectOptions(
-      await screen.findByLabelText(/^Format$/i),
+      await within(dialog).findByLabelText(/^Format$/i),
       'Championship',
     )
-    const matchdays = screen.getByLabelText(/Nombre de journées/i)
+    const matchdays = within(dialog).getByLabelText(/Nombre de journées/i)
     fireEvent.change(matchdays, { target: { value: '2' } })
     await user.click(
-      screen.getByRole('button', { name: 'Configurer la structure' }),
+      within(dialog).getByRole('button', { name: 'Configurer la structure' }),
     )
 
     await waitFor(() => {
@@ -435,13 +471,16 @@ describe('OrganisationPage', () => {
       await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Ajouter' }),
+      screen.queryByRole('button', { name: /Ajouter une équipe/i }),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Enregistrer le règlement' }),
+      screen.queryByRole('button', { name: /Gérer les équipes/i }),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Configurer la structure' }),
+      screen.queryByRole('button', { name: /Modifier le règlement/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Configurer la structure/i }),
     ).not.toBeInTheDocument()
   })
 
@@ -491,29 +530,30 @@ describe('OrganisationPage', () => {
 
     expect(
       await screen.findByText(
-        /La compétition est prête à matérialiser les matchs/i,
+        /La compétition est prête à créer les matchs/i,
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Aller au Cockpit pour matérialiser/i }),
+      screen.getByRole('link', {
+        name: /Aller à la Vue d’ensemble pour créer les matchs/i,
+      }),
     ).toHaveAttribute('href', `/competitions/${competitionId}`)
     expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument()
   })
 
-  it('shows blockers and hides Cockpit CTA when not ready to materialize', async () => {
+  it('shows blockers and hides Vue d’ensemble CTA when not ready to create matches', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderOrganisationPage()
 
     expect(
-      await screen.findByText(
-        /n’est pas encore prête à matérialiser les matchs/i,
-      ),
+      await screen.findByText(/Encore 2 éléments avant de démarrer/i),
     ).toBeInTheDocument()
     expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
+    expect(screen.getByText('Phase manquante')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', {
-        name: /Aller au Cockpit pour matérialiser/i,
+        name: /Aller à la Vue d’ensemble pour créer les matchs/i,
       }),
     ).not.toBeInTheDocument()
   })
@@ -551,11 +591,12 @@ describe('OrganisationPage', () => {
     const { queryClient } = renderOrganisationPage()
     const spy = vi.spyOn(queryClient, 'invalidateQueries')
 
+    const dialog = await openTeamsAddDialog(user)
     await user.type(
-      await screen.findByPlaceholderText(/Alpha FC/i),
+      await within(dialog).findByPlaceholderText(/Alpha FC/i),
       'Beta',
     )
-    await user.click(screen.getByRole('button', { name: 'Ajouter' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
     await waitFor(() => {
       expect(spy).toHaveBeenCalledWith(
