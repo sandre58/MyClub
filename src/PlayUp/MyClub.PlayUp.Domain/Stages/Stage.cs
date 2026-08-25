@@ -117,6 +117,26 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Creates a new stage in Draft status with a generated identity, materializing regulation from the competition.
+    /// </summary>
+    /// <param name="competitionId">The owning competition identity.</param>
+    /// <param name="name">The stage name.</param>
+    /// <param name="competitionRegulation">The competition regulation to materialize from.</param>
+    /// <param name="id">The stage identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created stage.</returns>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        Regulation competitionRegulation,
+        StageId id,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        return Create(competitionId, name, StageRegulation.MaterializeFrom(competitionRegulation), id, clock);
+    }
+
+    /// <summary>
     /// Creates a new stage in Draft status with an independent copy of the given stage regulation.
     /// </summary>
     /// <param name="competitionId">The owning competition identity.</param>
@@ -128,13 +148,30 @@ public sealed class Stage : AggregateRoot<StageId>
         CompetitionId competitionId,
         StageName name,
         StageRegulation regulation,
+        IClock clock) =>
+        Create(competitionId, name, regulation, StageId.New(), clock);
+
+    /// <summary>
+    /// Creates a new stage in Draft status with an explicit identity and an independent copy of the given stage regulation.
+    /// </summary>
+    /// <param name="competitionId">The owning competition identity.</param>
+    /// <param name="name">The stage name.</param>
+    /// <param name="regulation">The stage regulation (cloned on create).</param>
+    /// <param name="id">The stage identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created stage.</returns>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        StageId id,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var stage = new Stage(StageId.New(), competitionId, name, regulation.Copy());
+        var stage = new Stage(id, competitionId, name, regulation.Copy());
         stage.Raise(new StageCreated(stage.Id, competitionId, name.Value, clock));
         return stage;
     }
@@ -236,13 +273,23 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="kind">Principal resolution kind (immutable for this draw).</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created draw.</returns>
-    public Draw CreateDraw(DrawResolutionKind kind, IClock clock)
+    public Draw CreateDraw(DrawResolutionKind kind, IClock clock) =>
+        CreateDraw(kind, DrawId.New(), clock);
+
+    /// <summary>
+    /// Creates a draft draw with an explicit identity.
+    /// </summary>
+    /// <param name="kind">Principal resolution kind (immutable for this draw).</param>
+    /// <param name="id">The draw identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created draw.</returns>
+    public Draw CreateDraw(DrawResolutionKind kind, DrawId id, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
         DemoteToDraftIfReady();
 
-        var draw = new Draw(DrawId.New(), kind);
+        var draw = new Draw(id, kind);
         _draws.Add(draw);
         Raise(new StageDrawCreated(Id, draw.Id, kind, clock));
         return draw;

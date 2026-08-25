@@ -44,6 +44,7 @@ public static class PlayUpInfrastructureServiceCollectionExtensions
         services.AddScoped<ICompetitionRepository, CompetitionRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddScoped<IStageRepository, StageRepository>();
+        services.AddScoped<IPlayUpDatabaseReset, PlayUpDatabaseReset>();
         services.AddSingleton<IClock, SystemClock>();
 
         return services;

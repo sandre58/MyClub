@@ -1,0 +1,24 @@
+{
+  "key": "ligue-1",
+  "displayName": "Ligue 1",
+  "teams": [
+    "Paris Saint-Germain",
+    "Olympique de Marseille",
+    "Olympique Lyonnais",
+    "AS Monaco",
+    "LOSC Lille",
+    "OGC Nice",
+    "Stade Rennais",
+    "RC Lens",
+    "FC Nantes",
+    "RC Strasbourg",
+    "Toulouse FC",
+    "Stade Brestois",
+    "Montpellier HSC",
+    "Stade de Reims",
+    "Angers SCO",
+    "AJ Auxerre",
+    "Le Havre AC",
+    "AS Saint-Étienne"
+  ]
+}

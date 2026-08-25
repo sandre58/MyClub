@@ -59,19 +59,30 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     public IReadOnlyList<StageId> StageIds => _stageIds.AsReadOnly();
 
     /// <summary>
-    /// Creates a new competition in Draft status.
+    /// Creates a new competition in Draft status with a generated identity.
     /// </summary>
     /// <param name="name">The competition name.</param>
     /// <param name="regulation">The competition regulation.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created competition.</returns>
-    public static Competition Create(CompetitionName name, Regulation regulation, IClock clock)
+    public static Competition Create(CompetitionName name, Regulation regulation, IClock clock) =>
+        Create(name, regulation, CompetitionId.New(), clock);
+
+    /// <summary>
+    /// Creates a new competition in Draft status with an explicit identity.
+    /// </summary>
+    /// <param name="name">The competition name.</param>
+    /// <param name="regulation">The competition regulation.</param>
+    /// <param name="id">The competition identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created competition.</returns>
+    public static Competition Create(CompetitionName name, Regulation regulation, CompetitionId id, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var competition = new Competition(CompetitionId.New(), name, regulation.Copy());
+        var competition = new Competition(id, name, regulation.Copy());
         competition.Raise(new CompetitionCreated(competition.Id, name.Value, clock));
         return competition;
     }
@@ -146,7 +157,18 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     /// <param name="displayName">The display name for the entry.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created entry.</returns>
-    public CompetitionEntry AddEntry(TeamId teamId, string displayName, IClock clock)
+    public CompetitionEntry AddEntry(TeamId teamId, string displayName, IClock clock) =>
+        AddEntry(teamId, displayName, EntryId.New(), clock);
+
+    /// <summary>
+    /// Adds a team entry with an explicit entry identity.
+    /// </summary>
+    /// <param name="teamId">The team identity.</param>
+    /// <param name="displayName">The display name for the entry.</param>
+    /// <param name="entryId">The entry identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created entry.</returns>
+    public CompetitionEntry AddEntry(TeamId teamId, string displayName, EntryId entryId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
@@ -159,7 +181,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
                 CompetitionErrorCodes.DuplicateTeam);
         }
 
-        var entry = new CompetitionEntry(EntryId.New(), teamId, displayName);
+        var entry = new CompetitionEntry(entryId, teamId, displayName);
         _entries.Add(entry);
         Raise(new CompetitionEntryAdded(Id, entry.Id, teamId, clock));
         return entry;

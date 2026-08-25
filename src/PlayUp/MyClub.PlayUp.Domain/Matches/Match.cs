@@ -75,6 +75,25 @@ public sealed class Match : AggregateRoot<MatchId>
         StageId stageId,
         EntryId homeEntryId,
         EntryId awayEntryId,
+        IClock clock) =>
+        Create(competitionId, stageId, homeEntryId, awayEntryId, MatchId.New(), clock);
+
+    /// <summary>
+    /// Creates a new match in Scheduled status with an explicit identity.
+    /// </summary>
+    /// <param name="competitionId">The competition identity.</param>
+    /// <param name="stageId">The stage identity.</param>
+    /// <param name="homeEntryId">The home entry identity.</param>
+    /// <param name="awayEntryId">The away entry identity.</param>
+    /// <param name="id">The match identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created match.</returns>
+    public static Match Create(
+        CompetitionId competitionId,
+        StageId stageId,
+        EntryId homeEntryId,
+        EntryId awayEntryId,
+        MatchId id,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
@@ -86,7 +105,7 @@ public sealed class Match : AggregateRoot<MatchId>
                 MatchErrorCodes.SameParticipant);
         }
 
-        var match = new Match(MatchId.New(), competitionId, stageId, homeEntryId, awayEntryId);
+        var match = new Match(id, competitionId, stageId, homeEntryId, awayEntryId);
         match.Raise(new MatchCreated(
             match.Id,
             competitionId,

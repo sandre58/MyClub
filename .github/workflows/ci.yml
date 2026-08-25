@@ -29,6 +29,18 @@ jobs:
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
 
+      - name: Publish Host (architecture isolation)
+        run: |
+          dotnet publish src/PlayUp/MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj --no-build --configuration Release --output "${RUNNER_TEMP}/playup-host-publish"
+          if [ -f "${RUNNER_TEMP}/playup-host-publish/MyClub.PlayUp.Development.dll" ]; then
+            echo "MyClub.PlayUp.Development.dll must not be published with Host" >&2
+            exit 1
+          fi
+          if [ -f "${RUNNER_TEMP}/playup-host-publish/MyClub.PlayUp.DevRunner.dll" ]; then
+            echo "MyClub.PlayUp.DevRunner.dll must not be published with Host" >&2
+            exit 1
+          fi
+
   web:
     runs-on: ubuntu-latest
     defaults:

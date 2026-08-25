@@ -461,7 +461,7 @@ app.MapPost(
         return Results.NoContent();
     });
 
-app.Run();
+await app.RunAsync().ConfigureAwait(false);
 return;
 
 static CompletionMode parseCompletionMode(string mode) => mode.Equals("Normal", StringComparison.OrdinalIgnoreCase)

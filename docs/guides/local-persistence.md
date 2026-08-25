@@ -1,6 +1,6 @@
 # Local persistence environment
 
-This guide describes how Play'up developers run **PostgreSQL locally** for day-to-day Host work, and how that differs from automated tests.
+This guide describes how Play'up developers run **PostgreSQL locally** for day-to-day Host work, and how that differs from automated tests and the **Development Workspace** (DevRunner).
 
 Product vision and architecture decisions live in **Notion**. This document is the Git-side bootstrap for the local database.
 
@@ -8,225 +8,131 @@ Product vision and architecture decisions live in **Notion**. This document is t
 
 Play'up persists with **EF Core + PostgreSQL 18**. Local development uses **Docker Desktop** and **Docker Compose** so every developer gets the same PostgreSQL version, port layout, and volume strategy without installing PostgreSQL natively.
 
-Docker is also required for **Testcontainers** integration tests. That usage is separate from the persistent Compose database (see below).
+Docker is also required for **Testcontainers** integration tests (including Development.Tests scenario/template seeds). That usage is separate from the persistent Compose database (see below).
 
 ## Architecture (runtime)
 
 ```text
-Host (configuration / User Secrets)
-  |
-  | ConnectionStrings:PlayUp
-  v
-AddPlayUpInfrastructure(connectionString)
-  |
-  v
-PlayUpDbContext
-  |
-  | UseNpgsql
-  v
-PostgreSQL 18 (Docker Compose)
+                 Domain
+                   ↑
+              Application
+              ↑          ↑
+       Infrastructure  Development
+              ↑          ↑
+             Host     DevRunner
 ```
 
 | Layer | Responsibility |
 | :---- | :------------- |
-| **Host** | Owns runtime configuration. Reads `ConnectionStrings:PlayUp` and calls `AddPlayUpInfrastructure`. |
-| **DevSeed** | One-shot local seed tool. Same key `ConnectionStrings:PlayUp` via shared User Secrets Id `MyClub.PlayUp.Host` (no ProjectReference to Host). |
-| **Infrastructure** | Consumes the connection string. Configures `PlayUpDbContext` with `UseNpgsql`. Does **not** read Host User Secrets. |
-| **EF design-time** | Uses the Host as startup project (service provider). No `IDesignTimeDbContextFactory` is required. |
+| **Host** | Product HTTP only. PostgreSQL via `ConnectionStrings:PlayUp`. No Development reference, no seed, no InMemory mode. |
+| **Development** | Scenario/template catalog, JSON datasets, generators, orchestration (library; not shipped with Host). |
+| **DevRunner** | CLI: reset (`*_dev` DB only), `--templates`, `--scenarios`, progress `prepared\|running\|finished`. |
+| **Infrastructure** | EF Core + Npgsql. |
 | **Docker Compose** | Persistent local PostgreSQL for developers (`compose.yml`). |
 | **Testcontainers** | Ephemeral PostgreSQL for automated integration tests only. |
+
+Target local flow:
+
+```text
+docker compose up
+        ↓
+DevRunner --reset --templates … and/or --scenarios …
+        ↓
+PostgreSQL (*_dev)
+        ↓
+Host (ConnectionStrings:PlayUp → same DB to browse seeded data)
+        ↓
+React
+```
+
+## Progress (`prepared` | `running` | `finished`)
+
+Applies to **templates** and **structured scenarios** (`championship`, `groups`, `cup`, `random`):
+
+| Value | Meaning |
+| :--- | :------ |
+| `prepared` | Structure ready; matches Scheduled; no results |
+| `running` | ~50% matches Finished (default when omitted) |
+| `finished` | All matches Finished; competition Completed |
+
+Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`).
+
+Fixed UX scenarios (`empty-workspace`, `draft-empty`, `registration-open`) do **not** accept progress.
+
+Aliases (compat): `group-stage-mid` → `groups:running`, `knockout-qf` → `cup:running`, `finished` → `groups:finished`.
+
+## Templates (inspired competitions)
+
+Domain V1 = **one stage / one format**. Templates are approximations:
+
+| Id | Approximation |
+| :--- | :------------ |
+| `ligue-1` | Championship, 18 clubs (JSON) — single RR, not double RR |
+| `champions-league` | Groups 8×4 — no knockout pipeline |
+| `world-cup` | Groups 8×4 — no knockout pipeline |
+| `coupe-de-france` | Cup 32 — single principal round |
+
+Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/`.
+
+## Scenarios
+
+| Id | Progress? |
+| :--- | :--- |
+| `empty-workspace` | no |
+| `draft-empty` | no |
+| `registration-open` | no |
+| `championship` / `groups` / `cup` / `random` | yes |
 
 ## Three PostgreSQL usages (do not mix)
 
 | Usage | Purpose | Lifetime |
 | :---- | :------ | :------- |
-| **Docker Compose** | Develop against a real, persistent database (`myclub`) | Survives `docker compose down` (volume kept) |
-| **Testcontainers** | Prove mapping / constraints / Host E2E in CI and local full test runs | Destroyed after the test fixture |
-| **Fake connection strings** | Unit tests of model mapping or DI registration without opening a connection | Never connect |
+| **Docker Compose** | Develop against a real DB; create a `*_dev` database for DevRunner | Survives `docker compose down` |
+| **Testcontainers** | Integration tests (Host, Infrastructure, Development) | Destroyed after fixture |
+| **Fake connection strings** | Mapping/DI unit tests without opening a connection | Never connect |
 
 ## Local stack (facts)
 
 | Item | Value |
 | :--- | :---- |
-| Compose file | `compose.yml` (repository root) |
+| Compose file | `compose.yml` |
 | Image | `postgres:18` |
 | Host port | `localhost:5432` |
-| Database | `myclub` (from `.env`) |
-| User | `myclub` (from `.env`) |
-| Password | Local only — set in `.env`, never committed |
-| Volume | `myclub-postgres-data` → `/var/lib/postgresql` (PostgreSQL 18 data layout) |
-| App connection | Host User Secrets key `ConnectionStrings:PlayUp` |
+| Dev Workspace DB | name **must** end with `_dev` (e.g. `myclub_dev`) |
+| Host connection | User Secrets `ConnectionStrings:PlayUp` |
+| DevRunner connection | User Secrets `ConnectionStrings:PlayUpDev` |
 
-### Configuration split
-
-| Source | Role |
-| :----- | :--- |
-| `.env` / `.env.example` | Variables for **Docker Compose** (`POSTGRES_*`). `.env` is gitignored. |
-| Host User Secrets | Runtime **`ConnectionStrings:PlayUp`** for the ASP.NET Host, `dotnet ef`, and **DevSeed** (shared `UserSecretsId`). |
-| `appsettings.json` | No connection string (no secrets in Git). |
-| `appsettings.Development.json` | Gitignored; local logging overrides only — not the SoT for the connection string. |
-| Env `ConnectionStrings__PlayUp` | Optional override (CI / shells); same key as Host. |
-
-Keep the password in `.env` and in User Secrets aligned so the Host can connect to the Compose database.
-
----
-
-# Bootstrap for a new developer
-
-## 1. Prerequisites
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see [`global.json`](../../global.json))
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Linux engine / WSL2 backend on Windows)
-- Git
-- JetBrains Rider (or any PostgreSQL client) — **optional**, not a project dependency
-
-## 2. Clone and restore
+### Configuration
 
 ```bash
-git clone https://github.com/sandre58/MyClub.git
-cd MyClub
-dotnet restore
-dotnet tool restore
+dotnet user-secrets set "ConnectionStrings:PlayUp" "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=…" --project src/PlayUp/MyClub.PlayUp.Host
+dotnet user-secrets set "ConnectionStrings:PlayUpDev" "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=…" --project src/PlayUp/MyClub.PlayUp.DevRunner
 ```
 
-## 3. Create `.env`
+Create the workspace DB once:
 
 ```bash
-cp .env.example .env
+docker exec -it myclub-postgres-1 psql -U myclub -d myclub -c "CREATE DATABASE myclub_dev;"
 ```
 
-Edit `.env` and set a local `POSTGRES_PASSWORD` (replace `change-me`). Do not commit `.env`.
-
-## 4. Start PostgreSQL
+## DevRunner examples
 
 ```bash
-docker compose up -d
-docker compose ps
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --list
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --list-templates
+
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --templates ligue-1:prepared,world-cup:finished
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios groups:running,cup:finished
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios random:prepared --seed 7
 ```
 
-Expect service `postgres` using image `postgres:18` and port `5432`.
-
-Optional validation of the resolved Compose file:
-
-```bash
-docker compose config
-```
-
-## 5. Configure Host User Secrets
-
-```bash
-dotnet user-secrets set "ConnectionStrings:PlayUp" "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=YOUR_LOCAL_PASSWORD" --project src/PlayUp/MyClub.PlayUp.Host
-```
-
-Verify:
-
-```bash
-dotnet user-secrets list --project src/PlayUp/MyClub.PlayUp.Host
-```
-
-You should see `ConnectionStrings:PlayUp` (password never commit this value).
-
-The same secret store is used by **DevSeed** (`UserSecretsId` = `MyClub.PlayUp.Host`).
-
-## 6. Apply EF Core migrations
-
-Migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations`.
-
-```bash
-dotnet ef database update --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host
-```
-
-Design-time uses the Host configuration (User Secrets). Do not add an `IDesignTimeDbContextFactory` for this workflow.
-
-## 7. Run the Host
-
-```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.Host
-```
-
-Confirm the process starts without a missing-connection-string exception.
-
-### Optional — seed a competition for the organizer SPA
-
-```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.DevSeed
-```
-
-Uses the same `ConnectionStrings:PlayUp` as the Host (User Secrets / env). Optional one-shot override:
-
-```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.DevSeed -- "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=YOUR_LOCAL_PASSWORD"
-```
-
-Prints the new competition Guid (for `web/.env.local` → `VITE_SEED_COMPETITION_ID`).
-
-## 8. Connect with a client (optional)
-
-Use Rider’s Database tool, `psql`, or another PostgreSQL client:
-
-- Host: `localhost`
-- Port: `5432`
-- Database: `myclub`
-- User: `myclub`
-- Password: the value from `.env`
-
-Example via Docker:
-
-```bash
-docker exec -it myclub-postgres-1 psql -U myclub -d myclub
-```
-
-(Container name may vary; use `docker compose ps`.)
-
-## 9. Stop PostgreSQL
-
-```bash
-docker compose down
-```
-
-This **stops and removes the container** but **keeps** the named volume `myclub-postgres-data`. Data survives restarts.
-
-### Do not destroy the volume by accident
-
-```bash
-docker compose down -v
-```
-
-removes volumes declared in Compose, including `myclub-postgres-data`, and **deletes local database data**. Only use it when you intentionally want a blank database.
-
-List volumes:
-
-```bash
-docker volume ls
-```
-
----
+Reset is refused unless the DB name ends with `_dev`, the host is localhost/loopback, and the environment is not Production. Host has **no** reset/seed capability.
 
 ## Useful commands
 
 | Command | Purpose |
 | :------ | :------ |
-| `docker compose config` | Validate / print resolved Compose config |
-| `docker compose up -d` | Start PostgreSQL in the background |
-| `docker compose ps` | Show service status |
-| `docker compose down` | Stop containers; **keep** volumes |
-| `docker compose down -v` | Stop containers and **delete** volumes (data loss) |
-| `docker volume ls` | List volumes (look for `myclub-postgres-data`) |
-| `dotnet run --project src/PlayUp/MyClub.PlayUp.DevSeed` | Seed a competition (same User Secrets as Host) |
-| `dotnet test --filter Category!=Integration` | Fast suite without Testcontainers |
-| `dotnet test` | Full suite (needs Docker for Testcontainers) |
-
-## Troubleshooting (observed)
-
-| Symptom | Likely cause | What to do |
-| :------ | :----------- | :--------- |
-| Compose / Testcontainers fail with daemon errors | Docker Desktop not running | Start Docker Desktop; wait until the engine is ready |
-| `Bind for 0.0.0.0:5432 failed` | Another PostgreSQL (or process) already uses 5432 | Stop the other service, or temporarily change the host port mapping (local only) |
-| Unexpected auth / empty data after recreate | Existing volume `myclub-postgres-data` keeps first-boot credentials | Align `.env` / User Secrets with the volume, or intentionally recreate the volume (data loss) |
-| PostgreSQL 18 data directory | Official image expects data under `/var/lib/postgresql` | Keep the Compose mount as in `compose.yml`; do not mount the older `/var/lib/postgresql/data` path for PG 18 |
-
-## Related docs
-
-- [README — Getting started](../../README.md#getting-started)
-- [CONTRIBUTING.md](../../CONTRIBUTING.md)
-- Notion: Technologies *Docker* (hub général + exemple MyClub) · *PostgreSQL* · *Testcontainers* · *EF Core* ; Play'up *Architecture technique*
+| `docker compose up -d` | Start PostgreSQL |
+| `dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios groups:running` | Reset + seed |
+| `dotnet test --filter Category!=Integration` | Fast suite |
+| `dotnet test` | Full suite (Docker required for Integration) |

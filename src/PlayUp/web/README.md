@@ -6,17 +6,21 @@ Independent Vite + React + TypeScript app under `src/PlayUp/web/`. **Not** a .NE
 
 1. PostgreSQL with Play’up schema (local compose).
 2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`).
-3. Host reachable (create competitions from the SPA list — Phase 19.1). DevSeed remains optional for deep-link / ops demos.
+3. Host reachable (create competitions from the SPA list — Phase 19.1). DevRunner remains optional for seeded UX demos.
 
-### Seed a competition (optional, local)
+### Seed competitions (optional, local)
 
-Requires Host User Secrets `ConnectionStrings:PlayUp` (same as running the Host — see [local persistence](../../../docs/guides/local-persistence.md)).
+Requires User Secrets `ConnectionStrings:PlayUpDev` (see [local persistence](../../../docs/guides/local-persistence.md)). Point Host `ConnectionStrings:PlayUp` at the same `*_dev` database to browse seeded data.
 
 ```bash
-dotnet run --project ../MyClub.PlayUp.DevSeed
+dotnet run --project ../MyClub.PlayUp.DevRunner -- --reset --templates ligue-1:running
+# or structured scenarios:
+dotnet run --project ../MyClub.PlayUp.DevRunner -- --scenarios groups:running,cup:finished
 ```
 
-Copy the printed `competitionId` into `.env.local` as `VITE_SEED_COMPETITION_ID` for a Home shortcut. The seed also prints `stageId` and `matchId` for deep-link checks.
+Copy a printed `competitionId` into `.env.local` as `VITE_SEED_COMPETITION_ID` when useful.
+
+Progress: `prepared` | `running` (default) | `finished` via `id:progress`.
 
 ## Dev
 
@@ -36,7 +40,8 @@ Shared Run Configurations live in the repo under [`.run/`](../../../.run/) (not 
 |---|---|
 | **PlayUp Host** | ASP.NET Host (`launchSettings` → `http://localhost:5287`) |
 | **PlayUp Web** | `npm run dev` in this folder (Vite → `http://127.0.0.1:5173/`) |
-| **PlayUp Host + Web** | Compound — starts both in parallel |
+| **PlayUp Host + Web** | Compound — starts Host + Vite in parallel |
+| **PlayUp DevRunner** | One-shot CLI reset/seed (run when you need workspace data; not part of the daily compound) |
 
 **Daily use:** select **PlayUp Host + Web** in the Run widget → Run (or Debug for the Host). Stop the compound to stop both.
 
@@ -88,7 +93,7 @@ On Match detail:
 2. **Finish** (controlled form) → `POST /matches/{id}/finish` → invalidate match + stage match list  
 3. **Apply progression** → `POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression` → invalidate match + list + stage (slot fill)
 
-Re-seed after pulling DevSeed progression changes (`Winner` → slot `SF1-A`).
+Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slot `SF1-A`).
 
 ## Scripts
 

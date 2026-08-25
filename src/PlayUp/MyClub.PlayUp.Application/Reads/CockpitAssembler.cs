@@ -499,55 +499,25 @@ public static class CockpitAssembler
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
-        var items = new List<CockpitSituationDto>();
+        var items = (from item in attention.Items let actionCode = MapAttentionAction(item.Source) select CreateSituation(item.Source, NatureBlocking, item.TargetType, item.TargetId, ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch), actionCode, MapAttentionImpact(item.Source), BuildSituationParams(item))).ToList();
 
-        foreach (var item in attention.Items)
+        switch (competition.Status)
         {
-            var actionCode = MapAttentionAction(item.Source);
-            items.Add(CreateSituation(
-                item.Source,
-                NatureBlocking,
-                item.TargetType,
-                item.TargetId,
-                ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch),
-                actionCode,
-                MapAttentionImpact(item.Source),
-                BuildSituationParams(item)));
-        }
-
-        if (competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready)
-        {
-            foreach (var blocker in organisation.Readiness.Blockers)
-            {
-                var actionCode = MapOrgBlockerAction(blocker);
+            case CompetitionStatus.Draft or CompetitionStatus.Ready:
+                items.AddRange(from blocker in organisation.Readiness.Blockers let actionCode = MapOrgBlockerAction(blocker) select CreateSituation(blocker, NatureBlocking, "Organisation", competition.Id.Value.ToString(), null, actionCode, ImpactBlocksConstruction, new Dictionary<string, string> { ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture), ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture) }));
+                break;
+            case CompetitionStatus.Suspended:
+                // Domain Resume exists; Host exposure OPEN — informational, not actionable.
                 items.Add(CreateSituation(
-                    blocker,
-                    NatureBlocking,
-                    "Organisation",
+                    SourceCompetitionSuspended,
+                    NatureInformational,
+                    "Competition",
                     competition.Id.Value.ToString(),
                     null,
-                    actionCode,
-                    ImpactBlocksConstruction,
-                    new Dictionary<string, string>
-                    {
-                        ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                        ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
-                    }));
-            }
-        }
-
-        if (competition.Status == CompetitionStatus.Suspended)
-        {
-            // Domain Resume exists; Host exposure OPEN — informational, not actionable.
-            items.Add(CreateSituation(
-                SourceCompetitionSuspended,
-                NatureInformational,
-                "Competition",
-                competition.Id.Value.ToString(),
-                null,
-                null,
-                null,
-                new Dictionary<string, string>()));
+                    null,
+                    null,
+                    new Dictionary<string, string>()));
+                break;
         }
 
         return DeduplicateSituations(items);
@@ -582,7 +552,7 @@ public static class CockpitAssembler
                 or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
 
             // DrawNoSolution: regenerate/reconfigure lives on Stage — no Host action projected here.
-            _ => null,
+            _ => null
         };
 
     private static string? MapAttentionImpact(string source) =>
@@ -593,7 +563,7 @@ public static class CockpitAssembler
                 or NeedsAttentionAssembler.SourceProgressionConflict
                 or NeedsAttentionAssembler.SourceQualificationPending
                 or NeedsAttentionAssembler.SourceQualificationConflict => ImpactBlocksProgression,
-            _ => null,
+            _ => null
         };
 
     private static List<CockpitSituationDto> DeduplicateSituations(List<CockpitSituationDto> items) =>
@@ -1003,8 +973,7 @@ public static class CockpitAssembler
         }
 
         var parts = item.TargetId.Split(':', 2);
-        if (parts.Length != 2
-            || !Guid.TryParse(parts[0], out var destinationStageId)) return null;
+        if (parts.Length != 2 || !Guid.TryParse(parts[0], out var destinationStageId)) return null;
         var slotKey = parts[1];
         foreach (var stage in stages)
         {

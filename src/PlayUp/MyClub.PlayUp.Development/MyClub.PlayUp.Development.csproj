@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Play'up Development Workspace — deterministic Domain-first scenario/template seeding for local UX/dev.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+    <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Datasets\*.json" />
+  </ItemGroup>
+
+</Project>

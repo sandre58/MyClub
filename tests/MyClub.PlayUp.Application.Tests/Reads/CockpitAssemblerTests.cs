@@ -92,7 +92,7 @@ public sealed class CockpitAssemblerTests
         stage.ApplyMatchPlacements(
             [
                 new MatchPlacement(early.Id, start, resourceId),
-                new MatchPlacement(late.Id, end, resourceId),
+                new MatchPlacement(late.Id, end, resourceId)
             ],
             [early.Id, late.Id]);
 
