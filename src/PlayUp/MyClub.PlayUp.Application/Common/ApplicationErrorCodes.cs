@@ -47,9 +47,9 @@ public static class ApplicationErrorCodes
     public const string FixtureInvalid = "Application.FixtureInvalid";
 
     /// <summary>
-    /// Gets the code when a Round.TieFormat is required but missing:
-    /// PrepareStage (Progression references a Round fixture), or ApplyProgressionOutcome
-    /// (missing format, or fixture not hosted by a Round).
+    /// Gets the code when ApplyProgressionOutcome cannot resolve a Round for the fixture
+    /// (e.g. Matchday fixture — Progression requires a Round-hosted Fixture).
+    /// Null <c>Round.TieFormat</c> is not an error (effective OneLeg).
     /// </summary>
     public const string TieFormatRequired = "Application.TieFormatRequired";
 

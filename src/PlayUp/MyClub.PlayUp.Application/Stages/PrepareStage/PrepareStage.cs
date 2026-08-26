@@ -15,8 +15,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// <remarks>
 /// Hosts must call this use case for Draft → Ready — not <see cref="Stage.Prepare"/> alone.
 /// Domain validates local structure and local path destinations only.
-/// Application validates TieFormat when Progression references a Round fixture,
-/// outbound StageId/SlotKey destinations, and WhoFeeds (inbound).
+/// Application validates outbound StageId/SlotKey destinations and WhoFeeds (inbound).
+/// Null <c>Round.TieFormat</c> is allowed (effective OneLeg) — same contract as ApplyDraw / materialize.
 /// </remarks>
 public static class PrepareStage
 {
@@ -37,7 +37,6 @@ public static class PrepareStage
         ArgumentNullException.ThrowIfNull(clock);
 
         EnsureStageInCompetition(target, competitionStages);
-        EnsureTieFormatForProgressionSources(target);
         EnsureOutboundPathDestinations(target, competitionStages);
 
         if (target.Slots.Count == 0)
@@ -78,38 +77,6 @@ public static class PrepareStage
         throw new ApplicationFailureException(
             $"Stage '{target.Id}' is not part of the competition stages list.",
             ApplicationErrorCodes.StageNotInCompetition);
-    }
-
-    /// <summary>
-    /// D10-A / D10-B: a Round needs TieFormat when Progression references one of its fixtures.
-    /// </summary>
-    private static void EnsureTieFormatForProgressionSources(Stage target)
-    {
-        if (target.Regulation.ProgressionRules is not { } progression)
-        {
-            return;
-        }
-
-        var referencedFixtureIds = progression.Paths
-            .Select(p => p.SourceFixtureId)
-            .ToHashSet();
-
-        foreach (var round in target.Rounds)
-        {
-            if (round.TieFormat is not null)
-            {
-                continue;
-            }
-
-            if (!round.Fixtures.Any(f => referencedFixtureIds.Contains(f.Id)))
-            {
-                continue;
-            }
-
-            throw new ApplicationFailureException(
-                $"Round '{round.Name}' requires a TieFormat because one of its fixtures is referenced by a progression rule.",
-                ApplicationErrorCodes.TieFormatRequired);
-        }
     }
 
     /// <summary>

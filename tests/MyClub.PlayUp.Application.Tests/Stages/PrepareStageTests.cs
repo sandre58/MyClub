@@ -112,7 +112,7 @@ public sealed class PrepareStageTests
     }
 
     [Fact]
-    public void Execute_rejects_when_progression_references_round_without_tie_format()
+    public void Execute_prepares_when_progression_references_round_without_tie_format()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -132,13 +132,10 @@ public sealed class PrepareStageTests
             ]),
             _clock);
 
-        var act = () => PrepareStage.Execute(stage, [stage], _clock);
+        PrepareStage.Execute(stage, [stage], _clock);
 
-        var ex = act.Should().Throw<ApplicationFailureException>().Which;
-        ex.Code.Should().Be(ApplicationErrorCodes.TieFormatRequired);
-        ex.Message.Should().Contain("QuarterFinal");
-        ex.Message.Should().Contain("TieFormat");
-        stage.Status.Should().Be(StageStatus.Draft);
+        stage.Status.Should().Be(StageStatus.Ready);
+        round.TieFormat.Should().BeNull();
     }
 
     [Fact]

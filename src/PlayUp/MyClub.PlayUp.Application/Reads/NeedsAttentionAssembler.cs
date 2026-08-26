@@ -200,7 +200,7 @@ public static class NeedsAttentionAssembler
 
             var round = source.Rounds.FirstOrDefault(candidate =>
                 candidate.Fixtures.Any(fixtureCandidate => fixtureCandidate.Id.Equals(fixtureId)));
-            if (round?.TieFormat is null)
+            if (round is null)
             {
                 continue;
             }
@@ -209,7 +209,9 @@ public static class NeedsAttentionAssembler
             try
             {
                 var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, matches);
-                outcome = FixtureOutcomeResolver.Resolve(round.TieFormat, snapshot);
+                outcome = FixtureOutcomeResolver.Resolve(
+                    TieFormat.OrDefaultOneLeg(round.TieFormat),
+                    snapshot);
             }
             catch (Exception)
             {

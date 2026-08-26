@@ -36,7 +36,8 @@ public sealed class Round : Entity<RoundId>
     public string Name { get; private set; }
 
     /// <summary>
-    /// Gets the tie format for confrontations in this round, if any.
+    /// Gets the stored tie format for confrontations in this round.
+    /// When <see langword="null"/>, consumers treat the round as <see cref="TieFormat.DefaultOneLeg"/>.
     /// </summary>
     public TieFormat? TieFormat { get; private set; }
 

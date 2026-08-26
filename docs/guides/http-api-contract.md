@@ -233,7 +233,7 @@ Additional stages / rounds / slots / progression rules without Domain seeding. D
 { "name": "SF", "numberOfLegs": 2, "aggregateScoring": true }
 ```
 
-`numberOfLegs` / `aggregateScoring` optional. Omit legs to use stage regulation default. `numberOfLegs` must be `1` or `2` when set.
+`numberOfLegs` / `aggregateScoring` optional. Omit legs to leave the Round without an explicit TieFormat (stage regulation default may still apply at Domain add). **Effective contract:** null `Round.TieFormat` means **OneLeg** for materialize / draw / prepare / progression; **TwoLegs** only when explicit (`numberOfLegs: 2`). `numberOfLegs` must be `1` or `2` when set.
 
 ```json
 { "roundId": "<guid>", "name": "SF" }

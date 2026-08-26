@@ -16,7 +16,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Domain has no Applied status. Applied means resolution occupancy/attachments already match
 /// the published resolution — same heuristic previously reconstructed in the SPA.
 /// Pairing: each fixture must have attachments equal to the hosting Round's TieFormat legs
-/// (null TieFormat ⇒ 1).
+/// (null TieFormat ⇒ OneLeg).
 /// </remarks>
 public static class DrawAppliedState
 {
@@ -71,7 +71,7 @@ public static class DrawAppliedState
                && fixtures.All(fixture =>
                {
                    var round = stage.Rounds.First(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
-                   var expectedLegs = round.TieFormat?.NumberOfLegs ?? TieFormat.SingleLeg;
+                   var expectedLegs = TieFormat.OrDefaultOneLeg(round.TieFormat).NumberOfLegs;
                    return fixture.Attachments.Count == expectedLegs;
                });
     }

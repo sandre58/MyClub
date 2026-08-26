@@ -108,13 +108,11 @@ public static class ApplyProgressionOutcome
 
     private static TieFormat ResolveRoundTieFormat(Stage stage, FixtureId fixtureId)
     {
-        var round = stage.Rounds.FirstOrDefault(r => r.Fixtures.Any(f => f.Id.Equals(fixtureId))) ?? throw new ApplicationFailureException(
-                $"Fixture '{fixtureId}' is not hosted by a Round with TieFormat (Matchday fixtures cannot drive Progression).",
-                ApplicationErrorCodes.TieFormatRequired);
-        return round.TieFormat
+        var round = stage.Rounds.FirstOrDefault(r => r.Fixtures.Any(f => f.Id.Equals(fixtureId)))
             ?? throw new ApplicationFailureException(
-                $"Round '{round.Id}' has no TieFormat; cannot resolve fixture progression outcome.",
+                $"Fixture '{fixtureId}' is not hosted by a Round (Matchday fixtures cannot drive Progression).",
                 ApplicationErrorCodes.TieFormatRequired);
+        return TieFormat.OrDefaultOneLeg(round.TieFormat);
     }
 
     private static void EnsureFixtureMatchCoherence(

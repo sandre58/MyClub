@@ -628,7 +628,7 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_rejects_when_round_has_no_tie_format()
+    public void Execute_applies_one_leg_when_round_has_no_tie_format()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -650,11 +650,11 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(stage, fixtureId, [match], [stage], _clock);
+        var instructions = ApplyProgressionOutcome.Execute(stage, fixtureId, [match], [stage], _clock);
 
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.TieFormatRequired);
-        stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        instructions.Should().ContainSingle();
+        instructions[0].EntryId.Should().Be(home);
+        stage.FindSlot("SF1-A")!.EntryId.Should().Be(home);
     }
 
     [Fact]

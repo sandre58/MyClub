@@ -12,6 +12,11 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// How to determine the winner of a knockout confrontation (legs, aggregate, away goals, ET/TAB of the tie).
 /// Distinct from <see cref="MatchRules"/> (how a single match is played).
 /// </summary>
+/// <remarks>
+/// Stored Round TieFormat remains nullable for Thin Authoring: omitted means
+/// <see cref="DefaultOneLeg"/> everywhere legs or outcome are resolved (materialize, draw, prepare, progression).
+/// <see cref="TwoLegs"/> is only explicit as a stored value.
+/// </remarks>
 public sealed record TieFormat
 {
     /// <summary>
@@ -23,6 +28,19 @@ public sealed record TieFormat
     /// Two-legged confrontation (home and away).
     /// </summary>
     public const int TwoLegs = 2;
+
+    /// <summary>
+    /// Gets the effective format when a Round omits TieFormat: one leg, no aggregate.
+    /// </summary>
+    public static TieFormat DefaultOneLeg { get; } = new(SingleLeg, aggregateScoring: false);
+
+    /// <summary>
+    /// Returns <paramref name="tieFormat"/> when set; otherwise <see cref="DefaultOneLeg"/>.
+    /// </summary>
+    /// <param name="tieFormat">Stored round format, or <see langword="null"/> when omitted.</param>
+    /// <returns>The effective tie format for leg count and outcome resolution.</returns>
+    public static TieFormat OrDefaultOneLeg(TieFormat? tieFormat) =>
+        tieFormat ?? DefaultOneLeg;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TieFormat"/> class.

@@ -114,4 +114,19 @@ public sealed class TieFormatTests
         ReferenceEquals(copy.AwayGoalsRule, original.AwayGoalsRule).Should().BeFalse();
         ReferenceEquals(copy.ExtraTimeRule, original.ExtraTimeRule).Should().BeFalse();
     }
+
+    [Fact]
+    public void OrDefaultOneLeg_returns_default_when_null()
+    {
+        TieFormat.OrDefaultOneLeg(null).Should().Be(TieFormat.DefaultOneLeg);
+        TieFormat.DefaultOneLeg.NumberOfLegs.Should().Be(TieFormat.SingleLeg);
+        TieFormat.DefaultOneLeg.AggregateScoring.Should().BeFalse();
+    }
+
+    [Fact]
+    public void OrDefaultOneLeg_preserves_explicit_format()
+    {
+        var twoLegs = new TieFormat(TieFormat.TwoLegs, aggregateScoring: true);
+        TieFormat.OrDefaultOneLeg(twoLegs).Should().BeSameAs(twoLegs);
+    }
 }

@@ -21,19 +21,19 @@ namespace MyClub.PlayUp.Application.Stages;
 internal static class CupConfrontationMaterializer
 {
     /// <summary>
-    /// Resolves expected leg count from the Round hosting the fixture (null TieFormat ⇒ 1).
+    /// Resolves expected leg count from the Round hosting the fixture (null TieFormat ⇒ OneLeg).
     /// </summary>
     public static int ExpectedLegsForFixture(Stage stage, Fixture fixture)
     {
         var round = stage.Rounds.FirstOrDefault(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
-        return round?.TieFormat?.NumberOfLegs ?? TieFormat.SingleLeg;
+        return TieFormat.OrDefaultOneLeg(round?.TieFormat).NumberOfLegs;
     }
 
     /// <summary>
-    /// Resolves expected leg count for a Round (null TieFormat ⇒ 1).
+    /// Resolves expected leg count for a Round (null TieFormat ⇒ OneLeg).
     /// </summary>
     public static int ExpectedLegsForRound(Round round) =>
-        round.TieFormat?.NumberOfLegs ?? TieFormat.SingleLeg;
+        TieFormat.OrDefaultOneLeg(round.TieFormat).NumberOfLegs;
 
     /// <summary>
     /// Creates and attaches Leg 1 (and Leg 2 when <paramref name="expectedLegs"/> is 2).
