@@ -73,8 +73,8 @@
       "notReady": "Pas prêt",
       "transitions": {
         "Draw": "Tirage",
-        "MaterializeMatches": "Création des matchs",
-        "MaterializeFromOccupiedSlots": "Confrontations depuis les emplacements"
+      "MaterializeMatches": "Matérialisation",
+      "MaterializeFromOccupiedSlots": "Confrontations depuis les emplacements"
       },
       "readinessReady": "Le règlement permet d’envisager {{transition}}.",
       "readinessNotReady": "{{transition}} : conditions à lever",
@@ -140,8 +140,8 @@
       "ContinueOrganisation": "Complétez les équipes, la structure et le règlement.",
       "OpenMatches": "Suivez les rencontres et saisissez les résultats.",
       "OpenConsultation": "Consultez les classements de la compétition.",
-      "MaterializeMatches": "Générez le calendrier pour passer à l’étape suivante.",
-      "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — configurez les confrontations sur la phase.",
+      "MaterializeMatches": "Créez les fixtures / matchs pour avancer (championnat) ou le squelette de confrontations (coupe).",
+      "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — ouvrez la phase pour configurer les confrontations (SlotA ↔ SlotB).",
       "PublishDraw": "Publiez le tirage pour figer la composition.",
       "PrepareCompetition": "Passez la compétition en état prêt.",
       "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",

@@ -47,7 +47,7 @@ React
 
 ## Progress (`prepared` | `running` | `finished`)
 
-Applies to **templates** and **structured scenarios** (`championship`, `groups`, `cup`, `random`):
+Applies to **templates** and most **structured scenarios** (`championship`, `groups`, `cup`, `random`):
 
 | Value | Meaning |
 | :--- | :------ |
@@ -57,20 +57,26 @@ Applies to **templates** and **structured scenarios** (`championship`, `groups`,
 
 Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`).
 
-Fixed UX scenarios (`empty-workspace`, `draft-empty`, `registration-open`) do **not** accept progress.
+Fixed UX scenarios (`empty-workspace`, `draft-empty`, `registration-open`) and the multi-stage demo `cup-qf-sf` do **not** accept `:progress`.
 
-Aliases (compat): `group-stage-mid` → `groups:running`, `knockout-qf` → `cup:running`, `finished` → `groups:finished`.
+### Aliases (compat — do not change silently)
+
+| Alias | Resolves to | Notes |
+| :--- | :---------- | :---- |
+| `group-stage-mid` | `groups:running` | Historical shorthand |
+| `finished` | `groups:finished` | Means that scenario, not “any finished seed” |
+| `knockout-qf` | `cup:running` | **Historical only** — single-round cup (~16 teams, ~50% played). **Not** QF→SF. Multi-stage / from-slots demo = `cup-qf-sf` (no redirect). |
 
 ## Templates (inspired competitions)
 
-Domain V1 = **one stage / one format**. Templates are approximations:
+Templates are **capacity demos**, not full real multi-phase calendars:
 
 | Id | Approximation |
 | :--- | :------------ |
-| `ligue-1` | Championship, 18 clubs (JSON) — single RR, not double RR |
+| `ligue-1` | Championship, 18 clubs (JSON) — **`DoubleRoundRobin`**, 34 matchdays, PairMirror (`N×(N−1)` = 306). Not a real L1 calendar. |
 | `champions-league` | Groups 8×4 — no knockout pipeline |
 | `world-cup` | Groups 8×4 — no knockout pipeline |
-| `coupe-de-france` | Cup 32 — single principal round |
+| `coupe-de-france` | Cup 32 — single principal round (not a full CdF tree) |
 
 Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, logo paths).
 
@@ -78,12 +84,13 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 
 ## Scenarios
 
-| Id | Progress? |
-| :--- | :--- |
-| `empty-workspace` | no |
-| `draft-empty` | no |
-| `registration-open` | no |
-| `championship` / `groups` / `cup` / `random` | yes |
+| Id | Progress? | Notes |
+| :--- | :--- | :---- |
+| `empty-workspace` | no | |
+| `draft-empty` | no | |
+| `registration-open` | no | |
+| `championship` / `groups` / `cup` / `random` | yes | Cup = single principal round |
+| `cup-qf-sf` | no | Multi-stage QF→SF: QF played, SF slots occupied, **stops before** `materialize-from-slots` (Cockpit) |
 
 ## Three PostgreSQL usages (do not mix)
 
@@ -125,8 +132,11 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --list-templates
 
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --templates ligue-1:prepared,world-cup:finished
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios groups:running,cup:finished
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios cup-qf-sf
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios random:prepared --seed 7
 ```
+
+Generation demos (A→D4): `--templates ligue-1:prepared` (Double RR) · `--scenarios cup-qf-sf` (multi-stage slots for Cockpit from-slots).
 
 Reset is refused unless the DB name ends with `_dev`, the host is localhost/loopback, and the environment is not Production. Host has **no** reset/seed capability.
 

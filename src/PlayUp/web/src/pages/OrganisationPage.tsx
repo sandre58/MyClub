@@ -59,7 +59,8 @@ type OrganisationEditor = null | 'teams' | 'regulation' | 'structure'
 
 /**
  * After Organisation writes that change readiness, refresh Organisation + Cockpit.
- * Cockpit projects Materialize from ReadyForMaterialization — must not stay stale.
+ * Cockpit projects MaterializeMatches from ReadyForMaterialization
+ * (Cup: primary skeleton incomplete — not from-slots). Must not stay stale after structure edits.
  */
 async function invalidateAfterOrganisationMutation(
   queryClient: QueryClient,
@@ -435,6 +436,7 @@ function PreparationStrip({
   const openCount = blockers.length
 
   if (readyToMaterialize) {
+    const isCup = formatKind === 'Cup'
     return (
       <section
         className="organisation-strip organisation-strip--ready"
@@ -443,18 +445,24 @@ function PreparationStrip({
         <div className="organisation-strip__head">
           <h2 id="readiness-heading" className="organisation-strip__title">
             <CheckIcon size="sm" aria-hidden="true" />
-            {t('readiness.readyForMaterialization')}
+            {isCup
+              ? t('readiness.readyForCupSkeleton')
+              : t('readiness.readyForMaterialization')}
           </h2>
         </div>
         <div className="organisation-strip__actions">
           <p className="organisation-panel__muted">
-            {t('readiness.materializeHint')}
+            {isCup
+              ? t('readiness.cupSkeletonHint')
+              : t('readiness.materializeHint')}
           </p>
           <Link
             className="organisation-link"
             to={`/competitions/${data.competitionId}`}
           >
-            {t('readiness.goToCockpit')}
+            {isCup
+              ? t('readiness.goToCockpitCupSkeleton')
+              : t('readiness.goToCockpitMaterialize')}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

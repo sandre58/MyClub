@@ -220,8 +220,15 @@ public static class OrganisationViewAssembler
                     }
                     else
                     {
+                        // Draw path = structure (rounds + valid bracket).
+                        // MaterializeMatches = empty Fixture skeleton for Pairing — distinct from
+                        // Cockpit from-slots (occupied SlotA/B on a later stage).
                         readyForDraw = structure.RoundCount >= 1;
-                        readyForMaterialization = readyForDraw;
+                        var expectedSkeletonFixtures = structure.SlotCount / 2;
+                        var skeletonFixtures = primary.Rounds.Count > 0
+                            ? primary.Rounds[0].Fixtures.Count
+                            : 0;
+                        readyForMaterialization = readyForDraw && skeletonFixtures < expectedSkeletonFixtures;
                     }
 
                     break;

@@ -530,18 +530,18 @@ describe('OrganisationPage', () => {
 
     expect(
       await screen.findByText(
-        /La compétition est prête à créer les matchs/i,
+        /La compétition est prête à matérialiser/i,
       ),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('link', {
-        name: /Aller à la Vue d’ensemble pour créer les matchs/i,
+        name: /Aller à la Vue d’ensemble pour matérialiser/i,
       }),
     ).toHaveAttribute('href', `/competitions/${competitionId}`)
     expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument()
   })
 
-  it('shows blockers and hides Vue d’ensemble CTA when not ready to create matches', async () => {
+  it('shows blockers and hides Vue d’ensemble CTA when not ready to materialize', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderOrganisationPage()
@@ -553,7 +553,7 @@ describe('OrganisationPage', () => {
     expect(screen.getByText('Phase manquante')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', {
-        name: /Aller à la Vue d’ensemble pour créer les matchs/i,
+        name: /Aller à la Vue d’ensemble pour matérialiser/i,
       }),
     ).not.toBeInTheDocument()
   })

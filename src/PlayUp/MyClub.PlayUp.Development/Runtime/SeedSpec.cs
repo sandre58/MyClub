@@ -83,10 +83,15 @@ public readonly record struct SeedSpec(string Id, SeedProgress? Progress)
         }
     }
 
+    /// <summary>
+    /// Historical shorthand only. Do not silently retarget
+    /// <c>knockout-qf</c> to <c>cup-qf-sf</c> (multi-stage demo is a separate scenario id).
+    /// </summary>
     private static readonly Dictionary<string, SeedSpec> Aliases =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["group-stage-mid"] = new SeedSpec("groups", SeedProgress.Running),
+            // Historical: single-round cup:running — NOT QF→SF (use cup-qf-sf).
             ["knockout-qf"] = new SeedSpec("cup", SeedProgress.Running),
             ["finished"] = new SeedSpec("groups", SeedProgress.Finished)
         };

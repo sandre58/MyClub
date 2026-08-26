@@ -206,7 +206,7 @@ describe('CompetitionCockpitPage', () => {
       screen.getByRole('button', { name: /Préparer la phase/i }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /Ajouter une équipe/i }),
+      screen.getByRole('link', { name: /Ajouter une équipe/i }),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Renommer une équipe/i }),

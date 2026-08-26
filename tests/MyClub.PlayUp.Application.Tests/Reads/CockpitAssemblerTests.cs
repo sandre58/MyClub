@@ -665,11 +665,63 @@ public sealed class CockpitAssemblerTests
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
 
-        // Cup ReadyForMaterialization still projects skeleton MaterializeMatches — distinct code.
+        // Primary Cup skeleton still incomplete → MaterializeMatches; SF from-slots is the natural next step.
         view.AvailableActions.Should().Contain(item => item.Code == CockpitAssembler.ActionMaterializeMatches);
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeFromOccupiedSlots);
         view.AvailableActions.Should().NotContain(item =>
             item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
             && item.StageId == qf.Id.Value);
+    }
+
+    [Fact]
+    public void Assemble_from_slots_absent_from_regulation_gap_when_cup_slots_empty()
+    {
+        var competition = CreateCompetition.Execute("Cup-NoSlotsGap", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots);
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeMatches);
+    }
+
+    [Fact]
+    public void Assemble_cup_ready_for_materialization_false_after_skeleton_fixtures()
+    {
+        var competition = CreateCompetition.Execute("Cup-SkeletonDone", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock);
+        MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+
+        var organisation = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+        organisation.Readiness.ReadyForDraw.Should().BeTrue();
+        organisation.Readiness.ReadyForMaterialization.Should().BeFalse();
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == CockpitAssembler.ActionMaterializeMatches);
     }
 
     [Fact]

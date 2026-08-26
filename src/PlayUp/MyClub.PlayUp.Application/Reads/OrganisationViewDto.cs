@@ -114,7 +114,7 @@ public sealed record OrganisationStructureSummaryDto(
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
 /// <param name="ReadyForNextSlice">True when organisation is sufficient for Slice 3 entry.</param>
 /// <param name="ReadyForDraw">True when a Draw path is identifiable.</param>
-/// <param name="ReadyForMaterialization">True when Fixtures/Matches can be materialized.</param>
+/// <param name="ReadyForMaterialization">True when Fixtures/Matches can be materialized (Cup: primary skeleton fixtures incomplete; not from-slots).</param>
 /// <param name="ReadyForSchedule">True when attached Matches exist for scheduling.</param>
 /// <param name="ReadyForMatchOperation">True when Slice 4 can start (Matches attached; schedule optional).</param>
 /// <param name="ReadyForSchedulePath">Legacy Slice 2 hint: championship schedule path identifiable from structure.</param>

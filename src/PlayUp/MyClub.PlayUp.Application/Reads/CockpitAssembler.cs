@@ -395,6 +395,12 @@ public static class CockpitAssembler
         return readiness;
     }
 
+    /// <summary>
+    /// Projects from-slots transition only when an opportunity exists.
+    /// Omitting the not-ready row avoids poisoning regulation primaryGap with
+    /// <see cref="BlockerInsufficientOccupiedSlots"/> during early Cup construction
+    /// (skeleton / draw are separate concepts — D2 readiness audit).
+    /// </summary>
     private static void AppendFromSlotsTransitionReadiness(
         Competition competition,
         IReadOnlyList<Stage> stages,
@@ -405,36 +411,24 @@ public static class CockpitAssembler
             return;
         }
 
-        var anyCup = false;
-        var anyReady = false;
         foreach (var stage in stages)
         {
-            if (!IsCupStage(stage))
+            if (!TryDescribeFromSlotsOpportunity(competition, stage, out _))
             {
                 continue;
             }
 
-            anyCup = true;
-            if (TryDescribeFromSlotsOpportunity(competition, stage, out _))
-            {
-                anyReady = true;
-                break;
-            }
-        }
-
-        if (!anyCup)
-        {
+            readiness.Add(
+                new CockpitTransitionReadinessDto(
+                    TransitionMaterializeFromOccupiedSlots,
+                    Ready: true,
+                    []));
             return;
         }
-
-        readiness.Add(
-            new CockpitTransitionReadinessDto(
-                TransitionMaterializeFromOccupiedSlots,
-                anyReady,
-                anyReady ? [] : [BlockerInsufficientOccupiedSlots]));
     }
 
     /// <summary>Blocker: Cup stage lacks enough uncovered occupied slots for from-slots materialization.</summary>
+    /// <remarks>Retained for clients/tests; no longer attached as a standing regulation gap when absent.</remarks>
     public const string BlockerInsufficientOccupiedSlots = "InsufficientOccupiedSlots";
 
     private static CockpitOperationalFocusDto BuildOperationalFocus(
@@ -931,12 +925,14 @@ public static class CockpitAssembler
         bool fromSlotsOpportunity) =>
         competition.Status switch
         {
+            // From-slots (later Cup stage) before skeleton MaterializeMatches — avoid concurrent
+            // "create matches" vs "configure confrontations" when multi-stage slots are ready.
+            CompetitionStatus.Draft or CompetitionStatus.Ready when fromSlotsOpportunity =>
+                new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
             CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForMaterialization =>
                 new CockpitNaturalProgressionDto(ActionMaterializeMatches),
             CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForDraw =>
                 new CockpitNaturalProgressionDto(ActionPublishDraw),
-            CompetitionStatus.Draft or CompetitionStatus.Ready when fromSlotsOpportunity =>
-                new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
             CompetitionStatus.Draft or CompetitionStatus.Ready =>
                 new CockpitNaturalProgressionDto(ProgressionContinueOrganisation),
             CompetitionStatus.Running or CompetitionStatus.Suspended when fromSlotsOpportunity && attentionCount == 0 =>

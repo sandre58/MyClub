@@ -311,6 +311,8 @@ function useCockpitActionRunner(data: CockpitView) {
 
   return {
     onActionClick,
+    resolveIntent: (action: CockpitAction) =>
+      resolveCockpitActionIntent(action, data),
     mutation,
     activeKey,
     materializeFollowUp,
@@ -913,10 +915,23 @@ function ActionButtons({
           name: action.params?.stageName,
           ...action.params,
         })
+        const intent = actionRunner.resolveIntent(action)
         const variant =
           emphasizeFirst && index === 0
             ? 'ds-btn--primary'
             : 'ds-btn--secondary'
+        if (intent.kind === 'navigate') {
+          return (
+            <Link
+              key={key}
+              className={`ds-btn ${variant}`}
+              to={intent.to}
+              aria-label={`${label} — ${t('actions.openSpace')}`}
+            >
+              {label}
+            </Link>
+          )
+        }
         return (
           <button
             key={key}
