@@ -7,6 +7,7 @@
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -629,6 +630,108 @@ public sealed class CockpitAssemblerTests
         view.ConstructionDimensions.Regulation.Competition.MaximumTeams.Should().Be(16);
         view.ConstructionDimensions.Regulation.Competition.DurationPerPeriod.Should().Be(40);
         view.ConstructionDimensions.Regulation.Competition.WinPoints.Should().Be(2);
+    }
+
+    [Fact]
+    public void Assemble_projects_from_slots_action_on_secondary_cup_stage_with_occupied_slots()
+    {
+        var competition = CreateCompetition.Execute("Cup-D2-SF", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var qf = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock).Stage;
+        var sf = Stage.Create(competition.Id, new StageName("Semi-Finals"), SampleRegulations.Standard(), _clock);
+        sf.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        sf.AddSlot("SF1-A", _clock);
+        sf.AddSlot("SF1-B", _clock);
+        sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+        competition.AddStage(sf.Id, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [qf, sf],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var action = view.AvailableActions.Should().ContainSingle(item =>
+            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            && item.StageId == sf.Id.Value).Subject;
+        action.Params.Should().ContainKey("occupiedSlotCount").WhoseValue.Should().Be("2");
+        action.Params.Should().ContainKey("stageName").WhoseValue.Should().Be("Semi-Finals");
+
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
+
+        // Cup ReadyForMaterialization still projects skeleton MaterializeMatches — distinct code.
+        view.AvailableActions.Should().Contain(item => item.Code == CockpitAssembler.ActionMaterializeMatches);
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            && item.StageId == qf.Id.Value);
+    }
+
+    [Fact]
+    public void Assemble_from_slots_absent_when_target_stage_running()
+    {
+        var competition = CreateCompetition.Execute("Cup-D2-RunStage", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var sf = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        sf.AddRound("SF", _clock);
+        sf.AddSlot("SF1-A", _clock);
+        sf.AddSlot("SF1-B", _clock);
+        sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+        MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            sf,
+            [new CupSlotPair("SF1-A", "SF1-B")],
+            [],
+            _clock);
+        sf.Prepare(_clock);
+        sf.Start(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [sf],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots);
+    }
+
+    [Fact]
+    public void Assemble_from_slots_when_competition_running_and_stage_draft()
+    {
+        var competition = CreateCompetition.Execute("Cup-D2-Late", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var sf = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        sf.AddRound("SF", _clock);
+        sf.AddSlot("SF1-A", _clock);
+        sf.AddSlot("SF1-B", _clock);
+        sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [sf],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().Contain(item =>
+            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            && item.StageId == sf.Id.Value);
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeFromOccupiedSlots);
     }
 
     private (Competition Competition, Stage Stage, Match Match) CreateFinishedKnockoutWithProgression()

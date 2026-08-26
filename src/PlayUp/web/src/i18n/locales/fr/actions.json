@@ -10,6 +10,7 @@
   "PublishDraw": "Publier le tirage",
   "ApplyDraw": "Appliquer le tirage",
   "MaterializeMatches": "Créer les matchs",
+  "MaterializeFromOccupiedSlots": "Configurer les confrontations — {{stageName}}",
   "GenerateSchedule": "Générer un calendrier",
   "ApplySchedule": "Appliquer un calendrier",
   "StartMatch": "Démarrer un match",

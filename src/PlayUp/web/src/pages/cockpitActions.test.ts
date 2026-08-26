@@ -87,6 +87,14 @@ describe('resolveCockpitActionIntent', () => {
     expect(intent).toEqual({ kind: 'navigate', to: `/stages/${stageId}` })
   })
 
+  it('navigates MaterializeFromOccupiedSlots to the stage pairing UI', () => {
+    const intent = resolveCockpitActionIntent(
+      { code: 'MaterializeFromOccupiedSlots', guaranteed: false, stageId },
+      cockpitView(),
+    )
+    expect(intent).toEqual({ kind: 'navigate', to: `/stages/${stageId}` })
+  })
+
   it('builds a stable action key from Host ids', () => {
     expect(
       cockpitActionKey({

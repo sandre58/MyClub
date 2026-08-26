@@ -26,6 +26,8 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 | `DrawStatus` | draw summaries / stage overview / cockpit draws |
 | `DrawResolutionState` | draw summaries / stage overview / cockpit draws |
 | `StructureFormatKind` | organisation / consultation format |
+| `MatchGenerationFormat` | organisation `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
+| `ProgressionOutcome` | progression-rules paths (`Winner` \| `Loser`) |
 
 ## Named response contracts (Phase 12.8)
 
@@ -140,13 +142,14 @@ Contract notes:
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking.
 - Organisation construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Cockpit situations only while competition is Draft/Ready.
 - `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
-- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` in V1 (construction only; empty when Running/Suspended/Completed/Archived). Championship omits `Draw` (format never uses draw path).
-- `transitionReadiness` reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system.
+- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots`. `Draw` / `MaterializeMatches` reuse Organisation readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. Championship omits `Draw`.
+- `transitionReadiness` for Draw / MaterializeMatches reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system. From-slots uses its own opportunity check (not Cup `ReadyForMaterialization`).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
 - Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
-- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only).
+- **`MaterializeFromOccupiedSlots` (Cockpit):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Cockpit does **not** choose SlotA/SlotB pairs and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects pairs explicitly on the Stage surface, then calls `POST …/matches/materialize-from-slots`.
+- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip.
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 
 DTO source: `MyClub.PlayUp.Application.Reads.CockpitViewDto`.
@@ -156,10 +159,37 @@ DTO source: `MyClub.PlayUp.Application.Reads.CockpitViewDto`.
 All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **codes + structured facts** only:
 
 - Workspace: `nextActionCode` (no `nextActionLabel`)
-- Organisation: `format.kind`, `readiness.blockers` (no `format.label`, no `hints`)
+- Organisation: `format.kind`, `structure.matchGenerationFormat`, `readiness.blockers` (no `format.label`, no `hints`)
 - Needs Attention: `source` / `severity` / targets (no `reason`)
 - Completion: reason `code` only (no `message`)
 - Cockpit: codes + facts only (already)
+
+### `POST /competitions/{competitionId}/organisation/structure` → `OrganisationViewDto`
+
+Configures primary stage structure (`ConfigureStructureRequest`).
+
+```json
+{
+  "format": "Championship",
+  "stageName": "League",
+  "matchdayCount": 1,
+  "groupCount": null,
+  "participantsPerGroup": null,
+  "bracketSize": null,
+  "matchGenerationFormat": "DoubleRoundRobin"
+}
+```
+
+| Field | Notes |
+| :--- | :--- |
+| `format` | `Championship` \| `Groups` \| `Cup` (case-insensitive) |
+| `matchGenerationFormat` | Optional. `SingleRoundRobin` (default) \| `DoubleRoundRobin`. Applies to **Championship / Groups** only. Ignored for Cup skeleton. |
+
+**Materialization principle:** `POST …/matches/materialize` does **not** accept a generation-mode body. `MaterializeMatches` reads `Stage.MatchGenerationFormat` persisted by ConfigureStructure (or Domain defaults).
+
+Organisation Read already exposes `structure.matchGenerationFormat` on `OrganisationStructureSummaryDto` (same enum strings).
+
+Host contract: `MyClub.PlayUp.Host.Contracts.ConfigureStructureRequest`.
 
 ### `POST /competitions/{competitionId}/prepare` → 204 No Content
 
@@ -181,6 +211,59 @@ Competition lifecycle: Domain `Ready → Running`. No request body.
 | **404** | Competition not found (`Application.CompetitionNotFound`) |
 | **409** | Invalid transition / closed competition (`Competition.InvalidTransition` or `Application.CompetitionClosed`) |
 
+### Thin authoring (multi-stage Cup)
+
+Additional stages / rounds / slots / progression rules without Domain seeding. Does **not** author Fixtures (first tour remains MaterializeCup + Pairing; later tours use materialize-from-slots).
+
+#### `POST /competitions/{competitionId}/stages` → 201 `AddCompetitionStageResponse`
+
+```json
+{ "name": "Semi-Finals" }
+```
+
+```json
+{ "stageId": "<guid>", "name": "Semi-Finals" }
+```
+
+#### `POST /stages/{stageId}/rounds` → 201 `AddStageRoundResponse`
+
+```json
+{ "name": "SF", "numberOfLegs": 2, "aggregateScoring": true }
+```
+
+`numberOfLegs` / `aggregateScoring` optional. Omit legs to use stage regulation default. `numberOfLegs` must be `1` or `2` when set.
+
+```json
+{ "roundId": "<guid>", "name": "SF" }
+```
+
+#### `POST /stages/{stageId}/slots` → 201 `AddStageSlotResponse`
+
+```json
+{ "slotKey": "SF1-A" }
+```
+
+```json
+{ "slotKey": "SF1-A" }
+```
+
+#### `PUT /stages/{stageId}/progression-rules` → 204 No Content
+
+```json
+{
+  "paths": [
+    {
+      "sourceFixtureId": "<guid>",
+      "outcome": "Winner",
+      "destinationStageId": "<guid>",
+      "destinationSlotKey": "SF1-A"
+    }
+  ]
+}
+```
+
+Empty or null `paths` clears rules. Domain validates source fixture ownership and local destinations.
+
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 
 ```json
@@ -194,12 +277,44 @@ Competition lifecycle: Domain `Ready → Running`. No request body.
 
 ### `POST /stages/{stageId}/matches/materialize` → `MaterializeMatchesResponse`
 
+Creates Fixtures/Matches for the stage format (Championship / Groups RR, or Cup empty-fixture skeleton for Pairing). No request body. Reads persisted `Stage.MatchGenerationFormat` for RR (see ConfigureStructure above).
+
 ```json
 {
   "createdCount": 6,
   "attachedMatchIds": ["<guid>", "..."],
   "alreadyComplete": false
 }
+```
+
+### `POST /stages/{stageId}/matches/materialize-from-slots` → `MaterializeMatchesResponse`
+
+**Distinct from** `…/matches/materialize`. Materializes Cup confrontations from **explicit** occupied SlotA/SlotB pairs (creates Fixture + Matches; reuses TieFormat legs). Does **not** invent pairs.
+
+```json
+{
+  "pairs": [
+    { "slotAKey": "SF1-A", "slotBKey": "SF1-B" }
+  ]
+}
+```
+
+Response shape is the same `MaterializeMatchesResponse` as materialize.
+
+| Gate | Allowed |
+| :--- | :--- |
+| Competition | `Draft` \| `Ready` \| `Running` |
+| Target stage | `Draft` \| `Ready` only |
+| Target stage `Running` | Rejected (`Application.OrganisationNotMutable`) |
+| StructureLocked / AttachMatch on Running stage | Unchanged — not unlocked by this endpoint |
+
+Typical product flow (Cockpit is readiness + navigation only):
+
+```text
+Cockpit (MaterializeFromOccupiedSlots)
+  → navigate to Stage
+  → user selects SlotA ↔ SlotB
+  → POST /stages/{id}/matches/materialize-from-slots
 ```
 
 These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no Domain aggregates.
@@ -235,6 +350,8 @@ ProblemDetails extensions:
 ### Other Application codes (400 by default)
 
 Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `OrganisationNotMutable`, `MaterializationFailure`, `InvalidCompletionMode`.
+
+Cockpit from-slots readiness may surface blocker code `InsufficientOccupiedSlots` (not an Application exception code — Read projection only).
 
 ## Frontend boundary
 

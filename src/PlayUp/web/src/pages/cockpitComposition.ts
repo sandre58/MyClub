@@ -57,6 +57,7 @@ export function actionPresentationSlot(code: string): ConstructionSlot | 'operat
     case 'PublishDraw':
     case 'ApplyDraw':
     case 'MaterializeMatches':
+    case 'MaterializeFromOccupiedSlots':
     case 'GenerateSchedule':
     case 'ApplySchedule':
     case 'ApplyProgression':
@@ -152,6 +153,7 @@ export function actionsForDraw(
 export function stageWideOperationalActions(actions: CockpitAction[]): CockpitAction[] {
   return actions.filter((action) =>
     action.code === 'MaterializeMatches' ||
+    action.code === 'MaterializeFromOccupiedSlots' ||
     action.code === 'GenerateSchedule' ||
     action.code === 'ApplySchedule' ||
     action.code === 'ApplyProgression' ||

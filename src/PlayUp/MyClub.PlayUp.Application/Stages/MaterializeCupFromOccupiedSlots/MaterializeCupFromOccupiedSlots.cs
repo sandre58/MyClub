@@ -197,10 +197,13 @@ public static class MaterializeCupFromOccupiedSlots
             string.Equals(fixture.SlotAKey, slotAKey, StringComparison.Ordinal)
             && string.Equals(fixture.SlotBKey, slotBKey, StringComparison.Ordinal));
 
+    /// <summary>
+    /// Late materialization of a not-yet-started Cup stage is allowed while the competition runs.
+    /// Does not unlock StructureLocked: a Running stage remains immutable.
+    /// </summary>
     private static void EnsureMutable(Competition competition, Stage stage)
     {
-        if (competition.Status is CompetitionStatus.Running
-            or CompetitionStatus.Suspended
+        if (competition.Status is CompetitionStatus.Suspended
             or CompetitionStatus.Completed
             or CompetitionStatus.Archived)
         {

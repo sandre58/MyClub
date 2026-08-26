@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   applyDraw,
   fetchCompetitionOverview,
   fetchStageOverview,
+  materializeCupFromOccupiedSlots,
   prepareStage,
   publishDraw,
   startStage,
@@ -175,6 +177,8 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         {stageActionError && <MutationError error={stageActionError} />}
       </section>
 
+      <CupConfrontationsPanel data={data} />
+
       <section className="card" aria-labelledby="rounds-heading">
         <div className="card__head">
           <h2 className="card__title" id="rounds-heading">
@@ -257,6 +261,189 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         rounds={data.rounds}
       />
     </div>
+  )
+}
+
+type CupSlotPairDraft = { slotAKey: string; slotBKey: string }
+
+/**
+ * Explicit SlotA↔SlotB pairing for materialize-from-slots (D2).
+ * No naming heuristic — organizer chooses pairs.
+ */
+function CupConfrontationsPanel({ data }: { data: StageOverview }) {
+  const { t } = useTranslation('stage')
+  const queryClient = useQueryClient()
+  const [pairs, setPairs] = useState<CupSlotPairDraft[]>([])
+  const [slotA, setSlotA] = useState('')
+  const [slotB, setSlotB] = useState('')
+
+  const occupied = data.slots.filter((slot) => slot.entryId != null)
+  const usedKeys = new Set(pairs.flatMap((pair) => [pair.slotAKey, pair.slotBKey]))
+  const availableForSelect = occupied.filter((slot) => !usedKeys.has(slot.slotKey))
+
+  const canShow =
+    (data.status === 'Draft' || data.status === 'Ready') &&
+    data.rounds.length > 0 &&
+    occupied.length >= 2
+
+  const materializeMutation = useMutation({
+    mutationFn: () =>
+      materializeCupFromOccupiedSlots(
+        data.id,
+        pairs.map((pair) => ({
+          slotAKey: pair.slotAKey,
+          slotBKey: pair.slotBKey,
+        })),
+      ),
+    onSuccess: async () => {
+      setPairs([])
+      setSlotA('')
+      setSlotB('')
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stages.detail(data.id),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.competitions.cockpit(data.competitionId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.competitions.detail(data.competitionId),
+      })
+    },
+  })
+
+  if (!canShow) {
+    return null
+  }
+
+  const canAdd =
+    slotA.length > 0 &&
+    slotB.length > 0 &&
+    slotA !== slotB &&
+    !usedKeys.has(slotA) &&
+    !usedKeys.has(slotB)
+
+  return (
+    <section className="card" aria-labelledby="confrontations-heading">
+      <h2 className="card__title" id="confrontations-heading">
+        {t('confrontations.heading')}
+      </h2>
+      <p className="muted">{t('confrontations.intro')}</p>
+      <p className="muted">
+        {t('confrontations.occupiedHint', { count: occupied.length })}
+      </p>
+
+      {pairs.length > 0 && (
+        <ul className="plain-list" aria-label={t('confrontations.pairsHeading')}>
+          {pairs.map((pair) => (
+            <li key={`${pair.slotAKey}:${pair.slotBKey}`} className="button-row">
+              <span>
+                {t('confrontations.pairLabel', {
+                  slotA: pair.slotAKey,
+                  slotB: pair.slotBKey,
+                })}
+              </span>
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={() =>
+                  setPairs((current) =>
+                    current.filter(
+                      (item) =>
+                        item.slotAKey !== pair.slotAKey ||
+                        item.slotBKey !== pair.slotBKey,
+                    ),
+                  )
+                }
+              >
+                {t('confrontations.removePair')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {pairs.length === 0 && (
+        <p className="muted">{t('confrontations.pairsEmpty')}</p>
+      )}
+
+      {availableForSelect.length >= 2 && (
+        <div className="button-row">
+          <label>
+            {t('confrontations.slotA')}{' '}
+            <select
+              value={slotA}
+              onChange={(event) => setSlotA(event.target.value)}
+            >
+              <option value="">{t('confrontations.selectPlaceholder')}</option>
+              {availableForSelect
+                .filter((slot) => slot.slotKey !== slotB)
+                .map((slot) => (
+                  <option key={slot.slotKey} value={slot.slotKey}>
+                    {slot.slotKey}
+                    {slot.displayName ? ` — ${slot.displayName}` : ''}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            {t('confrontations.slotB')}{' '}
+            <select
+              value={slotB}
+              onChange={(event) => setSlotB(event.target.value)}
+            >
+              <option value="">{t('confrontations.selectPlaceholder')}</option>
+              {availableForSelect
+                .filter((slot) => slot.slotKey !== slotA)
+                .map((slot) => (
+                  <option key={slot.slotKey} value={slot.slotKey}>
+                    {slot.slotKey}
+                    {slot.displayName ? ` — ${slot.displayName}` : ''}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="btn"
+            disabled={!canAdd}
+            onClick={() => {
+              setPairs((current) => [...current, { slotAKey: slotA, slotBKey: slotB }])
+              setSlotA('')
+              setSlotB('')
+            }}
+          >
+            {t('confrontations.addPair')}
+          </button>
+        </div>
+      )}
+
+      <div className="button-row">
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={pairs.length === 0 || materializeMutation.isPending}
+          onClick={() => materializeMutation.mutate()}
+        >
+          {materializeMutation.isPending ? (
+            <PendingLabel>{t('confrontations.submitting')}</PendingLabel>
+          ) : (
+            t('confrontations.submit')
+          )}
+        </button>
+      </div>
+
+      {materializeMutation.isSuccess && (
+        <p className="notice" role="status">
+          {materializeMutation.data.alreadyComplete
+            ? t('confrontations.successAlreadyComplete')
+            : t('confrontations.successCreated', {
+                count: materializeMutation.data.createdCount,
+              })}
+        </p>
+      )}
+      {materializeMutation.isError && (
+        <MutationError error={materializeMutation.error} />
+      )}
+    </section>
   )
 }
 

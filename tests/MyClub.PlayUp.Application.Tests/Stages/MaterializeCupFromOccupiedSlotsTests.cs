@@ -179,6 +179,57 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
     }
 
     [Fact]
+    public void Execute_allows_when_competition_running_and_stage_draft()
+    {
+        var competition = CreateCompetition.Execute("Cup-C2-Late", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var stage = CreateSemiStage(competition.Id);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ApplyResolvedEntry("SF1-A", a, _clock);
+        stage.ApplyResolvedEntry("SF1-B", b, _clock);
+
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            [new CupSlotPair("SF1-A", "SF1-B")],
+            [],
+            _clock);
+
+        result.CreatedMatches.Should().HaveCount(1);
+        result.AlreadyComplete.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Execute_rejects_when_competition_suspended()
+    {
+        var competition = CreateCompetition.Execute("Cup-C2-Susp", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Suspend(_clock);
+
+        var stage = CreateSemiStage(competition.Id);
+        stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+
+        var act = () => MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            [new CupSlotPair("SF1-A", "SF1-B")],
+            [],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+    }
+
+    [Fact]
     public void Composition_progression_then_materialize_from_slots()
     {
         var competition = CreateCompetition.Execute("Cup-C2-Comp", _clock);

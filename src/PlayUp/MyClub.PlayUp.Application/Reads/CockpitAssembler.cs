@@ -6,6 +6,7 @@
 
 using System.Globalization;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -54,6 +55,9 @@ public static class CockpitAssembler
     /// <summary>Transition readiness: materialize matches path.</summary>
     public const string TransitionMaterializeMatches = "MaterializeMatches";
 
+    /// <summary>Transition readiness: Cup from occupied slots (distinct from skeleton MaterializeMatches).</summary>
+    public const string TransitionMaterializeFromOccupiedSlots = "MaterializeFromOccupiedSlots";
+
     /// <summary>Transition readiness: draw path identifiable (structure/pots/bracket).</summary>
     public const string TransitionDraw = "Draw";
 
@@ -86,6 +90,9 @@ public static class CockpitAssembler
 
     /// <summary>Materialize matches.</summary>
     public const string ActionMaterializeMatches = "MaterializeMatches";
+
+    /// <summary>Materialize Cup confrontations from occupied slots (navigate to Stage pairing UI).</summary>
+    public const string ActionMaterializeFromOccupiedSlots = "MaterializeFromOccupiedSlots";
 
     /// <summary>Generate schedule proposal.</summary>
     public const string ActionGenerateSchedule = "GenerateSchedule";
@@ -156,7 +163,16 @@ public static class CockpitAssembler
         var operationalFocus = BuildOperationalFocus(competition, stages, matchesByStage, matchCounts);
         var dimensions = BuildDimensions(competition, organisation, stages, matchCounts);
         var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
-        var progression = ResolveNaturalProgression(competition, organisation, completion, attentionSummary.Count);
+        var fromSlotsOpportunities = stages
+            .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))
+            .Select(stage => stage.Id)
+            .ToArray();
+        var progression = ResolveNaturalProgression(
+            competition,
+            organisation,
+            completion,
+            attentionSummary.Count,
+            fromSlotsOpportunities.Length > 0);
         var closure = new CockpitClosureHintDto(
             completion?.CanCompleteNormally ?? false,
             completion?.Reasons.Select(reason => reason.Code).ToArray() ?? []);
@@ -312,7 +328,8 @@ public static class CockpitAssembler
         var mutable = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
         var readiness = inConstruction
             ? BuildRegulationTransitionReadiness(organisation)
-            : [];
+            : new List<CockpitTransitionReadinessDto>();
+        AppendFromSlotsTransitionReadiness(competition, stages, readiness);
 
         return new CockpitRegulationDimensionDto(
             prominence,
@@ -377,6 +394,48 @@ public static class CockpitAssembler
 
         return readiness;
     }
+
+    private static void AppendFromSlotsTransitionReadiness(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        List<CockpitTransitionReadinessDto> readiness)
+    {
+        if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready or CompetitionStatus.Running))
+        {
+            return;
+        }
+
+        var anyCup = false;
+        var anyReady = false;
+        foreach (var stage in stages)
+        {
+            if (!IsCupStage(stage))
+            {
+                continue;
+            }
+
+            anyCup = true;
+            if (TryDescribeFromSlotsOpportunity(competition, stage, out _))
+            {
+                anyReady = true;
+                break;
+            }
+        }
+
+        if (!anyCup)
+        {
+            return;
+        }
+
+        readiness.Add(
+            new CockpitTransitionReadinessDto(
+                TransitionMaterializeFromOccupiedSlots,
+                anyReady,
+                anyReady ? [] : [BlockerInsufficientOccupiedSlots]));
+    }
+
+    /// <summary>Blocker: Cup stage lacks enough uncovered occupied slots for from-slots materialization.</summary>
+    public const string BlockerInsufficientOccupiedSlots = "InsufficientOccupiedSlots";
 
     private static CockpitOperationalFocusDto BuildOperationalFocus(
         Competition competition,
@@ -699,6 +758,24 @@ public static class CockpitAssembler
                 materializeStageId));
         }
 
+        foreach (var stage in stages)
+        {
+            if (!TryDescribeFromSlotsOpportunity(competition, stage, out var occupiedSlotCount))
+            {
+                continue;
+            }
+
+            actions.Add(new CockpitActionDto(
+                ActionMaterializeFromOccupiedSlots,
+                Guaranteed: false,
+                stage.Id.Value,
+                Params: new Dictionary<string, string>
+                {
+                    ["stageName"] = stage.Name.Value,
+                    ["occupiedSlotCount"] = occupiedSlotCount.ToString(CultureInfo.InvariantCulture)
+                }));
+        }
+
         if (organisation.Readiness.ReadyForSchedule
             && organisation.Format.PrimaryStageId is { } scheduleStageId)
         {
@@ -850,15 +927,20 @@ public static class CockpitAssembler
         Competition competition,
         OrganisationViewDto organisation,
         CompletionAnalysis? completion,
-        int attentionCount) =>
+        int attentionCount,
+        bool fromSlotsOpportunity) =>
         competition.Status switch
         {
             CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForMaterialization =>
                 new CockpitNaturalProgressionDto(ActionMaterializeMatches),
             CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForDraw =>
                 new CockpitNaturalProgressionDto(ActionPublishDraw),
+            CompetitionStatus.Draft or CompetitionStatus.Ready when fromSlotsOpportunity =>
+                new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
             CompetitionStatus.Draft or CompetitionStatus.Ready =>
                 new CockpitNaturalProgressionDto(ProgressionContinueOrganisation),
+            CompetitionStatus.Running or CompetitionStatus.Suspended when fromSlotsOpportunity && attentionCount == 0 =>
+                new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
             CompetitionStatus.Running or CompetitionStatus.Suspended when completion?.CanCompleteNormally == true =>
                 new CockpitNaturalProgressionDto(ActionCompleteCompetition),
             CompetitionStatus.Running or CompetitionStatus.Suspended when attentionCount > 0 =>
@@ -869,6 +951,77 @@ public static class CockpitAssembler
                 new CockpitNaturalProgressionDto(ProgressionOpenConsultation),
             _ => null
         };
+
+    /// <summary>
+    /// Opportunity for from-slots materialization: Cup stage Draft/Ready, enough occupied slots
+    /// not yet covered by a complete SlotA/B fixture. Does not invent pairing.
+    /// </summary>
+    private static bool TryDescribeFromSlotsOpportunity(
+        Competition competition,
+        Stage stage,
+        out int occupiedSlotCount)
+    {
+        occupiedSlotCount = 0;
+        if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready or CompetitionStatus.Running))
+        {
+            return false;
+        }
+
+        if (stage.Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            return false;
+        }
+
+        if (!IsCupStage(stage))
+        {
+            return false;
+        }
+
+        var occupiedKeys = stage.Slots
+            .Where(slot => slot.EntryId is not null)
+            .Select(slot => slot.SlotKey)
+            .ToArray();
+        occupiedSlotCount = occupiedKeys.Length;
+        if (occupiedSlotCount < 2)
+        {
+            return false;
+        }
+
+        var covered = GetSlotsCoveredByCompleteFixtures(stage);
+        var uncoveredOccupied = occupiedKeys.Count(key => !covered.Contains(key));
+        return uncoveredOccupied >= 2;
+    }
+
+    private static bool IsCupStage(Stage stage) =>
+        stage.Rounds.Count > 0 && stage.Groups.Count == 0 && stage.Matchdays.Count == 0;
+
+    private static HashSet<string> GetSlotsCoveredByCompleteFixtures(Stage stage)
+    {
+        var covered = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var round in stage.Rounds)
+        {
+            var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(round);
+            foreach (var fixture in round.Fixtures)
+            {
+                if (fixture.Attachments.Count < expectedLegs)
+                {
+                    continue;
+                }
+
+                if (fixture.SlotAKey is not null)
+                {
+                    covered.Add(fixture.SlotAKey);
+                }
+
+                if (fixture.SlotBKey is not null)
+                {
+                    covered.Add(fixture.SlotBKey);
+                }
+            }
+        }
+
+        return covered;
+    }
 
     private static IReadOnlyList<CockpitNavigationHintDto> BuildNavigationHints(
         Competition competition,

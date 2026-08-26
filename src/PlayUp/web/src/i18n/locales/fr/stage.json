@@ -31,5 +31,22 @@
     "heading": "Tirages ({{count}})",
     "emptyTitle": "Aucun tirage",
     "emptyBody": "Un tirage apparaît lorsque la structure de phase en nécessite un."
+  },
+  "confrontations": {
+    "heading": "Confrontations",
+    "intro": "Appariez explicitement les emplacements occupés (Slot A ↔ Slot B), puis générez les rencontres.",
+    "occupiedHint": "{{count}} emplacement(s) occupé(s).",
+    "slotA": "Emplacement A",
+    "slotB": "Emplacement B",
+    "selectPlaceholder": "Choisir…",
+    "addPair": "Ajouter la paire",
+    "removePair": "Retirer",
+    "pairsHeading": "Paires à matérialiser",
+    "pairsEmpty": "Aucune paire — ajoutez au moins une confrontation.",
+    "pairLabel": "{{slotA}} ↔ {{slotB}}",
+    "submit": "Générer les confrontations",
+    "submitting": "Génération…",
+    "successCreated": "{{count}} match(s) créé(s).",
+    "successAlreadyComplete": "Ces confrontations étaient déjà générées."
   }
 }

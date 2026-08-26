@@ -73,7 +73,8 @@
       "notReady": "Pas prêt",
       "transitions": {
         "Draw": "Tirage",
-        "MaterializeMatches": "Création des matchs"
+        "MaterializeMatches": "Création des matchs",
+        "MaterializeFromOccupiedSlots": "Confrontations depuis les emplacements"
       },
       "readinessReady": "Le règlement permet d’envisager {{transition}}.",
       "readinessNotReady": "{{transition}} : conditions à lever",
@@ -140,6 +141,7 @@
       "OpenMatches": "Suivez les rencontres et saisissez les résultats.",
       "OpenConsultation": "Consultez les classements de la compétition.",
       "MaterializeMatches": "Générez le calendrier pour passer à l’étape suivante.",
+      "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — configurez les confrontations sur la phase.",
       "PublishDraw": "Publiez le tirage pour figer la composition.",
       "PrepareCompetition": "Passez la compétition en état prêt.",
       "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",

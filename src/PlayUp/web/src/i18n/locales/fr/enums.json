@@ -68,6 +68,7 @@
     "DrawPending": "Tirage en attente",
     "StageReady": "Phase prête",
     "InsufficientParticipants": "Participants insuffisants",
+    "InsufficientOccupiedSlots": "Emplacements occupés insuffisants pour des confrontations",
     "MissingStage": "Phase manquante",
     "MissingStructure": "Structure manquante",
     "MissingPotRules": "Règles de pots manquantes",

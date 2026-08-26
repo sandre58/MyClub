@@ -337,6 +337,16 @@ export function materializeMatches(
   return sendJson('POST', `/stages/${stageId}/matches/materialize`)
 }
 
+/** POST /stages/{stageId}/matches/materialize-from-slots → MaterializeMatchesResponse */
+export function materializeCupFromOccupiedSlots(
+  stageId: string,
+  pairs: { slotAKey: string; slotBKey: string }[],
+): Promise<{ createdCount: number; attachedMatchIds: string[]; alreadyComplete: boolean }> {
+  return sendJson('POST', `/stages/${stageId}/matches/materialize-from-slots`, {
+    pairs,
+  })
+}
+
 /** POST /stages/{stageId}/qualification/apply → QualificationApplyResponse */
 export function applyQualification(
   stageId: string,

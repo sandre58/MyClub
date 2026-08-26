@@ -1036,7 +1036,7 @@ function NaturalProgressionSection({
 
 /** Content glyph of the suggested step — flag when unmapped. */
 function progressionBadgeIcon(code: string) {
-  if (code === 'MaterializeMatches') {
+  if (code === 'MaterializeMatches' || code === 'MaterializeFromOccupiedSlots') {
     return <CreateMatchesIcon />
   }
   if (code === 'ContinueOrganisation') {

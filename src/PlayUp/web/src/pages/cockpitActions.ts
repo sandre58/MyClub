@@ -79,6 +79,11 @@ export function resolveCockpitActionIntent(
         ? { kind: 'execute', run: () => materializeMatches(stageId) }
         : { kind: 'unsupported' }
 
+    case 'MaterializeFromOccupiedSlots':
+      return stageId
+        ? { kind: 'navigate', to: `/stages/${stageId}` }
+        : { kind: 'unsupported' }
+
     case 'StartMatch':
       return matchId
         ? { kind: 'execute', run: () => startMatch(matchId) }
