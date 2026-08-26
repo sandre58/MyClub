@@ -49,6 +49,12 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .IsRequired()
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(stage => stage.MatchGenerationFormat)
+            .HasColumnName("match_generation_format")
+            .HasConversion<int>()
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Property(stage => stage.Regulation)
             .HasColumnName("stage_regulation")
             .HasColumnType("jsonb")

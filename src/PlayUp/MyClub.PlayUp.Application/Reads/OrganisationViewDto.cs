@@ -101,13 +101,15 @@ public sealed record OrganisationRegulationSummaryDto(
 /// <param name="SlotCount">Slots.</param>
 /// <param name="HasDrawRules">Whether stage DrawRules are set.</param>
 /// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
+/// <param name="MatchGenerationFormat">Championship / Groups generation mode.</param>
 public sealed record OrganisationStructureSummaryDto(
     int GroupCount,
     int RoundCount,
     int MatchdayCount,
     int SlotCount,
     bool HasDrawRules,
-    int? NumberOfPots);
+    int? NumberOfPots,
+    MatchGenerationFormat MatchGenerationFormat);
 
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
 /// <param name="ReadyForNextSlice">True when organisation is sufficient for Slice 3 entry.</param>

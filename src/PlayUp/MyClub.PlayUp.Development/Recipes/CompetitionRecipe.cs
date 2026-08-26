@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
+
 namespace MyClub.PlayUp.Development.Recipes;
 
 /// <summary>
@@ -25,6 +27,11 @@ public sealed record CompetitionRecipe
 
     /// <summary>Gets championship matchday count (Championship).</summary>
     public int? MatchdayCount { get; init; }
+
+    /// <summary>
+    /// Gets Championship / Groups match generation format (default SingleRoundRobin).
+    /// </summary>
+    public MatchGenerationFormat MatchGenerationFormat { get; init; } = MatchGenerationFormat.SingleRoundRobin;
 
     /// <summary>Gets group count (Groups).</summary>
     public int? GroupCount { get; init; }

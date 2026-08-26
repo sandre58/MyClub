@@ -33,6 +33,7 @@ public sealed class Stage : AggregateRoot<StageId>
         Name = name;
         Regulation = regulation;
         Status = StageStatus.Draft;
+        MatchGenerationFormat = MatchGenerationFormat.SingleRoundRobin;
     }
 
     /// <summary>
@@ -54,6 +55,12 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the stage lifecycle status.
     /// </summary>
     public StageStatus Status { get; private set; }
+
+    /// <summary>
+    /// Gets how Championship / Groups matches are generated for this stage.
+    /// </summary>
+    /// <remarks>Cup materialization ignores this value. Default is <see cref="MatchGenerationFormat.SingleRoundRobin"/>.</remarks>
+    public MatchGenerationFormat MatchGenerationFormat { get; private set; }
 
     /// <summary>
     /// Gets the groups in this stage.
@@ -544,6 +551,31 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         Name = name;
+    }
+
+    /// <summary>
+    /// Sets how Championship / Groups matches are generated. No-op when unchanged.
+    /// </summary>
+    /// <param name="format">The match generation format.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void SetMatchGenerationFormat(MatchGenerationFormat format, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (MatchGenerationFormat == format)
+        {
+            return;
+        }
+
+        if (!Enum.IsDefined(format))
+        {
+            throw new DomainException(
+                $"Unknown match generation format '{format}'.",
+                StageErrorCodes.InvalidMatchGenerationFormat);
+        }
+
+        MatchGenerationFormat = format;
     }
 
     /// <summary>

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Development.Recipes;
 
@@ -40,7 +41,9 @@ public static class CompetitionRecipeValidator
     private static StructureIntent ValidateChampionship(CompetitionRecipe recipe)
     {
         var matchdays = recipe.MatchdayCount ?? 1;
-        return matchdays < 1 ? throw new InvalidOperationException("Championship requires MatchdayCount >= 1.") : StructureIntent.Championship(matchdays, recipe.StageName);
+        return matchdays < 1
+            ? throw new InvalidOperationException("Championship requires MatchdayCount >= 1.")
+            : StructureIntent.Championship(matchdays, recipe.StageName, recipe.MatchGenerationFormat);
     }
 
     private static StructureIntent ValidateGroups(CompetitionRecipe recipe)
@@ -53,7 +56,7 @@ public static class CompetitionRecipeValidator
         return groups * perGroup != recipe.TeamCount
             ? throw new InvalidOperationException(
                 $"Groups recipe requires GroupCount × ParticipantsPerGroup == TeamCount ({groups}×{perGroup}≠{recipe.TeamCount}).")
-            : StructureIntent.Groups(groups, perGroup, recipe.StageName);
+            : StructureIntent.Groups(groups, perGroup, recipe.StageName, recipe.MatchGenerationFormat);
     }
 
     private static StructureIntent ValidateCup(CompetitionRecipe recipe)

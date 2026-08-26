@@ -102,6 +102,7 @@ public sealed record ConsultationStageStructureDto(
     string Name,
     StageStatus Status,
     StructureFormatKind? FormatKind,
+    MatchGenerationFormat MatchGenerationFormat,
     IReadOnlyList<ConsultationGroupStructureDto> Groups,
     IReadOnlyList<ConsultationMatchdayStructureDto> Matchdays,
     IReadOnlyList<ConsultationRoundStructureDto> Rounds,

@@ -206,4 +206,9 @@ public static class StageErrorCodes
     /// (duplicates, missing target, Fixed divergence, unattached match).
     /// </summary>
     public const string MatchPlacementInvalid = "Stage.MatchPlacementInvalid";
+
+    /// <summary>
+    /// Gets the code when the match generation format is not a defined enum value.
+    /// </summary>
+    public const string InvalidMatchGenerationFormat = "Stage.InvalidMatchGenerationFormat";
 }

@@ -15,10 +15,12 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// <param name="GroupCount">Groups format group count.</param>
 /// <param name="ParticipantsPerGroup">Groups format capacity / pot count.</param>
 /// <param name="BracketSize">Cup bracket size (power of two, 2–64).</param>
+/// <param name="MatchGenerationFormat">SingleRoundRobin | DoubleRoundRobin (Championship/Groups; default Single).</param>
 public sealed record ConfigureStructureRequest(
     string Format,
     string? StageName = null,
     int? MatchdayCount = null,
     int? GroupCount = null,
     int? ParticipantsPerGroup = null,
-    int? BracketSize = null);
+    int? BracketSize = null,
+    string? MatchGenerationFormat = null);

@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
+
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
@@ -20,7 +22,8 @@ public sealed class StructureIntent
         int matchdayCount,
         int groupCount,
         int participantsPerGroup,
-        int bracketSize)
+        int bracketSize,
+        MatchGenerationFormat matchGenerationFormat)
     {
         Format = format;
         StageName = stageName;
@@ -28,6 +31,7 @@ public sealed class StructureIntent
         GroupCount = groupCount;
         ParticipantsPerGroup = participantsPerGroup;
         BracketSize = bracketSize;
+        MatchGenerationFormat = matchGenerationFormat;
     }
 
     /// <summary>Gets the format kind.</summary>
@@ -49,15 +53,28 @@ public sealed class StructureIntent
     public int BracketSize { get; }
 
     /// <summary>
+    /// Gets how Championship / Groups matches are generated (Cup ignores this).
+    /// </summary>
+    public MatchGenerationFormat MatchGenerationFormat { get; }
+
+    /// <summary>
     /// Builds a championship intent (matchdays only; fixtures/matches deferred to Slice 3).
     /// </summary>
     /// <param name="matchdayCount">Number of matchdays (≥ 1).</param>
     /// <param name="stageName">Optional stage name.</param>
+    /// <param name="matchGenerationFormat">Single or double round-robin (default single).</param>
     /// <returns>Validated intent.</returns>
-    public static StructureIntent Championship(int matchdayCount = 1, string? stageName = null) =>
+    public static StructureIntent Championship(
+        int matchdayCount = 1,
+        string? stageName = null,
+        MatchGenerationFormat matchGenerationFormat = MatchGenerationFormat.SingleRoundRobin) =>
         matchdayCount < 1
             ? throw new ApplicationFailureException(
                 "Championship requires at least one matchday.",
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : !Enum.IsDefined(matchGenerationFormat)
+            ? throw new ApplicationFailureException(
+                $"Unknown match generation format '{matchGenerationFormat}'.",
                 ApplicationErrorCodes.InvalidStructureIntent)
             : new StructureIntent(
                 StructureFormatKind.Championship,
@@ -65,7 +82,8 @@ public sealed class StructureIntent
                 matchdayCount,
                 groupCount: 0,
                 participantsPerGroup: 0,
-                bracketSize: 0);
+                bracketSize: 0,
+                matchGenerationFormat);
 
     /// <summary>
     /// Builds a groups intent (empty groups + matchday + PotRules for future Group Draw).
@@ -73,8 +91,13 @@ public sealed class StructureIntent
     /// <param name="groupCount">Number of groups (≥ 2).</param>
     /// <param name="participantsPerGroup">Capacity per group (≥ 2); becomes PotRules.NumberOfPots.</param>
     /// <param name="stageName">Optional stage name.</param>
+    /// <param name="matchGenerationFormat">Single or double round-robin (default single).</param>
     /// <returns>Validated intent.</returns>
-    public static StructureIntent Groups(int groupCount, int participantsPerGroup, string? stageName = null) =>
+    public static StructureIntent Groups(
+        int groupCount,
+        int participantsPerGroup,
+        string? stageName = null,
+        MatchGenerationFormat matchGenerationFormat = MatchGenerationFormat.SingleRoundRobin) =>
         groupCount < 2
             ? throw new ApplicationFailureException(
                 "Groups format requires at least two groups.",
@@ -83,13 +106,18 @@ public sealed class StructureIntent
                 ? throw new ApplicationFailureException(
                     "Groups format requires at least two participants per group (PotRules).",
                     ApplicationErrorCodes.InvalidStructureIntent)
+                : !Enum.IsDefined(matchGenerationFormat)
+                ? throw new ApplicationFailureException(
+                    $"Unknown match generation format '{matchGenerationFormat}'.",
+                    ApplicationErrorCodes.InvalidStructureIntent)
                 : new StructureIntent(
                     StructureFormatKind.Groups,
                     NormalizeStageName(stageName, "Phase de groupes"),
                     matchdayCount: 1,
                     groupCount,
                     participantsPerGroup,
-                    bracketSize: 0);
+                    bracketSize: 0,
+                    matchGenerationFormat);
 
     /// <summary>
     /// Builds a cup intent. V1 bounds bracket size to a power of two (no bye matrix).
@@ -108,7 +136,8 @@ public sealed class StructureIntent
                 matchdayCount: 0,
                 groupCount: 0,
                 participantsPerGroup: 0,
-                bracketSize);
+                bracketSize,
+                MatchGenerationFormat.SingleRoundRobin);
 
     private static string NormalizeStageName(string? stageName, string fallback) => string.IsNullOrWhiteSpace(stageName) ? fallback : stageName.Trim();
 

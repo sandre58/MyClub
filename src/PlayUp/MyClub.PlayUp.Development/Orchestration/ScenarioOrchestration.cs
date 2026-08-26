@@ -139,27 +139,42 @@ internal static class ScenarioOrchestration
         Stage stage)
     {
         var created = new List<Match>();
+        var maxRounds = 0;
+        var perGroupRounds = new List<(int GroupIndex, IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> Rounds)>();
         for (var groupIndex = 0; groupIndex < stage.Groups.Count; groupIndex++)
         {
             var group = stage.Groups[groupIndex];
-            var pairs = MaterializeMatches.BuildRoundRobinPairs([.. group.EntryIds]);
-            EnsureMatchdays(stage, Math.Max(1, pairs.Count), context.Clock);
-            var matchdays = stage.Matchdays.OrderBy(m => m.Number).ToList();
-            for (var p = 0; p < pairs.Count; p++)
+            var rounds = MaterializeMatches.BuildRoundRobinRounds(
+                [.. group.EntryIds],
+                stage.MatchGenerationFormat);
+            perGroupRounds.Add((groupIndex, rounds));
+            maxRounds = Math.Max(maxRounds, rounds.Count);
+        }
+
+        EnsureMatchdays(stage, Math.Max(1, maxRounds), context.Clock);
+        var matchdays = stage.Matchdays.OrderBy(m => m.Number).ToList();
+
+        foreach (var (groupIndex, rounds) in perGroupRounds)
+        {
+            var matchOrdinal = 0;
+            for (var roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
             {
-                var matchday = matchdays[p % matchdays.Count];
-                var fixture = stage.AddFixture(matchday.Id, context.Clock);
-                var (home, away) = pairs[p];
-                var match = Match.Create(
-                    competition.Id,
-                    stage.Id,
-                    home,
-                    away,
-                    context.Ids.Match($"g-{groupIndex}-m-{p}"),
-                    context.Clock);
-                stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
-                context.Matches.Add(match);
-                created.Add(match);
+                var matchday = matchdays[roundIndex];
+                foreach (var (home, away) in rounds[roundIndex])
+                {
+                    var fixture = stage.AddFixture(matchday.Id, context.Clock);
+                    var match = Match.Create(
+                        competition.Id,
+                        stage.Id,
+                        home,
+                        away,
+                        context.Ids.Match($"g-{groupIndex}-m-{matchOrdinal}"),
+                        context.Clock);
+                    stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
+                    context.Matches.Add(match);
+                    created.Add(match);
+                    matchOrdinal++;
+                }
             }
         }
 
@@ -175,25 +190,29 @@ internal static class ScenarioOrchestration
             .Where(e => e.Status == EntryStatus.Active)
             .Select(e => e.Id)
             .ToList();
-        var pairs = MaterializeMatches.BuildRoundRobinPairs(entries);
-        EnsureMatchdays(stage, Math.Max(stage.Matchdays.Count, 1), context.Clock);
+        var rounds = MaterializeMatches.BuildRoundRobinRounds(entries, stage.MatchGenerationFormat);
+        EnsureMatchdays(stage, Math.Max(stage.Matchdays.Count, rounds.Count), context.Clock);
         var matchdays = stage.Matchdays.OrderBy(m => m.Number).ToList();
         var created = new List<Match>();
-        for (var p = 0; p < pairs.Count; p++)
+        var matchOrdinal = 0;
+        for (var roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
         {
-            var matchday = matchdays[p % matchdays.Count];
-            var fixture = stage.AddFixture(matchday.Id, context.Clock);
-            var (home, away) = pairs[p];
-            var match = Match.Create(
-                competition.Id,
-                stage.Id,
-                home,
-                away,
-                context.Ids.Match($"ch-m-{p}"),
-                context.Clock);
-            stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
-            context.Matches.Add(match);
-            created.Add(match);
+            var matchday = matchdays[roundIndex];
+            foreach (var (home, away) in rounds[roundIndex])
+            {
+                var fixture = stage.AddFixture(matchday.Id, context.Clock);
+                var match = Match.Create(
+                    competition.Id,
+                    stage.Id,
+                    home,
+                    away,
+                    context.Ids.Match($"ch-m-{matchOrdinal}"),
+                    context.Clock);
+                stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
+                context.Matches.Add(match);
+                created.Add(match);
+                matchOrdinal++;
+            }
         }
 
         return created;

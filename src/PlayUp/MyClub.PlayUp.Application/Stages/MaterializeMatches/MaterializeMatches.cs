@@ -18,7 +18,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <remarks>
 /// Orchestrates Domain primitives only (AddMatchday / AddFixture / Match.Create / AttachMatch).
-/// Idempotent when expected Home/Away pairs are already attached.
+/// Idempotent when expected directed Home/Away pairs are already attached.
+/// Championship / Groups read <see cref="Stage.MatchGenerationFormat"/> (Single or Double Round-Robin + PairMirror).
 /// </remarks>
 public static class MaterializeMatches
 {
@@ -80,8 +81,8 @@ public static class MaterializeMatches
                 ApplicationErrorCodes.MaterializationFailure);
         }
 
-        var pairs = BuildRoundRobinPairs(entries);
-        return MaterializePairsOnMatchdays(competition, stage, existingMatches, pairs, clock);
+        var rounds = BuildRoundRobinRounds(entries, stage.MatchGenerationFormat);
+        return MaterializeRoundsOnMatchdays(competition, stage, existingMatches, rounds, clock);
     }
 
     private static MaterializeMatchesResult MaterializeGroups(
@@ -97,11 +98,7 @@ public static class MaterializeMatches
                 ApplicationErrorCodes.MaterializationFailure);
         }
 
-        var existingByPair = existingMatches
-            .Where(match => stage.HasMatch(match.Id))
-            .ToDictionary(
-                match => CanonicalPair(match.HomeEntryId, match.AwayEntryId),
-                match => match);
+        var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
 
         var maxRounds = 0;
         var perGroupRounds = new List<IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>>>();
@@ -114,8 +111,7 @@ public static class MaterializeMatches
                     ApplicationErrorCodes.MaterializationFailure);
             }
 
-            var pairs = BuildRoundRobinPairs([.. group.EntryIds]);
-            var rounds = CircleMethodRounds(pairs);
+            var rounds = BuildRoundRobinRounds([.. group.EntryIds], stage.MatchGenerationFormat);
             perGroupRounds.Add(rounds);
             maxRounds = Math.Max(maxRounds, rounds.Count);
         }
@@ -123,7 +119,7 @@ public static class MaterializeMatches
         var expectedTotal = perGroupRounds.Sum(rounds => rounds.Sum(round => round.Count));
         var alreadyPresent = perGroupRounds
             .SelectMany(rounds => rounds.SelectMany(round => round))
-            .Count(pair => existingByPair.ContainsKey(CanonicalPair(pair.Home, pair.Away)));
+            .Count(pair => existingByPair.ContainsKey(DirectedPair(pair.Home, pair.Away)));
         if (alreadyPresent == expectedTotal)
         {
             return new MaterializeMatchesResult(
@@ -143,7 +139,7 @@ public static class MaterializeMatches
                 var matchday = matchdaysByIndex[roundIndex];
                 foreach (var (home, away) in rounds[roundIndex])
                 {
-                    var key = CanonicalPair(home, away);
+                    var key = DirectedPair(home, away);
                     if (existingByPair.ContainsKey(key))
                     {
                         continue;
@@ -202,21 +198,18 @@ public static class MaterializeMatches
             : new MaterializeMatchesResult([], attached, AlreadyComplete: attached.Count >= expectedFixtures);
     }
 
-    private static MaterializeMatchesResult MaterializePairsOnMatchdays(
+    private static MaterializeMatchesResult MaterializeRoundsOnMatchdays(
         Competition competition,
         Stage stage,
         IReadOnlyList<Match> existingMatches,
-        IReadOnlyList<(EntryId Home, EntryId Away)> pairs,
+        IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds,
         IClock clock)
     {
-        var existingByPair = existingMatches
-            .Where(match => stage.HasMatch(match.Id))
-            .ToDictionary(
-                match => CanonicalPair(match.HomeEntryId, match.AwayEntryId),
-                match => match);
+        var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
 
-        var missing = pairs
-            .Where(pair => !existingByPair.ContainsKey(CanonicalPair(pair.Home, pair.Away)))
+        var expectedPairs = rounds.SelectMany(round => round).ToList();
+        var missing = expectedPairs
+            .Where(pair => !existingByPair.ContainsKey(DirectedPair(pair.Home, pair.Away)))
             .ToList();
 
         if (missing.Count == 0)
@@ -227,7 +220,6 @@ public static class MaterializeMatches
                 AlreadyComplete: true);
         }
 
-        var rounds = CircleMethodRounds([.. pairs.Select(pair => (pair.Home, pair.Away))]);
         EnsureMatchdays(stage, rounds.Count, clock);
         var matchdaysByIndex = stage.Matchdays.OrderBy(matchday => matchday.Number).ToList();
 
@@ -237,7 +229,7 @@ public static class MaterializeMatches
             var matchday = matchdaysByIndex[roundIndex];
             foreach (var (home, away) in rounds[roundIndex])
             {
-                var key = CanonicalPair(home, away);
+                var key = DirectedPair(home, away);
                 if (existingByPair.ContainsKey(key))
                 {
                     continue;
@@ -256,8 +248,9 @@ public static class MaterializeMatches
     }
 
     /// <summary>
-    /// Builds single round-robin pairs (home/away ordered stably by EntryId).
+    /// Builds single round-robin directed pairs (home/away ordered stably by EntryId).
     /// </summary>
+    /// <remarks>Used for combinatorial expectations; packing uses <see cref="BuildRoundRobinRounds"/>.</remarks>
     public static IReadOnlyList<(EntryId Home, EntryId Away)> BuildRoundRobinPairs(IReadOnlyList<EntryId> entries)
     {
         var ordered = entries.OrderBy(id => id.Value).ToList();
@@ -274,24 +267,54 @@ public static class MaterializeMatches
     }
 
     /// <summary>
-    /// Circle method: packs pairs into rounds so each team plays at most once per round.
+    /// Builds packed matchday rounds for Championship / Groups according to <paramref name="format"/>.
+    /// </summary>
+    /// <remarks>
+    /// DoubleRoundRobin = phase-1 circle packing + PairMirror (swap Home/Away), without H/A streak optimization.
+    /// Contract is invariants B1–B6; circle method is the V1 packing implementation only.
+    /// </remarks>
+    public static IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> BuildRoundRobinRounds(
+        IReadOnlyList<EntryId> entries,
+        MatchGenerationFormat format)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        if (!Enum.IsDefined(format))
+        {
+            throw new ApplicationFailureException(
+                $"Unknown match generation format '{format}'.",
+                ApplicationErrorCodes.MaterializationFailure);
+        }
+
+        var phase1 = CircleMethodRounds(entries);
+        if (format == MatchGenerationFormat.SingleRoundRobin)
+        {
+            return phase1;
+        }
+
+        var mirrored = phase1
+            .Select(round =>
+            {
+                IReadOnlyList<(EntryId Home, EntryId Away)> mirroredRound =
+                    [.. round.Select(pair => (pair.Away, pair.Home))];
+                return mirroredRound;
+            })
+            .ToArray();
+        return [.. phase1, .. mirrored];
+    }
+
+    /// <summary>
+    /// Circle method: packs entries into rounds so each team plays at most once per round.
     /// </summary>
     internal static IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> CircleMethodRounds(
-        IReadOnlyList<(EntryId Home, EntryId Away)> allPairs)
+        IReadOnlyList<EntryId> entries)
     {
-        // Prefer classic circle scheduling from the unique entry set for even packing.
-        var entries = allPairs
-            .SelectMany(pair => new[] { pair.Home, pair.Away })
-            .Distinct()
-            .OrderBy(id => id.Value)
-            .ToList();
-
-        if (entries.Count < 2)
+        var ordered = entries.Distinct().OrderBy(id => id.Value).ToList();
+        if (ordered.Count < 2)
         {
             return [];
         }
 
-        var working = entries.ToList();
+        var working = ordered.ToList();
         var bye = EntryId.New();
         var hasBye = working.Count % 2 != 0;
         if (hasBye)
@@ -331,6 +354,23 @@ public static class MaterializeMatches
         return rounds;
     }
 
+    /// <summary>
+    /// Legacy overload kept for callers that still pass combinatorial pairs (extracts entries).
+    /// </summary>
+    internal static IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> CircleMethodRounds(
+        IReadOnlyList<(EntryId Home, EntryId Away)> allPairs) =>
+        CircleMethodRounds(
+            allPairs.SelectMany(pair => new[] { pair.Home, pair.Away }).Distinct().ToList());
+
+    private static Dictionary<(EntryId Home, EntryId Away), Match> IndexExistingDirectedPairs(
+        Stage stage,
+        IReadOnlyList<Match> existingMatches) =>
+        existingMatches
+            .Where(match => stage.HasMatch(match.Id))
+            .ToDictionary(
+                match => DirectedPair(match.HomeEntryId, match.AwayEntryId),
+                match => match);
+
     private static void EnsureMatchdays(Stage stage, int requiredCount, IClock clock)
     {
         var nextNumber = stage.Matchdays.Count == 0
@@ -358,8 +398,7 @@ public static class MaterializeMatches
             .Distinct()
     ];
 
-    private static (EntryId Left, EntryId Right) CanonicalPair(EntryId a, EntryId b) =>
-        a.Value.CompareTo(b.Value) <= 0 ? (a, b) : (b, a);
+    private static (EntryId Home, EntryId Away) DirectedPair(EntryId home, EntryId away) => (home, away);
 
     private static (EntryId Home, EntryId Away) CanonicalOrdered(EntryId a, EntryId b) =>
         a.Value.CompareTo(b.Value) <= 0 ? (a, b) : (b, a);
@@ -368,10 +407,10 @@ public static class MaterializeMatches
         stage.Rounds.Count > 0
             ? StructureFormatKind.Cup
             : stage.Groups.Count > 0
-                ? StructureFormatKind.Groups
-                : stage.Matchdays.Count > 0
-                    ? StructureFormatKind.Championship
-                    : null;
+            ? StructureFormatKind.Groups
+            : stage.Matchdays.Count > 0
+            ? StructureFormatKind.Championship
+            : null;
 
     private static void EnsureMutable(Competition competition, Stage stage)
     {
@@ -381,14 +420,14 @@ public static class MaterializeMatches
             or CompetitionStatus.Archived)
         {
             throw new ApplicationFailureException(
-                $"Matches cannot be materialized when competition status is '{competition.Status}'.",
+                $"Matches cannot be materialized while competition status is '{competition.Status}'.",
                 ApplicationErrorCodes.OrganisationNotMutable);
         }
 
         if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
             throw new ApplicationFailureException(
-                $"Matches cannot be materialized when stage status is '{stage.Status}'.",
+                $"Matches cannot be materialized while stage status is '{stage.Status}'.",
                 ApplicationErrorCodes.OrganisationNotMutable);
         }
     }

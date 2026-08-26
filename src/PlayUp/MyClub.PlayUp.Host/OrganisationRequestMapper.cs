@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Host.Contracts;
 
@@ -23,9 +24,10 @@ internal static class OrganisationRequestMapper
     {
         ArgumentNullException.ThrowIfNull(request);
         var format = request.Format.Trim();
+        var matchGenerationFormat = ParseMatchGenerationFormat(request.MatchGenerationFormat);
         return format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase)
-            ? StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName)
+            ? StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName, matchGenerationFormat)
             : format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase)
             ? request.GroupCount is null || request.ParticipantsPerGroup is null
@@ -35,7 +37,8 @@ internal static class OrganisationRequestMapper
                 : StructureIntent.Groups(
                 request.GroupCount.Value,
                 request.ParticipantsPerGroup.Value,
-                request.StageName)
+                request.StageName,
+                matchGenerationFormat)
             : !format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
             && !format.Equals("Coupe", StringComparison.OrdinalIgnoreCase)
             ? throw new ApplicationFailureException(
@@ -70,5 +73,20 @@ internal static class OrganisationRequestMapper
                     RankingCriterion.GoalsFor,
                     RankingCriterion.HeadToHead
                 ]));
+    }
+
+    private static MatchGenerationFormat ParseMatchGenerationFormat(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return MatchGenerationFormat.SingleRoundRobin;
+        }
+
+        return Enum.TryParse<MatchGenerationFormat>(value.Trim(), ignoreCase: true, out var parsed)
+               && Enum.IsDefined(parsed)
+            ? parsed
+            : throw new ApplicationFailureException(
+                $"Unknown MatchGenerationFormat '{value}'. Expected SingleRoundRobin or DoubleRoundRobin.",
+                ApplicationErrorCodes.InvalidStructureIntent);
     }
 }

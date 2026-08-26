@@ -103,6 +103,8 @@ public static class ConfigureStructure
                     ApplicationErrorCodes.InvalidStructureIntent);
         }
 
+        stage.SetMatchGenerationFormat(intent.MatchGenerationFormat, clock);
+
         return new ConfigureStructureResult(stage, stageCreated);
     }
 

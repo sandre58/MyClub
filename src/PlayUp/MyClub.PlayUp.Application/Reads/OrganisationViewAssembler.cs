@@ -142,7 +142,14 @@ public static class OrganisationViewAssembler
     {
         if (primary is null)
         {
-            return new OrganisationStructureSummaryDto(0, 0, 0, 0, false, null);
+            return new OrganisationStructureSummaryDto(
+                0,
+                0,
+                0,
+                0,
+                false,
+                null,
+                MatchGenerationFormat.SingleRoundRobin);
         }
 
         var drawRules = primary.Regulation.DrawRules;
@@ -152,7 +159,8 @@ public static class OrganisationViewAssembler
             primary.Matchdays.Count,
             primary.Slots.Count,
             drawRules is not null,
-            drawRules?.PotRules?.NumberOfPots);
+            drawRules?.PotRules?.NumberOfPots,
+            primary.MatchGenerationFormat);
     }
 
     private static OrganisationReadinessDto BuildReadiness(

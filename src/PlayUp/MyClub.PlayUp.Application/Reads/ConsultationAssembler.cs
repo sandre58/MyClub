@@ -279,6 +279,7 @@ public static class ConsultationAssembler
                 stage.Name.Value,
                 stage.Status,
                 format,
+                stage.MatchGenerationFormat,
                 groups,
                 matchdays,
                 rounds,
