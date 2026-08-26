@@ -8,9 +8,12 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Development.Tests;
@@ -108,6 +111,49 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
             .ListByStageAsync(stage!.Id);
         matches.Should().OnlyContain(m => m.Status == MatchStatus.Scheduled);
+        stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.DoubleRoundRobin);
+        stage.Matchdays.Should().HaveCount(34);
+        matches.Should().HaveCount(18 * 17); // N×(N−1) directed fixtures for Double RR
+    }
+
+    [Fact]
+    public async Task Cup_qf_sf_fills_semi_slots_and_projects_from_slots_cockpit_actionAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("cup-qf-sf")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.Status.Should().Be(CompetitionStatus.Running);
+        competition.StageIds.Should().HaveCount(2);
+
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var quarter = await stages.GetByIdAsync(competition.StageIds[0]);
+        var semi = await stages.GetByIdAsync(competition.StageIds[1]);
+        quarter.Should().NotBeNull();
+        semi.Should().NotBeNull();
+        semi.Status.Should().Be(StageStatus.Draft);
+        semi.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+        semi.Rounds[0].Fixtures.Should().BeEmpty();
+
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stageId in competition.StageIds)
+        {
+            var list = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+                .ListByStageAsync(stageId);
+            matchesByStage[stageId] = list;
+        }
+
+        var cockpit = CockpitAssembler.Assemble(
+            competition,
+            [quarter!, semi!],
+            matchesByStage);
+        cockpit.AvailableActions.Should().Contain(action =>
+            action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            && action.StageId == semi!.Id.Value);
     }
 
     [Fact]

@@ -117,7 +117,8 @@ public sealed class CliOptions
             Progress (structured templates/scenarios): prepared | running | finished
             Default progress when omitted: running
 
-            Templates are mono-stage approximations (not full real multi-phase tournaments).
+            Templates are capacity demos (e.g. ligue-1 = Double RR), not full real multi-phase calendars.
+            Scenario cup-qf-sf: QF played → SF slots filled (Cockpit materialize-from-slots demo).
             ConnectionStrings:PlayUpDev is required.
             """);
 #pragma warning restore CA1303

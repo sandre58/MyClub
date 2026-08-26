@@ -7,11 +7,12 @@
 using MyClub.PlayUp.Development.Orchestration;
 using MyClub.PlayUp.Development.Recipes;
 using MyClub.PlayUp.Development.Runtime;
+using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// Ligue 1 inspired championship (18 clubs, single round-robin — not double RR).
+/// Ligue 1 inspired championship — Double RR / PairMirror capacity demonstrator (not a real calendar).
 /// </summary>
 public sealed class Ligue1Template : ICompetitionTemplate
 {
@@ -23,7 +24,7 @@ public sealed class Ligue1Template : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Championship · 18 clubs (JSON). Domain V1: single RR only (not 34-matchday double RR).";
+        "Championship · 18 clubs (JSON) · DoubleRoundRobin (34 matchdays) — capacity demo, not real L1 calendar.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()
@@ -31,7 +32,8 @@ public sealed class Ligue1Template : ICompetitionTemplate
         DisplayName = "Ligue 1",
         Format = RecipeFormat.Championship,
         TeamCount = 18,
-        MatchdayCount = 17,
+        MatchdayCount = 34,
+        MatchGenerationFormat = MatchGenerationFormat.DoubleRoundRobin,
         StageName = "Championnat",
         TeamNames = TeamNameSource.Dataset,
         DatasetCompetitionKey = "ligue-1"

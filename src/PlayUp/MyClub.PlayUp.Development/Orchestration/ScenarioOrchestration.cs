@@ -326,6 +326,99 @@ internal static class ScenarioOrchestration
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Multi-stage Cup demo: QF played + progression fills SF slots; does <strong>not</strong>
+    /// call materialize-from-slots (Cockpit / Stage UI owns that step).
+    /// </summary>
+    public static async Task BuildCupQfSfAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Coupe QF → SF",
+            Format = RecipeFormat.Cup,
+            TeamCount = 8,
+            BracketSize = 8,
+            StageName = "Quart de finale",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = CreateCompetitionFromRecipe(context, recipe);
+        RegisterTeams(context, competition, recipe);
+        var quarter = ConfigurePrimaryStage(context, competition, recipe);
+        quarter.ReplaceRoundTieFormat(
+            quarter.Rounds[0].Id,
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            context.Clock);
+        var qfMatches = ApplyCupPairingDeterministic(context, competition, quarter);
+
+        var semi = Stage.Create(
+            competition.Id,
+            new StageName("Demi-finale"),
+            competition.Regulation,
+            context.Ids.Stage("sf"),
+            context.Clock);
+        semi.AddRound("Demi-finales", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
+        foreach (var key in new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" })
+        {
+            semi.AddSlot(key, context.Clock);
+        }
+
+        competition.AddStage(semi.Id, context.Clock);
+        context.Stages.Add(semi);
+
+        var qfFixtures = quarter.Rounds[0].Fixtures
+            .OrderBy(fixture => fixture.Id.Value)
+            .Take(4)
+            .ToArray();
+        if (qfFixtures.Length != 4)
+        {
+            throw new InvalidOperationException(
+                $"Expected 4 QF fixtures for cup-qf-sf, found {qfFixtures.Length}.");
+        }
+
+        var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
+        var paths = new List<ProgressionPath>(4);
+        for (var i = 0; i < 4; i++)
+        {
+            paths.Add(
+                new ProgressionPath(
+                    qfFixtures[i].Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(semi.Id, destinationKeys[i])));
+        }
+
+        quarter.ReplaceProgressionRules(new ProgressionRules(paths), context.Clock);
+
+        // SF stays Draft (from-slots opportunity). Start competition + QF only.
+        quarter.Prepare(context.Clock);
+        competition.Prepare(context.Clock);
+        quarter.Start(context.Clock);
+        competition.Start(context.Clock);
+
+        PlayMatches(context, qfMatches, count: qfMatches.Count);
+
+        var competitionStages = new Stage[] { quarter, semi };
+        foreach (var fixture in qfFixtures)
+        {
+            var legMatches = qfMatches
+                .Where(match => fixture.MatchIds.Contains(match.Id))
+                .ToArray();
+            ApplyProgressionOutcome.Execute(
+                quarter,
+                fixture.Id,
+                legMatches,
+                competitionStages,
+                context.Clock);
+        }
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public static void ApplyProgress(
         ScenarioContext context,
         Competition competition,
