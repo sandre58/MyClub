@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Moq;
-using MyClub.Media.Application;
 using MyClub.Media.Application.Abstractions;
 using MyClub.Media.Application.Media;
 using MyClub.Media.Domain;
@@ -16,8 +16,10 @@ namespace MyClub.Media.Application.Tests;
 
 public sealed class MediaServiceTests
 {
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Test")]
+    [SuppressMessage("Reliability", "CA2025:Do not pass 'IDisposable' instances into unawaited tasks", Justification = "Test")]
     [Fact]
-    public async Task CreateAsync_WhenRepositoryFails_DeletesStoredFile()
+    public async Task CreateAsync_WhenRepositoryFails_DeletesStoredFileAsync()
     {
         var repository = new Mock<IMediaRepository>(MockBehavior.Strict);
         var storage = new Mock<IMediaStorage>(MockBehavior.Strict);
@@ -54,7 +56,7 @@ public sealed class MediaServiceTests
     }
 
     [Fact]
-    public async Task DeleteAsync_RemovesMetadataBeforeFile()
+    public async Task DeleteAsync_RemovesMetadataBeforeFileAsync()
     {
         var media = MediaItem.Create(MediaContentTypes.Webp, 8, "x.webp", DateTimeOffset.UtcNow);
         var repository = new Mock<IMediaRepository>(MockBehavior.Strict);
@@ -84,7 +86,7 @@ public sealed class MediaServiceTests
     }
 
     [Fact]
-    public async Task GetMetadataAsync_WhenMissing_ThrowsNotFound()
+    public async Task GetMetadataAsync_WhenMissing_ThrowsNotFoundAsync()
     {
         var repository = new Mock<IMediaRepository>();
         var storage = new Mock<IMediaStorage>();

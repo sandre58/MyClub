@@ -6,7 +6,6 @@
 
 using System.Globalization;
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -309,15 +308,46 @@ public static class CockpitAssembler
                 organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
             ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
         };
-        if (organisation.Format.Kind == StructureFormatKind.Swiss)
+        if (organisation.Format.Kind != StructureFormatKind.Swiss)
         {
-            structureFacts["swissRoundCount"] =
-                (organisation.Structure.SwissRoundCount ?? 0).ToString(CultureInfo.InvariantCulture);
-            structureFacts["swissByeCount"] = stages
-                .Where(stage => stage.IsSwiss)
-                .Sum(stage => stage.SwissByeHistory.Count)
-                .ToString(CultureInfo.InvariantCulture);
+            return new CockpitConstructionDimensionsDto(
+                new CockpitDimensionDto(
+                    teamsProminence,
+                    new Dictionary<string, string>
+                    {
+                        ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                        ["occupyingCount"] =
+                            organisation.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
+                        ["minimumTeams"] =
+                            organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                        ["maximumTeams"] =
+                            organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
+                    }),
+                new CockpitDimensionDto(structureProminence, structureFacts),
+                BuildRegulationDimension(
+                    competition,
+                    organisation,
+                    stages,
+                    matchesByStage,
+                    regulationProminence,
+                    inConstruction),
+                new CockpitDimensionDto(
+                    matchesProminence,
+                    new Dictionary<string, string>
+                    {
+                        ["live"] = matchCounts.Live.ToString(CultureInfo.InvariantCulture),
+                        ["scheduled"] = matchCounts.Scheduled.ToString(CultureInfo.InvariantCulture),
+                        ["finished"] = matchCounts.Finished.ToString(CultureInfo.InvariantCulture),
+                        ["total"] = matchCounts.Total.ToString(CultureInfo.InvariantCulture)
+                    }));
         }
+
+        structureFacts["swissRoundCount"] =
+            (organisation.Structure.SwissRoundCount ?? 0).ToString(CultureInfo.InvariantCulture);
+        structureFacts["swissByeCount"] = stages
+            .Where(stage => stage.IsSwiss)
+            .Sum(stage => stage.SwissByeHistory.Count)
+            .ToString(CultureInfo.InvariantCulture);
 
         return new CockpitConstructionDimensionsDto(
             new CockpitDimensionDto(
@@ -371,7 +401,7 @@ public static class CockpitAssembler
         var mutable = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
         var readiness = inConstruction
             ? BuildRegulationTransitionReadiness(organisation)
-            : new List<CockpitTransitionReadinessDto>();
+            : [];
         AppendFromSlotsTransitionReadiness(competition, stages, readiness);
         AppendSwissGenerateNextRoundReadiness(competition, organisation, stages, matchesByStage, readiness);
 
@@ -496,20 +526,12 @@ public static class CockpitAssembler
             return;
         }
 
-        foreach (var stage in stages)
-        {
-            if (!TryDescribeFromSlotsOpportunity(competition, stage, out _))
-            {
-                continue;
-            }
-
-            readiness.Add(
-                new CockpitTransitionReadinessDto(
-                    TransitionMaterializeFromOccupiedSlots,
-                    Ready: true,
-                    []));
-            return;
-        }
+        if (!stages.Any(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))) return;
+        readiness.Add(
+            new CockpitTransitionReadinessDto(
+                TransitionMaterializeFromOccupiedSlots,
+                Ready: true,
+                []));
     }
 
     /// <summary>Blocker: Cup stage lacks enough uncovered occupied slots for from-slots materialization.</summary>
@@ -1094,7 +1116,7 @@ public static class CockpitAssembler
         }
 
         var stage = stages.FirstOrDefault(candidate => candidate.Id.Value == primaryId);
-        if (stage is null || !stage.IsSwiss || stage.SwissSettings is null)
+        if (stage?.IsSwiss != true || stage.SwissSettings is null)
         {
             return null;
         }

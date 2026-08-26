@@ -460,7 +460,7 @@ internal static class ScenarioOrchestration
 
         PlayDecisiveMatches(context, qfMatches);
 
-        var competitionStages = new Stage[] { quarter, semi };
+        var competitionStages = new[] { quarter, semi };
         foreach (var fixture in qfFixtures)
         {
             var legMatches = qfMatches
@@ -813,14 +813,14 @@ internal static class ScenarioOrchestration
         return keys;
     }
 
-    private static CupSlotPair[] AdjacentPairs(IReadOnlyList<string> slotKeys)
+    private static CupSlotPair[] AdjacentPairs(string[] slotKeys)
     {
-        if (slotKeys.Count % 2 != 0)
+        if (slotKeys.Length % 2 != 0)
         {
             throw new InvalidOperationException("Slot keys must come in pairs for from-slots materialization.");
         }
 
-        var pairs = new CupSlotPair[slotKeys.Count / 2];
+        var pairs = new CupSlotPair[slotKeys.Length / 2];
         for (var i = 0; i < pairs.Length; i++)
         {
             pairs[i] = new CupSlotPair(slotKeys[i * 2], slotKeys[(i * 2) + 1]);
@@ -882,25 +882,18 @@ internal static class ScenarioOrchestration
     private static void WireWinnerProgression(
         Stage source,
         Stage destination,
-        IReadOnlyList<Fixture> fixtures,
-        IReadOnlyList<string> destinationKeys,
+        Fixture[] fixtures,
+        string[] destinationKeys,
         IClock clock)
     {
-        if (fixtures.Count != destinationKeys.Count)
+        if (fixtures.Length != destinationKeys.Length)
         {
             throw new InvalidOperationException(
-                $"Progression wiring expects {destinationKeys.Count} fixtures, found {fixtures.Count}.");
+                $"Progression wiring expects {destinationKeys.Length} fixtures, found {fixtures.Length}.");
         }
 
-        var paths = new List<ProgressionPath>(fixtures.Count);
-        for (var i = 0; i < fixtures.Count; i++)
-        {
-            paths.Add(
-                new ProgressionPath(
-                    fixtures[i].Id,
-                    ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, destinationKeys[i])));
-        }
+        var paths = new List<ProgressionPath>(fixtures.Length);
+        paths.AddRange(fixtures.Select((t, i) => new ProgressionPath(t.Id, ProgressionOutcome.Winner, new ProgressionDestination(destination.Id, destinationKeys[i]))));
 
         source.ReplaceProgressionRules(new ProgressionRules(paths), clock);
     }
@@ -909,13 +902,13 @@ internal static class ScenarioOrchestration
         Stage semi,
         Stage final,
         Stage bronze,
-        IReadOnlyList<Fixture> sfFixtures,
+        Fixture[] sfFixtures,
         IClock clock)
     {
-        if (sfFixtures.Count != 2)
+        if (sfFixtures.Length != 2)
         {
             throw new InvalidOperationException(
-                $"Expected 2 SF fixtures for Final+Bronze wiring, found {sfFixtures.Count}.");
+                $"Expected 2 SF fixtures for Final+Bronze wiring, found {sfFixtures.Length}.");
         }
 
         var paths = new ProgressionPath[]

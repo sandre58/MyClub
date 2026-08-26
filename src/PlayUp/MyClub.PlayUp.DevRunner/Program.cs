@@ -43,6 +43,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 DevDatabaseGuard.ValidateForDestructiveUse(connectionString, environmentName: "Development");
 
 var mediaConnectionString = configuration.GetConnectionString("Media") ?? connectionString;
+
 // Prefer Media:StorageRoot (appsettings defaults to Host .local/media). Fallback walks from
 // bin/Debug/netX.0 up to the sibling Host project so seeded files are served by the Host.
 var mediaStorageRoot = configuration["Media:StorageRoot"];

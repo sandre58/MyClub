@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Development.Recipes;
 

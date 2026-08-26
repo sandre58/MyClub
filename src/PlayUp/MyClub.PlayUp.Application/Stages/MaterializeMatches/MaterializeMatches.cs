@@ -363,7 +363,7 @@ public static class MaterializeMatches
     internal static IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> CircleMethodRounds(
         IReadOnlyList<(EntryId Home, EntryId Away)> allPairs) =>
         CircleMethodRounds(
-            allPairs.SelectMany(pair => new[] { pair.Home, pair.Away }).Distinct().ToList());
+            [.. allPairs.SelectMany(pair => new[] { pair.Home, pair.Away }).Distinct()]);
 
     private static Dictionary<(EntryId Home, EntryId Away), Match> IndexExistingDirectedPairs(
         Stage stage,

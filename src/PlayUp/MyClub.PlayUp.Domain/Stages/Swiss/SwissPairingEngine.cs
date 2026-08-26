@@ -90,7 +90,7 @@ public static class SwissPairingEngine
         Dictionary<EntryId, SwissParticipantStanding> byEntry,
         IReadOnlyDictionary<EntryId, int> byeCounts) =>
         ordered
-            .OrderBy(id => byeCounts.GetValueOrDefault(id))
+            .OrderBy(byeCounts.GetValueOrDefault)
             .ThenByDescending(id => byEntry[id].Position)
             .ThenBy(id => id.Value);
 

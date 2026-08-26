@@ -123,7 +123,7 @@ public sealed class SwissPairingEngineTests
             new SwissParticipantStanding(E2, points: 3, position: 1),
             new SwissParticipantStanding(E1, points: 3, position: 2),
             new SwissParticipantStanding(E4, points: 0, position: 3),
-            new SwissParticipantStanding(E3, points: 0, position: 4),
+            new SwissParticipantStanding(E3, points: 0, position: 4)
         };
 
         var result = SwissPairingEngine.BuildPairings(new SwissPairingRequest(standings, []));
@@ -151,7 +151,7 @@ public sealed class SwissPairingEngineTests
             new SwissParticipantStanding(E1, 3, 1),
             new SwissParticipantStanding(E3, 3, 2),
             new SwissParticipantStanding(E2, 0, 3),
-            new SwissParticipantStanding(E4, 0, 4),
+            new SwissParticipantStanding(E4, 0, 4)
         };
 
         var round2 = SwissPairingEngine.BuildPairings(new SwissPairingRequest(standingsR2, played));
@@ -200,7 +200,7 @@ public sealed class SwissPairingEngineTests
         new(Guid.Parse($"00000000-0000-7000-8000-0000000000{n:D2}"));
 
     private static SwissParticipantStanding[] EqualPoints(IReadOnlyList<EntryId> entries) =>
-        entries.Select((id, index) => new SwissParticipantStanding(id, points: 0, position: index + 1)).ToArray();
+        [.. entries.Select((id, index) => new SwissParticipantStanding(id, points: 0, position: index + 1))];
 
     private static void AssertCompleteCover(
         IReadOnlyList<SwissParticipantStanding> standings,

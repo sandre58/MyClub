@@ -104,11 +104,6 @@ public sealed class LocalFileMediaStorage : IMediaStorage
         }
 
         var fullPath = Path.GetFullPath(Path.Combine(_storageRoot, storageKey));
-        if (!fullPath.StartsWith(_storageRoot, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException("Storage key resolves outside the storage root.", nameof(storageKey));
-        }
-
-        return fullPath;
+        return !fullPath.StartsWith(_storageRoot, StringComparison.OrdinalIgnoreCase) ? throw new ArgumentException("Storage key resolves outside the storage root.", nameof(storageKey)) : fullPath;
     }
 }

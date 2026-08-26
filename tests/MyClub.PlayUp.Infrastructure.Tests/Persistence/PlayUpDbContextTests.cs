@@ -40,6 +40,7 @@ public sealed class PlayUpDbContextTests
                 "fixture_attachments",
                 "slots",
                 "stage_direct_assignments",
+                "stage_swiss_byes",
                 "draws",
                 "penalties",
                 "match_placements");

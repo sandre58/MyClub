@@ -33,42 +33,35 @@ public sealed class MediaItem
         CreatedAt = createdAt;
     }
 
-    // EF Core materialization.
-#pragma warning disable CS8618
-    private MediaItem()
-    {
-    }
-#pragma warning restore CS8618
-
     /// <summary>
     /// Gets the media identity.
     /// </summary>
-    public MediaId Id { get; private set; }
+    public MediaId Id { get; }
 
     /// <summary>
     /// Gets the validated content type (allowlisted string).
     /// </summary>
-    public string ContentType { get; private set; }
+    public string ContentType { get; }
 
     /// <summary>
     /// Gets the payload size in bytes.
     /// </summary>
-    public long ByteSize { get; private set; }
+    public long ByteSize { get; }
 
     /// <summary>
     /// Gets the internal storage key (never expose to product domains as a public URL).
     /// </summary>
-    public string StorageKey { get; private set; }
+    public string StorageKey { get; }
 
     /// <summary>
     /// Gets the optional sanitized original file name.
     /// </summary>
-    public string? OriginalName { get; private set; }
+    public string? OriginalName { get; }
 
     /// <summary>
     /// Gets the creation timestamp (UTC).
     /// </summary>
-    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; }
 
     /// <summary>
     /// Creates a new media item with a stable storage key derived from the identity.
@@ -91,32 +84,6 @@ public sealed class MediaItem
         var storageKey = BuildStorageKey(id, normalizedType);
 
         return new MediaItem(id, normalizedType, byteSize, storageKey, safeName, createdAt);
-    }
-
-    /// <summary>
-    /// Rebuilds a media item from persistence (no re-validation of allowlist — already stored).
-    /// </summary>
-    /// <param name="id">Media identity.</param>
-    /// <param name="contentType">Stored content type.</param>
-    /// <param name="byteSize">Stored byte size.</param>
-    /// <param name="storageKey">Stored storage key.</param>
-    /// <param name="originalName">Stored original name.</param>
-    /// <param name="createdAt">Stored creation timestamp.</param>
-    /// <returns>The reconstructed aggregate.</returns>
-    public static MediaItem Reconstitute(
-        MediaId id,
-        string contentType,
-        long byteSize,
-        string storageKey,
-        string? originalName,
-        DateTimeOffset createdAt)
-    {
-        if (string.IsNullOrWhiteSpace(storageKey))
-        {
-            throw new DomainException("Storage key is required.", MediaErrorCodes.InvalidStorageKey);
-        }
-
-        return new MediaItem(id, contentType, byteSize, storageKey, originalName, createdAt);
     }
 
     private static string BuildStorageKey(MediaId id, string contentType)

@@ -81,21 +81,13 @@ public static class TeamNameGenerator
         TeamNameSource source,
         string? datasetKey,
         DatasetCatalog? datasets,
-        int index)
-    {
-        if (source != TeamNameSource.Dataset)
-        {
-            return null;
-        }
-
-        return ResolveDatasetRow(datasets, datasetKey, index).LogoAsset;
-    }
+        int index) =>
+        source != TeamNameSource.Dataset ? null : ResolveDatasetRow(datasets, datasetKey, index).LogoAsset;
 
     private static DatasetTeamDocument ResolveDatasetRow(DatasetCatalog? datasets, string? datasetKey, int index)
     {
-        ArgumentNullException.ThrowIfNull(datasets);
         ArgumentException.ThrowIfNullOrWhiteSpace(datasetKey);
-        var list = datasets.GetTeams(datasetKey);
+        var list = datasets?.GetTeams(datasetKey) ?? [];
         return index >= list.Count
             ? throw new InvalidOperationException(
                 $"Dataset '{datasetKey}' has {list.Count} clubs; index {index} is out of range.")

@@ -14,10 +14,7 @@ namespace MyClub.PlayUp.Domain.Tests.Competitions;
 public sealed class LogoMediaIdTests
 {
     [Fact]
-    public void Create_WithNull_ReturnsNull()
-    {
-        LogoMediaId.Create(null).Should().BeNull();
-    }
+    public void Create_WithNull_ReturnsNull() => LogoMediaId.Create(null).Should().BeNull();
 
     [Fact]
     public void Create_WithGuid_ReturnsTypedId()

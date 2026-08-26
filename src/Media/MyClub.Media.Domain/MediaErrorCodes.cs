@@ -32,11 +32,6 @@ public static class MediaErrorCodes
     public const string InvalidMediaId = "Media.InvalidMediaId";
 
     /// <summary>
-    /// Storage key is missing or invalid.
-    /// </summary>
-    public const string InvalidStorageKey = "Media.InvalidStorageKey";
-
-    /// <summary>
     /// Original file name exceeds the allowed length.
     /// </summary>
     public const string InvalidOriginalName = "Media.InvalidOriginalName";

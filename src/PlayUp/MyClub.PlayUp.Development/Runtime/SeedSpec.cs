@@ -45,7 +45,9 @@ public readonly record struct SeedSpec(string Id, SeedProgress? Progress)
         return !TryParseProgress(progressToken, out var progress)
             ? throw new InvalidOperationException(
                 $"Unknown progress '{progressToken}'. Expected prepared, running, or finished.")
-            : Aliases.TryGetValue(id, out var baseAlias) ? new SeedSpec(baseAlias.Id, progress) : new SeedSpec(id, progress);
+            : Aliases.TryGetValue(id, out var baseAlias)
+                ? new SeedSpec(baseAlias.Id, progress)
+                : new SeedSpec(id, progress);
     }
 
     /// <summary>
@@ -91,6 +93,7 @@ public readonly record struct SeedSpec(string Id, SeedProgress? Progress)
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["group-stage-mid"] = new SeedSpec("groups", SeedProgress.Running),
+
             // Historical: single-round cup:running — NOT QF→SF (use cup-qf-sf).
             ["knockout-qf"] = new SeedSpec("cup", SeedProgress.Running),
             ["finished"] = new SeedSpec("groups", SeedProgress.Finished)

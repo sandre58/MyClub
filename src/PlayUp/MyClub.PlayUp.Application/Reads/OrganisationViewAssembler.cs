@@ -155,8 +155,7 @@ public static class OrganisationViewAssembler
                 0,
                 false,
                 null,
-                MatchGenerationFormat.SingleRoundRobin,
-                null);
+                MatchGenerationFormat.SingleRoundRobin);
         }
 
         var drawRules = primary.Regulation.DrawRules;

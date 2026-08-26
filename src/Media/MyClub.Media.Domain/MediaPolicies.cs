@@ -27,18 +27,16 @@ public static class MediaPolicies
     /// <param name="byteSize">Payload size in bytes.</param>
     public static void EnsureByteSizeAllowed(long byteSize)
     {
-        if (byteSize <= 0)
+        switch (byteSize)
         {
-            throw new DomainException(
-                "Media byte size must be greater than zero.",
-                MediaErrorCodes.InvalidByteSize);
-        }
-
-        if (byteSize > MaxByteSize)
-        {
-            throw new DomainException(
-                $"Media payload exceeds the maximum of {MaxByteSize} bytes.",
-                MediaErrorCodes.PayloadTooLarge);
+            case <= 0:
+                throw new DomainException(
+                    "Media byte size must be greater than zero.",
+                    MediaErrorCodes.InvalidByteSize);
+            case > MaxByteSize:
+                throw new DomainException(
+                    $"Media payload exceeds the maximum of {MaxByteSize} bytes.",
+                    MediaErrorCodes.PayloadTooLarge);
         }
     }
 

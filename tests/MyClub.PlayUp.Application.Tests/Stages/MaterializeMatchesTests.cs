@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -73,7 +72,7 @@ public sealed class MaterializeMatchesTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(1, matchGenerationFormat: MatchGenerationFormat.DoubleRoundRobin),
+            StructureIntent.Championship(matchGenerationFormat: MatchGenerationFormat.DoubleRoundRobin),
             _clock);
 
         configured.Stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.DoubleRoundRobin);
@@ -118,7 +117,7 @@ public sealed class MaterializeMatchesTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(1, matchGenerationFormat: MatchGenerationFormat.DoubleRoundRobin),
+            StructureIntent.Championship(matchGenerationFormat: MatchGenerationFormat.DoubleRoundRobin),
             _clock);
 
         var full = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);

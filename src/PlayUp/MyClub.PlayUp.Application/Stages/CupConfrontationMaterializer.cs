@@ -51,12 +51,10 @@ internal static class CupConfrontationMaterializer
         stage.AttachMatch(fixtureId, leg1.Id, legIndex: 1, clock);
         created.Add(leg1);
 
-        if (expectedLegs == TieFormat.TwoLegs)
-        {
-            var leg2 = Match.Create(stage.CompetitionId, stage.Id, away, home, clock);
-            stage.AttachMatch(fixtureId, leg2.Id, legIndex: 2, clock);
-            created.Add(leg2);
-        }
+        if (expectedLegs != TieFormat.TwoLegs) return created;
+        var leg2 = Match.Create(stage.CompetitionId, stage.Id, away, home, clock);
+        stage.AttachMatch(fixtureId, leg2.Id, legIndex: 2, clock);
+        created.Add(leg2);
 
         return created;
     }

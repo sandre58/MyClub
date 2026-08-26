@@ -14,23 +14,20 @@ namespace MyClub.PlayUp.Development.Runtime;
 /// <summary>
 /// Imports Development seed logo assets into Media once per normalized path (CdF/L1 dedup).
 /// </summary>
-public sealed class SeedLogoImporter
+/// <remarks>
+/// Initializes a new instance of the <see cref="SeedLogoImporter"/> class.
+/// </remarks>
+/// <param name="media">Media application service.</param>
+public sealed class SeedLogoImporter(MediaService media)
 {
     private static readonly string AssetsRoot = Path.Combine(
         AppContext.BaseDirectory,
         "Assets",
         "seed-logos");
 
-    private readonly MediaService _media;
+    private readonly MediaService _media = media ?? throw new ArgumentNullException(nameof(media));
     private readonly ConcurrentDictionary<string, LogoMediaId> _cache =
         new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SeedLogoImporter"/> class.
-    /// </summary>
-    /// <param name="media">Media application service.</param>
-    public SeedLogoImporter(MediaService media) =>
-        _media = media ?? throw new ArgumentNullException(nameof(media));
 
     /// <summary>
     /// Returns an existing Media id for the asset path, or creates one from the on-disk PNG.

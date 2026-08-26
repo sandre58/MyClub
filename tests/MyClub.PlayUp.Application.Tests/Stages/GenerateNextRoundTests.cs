@@ -110,7 +110,7 @@ public sealed class GenerateNextRoundTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(1),
+            StructureIntent.Championship(),
             _clock);
         configured.Stage.Prepare(_clock);
         configured.Stage.Start(_clock);

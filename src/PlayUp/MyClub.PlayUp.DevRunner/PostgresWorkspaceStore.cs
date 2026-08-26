@@ -18,7 +18,11 @@ namespace MyClub.PlayUp.DevRunner;
 internal sealed class PostgresWorkspaceStore(IServiceScopeFactory scopeFactory, string mediaStorageRoot)
     : IWorkspaceStore
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Resets all Play'up data for the active persistence mode.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the store is empty.</returns>
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
         var scope = scopeFactory.CreateAsyncScope();

@@ -398,13 +398,15 @@ app.MapPut(
         IReadOnlyList<ProgressionPathSpec>? paths = null;
         if (request.Paths is { Count: > 0 })
         {
-            paths = request.Paths
-                .Select(path => new ProgressionPathSpec(
-                    new FixtureId(path.SourceFixtureId),
-                    path.Outcome,
-                    new StageId(path.DestinationStageId),
-                    path.DestinationSlotKey))
-                .ToArray();
+            paths =
+            [
+                .. request.Paths
+                    .Select(path => new ProgressionPathSpec(
+                        new FixtureId(path.SourceFixtureId),
+                        path.Outcome,
+                        new StageId(path.DestinationStageId),
+                        path.DestinationSlotKey))
+            ];
         }
 
         await executor

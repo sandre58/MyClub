@@ -20,7 +20,7 @@ namespace MyClub.Media.Infrastructure.Tests;
 public sealed class MediaPersistenceTests(MediaPostgresFixture fixture)
 {
     [Fact]
-    public async Task CreateGetContentDelete_PersistsMetadataAndFile()
+    public async Task CreateGetContentDelete_PersistsMetadataAndFileAsync()
     {
         using var scope = fixture.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<MediaService>();
@@ -41,7 +41,7 @@ public sealed class MediaPersistenceTests(MediaPostgresFixture fixture)
         await using (var content = await service.OpenContentAsync(new MediaId(metadata.Id)))
         {
             content.ContentType.Should().Be(MediaContentTypes.Png);
-            using var buffer = new MemoryStream();
+            await using var buffer = new MemoryStream();
             await content.Content.CopyToAsync(buffer);
             buffer.ToArray().Should().Equal(payload);
         }
@@ -64,7 +64,7 @@ public sealed class MediaPersistenceTests(MediaPostgresFixture fixture)
         var entityType = context.Model.FindEntityType(typeof(MediaItem));
 
         entityType.Should().NotBeNull();
-        entityType!.GetSchema().Should().Be("media");
+        entityType.GetSchema().Should().Be("media");
         entityType.GetTableName().Should().Be("media_items");
     }
 }

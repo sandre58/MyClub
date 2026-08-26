@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.Media.Domain;
 using Xunit;
 
 namespace MyClub.Media.Domain.Tests;

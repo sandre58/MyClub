@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -63,7 +62,7 @@ public static class MaterializeCupFromOccupiedSlots
 
         var round = stage.Rounds[0];
         var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(round);
-        ValidateSlotPairs(stage, slotPairs);
+        ValidateSlotPairs(slotPairs);
 
         var knownById = existingMatches
             .Where(match => stage.HasMatch(match.Id))
@@ -148,15 +147,14 @@ public static class MaterializeCupFromOccupiedSlots
 
         var created = new List<Match>();
         var attached = new List<MatchId>();
-        foreach (var item in resolved)
+        foreach (var legs in resolved.Select(item => CupConfrontationMaterializer.AttachLegs(
+                     stage,
+                     item.Fixture.Id,
+                     item.Home,
+                     item.Away,
+                     expectedLegs,
+                     clock)))
         {
-            var legs = CupConfrontationMaterializer.AttachLegs(
-                stage,
-                item.Fixture.Id,
-                item.Home,
-                item.Away,
-                expectedLegs,
-                clock);
             created.AddRange(legs);
             attached.AddRange(legs.Select(match => match.Id));
         }
@@ -164,7 +162,7 @@ public static class MaterializeCupFromOccupiedSlots
         return new MaterializeCupFromOccupiedSlotsResult(created, attached, AlreadyComplete: false);
     }
 
-    private static void ValidateSlotPairs(Stage stage, IReadOnlyList<CupSlotPair> slotPairs)
+    private static void ValidateSlotPairs(IReadOnlyList<CupSlotPair> slotPairs)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var pair in slotPairs)

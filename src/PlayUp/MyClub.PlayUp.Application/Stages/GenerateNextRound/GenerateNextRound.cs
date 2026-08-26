@@ -169,7 +169,7 @@ public static class GenerateNextRound
         if (completeFixtures == expectedPairs
             && matchday.Fixtures.Count == expectedPairs
             && expectsBye == byeRecorded
-            && matchday.Fixtures.All(fixture => fixture.MatchIds.All(id => attached.ContainsKey(id))))
+            && matchday.Fixtures.All(fixture => fixture.MatchIds.All(attached.ContainsKey)))
         {
             EntryId? byeEntryId = byeRecorded
                 ? stage.SwissByeHistory.Single(bye => bye.RoundIndex == matchday.Number).EntryId

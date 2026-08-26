@@ -152,11 +152,11 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         var cockpit = CockpitAssembler.Assemble(
             competition,
-            [quarter!, semi!],
+            [quarter, semi],
             matchesByStage);
         cockpit.AvailableActions.Should().Contain(action =>
             action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
-            && action.StageId == semi!.Id.Value);
+            && action.StageId == semi.Id.Value);
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         {
             var stage = await stages.GetByIdAsync(stageId);
             stage.Should().NotBeNull();
-            loaded.Add(stage!);
+            loaded.Add(stage);
         }
 
         var roundOf32 = loaded[0];
@@ -227,7 +227,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         {
             var stage = await stages.GetByIdAsync(stageId);
             stage.Should().NotBeNull();
-            loaded.Add(stage!);
+            loaded.Add(stage);
         }
 
         var groups = loaded[0];
@@ -322,10 +322,10 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition!.StageIds[0]);
+            .GetByIdAsync(competition.StageIds[0]);
         stage.Should().NotBeNull();
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageAsync(stage.Id);
         return (competition, stage, matches);
     }
 

@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using MyClub.Media.Domain;
 using MyClub.Media.Infrastructure.Storage;
@@ -14,7 +15,7 @@ namespace MyClub.Media.Infrastructure.Tests;
 public sealed class LocalFileMediaStorageTests
 {
     [Fact]
-    public async Task SaveOpenDelete_RoundTripsBytes()
+    public async Task SaveOpenDelete_RoundTripsBytesAsync()
     {
         var root = Path.Combine(Path.GetTempPath(), "myclub-media-tests", Guid.NewGuid().ToString("N"));
         try
@@ -30,7 +31,7 @@ public sealed class LocalFileMediaStorageTests
 
             await using (var output = await storage.OpenReadAsync(key))
             {
-                using var buffer = new MemoryStream();
+                await using var buffer = new MemoryStream();
                 await output.CopyToAsync(buffer);
                 buffer.ToArray().Should().Equal(payload);
             }
@@ -48,7 +49,9 @@ public sealed class LocalFileMediaStorageTests
     }
 
     [Fact]
-    public async Task Save_RejectsPathTraversalKey()
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Test")]
+    [SuppressMessage("Reliability", "CA2025:Do not pass 'IDisposable' instances into unawaited tasks", Justification = "Test")]
+    public async Task Save_RejectsPathTraversalKeyAsync()
     {
         var root = Path.Combine(Path.GetTempPath(), "myclub-media-tests", Guid.NewGuid().ToString("N"));
         try

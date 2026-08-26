@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="Swiss8x3Scenario.cs" company="Stéphane ANDRE">
+// <copyright file="Swiss8X3Scenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -13,7 +13,7 @@ namespace MyClub.PlayUp.Development.Scenarios;
 /// <summary>
 /// Lot 2 reference case 1: Swiss classique, 8 teams × 3 rounds (progressive GenerateNextRound).
 /// </summary>
-public sealed class Swiss8x3Scenario : IScenario
+public sealed class Swiss8X3Scenario : IScenario
 {
     /// <inheritdoc />
     public string Id => "swiss-8x3";
