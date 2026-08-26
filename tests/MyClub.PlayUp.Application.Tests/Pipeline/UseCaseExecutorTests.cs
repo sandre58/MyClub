@@ -677,7 +677,7 @@ public sealed class UseCaseExecutorTests
         Mock<IMatchRepository> matches,
         Mock<ICompetitionRepository> competitions,
         Mock<IUnitOfWork> unitOfWork) =>
-        new(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        new(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
 
     private Competition CreateOpenCompetition() => CreateCompetitionAt(CompetitionStatus.Draft);
 

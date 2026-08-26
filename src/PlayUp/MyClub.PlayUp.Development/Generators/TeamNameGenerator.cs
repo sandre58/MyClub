@@ -22,12 +22,19 @@ public static class TeamNameGenerator
     /// <summary>
     /// Resolves display name and presentation for a team index.
     /// </summary>
+    /// <param name="entropy">Deterministic entropy (reserved for future generators).</param>
+    /// <param name="index">Zero-based team index.</param>
+    /// <param name="source">Name source.</param>
+    /// <param name="datasetKey">Dataset key when <paramref name="source"/> is Dataset.</param>
+    /// <param name="datasets">Dataset catalog when using Dataset source.</param>
+    /// <param name="logoMediaId">Resolved Media id for dataset logos (imported by the caller).</param>
     public static (string DisplayName, EntryPresentation Presentation) CreatePresentation(
         DeterministicEntropy entropy,
         int index,
         TeamNameSource source = TeamNameSource.Generated,
         string? datasetKey = null,
-        DatasetCatalog? datasets = null)
+        DatasetCatalog? datasets = null,
+        LogoMediaId? logoMediaId = null)
     {
         ArgumentNullException.ThrowIfNull(entropy);
         ArgumentOutOfRangeException.ThrowIfNegative(index);
@@ -40,7 +47,7 @@ public static class TeamNameGenerator
                 displayName,
                 new EntryPresentation(
                     ShortName.Create(row.ShortName),
-                    LogoUri.Create(row.LogoPath),
+                    logoMediaId,
                     TeamColor.Create(row.PrimaryColor),
                     TeamColor.Create(row.SecondaryColor)));
         }
@@ -66,6 +73,23 @@ public static class TeamNameGenerator
         string? datasetKey = null,
         DatasetCatalog? datasets = null) =>
         CreatePresentation(entropy, index, source, datasetKey, datasets).DisplayName;
+
+    /// <summary>
+    /// Returns the dataset logo asset path for a team index, or null.
+    /// </summary>
+    public static string? ResolveLogoAsset(
+        TeamNameSource source,
+        string? datasetKey,
+        DatasetCatalog? datasets,
+        int index)
+    {
+        if (source != TeamNameSource.Dataset)
+        {
+            return null;
+        }
+
+        return ResolveDatasetRow(datasets, datasetKey, index).LogoAsset;
+    }
 
     private static DatasetTeamDocument ResolveDatasetRow(DatasetCatalog? datasets, string? datasetKey, int index)
     {

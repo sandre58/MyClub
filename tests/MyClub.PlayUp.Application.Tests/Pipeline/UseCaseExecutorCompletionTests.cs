@@ -148,7 +148,8 @@ public sealed class UseCaseExecutorCompletionTests
             matchRepo.Object,
             competitions.Object,
             unitOfWork.Object,
-            _clock);
+            _clock,
+            AlwaysExistingMedia.Instance);
         return (executor, unitOfWork);
     }
 

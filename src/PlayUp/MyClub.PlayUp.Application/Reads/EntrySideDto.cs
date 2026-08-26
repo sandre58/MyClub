@@ -12,13 +12,13 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Display name when known.</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
-/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
 /// <param name="SecondaryColor">Optional secondary kit color (#RRGGBB).</param>
 public sealed record EntrySideDto(
     Guid EntryId,
     string? DisplayName,
     string? ShortName = null,
-    string? LogoPath = null,
+    Guid? LogoMediaId = null,
     string? PrimaryColor = null,
     string? SecondaryColor = null);

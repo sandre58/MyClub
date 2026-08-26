@@ -61,7 +61,7 @@ export interface CompetitionEntrySummary {
   displayName: string
   status: EntryStatus
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
   primaryColor?: string | null
   secondaryColor?: string | null
 }
@@ -78,7 +78,7 @@ export interface CompetitionListItem {
   name: string
   status: CompetitionStatus
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
 }
 
 /** POST /competitions — create Draft competition (name only). */
@@ -103,7 +103,7 @@ export interface WorkspaceSummary {
   canCompleteNormally: boolean
   completionBlockers: string[] | null
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
 }
 
 /** Cycle reading codes from CockpitAssembler (string on wire). */
@@ -316,7 +316,7 @@ export interface CompetitionOverview {
   stages: CompetitionStageSummary[]
   completionMode?: CompletionMode | null
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
   scheduledStart?: string | null
   scheduledEnd?: string | null
 }
@@ -333,7 +333,7 @@ export interface OrganisationView {
   actions: string[]
   readiness: OrganisationReadiness
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
   scheduledStart?: string | null
   scheduledEnd?: string | null
 }
@@ -349,7 +349,7 @@ export interface OrganisationEntry {
   displayName: string
   status: EntryStatus
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
   primaryColor?: string | null
   secondaryColor?: string | null
 }
@@ -399,7 +399,7 @@ export interface AddEntryRequest {
   displayName: string
   teamId?: string | null
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
   primaryColor?: string | null
   secondaryColor?: string | null
 }
@@ -407,7 +407,7 @@ export interface AddEntryRequest {
 /** POST /competitions/{id}/presentation */
 export interface UpdateCompetitionPresentationRequest {
   shortName: string | null
-  logoPath: string | null
+  logoMediaId: string | null
 }
 
 /** POST /competitions/{id}/schedule */
@@ -419,7 +419,7 @@ export interface SetCompetitionScheduleRequest {
 /** POST .../entries/{entryId}/presentation */
 export interface UpdateEntryPresentationRequest {
   shortName: string | null
-  logoPath: string | null
+  logoMediaId: string | null
   primaryColor: string | null
   secondaryColor: string | null
 }
@@ -536,7 +536,7 @@ export interface EntrySide {
   entryId: string
   displayName: string | null
   shortName?: string | null
-  logoPath?: string | null
+  logoMediaId?: string | null
   primaryColor?: string | null
   secondaryColor?: string | null
 }

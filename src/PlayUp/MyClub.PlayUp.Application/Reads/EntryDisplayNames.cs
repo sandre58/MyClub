@@ -47,7 +47,7 @@ internal static class EntryDisplayNames
                 entry.Id.Value,
                 entry.DisplayName,
                 entry.ShortName?.Value,
-                entry.LogoUri?.Value,
+                entry.LogoMediaId?.Value,
                 entry.PrimaryColor?.Value,
                 entry.SecondaryColor?.Value)
             : new EntrySideDto(entryId.Value, null);

@@ -7,8 +7,8 @@
 namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
-/// HTTP body for updating competition presentation (null clears a field).
+/// HTTP body for updating competition presentation.
 /// </summary>
 /// <param name="ShortName">Short name, or null to clear.</param>
-/// <param name="LogoPath">Logo path or absolute URI string, or null to clear.</param>
-public sealed record UpdateCompetitionPresentationRequest(string? ShortName, string? LogoPath);
+/// <param name="LogoMediaId">Logo Media Guid, or null to clear.</param>
+public sealed record UpdateCompetitionPresentationRequest(string? ShortName, Guid? LogoMediaId);

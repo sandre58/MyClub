@@ -6,6 +6,7 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MyClub.Media.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Templates;
@@ -41,6 +42,27 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 DevDatabaseGuard.ValidateForDestructiveUse(connectionString, environmentName: "Development");
 
+var mediaConnectionString = configuration.GetConnectionString("Media") ?? connectionString;
+// Prefer Media:StorageRoot (appsettings defaults to Host .local/media). Fallback walks from
+// bin/Debug/netX.0 up to the sibling Host project so seeded files are served by the Host.
+var mediaStorageRoot = configuration["Media:StorageRoot"];
+if (string.IsNullOrWhiteSpace(mediaStorageRoot))
+{
+    mediaStorageRoot = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory,
+        "..",
+        "..",
+        "..",
+        "..",
+        "MyClub.PlayUp.Host",
+        ".local",
+        "media"));
+}
+else if (!Path.IsPathRooted(mediaStorageRoot))
+{
+    mediaStorageRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, mediaStorageRoot));
+}
+
 var wantsRandom = options.Scenarios.Any(static s =>
     string.Equals(s.Id, "random", StringComparison.OrdinalIgnoreCase));
 var seed = options.Seed
@@ -58,7 +80,10 @@ var workspace = new DevelopmentWorkspaceOptions { Seed = seed };
 
 var services = new ServiceCollection();
 services.AddPlayUpInfrastructure(connectionString);
-services.AddSingleton<IWorkspaceStore, PostgresWorkspaceStore>();
+services.AddMediaInfrastructure(mediaConnectionString, mediaStorageRoot);
+services.AddSingleton<IWorkspaceStore>(sp => new PostgresWorkspaceStore(
+    sp.GetRequiredService<IServiceScopeFactory>(),
+    mediaStorageRoot));
 services.AddPlayUpDevelopmentWorkspace(workspace);
 await using var provider = services.BuildServiceProvider();
 

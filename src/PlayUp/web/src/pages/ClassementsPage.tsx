@@ -330,7 +330,7 @@ function MatchResultRow({ match }: { match: ConsultationResult }) {
         <span className="classements-result__team">
           <TeamCrest
             name={homeName}
-            logoPath={match.home.logoPath}
+            logoMediaId={match.home.logoMediaId}
             primaryColor={match.home.primaryColor}
             className="classements-crest"
           />
@@ -342,7 +342,7 @@ function MatchResultRow({ match }: { match: ConsultationResult }) {
         <span className="classements-result__team">
           <TeamCrest
             name={awayName}
-            logoPath={match.away.logoPath}
+            logoMediaId={match.away.logoMediaId}
             primaryColor={match.away.primaryColor}
             className="classements-crest"
           />

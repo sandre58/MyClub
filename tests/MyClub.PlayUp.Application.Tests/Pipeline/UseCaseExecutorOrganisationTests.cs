@@ -43,7 +43,7 @@ public sealed class UseCaseExecutorOrganisationTests
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var view = await executor.ConfigureStructureAsync(
             competition.Id,
             StructureIntent.Groups(2, 4));
@@ -70,7 +70,7 @@ public sealed class UseCaseExecutorOrganisationTests
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var view = await executor.AddEntryAsync(competition.Id, "Team One");
 
         view.Participants.ActiveCount.Should().Be(1);

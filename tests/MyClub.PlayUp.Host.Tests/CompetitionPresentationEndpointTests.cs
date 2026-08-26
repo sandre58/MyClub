@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;
@@ -31,14 +32,17 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
         summary.Should().NotBeNull();
         var id = summary.Id;
 
+        var competitionLogoId = await UploadPngAsync(client, "competition.png");
+        var entryLogoId = await UploadPngAsync(client, "psg.png");
+
         using var presentation = await client.PostAsJsonAsync(
             $"/competitions/{id}/presentation",
-            new UpdateCompetitionPresentationRequest("META", "/seed-logos/ligue-1/competition.png"));
+            new UpdateCompetitionPresentationRequest("META", competitionLogoId));
         presentation.StatusCode.Should().Be(HttpStatusCode.OK);
         var org = await presentation.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         org.Should().NotBeNull();
         org.ShortName.Should().Be("META");
-        org.LogoPath.Should().Be("/seed-logos/ligue-1/competition.png");
+        org.LogoMediaId.Should().Be(competitionLogoId);
 
         var start = new DateTimeOffset(2026, 8, 15, 0, 0, 0, TimeSpan.Zero);
         var end = new DateTimeOffset(2027, 5, 30, 0, 0, 0, TimeSpan.Zero);
@@ -55,15 +59,36 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
             new AddEntryRequest(
                 "Paris Saint-Germain",
                 ShortName: "PSG",
-                LogoPath: "/seed-logos/ligue-1/psg.png",
+                LogoMediaId: entryLogoId,
                 PrimaryColor: "#004170",
                 SecondaryColor: "#DA291C"));
         add.EnsureSuccessStatusCode();
         org = await add.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         var entry = org!.Participants.Entries.Should().ContainSingle().Subject;
         entry.ShortName.Should().Be("PSG");
-        entry.LogoPath.Should().Be("/seed-logos/ligue-1/psg.png");
+        entry.LogoMediaId.Should().Be(entryLogoId);
         entry.PrimaryColor.Should().Be("#004170");
         entry.SecondaryColor.Should().Be("#DA291C");
+
+        using var content = await client.GetAsync($"/media/{competitionLogoId}/content");
+        content.StatusCode.Should().Be(HttpStatusCode.OK);
+        content.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
+    }
+
+    private static async Task<Guid> UploadPngAsync(HttpClient client, string fileName)
+    {
+        // Minimal valid 1×1 PNG
+        var bytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
+        using var form = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(fileContent, "file", fileName);
+
+        using var response = await client.PostAsync("/media", form);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var metadata = await response.Content.ReadFromJsonAsync<MediaMetadataResponse>(HostJson.Options);
+        metadata.Should().NotBeNull();
+        return metadata.Id;
     }
 }

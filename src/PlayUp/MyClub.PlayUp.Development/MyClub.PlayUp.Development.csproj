@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
     <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+    <ProjectReference Include="..\..\Media\MyClub.Media.Application\MyClub.Media.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +19,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Datasets\*.json" />
     <EmbeddedResource Include="Generators\*.json" />
+    <Content Include="Assets\seed-logos\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\seed-logos\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

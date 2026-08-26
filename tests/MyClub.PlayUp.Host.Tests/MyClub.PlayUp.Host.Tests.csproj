@@ -17,6 +17,7 @@
     <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
     <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Host\MyClub.PlayUp.Host.csproj" />
     <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

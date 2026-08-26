@@ -10,11 +10,16 @@ const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:52
  * Same path prefix serves SPA deep-links (Accept: text/html) and API fetch (JSON).
  * Without this bypass, opening /matches/{id} in the address bar returns Host JSON.
  */
-function apiProxy(): ProxyOptions {
+function apiProxy(options?: { spaBypass?: boolean }): ProxyOptions {
+  const spaBypass = options?.spaBypass !== false
   return {
     target: apiProxyTarget,
     changeOrigin: true,
     bypass(req) {
+      if (!spaBypass) {
+        return undefined
+      }
+
       const accept = req.headers.accept ?? ''
       if (accept.includes('text/html')) {
         return '/index.html'
@@ -31,6 +36,8 @@ export default defineConfig({
       '/competitions': apiProxy(),
       '/stages': apiProxy(),
       '/matches': apiProxy(),
+      // Binary content: never SPA-bypass (Accept may include text/html in some browsers).
+      '/media': apiProxy({ spaBypass: false }),
     },
   },
   test: {

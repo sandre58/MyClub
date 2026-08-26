@@ -19,4 +19,4 @@ public sealed record CompetitionListItemDto(
     string Name,
     CompetitionStatus Status,
     string? ShortName = null,
-    string? LogoPath = null);
+    Guid? LogoMediaId = null);

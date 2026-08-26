@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCompetitionCockpit } from '../api'
 import { Status, type StatusTone } from '../design-system/components/Status'
+import { TeamCrest } from '../design-system/TeamCrest'
 import { AttentionBellIcon, SwapIcon } from '../design-system/icons/shellIcons'
 import { competitionStatusLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
@@ -28,7 +29,8 @@ export function ShellHeader({
   attentionTriggerRef,
   onAttentionClick,
 }: ShellHeaderProps) {
-  const { competitionId, competitionName, state } = useShellCompetitionContext()
+  const { competitionId, competitionName, logoMediaId, state } =
+    useShellCompetitionContext()
 
   const cockpitQuery = useQuery({
     queryKey: queryKeys.competitions.cockpit(competitionId ?? ''),
@@ -47,6 +49,7 @@ export function ShellHeader({
     <header className="shell-header">
       <ShellHeaderCompetitionContext
         competitionName={competitionName}
+        logoMediaId={logoMediaId}
         competitionStatus={competitionStatus}
         periodLabel={periodLabel}
         state={state}
@@ -67,11 +70,13 @@ export function ShellHeader({
 
 function ShellHeaderCompetitionContext({
   competitionName,
+  logoMediaId,
   competitionStatus,
   periodLabel,
   state,
 }: {
   competitionName?: string
+  logoMediaId?: string | null
   competitionStatus?: CompetitionStatus
   periodLabel?: string | null
   state: ReturnType<typeof useShellCompetitionContext>['state']
@@ -102,7 +107,12 @@ function ShellHeaderCompetitionContext({
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__crest" aria-hidden="true">
-          {t('competition.crestPlaceholder').charAt(0)}
+          <TeamCrest
+            name={competitionName}
+            logoMediaId={logoMediaId}
+            className="shell-header__crest-mark"
+            size="md"
+          />
         </span>
 
         <div className="shell-header__identity">

@@ -148,12 +148,7 @@ public sealed class UseCaseExecutorPrepareStartCompetitionTests
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var executor = new UseCaseExecutor(
-            stages.Object,
-            matches.Object,
-            competitions.Object,
-            unitOfWork.Object,
-            _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         return (executor, unitOfWork);
     }
 

@@ -24,23 +24,25 @@ namespace MyClub.PlayUp.Development.Orchestration;
 /// </summary>
 internal static class ScenarioOrchestration
 {
-    public static Competition CreateCompetition(
+    public static async Task<Competition> CreateCompetitionAsync(
         ScenarioContext context,
         string name,
         Regulation? regulation = null,
         string? shortName = null,
-        string? logoPath = null,
+        string? logoAsset = null,
         DateTimeOffset? scheduledStart = null,
-        DateTimeOffset? scheduledEnd = null)
+        DateTimeOffset? scheduledEnd = null,
+        CancellationToken cancellationToken = default)
     {
         var competition = Competition.Create(
             new CompetitionName(name),
             regulation ?? BootstrapRegulation.Standard(),
             context.Ids.Competition(),
             context.Clock);
-        if (shortName is not null || logoPath is not null)
+        var logoMediaId = await context.Logos.GetOrImportAsync(logoAsset, cancellationToken).ConfigureAwait(false);
+        if (shortName is not null || logoMediaId is not null)
         {
-            competition.UpdatePresentation(ShortName.Create(shortName), LogoUri.Create(logoPath), context.Clock);
+            competition.UpdatePresentation(ShortName.Create(shortName), logoMediaId, context.Clock);
         }
 
         if (scheduledStart is not null || scheduledEnd is not null)
@@ -52,41 +54,54 @@ internal static class ScenarioOrchestration
         return competition;
     }
 
-    private static Competition CreateCompetitionFromRecipe(ScenarioContext context, CompetitionRecipe recipe)
+    private static async Task<Competition> CreateCompetitionFromRecipeAsync(
+        ScenarioContext context,
+        CompetitionRecipe recipe,
+        CancellationToken cancellationToken)
     {
         if (recipe.TeamNames != TeamNameSource.Dataset
             || string.IsNullOrWhiteSpace(recipe.DatasetCompetitionKey))
         {
-            return CreateCompetition(context, recipe.DisplayName);
+            return await CreateCompetitionAsync(context, recipe.DisplayName, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
 
         var dataset = context.Datasets.Get(recipe.DatasetCompetitionKey);
-        return CreateCompetition(
+        return await CreateCompetitionAsync(
             context,
             recipe.DisplayName,
             shortName: dataset.ShortName,
-            logoPath: dataset.LogoPath,
+            logoAsset: dataset.LogoAsset,
             scheduledStart: dataset.ScheduledStart,
-            scheduledEnd: dataset.ScheduledEnd);
+            scheduledEnd: dataset.ScheduledEnd,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
-    public static IReadOnlyList<CompetitionEntry> RegisterTeams(
+    public static async Task<IReadOnlyList<CompetitionEntry>> RegisterTeamsAsync(
         ScenarioContext context,
         Competition competition,
         CompetitionRecipe recipe,
-        int? countOverride = null)
+        int? countOverride = null,
+        CancellationToken cancellationToken = default)
     {
         var count = countOverride ?? recipe.TeamCount;
         var entries = new List<CompetitionEntry>(count);
         for (var i = 0; i < count; i++)
         {
             context.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(i));
+            var logoAsset = TeamNameGenerator.ResolveLogoAsset(
+                recipe.TeamNames,
+                recipe.DatasetCompetitionKey,
+                context.Datasets,
+                i);
+            var logoMediaId = await context.Logos.GetOrImportAsync(logoAsset, cancellationToken).ConfigureAwait(false);
             var (displayName, presentation) = TeamNameGenerator.CreatePresentation(
                 context.Entropy,
                 i,
                 recipe.TeamNames,
                 recipe.DatasetCompetitionKey,
-                context.Datasets);
+                context.Datasets,
+                logoMediaId);
             var entry = competition.AddEntry(
                 context.Ids.Team($"team-{i}"),
                 displayName,
@@ -346,8 +361,10 @@ internal static class ScenarioOrchestration
         ArgumentNullException.ThrowIfNull(recipe);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var competition = CreateCompetitionFromRecipe(context, recipe);
-        var entries = RegisterTeams(context, competition, recipe);
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
 
         if (recipe.Format == RecipeFormat.Swiss)
@@ -386,8 +403,10 @@ internal static class ScenarioOrchestration
             TeamNames = TeamNameSource.Generated
         };
 
-        var competition = CreateCompetitionFromRecipe(context, recipe);
-        RegisterTeams(context, competition, recipe);
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         var quarter = ConfigurePrimaryStage(context, competition, recipe);
         quarter.ReplaceRoundTieFormat(
             quarter.Rounds[0].Id,
@@ -480,8 +499,10 @@ internal static class ScenarioOrchestration
             DatasetCompetitionKey = "coupe-de-france"
         };
 
-        var competition = CreateCompetitionFromRecipe(context, recipe);
-        RegisterTeams(context, competition, recipe);
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         var roundOf32 = ConfigurePrimaryStage(context, competition, recipe);
         roundOf32.ReplaceRoundTieFormat(
             roundOf32.Rounds[0].Id,
@@ -554,8 +575,10 @@ internal static class ScenarioOrchestration
             DatasetCompetitionKey = "world-cup"
         };
 
-        var competition = CreateCompetitionFromRecipe(context, recipe);
-        var entries = RegisterTeams(context, competition, recipe);
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         var groups = ConfigurePrimaryStage(context, competition, recipe);
 
         var r16SlotKeys = WorldCupR16SlotKeys;

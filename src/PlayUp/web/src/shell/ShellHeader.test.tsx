@@ -94,6 +94,7 @@ describe('ShellHeader', () => {
       status: 'Running',
       entries: [],
       stages: [],
+      logoMediaId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
     })
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
@@ -138,6 +139,11 @@ describe('ShellHeader', () => {
     expect(
       screen.getByRole('link', { name: 'Changer de compétition' }),
     ).toHaveAttribute('href', '/competitions')
+    const crest = document.querySelector('.shell-header__crest img')
+    expect(crest).toHaveAttribute(
+      'src',
+      '/media/dddddddd-dddd-dddd-dddd-dddddddddddd/content',
+    )
   })
 
   it('renders the no-selection state when competitions exist', async () => {

@@ -44,7 +44,8 @@ public sealed class UseCaseExecutor(
     IMatchRepository matches,
     ICompetitionRepository competitions,
     IUnitOfWork unitOfWork,
-    IClock clock)
+    IClock clock,
+    IMediaReferenceChecker mediaReferences)
 {
     /// <summary>
     /// Loads a stage, runs <see cref="PrepareStage"/>, and saves changes.
@@ -458,17 +459,18 @@ public sealed class UseCaseExecutor(
         string displayName,
         Guid? teamId = null,
         string? shortName = null,
-        string? logoPath = null,
+        Guid? logoMediaId = null,
         string? primaryColor = null,
         string? secondaryColor = null,
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var presentation = shortName is null && logoPath is null && primaryColor is null && secondaryColor is null
+        await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
+        var presentation = shortName is null && logoMediaId is null && primaryColor is null && secondaryColor is null
             ? null
             : new EntryPresentation(
                 ShortName.Create(shortName),
-                LogoUri.Create(logoPath),
+                LogoMediaId.Create(logoMediaId),
                 TeamColor.Create(primaryColor),
                 TeamColor.Create(secondaryColor));
         AddEntry.Execute(
@@ -487,11 +489,12 @@ public sealed class UseCaseExecutor(
     public async Task<OrganisationViewDto> UpdateCompetitionPresentationAsync(
         CompetitionId competitionId,
         string? shortName,
-        string? logoPath,
+        Guid? logoMediaId,
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        UpdateCompetitionPresentation.Execute(competition, shortName, logoPath, clock);
+        await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
+        UpdateCompetitionPresentation.Execute(competition, shortName, logoMediaId, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
@@ -518,17 +521,18 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         EntryId entryId,
         string? shortName,
-        string? logoPath,
+        Guid? logoMediaId,
         string? primaryColor,
         string? secondaryColor,
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
         UpdateEntryPresentation.Execute(
             competition,
             entryId,
             shortName,
-            logoPath,
+            logoMediaId,
             primaryColor,
             secondaryColor,
             clock);
@@ -958,6 +962,21 @@ public sealed class UseCaseExecutor(
         ?? throw new ApplicationFailureException(
             $"Competition '{competitionId}' was not found.",
             ApplicationErrorCodes.CompetitionNotFound);
+
+    private async Task EnsureLogoMediaExistsAsync(Guid? logoMediaId, CancellationToken cancellationToken)
+    {
+        if (logoMediaId is null)
+        {
+            return;
+        }
+
+        if (!await mediaReferences.ExistsAsync(logoMediaId.Value, cancellationToken).ConfigureAwait(false))
+        {
+            throw new ApplicationFailureException(
+                $"Media '{logoMediaId}' was not found.",
+                ApplicationErrorCodes.MediaNotFound);
+        }
+    }
 
     private async Task<OrganisationViewDto> AssembleOrganisationViewAsync(
         Competition competition,

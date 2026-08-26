@@ -172,4 +172,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when a normal lifecycle mutation is refused because the Competition is Completed or Archived.
     /// </summary>
     public const string CompetitionClosed = "Application.CompetitionClosed";
+
+    /// <summary>
+    /// Gets the code when a logo Media reference does not exist.
+    /// </summary>
+    public const string MediaNotFound = "Application.MediaNotFound";
 }

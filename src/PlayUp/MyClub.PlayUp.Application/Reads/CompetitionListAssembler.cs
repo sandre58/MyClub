@@ -28,6 +28,6 @@ public static class CompetitionListAssembler
                 competition.Name.Value,
                 competition.Status,
                 competition.ShortName?.Value,
-                competition.LogoUri?.Value))];
+                competition.LogoMediaId?.Value))];
     }
 }

@@ -44,7 +44,10 @@ public sealed class DraftEmptyScenario : IScenario
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        ScenarioOrchestration.CreateCompetition(context, Recipe!.DisplayName);
+        await ScenarioOrchestration.CreateCompetitionAsync(
+            context,
+            Recipe!.DisplayName,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

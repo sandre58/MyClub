@@ -17,8 +17,8 @@ public sealed class DatasetTeamDocument
     /// <summary>Gets or sets the optional short name.</summary>
     public string? ShortName { get; set; }
 
-    /// <summary>Gets or sets the optional logo path (app-relative).</summary>
-    public string? LogoPath { get; set; }
+    /// <summary>Gets or sets the optional logo asset under <c>Assets/seed-logos/</c>.</summary>
+    public string? LogoAsset { get; set; }
 
     /// <summary>Gets or sets the optional primary kit color (#RRGGBB).</summary>
     public string? PrimaryColor { get; set; }

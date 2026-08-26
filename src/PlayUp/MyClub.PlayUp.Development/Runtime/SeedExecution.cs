@@ -31,6 +31,7 @@ internal static class SeedExecution
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var logos = scope.ServiceProvider.GetRequiredService<SeedLogoImporter>();
 
         var clock = new ControlledClock(DefaultEpoch);
         var ids = new DeterministicIdFactory(catalogId, workspaceSeed);
@@ -46,7 +47,8 @@ internal static class SeedExecution
             clock,
             ids,
             entropy,
-            datasets);
+            datasets,
+            logos);
 
         await execute(context, cancellationToken).ConfigureAwait(false);
     }

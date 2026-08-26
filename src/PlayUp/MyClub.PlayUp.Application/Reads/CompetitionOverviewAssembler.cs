@@ -45,7 +45,7 @@ public static class CompetitionOverviewAssembler
                 entry.DisplayName,
                 entry.Status,
                 entry.ShortName?.Value,
-                entry.LogoUri?.Value,
+                entry.LogoMediaId?.Value,
                 entry.PrimaryColor?.Value,
                 entry.SecondaryColor?.Value))
             .ToArray();
@@ -58,7 +58,7 @@ public static class CompetitionOverviewAssembler
             stageSummaries,
             competition.CompletionMode,
             competition.ShortName?.Value,
-            competition.LogoUri?.Value,
+            competition.LogoMediaId?.Value,
             competition.ScheduledStart,
             competition.ScheduledEnd);
     }

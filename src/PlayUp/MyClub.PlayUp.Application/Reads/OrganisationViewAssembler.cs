@@ -71,7 +71,7 @@ public static class OrganisationViewAssembler
             actions,
             readiness,
             competition.ShortName?.Value,
-            competition.LogoUri?.Value,
+            competition.LogoMediaId?.Value,
             competition.ScheduledStart,
             competition.ScheduledEnd);
     }
@@ -102,7 +102,7 @@ public static class OrganisationViewAssembler
                 entry.DisplayName,
                 entry.Status,
                 entry.ShortName?.Value,
-                entry.LogoUri?.Value,
+                entry.LogoMediaId?.Value,
                 entry.PrimaryColor?.Value,
                 entry.SecondaryColor?.Value))
             .ToList();

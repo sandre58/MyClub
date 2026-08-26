@@ -28,7 +28,8 @@ public sealed class ScenarioContext
         ControlledClock clock,
         DeterministicIdFactory ids,
         DeterministicEntropy entropy,
-        DatasetCatalog datasets)
+        DatasetCatalog datasets,
+        SeedLogoImporter logos)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(scenarioId);
         ScenarioId = scenarioId;
@@ -42,6 +43,7 @@ public sealed class ScenarioContext
         Ids = ids ?? throw new ArgumentNullException(nameof(ids));
         Entropy = entropy ?? throw new ArgumentNullException(nameof(entropy));
         Datasets = datasets ?? throw new ArgumentNullException(nameof(datasets));
+        Logos = logos ?? throw new ArgumentNullException(nameof(logos));
     }
 
     /// <summary>Gets the scenario or template identity.</summary>
@@ -76,4 +78,7 @@ public sealed class ScenarioContext
 
     /// <summary>Gets JSON team datasets.</summary>
     public DatasetCatalog Datasets { get; }
+
+    /// <summary>Gets the seed logo importer (asset path → Media id cache).</summary>
+    public SeedLogoImporter Logos { get; }
 }

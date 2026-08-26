@@ -25,6 +25,7 @@ import {
   updateEntryPresentation,
   withdrawCompetitionEntry,
 } from '../api'
+import { LogoMediaField } from '../design-system/LogoMediaField'
 import { TeamCrest } from '../design-system/TeamCrest'
 import {
   CheckIcon,
@@ -268,7 +269,9 @@ function IdentitySection({ data }: { data: OrganisationView }) {
   const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
   const [shortName, setShortName] = useState(data.shortName ?? '')
-  const [logoPath, setLogoPath] = useState(data.logoPath ?? '')
+  const [logoMediaId, setLogoMediaId] = useState<string | null>(
+    data.logoMediaId ?? null,
+  )
   const [scheduledStart, setScheduledStart] = useState(
     data.scheduledStart?.slice(0, 10) ?? '',
   )
@@ -278,16 +281,16 @@ function IdentitySection({ data }: { data: OrganisationView }) {
 
   useEffect(() => {
     setShortName(data.shortName ?? '')
-    setLogoPath(data.logoPath ?? '')
+    setLogoMediaId(data.logoMediaId ?? null)
     setScheduledStart(data.scheduledStart?.slice(0, 10) ?? '')
     setScheduledEnd(data.scheduledEnd?.slice(0, 10) ?? '')
-  }, [data.shortName, data.logoPath, data.scheduledStart, data.scheduledEnd])
+  }, [data.shortName, data.logoMediaId, data.scheduledStart, data.scheduledEnd])
 
   const presentationMutation = useMutation({
     mutationFn: () =>
       updateCompetitionPresentation(data.competitionId, {
         shortName: shortName.trim() || null,
-        logoPath: logoPath.trim() || null,
+        logoMediaId,
       }),
     onSuccess: async () => {
       await invalidateAfterOrganisationMutation(queryClient, data.competitionId)
@@ -315,9 +318,6 @@ function IdentitySection({ data }: { data: OrganisationView }) {
         {t('identity.heading')}
       </PanelHead>
       <div className="organisation-identity">
-        {data.logoPath ? (
-          <TeamCrest name={data.name} logoPath={data.logoPath} size="md" />
-        ) : null}
         <form
           className="form"
           onSubmit={(event: FormEvent) => {
@@ -334,15 +334,13 @@ function IdentitySection({ data }: { data: OrganisationView }) {
               disabled={presentationMutation.isPending}
             />
           </label>
-          <label className="field">
-            {t('identity.logoPath')}
-            <input
-              value={logoPath}
-              onChange={(event) => setLogoPath(event.target.value)}
-              disabled={presentationMutation.isPending}
-              placeholder="/seed-logos/…"
-            />
-          </label>
+          <LogoMediaField
+            name={data.name}
+            value={logoMediaId}
+            onChange={setLogoMediaId}
+            disabled={presentationMutation.isPending}
+            label={t('identity.logo')}
+          />
           <button
             type="submit"
             className="ds-btn ds-btn--ghost"
@@ -588,7 +586,7 @@ function ParticipantsSection({
               <li key={entry.entryId} title={entry.displayName}>
                 <TeamCrest
                   name={entry.displayName}
-                  logoPath={entry.logoPath}
+                  logoMediaId={entry.logoMediaId}
                   primaryColor={entry.primaryColor}
                   className="organisation-crest"
                 />
@@ -607,7 +605,7 @@ function ParticipantsSection({
                 <div className="organisation-entry organisation-entry--read">
                   <TeamCrest
                     name={entry.displayName}
-                    logoPath={entry.logoPath}
+                    logoMediaId={entry.logoMediaId}
                     primaryColor={entry.primaryColor}
                     className="organisation-crest"
                   />
@@ -685,7 +683,7 @@ function TeamsEditorDialog({
   const queryClient = useQueryClient()
   const [displayName, setDisplayName] = useState('')
   const [shortName, setShortName] = useState('')
-  const [logoPath, setLogoPath] = useState('')
+  const [logoMediaId, setLogoMediaId] = useState<string | null>(null)
   const [primaryColor, setPrimaryColor] = useState('')
   const [secondaryColor, setSecondaryColor] = useState('')
   const competitionId = data.competitionId
@@ -698,14 +696,14 @@ function TeamsEditorDialog({
       addCompetitionEntry(competitionId, {
         displayName: displayName.trim(),
         shortName: shortName.trim() || null,
-        logoPath: logoPath.trim() || null,
+        logoMediaId,
         primaryColor: primaryColor.trim() || null,
         secondaryColor: secondaryColor.trim() || null,
       }),
     onSuccess: async () => {
       setDisplayName('')
       setShortName('')
-      setLogoPath('')
+      setLogoMediaId(null)
       setPrimaryColor('')
       setSecondaryColor('')
       await invalidateOrganisation()
@@ -765,15 +763,13 @@ function TeamsEditorDialog({
               maxLength={20}
             />
           </label>
-          <label className="field">
-            {t('participants.logoPath')}
-            <input
-              value={logoPath}
-              onChange={(event) => setLogoPath(event.target.value)}
-              disabled={addMutation.isPending}
-              placeholder="/seed-logos/…"
-            />
-          </label>
+          <LogoMediaField
+            name={displayName.trim() || t('participants.newEntryPlaceholder')}
+            value={logoMediaId}
+            onChange={setLogoMediaId}
+            disabled={addMutation.isPending}
+            label={t('participants.logo')}
+          />
           <div className="form form--inline">
             <label className="field">
               {t('participants.primaryColor')}
@@ -830,7 +826,7 @@ function EntryEditorRow({
   const { t } = useTranslation('organisation')
   const [name, setName] = useState(entry.displayName)
   const [shortName, setShortName] = useState(entry.shortName ?? '')
-  const [logoPath, setLogoPath] = useState(entry.logoPath ?? '')
+  const [logoMediaId, setLogoMediaId] = useState<string | null>(entry.logoMediaId ?? null)
   const [primaryColor, setPrimaryColor] = useState(entry.primaryColor ?? '')
   const [secondaryColor, setSecondaryColor] = useState(
     entry.secondaryColor ?? '',
@@ -849,7 +845,7 @@ function EntryEditorRow({
     mutationFn: () =>
       updateEntryPresentation(competitionId, entry.entryId, {
         shortName: shortName.trim() || null,
-        logoPath: logoPath.trim() || null,
+        logoMediaId,
         primaryColor: primaryColor.trim() || null,
         secondaryColor: secondaryColor.trim() || null,
       }),
@@ -883,7 +879,7 @@ function EntryEditorRow({
       <p className="organisation-entry__identity">
         <TeamCrest
           name={entry.displayName}
-          logoPath={entry.logoPath}
+          logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
           className="organisation-crest"
         />
@@ -944,14 +940,13 @@ function EntryEditorRow({
                   maxLength={20}
                 />
               </label>
-              <label className="field">
-                {t('participants.logoPath')}
-                <input
-                  value={logoPath}
-                  onChange={(event) => setLogoPath(event.target.value)}
-                  disabled={pending}
-                />
-              </label>
+              <LogoMediaField
+                name={entry.displayName}
+                value={logoMediaId}
+                onChange={setLogoMediaId}
+                disabled={pending}
+                label={t('participants.logo')}
+              />
               <div className="form form--inline">
                 <label className="field">
                   {t('participants.primaryColor')}

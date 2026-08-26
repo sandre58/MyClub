@@ -44,9 +44,9 @@ public sealed class CompetitionEntry : Entity<EntryId>
     public ShortName? ShortName { get; private set; }
 
     /// <summary>
-    /// Gets the optional logo URI or path.
+    /// Gets the optional Media reference for the entry logo.
     /// </summary>
-    public LogoUri? LogoUri { get; private set; }
+    public LogoMediaId? LogoMediaId { get; private set; }
 
     /// <summary>
     /// Gets the optional primary kit color.
@@ -106,7 +106,7 @@ public sealed class CompetitionEntry : Entity<EntryId>
     private void ApplyPresentation(EntryPresentation presentation)
     {
         ShortName = presentation.ShortName;
-        LogoUri = presentation.LogoUri;
+        LogoMediaId = presentation.LogoMediaId;
         PrimaryColor = presentation.PrimaryColor;
         SecondaryColor = presentation.SecondaryColor;
     }

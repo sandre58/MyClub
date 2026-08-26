@@ -20,7 +20,7 @@ public static class UpdateEntryPresentation
     /// <param name="competition">Target competition.</param>
     /// <param name="entryId">Entry identity.</param>
     /// <param name="shortName">Short name, or null to clear.</param>
-    /// <param name="logoPath">Logo path or absolute URI string, or null to clear.</param>
+    /// <param name="logoMediaId">Logo Media Guid, or null to clear.</param>
     /// <param name="primaryColor">Primary color, or null to clear.</param>
     /// <param name="secondaryColor">Secondary color, or null to clear.</param>
     /// <param name="clock">Clock for domain events.</param>
@@ -28,7 +28,7 @@ public static class UpdateEntryPresentation
         Competition competition,
         EntryId entryId,
         string? shortName,
-        string? logoPath,
+        Guid? logoMediaId,
         string? primaryColor,
         string? secondaryColor,
         IClock clock)
@@ -39,7 +39,7 @@ public static class UpdateEntryPresentation
             entryId,
             new EntryPresentation(
                 ShortName.Create(shortName),
-                LogoUri.Create(logoPath),
+                LogoMediaId.Create(logoMediaId),
                 TeamColor.Create(primaryColor),
                 TeamColor.Create(secondaryColor)),
             clock);

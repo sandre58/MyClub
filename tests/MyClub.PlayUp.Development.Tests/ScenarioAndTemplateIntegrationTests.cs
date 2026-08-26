@@ -102,6 +102,8 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         competition.Should().NotBeNull();
         competition.Entries.Should().HaveCount(18);
         competition.Status.Should().Be(CompetitionStatus.Running);
+        competition.LogoMediaId.Should().NotBeNull();
+        competition.Entries.Select(e => e.LogoMediaId).Should().OnlyContain(id => id.HasValue);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var overview = await executor.GetCompetitionOverviewAsync(competition.Id);

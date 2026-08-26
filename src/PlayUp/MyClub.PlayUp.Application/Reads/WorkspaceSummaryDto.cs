@@ -34,4 +34,4 @@ public sealed record WorkspaceSummaryDto(
     bool CanCompleteNormally = false,
     IReadOnlyList<string>? CompletionBlockers = null,
     string? ShortName = null,
-    string? LogoPath = null);
+    Guid? LogoMediaId = null);

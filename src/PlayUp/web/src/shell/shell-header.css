@@ -37,14 +37,21 @@
     flex: none;
     width: var(--shell-header-crest-size);
     height: var(--shell-header-crest-size);
+}
+
+.shell-header__crest-mark.team-crest {
+    width: var(--shell-header-crest-size);
+    height: var(--shell-header-crest-size);
+}
+
+.shell-header__crest-mark.team-crest--logo {
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-control);
     background: var(--color-surface-secondary);
-    color: var(--color-text-secondary);
-    font-size: 1.5rem;
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
-    text-transform: uppercase;
+}
+
+.shell-header__crest-mark .team-crest__initial {
+    font-size: 1rem;
 }
 
 .shell-header__identity {

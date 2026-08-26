@@ -9,6 +9,7 @@ using MyClub.Media.Application.Media;
 using MyClub.Media.Domain;
 using MyClub.Media.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Application;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
@@ -32,6 +33,7 @@ if (!Path.IsPathRooted(mediaStorageRoot))
 
 builder.Services.AddPlayUpInfrastructure(connectionString);
 builder.Services.AddMediaInfrastructure(mediaConnectionString, mediaStorageRoot);
+builder.Services.AddScoped<IMediaReferenceChecker, MediaReferenceChecker>();
 builder.Services.AddScoped<UseCaseExecutor>();
 builder.Services.ConfigureHttpJsonOptions(static options =>
 
@@ -104,7 +106,6 @@ app.MapGet(
         return Results.File(
             content.Content,
             content.ContentType,
-            fileDownloadName: content.OriginalName,
             enableRangeProcessing: false);
     });
 
@@ -178,7 +179,7 @@ app.MapPost(
                 request.DisplayName,
                 request.TeamId,
                 request.ShortName,
-                request.LogoPath,
+                request.LogoMediaId,
                 request.PrimaryColor,
                 request.SecondaryColor,
                 cancellationToken)
@@ -198,7 +199,7 @@ app.MapPost(
             .UpdateCompetitionPresentationAsync(
                 new CompetitionId(competitionId),
                 request.ShortName,
-                request.LogoPath,
+                request.LogoMediaId,
                 cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(view);
@@ -236,7 +237,7 @@ app.MapPost(
                 new CompetitionId(competitionId),
                 new EntryId(entryId),
                 request.ShortName,
-                request.LogoPath,
+                request.LogoMediaId,
                 request.PrimaryColor,
                 request.SecondaryColor,
                 cancellationToken)

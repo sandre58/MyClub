@@ -22,7 +22,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Actions">Available organisation action codes.</param>
 /// <param name="Readiness">Application readiness diagnostic for Slice 3.</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
-/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
 /// <param name="ScheduledEnd">Optional declared end.</param>
 public sealed record OrganisationViewDto(
@@ -36,7 +36,7 @@ public sealed record OrganisationViewDto(
     IReadOnlyList<string> Actions,
     OrganisationReadinessDto Readiness,
     string? ShortName = null,
-    string? LogoPath = null,
+    Guid? LogoMediaId = null,
     DateTimeOffset? ScheduledStart = null,
     DateTimeOffset? ScheduledEnd = null);
 
@@ -54,7 +54,7 @@ public sealed record OrganisationParticipantsSummaryDto(
 /// <param name="DisplayName">Display name.</param>
 /// <param name="Status">Entry status.</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
-/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color.</param>
 /// <param name="SecondaryColor">Optional secondary kit color.</param>
 public sealed record OrganisationEntryDto(
@@ -62,7 +62,7 @@ public sealed record OrganisationEntryDto(
     string DisplayName,
     EntryStatus Status,
     string? ShortName = null,
-    string? LogoPath = null,
+    Guid? LogoMediaId = null,
     string? PrimaryColor = null,
     string? SecondaryColor = null);
 

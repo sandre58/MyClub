@@ -39,9 +39,9 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     public ShortName? ShortName { get; private set; }
 
     /// <summary>
-    /// Gets the optional logo URI or path.
+    /// Gets the optional Media reference for the competition logo.
     /// </summary>
-    public LogoUri? LogoUri { get; private set; }
+    public LogoMediaId? LogoMediaId { get; private set; }
 
     /// <summary>
     /// Gets the optional declared competition start.
@@ -174,16 +174,16 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     /// Updates competition presentation metadata (short name and logo). Null clears a field.
     /// </summary>
     /// <param name="shortName">The short name, or <see langword="null"/> to clear.</param>
-    /// <param name="logoUri">The logo URI, or <see langword="null"/> to clear.</param>
+    /// <param name="logoMediaId">The logo Media reference, or <see langword="null"/> to clear.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void UpdatePresentation(ShortName? shortName, LogoUri? logoUri, IClock clock)
+    public void UpdatePresentation(ShortName? shortName, LogoMediaId? logoMediaId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
 
         ShortName = shortName;
-        LogoUri = logoUri;
-        Raise(new CompetitionPresentationUpdated(Id, shortName?.Value, logoUri?.Value, clock));
+        LogoMediaId = logoMediaId;
+        Raise(new CompetitionPresentationUpdated(Id, shortName?.Value, logoMediaId?.Value, clock));
     }
 
     /// <summary>

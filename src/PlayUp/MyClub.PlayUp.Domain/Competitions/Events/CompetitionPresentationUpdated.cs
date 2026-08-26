@@ -18,18 +18,18 @@ public sealed record CompetitionPresentationUpdated : DomainEvent
     /// </summary>
     /// <param name="competitionId">The competition identity.</param>
     /// <param name="shortName">The short name, if any.</param>
-    /// <param name="logoPath">The logo path or absolute URI string, if any.</param>
+    /// <param name="logoMediaId">The logo Media Guid, if any.</param>
     /// <param name="clock">The clock providing the occurrence timestamp.</param>
     public CompetitionPresentationUpdated(
         CompetitionId competitionId,
         string? shortName,
-        string? logoPath,
+        Guid? logoMediaId,
         IClock clock)
         : base(clock)
     {
         CompetitionId = competitionId;
         ShortName = shortName;
-        LogoPath = logoPath;
+        LogoMediaId = logoMediaId;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public sealed record CompetitionPresentationUpdated : DomainEvent
     public string? ShortName { get; }
 
     /// <summary>
-    /// Gets the logo path or absolute URI string, if any.
+    /// Gets the logo Media Guid, if any.
     /// </summary>
-    public string? LogoPath { get; }
+    public Guid? LogoMediaId { get; }
 }

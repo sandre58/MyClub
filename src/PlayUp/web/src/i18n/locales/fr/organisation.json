@@ -52,7 +52,7 @@
     "confirmWithdraw": "Retirer « {{name}} » de cette compétition ?",
     "confirmExclude": "Exclure « {{name}} » de cette compétition ?",
     "shortName": "Nom court",
-    "logoPath": "Chemin du logo",
+    "logo": "Logo",
     "primaryColor": "Couleur primaire",
     "secondaryColor": "Couleur secondaire",
     "savePresentation": "Enregistrer la présentation"
@@ -60,11 +60,15 @@
   "identity": {
     "heading": "Identité",
     "shortName": "Nom court",
-    "logoPath": "Chemin du logo",
+    "logo": "Logo",
     "scheduledStart": "Début déclaré",
     "scheduledEnd": "Fin déclarée",
     "savePresentation": "Enregistrer l’identité",
     "saveSchedule": "Enregistrer les dates"
+  },
+  "logo": {
+    "clear": "Retirer le logo",
+    "uploading": "Téléversement…"
   },
   "regulation": {
     "heading": "Règlement",

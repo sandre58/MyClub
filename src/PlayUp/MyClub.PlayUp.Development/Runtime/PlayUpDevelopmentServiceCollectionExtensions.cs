@@ -32,6 +32,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
 
         services.AddSingleton(options);
         services.AddSingleton(_ => DatasetCatalog.LoadFromAssembly(typeof(DatasetCatalog).Assembly));
+        services.AddScoped<SeedLogoImporter>();
 
         services.AddSingleton<IScenario, EmptyWorkspaceScenario>();
         services.AddSingleton<IScenario, DraftEmptyScenario>();

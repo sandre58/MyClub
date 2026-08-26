@@ -21,11 +21,12 @@ public sealed class CompetitionPresentationTests
     public void UpdatePresentation_sets_short_name_and_logo()
     {
         var competition = CreateDraft();
+        var logoId = new LogoMediaId(Guid.CreateVersion7());
 
-        competition.UpdatePresentation(ShortName.Create("L1"), LogoUri.Create("/seed-logos/ligue-1/comp.png"), _clock);
+        competition.UpdatePresentation(ShortName.Create("L1"), logoId, _clock);
 
         competition.ShortName!.Value.Should().Be("L1");
-        competition.LogoUri!.Value.Should().Be("/seed-logos/ligue-1/comp.png");
+        competition.LogoMediaId.Should().Be(logoId);
         competition.DomainEvents.OfType<CompetitionPresentationUpdated>().Should().ContainSingle();
     }
 
@@ -64,16 +65,17 @@ public sealed class CompetitionPresentationTests
     public void AddEntry_accepts_presentation()
     {
         var competition = CreateDraft();
+        var logoId = new LogoMediaId(Guid.CreateVersion7());
         var presentation = new EntryPresentation(
             ShortName.Create("PSG"),
-            LogoUri.Create("/seed-logos/ligue-1/psg.png"),
+            logoId,
             TeamColor.Create("#004170"),
             TeamColor.Create("#DA291C"));
 
         var entry = competition.AddEntry(TeamId.New(), "Paris Saint-Germain", _clock, presentation);
 
         entry.ShortName!.Value.Should().Be("PSG");
-        entry.LogoUri!.Value.Should().Be("/seed-logos/ligue-1/psg.png");
+        entry.LogoMediaId.Should().Be(logoId);
         entry.PrimaryColor!.Value.Should().Be("#004170");
         entry.SecondaryColor!.Value.Should().Be("#DA291C");
     }
@@ -83,14 +85,15 @@ public sealed class CompetitionPresentationTests
     {
         var competition = CreateDraft();
         var entry = competition.AddEntry(TeamId.New(), "Alpha", _clock, new EntryPresentation(ShortName.Create("ALP")));
+        var logoId = new LogoMediaId(Guid.CreateVersion7());
 
         competition.UpdateEntryPresentation(
             entry.Id,
-            new EntryPresentation(null, LogoUri.Create("https://example.com/a.png"), TeamColor.Create("#AABBCC")),
+            new EntryPresentation(null, logoId, TeamColor.Create("#AABBCC")),
             _clock);
 
         entry.ShortName.Should().BeNull();
-        entry.LogoUri!.Value.Should().Be("https://example.com/a.png");
+        entry.LogoMediaId.Should().Be(logoId);
         entry.PrimaryColor!.Value.Should().Be("#AABBCC");
         entry.SecondaryColor.Should().BeNull();
     }
@@ -107,15 +110,6 @@ public sealed class CompetitionPresentationTests
         var act = () => competition.UpdatePresentation(ShortName.Create("X"), null, _clock);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
-    }
-
-    [Theory]
-    [InlineData("not-a-path")]
-    [InlineData("ftp://example.com/a.png")]
-    public void LogoUri_rejects_invalid(string raw)
-    {
-        var act = () => LogoUri.Create(raw);
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidLogoUri);
     }
 
     [Fact]

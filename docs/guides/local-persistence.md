@@ -78,9 +78,9 @@ Templates are **capacity demos**, not full real multi-phase calendars:
 | `world-cup` | Groups 8×4 → Top2 qualify → R16→QF→SF → Final + Bronze (`Loser`). Stops before materialize Final/Bronze. `:progress` ignored. |
 | `coupe-de-france` | Cup multi-stage R32→R16→QF→SF→Final. R32 played, R16 slots filled — **stops before** from-slots (like `cup-qf-sf`). `:progress` ignored. |
 
-Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, logo paths).
+Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, `logoAsset`).
 
-**Seed logos (internal only):** real crest/flag PNGs under `src/PlayUp/web/public/seed-logos/` referenced as `/seed-logos/...` in dataset JSON. See `seed-logos/README.md` — not for redistribution or product DS.
+**Seed logos (internal only):** crest/flag PNGs under `MyClub.PlayUp.Development/Assets/seed-logos/`. Datasets reference relative paths (e.g. `ligue-1/psg.png`); DevRunner imports them into Media on seed (`logo_media_id`). Not for redistribution or product DS.
 
 ## Scenarios
 

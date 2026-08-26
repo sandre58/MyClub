@@ -33,7 +33,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.GetByIdAsync(It.IsAny<CompetitionId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Competition?)null);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var act = async () => await executor.GetCompetitionOverviewAsync(CompetitionId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
@@ -52,7 +52,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.GetByIdAsync(It.IsAny<StageId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Stage?)null);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var act = async () => await executor.GetStageOverviewAsync(StageId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
@@ -71,7 +71,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.GetByIdAsync(It.IsAny<MatchId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DomainMatch?)null);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var act = async () => await executor.GetMatchDetailAsync(MatchId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
@@ -103,7 +103,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.ListByStageAsync(stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync([match]);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var summaries = await executor.ListMatchesByStageAsync(stage.Id);
 
         summaries.Should().ContainSingle();

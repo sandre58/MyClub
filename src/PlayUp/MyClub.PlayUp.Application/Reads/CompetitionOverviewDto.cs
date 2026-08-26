@@ -18,7 +18,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Stages">Referenced stages (name + status).</param>
 /// <param name="CompletionMode">How the competition was completed, when set.</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
-/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
 /// <param name="ScheduledEnd">Optional declared end.</param>
 public sealed record CompetitionOverviewDto(
@@ -29,7 +29,7 @@ public sealed record CompetitionOverviewDto(
     IReadOnlyList<CompetitionStageSummaryDto> Stages,
     CompletionMode? CompletionMode = null,
     string? ShortName = null,
-    string? LogoPath = null,
+    Guid? LogoMediaId = null,
     DateTimeOffset? ScheduledStart = null,
     DateTimeOffset? ScheduledEnd = null);
 
@@ -40,7 +40,7 @@ public sealed record CompetitionOverviewDto(
 /// <param name="DisplayName">Display name.</param>
 /// <param name="Status">Participation status.</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
-/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color.</param>
 /// <param name="SecondaryColor">Optional secondary kit color.</param>
 public sealed record CompetitionEntrySummaryDto(
@@ -48,7 +48,7 @@ public sealed record CompetitionEntrySummaryDto(
     string DisplayName,
     EntryStatus Status,
     string? ShortName = null,
-    string? LogoPath = null,
+    Guid? LogoMediaId = null,
     string? PrimaryColor = null,
     string? SecondaryColor = null);
 

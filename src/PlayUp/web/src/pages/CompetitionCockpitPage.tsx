@@ -727,7 +727,7 @@ function TeamsPanel({
             >
               <TeamCrest
                 name={entry.displayName}
-                logoPath={entry.logoPath}
+                logoMediaId={entry.logoMediaId}
                 primaryColor={entry.primaryColor}
                 size="sm"
               />

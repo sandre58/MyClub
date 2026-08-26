@@ -10,12 +10,12 @@ namespace MyClub.PlayUp.Domain.Competitions;
 /// Optional presentation metadata for a competition entry.
 /// </summary>
 /// <param name="ShortName">Abbreviated name.</param>
-/// <param name="LogoUri">Logo path or URI.</param>
+/// <param name="LogoMediaId">Optional Media reference for the entry logo.</param>
 /// <param name="PrimaryColor">Primary kit color.</param>
 /// <param name="SecondaryColor">Secondary kit color.</param>
 public sealed record EntryPresentation(
     ShortName? ShortName = null,
-    LogoUri? LogoUri = null,
+    LogoMediaId? LogoMediaId = null,
     TeamColor? PrimaryColor = null,
     TeamColor? SecondaryColor = null)
 {

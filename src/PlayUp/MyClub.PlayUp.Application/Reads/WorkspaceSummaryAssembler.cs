@@ -51,7 +51,7 @@ public static class WorkspaceSummaryAssembler
             canCompleteNormally,
             blockers,
             competition.ShortName?.Value,
-            competition.LogoUri?.Value);
+            competition.LogoMediaId?.Value);
     }
 
     private static string? ResolveNextStub(CompetitionStatus status, bool canCompleteNormally) =>

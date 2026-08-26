@@ -20,8 +20,8 @@ public sealed class DatasetDocument
     /// <summary>Gets or sets the optional competition short name.</summary>
     public string? ShortName { get; set; }
 
-    /// <summary>Gets or sets the optional competition logo path.</summary>
-    public string? LogoPath { get; set; }
+    /// <summary>Gets or sets the optional competition logo asset under <c>Assets/seed-logos/</c>.</summary>
+    public string? LogoAsset { get; set; }
 
     /// <summary>Gets or sets the optional declared start (ISO).</summary>
     public DateTimeOffset? ScheduledStart { get; set; }

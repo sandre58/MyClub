@@ -2,7 +2,7 @@
 
 Transverse MyClub capability for storing and serving binary media (images in v1). Product domains hold **references** (`MediaId` / Guid) only — they do not own files or storage technology.
 
-Play’up composition root hosts the HTTP endpoints today; Play’up competition logos (`LogoUri` / `logoPath`) are **not** migrated to Media yet.
+Play’up composition root hosts the HTTP endpoints today. Competition / entry logos store a local `LogoMediaId` (Guid) and the SPA loads binaries exclusively via `GET /media/{id}/content`.
 
 ## Projects
 
@@ -17,7 +17,7 @@ Play’up composition root hosts the HTTP endpoints today; Play’up competition
 | Key | Purpose |
 | :-- | :------ |
 | `ConnectionStrings:Media` | PostgreSQL for Media metadata (falls back to `ConnectionStrings:PlayUp` when omitted) |
-| `Media:StorageRoot` | Local filesystem root for binaries (default `.local/media` under the Host content root; gitignored via `.local/`) |
+| `Media:StorageRoot` | Local filesystem root for binaries (default `.local/media` under the Host content root; gitignored via `.local/`). **DevRunner must use the same root** (default resolves to the Host `.local/media`) so seeded files are visible via `GET /media/{id}/content`. |
 
 Apply migrations:
 
@@ -63,6 +63,10 @@ Not formal product Décisions yet:
 - Public read by id (Host has no auth yet)
 - No retention / soft-delete / thumbnails
 
+## Play’up logos
+
+Competition and entry logos are `LogoMediaId` (Guid) in Play’up Domain — **no** project reference to `Media.Domain`. Existence is checked at the Application boundary (`IMediaReferenceChecker`). Seeds import PNGs from `Development/Assets/seed-logos/` via Media create; the SPA uses `TeamCrest` → `/media/{id}/content` only.
+
 ## Decoupling note
 
-`MediaId` lives in `MyClub.Media.Domain`. Future domains may store a Guid reference **without** taking a project dependency on Media until they need Media APIs.
+`MediaId` lives in `MyClub.Media.Domain`. Play’up Domain stores a local Guid VO (`LogoMediaId`) without referencing Media. Other domains may do the same until they need Media APIs.

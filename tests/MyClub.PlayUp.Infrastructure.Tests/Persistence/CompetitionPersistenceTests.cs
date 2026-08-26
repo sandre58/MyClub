@@ -297,7 +297,9 @@ public sealed class CompetitionPersistenceTests
     {
         var databaseName = Guid.NewGuid().ToString();
         var competition = Competition.Create(new CompetitionName("Ligue 1"), SampleRegulations.Standard(), _clock);
-        competition.UpdatePresentation(ShortName.Create("L1"), LogoUri.Create("/seed-logos/ligue-1/comp.png"), _clock);
+        var competitionLogo = new LogoMediaId(Guid.CreateVersion7());
+        var entryLogo = new LogoMediaId(Guid.CreateVersion7());
+        competition.UpdatePresentation(ShortName.Create("L1"), competitionLogo, _clock);
         var start = new DateTimeOffset(2026, 8, 15, 0, 0, 0, TimeSpan.Zero);
         var end = new DateTimeOffset(2027, 5, 30, 0, 0, 0, TimeSpan.Zero);
         competition.SetSchedule(start, end, _clock);
@@ -307,7 +309,7 @@ public sealed class CompetitionPersistenceTests
             _clock,
             new EntryPresentation(
                 ShortName.Create("PSG"),
-                LogoUri.Create("/seed-logos/ligue-1/psg.png"),
+                entryLogo,
                 TeamColor.Create("#004170"),
                 TeamColor.Create("#DA291C")));
         var id = competition.Id;
@@ -323,12 +325,12 @@ public sealed class CompetitionPersistenceTests
             var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
             loaded.Should().NotBeNull();
             loaded.ShortName!.Value.Should().Be("L1");
-            loaded.LogoUri!.Value.Should().Be("/seed-logos/ligue-1/comp.png");
+            loaded.LogoMediaId.Should().Be(competitionLogo);
             loaded.ScheduledStart.Should().Be(start);
             loaded.ScheduledEnd.Should().Be(end);
             var entry = loaded.Entries.Should().ContainSingle().Subject;
             entry.ShortName!.Value.Should().Be("PSG");
-            entry.LogoUri!.Value.Should().Be("/seed-logos/ligue-1/psg.png");
+            entry.LogoMediaId.Should().Be(entryLogo);
             entry.PrimaryColor!.Value.Should().Be("#004170");
             entry.SecondaryColor!.Value.Should().Be("#DA291C");
         }

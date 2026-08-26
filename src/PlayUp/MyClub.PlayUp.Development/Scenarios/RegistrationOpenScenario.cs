@@ -52,11 +52,17 @@ public sealed class RegistrationOpenScenario : IScenario
             BootstrapRegulation.Standard().MatchRules,
             BootstrapRegulation.Standard().StandingRules);
 
-        var competition = ScenarioOrchestration.CreateCompetition(
+        var competition = await ScenarioOrchestration.CreateCompetitionAsync(
             context,
             Recipe!.DisplayName,
-            regulation);
-        ScenarioOrchestration.RegisterTeams(context, competition, Recipe, countOverride: 3);
+            regulation,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+        await ScenarioOrchestration.RegisterTeamsAsync(
+            context,
+            competition,
+            Recipe,
+            countOverride: 3,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

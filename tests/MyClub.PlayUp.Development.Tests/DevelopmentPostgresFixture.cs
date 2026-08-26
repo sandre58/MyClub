@@ -7,6 +7,9 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MyClub.Media.Infrastructure.DependencyInjection;
+using MyClub.Media.Infrastructure.Persistence;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Persistence;
@@ -19,6 +22,11 @@ namespace MyClub.PlayUp.Development.Tests;
 public sealed class DevelopmentPostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18").Build();
+    private readonly string _mediaStorageRoot = Path.Combine(
+        Path.GetTempPath(),
+        "playup-development-tests-media",
+        Guid.CreateVersion7().ToString("N"));
+
     private ServiceProvider? _provider;
 
     public IServiceProvider Services =>
@@ -52,9 +60,15 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         adminBuilder.Database = databaseName;
         var connectionString = adminBuilder.ConnectionString;
 
+        Directory.CreateDirectory(_mediaStorageRoot);
+
         var services = new ServiceCollection();
         services.AddPlayUpInfrastructure(connectionString);
-        services.AddSingleton<IWorkspaceStore, FixturePostgresWorkspaceStore>();
+        services.AddMediaInfrastructure(connectionString, _mediaStorageRoot);
+        services.AddScoped<IMediaReferenceChecker, AlwaysExistingMediaReferences>();
+        services.AddSingleton<IWorkspaceStore>(sp => new FixturePostgresWorkspaceStore(
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            _mediaStorageRoot));
         services.AddPlayUpDevelopmentWorkspace(new DevelopmentWorkspaceOptions { Seed = 42 });
         services.AddScoped<Application.Pipeline.UseCaseExecutor>();
         services.AddSingleton<Domain.Common.IClock>(_ =>
@@ -64,6 +78,8 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         using var scope = _provider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
         await context.Database.MigrateAsync().ConfigureAwait(false);
+        var media = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        await media.Database.MigrateAsync().ConfigureAwait(false);
     }
 
     public async Task DisposeAsync()
@@ -74,9 +90,22 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         }
 
         await _container.DisposeAsync().ConfigureAwait(false);
+
+        if (Directory.Exists(_mediaStorageRoot))
+        {
+            Directory.Delete(_mediaStorageRoot, recursive: true);
+        }
     }
 
-    private sealed class FixturePostgresWorkspaceStore(IServiceScopeFactory scopeFactory) : IWorkspaceStore
+    private sealed class AlwaysExistingMediaReferences : IMediaReferenceChecker
+    {
+        public Task<bool> ExistsAsync(Guid mediaId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+    }
+
+    private sealed class FixturePostgresWorkspaceStore(
+        IServiceScopeFactory scopeFactory,
+        string mediaStorageRoot) : IWorkspaceStore
     {
         public async Task ResetAsync(CancellationToken cancellationToken = default)
         {
@@ -104,6 +133,27 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
                 }
 
                 await context.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+                var media = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+                await media.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            if (Directory.Exists(mediaStorageRoot))
+            {
+                foreach (var entry in Directory.EnumerateFileSystemEntries(mediaStorageRoot))
+                {
+                    if (Directory.Exists(entry))
+                    {
+                        Directory.Delete(entry, recursive: true);
+                    }
+                    else
+                    {
+                        File.Delete(entry);
+                    }
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory(mediaStorageRoot);
             }
         }
     }

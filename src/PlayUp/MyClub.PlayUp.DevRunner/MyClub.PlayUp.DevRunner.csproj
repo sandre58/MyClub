@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MyClub.PlayUp.Development\MyClub.PlayUp.Development.csproj" />
     <ProjectReference Include="..\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +27,10 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Content Include="..\MyClub.PlayUp.Development\Assets\seed-logos\**\*">
+      <Link>Assets\seed-logos\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

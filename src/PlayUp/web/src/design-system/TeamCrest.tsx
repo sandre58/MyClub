@@ -2,18 +2,19 @@ type CrestTone = 'a' | 'b' | 'c' | 'd' | 'e'
 
 export type TeamCrestProps = {
   name: string
-  logoPath?: string | null
+  logoMediaId?: string | null
   primaryColor?: string | null
   className?: string
   size?: 'sm' | 'md'
 }
 
 /**
- * Team crest: real logo when logoPath is set, otherwise letter-mark placeholder.
+ * Team crest: real logo via /media/{id}/content when logoMediaId is set,
+ * otherwise letter-mark placeholder.
  */
 export function TeamCrest({
   name,
-  logoPath,
+  logoMediaId,
   primaryColor,
   className = '',
   size = 'md',
@@ -22,13 +23,17 @@ export function TeamCrest({
   const tone = crestTone(name)
   const sizeClass = size === 'sm' ? 'team-crest--sm' : 'team-crest--md'
 
-  if (logoPath) {
+  if (logoMediaId) {
     return (
       <span
         className={`team-crest team-crest--logo ${sizeClass} ${className}`.trim()}
         title={name}
       >
-        <img src={logoPath} alt="" className="team-crest__img" />
+        <img
+          src={mediaContentUrl(logoMediaId)}
+          alt=""
+          className="team-crest__img"
+        />
       </span>
     )
   }
@@ -49,6 +54,11 @@ export function TeamCrest({
       <span className="team-crest__initial">{initial}</span>
     </span>
   )
+}
+
+/** Relative URL for Media binary content (Vite proxy → Host). */
+export function mediaContentUrl(mediaId: string): string {
+  return `/media/${mediaId}/content`
 }
 
 function crestInitials(name: string): string {

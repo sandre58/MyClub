@@ -4,16 +4,19 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MyClub.Media.Infrastructure.Persistence;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Infrastructure.Persistence;
 
 namespace MyClub.PlayUp.DevRunner;
 
 /// <summary>
-/// PostgreSQL workspace reset for the DevRunner CLI.
+/// PostgreSQL workspace reset for the DevRunner CLI (Play'up + Media schema + local files).
 /// </summary>
-internal sealed class PostgresWorkspaceStore(IServiceScopeFactory scopeFactory) : IWorkspaceStore
+internal sealed class PostgresWorkspaceStore(IServiceScopeFactory scopeFactory, string mediaStorageRoot)
+    : IWorkspaceStore
 {
     /// <inheritdoc />
     public async Task ResetAsync(CancellationToken cancellationToken = default)
@@ -23,6 +26,32 @@ internal sealed class PostgresWorkspaceStore(IServiceScopeFactory scopeFactory) 
         {
             var reset = scope.ServiceProvider.GetRequiredService<IPlayUpDatabaseReset>();
             await reset.ResetAsync(cancellationToken).ConfigureAwait(false);
+
+            var mediaDb = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+            await mediaDb.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        ClearMediaStorage(mediaStorageRoot);
+    }
+
+    private static void ClearMediaStorage(string root)
+    {
+        if (!Directory.Exists(root))
+        {
+            Directory.CreateDirectory(root);
+            return;
+        }
+
+        foreach (var entry in Directory.EnumerateFileSystemEntries(root))
+        {
+            if (Directory.Exists(entry))
+            {
+                Directory.Delete(entry, recursive: true);
+            }
+            else
+            {
+                File.Delete(entry);
+            }
         }
     }
 }

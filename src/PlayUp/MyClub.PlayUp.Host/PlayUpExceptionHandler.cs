@@ -69,6 +69,8 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
                 (StatusCodes.Status409Conflict, "Completion not allowed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.CompetitionClosed } application =>
                 (StatusCodes.Status409Conflict, "Competition closed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>
+                (StatusCodes.Status400BadRequest, "Media not found", application.Code),
             ApplicationFailureException application =>
                 (StatusCodes.Status400BadRequest, "Application failure", application.Code),
             DomainException domain =>

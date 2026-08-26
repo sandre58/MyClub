@@ -57,9 +57,9 @@ public static class CompetitionErrorCodes
     public const string InvalidShortName = "Competition.InvalidShortName";
 
     /// <summary>
-    /// Gets the code when a logo URI is invalid.
+    /// Gets the code when a logo media reference is empty.
     /// </summary>
-    public const string InvalidLogoUri = "Competition.InvalidLogoUri";
+    public const string InvalidLogoMediaId = "Competition.InvalidLogoMediaId";
 
     /// <summary>
     /// Gets the code when a team color is invalid.

@@ -43,13 +43,13 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
                 value => ShortName.Create(value))
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
-        builder.Property(competition => competition.LogoUri)
-            .HasColumnName("logo_uri")
-            .HasMaxLength(LogoUri.MaxLength)
+        builder.Property(competition => competition.LogoMediaId)
+            .HasColumnName("logo_media_id")
+            .HasColumnType("uuid")
             .IsRequired(false)
             .HasConversion(
-                uri => uri == null ? null : uri.Value,
-                value => LogoUri.Create(value))
+                id => id == null ? (Guid?)null : id.Value.Value,
+                value => LogoMediaId.Create(value))
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
         builder.Property(competition => competition.ScheduledStart)
@@ -123,13 +123,13 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
                 value => ShortName.Create(value))
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
-        entries.Property(entry => entry.LogoUri)
-            .HasColumnName("logo_uri")
-            .HasMaxLength(LogoUri.MaxLength)
+        entries.Property(entry => entry.LogoMediaId)
+            .HasColumnName("logo_media_id")
+            .HasColumnType("uuid")
             .IsRequired(false)
             .HasConversion(
-                uri => uri == null ? null : uri.Value,
-                value => LogoUri.Create(value))
+                id => id == null ? (Guid?)null : id.Value.Value,
+                value => LogoMediaId.Create(value))
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
         entries.Property(entry => entry.PrimaryColor)
