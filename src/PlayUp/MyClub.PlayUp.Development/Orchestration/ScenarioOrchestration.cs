@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Development.Generators;
 using MyClub.PlayUp.Development.Recipes;
 using MyClub.PlayUp.Development.Runtime;
@@ -14,6 +15,7 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Domain.Standings;
 
 namespace MyClub.PlayUp.Development.Orchestration;
 
@@ -287,6 +289,29 @@ internal static class ScenarioOrchestration
         }
     }
 
+    /// <summary>
+    /// Plays all matches with a decisive (non-draw) score — required for single-leg KO progression.
+    /// </summary>
+    public static void PlayDecisiveMatches(
+        ScenarioContext context,
+        IReadOnlyList<Match> matches)
+    {
+        var ordered = matches.OrderBy(m => m.Id.Value).ToList();
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            context.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(i));
+            var (home, away) = ScoreGenerator.Create(context.Entropy);
+            if (home == away)
+            {
+                home++;
+            }
+
+            var match = ordered[i];
+            match.Start(context.Clock);
+            match.Finish(ResultGenerator.Played(home, away), context.Clock);
+        }
+    }
+
     public static void PrepareAndStart(ScenarioContext context, Competition competition, Stage stage)
     {
         stage.Prepare(context.Clock);
@@ -308,6 +333,10 @@ internal static class ScenarioOrchestration
     /// <summary>
     /// Builds a structured competition (register → configure → materialize → prepare/start → progress).
     /// </summary>
+    /// <remarks>
+    /// Swiss skips upfront materialize: Prepare/Start first, then progressive
+    /// <see cref="GenerateNextRound"/> according to <see cref="SeedProgress"/>.
+    /// </remarks>
     public static async Task BuildStructuredAsync(
         ScenarioContext context,
         CompetitionRecipe recipe,
@@ -320,9 +349,19 @@ internal static class ScenarioOrchestration
         var competition = CreateCompetitionFromRecipe(context, recipe);
         var entries = RegisterTeams(context, competition, recipe);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
-        var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
-        PrepareAndStart(context, competition, stage);
-        ApplyProgress(context, competition, stage, matches, context.Progress);
+
+        if (recipe.Format == RecipeFormat.Swiss)
+        {
+            PrepareAndStart(context, competition, stage);
+            ApplySwissProgress(context, competition, stage, context.Progress);
+        }
+        else
+        {
+            var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
+            PrepareAndStart(context, competition, stage);
+            ApplyProgress(context, competition, stage, matches, context.Progress);
+        }
+
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -400,7 +439,7 @@ internal static class ScenarioOrchestration
         quarter.Start(context.Clock);
         competition.Start(context.Clock);
 
-        PlayMatches(context, qfMatches, count: qfMatches.Count);
+        PlayDecisiveMatches(context, qfMatches);
 
         var competitionStages = new Stage[] { quarter, semi };
         foreach (var fixture in qfFixtures)
@@ -415,6 +454,173 @@ internal static class ScenarioOrchestration
                 competitionStages,
                 context.Clock);
         }
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Coupe de France multi-stage: R32 played → R16 slots filled; stops before from-slots.
+    /// Ignores <see cref="ScenarioContext.Progress"/> (fixed seed, like <c>cup-qf-sf</c>).
+    /// </summary>
+    public static async Task BuildCoupeDeFranceMultiStageAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Coupe de France",
+            Format = RecipeFormat.Cup,
+            TeamCount = 32,
+            BracketSize = 32,
+            StageName = "32es de finale",
+            TeamNames = TeamNameSource.Dataset,
+            DatasetCompetitionKey = "coupe-de-france"
+        };
+
+        var competition = CreateCompetitionFromRecipe(context, recipe);
+        RegisterTeams(context, competition, recipe);
+        var roundOf32 = ConfigurePrimaryStage(context, competition, recipe);
+        roundOf32.ReplaceRoundTieFormat(
+            roundOf32.Rounds[0].Id,
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            context.Clock);
+        var r32Matches = ApplyCupPairingDeterministic(context, competition, roundOf32);
+
+        var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
+        var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
+        var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
+        var finalSlotKeys = new[] { "F-A", "F-B" };
+
+        var roundOf16 = CreateKnockoutStage(
+            context, competition, "r16", "16es de finale", "16es de finale", r16SlotKeys);
+        _ = CreateKnockoutStage(
+            context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
+        _ = CreateKnockoutStage(
+            context, competition, "sf", "Demis de finale", "Demis de finale", sfSlotKeys);
+        _ = CreateKnockoutStage(
+            context, competition, "final", "Finale", "Finale", finalSlotKeys);
+
+        var r32Fixtures = roundOf32.Rounds[0].Fixtures
+            .OrderBy(fixture => fixture.Id.Value)
+            .Take(16)
+            .ToArray();
+        if (r32Fixtures.Length != 16)
+        {
+            throw new InvalidOperationException(
+                $"Expected 16 R32 fixtures for coupe-de-france, found {r32Fixtures.Length}.");
+        }
+
+        WireWinnerProgression(roundOf32, roundOf16, r32Fixtures, r16SlotKeys, context.Clock);
+
+        roundOf32.Prepare(context.Clock);
+        competition.Prepare(context.Clock);
+        roundOf32.Start(context.Clock);
+        competition.Start(context.Clock);
+
+        PlayDecisiveMatches(context, r32Matches);
+        ApplyAllProgressions(
+            context,
+            roundOf32,
+            r32Fixtures,
+            r32Matches,
+            [roundOf32, roundOf16]);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// World Cup: Groups 8×4 → Top2 qualify → play R16→QF→SF → Final+Bronze slots filled;
+    /// stops before materialize Final/Bronze. Ignores progress (fixed seed).
+    /// </summary>
+    public static async Task BuildWorldCupAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "FIFA World Cup",
+            Format = RecipeFormat.Groups,
+            TeamCount = 32,
+            GroupCount = 8,
+            ParticipantsPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Dataset,
+            DatasetCompetitionKey = "world-cup"
+        };
+
+        var competition = CreateCompetitionFromRecipe(context, recipe);
+        var entries = RegisterTeams(context, competition, recipe);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+
+        var r16SlotKeys = WorldCupR16SlotKeys;
+        var r16Pairs = WorldCupR16Pairs;
+        var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
+        var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
+        var finalSlotKeys = new[] { "F-A", "F-B" };
+        var bronzeSlotKeys = new[] { "B-A", "B-B" };
+
+        var roundOf16 = CreateKnockoutStage(
+            context, competition, "r16", "Huitièmes de finale", "Huitièmes de finale", r16SlotKeys);
+        var quarter = CreateKnockoutStage(
+            context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
+        var semi = CreateKnockoutStage(
+            context, competition, "sf", "Demis de finale", "Demis de finale", sfSlotKeys);
+        var final = CreateKnockoutStage(
+            context, competition, "final", "Finale", "Finale", finalSlotKeys);
+        var bronze = CreateKnockoutStage(
+            context, competition, "bronze", "Match pour la 3e place", "Match pour la 3e place", bronzeSlotKeys);
+
+        WireWorldCupQualification(groups, roundOf16, context.Clock);
+
+        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
+        PrepareAndStart(context, competition, groups);
+        PlayMatches(context, groupMatches, count: groupMatches.Count);
+
+        var groupStandings = new Dictionary<GroupId, Standing>();
+        foreach (var group in groups.Groups)
+        {
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                groupMatches,
+                groups.Regulation.StandingRules);
+        }
+
+        Stage[] allStages = [groups, roundOf16, quarter, semi, final, bronze];
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            groupStandings,
+            allStages,
+            context.Clock);
+
+        var r16Matches = MaterializeFromSlots(context, competition, roundOf16, r16Pairs);
+        var r16Fixtures = OrderedFixtures(roundOf16, expectedCount: 8);
+        WireWinnerProgression(roundOf16, quarter, r16Fixtures, qfSlotKeys, context.Clock);
+        PrepareAndStartStage(context, roundOf16);
+        PlayDecisiveMatches(context, r16Matches);
+        ApplyAllProgressions(context, roundOf16, r16Fixtures, r16Matches, allStages);
+
+        var qfPairs = AdjacentPairs(qfSlotKeys);
+        var qfMatches = MaterializeFromSlots(context, competition, quarter, qfPairs);
+        var qfFixtures = OrderedFixtures(quarter, expectedCount: 4);
+        WireWinnerProgression(quarter, semi, qfFixtures, sfSlotKeys, context.Clock);
+        PrepareAndStartStage(context, quarter);
+        PlayDecisiveMatches(context, qfMatches);
+        ApplyAllProgressions(context, quarter, qfFixtures, qfMatches, allStages);
+
+        var sfPairs = AdjacentPairs(sfSlotKeys);
+        var sfMatches = MaterializeFromSlots(context, competition, semi, sfPairs);
+        var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
+        WireSemiToFinalAndBronze(semi, final, bronze, sfFixtures, context.Clock);
+        PrepareAndStartStage(context, semi);
+        PlayDecisiveMatches(context, sfMatches);
+        ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -447,6 +653,80 @@ internal static class ScenarioOrchestration
         }
     }
 
+    /// <summary>
+    /// Swiss progress: rounds are created only after Running via GenerateNextRound.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item><c>prepared</c> — Running, 0 rounds (Cockpit ready for GenerateNextRound).</item>
+    /// <item><c>running</c> — round 1 finished + round 2 generated, half played (awaiting results).</item>
+    /// <item><c>finished</c> — all planned rounds generated and finished; competition Completed.</item>
+    /// </list>
+    /// </remarks>
+    public static void ApplySwissProgress(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        SeedProgress progress)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        if (!stage.IsSwiss || stage.SwissSettings is null)
+        {
+            throw new InvalidOperationException("ApplySwissProgress requires a Swiss stage with SwissSettings.");
+        }
+
+        var planned = stage.SwissSettings.RoundCount;
+        var allMatches = new List<Match>();
+
+        switch (progress)
+        {
+            case SeedProgress.Prepared:
+                return;
+            case SeedProgress.Running:
+                {
+                    // Round 1 complete → round 2 open with ~50% results (awaiting next GenerateNextRound).
+                    var round1 = GenerateSwissRound(context, competition, stage, allMatches);
+                    PlayMatches(context, round1, count: round1.Count);
+                    var round2 = GenerateSwissRound(context, competition, stage, allMatches);
+                    PlayMatches(context, round2, count: Math.Max(1, round2.Count / 2));
+                    return;
+                }
+
+            case SeedProgress.Finished:
+                {
+                    for (var round = 1; round <= planned; round++)
+                    {
+                        var created = GenerateSwissRound(context, competition, stage, allMatches);
+                        PlayMatches(context, created, count: created.Count);
+                    }
+
+                    CompleteRunning(context, competition, stage);
+                    return;
+                }
+
+            default:
+                throw new InvalidOperationException($"Unsupported seed progress '{progress}'.");
+        }
+    }
+
+    private static IReadOnlyList<Match> GenerateSwissRound(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        List<Match> accumulated)
+    {
+        var result = GenerateNextRound.Execute(competition, stage, accumulated, context.Clock);
+        foreach (var match in result.CreatedMatches)
+        {
+            context.Matches.Add(match);
+            accumulated.Add(match);
+        }
+
+        return result.CreatedMatches;
+    }
+
     private static IReadOnlyList<Match> MaterializeForFormat(
         ScenarioContext context,
         Competition competition,
@@ -458,6 +738,8 @@ internal static class ScenarioOrchestration
             RecipeFormat.Groups => AssignThenMaterializeGroups(context, competition, stage, entries),
             RecipeFormat.Cup => ApplyCupPairingDeterministic(context, competition, stage),
             RecipeFormat.Championship => MaterializeChampionshipMatches(context, competition, stage),
+            RecipeFormat.Swiss => throw new InvalidOperationException(
+                "Swiss does not use MaterializeForFormat — ApplySwissProgress after PrepareAndStart."),
             _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'.")
         };
 
@@ -469,6 +751,220 @@ internal static class ScenarioOrchestration
     {
         AssignGroupsRoundRobin(context, stage, entries);
         return MaterializeGroupsMatches(context, competition, stage);
+    }
+
+    private static Stage CreateKnockoutStage(
+        ScenarioContext context,
+        Competition competition,
+        string stageKey,
+        string stageName,
+        string roundName,
+        IReadOnlyList<string> slotKeys)
+    {
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName(stageName),
+            competition.Regulation,
+            context.Ids.Stage(stageKey),
+            context.Clock);
+        stage.AddRound(roundName, new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
+        foreach (var key in slotKeys)
+        {
+            stage.AddSlot(key, context.Clock);
+        }
+
+        competition.AddStage(stage.Id, context.Clock);
+        context.Stages.Add(stage);
+        return stage;
+    }
+
+    private static string[] PairSlotKeys(string prefix, int pairCount)
+    {
+        var keys = new string[pairCount * 2];
+        for (var i = 0; i < pairCount; i++)
+        {
+            keys[i * 2] = $"{prefix}-{i + 1}-A";
+            keys[(i * 2) + 1] = $"{prefix}-{i + 1}-B";
+        }
+
+        return keys;
+    }
+
+    private static CupSlotPair[] AdjacentPairs(IReadOnlyList<string> slotKeys)
+    {
+        if (slotKeys.Count % 2 != 0)
+        {
+            throw new InvalidOperationException("Slot keys must come in pairs for from-slots materialization.");
+        }
+
+        var pairs = new CupSlotPair[slotKeys.Count / 2];
+        for (var i = 0; i < pairs.Length; i++)
+        {
+            pairs[i] = new CupSlotPair(slotKeys[i * 2], slotKeys[(i * 2) + 1]);
+        }
+
+        return pairs;
+    }
+
+    /// <summary>Classic WC R16 matrix (Top2): A1–B2, C1–D2, then B1–A2, and so on.</summary>
+    private static readonly string[] WorldCupR16SlotKeys =
+    [
+        "A1", "B2", "C1", "D2", "E1", "F2", "G1", "H2",
+        "B1", "A2", "D1", "C2", "F1", "E2", "H1", "G2"
+    ];
+
+    private static readonly CupSlotPair[] WorldCupR16Pairs =
+    [
+        new("A1", "B2"),
+        new("C1", "D2"),
+        new("E1", "F2"),
+        new("G1", "H2"),
+        new("B1", "A2"),
+        new("D1", "C2"),
+        new("F1", "E2"),
+        new("H1", "G2")
+    ];
+
+    private static void WireWorldCupQualification(Stage groups, Stage roundOf16, IClock clock)
+    {
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 8)
+        {
+            throw new InvalidOperationException(
+                $"Expected 8 World Cup groups, found {orderedGroups.Length}.");
+        }
+
+        var paths = new List<QualificationPath>(16);
+        var order = 1;
+        foreach (var group in orderedGroups)
+        {
+            var letter = group.Name;
+            paths.Add(
+                new QualificationPath(
+                    order++,
+                    QualificationSource.FromGroup(group.Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(roundOf16.Id, $"{letter}1")));
+            paths.Add(
+                new QualificationPath(
+                    order++,
+                    QualificationSource.FromGroup(group.Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(roundOf16.Id, $"{letter}2")));
+        }
+
+        groups.ReplaceQualificationRules(new QualificationRules(paths), clock);
+    }
+
+    private static void WireWinnerProgression(
+        Stage source,
+        Stage destination,
+        IReadOnlyList<Fixture> fixtures,
+        IReadOnlyList<string> destinationKeys,
+        IClock clock)
+    {
+        if (fixtures.Count != destinationKeys.Count)
+        {
+            throw new InvalidOperationException(
+                $"Progression wiring expects {destinationKeys.Count} fixtures, found {fixtures.Count}.");
+        }
+
+        var paths = new List<ProgressionPath>(fixtures.Count);
+        for (var i = 0; i < fixtures.Count; i++)
+        {
+            paths.Add(
+                new ProgressionPath(
+                    fixtures[i].Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(destination.Id, destinationKeys[i])));
+        }
+
+        source.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+    }
+
+    private static void WireSemiToFinalAndBronze(
+        Stage semi,
+        Stage final,
+        Stage bronze,
+        IReadOnlyList<Fixture> sfFixtures,
+        IClock clock)
+    {
+        if (sfFixtures.Count != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 SF fixtures for Final+Bronze wiring, found {sfFixtures.Count}.");
+        }
+
+        var paths = new ProgressionPath[]
+        {
+            new(sfFixtures[0].Id, ProgressionOutcome.Winner, new ProgressionDestination(final.Id, "F-A")),
+            new(sfFixtures[1].Id, ProgressionOutcome.Winner, new ProgressionDestination(final.Id, "F-B")),
+            new(sfFixtures[0].Id, ProgressionOutcome.Loser, new ProgressionDestination(bronze.Id, "B-A")),
+            new(sfFixtures[1].Id, ProgressionOutcome.Loser, new ProgressionDestination(bronze.Id, "B-B"))
+        };
+        semi.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+    }
+
+    private static Fixture[] OrderedFixtures(Stage stage, int expectedCount)
+    {
+        var fixtures = stage.Rounds[0].Fixtures
+            .OrderBy(fixture => fixture.Id.Value)
+            .Take(expectedCount)
+            .ToArray();
+        if (fixtures.Length != expectedCount)
+        {
+            throw new InvalidOperationException(
+                $"Expected {expectedCount} fixtures on stage '{stage.Name.Value}', found {fixtures.Length}.");
+        }
+
+        return fixtures;
+    }
+
+    private static IReadOnlyList<Match> MaterializeFromSlots(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<CupSlotPair> pairs)
+    {
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            pairs,
+            [],
+            context.Clock);
+        foreach (var match in result.CreatedMatches)
+        {
+            context.Matches.Add(match);
+        }
+
+        return result.CreatedMatches;
+    }
+
+    private static void PrepareAndStartStage(ScenarioContext context, Stage stage)
+    {
+        stage.Prepare(context.Clock);
+        stage.Start(context.Clock);
+    }
+
+    private static void ApplyAllProgressions(
+        ScenarioContext context,
+        Stage source,
+        IReadOnlyList<Fixture> fixtures,
+        IReadOnlyList<Match> matches,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        foreach (var fixture in fixtures)
+        {
+            var legMatches = matches
+                .Where(match => fixture.MatchIds.Contains(match.Id))
+                .ToArray();
+            ApplyProgressionOutcome.Execute(
+                source,
+                fixture.Id,
+                legMatches,
+                competitionStages,
+                context.Clock);
+        }
     }
 
     private static void EnsureMatchdays(Stage stage, int requiredCount, IClock clock)

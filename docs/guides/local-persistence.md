@@ -47,15 +47,15 @@ React
 
 ## Progress (`prepared` | `running` | `finished`)
 
-Applies to **templates** and most **structured scenarios** (`championship`, `groups`, `cup`, `random`):
+Applies to **templates** and most **structured scenarios** (`championship`, `groups`, `cup`, `swiss-8x3`, `random`):
 
 | Value | Meaning |
 | :--- | :------ |
-| `prepared` | Structure ready; matches Scheduled; no results |
-| `running` | ~50% matches Finished (default when omitted) |
-| `finished` | All matches Finished; competition Completed |
+| `prepared` | Structure ready; matches Scheduled (or Swiss: Running with **0** rounds yet); no / incomplete results |
+| `running` | ~50% matches Finished (default when omitted). Swiss: round 1 finished + round 2 half-played |
+| `finished` | All matches Finished; competition Completed. Swiss: all planned rounds generated then finished |
 
-Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`).
+Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`, `swiss-8x3:running`).
 
 Fixed UX scenarios (`empty-workspace`, `draft-empty`, `registration-open`) and the multi-stage demo `cup-qf-sf` do **not** accept `:progress`.
 
@@ -73,10 +73,10 @@ Templates are **capacity demos**, not full real multi-phase calendars:
 
 | Id | Approximation |
 | :--- | :------------ |
-| `ligue-1` | Championship, 18 clubs (JSON) — **`DoubleRoundRobin`**, 34 matchdays, PairMirror (`N×(N−1)` = 306). Not a real L1 calendar. |
-| `champions-league` | Groups 8×4 — no knockout pipeline |
-| `world-cup` | Groups 8×4 — no knockout pipeline |
-| `coupe-de-france` | Cup 32 — single principal round (not a full CdF tree) |
+| `ligue-1` | Championship, 18 clubs (JSON) — **`DoubleRoundRobin`**, 34 matchdays, PairMirror (`N×(N−1)` = 306). Capacity demo, not a real L1 calendar. |
+| `champions-league` | Groups 8×4 only. **Not** UEFA League Phase (future distinct track). **Not** Swiss classique (Lot 2 Kind — do not wire here). |
+| `world-cup` | Groups 8×4 → Top2 qualify → R16→QF→SF → Final + Bronze (`Loser`). Stops before materialize Final/Bronze. `:progress` ignored. |
+| `coupe-de-france` | Cup multi-stage R32→R16→QF→SF→Final. R32 played, R16 slots filled — **stops before** from-slots (like `cup-qf-sf`). `:progress` ignored. |
 
 Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, logo paths).
 
@@ -90,7 +90,10 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `draft-empty` | no | |
 | `registration-open` | no | |
 | `championship` / `groups` / `cup` / `random` | yes | Cup = single principal round |
+| `swiss-8x3` | yes | Lot 2 case 1 — Swiss 8 teams × 3 rounds; Matchdays via `GenerateNextRound` (not `MaterializeMatches`) |
 | `cup-qf-sf` | no | Multi-stage QF→SF: QF played, SF slots occupied, **stops before** `materialize-from-slots` (Cockpit) |
+
+Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progress` (fixed seed contracts).
 
 ## Three PostgreSQL usages (do not mix)
 
@@ -132,11 +135,12 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --list-templates
 
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --templates ligue-1:prepared,world-cup:finished
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios groups:running,cup:finished
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios swiss-8x3:prepared
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios cup-qf-sf
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios random:prepared --seed 7
 ```
 
-Generation demos (A→D4): `--templates ligue-1:prepared` (Double RR) · `--scenarios cup-qf-sf` (multi-stage slots for Cockpit from-slots).
+Generation demos (Lot 1–3): `--templates ligue-1:prepared` (Double RR) · `--templates coupe-de-france` (multi-stage from-slots) · `--templates world-cup` (Groups→KO+Bronze) · `--scenarios cup-qf-sf` · `--scenarios swiss-8x3:running` (Swiss progressive rounds).
 
 Reset is refused unless the DB name ends with `_dev`, the host is localhost/loopback, and the environment is not Production. Host has **no** reset/seed capability.
 

@@ -40,6 +40,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, GroupsScenario>();
         services.AddSingleton<IScenario, CupScenario>();
         services.AddSingleton<IScenario, CupQfSfScenario>();
+        services.AddSingleton<IScenario, Swiss8x3Scenario>();
         services.AddSingleton<IScenario, RandomScenario>();
         services.AddSingleton(static sp => new ScenarioCatalog(sp.GetServices<IScenario>()));
 

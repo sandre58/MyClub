@@ -12,6 +12,7 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -154,6 +155,176 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         cockpit.AvailableActions.Should().Contain(action =>
             action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
             && action.StageId == semi!.Id.Value);
+    }
+
+    [Fact]
+    public async Task Coupe_de_france_multi_stage_fills_r16_slots_and_projects_from_slotsAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<TemplateRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("coupe-de-france")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.Status.Should().Be(CompetitionStatus.Running);
+        competition.StageIds.Should().HaveCount(5);
+
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var loaded = new List<Stage>(5);
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = await stages.GetByIdAsync(stageId);
+            stage.Should().NotBeNull();
+            loaded.Add(stage!);
+        }
+
+        var roundOf32 = loaded[0];
+        var roundOf16 = loaded[1];
+        roundOf32.Status.Should().Be(StageStatus.Running);
+        roundOf16.Status.Should().Be(StageStatus.Draft);
+        roundOf16.Slots.Count(slot => slot.EntryId is not null).Should().Be(16);
+        roundOf16.Rounds[0].Fixtures.Should().BeEmpty();
+        loaded.Should().HaveCount(5);
+
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stage in loaded)
+        {
+            matchesByStage[stage.Id] = await scope.ServiceProvider
+                .GetRequiredService<IMatchRepository>()
+                .ListByStageAsync(stage.Id);
+        }
+
+        matchesByStage[roundOf32.Id].Should().HaveCount(16);
+        matchesByStage[roundOf32.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
+
+        var cockpit = CockpitAssembler.Assemble(competition, loaded, matchesByStage);
+        cockpit.AvailableActions.Should().Contain(action =>
+            action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            && action.StageId == roundOf16.Id.Value);
+    }
+
+    [Fact]
+    public async Task World_cup_groups_to_ko_fills_final_and_bronze_slotsAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<TemplateRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("world-cup")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.Status.Should().Be(CompetitionStatus.Running);
+        competition.StageIds.Should().HaveCount(6);
+
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var loaded = new List<Stage>(6);
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = await stages.GetByIdAsync(stageId);
+            stage.Should().NotBeNull();
+            loaded.Add(stage!);
+        }
+
+        var groups = loaded[0];
+        var roundOf16 = loaded[1];
+        var quarter = loaded[2];
+        var semi = loaded[3];
+        var final = loaded[4];
+        var bronze = loaded[5];
+
+        groups.Groups.Should().HaveCount(8);
+        roundOf16.Slots.Count(slot => slot.EntryId is not null).Should().Be(16);
+        quarter.Slots.Count(slot => slot.EntryId is not null).Should().Be(8);
+        semi.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+        final.Status.Should().Be(StageStatus.Draft);
+        bronze.Status.Should().Be(StageStatus.Draft);
+        final.Slots.Count(slot => slot.EntryId is not null).Should().Be(2);
+        bronze.Slots.Count(slot => slot.EntryId is not null).Should().Be(2);
+        final.Rounds[0].Fixtures.Should().BeEmpty();
+        bronze.Rounds[0].Fixtures.Should().BeEmpty();
+
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stage in loaded)
+        {
+            matchesByStage[stage.Id] = await scope.ServiceProvider
+                .GetRequiredService<IMatchRepository>()
+                .ListByStageAsync(stage.Id);
+        }
+
+        matchesByStage[roundOf16.Id].Should().HaveCount(8);
+        matchesByStage[quarter.Id].Should().HaveCount(4);
+        matchesByStage[semi.Id].Should().HaveCount(2);
+        matchesByStage[final.Id].Should().BeEmpty();
+        matchesByStage[bronze.Id].Should().BeEmpty();
+
+        var cockpit = CockpitAssembler.Assemble(competition, loaded, matchesByStage);
+        cockpit.AvailableActions.Should().Contain(action =>
+            action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            && (action.StageId == final.Id.Value || action.StageId == bronze.Id.Value));
+    }
+
+    [Fact]
+    public async Task Swiss_8x3_prepared_running_finished_progressAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+
+        await runner.ResetAndRunAsync([SeedSpec.Parse("swiss-8x3:prepared")]);
+        using (var scope = fixture.Services.CreateScope())
+        {
+            var (competition, stage, matches) = await LoadPrimaryAsync(scope);
+            competition.Status.Should().Be(CompetitionStatus.Running);
+            stage.IsSwiss.Should().BeTrue();
+            stage.SwissSettings!.RoundCount.Should().Be(3);
+            stage.Matchdays.Should().BeEmpty();
+            matches.Should().BeEmpty();
+
+            var cockpit = CockpitAssembler.Assemble(
+                competition,
+                [stage],
+                new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
+            cockpit.AvailableActions.Should().Contain(action =>
+                action.Code == CockpitAssembler.ActionGenerateNextRound);
+            cockpit.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionGenerateNextRound);
+        }
+
+        await runner.ResetAndRunAsync([SeedSpec.Parse("swiss-8x3:running")]);
+        using (var scope = fixture.Services.CreateScope())
+        {
+            var (competition, stage, matches) = await LoadPrimaryAsync(scope);
+            competition.Status.Should().Be(CompetitionStatus.Running);
+            stage.Matchdays.Should().HaveCount(2);
+            matches.Should().HaveCount(8); // 4+4 for 8 teams
+            matches.Count(match => match.Status == MatchStatus.Finished).Should().BeGreaterThan(0);
+            matches.Count(match => match.Status == MatchStatus.Scheduled).Should().BeGreaterThan(0);
+        }
+
+        await runner.ResetAndRunAsync([SeedSpec.Parse("swiss-8x3:finished")]);
+        using (var scope = fixture.Services.CreateScope())
+        {
+            var (competition, stage, matches) = await LoadPrimaryAsync(scope);
+            competition.Status.Should().Be(CompetitionStatus.Completed);
+            stage.Matchdays.Should().HaveCount(3);
+            matches.Should().HaveCount(12);
+            matches.Should().OnlyContain(match => match.Status == MatchStatus.Finished);
+        }
+    }
+
+    private static async Task<(Competition Competition, Stage Stage, IReadOnlyList<Match> Matches)>
+        LoadPrimaryAsync(IServiceScope scope)
+    {
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdAsync(summary.Id);
+        competition.Should().NotBeNull();
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+            .GetByIdAsync(competition!.StageIds[0]);
+        stage.Should().NotBeNull();
+        var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+            .ListByStageAsync(stage!.Id);
+        return (competition, stage, matches);
     }
 
     [Fact]

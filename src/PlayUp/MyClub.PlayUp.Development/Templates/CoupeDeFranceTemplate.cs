@@ -11,8 +11,12 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// Coupe de France inspired cup of 32 — single principal round only.
+/// Coupe de France inspired multi-stage cup (R32 → R16 → QF → SF → Final).
 /// </summary>
+/// <remarks>
+/// Seed stops after R32 is played and R16 slots are filled (Cockpit from-slots).
+/// <c>:progress</c> is ignored — fixed seed like <c>cup-qf-sf</c>.
+/// </remarks>
 public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
 {
     /// <inheritdoc />
@@ -23,7 +27,7 @@ public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 32 (JSON). Domain V1: single principal knockout round (not full bracket tree).";
+        "Cup 32 (JSON) · R32→R16→QF→SF→Final · R32 played, R16 slots filled — stop before from-slots. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()
@@ -32,12 +36,12 @@ public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
         Format = RecipeFormat.Cup,
         TeamCount = 32,
         BracketSize = 32,
-        StageName = "Tour à élimination",
+        StageName = "32es de finale",
         TeamNames = TeamNameSource.Dataset,
         DatasetCompetitionKey = "coupe-de-france"
     };
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe, cancellationToken);
+        ScenarioOrchestration.BuildCoupeDeFranceMultiStageAsync(context, cancellationToken);
 }

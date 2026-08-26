@@ -98,7 +98,8 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
     "matchCounts": {
       "live": 0, "scheduled": 0, "finished": 0, "postponed": 0, "cancelled": 0, "total": 0
     },
-    "upcomingMatches": []
+    "upcomingMatches": [],
+    "swissByes": []
   },
   "situations": [{
     "source": "InsufficientParticipants",
@@ -142,9 +143,10 @@ Contract notes:
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking.
 - Organisation construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Cockpit situations only while competition is Draft/Ready.
 - `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
-- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots`. `Draw` / `MaterializeMatches` reuse Organisation readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. Championship omits `Draw`.
-- `transitionReadiness` for Draw / MaterializeMatches reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system. **Cup `ReadyForMaterialization`** means the primary stage still needs its empty Fixture **skeleton** (fixture count below `slotCount / 2`) — it is **not** the from-slots path and is **not** equal to `ReadyForDraw` after the skeleton exists. From-slots uses its own opportunity check; the Cockpit projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction).
-- Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage).
+- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots` | `GenerateNextRound`. `Draw` / `MaterializeMatches` reuse Organisation readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. **Championship** and **Swiss** omit `Draw`. **Swiss** omits `MaterializeMatches` and projects `GenerateNextRound` instead (ready when stage Running, previous round Finished, rounds remaining).
+- `transitionReadiness` for Draw / MaterializeMatches reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system. **Cup `ReadyForMaterialization`** means the primary stage still needs its empty Fixture **skeleton** (fixture count below `slotCount / 2`) — it is **not** the from-slots path and is **not** equal to `ReadyForDraw` after the skeleton exists. From-slots uses its own opportunity check; the Cockpit projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction). Swiss `GenerateNextRound` blockers: `SwissStageNotRunning` | `SwissAwaitingRoundResults` | `SwissRoundsComplete` | `SwissInsufficientParticipants`.
+- Structure facts may include `swissRoundCount` / `swissByeCount` when Kind is Swiss. `operationalFocus.swissByes[]` lists recorded bye pairing events (`roundIndex`, `entryId`, `entryDisplayName`) — **not** fixtures/matches.
+- Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage). While Running, Swiss prefers `GenerateNextRound` when ready (before generic `OpenMatches`).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
 - Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
@@ -376,7 +378,7 @@ ProblemDetails extensions:
 
 ### Other Application codes (400 by default)
 
-Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `OrganisationNotMutable`, `MaterializationFailure`, `InvalidCompletionMode`.
+Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `OrganisationNotMutable`, `MaterializationFailure`, `SwissRoundGenerationFailure`, `InvalidCompletionMode`.
 
 Cockpit from-slots readiness is projected only when an opportunity exists (occupied uncovered slots). It does **not** leave a standing regulation blocker `InsufficientOccupiedSlots` when slots are still empty during early Cup construction.
 

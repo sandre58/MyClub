@@ -11,8 +11,12 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// World Cup inspired group stage only (8×4) — no knockout pipeline.
+/// World Cup inspired Groups → KO + Bronze (Top2, no best thirds).
 /// </summary>
+/// <remarks>
+/// Seed plays Groups→R16→QF→SF, fills Final + Bronze slots via Winner/Loser, stops before
+/// materialize Final/Bronze. <c>:progress</c> is ignored — fixed seed.
+/// </remarks>
 public sealed class WorldCupTemplate : ICompetitionTemplate
 {
     /// <inheritdoc />
@@ -23,7 +27,7 @@ public sealed class WorldCupTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 8×4 · 32 nations (JSON). Domain V1: group stage only (no KO tree).";
+        "Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze (Loser) · stop before materialize Final/Bronze. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()
@@ -40,5 +44,5 @@ public sealed class WorldCupTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe, cancellationToken);
+        ScenarioOrchestration.BuildWorldCupAsync(context, cancellationToken);
 }

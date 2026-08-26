@@ -24,7 +24,7 @@ public sealed class Ligue1Template : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Championship · 18 clubs (JSON) · DoubleRoundRobin (34 matchdays) — capacity demo, not real L1 calendar.";
+        "Championship · 18 clubs (JSON) · DoubleRoundRobin / 34 matchdays (PairMirror) — capacity demo, not a real Ligue 1 calendar.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()

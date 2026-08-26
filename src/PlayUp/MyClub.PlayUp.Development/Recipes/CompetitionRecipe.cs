@@ -42,6 +42,9 @@ public sealed record CompetitionRecipe
     /// <summary>Gets cup bracket size (Cup, power of two).</summary>
     public int? BracketSize { get; init; }
 
+    /// <summary>Gets planned Swiss rounds K (Swiss only).</summary>
+    public int? SwissRoundCount { get; init; }
+
     /// <summary>Gets how team display names are sourced.</summary>
     public TeamNameSource TeamNames { get; init; } = TeamNameSource.Generated;
 

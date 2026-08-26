@@ -18,5 +18,8 @@ public enum RecipeFormat
     Groups = 1,
 
     /// <summary>Cup / knockout bracket.</summary>
-    Cup = 2
+    Cup = 2,
+
+    /// <summary>Swiss classique — progressive Matchdays via GenerateNextRound.</summary>
+    Swiss = 3
 }

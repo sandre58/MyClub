@@ -34,6 +34,7 @@ public static class CompetitionRecipeValidator
             RecipeFormat.Championship => ValidateChampionship(recipe),
             RecipeFormat.Groups => ValidateGroups(recipe),
             RecipeFormat.Cup => ValidateCup(recipe),
+            RecipeFormat.Swiss => ValidateSwiss(recipe),
             _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'.")
         };
     }
@@ -66,5 +67,19 @@ public static class CompetitionRecipeValidator
             ? throw new InvalidOperationException(
                 $"Cup recipe requires TeamCount == BracketSize ({recipe.TeamCount}≠{bracket}).")
             : StructureIntent.Cup(bracket, recipe.StageName);
+    }
+
+    private static StructureIntent ValidateSwiss(CompetitionRecipe recipe)
+    {
+        if (recipe.TeamCount < 2)
+        {
+            throw new InvalidOperationException("Swiss recipe requires TeamCount >= 2.");
+        }
+
+        var rounds = recipe.SwissRoundCount
+            ?? throw new InvalidOperationException("Swiss recipe requires SwissRoundCount.");
+        return rounds < 1
+            ? throw new InvalidOperationException("Swiss recipe requires SwissRoundCount >= 1.")
+            : StructureIntent.Swiss(rounds, recipe.StageName);
     }
 }
