@@ -204,6 +204,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
           dimension={data.constructionDimensions.structure}
           stages={data.operationalFocus.stages}
           matchTotal={data.operationalFocus.matchCounts.total}
+          swissByes={data.operationalFocus.swissByes}
           href={orgHref}
           hrefLabel={t('dimensions.openStructure')}
           actions={[...slotActions('structure'), ...stageActions]}
@@ -772,6 +773,7 @@ function StructurePanel({
   dimension,
   stages,
   matchTotal,
+  swissByes,
   href,
   hrefLabel,
   actions,
@@ -780,6 +782,7 @@ function StructurePanel({
   dimension: CockpitDimension
   stages: CockpitView['operationalFocus']['stages']
   matchTotal: number
+  swissByes: CockpitView['operationalFocus']['swissByes']
   href: string
   hrefLabel: string
   actions: CockpitAction[]
@@ -792,6 +795,8 @@ function StructurePanel({
   const roundCount = Number(dimension.facts.roundCount ?? '0')
   const matchdayCount = Number(dimension.facts.matchdayCount ?? '0')
   const slotCount = Number(dimension.facts.slotCount ?? '0')
+  const swissRoundCount = Number(dimension.facts.swissRoundCount ?? '0')
+  const swissByeCount = Number(dimension.facts.swissByeCount ?? '0')
   const stageNames = stages.map((stage) => stage.name).filter(Boolean)
 
   return (
@@ -831,11 +836,41 @@ function StructurePanel({
             label={t('dimensions.structure.rounds', { count: roundCount })}
           />
         )}
-        {matchdayCount > 0 && (
+        {formatKind === 'Swiss' && swissRoundCount > 0 && (
+          <StructureRow
+            done={matchdayCount > 0}
+            label={t('dimensions.structure.swissRounds', {
+              generated: matchdayCount,
+              planned: swissRoundCount,
+            })}
+          />
+        )}
+        {formatKind !== 'Swiss' && matchdayCount > 0 && (
           <StructureRow
             done
             label={t('dimensions.structure.matchdays', { count: matchdayCount })}
           />
+        )}
+        {formatKind === 'Swiss' && swissByeCount > 0 && (
+          <StructureRow
+            done
+            label={t('dimensions.structure.swissByes', { count: swissByeCount })}
+            detail={t('dimensions.structure.swissByesHint')}
+          />
+        )}
+        {formatKind === 'Swiss' && swissByes.length > 0 && (
+          <li className="overview-row overview-row--stack">
+            <ul className="overview-rows overview-rows--nested">
+              {swissByes.map((bye) => (
+                <li key={`${bye.stageId}:${bye.roundIndex}:${bye.entryId}`}>
+                  {t('dimensions.structure.swissByeLine', {
+                    round: bye.roundIndex,
+                    name: bye.entryDisplayName,
+                  })}
+                </li>
+              ))}
+            </ul>
+          </li>
         )}
         {slotCount > 0 && (
           <StructureRow
@@ -1051,7 +1086,11 @@ function NaturalProgressionSection({
 
 /** Content glyph of the suggested step — flag when unmapped. */
 function progressionBadgeIcon(code: string) {
-  if (code === 'MaterializeMatches' || code === 'MaterializeFromOccupiedSlots') {
+  if (
+    code === 'MaterializeMatches' ||
+    code === 'MaterializeFromOccupiedSlots' ||
+    code === 'GenerateNextRound'
+  ) {
     return <CreateMatchesIcon />
   }
   if (code === 'ContinueOrganisation') {

@@ -567,6 +567,21 @@ app.MapPost(
     });
 
 app.MapPost(
+    "/stages/{stageId:guid}/swiss/generate-next-round",
+    async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var result = await executor
+            .GenerateNextRoundAsync(new StageId(stageId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(new GenerateNextRoundResponse(
+            result.RoundIndex,
+            result.CreatedMatches.Count,
+            [.. result.CreatedMatches.Select(match => match.Id.Value)],
+            result.ByeEntryId?.Value,
+            result.AlreadyComplete));
+    });
+
+app.MapPost(
     "/stages/{stageId:guid}/matches/materialize-from-slots",
     async (
         Guid stageId,

@@ -11,6 +11,7 @@
   "ApplyDraw": "Appliquer le tirage",
   "MaterializeMatches": "Créer les matchs / le squelette",
   "MaterializeFromOccupiedSlots": "Configurer les confrontations — {{stageName}}",
+  "GenerateNextRound": "Générer le tour Swiss {{roundIndex}} / {{plannedRounds}}",
   "GenerateSchedule": "Générer un calendrier",
   "ApplySchedule": "Appliquer un calendrier",
   "StartMatch": "Démarrer un match",

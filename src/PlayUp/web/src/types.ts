@@ -203,6 +203,15 @@ export interface CockpitOperationalFocus {
   draws: CockpitDrawFocus[]
   matchCounts: CockpitMatchCounts
   upcomingMatches: CockpitUpcomingMatch[]
+  /** Swiss bye pairing events — never fixtures/matches. */
+  swissByes: CockpitSwissBye[]
+}
+
+export interface CockpitSwissBye {
+  stageId: string
+  roundIndex: number
+  entryId: string
+  entryDisplayName: string
 }
 
 export interface CockpitStageFocus {

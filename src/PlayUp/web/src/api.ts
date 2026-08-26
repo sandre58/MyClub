@@ -337,6 +337,17 @@ export function materializeMatches(
   return sendJson('POST', `/stages/${stageId}/matches/materialize`)
 }
 
+/** POST /stages/{stageId}/swiss/generate-next-round → GenerateNextRoundResponse */
+export function generateNextSwissRound(stageId: string): Promise<{
+  roundIndex: number
+  createdCount: number
+  attachedMatchIds: string[]
+  byeEntryId: string | null
+  alreadyComplete: boolean
+}> {
+  return sendJson('POST', `/stages/${stageId}/swiss/generate-next-round`)
+}
+
 /** POST /stages/{stageId}/matches/materialize-from-slots → MaterializeMatchesResponse */
 export function materializeCupFromOccupiedSlots(
   stageId: string,

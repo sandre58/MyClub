@@ -58,8 +58,23 @@ public static class CockpitAssembler
     /// <summary>Transition readiness: Cup from occupied slots (distinct from skeleton MaterializeMatches).</summary>
     public const string TransitionMaterializeFromOccupiedSlots = "MaterializeFromOccupiedSlots";
 
+    /// <summary>Transition readiness: Swiss GenerateNextRound path.</summary>
+    public const string TransitionGenerateNextRound = "GenerateNextRound";
+
     /// <summary>Transition readiness: draw path identifiable (structure/pots/bracket).</summary>
     public const string TransitionDraw = "Draw";
+
+    /// <summary>Blocker: Swiss stage is not Running yet.</summary>
+    public const string BlockerSwissStageNotRunning = "SwissStageNotRunning";
+
+    /// <summary>Blocker: previous Swiss round matches are not all Finished.</summary>
+    public const string BlockerSwissAwaitingRoundResults = "SwissAwaitingRoundResults";
+
+    /// <summary>Blocker: all planned Swiss rounds already generated.</summary>
+    public const string BlockerSwissRoundsComplete = "SwissRoundsComplete";
+
+    /// <summary>Blocker: fewer than two active entries for Swiss pairing.</summary>
+    public const string BlockerSwissInsufficientParticipants = "SwissInsufficientParticipants";
 
     /// <summary>Source: competition suspended (operational, L11).</summary>
     public const string SourceCompetitionSuspended = "CompetitionSuspended";
@@ -93,6 +108,9 @@ public static class CockpitAssembler
 
     /// <summary>Materialize Cup confrontations from occupied slots (navigate to Stage pairing UI).</summary>
     public const string ActionMaterializeFromOccupiedSlots = "MaterializeFromOccupiedSlots";
+
+    /// <summary>Generate next Swiss round (pairings + Matchday) while Running.</summary>
+    public const string ActionGenerateNextRound = "GenerateNextRound";
 
     /// <summary>Generate schedule proposal.</summary>
     public const string ActionGenerateSchedule = "GenerateSchedule";
@@ -161,18 +179,26 @@ public static class CockpitAssembler
 
         var matchCounts = BuildMatchCounts(matchesByStage);
         var operationalFocus = BuildOperationalFocus(competition, stages, matchesByStage, matchCounts);
-        var dimensions = BuildDimensions(competition, organisation, stages, matchCounts);
+        var dimensions = BuildDimensions(competition, organisation, stages, matchCounts, matchesByStage);
         var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
         var fromSlotsOpportunities = stages
             .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))
             .Select(stage => stage.Id)
             .ToArray();
+        var swissNextRoundReady = TryEvaluateSwissGenerateNextRound(
+            competition,
+            organisation,
+            stages,
+            matchesByStage,
+            out _,
+            out _) is { Ready: true };
         var progression = ResolveNaturalProgression(
             competition,
             organisation,
             completion,
             attentionSummary.Count,
-            fromSlotsOpportunities.Length > 0);
+            fromSlotsOpportunities.Length > 0,
+            swissNextRoundReady);
         var closure = new CockpitClosureHintDto(
             completion?.CanCompleteNormally ?? false,
             completion?.Reasons.Select(reason => reason.Code).ToArray() ?? []);
@@ -243,7 +269,8 @@ public static class CockpitAssembler
         Competition competition,
         OrganisationViewDto organisation,
         IReadOnlyList<Stage> stages,
-        CockpitMatchCountsDto matchCounts)
+        CockpitMatchCountsDto matchCounts,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
     {
         var inConstruction = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
         var running = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
@@ -273,6 +300,25 @@ public static class CockpitAssembler
                 ? matchCounts.Live > 0 ? ProminenceDominant : ProminencePresent
                 : ProminenceCondensed;
 
+        var structureFacts = new Dictionary<string, string>
+        {
+            ["formatKind"] = organisation.Format.Kind?.ToString() ?? "None",
+            ["groupCount"] = organisation.Structure.GroupCount.ToString(CultureInfo.InvariantCulture),
+            ["roundCount"] = organisation.Structure.RoundCount.ToString(CultureInfo.InvariantCulture),
+            ["matchdayCount"] =
+                organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
+            ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
+        };
+        if (organisation.Format.Kind == StructureFormatKind.Swiss)
+        {
+            structureFacts["swissRoundCount"] =
+                (organisation.Structure.SwissRoundCount ?? 0).ToString(CultureInfo.InvariantCulture);
+            structureFacts["swissByeCount"] = stages
+                .Where(stage => stage.IsSwiss)
+                .Sum(stage => stage.SwissByeHistory.Count)
+                .ToString(CultureInfo.InvariantCulture);
+        }
+
         return new CockpitConstructionDimensionsDto(
             new CockpitDimensionDto(
                 teamsProminence,
@@ -286,18 +332,14 @@ public static class CockpitAssembler
                     ["maximumTeams"] =
                         organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                 }),
-            new CockpitDimensionDto(
-                structureProminence,
-                new Dictionary<string, string>
-                {
-                    ["formatKind"] = organisation.Format.Kind?.ToString() ?? "None",
-                    ["groupCount"] = organisation.Structure.GroupCount.ToString(CultureInfo.InvariantCulture),
-                    ["roundCount"] = organisation.Structure.RoundCount.ToString(CultureInfo.InvariantCulture),
-                    ["matchdayCount"] =
-                        organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
-                    ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
-                }),
-            BuildRegulationDimension(competition, organisation, stages, regulationProminence, inConstruction),
+            new CockpitDimensionDto(structureProminence, structureFacts),
+            BuildRegulationDimension(
+                competition,
+                organisation,
+                stages,
+                matchesByStage,
+                regulationProminence,
+                inConstruction),
             new CockpitDimensionDto(
                 matchesProminence,
                 new Dictionary<string, string>
@@ -321,6 +363,7 @@ public static class CockpitAssembler
         Competition competition,
         OrganisationViewDto organisation,
         IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
         string prominence,
         bool inConstruction)
     {
@@ -330,6 +373,7 @@ public static class CockpitAssembler
             ? BuildRegulationTransitionReadiness(organisation)
             : new List<CockpitTransitionReadinessDto>();
         AppendFromSlotsTransitionReadiness(competition, stages, readiness);
+        AppendSwissGenerateNextRoundReadiness(competition, organisation, stages, matchesByStage, readiness);
 
         return new CockpitRegulationDimensionDto(
             prominence,
@@ -375,9 +419,10 @@ public static class CockpitAssembler
     {
         var blockers = organisation.Readiness.Blockers;
         var readiness = new List<CockpitTransitionReadinessDto>();
+        var kind = organisation.Format.Kind;
 
-        // Championship never uses the draw path — omit Draw readiness (avoid ready=false with empty blockers).
-        if (organisation.Format.Kind is not StructureFormatKind.Championship)
+        // Championship / Swiss never use the draw path — omit Draw readiness.
+        if (kind is not StructureFormatKind.Championship and not StructureFormatKind.Swiss)
         {
             readiness.Add(
                 new CockpitTransitionReadinessDto(
@@ -386,13 +431,53 @@ public static class CockpitAssembler
                     organisation.Readiness.ReadyForDraw ? [] : blockers));
         }
 
-        readiness.Add(
-            new CockpitTransitionReadinessDto(
-                TransitionMaterializeMatches,
-                organisation.Readiness.ReadyForMaterialization,
-                organisation.Readiness.ReadyForMaterialization ? [] : blockers));
+        // Swiss uses GenerateNextRound — omit MaterializeMatches (always false with empty blockers).
+        if (kind is not StructureFormatKind.Swiss)
+        {
+            readiness.Add(
+                new CockpitTransitionReadinessDto(
+                    TransitionMaterializeMatches,
+                    organisation.Readiness.ReadyForMaterialization,
+                    organisation.Readiness.ReadyForMaterialization ? [] : blockers));
+        }
 
         return readiness;
+    }
+
+    private static void AppendSwissGenerateNextRoundReadiness(
+        Competition competition,
+        OrganisationViewDto organisation,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        List<CockpitTransitionReadinessDto> readiness)
+    {
+        if (organisation.Format.Kind is not StructureFormatKind.Swiss)
+        {
+            return;
+        }
+
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            return;
+        }
+
+        var evaluation = TryEvaluateSwissGenerateNextRound(
+            competition,
+            organisation,
+            stages,
+            matchesByStage,
+            out _,
+            out var blockers);
+        if (evaluation is null)
+        {
+            return;
+        }
+
+        readiness.Add(
+            new CockpitTransitionReadinessDto(
+                TransitionGenerateNextRound,
+                evaluation.Value.Ready,
+                blockers));
     }
 
     /// <summary>
@@ -478,7 +563,18 @@ public static class CockpitAssembler
             .Take(8)
             .ToArray();
 
-        return new CockpitOperationalFocusDto(stageFocus, draws, matchCounts, upcoming);
+        var swissByes = stages
+            .Where(stage => stage.IsSwiss)
+            .SelectMany(stage => stage.SwissByeHistory.Select(bye => new CockpitSwissByeDto(
+                stage.Id.Value,
+                bye.RoundIndex,
+                bye.EntryId.Value,
+                EntryDisplayNames.Resolve(names, bye.EntryId) ?? bye.EntryId.Value.ToString())))
+            .OrderBy(bye => bye.RoundIndex)
+            .ThenBy(bye => bye.EntryId)
+            .ToArray();
+
+        return new CockpitOperationalFocusDto(stageFocus, draws, matchCounts, upcoming, swissByes);
     }
 
     private static CockpitMatchCountsDto BuildMatchCounts(
@@ -752,6 +848,32 @@ public static class CockpitAssembler
                 materializeStageId));
         }
 
+        if (TryEvaluateSwissGenerateNextRound(
+                competition,
+                organisation,
+                stages,
+                matchesByStage,
+                out var swissStageId,
+                out _) is { Ready: true }
+            && swissStageId is { } generateStageId)
+        {
+            var stage = stages.First(candidate => candidate.Id.Value == generateStageId);
+            var nextRound = stage.Matchdays.Count == 0
+                ? 1
+                : stage.Matchdays.Max(matchday => matchday.Number) + 1;
+            actions.Add(new CockpitActionDto(
+                ActionGenerateNextRound,
+                Guaranteed: false,
+                generateStageId,
+                Params: new Dictionary<string, string>
+                {
+                    ["stageName"] = stage.Name.Value,
+                    ["roundIndex"] = nextRound.ToString(CultureInfo.InvariantCulture),
+                    ["plannedRounds"] = (stage.SwissSettings?.RoundCount ?? 0)
+                        .ToString(CultureInfo.InvariantCulture)
+                }));
+        }
+
         foreach (var stage in stages)
         {
             if (!TryDescribeFromSlotsOpportunity(competition, stage, out var occupiedSlotCount))
@@ -922,7 +1044,8 @@ public static class CockpitAssembler
         OrganisationViewDto organisation,
         CompletionAnalysis? completion,
         int attentionCount,
-        bool fromSlotsOpportunity) =>
+        bool fromSlotsOpportunity,
+        bool swissGenerateNextRoundReady) =>
         competition.Status switch
         {
             // From-slots (later Cup stage) before skeleton MaterializeMatches — avoid concurrent
@@ -937,6 +1060,8 @@ public static class CockpitAssembler
                 new CockpitNaturalProgressionDto(ProgressionContinueOrganisation),
             CompetitionStatus.Running or CompetitionStatus.Suspended when fromSlotsOpportunity && attentionCount == 0 =>
                 new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
+            CompetitionStatus.Running or CompetitionStatus.Suspended when swissGenerateNextRoundReady && attentionCount == 0 =>
+                new CockpitNaturalProgressionDto(ActionGenerateNextRound),
             CompetitionStatus.Running or CompetitionStatus.Suspended when completion?.CanCompleteNormally == true =>
                 new CockpitNaturalProgressionDto(ActionCompleteCompetition),
             CompetitionStatus.Running or CompetitionStatus.Suspended when attentionCount > 0 =>
@@ -947,6 +1072,106 @@ public static class CockpitAssembler
                 new CockpitNaturalProgressionDto(ProgressionOpenConsultation),
             _ => null
         };
+
+    /// <summary>
+    /// Evaluates whether Swiss <see cref="ActionGenerateNextRound"/> is an opportunity.
+    /// Mirrors GenerateNextRound preconditions without inventing pairing rules.
+    /// </summary>
+    private static (bool Ready, Guid StageId)? TryEvaluateSwissGenerateNextRound(
+        Competition competition,
+        OrganisationViewDto organisation,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        out Guid? stageId,
+        out IReadOnlyList<string> blockers)
+    {
+        stageId = null;
+        blockers = [];
+        if (organisation.Format.Kind is not StructureFormatKind.Swiss
+            || organisation.Format.PrimaryStageId is not { } primaryId)
+        {
+            return null;
+        }
+
+        var stage = stages.FirstOrDefault(candidate => candidate.Id.Value == primaryId);
+        if (stage is null || !stage.IsSwiss || stage.SwissSettings is null)
+        {
+            return null;
+        }
+
+        stageId = stage.Id.Value;
+        var codes = new List<string>();
+        var activeCount = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
+        if (activeCount < 2)
+        {
+            codes.Add(BlockerSwissInsufficientParticipants);
+        }
+
+        if (stage.Status is not StageStatus.Running)
+        {
+            codes.Add(BlockerSwissStageNotRunning);
+        }
+
+        var planned = stage.SwissSettings.RoundCount;
+        var generated = stage.Matchdays.Count;
+        if (generated >= planned)
+        {
+            codes.Add(BlockerSwissRoundsComplete);
+        }
+        else if (generated > 0)
+        {
+            var previous = stage.Matchdays.Max(matchday => matchday.Number);
+            if (!IsSwissRoundFullyFinished(stage, previous, matchesByStage))
+            {
+                codes.Add(BlockerSwissAwaitingRoundResults);
+            }
+        }
+
+        if (competition.Status is CompetitionStatus.Suspended
+            or CompetitionStatus.Completed
+            or CompetitionStatus.Archived)
+        {
+            codes.Add(BlockerSwissStageNotRunning);
+        }
+
+        var ready = codes.Count == 0;
+        blockers = codes;
+        return (ready, stage.Id.Value);
+    }
+
+    private static bool IsSwissRoundFullyFinished(
+        Stage stage,
+        int roundIndex,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        var matchday = stage.Matchdays.FirstOrDefault(candidate => candidate.Number == roundIndex);
+        if (matchday is null)
+        {
+            return false;
+        }
+
+        var attached = matchesByStage.TryGetValue(stage.Id, out var list)
+            ? list.ToDictionary(match => match.Id)
+            : new Dictionary<MatchId, Match>();
+
+        foreach (var fixture in matchday.Fixtures)
+        {
+            if (fixture.Attachments.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var matchId in fixture.MatchIds)
+            {
+                if (!attached.TryGetValue(matchId, out var match) || match.Status != MatchStatus.Finished)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
     /// <summary>
     /// Opportunity for from-slots materialization: Cup stage Draft/Ready, enough occupied slots

@@ -53,6 +53,11 @@
       "rounds_other": "{{count}} tours",
       "matchdays_one": "{{count}} journée",
       "matchdays_other": "{{count}} journées",
+      "swissRounds": "Swiss · {{generated}} / {{planned}} tours générés",
+      "swissByes_one": "{{count}} bye (événement d’appariement)",
+      "swissByes_other": "{{count}} byes (événements d’appariement)",
+      "swissByesHint": "Pas un match — l’équipe est exemptée pour le tour.",
+      "swissByeLine": "Tour {{round}} · {{name}}",
       "slots_one": "{{count}} emplacement",
       "slots_other": "{{count}} emplacements",
       "matches_one": "{{count}} match",
@@ -73,8 +78,9 @@
       "notReady": "Pas prêt",
       "transitions": {
         "Draw": "Tirage",
-      "MaterializeMatches": "Matérialisation",
-      "MaterializeFromOccupiedSlots": "Confrontations depuis les emplacements"
+        "MaterializeMatches": "Matérialisation",
+        "MaterializeFromOccupiedSlots": "Confrontations depuis les emplacements",
+        "GenerateNextRound": "Tour Swiss suivant"
       },
       "readinessReady": "Le règlement permet d’envisager {{transition}}.",
       "readinessNotReady": "{{transition}} : conditions à lever",
@@ -142,6 +148,7 @@
       "OpenConsultation": "Consultez les classements de la compétition.",
       "MaterializeMatches": "Créez les fixtures / matchs pour avancer (championnat) ou le squelette de confrontations (coupe).",
       "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — ouvrez la phase pour configurer les confrontations (SlotA ↔ SlotB).",
+      "GenerateNextRound": "Générez le prochain tour Swiss (appariements + matchs) — après résultats du tour courant si besoin.",
       "PublishDraw": "Publiez le tirage pour figer la composition.",
       "PrepareCompetition": "Passez la compétition en état prêt.",
       "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",

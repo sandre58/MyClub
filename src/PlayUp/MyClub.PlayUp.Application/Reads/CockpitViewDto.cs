@@ -122,11 +122,28 @@ public sealed record CockpitTransitionReadinessDto(
     IReadOnlyList<string> BlockerCodes);
 
 /// <summary>Operational focus across stages (no single “active stage” fiction).</summary>
+/// <param name="Stages">Stage focus lines.</param>
+/// <param name="Draws">Draw pipeline projection.</param>
+/// <param name="MatchCounts">Match status counters.</param>
+/// <param name="UpcomingMatches">Upcoming scheduled matches.</param>
+/// <param name="SwissByes">Recorded Swiss byes (pairing events — not fixtures/matches).</param>
 public sealed record CockpitOperationalFocusDto(
     IReadOnlyList<CockpitStageFocusDto> Stages,
     IReadOnlyList<CockpitDrawFocusDto> Draws,
     CockpitMatchCountsDto MatchCounts,
-    IReadOnlyList<CockpitUpcomingMatchDto> UpcomingMatches);
+    IReadOnlyList<CockpitUpcomingMatchDto> UpcomingMatches,
+    IReadOnlyList<CockpitSwissByeDto> SwissByes);
+
+/// <summary>Swiss bye projection — pairing event, never a fake match.</summary>
+/// <param name="StageId">Owning Swiss stage.</param>
+/// <param name="RoundIndex">1-based Swiss round / Matchday number.</param>
+/// <param name="EntryId">Entry that received the bye.</param>
+/// <param name="EntryDisplayName">Display name for SPA.</param>
+public sealed record CockpitSwissByeDto(
+    Guid StageId,
+    int RoundIndex,
+    Guid EntryId,
+    string EntryDisplayName);
 
 /// <summary>Stage line for operational focus.</summary>
 public sealed record CockpitStageFocusDto(Guid StageId, string Name, StageStatus Status);

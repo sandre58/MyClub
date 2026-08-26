@@ -515,6 +515,7 @@ describe('CompetitionCockpitPage', () => {
             total: 0,
           },
           upcomingMatches: [],
+          swissByes: [],
         },
       }),
     )

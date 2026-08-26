@@ -85,6 +85,7 @@ describe('cockpitComposition', () => {
             total: 0,
           },
           upcomingMatches: [],
+          swissByes: [],
         },
       }),
     )

@@ -95,7 +95,15 @@ describe('resolveCockpitActionIntent', () => {
     expect(intent).toEqual({ kind: 'navigate', to: `/stages/${stageId}` })
   })
 
-  it('builds a stable action key from Host ids', () => {
+    it('executes GenerateNextRound when stageId is provided', () => {
+      const intent = resolveCockpitActionIntent(
+        { code: 'GenerateNextRound', guaranteed: false, stageId },
+        cockpitView(),
+      )
+      expect(intent.kind).toBe('execute')
+    })
+
+    it('builds a stable action key from Host ids', () => {
     expect(
       cockpitActionKey({
         code: 'PublishDraw',

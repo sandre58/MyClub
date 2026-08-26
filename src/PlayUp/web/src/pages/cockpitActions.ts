@@ -4,6 +4,7 @@ import {
   applyQualification,
   archiveCompetition,
   completeCompetition,
+  generateNextSwissRound,
   materializeMatches,
   prepareCompetition,
   prepareStage,
@@ -77,6 +78,11 @@ export function resolveCockpitActionIntent(
     case 'MaterializeMatches':
       return stageId
         ? { kind: 'execute', run: () => materializeMatches(stageId) }
+        : { kind: 'unsupported' }
+
+    case 'GenerateNextRound':
+      return stageId
+        ? { kind: 'execute', run: () => generateNextSwissRound(stageId) }
         : { kind: 'unsupported' }
 
     case 'MaterializeFromOccupiedSlots':

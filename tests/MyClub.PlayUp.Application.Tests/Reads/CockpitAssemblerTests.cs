@@ -786,6 +786,97 @@ public sealed class CockpitAssemblerTests
         view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeFromOccupiedSlots);
     }
 
+    [Fact]
+    public void Assemble_swiss_construction_omits_materialize_and_shows_generate_not_ready()
+    {
+        var competition = CreateCompetition.Execute("Swiss-Cockpit", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Swiss(3),
+            _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.ConstructionDimensions.Structure.Facts["formatKind"].Should().Be("Swiss");
+        view.ConstructionDimensions.Structure.Facts["swissRoundCount"].Should().Be("3");
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
+            item.Transition == CockpitAssembler.TransitionMaterializeMatches);
+        view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
+            item.Transition == CockpitAssembler.TransitionDraw);
+        var generate = view.ConstructionDimensions.Regulation.TransitionReadiness
+            .Should().ContainSingle(item => item.Transition == CockpitAssembler.TransitionGenerateNextRound)
+            .Subject;
+        generate.Ready.Should().BeFalse();
+        generate.BlockerCodes.Should().Contain(CockpitAssembler.BlockerSwissStageNotRunning);
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == CockpitAssembler.ActionGenerateNextRound);
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == CockpitAssembler.ActionMaterializeMatches);
+    }
+
+    [Fact]
+    public void Assemble_swiss_running_projects_generate_next_round_and_bye()
+    {
+        var competition = CreateCompetition.Execute("Swiss-Run", _clock);
+        for (var i = 0; i < 3; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Swiss(2),
+            _clock);
+        var stage = configured.Stage;
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var round1 = GenerateNextRound.Execute(competition, stage, [], _clock);
+        foreach (var match in round1.CreatedMatches)
+        {
+            match.Start(_clock);
+            match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        }
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [stage.Id] = round1.CreatedMatches
+            });
+
+        view.AvailableActions.Should().Contain(item =>
+            item.Code == CockpitAssembler.ActionGenerateNextRound);
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionGenerateNextRound);
+        view.OperationalFocus.SwissByes.Should().ContainSingle();
+        view.ConstructionDimensions.Structure.Facts["swissByeCount"].Should().Be("1");
+
+        var awaiting = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [stage.Id] = []
+            });
+        var transition = awaiting.ConstructionDimensions.Regulation.TransitionReadiness
+            .Should().ContainSingle(item => item.Transition == CockpitAssembler.TransitionGenerateNextRound)
+            .Subject;
+        transition.Ready.Should().BeFalse();
+        transition.BlockerCodes.Should().Contain(CockpitAssembler.BlockerSwissAwaitingRoundResults);
+    }
+
     private (Competition Competition, Stage Stage, Match Match) CreateFinishedKnockoutWithProgression()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);

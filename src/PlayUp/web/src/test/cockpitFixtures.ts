@@ -86,6 +86,7 @@ export function cockpitView(
         total: 0,
       },
       upcomingMatches: [],
+      swissByes: [],
     },
     situations: [],
     attentionSummary: { count: 0, items: [] },

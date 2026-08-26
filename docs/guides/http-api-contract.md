@@ -291,6 +291,29 @@ Creates Fixtures/Matches for the stage format (Championship / Groups RR, or Cup 
 }
 ```
 
+### `POST /stages/{stageId}/swiss/generate-next-round` → `GenerateNextRoundResponse`
+
+Generates the next Swiss round (pairings + Matchday + Matches, optional bye). Stage must be **Running**. Distinct from `…/matches/materialize` (RR / Cup skeleton).
+
+```json
+{
+  "roundIndex": 1,
+  "createdCount": 4,
+  "attachedMatchIds": ["<guid>", "..."],
+  "byeEntryId": null,
+  "alreadyComplete": false
+}
+```
+
+| Gate | Allowed |
+| :--- | :--- |
+| Stage | Swiss (`SwissSettings`) + `Running` |
+| Previous round | Fully **Finished** before generating the next |
+| Planned rounds | At most `SwissSettings.RoundCount` |
+| Competition | Not Suspended / Completed / Archived |
+
+Host contract: `MyClub.PlayUp.Host.Contracts.GenerateNextRoundResponse`.
+
 ### `POST /stages/{stageId}/matches/materialize-from-slots` → `MaterializeMatchesResponse`
 
 **Distinct from** `…/matches/materialize`. Materializes Cup confrontations from **explicit** occupied SlotA/SlotB pairs (creates Fixture + Matches; reuses TieFormat legs). Does **not** invent pairs.
