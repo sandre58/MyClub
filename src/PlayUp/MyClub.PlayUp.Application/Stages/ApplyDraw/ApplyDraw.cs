@@ -6,7 +6,6 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -292,8 +291,14 @@ public static class ApplyDraw
         {
             var pairing = pairings[i];
             var fixture = fixtures[i];
-            var expectedLegs = ExpectedLegsForFixture(stage, fixture);
-            if (!TryMatchCompletePairing(fixture, pairing, knownById, expectedLegs, out var matchedIds))
+            var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixture);
+            if (!CupConfrontationMaterializer.TryMatchCompleteLegs(
+                    fixture,
+                    pairing.EntryA,
+                    pairing.EntryB,
+                    knownById,
+                    expectedLegs,
+                    out var matchedIds))
             {
                 continue;
             }
@@ -327,89 +332,17 @@ public static class ApplyDraw
         {
             var pairing = pairings[i];
             var fixtureId = fixtureIds[i];
-            var expectedLegs = ExpectedLegsForFixture(stage, fixtures[i]);
-
-            var leg1 = Match.Create(
-                stage.CompetitionId,
-                stage.Id,
-                pairing.EntryA,
-                pairing.EntryB,
-                clock);
-            stage.AttachMatch(fixtureId, leg1.Id, legIndex: 1, clock);
-            created.Add(leg1);
-
-            if (expectedLegs == TieFormat.TwoLegs)
-            {
-                var leg2 = Match.Create(
-                    stage.CompetitionId,
-                    stage.Id,
-                    pairing.EntryB,
+            var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixtures[i]);
+            created.AddRange(
+                CupConfrontationMaterializer.AttachLegs(
+                    stage,
+                    fixtureId,
                     pairing.EntryA,
-                    clock);
-                stage.AttachMatch(fixtureId, leg2.Id, legIndex: 2, clock);
-                created.Add(leg2);
-            }
+                    pairing.EntryB,
+                    expectedLegs,
+                    clock));
         }
 
         return created;
-    }
-
-    private static int ExpectedLegsForFixture(Stage stage, Fixture fixture)
-    {
-        var round = stage.Rounds.FirstOrDefault(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
-        return round?.TieFormat?.NumberOfLegs ?? TieFormat.SingleLeg;
-    }
-
-    private static bool TryMatchCompletePairing(
-        Fixture fixture,
-        PairingDrawResult pairing,
-        IReadOnlyDictionary<MatchId, Match> knownById,
-        int expectedLegs,
-        out List<MatchId> matchedIds)
-    {
-        matchedIds = [];
-        if (fixture.Attachments.Count != expectedLegs)
-        {
-            return false;
-        }
-
-        var leg1 = FindAttachedMatch(fixture, knownById, legIndex: 1, pairing.EntryA, pairing.EntryB);
-        if (leg1 is null)
-        {
-            return false;
-        }
-
-        matchedIds.Add(leg1.Id);
-        if (expectedLegs == TieFormat.SingleLeg)
-        {
-            return true;
-        }
-
-        var leg2 = FindAttachedMatch(fixture, knownById, legIndex: 2, pairing.EntryB, pairing.EntryA);
-        if (leg2 is null)
-        {
-            return false;
-        }
-
-        matchedIds.Add(leg2.Id);
-        return true;
-    }
-
-    private static Match? FindAttachedMatch(
-        Fixture fixture,
-        IReadOnlyDictionary<MatchId, Match> knownById,
-        int legIndex,
-        EntryId home,
-        EntryId away)
-    {
-        var attachment = fixture.Attachments.FirstOrDefault(a => a.LegIndex == legIndex);
-        if (attachment is null || !knownById.TryGetValue(attachment.MatchId, out var match))
-        {
-            return null;
-        }
-
-        return match.HomeEntryId.Equals(home) && match.AwayEntryId.Equals(away)
-            ? match
-            : null;
     }
 }

@@ -7,6 +7,7 @@
 using System.Text.Json.Serialization;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host;
@@ -475,6 +476,27 @@ app.MapPost(
     {
         var result = await executor
             .MaterializeMatchesAsync(new StageId(stageId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(new MaterializeMatchesResponse(
+            result.CreatedMatches.Count,
+            [.. result.AttachedMatchIds.Select(id => id.Value)],
+            result.AlreadyComplete));
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/matches/materialize-from-slots",
+    async (
+        Guid stageId,
+        MaterializeCupFromOccupiedSlotsRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var pairs = request.Pairs
+            .Select(pair => new CupSlotPair(pair.SlotAKey, pair.SlotBKey))
+            .ToArray();
+        var result = await executor
+            .MaterializeCupFromOccupiedSlotsAsync(new StageId(stageId), pairs, cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(new MaterializeMatchesResponse(
             result.CreatedMatches.Count,
