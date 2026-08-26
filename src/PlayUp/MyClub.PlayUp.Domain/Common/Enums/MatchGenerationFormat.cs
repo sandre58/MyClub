@@ -10,7 +10,7 @@ namespace MyClub.PlayUp.Domain.Common;
 /// How Fixtures/Matches are generated for Championship / Groups stages (not scheduling).
 /// </summary>
 /// <remarks>
-/// Cup stages ignore this value. Knockout / Swiss modes are out of scope for V1.
+/// Cup and Swiss stages ignore this value. Swiss is a dedicated Kind (not a value here).
 /// </remarks>
 public enum MatchGenerationFormat
 {

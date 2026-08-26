@@ -211,4 +211,14 @@ public static class StageErrorCodes
     /// Gets the code when the match generation format is not a defined enum value.
     /// </summary>
     public const string InvalidMatchGenerationFormat = "Stage.InvalidMatchGenerationFormat";
+
+    /// <summary>
+    /// Gets the code when Swiss settings are invalid or incompatible with stage composition.
+    /// </summary>
+    public const string SwissSettingsInvalid = "Stage.SwissSettingsInvalid";
+
+    /// <summary>
+    /// Gets the code when a Swiss bye payload is invalid or conflicts with existing history.
+    /// </summary>
+    public const string SwissByeInvalid = "Stage.SwissByeInvalid";
 }

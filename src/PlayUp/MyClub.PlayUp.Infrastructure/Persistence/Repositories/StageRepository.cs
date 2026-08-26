@@ -33,6 +33,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             .Include(candidate => candidate.Draws)
             .Include(candidate => candidate.Penalties)
             .Include(candidate => candidate.MatchPlacements)
+            .Include(candidate => candidate.SwissByeHistory)
             .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
             .ConfigureAwait(false);
 

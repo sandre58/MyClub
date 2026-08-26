@@ -303,12 +303,43 @@ public sealed class StagePersistenceTests
         entity.FindNavigation(nameof(Stage.Draws)).Should().NotBeNull();
         entity.FindNavigation(nameof(Stage.Penalties)).Should().NotBeNull();
         entity.FindNavigation(nameof(Stage.MatchPlacements)).Should().NotBeNull();
+        entity.FindNavigation(nameof(Stage.SwissByeHistory)).Should().NotBeNull();
         entity.FindNavigation(nameof(Stage.DomainEvents)).Should().BeNull();
 
         context.Model.GetEntityTypes().Select(type => type.GetTableName())
-            .Should().Contain(["draws", "penalties", "match_placements"]);
+            .Should().Contain(["draws", "penalties", "match_placements", "stage_swiss_byes"]);
         context.Model.GetEntityTypes().Select(type => type.GetTableName())
             .Should().NotContain(["qualification_results", "progression_results", "standings"]);
+    }
+
+    [Fact]
+    public async Task Swiss_settings_and_bye_history_round_tripAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var byeEntry = EntryId.New();
+        StageId stageId;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var stage = Stage.Create(CompetitionId.New(), new StageName("Swiss"), SampleRegulations.Standard(), _clock);
+            stage.SetSwissSettings(new SwissSettings(3), _clock);
+            stage.AddMatchday(1, _clock);
+            stage.RecordSwissBye(1, byeEntry, _clock);
+            stageId = stage.Id;
+            new StageRepository(context).Add(stage);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            loaded.Should().NotBeNull();
+            loaded.IsSwiss.Should().BeTrue();
+            loaded.SwissSettings.Should().Be(new SwissSettings(3));
+            loaded.SwissByeHistory.Should().ContainSingle().Which.Should().Be(new SwissBye(1, byeEntry));
+            loaded.CountSwissByes(byeEntry).Should().Be(1);
+            loaded.Matchdays.Should().ContainSingle().Which.Number.Should().Be(1);
+        }
     }
 
     [Fact]

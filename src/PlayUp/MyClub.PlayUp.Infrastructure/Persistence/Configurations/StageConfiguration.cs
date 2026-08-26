@@ -55,6 +55,14 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .IsRequired()
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(stage => stage.SwissSettings)
+            .HasColumnName("swiss_round_count")
+            .HasConversion(
+                settings => settings == null ? (int?)null : settings.RoundCount,
+                value => value == null ? null : new SwissSettings(value.Value))
+            .IsRequired(false)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Property(stage => stage.Regulation)
             .HasColumnName("stage_regulation")
             .HasColumnType("jsonb")
@@ -127,6 +135,11 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
         builder.Navigation(stage => stage.MatchPlacements)
             .HasField("_matchPlacements")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.OwnsMany(stage => stage.SwissByeHistory, ConfigureSwissByeHistory);
+        builder.Navigation(stage => stage.SwissByeHistory)
+            .HasField("_swissByeHistory")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 
     private static void ConfigureDirectAssignments(OwnedNavigationBuilder<Stage, DirectAssignment> assignments)
@@ -174,5 +187,23 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .WithMany()
             .HasForeignKey(placement => placement.MatchId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+
+    private static void ConfigureSwissByeHistory(OwnedNavigationBuilder<Stage, SwissBye> byes)
+    {
+        byes.ToTable("stage_swiss_byes");
+        byes.WithOwner().HasForeignKey("stage_id");
+        byes.HasKey("stage_id", "RoundIndex");
+
+        byes.Property(bye => bye.RoundIndex)
+            .HasColumnName("round_index")
+            .ValueGeneratedNever()
+            .IsRequired();
+
+        byes.Property(bye => bye.EntryId)
+            .HasColumnName("entry_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<EntryId>());
     }
 }

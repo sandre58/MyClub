@@ -25,6 +25,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Draw> _draws = [];
     private readonly List<Penalty> _penalties = [];
     private readonly List<MatchPlacement> _matchPlacements = [];
+    private readonly List<SwissBye> _swissByeHistory = [];
 
     private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
         : base(id)
@@ -59,8 +60,18 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Gets how Championship / Groups matches are generated for this stage.
     /// </summary>
-    /// <remarks>Cup materialization ignores this value. Default is <see cref="MatchGenerationFormat.SingleRoundRobin"/>.</remarks>
+    /// <remarks>Cup and Swiss materialization ignore this value. Default is <see cref="MatchGenerationFormat.SingleRoundRobin"/>.</remarks>
     public MatchGenerationFormat MatchGenerationFormat { get; private set; }
+
+    /// <summary>
+    /// Gets Swiss Kind settings when this stage is Swiss; otherwise <see langword="null"/>.
+    /// </summary>
+    public SwissSettings? SwissSettings { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether this stage is configured as Swiss Kind.
+    /// </summary>
+    public bool IsSwiss => SwissSettings is not null;
 
     /// <summary>
     /// Gets the groups in this stage.
@@ -102,6 +113,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets materialized calendar placements (one per attached <see cref="MatchId"/>).
     /// </summary>
     public IReadOnlyList<MatchPlacement> MatchPlacements => _matchPlacements.AsReadOnly();
+
+    /// <summary>
+    /// Gets recorded Swiss byes (pairing events — no Fixture/Match).
+    /// </summary>
+    public IReadOnlyList<SwissBye> SwissByeHistory => _swissByeHistory.AsReadOnly();
 
     private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
 
@@ -579,6 +595,89 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Enables or updates Swiss Kind settings. Pass <see langword="null"/> to clear when history is empty.
+    /// </summary>
+    /// <param name="settings">Swiss settings, or <see langword="null"/> to clear.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void SetSwissSettings(SwissSettings? settings, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (Equals(SwissSettings, settings))
+        {
+            return;
+        }
+
+        if (settings is null)
+        {
+            if (_swissByeHistory.Count > 0)
+            {
+                throw new DomainException(
+                    "Swiss settings cannot be cleared while bye history exists.",
+                    StageErrorCodes.SwissSettingsInvalid);
+            }
+
+            SwissSettings = null;
+            return;
+        }
+
+        EnsureSwissCompositionAllowed();
+        var maxByeRound = _swissByeHistory.Count == 0
+            ? 0
+            : _swissByeHistory.Max(bye => bye.RoundIndex);
+        if (settings.RoundCount < maxByeRound)
+        {
+            throw new DomainException(
+                $"Swiss round count cannot be less than highest recorded bye round ({maxByeRound}).",
+                StageErrorCodes.SwissSettingsInvalid);
+        }
+
+        SwissSettings = settings;
+    }
+
+    /// <summary>
+    /// Records a Swiss bye for a round. Allowed while Running (GenerateNextRound); not a Fixture/Match.
+    /// </summary>
+    /// <param name="roundIndex">1-based Swiss round index.</param>
+    /// <param name="entryId">Entry receiving the bye.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RecordSwissBye(int roundIndex, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissByeMutable();
+
+        var settings = SwissSettings
+            ?? throw new DomainException(
+                "Swiss bye can only be recorded on a Swiss stage.",
+                StageErrorCodes.SwissByeInvalid);
+
+        if (roundIndex < 1 || roundIndex > settings.RoundCount)
+        {
+            throw new DomainException(
+                $"Swiss bye round index must be between 1 and {settings.RoundCount}.",
+                StageErrorCodes.SwissByeInvalid);
+        }
+
+        if (_swissByeHistory.Any(bye => bye.RoundIndex == roundIndex))
+        {
+            throw new DomainException(
+                $"Swiss bye already recorded for round {roundIndex}.",
+                StageErrorCodes.SwissByeInvalid);
+        }
+
+        _swissByeHistory.Add(new SwissBye(roundIndex, entryId));
+    }
+
+    /// <summary>
+    /// Counts recorded byes for an entry (I6 pairing input).
+    /// </summary>
+    /// <param name="entryId">Entry identity.</param>
+    /// <returns>Number of byes in history.</returns>
+    public int CountSwissByes(EntryId entryId) =>
+        _swissByeHistory.Count(bye => bye.EntryId.Equals(entryId));
+
+    /// <summary>
     /// Adds a group to the stage.
     /// </summary>
     /// <param name="name">The group name.</param>
@@ -688,6 +787,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
+        EnsureNotSwiss("Slots");
 
         var key = Slot.NormalizeKey(slotKey);
         if (_slots.Any(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal)))
@@ -1558,6 +1658,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     private void EnsureCanAddGroup()
     {
+        EnsureNotSwiss("Groups");
         if (_rounds.Count > 0)
         {
             throw new DomainException(
@@ -1568,6 +1669,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     private void EnsureCanAddRound()
     {
+        EnsureNotSwiss("Rounds");
         if (_groups.Count > 0)
         {
             throw new DomainException(
@@ -1590,6 +1692,38 @@ public sealed class Stage : AggregateRoot<StageId>
             throw new DomainException(
                 "Matchdays cannot be combined with rounds.",
                 StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureSwissCompositionAllowed()
+    {
+        if (_groups.Count > 0 || _rounds.Count > 0 || _slots.Count > 0)
+        {
+            throw new DomainException(
+                "Swiss settings require Matchdays-only composition (no Groups, Rounds, or Slots).",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureNotSwiss(string composition)
+    {
+        if (!IsSwiss)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"{composition} cannot be combined with Swiss settings.",
+            StageErrorCodes.InvalidComposition);
+    }
+
+    private void EnsureSwissByeMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Swiss bye cannot be recorded when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
         }
     }
 
