@@ -245,6 +245,89 @@ app.MapPost(
         return Results.Ok(view);
     });
 
+app.MapPost(
+    "/competitions/{competitionId:guid}/stages",
+    async (
+        Guid competitionId,
+        AddCompetitionStageRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var stage = await executor
+            .AddCompetitionStageAsync(new CompetitionId(competitionId), request.Name, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Created(
+            $"/stages/{stage.Id.Value}",
+            new AddCompetitionStageResponse(stage.Id.Value, stage.Name.Value));
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/rounds",
+    async (
+        Guid stageId,
+        AddStageRoundRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var round = await executor
+            .AddStageRoundAsync(
+                new StageId(stageId),
+                request.Name,
+                request.NumberOfLegs,
+                request.AggregateScoring,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Created(
+            $"/stages/{stageId}/rounds/{round.Id.Value}",
+            new AddStageRoundResponse(round.Id.Value, round.Name));
+    });
+
+app.MapPost(
+    "/stages/{stageId:guid}/slots",
+    async (
+        Guid stageId,
+        AddStageSlotRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var slot = await executor
+            .AddStageSlotAsync(new StageId(stageId), request.SlotKey, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Created(
+            $"/stages/{stageId}/slots/{Uri.EscapeDataString(slot.SlotKey)}",
+            new AddStageSlotResponse(slot.SlotKey));
+    });
+
+app.MapPut(
+    "/stages/{stageId:guid}/progression-rules",
+    async (
+        Guid stageId,
+        ReplaceStageProgressionRulesRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        IReadOnlyList<ProgressionPathSpec>? paths = null;
+        if (request.Paths is { Count: > 0 })
+        {
+            paths = request.Paths
+                .Select(path => new ProgressionPathSpec(
+                    new FixtureId(path.SourceFixtureId),
+                    path.Outcome,
+                    new StageId(path.DestinationStageId),
+                    path.DestinationSlotKey))
+                .ToArray();
+        }
+
+        await executor
+            .ReplaceStageProgressionRulesAsync(new StageId(stageId), paths, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
 app.MapGet(
     "/competitions/{competitionId:guid}",
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>

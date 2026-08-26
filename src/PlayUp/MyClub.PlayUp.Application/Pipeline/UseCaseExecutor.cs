@@ -624,6 +624,65 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Adds an additional stage to a competition (thin multi-stage authoring).
+    /// </summary>
+    public async Task<Stage> AddCompetitionStageAsync(
+        CompetitionId competitionId,
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var stage = AddCompetitionStage.Execute(competition, name, clock);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return stage;
+    }
+
+    /// <summary>
+    /// Adds a round (optional TieFormat) to a stage.
+    /// </summary>
+    public async Task<Round> AddStageRoundAsync(
+        StageId stageId,
+        string name,
+        int? numberOfLegs,
+        bool? aggregateScoring,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var tieFormat = AddStageRound.BuildTieFormat(numberOfLegs, aggregateScoring);
+        var round = AddStageRound.Execute(stage, name, tieFormat, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return round;
+    }
+
+    /// <summary>
+    /// Adds a positional slot to a stage.
+    /// </summary>
+    public async Task<Slot> AddStageSlotAsync(
+        StageId stageId,
+        string slotKey,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var slot = AddStageSlot.Execute(stage, slotKey, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return slot;
+    }
+
+    /// <summary>
+    /// Replaces progression rules on a stage (null/empty clears).
+    /// </summary>
+    public async Task ReplaceStageProgressionRulesAsync(
+        StageId stageId,
+        IReadOnlyList<ProgressionPathSpec>? paths,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageProgressionRules.Execute(stage, paths, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Assembles <see cref="OrganisationViewDto"/> for the Organisation hub.
     /// </summary>
     public async Task<OrganisationViewDto> GetOrganisationViewAsync(

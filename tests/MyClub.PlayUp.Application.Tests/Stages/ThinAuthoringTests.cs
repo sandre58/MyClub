@@ -1,0 +1,157 @@
+// -----------------------------------------------------------------------
+// <copyright file="ThinAuthoringTests.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using FluentAssertions;
+using MyClub.PlayUp.Application;
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
+using Xunit;
+
+namespace MyClub.PlayUp.Application.Tests.Stages;
+
+/// <summary>
+/// D1 thin authoring: AddStage / AddRound / AddSlot / ReplaceProgressionRules composition.
+/// </summary>
+public sealed class ThinAuthoringTests
+{
+    private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 26, 14, 0, 0, TimeSpan.Zero));
+
+    [Fact]
+    public void Composition_authors_qf_to_sf_chain()
+    {
+        var competition = CreateCompetition.Execute("Cup-D1", _clock);
+
+        var qf = AddCompetitionStage.Execute(competition, "Quarter-Finals", _clock);
+        var qfRound = AddStageRound.Execute(
+            qf,
+            "QF",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            _clock);
+        AddStageSlot.Execute(qf, "QF1-A", _clock);
+        AddStageSlot.Execute(qf, "QF1-B", _clock);
+        var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
+
+        var sf = AddCompetitionStage.Execute(competition, "Semi-Finals", _clock);
+        var sfRound = AddStageRound.Execute(
+            sf,
+            "SF",
+            AddStageRound.BuildTieFormat(numberOfLegs: 2, aggregateScoring: true),
+            _clock);
+        AddStageSlot.Execute(sf, "SF1-A", _clock);
+        AddStageSlot.Execute(sf, "SF1-B", _clock);
+
+        ReplaceStageProgressionRules.Execute(
+            qf,
+            [
+                new ProgressionPathSpec(
+                    qfFixture.Id,
+                    ProgressionOutcome.Winner,
+                    sf.Id,
+                    "SF1-A"),
+                new ProgressionPathSpec(
+                    qfFixture.Id,
+                    ProgressionOutcome.Loser,
+                    sf.Id,
+                    "SF1-B")
+            ],
+            _clock);
+
+        competition.StageIds.Should().HaveCount(2);
+        competition.StageIds.Should().Contain([qf.Id, sf.Id]);
+        qf.Rounds.Should().ContainSingle().Which.Name.Should().Be("QF");
+        sfRound.TieFormat.Should().NotBeNull();
+        sfRound.TieFormat!.NumberOfLegs.Should().Be(2);
+        sfRound.TieFormat.AggregateScoring.Should().BeTrue();
+        sf.Slots.Select(s => s.SlotKey).Should().BeEquivalentTo("SF1-A", "SF1-B");
+        qf.Regulation.ProgressionRules.Should().NotBeNull();
+        qf.Regulation.ProgressionRules!.Paths.Should().HaveCount(2);
+        qf.Regulation.ProgressionRules.Paths[0].Destination.StageId.Should().Be(sf.Id);
+        qf.Regulation.ProgressionRules.Paths[0].Destination.SlotKey.Should().Be("SF1-A");
+    }
+
+    [Fact]
+    public void AddCompetitionStage_rejects_when_competition_running()
+    {
+        var competition = CreateCompetition.Execute("Cup-D1-Run", _clock);
+        AddCompetitionStage.Execute(competition, "Only", _clock);
+        competition.AddEntry(TeamId.New(), "Team A", _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var act = () => AddCompetitionStage.Execute(competition, "TooLate", _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+    }
+
+    [Fact]
+    public void AddStageRound_rejects_when_stage_running()
+    {
+        var competition = CreateCompetition.Execute("Cup-D1-Lock", _clock);
+        var stage = AddCompetitionStage.Execute(competition, "Locked", _clock);
+        AddStageRound.Execute(stage, "R1", null, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => AddStageRound.Execute(stage, "R2", null, _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+    }
+
+    [Fact]
+    public void AddStageSlot_rejects_when_stage_running()
+    {
+        var competition = CreateCompetition.Execute("Cup-D1-SlotLock", _clock);
+        var stage = AddCompetitionStage.Execute(competition, "Locked", _clock);
+        AddStageRound.Execute(stage, "R1", null, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => AddStageSlot.Execute(stage, "X", _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+    }
+
+    [Fact]
+    public void ReplaceProgressionRules_rejects_when_stage_running()
+    {
+        var competition = CreateCompetition.Execute("Cup-D1-ProgLock", _clock);
+        var stage = AddCompetitionStage.Execute(competition, "QF", _clock);
+        var round = AddStageRound.Execute(stage, "R1", null, _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => ReplaceStageProgressionRules.Execute(
+            stage,
+            [
+                new ProgressionPathSpec(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    stage.Id,
+                    "A")
+            ],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+    }
+
+    [Fact]
+    public void BuildTieFormat_rejects_invalid_legs()
+    {
+        var act = () => AddStageRound.BuildTieFormat(3, aggregateScoring: true);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
+    }
+}
