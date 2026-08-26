@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -14,6 +15,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <remarks>
 /// Domain has no Applied status. Applied means resolution occupancy/attachments already match
 /// the published resolution — same heuristic previously reconstructed in the SPA.
+/// Pairing: each fixture must have attachments equal to the hosting Round's TieFormat legs
+/// (null TieFormat ⇒ 1).
 /// </remarks>
 public static class DrawAppliedState
 {
@@ -62,6 +65,14 @@ public static class DrawAppliedState
     {
         var pairings = draw.Resolution.PairingResults;
         var fixtures = stage.Rounds.SelectMany(round => round.Fixtures).ToArray();
-        return pairings.Count != 0 && fixtures.Length != 0 && pairings.Count == fixtures.Length && fixtures.All(fixture => fixture.Attachments.Count > 0);
+        return pairings.Count != 0
+               && fixtures.Length != 0
+               && pairings.Count == fixtures.Length
+               && fixtures.All(fixture =>
+               {
+                   var round = stage.Rounds.First(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
+                   var expectedLegs = round.TieFormat?.NumberOfLegs ?? TieFormat.SingleLeg;
+                   return fixture.Attachments.Count == expectedLegs;
+               });
     }
 }

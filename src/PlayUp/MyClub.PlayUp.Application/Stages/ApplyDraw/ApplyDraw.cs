@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -19,8 +20,9 @@ namespace MyClub.PlayUp.Application.Stages;
 /// <c>IUnitOfWork.SaveChangesAsync</c> once. Pairing callers must
 /// <c>IMatchRepository.Add</c> each created Match before that single SaveChanges.
 /// Pairing: opposition is conceptually unordered; V1 Match creation maps EntryA→Home, EntryB→Away
-/// as a technical convention only. Fixture targets are Application orchestration input
-/// (one Fixture per pairing, LegIndex 1).
+/// as a technical convention for LegIndex 1. When the hosting Round has <c>TieFormat.NumberOfLegs == 2</c>,
+/// LegIndex 2 is created on the same Fixture with Home/Away mirrored (B→A). Null TieFormat ⇒ one leg.
+/// Fixture targets are Application orchestration input (one Fixture per pairing).
 /// Does not recalculate WhoFeeds and never creates DirectAssignment.
 /// Host supplies Pairing fixture context and Draw entry pools (typically ⊆ qualified/progressed Entries).
 /// </remarks>
@@ -290,18 +292,17 @@ public static class ApplyDraw
         {
             var pairing = pairings[i];
             var fixture = fixtures[i];
-            var existing = fixture.MatchIds
-                .Select(knownById.GetValueOrDefault)
-                .FirstOrDefault(m =>
-                    m?.HomeEntryId.Equals(pairing.EntryA) == true
-                    && m.AwayEntryId.Equals(pairing.EntryB));
-            if (existing is null)
+            var expectedLegs = ExpectedLegsForFixture(stage, fixture);
+            if (!TryMatchCompletePairing(fixture, pairing, knownById, expectedLegs, out var matchedIds))
             {
                 continue;
             }
 
             matchedPairingIndexes.Add(i);
-            matchedMatchIds.Add(existing.Id);
+            foreach (var matchId in matchedIds)
+            {
+                matchedMatchIds.Add(matchId);
+            }
         }
 
         var unmatchedMatches = knownMatches.Where(m => !matchedMatchIds.Contains(m.Id)).ToArray();
@@ -321,20 +322,94 @@ public static class ApplyDraw
                 ApplicationErrorCodes.DrawApplyFailure);
         }
 
-        var created = new List<Match>(pairings.Count);
+        var created = new List<Match>();
         for (var i = 0; i < pairings.Count; i++)
         {
             var pairing = pairings[i];
-            var match = Match.Create(
+            var fixtureId = fixtureIds[i];
+            var expectedLegs = ExpectedLegsForFixture(stage, fixtures[i]);
+
+            var leg1 = Match.Create(
                 stage.CompetitionId,
                 stage.Id,
                 pairing.EntryA,
                 pairing.EntryB,
                 clock);
-            stage.AttachMatch(fixtureIds[i], match.Id, legIndex: 1, clock);
-            created.Add(match);
+            stage.AttachMatch(fixtureId, leg1.Id, legIndex: 1, clock);
+            created.Add(leg1);
+
+            if (expectedLegs == TieFormat.TwoLegs)
+            {
+                var leg2 = Match.Create(
+                    stage.CompetitionId,
+                    stage.Id,
+                    pairing.EntryB,
+                    pairing.EntryA,
+                    clock);
+                stage.AttachMatch(fixtureId, leg2.Id, legIndex: 2, clock);
+                created.Add(leg2);
+            }
         }
 
         return created;
+    }
+
+    private static int ExpectedLegsForFixture(Stage stage, Fixture fixture)
+    {
+        var round = stage.Rounds.FirstOrDefault(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
+        return round?.TieFormat?.NumberOfLegs ?? TieFormat.SingleLeg;
+    }
+
+    private static bool TryMatchCompletePairing(
+        Fixture fixture,
+        PairingDrawResult pairing,
+        IReadOnlyDictionary<MatchId, Match> knownById,
+        int expectedLegs,
+        out List<MatchId> matchedIds)
+    {
+        matchedIds = [];
+        if (fixture.Attachments.Count != expectedLegs)
+        {
+            return false;
+        }
+
+        var leg1 = FindAttachedMatch(fixture, knownById, legIndex: 1, pairing.EntryA, pairing.EntryB);
+        if (leg1 is null)
+        {
+            return false;
+        }
+
+        matchedIds.Add(leg1.Id);
+        if (expectedLegs == TieFormat.SingleLeg)
+        {
+            return true;
+        }
+
+        var leg2 = FindAttachedMatch(fixture, knownById, legIndex: 2, pairing.EntryB, pairing.EntryA);
+        if (leg2 is null)
+        {
+            return false;
+        }
+
+        matchedIds.Add(leg2.Id);
+        return true;
+    }
+
+    private static Match? FindAttachedMatch(
+        Fixture fixture,
+        IReadOnlyDictionary<MatchId, Match> knownById,
+        int legIndex,
+        EntryId home,
+        EntryId away)
+    {
+        var attachment = fixture.Attachments.FirstOrDefault(a => a.LegIndex == legIndex);
+        if (attachment is null || !knownById.TryGetValue(attachment.MatchId, out var match))
+        {
+            return null;
+        }
+
+        return match.HomeEntryId.Equals(home) && match.AwayEntryId.Equals(away)
+            ? match
+            : null;
     }
 }

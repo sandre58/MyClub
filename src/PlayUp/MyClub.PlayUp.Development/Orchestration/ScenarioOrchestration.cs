@@ -256,23 +256,18 @@ internal static class ScenarioOrchestration
         }
 
         var fixtures = round.Fixtures.Take(pairings.Count).ToList();
-        var created = new List<Match>();
-        for (var i = 0; i < pairings.Count; i++)
+        var applyResult = ApplyDraw.Execute(
+            stage,
+            draw.Id,
+            context.Clock,
+            new PairingApplicationContext([.. fixtures.Select(fixture => fixture.Id)]),
+            []);
+        foreach (var match in applyResult.CreatedMatches)
         {
-            var pairing = pairings[i];
-            var match = Match.Create(
-                competition.Id,
-                stage.Id,
-                pairing.EntryA,
-                pairing.EntryB,
-                context.Ids.Match($"cup-m-{i}"),
-                context.Clock);
-            stage.AttachMatch(fixtures[i].Id, match.Id, legIndex: 1, context.Clock);
             context.Matches.Add(match);
-            created.Add(match);
         }
 
-        return created;
+        return applyResult.CreatedMatches;
     }
 
     public static void PlayMatches(

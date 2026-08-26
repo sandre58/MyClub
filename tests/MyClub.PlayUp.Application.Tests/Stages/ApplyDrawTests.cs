@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Stages.Events;
 using Xunit;
@@ -494,6 +495,91 @@ public sealed class ApplyDrawTests
 
         second.CreatedMatches.Should().BeEmpty();
         fixture.MatchIds.Should().HaveCount(1);
+        stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_pairing_two_legs_creates_mirrored_matches_on_same_fixture()
+    {
+        var stage = CreateStage();
+        var round = stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var draw = PublishPairingDraw(stage, [new PairingDrawResult(a, b)]);
+
+        var result = ApplyDraw.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            new PairingApplicationContext(fixture.Id),
+            []);
+
+        result.CreatedMatches.Should().HaveCount(2);
+        result.CreatedMatches[0].HomeEntryId.Should().Be(a);
+        result.CreatedMatches[0].AwayEntryId.Should().Be(b);
+        result.CreatedMatches[1].HomeEntryId.Should().Be(b);
+        result.CreatedMatches[1].AwayEntryId.Should().Be(a);
+        fixture.MatchIds.Should().HaveCount(2);
+        fixture.Attachments.Should().HaveCount(2);
+        fixture.Attachments.Single(attachment => attachment.LegIndex == 1).MatchId
+            .Should().Be(result.CreatedMatches[0].Id);
+        fixture.Attachments.Single(attachment => attachment.LegIndex == 2).MatchId
+            .Should().Be(result.CreatedMatches[1].Id);
+    }
+
+    [Fact]
+    public void Execute_pairing_two_legs_second_apply_exact_is_noop()
+    {
+        var stage = CreateStage();
+        var round = stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var draw = PublishPairingDraw(stage, [new PairingDrawResult(a, b)]);
+        var first = ApplyDraw.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            new PairingApplicationContext(fixture.Id),
+            []);
+        stage.ClearDomainEvents();
+
+        var second = ApplyDraw.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            new PairingApplicationContext(fixture.Id),
+            [..first.CreatedMatches]);
+
+        second.CreatedMatches.Should().BeEmpty();
+        fixture.MatchIds.Should().HaveCount(2);
+        stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_pairing_two_legs_rejects_partial_leg1_only()
+    {
+        var stage = CreateStage();
+        var round = stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var draw = PublishPairingDraw(stage, [new PairingDrawResult(a, b)]);
+        var leg1Only = Match.Create(_competitionId, stage.Id, a, b, _clock);
+        stage.AttachMatch(fixture.Id, leg1Only.Id, legIndex: 1, _clock);
+        stage.ClearDomainEvents();
+
+        var act = () => ApplyDraw.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            new PairingApplicationContext(fixture.Id),
+            [leg1Only]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+        fixture.MatchIds.Should().ContainSingle().Which.Should().Be(leg1Only.Id);
         stage.DomainEvents.Should().BeEmpty();
     }
 
