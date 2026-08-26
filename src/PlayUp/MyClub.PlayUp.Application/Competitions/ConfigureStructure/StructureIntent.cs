@@ -23,7 +23,8 @@ public sealed class StructureIntent
         int groupCount,
         int participantsPerGroup,
         int bracketSize,
-        MatchGenerationFormat matchGenerationFormat)
+        MatchGenerationFormat matchGenerationFormat,
+        int swissRoundCount)
     {
         Format = format;
         StageName = stageName;
@@ -32,6 +33,7 @@ public sealed class StructureIntent
         ParticipantsPerGroup = participantsPerGroup;
         BracketSize = bracketSize;
         MatchGenerationFormat = matchGenerationFormat;
+        SwissRoundCount = swissRoundCount;
     }
 
     /// <summary>Gets the format kind.</summary>
@@ -53,9 +55,12 @@ public sealed class StructureIntent
     public int BracketSize { get; }
 
     /// <summary>
-    /// Gets how Championship / Groups matches are generated (Cup ignores this).
+    /// Gets how Championship / Groups matches are generated (Cup / Swiss ignore this).
     /// </summary>
     public MatchGenerationFormat MatchGenerationFormat { get; }
+
+    /// <summary>Gets planned Swiss round count K (Swiss only).</summary>
+    public int SwissRoundCount { get; }
 
     /// <summary>
     /// Builds a championship intent (matchdays only; fixtures/matches deferred to Slice 3).
@@ -83,7 +88,8 @@ public sealed class StructureIntent
                 groupCount: 0,
                 participantsPerGroup: 0,
                 bracketSize: 0,
-                matchGenerationFormat);
+                matchGenerationFormat,
+                swissRoundCount: 0);
 
     /// <summary>
     /// Builds a groups intent (empty groups + matchday + PotRules for future Group Draw).
@@ -117,7 +123,8 @@ public sealed class StructureIntent
                     groupCount,
                     participantsPerGroup,
                     bracketSize: 0,
-                    matchGenerationFormat);
+                    matchGenerationFormat,
+                    swissRoundCount: 0);
 
     /// <summary>
     /// Builds a cup intent. V1 bounds bracket size to a power of two (no bye matrix).
@@ -137,7 +144,29 @@ public sealed class StructureIntent
                 groupCount: 0,
                 participantsPerGroup: 0,
                 bracketSize,
-                MatchGenerationFormat.SingleRoundRobin);
+                MatchGenerationFormat.SingleRoundRobin,
+                swissRoundCount: 0);
+
+    /// <summary>
+    /// Builds a Swiss intent (SwissSettings only — Matchdays created by GenerateNextRound).
+    /// </summary>
+    /// <param name="roundCount">Planned Swiss rounds K (≥ 1).</param>
+    /// <param name="stageName">Optional stage name.</param>
+    /// <returns>Validated intent.</returns>
+    public static StructureIntent Swiss(int roundCount, string? stageName = null) =>
+        roundCount < 1
+            ? throw new ApplicationFailureException(
+                "Swiss format requires at least one round (SwissSettings.RoundCount).",
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : new StructureIntent(
+                StructureFormatKind.Swiss,
+                NormalizeStageName(stageName, "Swiss"),
+                matchdayCount: 0,
+                groupCount: 0,
+                participantsPerGroup: 0,
+                bracketSize: 0,
+                MatchGenerationFormat.SingleRoundRobin,
+                roundCount);
 
     private static string NormalizeStageName(string? stageName, string fallback) => string.IsNullOrWhiteSpace(stageName) ? fallback : stageName.Trim();
 

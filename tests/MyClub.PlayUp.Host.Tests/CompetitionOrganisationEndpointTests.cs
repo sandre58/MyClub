@@ -100,6 +100,29 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
     }
 
     [IntegrationFact]
+    public async Task ConfigureStructure_swiss_persists_settingsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var competitionId = await CreateCompetitionAsync(client, "Swiss");
+
+        await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("A"));
+        await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("B"));
+
+        using var swissResponse = await client.PostAsJsonAsync(
+            $"/competitions/{competitionId}/organisation/structure",
+            new ConfigureStructureRequest("Swiss", SwissRoundCount: 5));
+        swissResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var swiss = await swissResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        swiss!.Format.Kind.Should().Be(StructureFormatKind.Swiss);
+        swiss.Structure.SwissRoundCount.Should().Be(5);
+        swiss.Structure.MatchdayCount.Should().Be(0);
+        swiss.Readiness.ReadyForSchedulePath.Should().BeTrue();
+        swiss.Readiness.ReadyForMaterialization.Should().BeFalse();
+    }
+
+    [IntegrationFact]
     public async Task Rename_withdraw_exclude_and_replace_regulationAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);

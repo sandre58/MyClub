@@ -46,7 +46,8 @@
   "structureFormatKind": {
     "Championship": "Championnat",
     "Groups": "Groupes",
-    "Cup": "Coupe"
+    "Cup": "Coupe",
+    "Swiss": "Swiss"
   },
   "matchGenerationFormat": {
     "SingleRoundRobin": "Aller simple",

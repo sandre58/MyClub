@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -208,6 +209,23 @@ public sealed class MaterializeMatchesTests
 
         var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
         view.Readiness.ReadyForMatchOperation.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Swiss_materialize_is_rejected()
+    {
+        var competition = CreateCompetition.Execute("Swiss", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Swiss(3),
+            _clock);
+
+        var act = () => MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationFailure);
     }
 
     [Fact]

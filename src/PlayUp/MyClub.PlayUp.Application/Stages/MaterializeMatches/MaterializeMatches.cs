@@ -61,6 +61,9 @@ public static class MaterializeMatches
             StructureFormatKind.Championship => MaterializeChampionship(competition, stage, existingMatches, clock),
             StructureFormatKind.Groups => MaterializeGroups(competition, stage, existingMatches, clock),
             StructureFormatKind.Cup => MaterializeCup(competition, stage, existingMatches, clock),
+            StructureFormatKind.Swiss => throw new ApplicationFailureException(
+                "Swiss stages use GenerateNextRound — MaterializeMatches is not applicable.",
+                ApplicationErrorCodes.MaterializationFailure),
             _ => throw new ApplicationFailureException(
                 $"Materialization does not support format '{format}'.",
                 ApplicationErrorCodes.MaterializationFailure)
@@ -404,7 +407,9 @@ public static class MaterializeMatches
         a.Value.CompareTo(b.Value) <= 0 ? (a, b) : (b, a);
 
     private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.Rounds.Count > 0
+        stage.IsSwiss
+            ? StructureFormatKind.Swiss
+            : stage.Rounds.Count > 0
             ? StructureFormatKind.Cup
             : stage.Groups.Count > 0
             ? StructureFormatKind.Groups

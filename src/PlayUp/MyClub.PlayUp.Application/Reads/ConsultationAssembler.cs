@@ -85,9 +85,15 @@ public static class ConsultationAssembler
     }
 
     private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.Rounds.Count > 0
+        stage.IsSwiss
+            ? StructureFormatKind.Swiss
+            : stage.Rounds.Count > 0
             ? StructureFormatKind.Cup
-            : stage.Groups.Count > 0 ? StructureFormatKind.Groups : stage.Matchdays.Count > 0 ? StructureFormatKind.Championship : null;
+            : stage.Groups.Count > 0
+            ? StructureFormatKind.Groups
+            : stage.Matchdays.Count > 0
+            ? StructureFormatKind.Championship
+            : null;
 
     private static string FormatLabel(StructureFormatKind? kind, Stage? primary) =>
         kind switch
@@ -95,6 +101,7 @@ public static class ConsultationAssembler
             StructureFormatKind.Championship => "Championnat",
             StructureFormatKind.Groups => "Groupes",
             StructureFormatKind.Cup => "Coupe",
+            StructureFormatKind.Swiss => "Swiss",
             null when primary is null => "Non configuré",
             _ => "Structure partielle"
         };
@@ -147,6 +154,9 @@ public static class ConsultationAssembler
         {
             case StructureFormatKind.Cup:
                 return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
+            case StructureFormatKind.Swiss:
+                // Ranking uses StandingRules on Matchdays; tables are assembled like Championship.
+                break;
             case StructureFormatKind.Championship:
             case StructureFormatKind.Groups:
                 break;
@@ -168,7 +178,7 @@ public static class ConsultationAssembler
         foreach (var stage in stages)
         {
             var format = InferFormat(stage);
-            if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups))
+            if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
             {
                 continue;
             }
@@ -177,7 +187,7 @@ public static class ConsultationAssembler
             var penalties = CalculateStanding.ToStandingPenalties(stage.Penalties);
             var rules = stage.Regulation.StandingRules;
 
-            if (format == StructureFormatKind.Championship)
+            if (format is StructureFormatKind.Championship or StructureFormatKind.Swiss)
             {
                 var participants = ResolveOverallParticipants(competition, matches);
                 var standing = CalculateStanding.Execute(participants, matches, rules, MatchFilter.All, penalties);

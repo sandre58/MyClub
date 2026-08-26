@@ -122,6 +122,47 @@ public sealed class OrganisationUseCaseTests
     }
 
     [Fact]
+    public void ConfigureStructure_swiss_sets_settings_without_matchdays()
+    {
+        var competition = CreateCompetition.Execute("Swiss", _clock);
+        var result = ConfigureStructure.Execute(
+            competition,
+            primaryStage: null,
+            StructureIntent.Swiss(3),
+            _clock);
+
+        result.Stage.IsSwiss.Should().BeTrue();
+        result.Stage.SwissSettings!.RoundCount.Should().Be(3);
+        result.Stage.Matchdays.Should().BeEmpty();
+        result.Stage.Groups.Should().BeEmpty();
+        result.Stage.Rounds.Should().BeEmpty();
+        result.Stage.Slots.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void OrganisationView_swiss_ready_for_schedule_path_not_materialization()
+    {
+        var competition = CreateCompetition.Execute("Swiss Ready", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Swiss(4),
+            _clock);
+        var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+
+        view.Format.Kind.Should().Be(StructureFormatKind.Swiss);
+        view.Structure.SwissRoundCount.Should().Be(4);
+        view.Structure.MatchdayCount.Should().Be(0);
+        view.Readiness.ReadyForSchedulePath.Should().BeTrue();
+        view.Readiness.ReadyForMaterialization.Should().BeFalse();
+        view.Readiness.ReadyForDraw.Should().BeFalse();
+        view.Readiness.ReadyForNextSlice.Should().BeTrue();
+        view.Readiness.Blockers.Should().BeEmpty();
+    }
+
+    [Fact]
     public void OrganisationView_readiness_requires_participants_and_structure()
     {
         var competition = CreateCompetition.Execute("Ready", _clock);

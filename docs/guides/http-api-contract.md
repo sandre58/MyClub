@@ -25,7 +25,7 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 | `DrawResolutionKind` | draw summaries / stage overview / cockpit draws |
 | `DrawStatus` | draw summaries / stage overview / cockpit draws |
 | `DrawResolutionState` | draw summaries / stage overview / cockpit draws |
-| `StructureFormatKind` | organisation / consultation format |
+| `StructureFormatKind` | organisation / consultation format (`Championship` \| `Groups` \| `Cup` \| `Swiss`) |
 | `MatchGenerationFormat` | organisation `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
 | `ProgressionOutcome` | progression-rules paths (`Winner` \| `Loser`) |
 
@@ -178,18 +178,20 @@ Configures primary stage structure (`ConfigureStructureRequest`).
   "groupCount": null,
   "participantsPerGroup": null,
   "bracketSize": null,
-  "matchGenerationFormat": "DoubleRoundRobin"
+  "matchGenerationFormat": "DoubleRoundRobin",
+  "swissRoundCount": null
 }
 ```
 
 | Field | Notes |
 | :--- | :--- |
-| `format` | `Championship` \| `Groups` \| `Cup` (case-insensitive) |
-| `matchGenerationFormat` | Optional. `SingleRoundRobin` (default) \| `DoubleRoundRobin`. Applies to **Championship / Groups** only. Ignored for Cup skeleton. |
+| `format` | `Championship` \| `Groups` \| `Cup` \| `Swiss` (case-insensitive) |
+| `matchGenerationFormat` | Optional. `SingleRoundRobin` (default) \| `DoubleRoundRobin`. Applies to **Championship / Groups** only. Ignored for Cup / Swiss. |
+| `swissRoundCount` | Required when `format` is `Swiss` (≥ 1). Persists `SwissSettings.RoundCount`. Matchdays are created later by `GenerateNextRound`, **not** by `MaterializeMatches`. |
 
-**Materialization principle:** `POST …/matches/materialize` does **not** accept a generation-mode body. `MaterializeMatches` reads `Stage.MatchGenerationFormat` persisted by ConfigureStructure (or Domain defaults).
+**Materialization principle:** `POST …/matches/materialize` does **not** accept a generation-mode body. `MaterializeMatches` reads `Stage.MatchGenerationFormat` persisted by ConfigureStructure (or Domain defaults). **Swiss** stages reject materialize — use `GenerateNextRound` instead.
 
-Organisation Read already exposes `structure.matchGenerationFormat` on `OrganisationStructureSummaryDto` (same enum strings).
+Organisation Read already exposes `structure.matchGenerationFormat` and `structure.swissRoundCount` on `OrganisationStructureSummaryDto` (same enum / nullable int on wire).
 
 Host contract: `MyClub.PlayUp.Host.Contracts.ConfigureStructureRequest`.
 
@@ -279,7 +281,7 @@ Empty or null `paths` clears rules. Domain validates source fixture ownership an
 
 ### `POST /stages/{stageId}/matches/materialize` → `MaterializeMatchesResponse`
 
-Creates Fixtures/Matches for the stage format (Championship / Groups RR, or Cup empty-fixture skeleton for Pairing). No request body. Reads persisted `Stage.MatchGenerationFormat` for RR (see ConfigureStructure above).
+Creates Fixtures/Matches for the stage format (Championship / Groups RR, or Cup empty-fixture skeleton for Pairing). No request body. Reads persisted `Stage.MatchGenerationFormat` for RR (see ConfigureStructure above). **Not applicable to Swiss** (`Application.MaterializationFailure` — use `GenerateNextRound`).
 
 ```json
 {

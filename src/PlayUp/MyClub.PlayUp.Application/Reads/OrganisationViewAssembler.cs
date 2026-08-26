@@ -134,9 +134,15 @@ public static class OrganisationViewAssembler
                 primary.Status);
 
     private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.Rounds.Count > 0
+        stage.IsSwiss
+            ? StructureFormatKind.Swiss
+            : stage.Rounds.Count > 0
             ? StructureFormatKind.Cup
-            : stage.Groups.Count > 0 ? StructureFormatKind.Groups : stage.Matchdays.Count > 0 ? StructureFormatKind.Championship : null;
+            : stage.Groups.Count > 0
+            ? StructureFormatKind.Groups
+            : stage.Matchdays.Count > 0
+            ? StructureFormatKind.Championship
+            : null;
 
     private static OrganisationStructureSummaryDto BuildStructureSummary(Stage? primary)
     {
@@ -149,7 +155,8 @@ public static class OrganisationViewAssembler
                 0,
                 false,
                 null,
-                MatchGenerationFormat.SingleRoundRobin);
+                MatchGenerationFormat.SingleRoundRobin,
+                null);
         }
 
         var drawRules = primary.Regulation.DrawRules;
@@ -160,7 +167,8 @@ public static class OrganisationViewAssembler
             primary.Slots.Count,
             drawRules is not null,
             drawRules?.PotRules?.NumberOfPots,
-            primary.MatchGenerationFormat);
+            primary.MatchGenerationFormat,
+            primary.SwissSettings?.RoundCount);
     }
 
     private static OrganisationReadinessDto BuildReadiness(
@@ -231,6 +239,11 @@ public static class OrganisationViewAssembler
                         readyForMaterialization = readyForDraw && skeletonFixtures < expectedSkeletonFixtures;
                     }
 
+                    break;
+                case StructureFormatKind.Swiss:
+                    // Matchdays come from GenerateNextRound — not MaterializeMatches.
+                    readyForSchedulePath = structure.SwissRoundCount is >= 1;
+                    readyForMaterialization = false;
                     break;
                 case null:
                     break;

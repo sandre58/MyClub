@@ -1404,11 +1404,17 @@ function StructureSection({
             <div className="organisation-phase__cell">
               <dt>{t('structure.calendar')}</dt>
               <dd>
-                {t('structure.calendarValue', {
-                  matchdays: data.structure.matchdayCount,
-                  slots: data.structure.slotCount,
-                  matches: data.readiness.attachedMatchCount,
-                })}
+                {formatKind === 'Swiss'
+                  ? t('structure.swissCalendarValue', {
+                      planned: data.structure.swissRoundCount ?? 0,
+                      matchdays: data.structure.matchdayCount,
+                      matches: data.readiness.attachedMatchCount,
+                    })
+                  : t('structure.calendarValue', {
+                      matchdays: data.structure.matchdayCount,
+                      slots: data.structure.slotCount,
+                      matches: data.readiness.attachedMatchCount,
+                    })}
               </dd>
             </div>
             <div className="organisation-phase__cell">
@@ -1462,6 +1468,9 @@ function StructureEditorDialog({
   const [bracketSize, setBracketSize] = useState(
     Math.max(2, data.structure.slotCount || 4),
   )
+  const [swissRoundCount, setSwissRoundCount] = useState(
+    Math.max(1, data.structure.swissRoundCount || 3),
+  )
   const [matchGenerationFormat, setMatchGenerationFormat] =
     useState<MatchGenerationFormat>(
       data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
@@ -1477,6 +1486,7 @@ function StructureEditorDialog({
         participantsPerGroup:
           format === 'Groups' ? participantsPerGroup : null,
         bracketSize: format === 'Cup' ? bracketSize : null,
+        swissRoundCount: format === 'Swiss' ? swissRoundCount : null,
         matchGenerationFormat:
           format === 'Championship' || format === 'Groups'
             ? matchGenerationFormat
@@ -1524,6 +1534,9 @@ function StructureEditorDialog({
                 {structureFormatKindLabel('Groups')}
               </option>
               <option value="Cup">{structureFormatKindLabel('Cup')}</option>
+              <option value="Swiss">
+                {structureFormatKindLabel('Swiss')}
+              </option>
             </select>
           </label>
           <label className="field">
@@ -1612,6 +1625,24 @@ function StructureEditorDialog({
                 }
                 required
               />
+            </label>
+          )}
+          {format === 'Swiss' && (
+            <label className="field">
+              {t('structure.swissRoundCount')}
+              <input
+                type="number"
+                min={1}
+                value={swissRoundCount}
+                onChange={(event) =>
+                  setSwissRoundCount(Number(event.target.value) || 1)
+                }
+                required
+                aria-describedby="swiss-round-hint"
+              />
+              <span id="swiss-round-hint" className="caption">
+                {t('structure.swissRoundHint')}
+              </span>
             </label>
           )}
         </fieldset>

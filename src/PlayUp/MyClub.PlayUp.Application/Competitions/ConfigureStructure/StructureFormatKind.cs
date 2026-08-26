@@ -18,5 +18,8 @@ public enum StructureFormatKind
     Groups = 1,
 
     /// <summary>Cup / knockout: round + slots (bracket size power of two).</summary>
-    Cup = 2
+    Cup = 2,
+
+    /// <summary>Swiss: SwissSettings + progressive Matchdays via GenerateNextRound.</summary>
+    Swiss = 3
 }

@@ -102,6 +102,7 @@ public sealed record OrganisationRegulationSummaryDto(
 /// <param name="HasDrawRules">Whether stage DrawRules are set.</param>
 /// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
 /// <param name="MatchGenerationFormat">Championship / Groups generation mode.</param>
+/// <param name="SwissRoundCount">Planned Swiss rounds K when Kind is Swiss.</param>
 public sealed record OrganisationStructureSummaryDto(
     int GroupCount,
     int RoundCount,
@@ -109,7 +110,8 @@ public sealed record OrganisationStructureSummaryDto(
     int SlotCount,
     bool HasDrawRules,
     int? NumberOfPots,
-    MatchGenerationFormat MatchGenerationFormat);
+    MatchGenerationFormat MatchGenerationFormat,
+    int? SwissRoundCount = null);
 
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
 /// <param name="ReadyForNextSlice">True when organisation is sufficient for Slice 3 entry.</param>

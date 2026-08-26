@@ -51,7 +51,7 @@ export type DrawResolutionKind = 'Slot' | 'Group' | 'Pairing'
 export type DrawResolutionState = 'NotResolved' | 'Resolved' | 'NoSolution'
 
 /** Application StructureFormatKind — organisation format intent (string on wire). */
-export type StructureFormatKind = 'Championship' | 'Groups' | 'Cup'
+export type StructureFormatKind = 'Championship' | 'Groups' | 'Cup' | 'Swiss'
 
 /** Domain MatchGenerationFormat — Championship / Groups RR mode (string on wire). */
 export type MatchGenerationFormat = 'SingleRoundRobin' | 'DoubleRoundRobin'
@@ -370,6 +370,8 @@ export interface OrganisationStructureSummary {
   hasDrawRules: boolean
   numberOfPots: number | null
   matchGenerationFormat: MatchGenerationFormat
+  /** Planned Swiss rounds K when kind is Swiss; null otherwise. */
+  swissRoundCount?: number | null
 }
 
 export interface OrganisationReadiness {
@@ -440,8 +442,10 @@ export type ConfigureStructureRequest = {
   groupCount?: number | null
   participantsPerGroup?: number | null
   bracketSize?: number | null
-  /** Championship / Groups only; ignored for Cup. Default SingleRoundRobin on Host. */
+  /** Championship / Groups only; ignored for Cup / Swiss. Default SingleRoundRobin on Host. */
   matchGenerationFormat?: MatchGenerationFormat | null
+  /** Swiss planned rounds K (≥ 1). Matchdays created by GenerateNextRound. */
+  swissRoundCount?: number | null
 }
 
 /** GET /competitions/{id}/consultation — Slice 7 multi-consumer Read (camelCase wire). */

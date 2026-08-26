@@ -97,13 +97,19 @@ public static class ConfigureStructure
             case StructureFormatKind.Cup:
                 BuildCup(stage, intent.BracketSize, clock);
                 break;
+            case StructureFormatKind.Swiss:
+                BuildSwiss(stage, intent.SwissRoundCount, clock);
+                break;
             default:
                 throw new ApplicationFailureException(
                     $"Unknown structure format '{intent.Format}'.",
                     ApplicationErrorCodes.InvalidStructureIntent);
         }
 
-        stage.SetMatchGenerationFormat(intent.MatchGenerationFormat, clock);
+        if (intent.Format is not StructureFormatKind.Swiss)
+        {
+            stage.SetMatchGenerationFormat(intent.MatchGenerationFormat, clock);
+        }
 
         return new ConfigureStructureResult(stage, stageCreated);
     }
@@ -142,8 +148,16 @@ public static class ConfigureStructure
         stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), clock);
     }
 
+    private static void BuildSwiss(Stage stage, int roundCount, IClock clock)
+    {
+        stage.ReplaceDrawRules(null, clock);
+        stage.SetSwissSettings(new SwissSettings(roundCount), clock);
+    }
+
     private static void ClearStructure(Stage stage, IClock clock)
     {
+        stage.ClearSwissConfiguration(clock);
+
         foreach (var round in stage.Rounds.ToList())
         {
             stage.RemoveRound(round.Id, clock);

@@ -755,6 +755,18 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Clears Swiss Kind settings and bye history (Organisation reconfigure). Draft/Ready only.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearSwissConfiguration(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        _swissByeHistory.Clear();
+        SwissSettings = null;
+    }
+
+    /// <summary>
     /// Adds a group to the stage.
     /// </summary>
     /// <param name="name">The group name.</param>
