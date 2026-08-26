@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchConsultation, fetchOrganisationView } from '../api'
+import { TeamCrest } from '../design-system/TeamCrest'
 import { RegulationIcon } from '../design-system/icons/overviewIcons'
 import {
   ClassementsNavIcon,
@@ -327,14 +328,24 @@ function MatchResultRow({ match }: { match: ConsultationResult }) {
     >
       <span className="classements-result__match">
         <span className="classements-result__team">
-          <TeamCrest name={homeName} />
+          <TeamCrest
+            name={homeName}
+            logoPath={match.home.logoPath}
+            primaryColor={match.home.primaryColor}
+            className="classements-crest"
+          />
           <span className="classements-result__name">{homeName}</span>
         </span>
         <span className="classements-result__vs" aria-hidden="true">
           –
         </span>
         <span className="classements-result__team">
-          <TeamCrest name={awayName} />
+          <TeamCrest
+            name={awayName}
+            logoPath={match.away.logoPath}
+            primaryColor={match.away.primaryColor}
+            className="classements-crest"
+          />
           <span className="classements-result__name">{awayName}</span>
         </span>
       </span>
@@ -356,40 +367,6 @@ function MatchResultRow({ match }: { match: ConsultationResult }) {
       </span>
     </Link>
   )
-}
-
-function TeamCrest({ name }: { name: string }) {
-  const initial = teamInitial(name)
-  const tone = crestTone(name)
-
-  return (
-    <span
-      className={`classements-crest classements-crest--${tone}`}
-      aria-hidden="true"
-    >
-      <svg className="classements-crest__shield" viewBox="0 0 24 28" focusable="false">
-        <path d="M12 1.5 21 5.2v8.4c0 6.1-3.9 10.6-9 12.4-5.1-1.8-9-6.3-9-12.4V5.2L12 1.5Z" />
-      </svg>
-      <span className="classements-crest__initial">{initial}</span>
-    </span>
-  )
-}
-
-function teamInitial(name: string): string {
-  const trimmed = name.trim()
-  if (!trimmed || trimmed === '—') {
-    return '?'
-  }
-  return trimmed.charAt(0).toLocaleUpperCase()
-}
-
-/** Stable presentation tone from display name — not a métier rule. */
-function crestTone(name: string): 'a' | 'b' | 'c' | 'd' | 'e' {
-  let hash = 0
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5
-  }
-  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]
 }
 
 function RegulationPanel({

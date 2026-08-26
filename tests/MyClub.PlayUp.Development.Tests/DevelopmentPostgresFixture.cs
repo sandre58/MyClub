@@ -30,7 +30,7 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
 
         var adminBuilder = new Npgsql.NpgsqlConnectionStringBuilder(_container.GetConnectionString())
         {
-            Pooling = false,
+            Pooling = false
         };
         const string databaseName = "playup_development_tests";
         await using (var admin = new Npgsql.NpgsqlConnection(adminBuilder.ConnectionString))
@@ -56,8 +56,8 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         services.AddPlayUpInfrastructure(connectionString);
         services.AddSingleton<IWorkspaceStore, FixturePostgresWorkspaceStore>();
         services.AddPlayUpDevelopmentWorkspace(new DevelopmentWorkspaceOptions { Seed = 42 });
-        services.AddScoped<MyClub.PlayUp.Application.Pipeline.UseCaseExecutor>();
-        services.AddSingleton<MyClub.PlayUp.Domain.Common.IClock>(_ =>
+        services.AddScoped<Application.Pipeline.UseCaseExecutor>();
+        services.AddSingleton<Domain.Common.IClock>(_ =>
             new FakeClock(new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero)));
         _provider = services.BuildServiceProvider(validateScopes: true);
 
@@ -95,9 +95,11 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
                 await using (var connection = new Npgsql.NpgsqlConnection(builder.ConnectionString))
                 {
                     await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+#pragma warning disable CA2100
                     await using var command = new Npgsql.NpgsqlCommand(
                         $"DROP DATABASE IF EXISTS \"{databaseName}\" WITH (FORCE); CREATE DATABASE \"{databaseName}\";",
                         connection);
+#pragma warning restore CA2100
                     await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 }
 
@@ -108,6 +110,6 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
 }
 
 [CollectionDefinition("DevelopmentPostgres")]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1515", Justification = "xUnit collection definition must be public.")]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711", Justification = "xUnit collection naming convention.")]
+[SuppressMessage("Design", "CA1515", Justification = "xUnit collection definition must be public.")]
+[SuppressMessage("Naming", "CA1711", Justification = "xUnit collection naming convention.")]
 public sealed class DevelopmentPostgresCollectionDefinition : ICollectionFixture<DevelopmentPostgresFixture>;

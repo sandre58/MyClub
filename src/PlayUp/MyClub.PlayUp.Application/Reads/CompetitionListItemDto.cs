@@ -14,4 +14,9 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Id">Competition identity.</param>
 /// <param name="Name">Display name.</param>
 /// <param name="Status">Lifecycle status.</param>
-public sealed record CompetitionListItemDto(Guid Id, string Name, CompetitionStatus Status);
+public sealed record CompetitionListItemDto(
+    Guid Id,
+    string Name,
+    CompetitionStatus Status,
+    string? ShortName = null,
+    string? LogoPath = null);

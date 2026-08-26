@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionOverview, fetchMatchesByStage } from '../api'
+import { TeamCrest } from '../design-system/TeamCrest'
 import {
   ClassementsNavIcon,
   MatchesNavIcon,
@@ -288,14 +289,24 @@ function MatchResultRow({
     >
       <span className="matches-result__match">
         <span className="matches-result__team">
-          <TeamCrest name={homeName} />
+          <TeamCrest
+            name={homeName}
+            logoPath={match.home.logoPath}
+            primaryColor={match.home.primaryColor}
+            className="matches-crest"
+          />
           <span className="matches-result__name">{homeName}</span>
         </span>
         <span className="matches-result__vs" aria-hidden="true">
           –
         </span>
         <span className="matches-result__team">
-          <TeamCrest name={awayName} />
+          <TeamCrest
+            name={awayName}
+            logoPath={match.away.logoPath}
+            primaryColor={match.away.primaryColor}
+            className="matches-crest"
+          />
           <span className="matches-result__name">{awayName}</span>
         </span>
       </span>
@@ -441,43 +452,6 @@ function PanelHead({
       {children}
     </h2>
   )
-}
-
-function TeamCrest({ name }: { name: string }) {
-  const initial = teamInitial(name)
-  const tone = crestTone(name)
-
-  return (
-    <span
-      className={`matches-crest matches-crest--${tone}`}
-      aria-hidden="true"
-    >
-      <svg
-        className="matches-crest__shield"
-        viewBox="0 0 24 28"
-        focusable="false"
-      >
-        <path d="M12 1.5 21 5.2v8.4c0 6.1-3.9 10.6-9 12.4-5.1-1.8-9-6.3-9-12.4V5.2L12 1.5Z" />
-      </svg>
-      <span className="matches-crest__initial">{initial}</span>
-    </span>
-  )
-}
-
-function teamInitial(name: string): string {
-  const trimmed = name.trim()
-  if (!trimmed || trimmed === '—') {
-    return '?'
-  }
-  return trimmed.charAt(0).toLocaleUpperCase()
-}
-
-function crestTone(name: string): 'a' | 'b' | 'c' | 'd' | 'e' {
-  let hash = 0
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5
-  }
-  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]
 }
 
 interface SportingBucket {

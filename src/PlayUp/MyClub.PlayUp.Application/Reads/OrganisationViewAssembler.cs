@@ -69,7 +69,11 @@ public static class OrganisationViewAssembler
             regulation,
             structure,
             actions,
-            readiness);
+            readiness,
+            competition.ShortName?.Value,
+            competition.LogoUri?.Value,
+            competition.ScheduledStart,
+            competition.ScheduledEnd);
     }
 
     private static int CountAttachedMatches(Stage? primary) =>
@@ -93,7 +97,14 @@ public static class OrganisationViewAssembler
     private static OrganisationParticipantsSummaryDto BuildParticipants(Competition competition)
     {
         var entries = competition.Entries
-            .Select(entry => new OrganisationEntryDto(entry.Id.Value, entry.DisplayName, entry.Status))
+            .Select(entry => new OrganisationEntryDto(
+                entry.Id.Value,
+                entry.DisplayName,
+                entry.Status,
+                entry.ShortName?.Value,
+                entry.LogoUri?.Value,
+                entry.PrimaryColor?.Value,
+                entry.SecondaryColor?.Value))
             .ToList();
         var active = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
         var occupying = competition.Entries.Count(entry => entry.IsOccupying);

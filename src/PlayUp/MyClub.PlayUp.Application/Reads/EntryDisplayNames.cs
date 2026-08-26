@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Competitions;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Resolves entry display names from a Competition (outside Domain).
+/// Resolves entry display presentation from a Competition (outside Domain).
 /// </summary>
 internal static class EntryDisplayNames
 {
@@ -24,8 +24,31 @@ internal static class EntryDisplayNames
     }
 
     /// <summary>
+    /// Builds a lookup of entry identity → presentation snapshot.
+    /// </summary>
+    public static IReadOnlyDictionary<EntryId, CompetitionEntry> ToEntries(Competition competition)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        return competition.Entries.ToDictionary(entry => entry.Id);
+    }
+
+    /// <summary>
     /// Resolves a display name, or <see langword="null"/> when the entry is unknown.
     /// </summary>
     public static string? Resolve(IReadOnlyDictionary<EntryId, string> names, EntryId entryId) =>
         names.GetValueOrDefault(entryId);
+
+    /// <summary>
+    /// Builds an <see cref="EntrySideDto"/> from a presentation map.
+    /// </summary>
+    public static EntrySideDto ToSide(IReadOnlyDictionary<EntryId, CompetitionEntry> entries, EntryId entryId) =>
+        entries.TryGetValue(entryId, out var entry)
+            ? new EntrySideDto(
+                entry.Id.Value,
+                entry.DisplayName,
+                entry.ShortName?.Value,
+                entry.LogoUri?.Value,
+                entry.PrimaryColor?.Value,
+                entry.SecondaryColor?.Value)
+            : new EntrySideDto(entryId.Value, null);
 }

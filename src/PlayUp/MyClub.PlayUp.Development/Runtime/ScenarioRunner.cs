@@ -12,30 +12,20 @@ namespace MyClub.PlayUp.Development.Runtime;
 /// <summary>
 /// Executes Development Workspace scenarios atomically (fail-fast).
 /// </summary>
-public sealed class ScenarioRunner
+/// <remarks>
+/// Initializes a new instance of the <see cref="ScenarioRunner"/> class.
+/// </remarks>
+public sealed class ScenarioRunner(
+    IServiceScopeFactory scopeFactory,
+    ScenarioCatalog catalog,
+    IWorkspaceStore workspaceStore,
+    DatasetCatalog datasets,
+    int workspaceSeed)
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ScenarioCatalog _catalog;
-    private readonly IWorkspaceStore _workspaceStore;
-    private readonly DatasetCatalog _datasets;
-    private readonly int _workspaceSeed;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ScenarioRunner"/> class.
-    /// </summary>
-    public ScenarioRunner(
-        IServiceScopeFactory scopeFactory,
-        ScenarioCatalog catalog,
-        IWorkspaceStore workspaceStore,
-        DatasetCatalog datasets,
-        int workspaceSeed)
-    {
-        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
-        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-        _workspaceStore = workspaceStore ?? throw new ArgumentNullException(nameof(workspaceStore));
-        _datasets = datasets ?? throw new ArgumentNullException(nameof(datasets));
-        _workspaceSeed = workspaceSeed;
-    }
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
+    private readonly ScenarioCatalog _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+    private readonly IWorkspaceStore _workspaceStore = workspaceStore ?? throw new ArgumentNullException(nameof(workspaceStore));
+    private readonly DatasetCatalog _datasets = datasets ?? throw new ArgumentNullException(nameof(datasets));
 
     /// <summary>
     /// Runs scenarios in order (no reset). Fail-fast; on failure clears the workspace.
@@ -89,7 +79,7 @@ public sealed class ScenarioRunner
         await SeedExecution.ExecuteAsync(
             _scopeFactory,
             _datasets,
-            _workspaceSeed,
+            workspaceSeed,
             scenario.Id,
             progress,
             scenario.ExecuteAsync,

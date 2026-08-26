@@ -39,6 +39,26 @@ public sealed class CompetitionEntry : Entity<EntryId>
     public string DisplayName { get; private set; }
 
     /// <summary>
+    /// Gets the optional abbreviated name.
+    /// </summary>
+    public ShortName? ShortName { get; private set; }
+
+    /// <summary>
+    /// Gets the optional logo URI or path.
+    /// </summary>
+    public LogoUri? LogoUri { get; private set; }
+
+    /// <summary>
+    /// Gets the optional primary kit color.
+    /// </summary>
+    public TeamColor? PrimaryColor { get; private set; }
+
+    /// <summary>
+    /// Gets the optional secondary kit color.
+    /// </summary>
+    public TeamColor? SecondaryColor { get; private set; }
+
+    /// <summary>
     /// Gets the participation status.
     /// </summary>
     public EntryStatus Status { get; private set; }
@@ -49,6 +69,12 @@ public sealed class CompetitionEntry : Entity<EntryId>
     public bool IsOccupying => Status is EntryStatus.Active or EntryStatus.Qualified or EntryStatus.Eliminated;
 
     internal void Rename(string displayName) => DisplayName = NormalizeDisplayName(displayName);
+
+    internal void UpdatePresentation(EntryPresentation presentation)
+    {
+        ArgumentNullException.ThrowIfNull(presentation);
+        ApplyPresentation(presentation);
+    }
 
     internal void Withdraw()
     {
@@ -75,6 +101,14 @@ public sealed class CompetitionEntry : Entity<EntryId>
                 CompetitionErrorCodes.InvalidDisplayName),
             _ => trimmed
         };
+    }
+
+    private void ApplyPresentation(EntryPresentation presentation)
+    {
+        ShortName = presentation.ShortName;
+        LogoUri = presentation.LogoUri;
+        PrimaryColor = presentation.PrimaryColor;
+        SecondaryColor = presentation.SecondaryColor;
     }
 
     private void EnsureActive()

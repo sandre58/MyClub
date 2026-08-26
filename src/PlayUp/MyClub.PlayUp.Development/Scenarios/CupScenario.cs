@@ -37,7 +37,7 @@ public sealed class CupScenario : IScenario
         Format = RecipeFormat.Cup,
         TeamCount = 16,
         BracketSize = 16,
-        StageName = "Tour à élimination",
+        StageName = "Tour à élimination"
     };
 
     /// <inheritdoc />

@@ -6,7 +6,6 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Development.Runtime;
-using MyClub.PlayUp.DevRunner;
 using Xunit;
 
 namespace MyClub.PlayUp.DevRunner.Tests;
@@ -21,7 +20,7 @@ public sealed class CliOptionsTests
             "--reset",
             "--templates", "ligue-1:prepared,world-cup:finished",
             "--scenarios", "groups:running,cup:finished",
-            "--seed", "7",
+            "--seed", "7"
         ]);
 
         options.Reset.Should().BeTrue();

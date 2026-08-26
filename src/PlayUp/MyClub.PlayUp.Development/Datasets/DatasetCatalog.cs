@@ -16,7 +16,7 @@ public sealed class DatasetCatalog
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true,
+        PropertyNameCaseInsensitive = true
     };
 
     private readonly Dictionary<string, DatasetDocument> _byKey;
@@ -67,12 +67,7 @@ public sealed class DatasetCatalog
             }
         }
 
-        if (byKey.Count == 0)
-        {
-            throw new InvalidOperationException("No Development datasets were embedded.");
-        }
-
-        return new DatasetCatalog(byKey);
+        return byKey.Count == 0 ? throw new InvalidOperationException("No Development datasets were embedded.") : new DatasetCatalog(byKey);
     }
 
     /// <summary>
@@ -90,25 +85,15 @@ public sealed class DatasetCatalog
     }
 
     /// <summary>
-    /// Returns ordered team names for a dataset key.
+    /// Returns ordered team rows for a dataset key.
     /// </summary>
     /// <param name="key">Dataset key.</param>
-    /// <returns>Team names.</returns>
-    public IReadOnlyList<string> GetTeams(string key) => Get(key).Teams;
+    /// <returns>Team rows.</returns>
+    public IReadOnlyList<DatasetTeamDocument> GetTeams(string key) => Get(key).Teams;
 
     private static string NormalizeKey(string key)
     {
         var trimmed = key.Trim();
-        if (trimmed.Equals("ucl", StringComparison.OrdinalIgnoreCase))
-        {
-            return "champions-league";
-        }
-
-        if (trimmed.Equals("coupe", StringComparison.OrdinalIgnoreCase))
-        {
-            return "coupe-de-france";
-        }
-
         return trimmed;
     }
 }

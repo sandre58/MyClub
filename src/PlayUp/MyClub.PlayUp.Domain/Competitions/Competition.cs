@@ -34,6 +34,26 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     public CompetitionName Name { get; private set; }
 
     /// <summary>
+    /// Gets the optional abbreviated name.
+    /// </summary>
+    public ShortName? ShortName { get; private set; }
+
+    /// <summary>
+    /// Gets the optional logo URI or path.
+    /// </summary>
+    public LogoUri? LogoUri { get; private set; }
+
+    /// <summary>
+    /// Gets the optional declared competition start.
+    /// </summary>
+    public DateTimeOffset? ScheduledStart { get; private set; }
+
+    /// <summary>
+    /// Gets the optional declared competition end.
+    /// </summary>
+    public DateTimeOffset? ScheduledEnd { get; private set; }
+
+    /// <summary>
     /// Gets the competition regulation (entry, match, and standing rules).
     /// </summary>
     public Regulation Regulation { get; private set; }
@@ -151,14 +171,59 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     }
 
     /// <summary>
+    /// Updates competition presentation metadata (short name and logo). Null clears a field.
+    /// </summary>
+    /// <param name="shortName">The short name, or <see langword="null"/> to clear.</param>
+    /// <param name="logoUri">The logo URI, or <see langword="null"/> to clear.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void UpdatePresentation(ShortName? shortName, LogoUri? logoUri, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        ShortName = shortName;
+        LogoUri = logoUri;
+        Raise(new CompetitionPresentationUpdated(Id, shortName?.Value, logoUri?.Value, clock));
+    }
+
+    /// <summary>
+    /// Sets or clears declared competition schedule dates.
+    /// When both are set, <paramref name="scheduledStart"/> must be less than or equal to <paramref name="scheduledEnd"/>.
+    /// </summary>
+    /// <param name="scheduledStart">Declared start, or <see langword="null"/>.</param>
+    /// <param name="scheduledEnd">Declared end, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void SetSchedule(DateTimeOffset? scheduledStart, DateTimeOffset? scheduledEnd, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (scheduledStart is { } start && scheduledEnd is { } end && start > end)
+        {
+            throw new DomainException(
+                "Scheduled start cannot be after scheduled end.",
+                CompetitionErrorCodes.InvalidSchedule);
+        }
+
+        ScheduledStart = scheduledStart;
+        ScheduledEnd = scheduledEnd;
+        Raise(new CompetitionScheduleSet(Id, scheduledStart, scheduledEnd, clock));
+    }
+
+    /// <summary>
     /// Adds a participating team.
     /// </summary>
     /// <param name="teamId">The team identity.</param>
     /// <param name="displayName">The display name for the entry.</param>
     /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="presentation">Optional presentation metadata.</param>
     /// <returns>The created entry.</returns>
-    public CompetitionEntry AddEntry(TeamId teamId, string displayName, IClock clock) =>
-        AddEntry(teamId, displayName, EntryId.New(), clock);
+    public CompetitionEntry AddEntry(
+        TeamId teamId,
+        string displayName,
+        IClock clock,
+        EntryPresentation? presentation = null) =>
+        AddEntry(teamId, displayName, EntryId.New(), clock, presentation);
 
     /// <summary>
     /// Adds a team entry with an explicit entry identity.
@@ -167,8 +232,14 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     /// <param name="displayName">The display name for the entry.</param>
     /// <param name="entryId">The entry identity (must not be empty).</param>
     /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="presentation">Optional presentation metadata.</param>
     /// <returns>The created entry.</returns>
-    public CompetitionEntry AddEntry(TeamId teamId, string displayName, EntryId entryId, IClock clock)
+    public CompetitionEntry AddEntry(
+        TeamId teamId,
+        string displayName,
+        EntryId entryId,
+        IClock clock,
+        EntryPresentation? presentation = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
@@ -182,6 +253,11 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         }
 
         var entry = new CompetitionEntry(entryId, teamId, displayName);
+        if (presentation is not null)
+        {
+            entry.UpdatePresentation(presentation);
+        }
+
         _entries.Add(entry);
         Raise(new CompetitionEntryAdded(Id, entry.Id, teamId, clock));
         return entry;
@@ -201,6 +277,23 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         var entry = GetEntry(entryId);
         entry.Rename(displayName);
         Raise(new CompetitionEntryRenamed(Id, entryId, entry.DisplayName, clock));
+    }
+
+    /// <summary>
+    /// Updates entry presentation metadata. Null fields clear the corresponding value.
+    /// </summary>
+    /// <param name="entryId">The entry identity.</param>
+    /// <param name="presentation">The presentation to apply.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void UpdateEntryPresentation(EntryId entryId, EntryPresentation presentation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(presentation);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        var entry = GetEntry(entryId);
+        entry.UpdatePresentation(presentation);
+        Raise(new CompetitionEntryPresentationUpdated(Id, entryId, clock));
     }
 
     /// <summary>

@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.DevRunner;
 using Xunit;
 
 namespace MyClub.PlayUp.DevRunner.Tests;

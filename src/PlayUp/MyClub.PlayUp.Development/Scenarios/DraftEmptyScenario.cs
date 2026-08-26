@@ -36,7 +36,7 @@ public sealed class DraftEmptyScenario : IScenario
         DisplayName = "Draft vide",
         Format = RecipeFormat.Championship,
         TeamCount = 0,
-        MatchdayCount = 1,
+        MatchdayCount = 1
     };
 
     /// <inheritdoc />

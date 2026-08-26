@@ -35,7 +35,7 @@ public sealed class ChampionsLeagueTemplate : ICompetitionTemplate
         ParticipantsPerGroup = 4,
         StageName = "Phase de groupes",
         TeamNames = TeamNameSource.Dataset,
-        DatasetCompetitionKey = "champions-league",
+        DatasetCompetitionKey = "champions-league"
     };
 
     /// <inheritdoc />

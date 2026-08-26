@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Datasets\*.json" />
+    <EmbeddedResource Include="Generators\*.json" />
   </ItemGroup>
 
 </Project>

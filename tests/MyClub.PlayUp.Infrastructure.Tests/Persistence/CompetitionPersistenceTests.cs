@@ -292,6 +292,48 @@ public sealed class CompetitionPersistenceTests
         }
     }
 
+    [Fact]
+    public async Task Presentation_metadata_round_trips_after_reloadAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var competition = Competition.Create(new CompetitionName("Ligue 1"), SampleRegulations.Standard(), _clock);
+        competition.UpdatePresentation(ShortName.Create("L1"), LogoUri.Create("/seed-logos/ligue-1/comp.png"), _clock);
+        var start = new DateTimeOffset(2026, 8, 15, 0, 0, 0, TimeSpan.Zero);
+        var end = new DateTimeOffset(2027, 5, 30, 0, 0, 0, TimeSpan.Zero);
+        competition.SetSchedule(start, end, _clock);
+        competition.AddEntry(
+            TeamId.New(),
+            "Paris Saint-Germain",
+            _clock,
+            new EntryPresentation(
+                ShortName.Create("PSG"),
+                LogoUri.Create("/seed-logos/ligue-1/psg.png"),
+                TeamColor.Create("#004170"),
+                TeamColor.Create("#DA291C")));
+        var id = competition.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new CompetitionRepository(context).Add(competition);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.ShortName!.Value.Should().Be("L1");
+            loaded.LogoUri!.Value.Should().Be("/seed-logos/ligue-1/comp.png");
+            loaded.ScheduledStart.Should().Be(start);
+            loaded.ScheduledEnd.Should().Be(end);
+            var entry = loaded.Entries.Should().ContainSingle().Subject;
+            entry.ShortName!.Value.Should().Be("PSG");
+            entry.LogoUri!.Value.Should().Be("/seed-logos/ligue-1/psg.png");
+            entry.PrimaryColor!.Value.Should().Be("#004170");
+            entry.SecondaryColor!.Value.Should().Be("#DA291C");
+        }
+    }
+
     private async Task<CompetitionId> SeedLifecycleAsync(string databaseName)
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);

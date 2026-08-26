@@ -40,7 +40,14 @@ public static class CompetitionOverviewAssembler
         }
 
         var entries = competition.Entries
-            .Select(entry => new CompetitionEntrySummaryDto(entry.Id.Value, entry.DisplayName, entry.Status))
+            .Select(entry => new CompetitionEntrySummaryDto(
+                entry.Id.Value,
+                entry.DisplayName,
+                entry.Status,
+                entry.ShortName?.Value,
+                entry.LogoUri?.Value,
+                entry.PrimaryColor?.Value,
+                entry.SecondaryColor?.Value))
             .ToArray();
 
         return new CompetitionOverviewDto(
@@ -49,6 +56,10 @@ public static class CompetitionOverviewAssembler
             competition.Status,
             entries,
             stageSummaries,
-            competition.CompletionMode);
+            competition.CompletionMode,
+            competition.ShortName?.Value,
+            competition.LogoUri?.Value,
+            competition.ScheduledStart,
+            competition.ScheduledEnd);
     }
 }

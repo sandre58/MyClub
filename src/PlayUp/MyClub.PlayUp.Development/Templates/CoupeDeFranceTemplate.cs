@@ -34,7 +34,7 @@ public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
         BracketSize = 32,
         StageName = "Tour à élimination",
         TeamNames = TeamNameSource.Dataset,
-        DatasetCompetitionKey = "coupe-de-france",
+        DatasetCompetitionKey = "coupe-de-france"
     };
 
     /// <inheritdoc />

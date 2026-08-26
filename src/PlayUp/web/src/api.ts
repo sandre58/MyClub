@@ -14,7 +14,10 @@ import type {
   OrganisationView,
   RenameEntryRequest,
   ReplaceRegulationRequest,
+  SetCompetitionScheduleRequest,
   StageOverview,
+  UpdateCompetitionPresentationRequest,
+  UpdateEntryPresentationRequest,
   WorkspaceSummary,
 } from './types'
 
@@ -177,6 +180,35 @@ export function addCompetitionEntry(
   request: AddEntryRequest,
 ): Promise<OrganisationView> {
   return sendJson('POST', `/competitions/${competitionId}/entries`, request)
+}
+
+/** POST /competitions/{id}/presentation → OrganisationView */
+export function updateCompetitionPresentation(
+  competitionId: string,
+  request: UpdateCompetitionPresentationRequest,
+): Promise<OrganisationView> {
+  return sendJson('POST', `/competitions/${competitionId}/presentation`, request)
+}
+
+/** POST /competitions/{id}/schedule → OrganisationView */
+export function setCompetitionSchedule(
+  competitionId: string,
+  request: SetCompetitionScheduleRequest,
+): Promise<OrganisationView> {
+  return sendJson('POST', `/competitions/${competitionId}/schedule`, request)
+}
+
+/** POST .../entries/{entryId}/presentation → OrganisationView */
+export function updateEntryPresentation(
+  competitionId: string,
+  entryId: string,
+  request: UpdateEntryPresentationRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/presentation`,
+    request,
+  )
 }
 
 /** POST .../entries/{entryId}/rename → OrganisationView */

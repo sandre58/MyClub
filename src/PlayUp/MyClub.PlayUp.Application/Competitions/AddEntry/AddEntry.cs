@@ -25,13 +25,15 @@ public static class AddEntry
     /// <param name="displayName">Entry display name.</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="teamId">Optional team identity; a new id is created when omitted.</param>
+    /// <param name="presentation">Optional team presentation.</param>
     /// <returns>The created entry.</returns>
     /// <exception cref="ApplicationFailureException">Thrown when maximum capacity is reached.</exception>
     public static CompetitionEntry Execute(
         Competition competition,
         string displayName,
         IClock clock,
-        TeamId? teamId = null)
+        TeamId? teamId = null,
+        EntryPresentation? presentation = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(clock);
@@ -41,6 +43,6 @@ public static class AddEntry
             ? throw new ApplicationFailureException(
                 $"Competition already has the maximum of {competition.Regulation.EntryRules.MaximumTeams} occupying entries.",
                 ApplicationErrorCodes.EntryCapacityExceeded)
-            : competition.AddEntry(teamId ?? TeamId.New(), displayName, clock);
+            : competition.AddEntry(teamId ?? TeamId.New(), displayName, clock, presentation);
     }
 }

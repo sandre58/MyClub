@@ -34,6 +34,34 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
             .IsRequired()
             .HasConversion(name => name.Value, value => new CompetitionName(value));
 
+        builder.Property(competition => competition.ShortName)
+            .HasColumnName("short_name")
+            .HasMaxLength(ShortName.MaxLength)
+            .IsRequired(false)
+            .HasConversion(
+                name => name == null ? null : name.Value,
+                value => ShortName.Create(value))
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        builder.Property(competition => competition.LogoUri)
+            .HasColumnName("logo_uri")
+            .HasMaxLength(LogoUri.MaxLength)
+            .IsRequired(false)
+            .HasConversion(
+                uri => uri == null ? null : uri.Value,
+                value => LogoUri.Create(value))
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        builder.Property(competition => competition.ScheduledStart)
+            .HasColumnName("scheduled_start")
+            .IsRequired(false)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        builder.Property(competition => competition.ScheduledEnd)
+            .HasColumnName("scheduled_end")
+            .IsRequired(false)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Property(competition => competition.Regulation)
             .HasColumnName("regulation")
             .HasColumnType("jsonb")
@@ -84,6 +112,42 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
             .HasColumnName("display_name")
             .HasMaxLength(CompetitionEntry.DisplayNameMaxLength)
             .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        entries.Property(entry => entry.ShortName)
+            .HasColumnName("short_name")
+            .HasMaxLength(ShortName.MaxLength)
+            .IsRequired(false)
+            .HasConversion(
+                name => name == null ? null : name.Value,
+                value => ShortName.Create(value))
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        entries.Property(entry => entry.LogoUri)
+            .HasColumnName("logo_uri")
+            .HasMaxLength(LogoUri.MaxLength)
+            .IsRequired(false)
+            .HasConversion(
+                uri => uri == null ? null : uri.Value,
+                value => LogoUri.Create(value))
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        entries.Property(entry => entry.PrimaryColor)
+            .HasColumnName("primary_color")
+            .HasMaxLength(7)
+            .IsRequired(false)
+            .HasConversion(
+                color => color == null ? null : color.Value,
+                value => TeamColor.Create(value))
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        entries.Property(entry => entry.SecondaryColor)
+            .HasColumnName("secondary_color")
+            .HasMaxLength(7)
+            .IsRequired(false)
+            .HasConversion(
+                color => color == null ? null : color.Value,
+                value => TeamColor.Create(value))
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
         entries.Property(entry => entry.Status)

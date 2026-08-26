@@ -52,7 +52,7 @@ public sealed class RandomScenario : IScenario
                 Format = RecipeFormat.Championship,
                 TeamCount = 8,
                 MatchdayCount = 7,
-                StageName = "Championnat",
+                StageName = "Championnat"
             },
             1 => new CompetitionRecipe
             {
@@ -61,7 +61,7 @@ public sealed class RandomScenario : IScenario
                 TeamCount = 16,
                 GroupCount = 4,
                 ParticipantsPerGroup = 4,
-                StageName = "Phase de groupes",
+                StageName = "Phase de groupes"
             },
             _ => new CompetitionRecipe
             {
@@ -69,8 +69,8 @@ public sealed class RandomScenario : IScenario
                 Format = RecipeFormat.Cup,
                 TeamCount = 16,
                 BracketSize = 16,
-                StageName = "Tour à élimination",
-            },
+                StageName = "Tour à élimination"
+            }
         };
     }
 }

@@ -38,7 +38,7 @@ public sealed class GroupsScenario : IScenario
         TeamCount = 16,
         GroupCount = 4,
         ParticipantsPerGroup = 4,
-        StageName = "Phase de groupes",
+        StageName = "Phase de groupes"
     };
 
     /// <inheritdoc />

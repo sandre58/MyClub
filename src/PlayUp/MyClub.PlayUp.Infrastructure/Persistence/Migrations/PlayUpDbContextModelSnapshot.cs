@@ -32,6 +32,11 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("completion_mode");
 
+                    b.Property<string>("LogoUri")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("logo_uri");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -42,6 +47,19 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("regulation");
+
+                    b.Property<DateTimeOffset?>("ScheduledEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_end");
+
+                    b.Property<DateTimeOffset?>("ScheduledStart")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_start");
+
+                    b.Property<string>("ShortName")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("short_name");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -411,6 +429,26 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
                                 .HasColumnName("display_name");
+
+                            b1.Property<string>("LogoUri")
+                                .HasMaxLength(2048)
+                                .HasColumnType("character varying(2048)")
+                                .HasColumnName("logo_uri");
+
+                            b1.Property<string>("PrimaryColor")
+                                .HasMaxLength(7)
+                                .HasColumnType("character varying(7)")
+                                .HasColumnName("primary_color");
+
+                            b1.Property<string>("SecondaryColor")
+                                .HasMaxLength(7)
+                                .HasColumnType("character varying(7)")
+                                .HasColumnName("secondary_color");
+
+                            b1.Property<string>("ShortName")
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("short_name");
 
                             b1.Property<int>("SortOrder")
                                 .HasColumnType("integer")

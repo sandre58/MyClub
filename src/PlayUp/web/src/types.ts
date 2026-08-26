@@ -57,6 +57,10 @@ export interface CompetitionEntrySummary {
   entryId: string
   displayName: string
   status: EntryStatus
+  shortName?: string | null
+  logoPath?: string | null
+  primaryColor?: string | null
+  secondaryColor?: string | null
 }
 
 export interface CompetitionStageSummary {
@@ -70,6 +74,8 @@ export interface CompetitionListItem {
   id: string
   name: string
   status: CompetitionStatus
+  shortName?: string | null
+  logoPath?: string | null
 }
 
 /** POST /competitions — create Draft competition (name only). */
@@ -93,6 +99,8 @@ export interface WorkspaceSummary {
   completionMode: CompletionMode | null
   canCompleteNormally: boolean
   completionBlockers: string[] | null
+  shortName?: string | null
+  logoPath?: string | null
 }
 
 /** Cycle reading codes from CockpitAssembler (string on wire). */
@@ -294,6 +302,11 @@ export interface CompetitionOverview {
   status: CompetitionStatus
   entries: CompetitionEntrySummary[]
   stages: CompetitionStageSummary[]
+  completionMode?: CompletionMode | null
+  shortName?: string | null
+  logoPath?: string | null
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
 }
 
 /** GET /competitions/{id}/organisation — Slice 2 Organisation hub. */
@@ -307,6 +320,10 @@ export interface OrganisationView {
   structure: OrganisationStructureSummary
   actions: string[]
   readiness: OrganisationReadiness
+  shortName?: string | null
+  logoPath?: string | null
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
 }
 
 export interface OrganisationParticipantsSummary {
@@ -319,6 +336,10 @@ export interface OrganisationEntry {
   entryId: string
   displayName: string
   status: EntryStatus
+  shortName?: string | null
+  logoPath?: string | null
+  primaryColor?: string | null
+  secondaryColor?: string | null
 }
 
 export interface OrganisationFormatSummary {
@@ -362,6 +383,30 @@ export interface OrganisationReadiness {
 export interface AddEntryRequest {
   displayName: string
   teamId?: string | null
+  shortName?: string | null
+  logoPath?: string | null
+  primaryColor?: string | null
+  secondaryColor?: string | null
+}
+
+/** POST /competitions/{id}/presentation */
+export interface UpdateCompetitionPresentationRequest {
+  shortName: string | null
+  logoPath: string | null
+}
+
+/** POST /competitions/{id}/schedule */
+export interface SetCompetitionScheduleRequest {
+  scheduledStart: string | null
+  scheduledEnd: string | null
+}
+
+/** POST .../entries/{entryId}/presentation */
+export interface UpdateEntryPresentationRequest {
+  shortName: string | null
+  logoPath: string | null
+  primaryColor: string | null
+  secondaryColor: string | null
 }
 
 /** POST .../entries/{entryId}/rename */
@@ -470,6 +515,10 @@ export interface ConsultationStageStructure {
 export interface EntrySide {
   entryId: string
   displayName: string | null
+  shortName?: string | null
+  logoPath?: string | null
+  primaryColor?: string | null
+  secondaryColor?: string | null
 }
 
 export interface MatchScore {

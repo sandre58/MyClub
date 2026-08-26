@@ -18,5 +18,5 @@ public enum SeedProgress
     Running = 1,
 
     /// <summary>All matches finished; competition completed.</summary>
-    Finished = 2,
+    Finished = 2
 }

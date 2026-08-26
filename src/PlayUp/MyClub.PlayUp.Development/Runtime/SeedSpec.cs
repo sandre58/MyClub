@@ -42,18 +42,10 @@ public readonly record struct SeedSpec(string Id, SeedProgress? Progress)
 
         var id = token[..separator].Trim();
         var progressToken = token[(separator + 1)..].Trim();
-        if (!TryParseProgress(progressToken, out var progress))
-        {
-            throw new InvalidOperationException(
-                $"Unknown progress '{progressToken}'. Expected prepared, running, or finished.");
-        }
-
-        if (Aliases.TryGetValue(id, out var baseAlias))
-        {
-            return new SeedSpec(baseAlias.Id, progress);
-        }
-
-        return new SeedSpec(id, progress);
+        return !TryParseProgress(progressToken, out var progress)
+            ? throw new InvalidOperationException(
+                $"Unknown progress '{progressToken}'. Expected prepared, running, or finished.")
+            : Aliases.TryGetValue(id, out var baseAlias) ? new SeedSpec(baseAlias.Id, progress) : new SeedSpec(id, progress);
     }
 
     /// <summary>
@@ -96,6 +88,6 @@ public readonly record struct SeedSpec(string Id, SeedProgress? Progress)
         {
             ["group-stage-mid"] = new SeedSpec("groups", SeedProgress.Running),
             ["knockout-qf"] = new SeedSpec("cup", SeedProgress.Running),
-            ["finished"] = new SeedSpec("groups", SeedProgress.Finished),
+            ["finished"] = new SeedSpec("groups", SeedProgress.Finished)
         };
 }

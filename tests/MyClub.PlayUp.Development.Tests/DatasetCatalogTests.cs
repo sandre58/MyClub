@@ -20,6 +20,5 @@ public sealed class DatasetCatalogTests
         catalog.Get("champions-league").Teams.Should().HaveCount(32);
         catalog.Get("world-cup").Teams.Should().HaveCount(32);
         catalog.Get("coupe-de-france").Teams.Should().HaveCount(32);
-        catalog.Get("ucl").Key.Should().Be("champions-league");
     }
 }

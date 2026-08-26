@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchCompetitionCockpit, fetchOrganisationView } from '../api'
+import { TeamCrest } from '../design-system/TeamCrest'
 import { Status } from '../design-system/components/Status'
 import {
   AttentionMarkIcon,
@@ -721,7 +722,12 @@ function TeamsPanel({
               className="overview-crest"
               title={entry.displayName}
             >
-              {crestInitials(entry.displayName)}
+              <TeamCrest
+                name={entry.displayName}
+                logoPath={entry.logoPath}
+                primaryColor={entry.primaryColor}
+                size="sm"
+              />
             </li>
           ))}
           {overflow > 0 && (
@@ -753,18 +759,6 @@ function TeamsPanel({
       </p>
     </article>
   )
-}
-
-/** Letter mark — Host has no crest asset yet; placeholders until logos exist. */
-function crestInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) {
-    return '?'
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase()
 }
 
 /**

@@ -38,7 +38,7 @@ public sealed class RegistrationOpenScenario : IScenario
         DisplayName = "Inscriptions en cours",
         Format = RecipeFormat.Championship,
         TeamCount = 16,
-        MatchdayCount = 1,
+        MatchdayCount = 1
     };
 
     /// <inheritdoc />

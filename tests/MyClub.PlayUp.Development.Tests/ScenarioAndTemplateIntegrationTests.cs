@@ -11,8 +11,6 @@ using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using Xunit;
 
 namespace MyClub.PlayUp.Development.Tests;
@@ -22,7 +20,7 @@ namespace MyClub.PlayUp.Development.Tests;
 public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixture fixture)
 {
     [Fact]
-    public async Task Empty_workspace_has_no_competitions()
+    public async Task Empty_workspace_has_no_competitionsAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse("empty-workspace")]);
@@ -33,13 +31,13 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Draft_and_registration_fixed_scenarios()
+    public async Task Draft_and_registration_fixed_scenariosAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync(
         [
             SeedSpec.Parse("draft-empty"),
-            SeedSpec.Parse("registration-open"),
+            SeedSpec.Parse("registration-open")
         ]);
 
         using var scope = fixture.Services.CreateScope();
@@ -50,7 +48,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Groups_prepared_running_finished_progress()
+    public async Task Groups_prepared_running_finished_progressAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
 
@@ -65,13 +63,13 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Cup_and_championship_accept_progress()
+    public async Task Cup_and_championship_accept_progressAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync(
         [
             SeedSpec.Parse("cup:prepared"),
-            SeedSpec.Parse("championship:running"),
+            SeedSpec.Parse("championship:running")
         ]);
 
         using var scope = fixture.Services.CreateScope();
@@ -80,7 +78,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Alias_group_stage_mid_maps_to_groups_running()
+    public async Task Alias_group_stage_mid_maps_to_groups_runningAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse("group-stage-mid")]);
@@ -88,7 +86,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Ligue1_prepared_template_and_use_case_read()
+    public async Task Ligue1_prepared_template_and_use_case_readAsync()
     {
         var templates = fixture.Services.GetRequiredService<TemplateRunner>();
         await templates.ResetAndRunAsync([SeedSpec.Parse("ligue-1:prepared")]);
@@ -98,7 +96,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
-        competition!.Entries.Should().HaveCount(18);
+        competition.Entries.Should().HaveCount(18);
         competition.Status.Should().Be(CompetitionStatus.Running);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
@@ -113,7 +111,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Double_run_groups_running_is_deterministic()
+    public async Task Double_run_groups_running_is_deterministicAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse("groups:running")]);
@@ -131,7 +129,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition!.StageIds[0]);
+            .GetByIdAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
             .ListByStageAsync(stage!.Id);
         matches.Count(m => m.Status == MatchStatus.Finished).Should().Be(matches.Count / 2);
@@ -144,7 +142,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var summary = (await competitions.ListAsync()).Single();
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
-        competition!.Status.Should().Be(CompetitionStatus.Completed);
+        competition.Status.Should().Be(CompetitionStatus.Completed);
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
             .GetByIdAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
@@ -160,7 +158,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition!.StageIds[0]);
+            .GetByIdAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
             .ListByStageAsync(stage!.Id);
         matches.Count(m => m.Status == MatchStatus.Finished).Should().Be(finished);
@@ -178,21 +176,21 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition!.StageIds[0]);
+            .GetByIdAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
             .ListByStageAsync(stage!.Id);
         return new
         {
             CompetitionId = competition.Id.Value,
             StageId = stage.Id.Value,
-            EntryIds = competition.Entries.Select(e => e.Id.Value).OrderBy(x => x).ToArray(),
-            Names = competition.Entries.Select(e => e.DisplayName).OrderBy(x => x).ToArray(),
-            MatchIds = matches.Select(m => m.Id.Value).OrderBy(x => x).ToArray(),
+            EntryIds = competition.Entries.Select(e => e.Id.Value).Order().ToArray(),
+            Names = competition.Entries.Select(e => e.DisplayName).Order().ToArray(),
+            MatchIds = matches.Select(m => m.Id.Value).Order().ToArray(),
             Results = matches
                 .Where(m => m.Result is not null)
                 .OrderBy(m => m.Id.Value)
                 .Select(m => (m.Result!.Score.HomeGoals, m.Result.Score.AwayGoals))
-                .ToArray(),
+                .ToArray()
         };
     }
 }

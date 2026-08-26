@@ -20,8 +20,12 @@ import {
   fetchOrganisationView,
   renameCompetitionEntry,
   replaceCompetitionRegulation,
+  setCompetitionSchedule,
+  updateCompetitionPresentation,
+  updateEntryPresentation,
   withdrawCompetitionEntry,
 } from '../api'
+import { TeamCrest } from '../design-system/TeamCrest'
 import {
   CheckIcon,
   RegulationIcon,
@@ -127,6 +131,7 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
       </header>
 
       <ContextBand data={data} />
+      <IdentitySection data={data} />
       <PreparationStrip
         data={data}
         onOpenEditor={(next) => setEditor(next)}
@@ -253,6 +258,145 @@ function ContextBand({ data }: { data: OrganisationView }) {
         {t('band.phases', { count: phaseCount })}
       </li>
     </ul>
+  )
+}
+
+function IdentitySection({ data }: { data: OrganisationView }) {
+  const { t } = useTranslation('organisation')
+  const queryClient = useQueryClient()
+  const [shortName, setShortName] = useState(data.shortName ?? '')
+  const [logoPath, setLogoPath] = useState(data.logoPath ?? '')
+  const [scheduledStart, setScheduledStart] = useState(
+    data.scheduledStart?.slice(0, 10) ?? '',
+  )
+  const [scheduledEnd, setScheduledEnd] = useState(
+    data.scheduledEnd?.slice(0, 10) ?? '',
+  )
+
+  useEffect(() => {
+    setShortName(data.shortName ?? '')
+    setLogoPath(data.logoPath ?? '')
+    setScheduledStart(data.scheduledStart?.slice(0, 10) ?? '')
+    setScheduledEnd(data.scheduledEnd?.slice(0, 10) ?? '')
+  }, [data.shortName, data.logoPath, data.scheduledStart, data.scheduledEnd])
+
+  const presentationMutation = useMutation({
+    mutationFn: () =>
+      updateCompetitionPresentation(data.competitionId, {
+        shortName: shortName.trim() || null,
+        logoPath: logoPath.trim() || null,
+      }),
+    onSuccess: async () => {
+      await invalidateAfterOrganisationMutation(queryClient, data.competitionId)
+    },
+  })
+
+  const scheduleMutation = useMutation({
+    mutationFn: () =>
+      setCompetitionSchedule(data.competitionId, {
+        scheduledStart: scheduledStart
+          ? new Date(`${scheduledStart}T00:00:00.000Z`).toISOString()
+          : null,
+        scheduledEnd: scheduledEnd
+          ? new Date(`${scheduledEnd}T00:00:00.000Z`).toISOString()
+          : null,
+      }),
+    onSuccess: async () => {
+      await invalidateAfterOrganisationMutation(queryClient, data.competitionId)
+    },
+  })
+
+  return (
+    <section className="ds-panel" aria-labelledby="identity-heading">
+      <PanelHead id="identity-heading" icon={<TeamsIcon size="md" />}>
+        {t('identity.heading')}
+      </PanelHead>
+      <div className="organisation-identity">
+        {data.logoPath ? (
+          <TeamCrest name={data.name} logoPath={data.logoPath} size="md" />
+        ) : null}
+        <form
+          className="form"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault()
+            presentationMutation.mutate()
+          }}
+        >
+          <label className="field">
+            {t('identity.shortName')}
+            <input
+              value={shortName}
+              onChange={(event) => setShortName(event.target.value)}
+              maxLength={20}
+              disabled={presentationMutation.isPending}
+            />
+          </label>
+          <label className="field">
+            {t('identity.logoPath')}
+            <input
+              value={logoPath}
+              onChange={(event) => setLogoPath(event.target.value)}
+              disabled={presentationMutation.isPending}
+              placeholder="/seed-logos/…"
+            />
+          </label>
+          <button
+            type="submit"
+            className="ds-btn ds-btn--ghost"
+            disabled={presentationMutation.isPending}
+          >
+            {presentationMutation.isPending ? (
+              <PendingLabel>{t('working')}</PendingLabel>
+            ) : (
+              t('identity.savePresentation')
+            )}
+          </button>
+          {presentationMutation.isError && (
+            <MutationError error={presentationMutation.error} />
+          )}
+        </form>
+        <form
+          className="form form--inline"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault()
+            scheduleMutation.mutate()
+          }}
+        >
+          <label className="field">
+            {t('identity.scheduledStart')}
+            <input
+              type="date"
+              value={scheduledStart}
+              onChange={(event) => setScheduledStart(event.target.value)}
+              disabled={scheduleMutation.isPending}
+            />
+          </label>
+          <label className="field">
+            {t('identity.scheduledEnd')}
+            <input
+              type="date"
+              value={scheduledEnd}
+              onChange={(event) => setScheduledEnd(event.target.value)}
+              disabled={scheduleMutation.isPending}
+            />
+          </label>
+          <button
+            type="submit"
+            className="ds-btn ds-btn--ghost"
+            disabled={scheduleMutation.isPending}
+          >
+            {scheduleMutation.isPending ? (
+              <PendingLabel>{t('working')}</PendingLabel>
+            ) : (
+              t('identity.saveSchedule')
+            )}
+          </button>
+          {scheduleMutation.isError && (
+            <MutationError error={scheduleMutation.error} />
+          )}
+        </form>
+      </div>
+    </section>
   )
 }
 
@@ -432,7 +576,12 @@ function ParticipantsSection({
           >
             {entries.slice(0, 8).map((entry) => (
               <li key={entry.entryId} title={entry.displayName}>
-                <TeamCrest name={entry.displayName} />
+                <TeamCrest
+                  name={entry.displayName}
+                  logoPath={entry.logoPath}
+                  primaryColor={entry.primaryColor}
+                  className="organisation-crest"
+                />
               </li>
             ))}
             {entries.length > 8 && (
@@ -446,7 +595,12 @@ function ParticipantsSection({
             {entries.map((entry) => (
               <li key={entry.entryId}>
                 <div className="organisation-entry organisation-entry--read">
-                  <TeamCrest name={entry.displayName} />
+                  <TeamCrest
+                    name={entry.displayName}
+                    logoPath={entry.logoPath}
+                    primaryColor={entry.primaryColor}
+                    className="organisation-crest"
+                  />
                   <p className="organisation-entry__identity">
                     <span className="organisation-entry__name">
                       {entry.displayName}
@@ -520,6 +674,10 @@ function TeamsEditorDialog({
   const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
   const [displayName, setDisplayName] = useState('')
+  const [shortName, setShortName] = useState('')
+  const [logoPath, setLogoPath] = useState('')
+  const [primaryColor, setPrimaryColor] = useState('')
+  const [secondaryColor, setSecondaryColor] = useState('')
   const competitionId = data.competitionId
 
   const invalidateOrganisation = () =>
@@ -527,9 +685,19 @@ function TeamsEditorDialog({
 
   const addMutation = useMutation({
     mutationFn: () =>
-      addCompetitionEntry(competitionId, { displayName: displayName.trim() }),
+      addCompetitionEntry(competitionId, {
+        displayName: displayName.trim(),
+        shortName: shortName.trim() || null,
+        logoPath: logoPath.trim() || null,
+        primaryColor: primaryColor.trim() || null,
+        secondaryColor: secondaryColor.trim() || null,
+      }),
     onSuccess: async () => {
       setDisplayName('')
+      setShortName('')
+      setLogoPath('')
+      setPrimaryColor('')
+      setSecondaryColor('')
       await invalidateOrganisation()
     },
   })
@@ -559,7 +727,7 @@ function TeamsEditorDialog({
 
       {canAdd && (
         <form
-          className="form form--inline"
+          className="form"
           onSubmit={(event: FormEvent) => {
             event.preventDefault()
             if (displayName.trim().length === 0 || addMutation.isPending) {
@@ -578,6 +746,44 @@ function TeamsEditorDialog({
               required
             />
           </label>
+          <label className="field">
+            {t('participants.shortName')}
+            <input
+              value={shortName}
+              onChange={(event) => setShortName(event.target.value)}
+              disabled={addMutation.isPending}
+              maxLength={20}
+            />
+          </label>
+          <label className="field">
+            {t('participants.logoPath')}
+            <input
+              value={logoPath}
+              onChange={(event) => setLogoPath(event.target.value)}
+              disabled={addMutation.isPending}
+              placeholder="/seed-logos/…"
+            />
+          </label>
+          <div className="form form--inline">
+            <label className="field">
+              {t('participants.primaryColor')}
+              <input
+                value={primaryColor}
+                onChange={(event) => setPrimaryColor(event.target.value)}
+                disabled={addMutation.isPending}
+                placeholder="#RRGGBB"
+              />
+            </label>
+            <label className="field">
+              {t('participants.secondaryColor')}
+              <input
+                value={secondaryColor}
+                onChange={(event) => setSecondaryColor(event.target.value)}
+                disabled={addMutation.isPending}
+                placeholder="#RRGGBB"
+              />
+            </label>
+          </div>
           <button
             type="submit"
             className="ds-btn ds-btn--primary"
@@ -613,12 +819,29 @@ function EntryEditorRow({
 }) {
   const { t } = useTranslation('organisation')
   const [name, setName] = useState(entry.displayName)
+  const [shortName, setShortName] = useState(entry.shortName ?? '')
+  const [logoPath, setLogoPath] = useState(entry.logoPath ?? '')
+  const [primaryColor, setPrimaryColor] = useState(entry.primaryColor ?? '')
+  const [secondaryColor, setSecondaryColor] = useState(
+    entry.secondaryColor ?? '',
+  )
   const busyLabel = t('working')
 
   const renameMutation = useMutation({
     mutationFn: () =>
       renameCompetitionEntry(competitionId, entry.entryId, {
         displayName: name.trim(),
+      }),
+    onSuccess: onChanged,
+  })
+
+  const presentationMutation = useMutation({
+    mutationFn: () =>
+      updateEntryPresentation(competitionId, entry.entryId, {
+        shortName: shortName.trim() || null,
+        logoPath: logoPath.trim() || null,
+        primaryColor: primaryColor.trim() || null,
+        secondaryColor: secondaryColor.trim() || null,
       }),
     onSuccess: onChanged,
   })
@@ -635,21 +858,32 @@ function EntryEditorRow({
 
   const pending =
     renameMutation.isPending ||
+    presentationMutation.isPending ||
     withdrawMutation.isPending ||
     excludeMutation.isPending
 
   const mutationError =
-    renameMutation.error ?? withdrawMutation.error ?? excludeMutation.error
+    renameMutation.error ??
+    presentationMutation.error ??
+    withdrawMutation.error ??
+    excludeMutation.error
 
   return (
     <div className="organisation-entry">
       <p className="organisation-entry__identity">
+        <TeamCrest
+          name={entry.displayName}
+          logoPath={entry.logoPath}
+          primaryColor={entry.primaryColor}
+          className="organisation-crest"
+        />
         <span className="organisation-entry__name">{entry.displayName}</span>
         <EntryStatusBadge status={entry.status} />
       </p>
       {(canRename || canWithdraw || canExclude) && (
         <div className="organisation-entry__actions">
           {canRename && (
+            <>
             <form
               className="form form--inline"
               onSubmit={(event: FormEvent) => {
@@ -681,6 +915,66 @@ function EntryEditorRow({
                 )}
               </button>
             </form>
+            <form
+              className="form"
+              onSubmit={(event: FormEvent) => {
+                event.preventDefault()
+                if (pending) {
+                  return
+                }
+                presentationMutation.mutate()
+              }}
+            >
+              <label className="field">
+                {t('participants.shortName')}
+                <input
+                  value={shortName}
+                  onChange={(event) => setShortName(event.target.value)}
+                  disabled={pending}
+                  maxLength={20}
+                />
+              </label>
+              <label className="field">
+                {t('participants.logoPath')}
+                <input
+                  value={logoPath}
+                  onChange={(event) => setLogoPath(event.target.value)}
+                  disabled={pending}
+                />
+              </label>
+              <div className="form form--inline">
+                <label className="field">
+                  {t('participants.primaryColor')}
+                  <input
+                    value={primaryColor}
+                    onChange={(event) => setPrimaryColor(event.target.value)}
+                    disabled={pending}
+                    placeholder="#RRGGBB"
+                  />
+                </label>
+                <label className="field">
+                  {t('participants.secondaryColor')}
+                  <input
+                    value={secondaryColor}
+                    onChange={(event) => setSecondaryColor(event.target.value)}
+                    disabled={pending}
+                    placeholder="#RRGGBB"
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                className="ds-btn ds-btn--ghost"
+                disabled={pending}
+              >
+                {presentationMutation.isPending ? (
+                  <PendingLabel>{busyLabel}</PendingLabel>
+                ) : (
+                  t('participants.savePresentation')
+                )}
+              </button>
+            </form>
+            </>
           )}
           {canWithdraw && (
             <button
@@ -1125,44 +1419,6 @@ function StructureSection({
       )}
     </section>
   )
-}
-
-function TeamCrest({ name }: { name: string }) {
-  const initial = teamInitial(name)
-  const tone = crestTone(name)
-
-  return (
-    <span
-      className={`organisation-crest organisation-crest--${tone}`}
-      aria-hidden="true"
-    >
-      <svg
-        className="organisation-crest__shield"
-        viewBox="0 0 24 28"
-        focusable="false"
-      >
-        <path d="M12 1.5 21 5.2v8.4c0 6.1-3.9 10.6-9 12.4-5.1-1.8-9-6.3-9-12.4V5.2L12 1.5Z" />
-      </svg>
-      <span className="organisation-crest__initial">{initial}</span>
-    </span>
-  )
-}
-
-function teamInitial(name: string): string {
-  const trimmed = name.trim()
-  if (!trimmed) {
-    return '?'
-  }
-  return trimmed.charAt(0).toLocaleUpperCase()
-}
-
-/** Stable presentation tone from display name — not a métier rule. */
-function crestTone(name: string): 'a' | 'b' | 'c' | 'd' | 'e' {
-  let hash = 0
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5
-  }
-  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]
 }
 
 function StructureEditorDialog({

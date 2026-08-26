@@ -95,13 +95,12 @@ public sealed class CliOptions
             ShowHelp = help,
             Seed = seed,
             Scenarios = scenarios,
-            Templates = templates,
+            Templates = templates
         };
     }
 
     /// <summary>Writes CLI help to stdout.</summary>
-    public static void PrintHelp()
-    {
+    public static void PrintHelp() =>
 #pragma warning disable CA1303
         Console.WriteLine(
             """
@@ -122,7 +121,6 @@ public sealed class CliOptions
             ConnectionStrings:PlayUpDev is required.
             """);
 #pragma warning restore CA1303
-    }
 
     private static IEnumerable<SeedSpec> ParseSpecs(string raw) =>
         raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

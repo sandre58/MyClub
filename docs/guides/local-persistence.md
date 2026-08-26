@@ -72,7 +72,9 @@ Domain V1 = **one stage / one format**. Templates are approximations:
 | `world-cup` | Groups 8×4 — no knockout pipeline |
 | `coupe-de-france` | Cup 32 — single principal round |
 
-Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/`.
+Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, logo paths).
+
+**Seed logos (internal only):** real crest/flag PNGs under `src/PlayUp/web/public/seed-logos/` referenced as `/seed-logos/...` in dataset JSON. See `seed-logos/README.md` — not for redistribution or product DS.
 
 ## Scenarios
 

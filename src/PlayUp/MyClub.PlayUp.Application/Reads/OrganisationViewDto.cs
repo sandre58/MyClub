@@ -21,6 +21,10 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Structure">Structure counts (not full Domain graph).</param>
 /// <param name="Actions">Available organisation action codes.</param>
 /// <param name="Readiness">Application readiness diagnostic for Slice 3.</param>
+/// <param name="ShortName">Optional abbreviated name.</param>
+/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="ScheduledStart">Optional declared start.</param>
+/// <param name="ScheduledEnd">Optional declared end.</param>
 public sealed record OrganisationViewDto(
     Guid CompetitionId,
     string Name,
@@ -30,7 +34,11 @@ public sealed record OrganisationViewDto(
     OrganisationRegulationSummaryDto Regulation,
     OrganisationStructureSummaryDto Structure,
     IReadOnlyList<string> Actions,
-    OrganisationReadinessDto Readiness);
+    OrganisationReadinessDto Readiness,
+    string? ShortName = null,
+    string? LogoPath = null,
+    DateTimeOffset? ScheduledStart = null,
+    DateTimeOffset? ScheduledEnd = null);
 
 /// <summary>Participants section.</summary>
 /// <param name="ActiveCount">Active entries.</param>
@@ -45,7 +53,18 @@ public sealed record OrganisationParticipantsSummaryDto(
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Display name.</param>
 /// <param name="Status">Entry status.</param>
-public sealed record OrganisationEntryDto(Guid EntryId, string DisplayName, EntryStatus Status);
+/// <param name="ShortName">Optional abbreviated name.</param>
+/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="PrimaryColor">Optional primary kit color.</param>
+/// <param name="SecondaryColor">Optional secondary kit color.</param>
+public sealed record OrganisationEntryDto(
+    Guid EntryId,
+    string DisplayName,
+    EntryStatus Status,
+    string? ShortName = null,
+    string? LogoPath = null,
+    string? PrimaryColor = null,
+    string? SecondaryColor = null);
 
 /// <summary>Format summary (Application inference — not Domain Format aggregate).</summary>
 /// <param name="Kind">Inferred format, or null when structure empty (authoritative for SPA i18n).</param>

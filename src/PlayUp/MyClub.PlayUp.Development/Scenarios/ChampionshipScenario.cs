@@ -37,7 +37,7 @@ public sealed class ChampionshipScenario : IScenario
         Format = RecipeFormat.Championship,
         TeamCount = 8,
         MatchdayCount = 7,
-        StageName = "Championnat",
+        StageName = "Championnat"
     };
 
     /// <inheritdoc />

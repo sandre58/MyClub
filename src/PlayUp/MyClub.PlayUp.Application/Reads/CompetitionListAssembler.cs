@@ -26,6 +26,8 @@ public static class CompetitionListAssembler
             new CompetitionListItemDto(
                 competition.Id.Value,
                 competition.Name.Value,
-                competition.Status))];
+                competition.Status,
+                competition.ShortName?.Value,
+                competition.LogoUri?.Value))];
     }
 }

@@ -25,15 +25,47 @@ internal static class ScenarioOrchestration
     public static Competition CreateCompetition(
         ScenarioContext context,
         string name,
-        Regulation? regulation = null)
+        Regulation? regulation = null,
+        string? shortName = null,
+        string? logoPath = null,
+        DateTimeOffset? scheduledStart = null,
+        DateTimeOffset? scheduledEnd = null)
     {
         var competition = Competition.Create(
             new CompetitionName(name),
             regulation ?? BootstrapRegulation.Standard(),
             context.Ids.Competition(),
             context.Clock);
+        if (shortName is not null || logoPath is not null)
+        {
+            competition.UpdatePresentation(ShortName.Create(shortName), LogoUri.Create(logoPath), context.Clock);
+        }
+
+        if (scheduledStart is not null || scheduledEnd is not null)
+        {
+            competition.SetSchedule(scheduledStart, scheduledEnd, context.Clock);
+        }
+
         context.Competitions.Add(competition);
         return competition;
+    }
+
+    private static Competition CreateCompetitionFromRecipe(ScenarioContext context, CompetitionRecipe recipe)
+    {
+        if (recipe.TeamNames != TeamNameSource.Dataset
+            || string.IsNullOrWhiteSpace(recipe.DatasetCompetitionKey))
+        {
+            return CreateCompetition(context, recipe.DisplayName);
+        }
+
+        var dataset = context.Datasets.Get(recipe.DatasetCompetitionKey);
+        return CreateCompetition(
+            context,
+            recipe.DisplayName,
+            shortName: dataset.ShortName,
+            logoPath: dataset.LogoPath,
+            scheduledStart: dataset.ScheduledStart,
+            scheduledEnd: dataset.ScheduledEnd);
     }
 
     public static IReadOnlyList<CompetitionEntry> RegisterTeams(
@@ -47,7 +79,7 @@ internal static class ScenarioOrchestration
         for (var i = 0; i < count; i++)
         {
             context.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(i));
-            var displayName = TeamNameGenerator.Create(
+            var (displayName, presentation) = TeamNameGenerator.CreatePresentation(
                 context.Entropy,
                 i,
                 recipe.TeamNames,
@@ -57,7 +89,8 @@ internal static class ScenarioOrchestration
                 context.Ids.Team($"team-{i}"),
                 displayName,
                 context.Ids.Entry($"entry-{i}"),
-                context.Clock);
+                context.Clock,
+                presentation);
             entries.Add(entry);
         }
 
@@ -270,7 +303,7 @@ internal static class ScenarioOrchestration
         ArgumentNullException.ThrowIfNull(recipe);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var competition = CreateCompetition(context, recipe.DisplayName);
+        var competition = CreateCompetitionFromRecipe(context, recipe);
         var entries = RegisterTeams(context, competition, recipe);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
         var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
@@ -318,7 +351,7 @@ internal static class ScenarioOrchestration
             RecipeFormat.Groups => AssignThenMaterializeGroups(context, competition, stage, entries),
             RecipeFormat.Cup => ApplyCupPairingDeterministic(context, competition, stage),
             RecipeFormat.Championship => MaterializeChampionshipMatches(context, competition, stage),
-            _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'."),
+            _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'.")
         };
 
     private static IReadOnlyList<Match> AssignThenMaterializeGroups(

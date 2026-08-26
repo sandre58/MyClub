@@ -55,10 +55,11 @@ public static class ConsultationAssembler
         var formatKind = primary is null ? null : InferFormat(primary);
         var formatLabel = FormatLabel(formatKind, primary);
         var names = EntryDisplayNames.ToMap(competition);
+        var entries = EntryDisplayNames.ToEntries(competition);
 
         var results = AssembleResults(competition, stages, matchesByStage);
         var standings = AssembleStandings(competition, stages, matchesByStage, names, formatKind);
-        var structure = AssembleStructure(stages, names, formatKind);
+        var structure = AssembleStructure(stages, entries, formatKind);
 
         return new ConsultationViewDto(
             competition.Id.Value,
@@ -237,7 +238,7 @@ public static class ConsultationAssembler
 
     private static ConsultationStructureDto AssembleStructure(
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<EntryId, string> names,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
         StructureFormatKind? primaryFormat)
     {
         var stageDtos = stages.Select(stage =>
@@ -248,9 +249,7 @@ public static class ConsultationAssembler
                     group.Id.Value,
                     group.Name,
                     [
-                        .. group.EntryIds.Select(entryId => new EntrySideDto(
-                            entryId.Value,
-                            EntryDisplayNames.Resolve(names, entryId)))
+                        .. group.EntryIds.Select(entryId => EntryDisplayNames.ToSide(entries, entryId))
                     ]))
                 .ToArray();
 
@@ -272,7 +271,7 @@ public static class ConsultationAssembler
                 .Select(slot => new ConsultationSlotStructureDto(
                     slot.SlotKey,
                     slot.EntryId?.Value,
-                    slot.EntryId is { } entryId ? EntryDisplayNames.Resolve(names, entryId) : null))
+                    slot.EntryId is { } entryId ? EntryDisplayNames.ToSide(entries, entryId).DisplayName : null))
                 .ToArray();
 
             return new ConsultationStageStructureDto(

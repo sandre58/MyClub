@@ -92,6 +92,68 @@ app.MapPost(
                 new CompetitionId(competitionId),
                 request.DisplayName,
                 request.TeamId,
+                request.ShortName,
+                request.LogoPath,
+                request.PrimaryColor,
+                request.SecondaryColor,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/presentation",
+    async (
+        Guid competitionId,
+        UpdateCompetitionPresentationRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .UpdateCompetitionPresentationAsync(
+                new CompetitionId(competitionId),
+                request.ShortName,
+                request.LogoPath,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/schedule",
+    async (
+        Guid competitionId,
+        SetCompetitionScheduleRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .SetCompetitionScheduleAsync(
+                new CompetitionId(competitionId),
+                request.ScheduledStart,
+                request.ScheduledEnd,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/presentation",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        UpdateEntryPresentationRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .UpdateEntryPresentationAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                request.ShortName,
+                request.LogoPath,
+                request.PrimaryColor,
+                request.SecondaryColor,
                 cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(view);

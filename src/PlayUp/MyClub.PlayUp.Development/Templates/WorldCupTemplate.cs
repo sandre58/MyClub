@@ -35,7 +35,7 @@ public sealed class WorldCupTemplate : ICompetitionTemplate
         ParticipantsPerGroup = 4,
         StageName = "Phase de groupes",
         TeamNames = TeamNameSource.Dataset,
-        DatasetCompetitionKey = "world-cup",
+        DatasetCompetitionKey = "world-cup"
     };
 
     /// <inheritdoc />

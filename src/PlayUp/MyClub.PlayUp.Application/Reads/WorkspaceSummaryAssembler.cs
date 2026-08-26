@@ -49,7 +49,9 @@ public static class WorkspaceSummaryAssembler
             attentionCount,
             competition.CompletionMode,
             canCompleteNormally,
-            blockers);
+            blockers,
+            competition.ShortName?.Value,
+            competition.LogoUri?.Value);
     }
 
     private static string? ResolveNextStub(CompetitionStatus status, bool canCompleteNormally) =>

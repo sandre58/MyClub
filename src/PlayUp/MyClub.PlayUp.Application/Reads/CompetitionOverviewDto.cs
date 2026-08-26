@@ -17,13 +17,21 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Entries">Participating entries.</param>
 /// <param name="Stages">Referenced stages (name + status).</param>
 /// <param name="CompletionMode">How the competition was completed, when set.</param>
+/// <param name="ShortName">Optional abbreviated name.</param>
+/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="ScheduledStart">Optional declared start.</param>
+/// <param name="ScheduledEnd">Optional declared end.</param>
 public sealed record CompetitionOverviewDto(
     Guid Id,
     string Name,
     CompetitionStatus Status,
     IReadOnlyList<CompetitionEntrySummaryDto> Entries,
     IReadOnlyList<CompetitionStageSummaryDto> Stages,
-    CompletionMode? CompletionMode = null);
+    CompletionMode? CompletionMode = null,
+    string? ShortName = null,
+    string? LogoPath = null,
+    DateTimeOffset? ScheduledStart = null,
+    DateTimeOffset? ScheduledEnd = null);
 
 /// <summary>
 /// Entry line in a competition overview.
@@ -31,7 +39,18 @@ public sealed record CompetitionOverviewDto(
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Display name.</param>
 /// <param name="Status">Participation status.</param>
-public sealed record CompetitionEntrySummaryDto(Guid EntryId, string DisplayName, EntryStatus Status);
+/// <param name="ShortName">Optional abbreviated name.</param>
+/// <param name="LogoPath">Optional logo path or absolute URI string.</param>
+/// <param name="PrimaryColor">Optional primary kit color.</param>
+/// <param name="SecondaryColor">Optional secondary kit color.</param>
+public sealed record CompetitionEntrySummaryDto(
+    Guid EntryId,
+    string DisplayName,
+    EntryStatus Status,
+    string? ShortName = null,
+    string? LogoPath = null,
+    string? PrimaryColor = null,
+    string? SecondaryColor = null);
 
 /// <summary>
 /// Stage line in a competition overview.

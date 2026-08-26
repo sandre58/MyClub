@@ -32,7 +32,7 @@ public static class MatchReadAssembler
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matches);
 
-        var names = EntryDisplayNames.ToMap(competition);
+        var entries = EntryDisplayNames.ToEntries(competition);
         var placement = BuildFixturePlacementIndex(stage);
 
         return
@@ -49,12 +49,8 @@ public static class MatchReadAssembler
                         match.Id.Value,
                         match.StageId.Value,
                         match.Status,
-                        new EntrySideDto(
-                            match.HomeEntryId.Value,
-                            EntryDisplayNames.Resolve(names, match.HomeEntryId)),
-                        new EntrySideDto(
-                            match.AwayEntryId.Value,
-                            EntryDisplayNames.Resolve(names, match.AwayEntryId)),
+                        EntryDisplayNames.ToSide(entries, match.HomeEntryId),
+                        EntryDisplayNames.ToSide(entries, match.AwayEntryId),
                         MapScore(match.Result),
                         info.FixtureId?.Value,
                         info.RoundId?.Value,
@@ -79,7 +75,7 @@ public static class MatchReadAssembler
         ArgumentNullException.ThrowIfNull(match);
         ArgumentNullException.ThrowIfNull(competition);
 
-        var names = EntryDisplayNames.ToMap(competition);
+        var entries = EntryDisplayNames.ToEntries(competition);
         DateTimeOffset? scheduledAt = null;
         Guid? resourceId = null;
         if (stage is not null)
@@ -94,8 +90,8 @@ public static class MatchReadAssembler
                 match.CompetitionId.Value,
                 match.StageId.Value,
                 match.Status,
-                new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
-                new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
+                EntryDisplayNames.ToSide(entries, match.HomeEntryId),
+                EntryDisplayNames.ToSide(entries, match.AwayEntryId),
                 MapResult(match.Result),
                 FixtureId: null,
                 LegIndex: null,
@@ -110,8 +106,8 @@ public static class MatchReadAssembler
                 match.CompetitionId.Value,
                 match.StageId.Value,
                 match.Status,
-                new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
-                new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
+                EntryDisplayNames.ToSide(entries, match.HomeEntryId),
+                EntryDisplayNames.ToSide(entries, match.AwayEntryId),
                 MapResult(match.Result),
                 FixtureId: null,
                 LegIndex: null,
@@ -122,8 +118,8 @@ public static class MatchReadAssembler
             match.CompetitionId.Value,
             match.StageId.Value,
             match.Status,
-            new EntrySideDto(match.HomeEntryId.Value, EntryDisplayNames.Resolve(names, match.HomeEntryId)),
-            new EntrySideDto(match.AwayEntryId.Value, EntryDisplayNames.Resolve(names, match.AwayEntryId)),
+            EntryDisplayNames.ToSide(entries, match.HomeEntryId),
+            EntryDisplayNames.ToSide(entries, match.AwayEntryId),
             MapResult(match.Result),
             found.FixtureId.Value,
             found.LegIndex,

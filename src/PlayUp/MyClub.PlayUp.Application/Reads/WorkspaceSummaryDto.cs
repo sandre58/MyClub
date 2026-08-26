@@ -32,4 +32,6 @@ public sealed record WorkspaceSummaryDto(
     int AttentionCount,
     CompletionMode? CompletionMode = null,
     bool CanCompleteNormally = false,
-    IReadOnlyList<string>? CompletionBlockers = null);
+    IReadOnlyList<string>? CompletionBlockers = null,
+    string? ShortName = null,
+    string? LogoPath = null);

@@ -34,7 +34,7 @@ public sealed class Ligue1Template : ICompetitionTemplate
         MatchdayCount = 17,
         StageName = "Championnat",
         TeamNames = TeamNameSource.Dataset,
-        DatasetCompetitionKey = "ligue-1",
+        DatasetCompetitionKey = "ligue-1"
     };
 
     /// <inheritdoc />

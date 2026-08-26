@@ -24,5 +24,5 @@ public enum ScenarioCategory
     Terminal = 3,
 
     /// <summary>Seed with non-deterministic-looking but seed-driven variety.</summary>
-    Random = 4,
+    Random = 4
 }

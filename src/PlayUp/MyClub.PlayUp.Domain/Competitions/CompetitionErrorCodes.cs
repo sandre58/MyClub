@@ -50,4 +50,24 @@ public static class CompetitionErrorCodes
     /// Gets the code when a competition name is invalid.
     /// </summary>
     public const string NameInvalid = "Competition.NameInvalid";
+
+    /// <summary>
+    /// Gets the code when a short name is invalid.
+    /// </summary>
+    public const string InvalidShortName = "Competition.InvalidShortName";
+
+    /// <summary>
+    /// Gets the code when a logo URI is invalid.
+    /// </summary>
+    public const string InvalidLogoUri = "Competition.InvalidLogoUri";
+
+    /// <summary>
+    /// Gets the code when a team color is invalid.
+    /// </summary>
+    public const string InvalidTeamColor = "Competition.InvalidTeamColor";
+
+    /// <summary>
+    /// Gets the code when declared schedule dates are inconsistent.
+    /// </summary>
+    public const string InvalidSchedule = "Competition.InvalidSchedule";
 }

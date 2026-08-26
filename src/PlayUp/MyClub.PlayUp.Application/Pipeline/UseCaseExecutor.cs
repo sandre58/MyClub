@@ -457,14 +457,81 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         string displayName,
         Guid? teamId = null,
+        string? shortName = null,
+        string? logoPath = null,
+        string? primaryColor = null,
+        string? secondaryColor = null,
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var presentation = shortName is null && logoPath is null && primaryColor is null && secondaryColor is null
+            ? null
+            : new EntryPresentation(
+                ShortName.Create(shortName),
+                LogoUri.Create(logoPath),
+                TeamColor.Create(primaryColor),
+                TeamColor.Create(secondaryColor));
         AddEntry.Execute(
             competition,
             displayName,
             clock,
-            teamId is null ? null : new TeamId(teamId.Value));
+            teamId is null ? null : new TeamId(teamId.Value),
+            presentation);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Updates competition presentation and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> UpdateCompetitionPresentationAsync(
+        CompetitionId competitionId,
+        string? shortName,
+        string? logoPath,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        UpdateCompetitionPresentation.Execute(competition, shortName, logoPath, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sets declared competition schedule and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> SetCompetitionScheduleAsync(
+        CompetitionId competitionId,
+        DateTimeOffset? scheduledStart,
+        DateTimeOffset? scheduledEnd,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        SetCompetitionSchedule.Execute(competition, scheduledStart, scheduledEnd, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Updates entry presentation and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> UpdateEntryPresentationAsync(
+        CompetitionId competitionId,
+        EntryId entryId,
+        string? shortName,
+        string? logoPath,
+        string? primaryColor,
+        string? secondaryColor,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        UpdateEntryPresentation.Execute(
+            competition,
+            entryId,
+            shortName,
+            logoPath,
+            primaryColor,
+            secondaryColor,
+            clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
