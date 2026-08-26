@@ -804,6 +804,26 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Generates the next Swiss round (pairings + Matchday) while the stage is Running.
+    /// </summary>
+    public async Task<GenerateNextRoundResult> GenerateNextRoundAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
+        var existing = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var result = GenerateNextRound.Execute(competition, stage, existing, clock);
+        foreach (var created in result.CreatedMatches)
+        {
+            matches.Add(created);
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    /// <summary>
     /// Generates a schedule proposal without mutating the Stage.
     /// </summary>
     public async Task<ScheduleProposalDto> GenerateScheduleAsync(

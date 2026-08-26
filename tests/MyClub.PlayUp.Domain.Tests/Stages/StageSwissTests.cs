@@ -172,7 +172,6 @@ public sealed class StageSwissTests
     public void RecordSwissBye_allowed_while_running()
     {
         var stage = CreateSwiss(3);
-        stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
 
@@ -181,6 +180,31 @@ public sealed class StageSwissTests
 
         stage.SwissByeHistory.Should().ContainSingle().Which.EntryId.Should().Be(entry);
         stage.Status.Should().Be(StageStatus.Running);
+    }
+
+    [Fact]
+    public void Prepare_allows_swiss_without_matchdays()
+    {
+        var stage = CreateSwiss(3);
+
+        stage.Prepare(_clock);
+
+        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Matchdays.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AddSwissRoundMatchday_allowed_while_running()
+    {
+        var stage = CreateSwiss(2);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var matchday = stage.AddSwissRoundMatchday(_clock);
+
+        matchday.Number.Should().Be(1);
+        var blocked = () => stage.AddMatchday(2, _clock);
+        blocked.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
     }
 
     private Stage CreateDraft() =>

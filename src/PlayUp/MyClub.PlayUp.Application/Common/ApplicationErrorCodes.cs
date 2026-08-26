@@ -139,6 +139,11 @@ public static class ApplicationErrorCodes
     public const string MaterializationFailure = "Application.MaterializationFailure";
 
     /// <summary>
+    /// Gets the code when Swiss <c>GenerateNextRound</c> fails (preconditions or I8 NoSolution).
+    /// </summary>
+    public const string SwissRoundGenerationFailure = "Application.SwissRoundGenerationFailure";
+
+    /// <summary>
     /// Gets the code when Start/Finish is refused because the Competition is Completed or Archived.
     /// </summary>
     public const string MatchOperationNotAllowed = "Application.MatchOperationNotAllowed";

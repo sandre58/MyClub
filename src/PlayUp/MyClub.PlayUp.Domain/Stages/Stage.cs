@@ -678,6 +678,83 @@ public sealed class Stage : AggregateRoot<StageId>
         _swissByeHistory.Count(bye => bye.EntryId.Equals(entryId));
 
     /// <summary>
+    /// Adds the next Swiss Matchday (progressive round). Allowed while Running — does not unlock global structure.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created matchday (number = previous max + 1).</returns>
+    public Matchday AddSwissRoundMatchday(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+        EnsureCanAddMatchday();
+
+        var settings = SwissSettings!;
+        var nextNumber = _matchdays.Count == 0 ? 1 : _matchdays.Max(matchday => matchday.Number) + 1;
+        if (nextNumber > settings.RoundCount)
+        {
+            throw new DomainException(
+                $"Swiss stage already reached RoundCount {settings.RoundCount}.",
+                StageErrorCodes.SwissSettingsInvalid);
+        }
+
+        var matchday = new Matchday(MatchdayId.New(), nextNumber);
+        _matchdays.Add(matchday);
+        Raise(new StageMatchdayAdded(Id, matchday.Id, clock));
+        return matchday;
+    }
+
+    /// <summary>
+    /// Adds a Fixture under a Swiss Matchday while Running (GenerateNextRound).
+    /// </summary>
+    /// <param name="matchdayId">Target Swiss matchday.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created fixture.</returns>
+    public Fixture AddSwissRoundFixture(MatchdayId matchdayId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+
+        var matchday = _matchdays.FirstOrDefault(candidate => candidate.Id.Equals(matchdayId))
+            ?? throw new DomainException(
+                $"Matchday '{matchdayId}' was not found.",
+                StageErrorCodes.MatchdayNotFound);
+
+        var fixture = new Fixture(FixtureId.New(), slotAKey: null, slotBKey: null);
+        matchday.AddFixture(fixture);
+        Raise(new StageFixtureAdded(Id, fixture.Id, clock));
+        return fixture;
+    }
+
+    /// <summary>
+    /// Attaches a Match to a Swiss Fixture while Running (GenerateNextRound). LegIndex 1 for V1.
+    /// </summary>
+    /// <param name="fixtureId">Fixture identity.</param>
+    /// <param name="matchId">Match identity.</param>
+    /// <param name="legIndex">1-based leg index.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AttachSwissRoundMatch(FixtureId fixtureId, MatchId matchId, int legIndex, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+
+        var fixture = GetFixture(fixtureId);
+        if (fixture.Contains(matchId))
+        {
+            return;
+        }
+
+        if (HasMatch(matchId))
+        {
+            throw new DomainException(
+                $"Match '{matchId}' is already attached to another fixture.",
+                StageErrorCodes.MatchAlreadyAttached);
+        }
+
+        fixture.AttachMatch(matchId, legIndex);
+        Raise(new StageMatchAttached(Id, fixtureId, matchId, legIndex, clock));
+    }
+
+    /// <summary>
     /// Adds a group to the stage.
     /// </summary>
     /// <param name="name">The group name.</param>
@@ -1498,15 +1575,23 @@ public sealed class Stage : AggregateRoot<StageId>
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStatus(StageStatus.Draft, "Stage can only be prepared from Draft.");
 
-        if (!HasStructure)
+        if (!HasStructure && !IsSwiss)
         {
             throw new DomainException(
                 "Stage requires structure before Prepare.",
                 StageErrorCodes.NotReady);
         }
 
+        if (IsSwiss && SwissSettings is null)
+        {
+            throw new DomainException(
+                "Swiss stage requires SwissSettings before Prepare.",
+                StageErrorCodes.NotReady);
+        }
+
         // Elimination (Phase 5.5): ≥1 Round is enough; fixtures optional for Prepare.
         // Championship: Matchdays only. Poules: Groups + Matchdays + ≥1 entry.
+        // Swiss: SwissSettings is enough — Matchdays are created by GenerateNextRound.
         if (_rounds.Count == 0 && _groups.Count > 0)
         {
             if (_matchdays.Count == 0)
@@ -1723,6 +1808,27 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Swiss bye cannot be recorded when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    /// <summary>
+    /// Swiss progressive round materialization: Draft/Ready/Running, not Suspended/Completed.
+    /// Does not call <see cref="EnsureStructureMutable"/> (StructureLocked stays for non-Swiss ops).
+    /// </summary>
+    private void EnsureSwissProgressiveMutable()
+    {
+        if (!IsSwiss)
+        {
+            throw new DomainException(
+                "Swiss progressive round APIs require Swiss settings.",
+                StageErrorCodes.SwissSettingsInvalid);
+        }
+
+        if (Status is StageStatus.Suspended or StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Swiss round cannot be materialized when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
         }
     }
