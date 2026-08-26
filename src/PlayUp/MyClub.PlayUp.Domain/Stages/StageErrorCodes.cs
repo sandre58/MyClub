@@ -221,4 +221,9 @@ public static class StageErrorCodes
     /// Gets the code when a Swiss bye payload is invalid or conflicts with existing history.
     /// </summary>
     public const string SwissByeInvalid = "Stage.SwissByeInvalid";
+
+    /// <summary>
+    /// Gets the code when a Swiss pairing request is structurally invalid (≠ NoSolution).
+    /// </summary>
+    public const string SwissPairingInvalid = "Stage.SwissPairingInvalid";
 }
