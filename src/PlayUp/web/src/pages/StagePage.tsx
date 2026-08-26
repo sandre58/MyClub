@@ -267,8 +267,9 @@ function StageOverviewView({ data }: { data: StageOverview }) {
 type CupSlotPairDraft = { slotAKey: string; slotBKey: string }
 
 /**
- * Explicit SlotA↔SlotB pairing for materialize-from-slots (D2).
- * No naming heuristic — organizer chooses pairs.
+ * Explicit SlotA↔SlotB pairing for materialize-from-slots (D2 / Slice 4).
+ * No naming heuristic — organizer chooses pairs among occupied slots not yet
+ * covered by a complete Fixture (same rule as Cockpit readiness).
  */
 function CupConfrontationsPanel({ data }: { data: StageOverview }) {
   const { t } = useTranslation('stage')
@@ -278,8 +279,10 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
   const [slotB, setSlotB] = useState('')
 
   const occupied = data.slots.filter((slot) => slot.entryId != null)
+  const pairable = occupied.filter((slot) => !slot.coveredByCompleteFixture)
+  const coveredCount = occupied.filter((slot) => slot.coveredByCompleteFixture).length
   const usedKeys = new Set(pairs.flatMap((pair) => [pair.slotAKey, pair.slotBKey]))
-  const availableForSelect = occupied.filter((slot) => !usedKeys.has(slot.slotKey))
+  const availableForSelect = pairable.filter((slot) => !usedKeys.has(slot.slotKey))
 
   const canShow =
     (data.status === 'Draft' || data.status === 'Ready') &&
@@ -322,6 +325,8 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
     !usedKeys.has(slotA) &&
     !usedKeys.has(slotB)
 
+  const pairingExhausted = pairable.length < 2 && pairs.length === 0
+
   return (
     <section className="card" aria-labelledby="confrontations-heading">
       <h2 className="card__title" id="confrontations-heading">
@@ -331,105 +336,121 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       <p className="muted">
         {t('confrontations.occupiedHint', { count: occupied.length })}
       </p>
+      {coveredCount > 0 && (
+        <p className="muted">
+          {t('confrontations.coveredHint', { count: coveredCount })}
+        </p>
+      )}
 
-      {pairs.length > 0 && (
-        <ul className="plain-list" aria-label={t('confrontations.pairsHeading')}>
-          {pairs.map((pair) => (
-            <li key={`${pair.slotAKey}:${pair.slotBKey}`} className="button-row">
-              <span>
-                {t('confrontations.pairLabel', {
-                  slotA: pair.slotAKey,
-                  slotB: pair.slotBKey,
-                })}
-              </span>
+      {pairingExhausted ? (
+        <p className="notice" role="status">
+          {t('confrontations.allCovered')}
+        </p>
+      ) : (
+        <>
+          {pairs.length > 0 && (
+            <ul className="plain-list" aria-label={t('confrontations.pairsHeading')}>
+              {pairs.map((pair) => (
+                <li key={`${pair.slotAKey}:${pair.slotBKey}`} className="button-row">
+                  <span>
+                    {t('confrontations.pairLabel', {
+                      slotA: pair.slotAKey,
+                      slotB: pair.slotBKey,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--sm"
+                    onClick={() =>
+                      setPairs((current) =>
+                        current.filter(
+                          (item) =>
+                            item.slotAKey !== pair.slotAKey ||
+                            item.slotBKey !== pair.slotBKey,
+                        ),
+                      )
+                    }
+                  >
+                    {t('confrontations.removePair')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {pairs.length === 0 && (
+            <p className="muted">{t('confrontations.pairsEmpty')}</p>
+          )}
+
+          {availableForSelect.length >= 2 && (
+            <div className="button-row">
+              <label>
+                {t('confrontations.slotA')}{' '}
+                <select
+                  value={slotA}
+                  onChange={(event) => setSlotA(event.target.value)}
+                >
+                  <option value="">{t('confrontations.selectPlaceholder')}</option>
+                  {availableForSelect
+                    .filter((slot) => slot.slotKey !== slotB)
+                    .map((slot) => (
+                      <option key={slot.slotKey} value={slot.slotKey}>
+                        {slot.slotKey}
+                        {slot.displayName ? ` — ${slot.displayName}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                {t('confrontations.slotB')}{' '}
+                <select
+                  value={slotB}
+                  onChange={(event) => setSlotB(event.target.value)}
+                >
+                  <option value="">{t('confrontations.selectPlaceholder')}</option>
+                  {availableForSelect
+                    .filter((slot) => slot.slotKey !== slotA)
+                    .map((slot) => (
+                      <option key={slot.slotKey} value={slot.slotKey}>
+                        {slot.slotKey}
+                        {slot.displayName ? ` — ${slot.displayName}` : ''}
+                      </option>
+                    ))}
+                </select>
+              </label>
               <button
                 type="button"
-                className="btn btn--sm"
-                onClick={() =>
-                  setPairs((current) =>
-                    current.filter(
-                      (item) =>
-                        item.slotAKey !== pair.slotAKey ||
-                        item.slotBKey !== pair.slotBKey,
-                    ),
-                  )
-                }
+                className="btn"
+                disabled={!canAdd}
+                onClick={() => {
+                  setPairs((current) => [
+                    ...current,
+                    { slotAKey: slotA, slotBKey: slotB },
+                  ])
+                  setSlotA('')
+                  setSlotB('')
+                }}
               >
-                {t('confrontations.removePair')}
+                {t('confrontations.addPair')}
               </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {pairs.length === 0 && (
-        <p className="muted">{t('confrontations.pairsEmpty')}</p>
-      )}
-
-      {availableForSelect.length >= 2 && (
-        <div className="button-row">
-          <label>
-            {t('confrontations.slotA')}{' '}
-            <select
-              value={slotA}
-              onChange={(event) => setSlotA(event.target.value)}
-            >
-              <option value="">{t('confrontations.selectPlaceholder')}</option>
-              {availableForSelect
-                .filter((slot) => slot.slotKey !== slotB)
-                .map((slot) => (
-                  <option key={slot.slotKey} value={slot.slotKey}>
-                    {slot.slotKey}
-                    {slot.displayName ? ` — ${slot.displayName}` : ''}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label>
-            {t('confrontations.slotB')}{' '}
-            <select
-              value={slotB}
-              onChange={(event) => setSlotB(event.target.value)}
-            >
-              <option value="">{t('confrontations.selectPlaceholder')}</option>
-              {availableForSelect
-                .filter((slot) => slot.slotKey !== slotA)
-                .map((slot) => (
-                  <option key={slot.slotKey} value={slot.slotKey}>
-                    {slot.slotKey}
-                    {slot.displayName ? ` — ${slot.displayName}` : ''}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className="btn"
-            disabled={!canAdd}
-            onClick={() => {
-              setPairs((current) => [...current, { slotAKey: slotA, slotBKey: slotB }])
-              setSlotA('')
-              setSlotB('')
-            }}
-          >
-            {t('confrontations.addPair')}
-          </button>
-        </div>
-      )}
-
-      <div className="button-row">
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={pairs.length === 0 || materializeMutation.isPending}
-          onClick={() => materializeMutation.mutate()}
-        >
-          {materializeMutation.isPending ? (
-            <PendingLabel>{t('confrontations.submitting')}</PendingLabel>
-          ) : (
-            t('confrontations.submit')
+            </div>
           )}
-        </button>
-      </div>
+
+          <div className="button-row">
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={pairs.length === 0 || materializeMutation.isPending}
+              onClick={() => materializeMutation.mutate()}
+            >
+              {materializeMutation.isPending ? (
+                <PendingLabel>{t('confrontations.submitting')}</PendingLabel>
+              ) : (
+                t('confrontations.submit')
+              )}
+            </button>
+          </div>
+        </>
+      )}
 
       {materializeMutation.isSuccess && (
         <p className="notice" role="status">

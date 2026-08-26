@@ -50,7 +50,7 @@ const stageOverview: StageOverview = {
   name: 'QF',
   status: 'Draft',
   rounds: [],
-  slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+  slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
   draws: [],
 }
 
@@ -189,6 +189,7 @@ describe('MatchPage', () => {
             slotKey: 'SF1-A',
             entryId: 'home',
             displayName: 'Alpha',
+            coveredByCompleteFixture: false,
           },
         ],
       }

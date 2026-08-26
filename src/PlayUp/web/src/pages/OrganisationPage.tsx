@@ -35,6 +35,7 @@ import {
 import {
   attentionSourceLabel,
   competitionStatusLabel,
+  matchGenerationFormatLabel,
   structureFormatKindLabel,
 } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
@@ -48,6 +49,7 @@ import {
   StageStatusBadge,
 } from '../ui'
 import {
+  type MatchGenerationFormat,
   type OrganisationEntry,
   type OrganisationView,
   type ReplaceRegulationRequest,
@@ -1382,6 +1384,14 @@ function StructureSection({
               <dt>{t('structure.format')}</dt>
               <dd>{formatLabel}</dd>
             </div>
+            {(formatKind === 'Championship' || formatKind === 'Groups') && (
+              <div className="organisation-phase__cell">
+                <dt>{t('structure.matchGenerationFormat')}</dt>
+                <dd>
+                  {matchGenerationFormatLabel(data.structure.matchGenerationFormat)}
+                </dd>
+              </div>
+            )}
             <div className="organisation-phase__cell">
               <dt>{t('structure.composition')}</dt>
               <dd>
@@ -1438,12 +1448,24 @@ function StructureEditorDialog({
 }) {
   const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
-  const [format, setFormat] = useState<StructureFormatKind>('Championship')
+  const [format, setFormat] = useState<StructureFormatKind>(
+    data.format.kind ?? 'Championship',
+  )
   const [stageName, setStageName] = useState('')
-  const [matchdayCount, setMatchdayCount] = useState(1)
-  const [groupCount, setGroupCount] = useState(2)
+  const [matchdayCount, setMatchdayCount] = useState(
+    Math.max(1, data.structure.matchdayCount || 1),
+  )
+  const [groupCount, setGroupCount] = useState(
+    Math.max(1, data.structure.groupCount || 2),
+  )
   const [participantsPerGroup, setParticipantsPerGroup] = useState(2)
-  const [bracketSize, setBracketSize] = useState(4)
+  const [bracketSize, setBracketSize] = useState(
+    Math.max(2, data.structure.slotCount || 4),
+  )
+  const [matchGenerationFormat, setMatchGenerationFormat] =
+    useState<MatchGenerationFormat>(
+      data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
+    )
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -1455,6 +1477,10 @@ function StructureEditorDialog({
         participantsPerGroup:
           format === 'Groups' ? participantsPerGroup : null,
         bracketSize: format === 'Cup' ? bracketSize : null,
+        matchGenerationFormat:
+          format === 'Championship' || format === 'Groups'
+            ? matchGenerationFormat
+            : null,
       }),
     onSuccess: async () => {
       await invalidateAfterOrganisationMutation(
@@ -1508,6 +1534,30 @@ function StructureEditorDialog({
               placeholder={t('structure.stageNamePlaceholder')}
             />
           </label>
+          {(format === 'Championship' || format === 'Groups') && (
+            <label className="field">
+              {t('structure.matchGenerationFormat')}
+              <select
+                value={matchGenerationFormat}
+                onChange={(event) =>
+                  setMatchGenerationFormat(
+                    event.target.value as MatchGenerationFormat,
+                  )
+                }
+                aria-describedby="match-generation-hint"
+              >
+                <option value="SingleRoundRobin">
+                  {matchGenerationFormatLabel('SingleRoundRobin')}
+                </option>
+                <option value="DoubleRoundRobin">
+                  {matchGenerationFormatLabel('DoubleRoundRobin')}
+                </option>
+              </select>
+              <span id="match-generation-hint" className="caption">
+                {t('structure.matchGenerationHint')}
+              </span>
+            </label>
+          )}
           {format === 'Championship' && (
             <label className="field">
               {t('structure.matchdayCount')}

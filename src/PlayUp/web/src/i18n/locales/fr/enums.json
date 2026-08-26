@@ -48,6 +48,10 @@
     "Groups": "Groupes",
     "Cup": "Coupe"
   },
+  "matchGenerationFormat": {
+    "SingleRoundRobin": "Aller simple",
+    "DoubleRoundRobin": "Aller-retour (double RR)"
+  },
   "resultType": {
     "Played": "Joué",
     "Forfeit": "Forfait",

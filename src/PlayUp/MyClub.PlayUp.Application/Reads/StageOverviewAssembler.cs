@@ -35,11 +35,14 @@ public static class StageOverviewAssembler
                 [.. round.Fixtures.Select(MapFixture)]))
             .ToArray();
 
+        var covered = CupSlotCoverage.GetSlotsCoveredByCompleteFixtures(stage);
+
         var slots = stage.Slots
             .Select(slot => new StageSlotDto(
                 slot.SlotKey,
                 slot.EntryId?.Value,
-                slot.EntryId is { } entryId ? EntryDisplayNames.Resolve(names, entryId) : null))
+                slot.EntryId is { } entryId ? EntryDisplayNames.Resolve(names, entryId) : null,
+                covered.Contains(slot.SlotKey)))
             .ToArray();
 
         var draws = stage.Draws.Select(draw => MapDraw(draw, names)).ToArray();

@@ -60,6 +60,7 @@ function organisationView(
       slotCount: 0,
       hasDrawRules: false,
       numberOfPots: null,
+      matchGenerationFormat: 'SingleRoundRobin',
     },
     actions: [],
     readiness: {

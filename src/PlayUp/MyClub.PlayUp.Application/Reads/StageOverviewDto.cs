@@ -62,7 +62,12 @@ public sealed record StageFixtureAttachmentDto(Guid MatchId, int LegIndex);
 /// <param name="SlotKey">Business slot key.</param>
 /// <param name="EntryId">Resolved occupant when set.</param>
 /// <param name="DisplayName">Occupant display name when known.</param>
-public sealed record StageSlotDto(string SlotKey, Guid? EntryId, string? DisplayName);
+/// <param name="CoveredByCompleteFixture">True when a complete SlotA/B Fixture already covers this key (from-slots pairing excludes it).</param>
+public sealed record StageSlotDto(
+    string SlotKey,
+    Guid? EntryId,
+    string? DisplayName,
+    bool CoveredByCompleteFixture);
 
 /// <summary>
 /// Draw summary for stage overview (no rules, inputs, or soft violations).

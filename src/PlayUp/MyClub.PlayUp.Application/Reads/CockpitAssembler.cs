@@ -983,41 +983,13 @@ public static class CockpitAssembler
             return false;
         }
 
-        var covered = GetSlotsCoveredByCompleteFixtures(stage);
+        var covered = CupSlotCoverage.GetSlotsCoveredByCompleteFixtures(stage);
         var uncoveredOccupied = occupiedKeys.Count(key => !covered.Contains(key));
         return uncoveredOccupied >= 2;
     }
 
     private static bool IsCupStage(Stage stage) =>
         stage.Rounds.Count > 0 && stage.Groups.Count == 0 && stage.Matchdays.Count == 0;
-
-    private static HashSet<string> GetSlotsCoveredByCompleteFixtures(Stage stage)
-    {
-        var covered = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var round in stage.Rounds)
-        {
-            var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(round);
-            foreach (var fixture in round.Fixtures)
-            {
-                if (fixture.Attachments.Count < expectedLegs)
-                {
-                    continue;
-                }
-
-                if (fixture.SlotAKey is not null)
-                {
-                    covered.Add(fixture.SlotAKey);
-                }
-
-                if (fixture.SlotBKey is not null)
-                {
-                    covered.Add(fixture.SlotBKey);
-                }
-            }
-        }
-
-        return covered;
-    }
 
     private static IReadOnlyList<CockpitNavigationHintDto> BuildNavigationHints(
         Competition competition,

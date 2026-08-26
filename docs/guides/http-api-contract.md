@@ -150,6 +150,7 @@ Contract notes:
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
 - **`MaterializeFromOccupiedSlots` (Cockpit):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Cockpit does **not** choose SlotA/SlotB pairs and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects pairs explicitly on the Stage surface, then calls `POST …/matches/materialize-from-slots`.
+- Stage overview `slots[].coveredByCompleteFixture`: true when that slot key is already on a Fixture with the expected legs attached. Confrontations pairing UI excludes those slots (same coverage rule as Cockpit opportunity).
 - `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip.
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 

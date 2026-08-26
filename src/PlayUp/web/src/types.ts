@@ -53,6 +53,9 @@ export type DrawResolutionState = 'NotResolved' | 'Resolved' | 'NoSolution'
 /** Application StructureFormatKind — organisation format intent (string on wire). */
 export type StructureFormatKind = 'Championship' | 'Groups' | 'Cup'
 
+/** Domain MatchGenerationFormat — Championship / Groups RR mode (string on wire). */
+export type MatchGenerationFormat = 'SingleRoundRobin' | 'DoubleRoundRobin'
+
 export interface CompetitionEntrySummary {
   entryId: string
   displayName: string
@@ -366,6 +369,7 @@ export interface OrganisationStructureSummary {
   slotCount: number
   hasDrawRules: boolean
   numberOfPots: number | null
+  matchGenerationFormat: MatchGenerationFormat
 }
 
 export interface OrganisationReadiness {
@@ -436,6 +440,8 @@ export type ConfigureStructureRequest = {
   groupCount?: number | null
   participantsPerGroup?: number | null
   bracketSize?: number | null
+  /** Championship / Groups only; ignored for Cup. Default SingleRoundRobin on Host. */
+  matchGenerationFormat?: MatchGenerationFormat | null
 }
 
 /** GET /competitions/{id}/consultation — Slice 7 multi-consumer Read (camelCase wire). */
@@ -506,6 +512,7 @@ export interface ConsultationStageStructure {
   name: string
   status: StageStatus
   formatKind: StructureFormatKind | null
+  matchGenerationFormat: MatchGenerationFormat
   groups: unknown[]
   matchdays: unknown[]
   rounds: unknown[]
@@ -605,6 +612,8 @@ export interface StageSlot {
   slotKey: string
   entryId: string | null
   displayName: string | null
+  /** True when a complete Fixture already covers this slot (exclude from from-slots pairing). */
+  coveredByCompleteFixture: boolean
 }
 
 export interface StageDrawPairing {

@@ -118,6 +118,8 @@
     "configureAction": "Configurer la structure",
     "configureLegend": "Configurer la structure",
     "format": "Format",
+    "matchGenerationFormat": "Génération des rencontres",
+    "matchGenerationHint": "Championnat / groupes uniquement. La coupe ignore ce réglage.",
     "stageName": "Nom de la phase (optionnel)",
     "stageNamePlaceholder": "ex. Saison régulière",
     "matchdayCount": "Nombre de journées",

@@ -73,6 +73,7 @@ function organisationView(
       slotCount: 0,
       hasDrawRules: false,
       numberOfPots: null,
+      matchGenerationFormat: 'SingleRoundRobin',
     },
     actions: [
       'AddEntry',
@@ -281,9 +282,12 @@ describe('OrganisationPage', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
     await waitFor(() => {
-      expect(addCompetitionEntry).toHaveBeenCalledWith(competitionId, {
-        displayName: 'Beta',
-      })
+      expect(addCompetitionEntry).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({
+          displayName: 'Beta',
+        }),
+      )
     })
     expect((await screen.findAllByText('Beta')).length).toBeGreaterThan(0)
   })
@@ -455,9 +459,71 @@ describe('OrganisationPage', () => {
           groupCount: null,
           participantsPerGroup: null,
           bracketSize: null,
+          matchGenerationFormat: 'SingleRoundRobin',
         }),
       )
     })
+  })
+
+  it('configures Championship with DoubleRoundRobin generation format', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderOrganisationPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Configurer la structure/i }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.selectOptions(
+      await within(dialog).findByLabelText(/^Format$/i),
+      'Championship',
+    )
+    await user.selectOptions(
+      within(dialog).getByLabelText(/Génération des rencontres/i),
+      'DoubleRoundRobin',
+    )
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Configurer la structure' }),
+    )
+
+    await waitFor(() => {
+      expect(configureOrganisationStructure).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({
+          format: 'Championship',
+          matchGenerationFormat: 'DoubleRoundRobin',
+        }),
+      )
+    })
+  })
+
+  it('shows match generation format on a Championship structure panel', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        structure: {
+          groupCount: 0,
+          roundCount: 0,
+          matchdayCount: 34,
+          slotCount: 0,
+          hasDrawRules: false,
+          numberOfPots: null,
+          matchGenerationFormat: 'DoubleRoundRobin',
+        },
+      }),
+    )
+
+    renderOrganisationPage()
+
+    expect(
+      await screen.findByText(/Aller-retour \(double RR\)/i),
+    ).toBeInTheDocument()
   })
 
   it('hides mutations when Host actions omit them', async () => {
@@ -500,6 +566,7 @@ describe('OrganisationPage', () => {
           slotCount: 0,
           hasDrawRules: false,
           numberOfPots: null,
+          matchGenerationFormat: 'SingleRoundRobin',
         },
         participants: {
           activeCount: 2,

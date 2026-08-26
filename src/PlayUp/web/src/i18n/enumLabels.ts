@@ -6,6 +6,7 @@ import type {
   DrawResolutionState,
   DrawStatus,
   EntryStatus,
+  MatchGenerationFormat,
   MatchStatus,
   ResultType,
   StageStatus,
@@ -47,6 +48,10 @@ export function drawResolutionKindLabel(kind: DrawResolutionKind): string {
 
 export function structureFormatKindLabel(kind: StructureFormatKind): string {
   return enumLabel('structureFormatKind', kind)
+}
+
+export function matchGenerationFormatLabel(format: MatchGenerationFormat): string {
+  return enumLabel('matchGenerationFormat', format)
 }
 
 export function resultTypeLabel(type: ResultType): string {

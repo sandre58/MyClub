@@ -34,8 +34,10 @@
   },
   "confrontations": {
     "heading": "Confrontations",
-    "intro": "Appariez explicitement les emplacements occupés (Slot A ↔ Slot B), puis générez les rencontres.",
+    "intro": "Appariez explicitement les emplacements occupés non encore couverts (Slot A ↔ Slot B), puis générez les rencontres.",
     "occupiedHint": "{{count}} emplacement(s) occupé(s).",
+    "coveredHint": "{{count}} déjà couvert(s) par une confrontation complète — exclus de l’appariement.",
+    "allCovered": "Toutes les confrontations possibles sont déjà générées pour les emplacements occupés.",
     "slotA": "Emplacement A",
     "slotB": "Emplacement B",
     "selectPlaceholder": "Choisir…",

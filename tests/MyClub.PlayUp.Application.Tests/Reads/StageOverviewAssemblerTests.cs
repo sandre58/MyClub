@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -42,7 +43,8 @@ public sealed class StageOverviewAssemblerTests
         overview.Rounds[0].Fixtures[0].Id.Should().Be(fixture.Id.Value);
         overview.Rounds[0].Fixtures[0].Attachments.Should().BeEmpty();
         overview.Slots.Should().HaveCount(2);
-        overview.Slots.Should().OnlyContain(slot => slot.EntryId == null && slot.DisplayName == null);
+        overview.Slots.Should().OnlyContain(slot =>
+            slot.EntryId == null && slot.DisplayName == null && !slot.CoveredByCompleteFixture);
         overview.Draws.Should().ContainSingle();
         overview.Draws[0].Id.Should().Be(draw.Id.Value);
         overview.Draws[0].Kind.Should().Be(DrawResolutionKind.Pairing);
@@ -103,5 +105,39 @@ public sealed class StageOverviewAssemblerTests
         overview.Draws[0].SlotPlacements[0].SlotKey.Should().Be("A");
         overview.Draws[0].SlotPlacements[0].DisplayName.Should().Be("Seeded");
         overview.Draws[0].Pairings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Assemble_marks_slots_covered_by_complete_fixture()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var b = competition.AddEntry(TeamId.New(), "Beta", _clock);
+        var c = competition.AddEntry(TeamId.New(), "Gamma", _clock);
+        var d = competition.AddEntry(TeamId.New(), "Delta", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-B", _clock);
+        stage.AddSlot("SF2-A", _clock);
+        stage.AddSlot("SF2-B", _clock);
+        stage.ApplyResolvedEntry("SF1-A", a.Id, _clock);
+        stage.ApplyResolvedEntry("SF1-B", b.Id, _clock);
+        stage.ApplyResolvedEntry("SF2-A", c.Id, _clock);
+        stage.ApplyResolvedEntry("SF2-B", d.Id, _clock);
+
+        MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            [new CupSlotPair("SF1-A", "SF1-B")],
+            [],
+            _clock);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-A").CoveredByCompleteFixture.Should().BeTrue();
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-B").CoveredByCompleteFixture.Should().BeTrue();
+        overview.Slots.Single(slot => slot.SlotKey == "SF2-A").CoveredByCompleteFixture.Should().BeFalse();
+        overview.Slots.Single(slot => slot.SlotKey == "SF2-B").CoveredByCompleteFixture.Should().BeFalse();
     }
 }

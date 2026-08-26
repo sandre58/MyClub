@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -7,6 +7,7 @@ import {
   applyDraw,
   fetchCompetitionOverview,
   fetchStageOverview,
+  materializeCupFromOccupiedSlots,
   prepareStage,
   publishDraw,
   startStage,
@@ -30,6 +31,7 @@ vi.mock('../api', async (importOriginal) => {
     startStage: vi.fn(),
     publishDraw: vi.fn(),
     applyDraw: vi.fn(),
+    materializeCupFromOccupiedSlots: vi.fn(),
   }
 })
 
@@ -129,13 +131,13 @@ function renderStagePage() {
 
 describe('isSlotDrawApplied', () => {
   const slotsOccupied: StageSlot[] = [
-    { slotKey: 'SF1-A', entryId: entryA, displayName: 'Alpha' },
+    { slotKey: 'SF1-A', entryId: entryA, displayName: 'Alpha', coveredByCompleteFixture: false },
   ]
   const slotsEmpty: StageSlot[] = [
-    { slotKey: 'SF1-A', entryId: null, displayName: null },
+    { slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false },
   ]
   const slotsWrong: StageSlot[] = [
-    { slotKey: 'SF1-A', entryId: entryB, displayName: 'Beta' },
+    { slotKey: 'SF1-A', entryId: entryB, displayName: 'Beta', coveredByCompleteFixture: false },
   ]
 
   it('is true when every placement matches the stage slot occupant', () => {
@@ -612,7 +614,7 @@ describe('StagePage draws', () => {
   it('shows derived Applied when slot placements match stage slots', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: entryA, displayName: 'Alpha' }],
+        slots: [{ slotKey: 'SF1-A', entryId: entryA, displayName: 'Alpha', coveredByCompleteFixture: false }],
         draws: [slotDraw()],
       }),
     )
@@ -640,7 +642,7 @@ describe('StagePage draws', () => {
   it('does not show Applied when slot occupants do not match', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
         draws: [slotDraw()],
       }),
     )
@@ -739,6 +741,7 @@ describe('StagePage draws', () => {
             slotKey: 'SF1-A',
             entryId: applied ? entryA : null,
             displayName: applied ? 'Alpha' : null,
+            coveredByCompleteFixture: false,
           },
         ],
         draws: [slotDraw()],
@@ -769,7 +772,7 @@ describe('StagePage draws', () => {
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
         draws: [slotDraw()],
       }),
     )
@@ -801,7 +804,7 @@ describe('StagePage draws', () => {
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
         draws: [slotDraw()],
       }),
     )
@@ -821,7 +824,7 @@ describe('StagePage draws', () => {
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null }],
+        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
         draws: [slotDraw()],
       }),
     )
@@ -889,6 +892,108 @@ describe('StagePage draws', () => {
     expect(screen.getByText('Appliqué')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('Confrontations excludes slots covered by a complete fixture', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        status: 'Draft',
+        rounds: [
+          {
+            id: 'r1',
+            name: 'SF',
+            fixtures: [
+              {
+                id: fixtureId,
+                slotAKey: 'SF1-A',
+                slotBKey: 'SF1-B',
+                attachments: [{ matchId: 'm1', legIndex: 1 }],
+              },
+            ],
+          },
+        ],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: entryA,
+            displayName: 'Alpha',
+            coveredByCompleteFixture: true,
+          },
+          {
+            slotKey: 'SF1-B',
+            entryId: entryB,
+            displayName: 'Beta',
+            coveredByCompleteFixture: true,
+          },
+          {
+            slotKey: 'SF2-A',
+            entryId: entryA,
+            displayName: 'Alpha',
+            coveredByCompleteFixture: false,
+          },
+          {
+            slotKey: 'SF2-B',
+            entryId: entryB,
+            displayName: 'Beta',
+            coveredByCompleteFixture: false,
+          },
+        ],
+      }),
+    )
+
+    renderStagePage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Confrontations' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/2 déjà couvert\(s\) par une confrontation complète/i),
+    ).toBeInTheDocument()
+
+    const slotA = screen.getByLabelText(/Emplacement A/i)
+    expect(within(slotA).queryByText(/SF1-A/)).not.toBeInTheDocument()
+    expect(within(slotA).getByText(/SF2-A/)).toBeInTheDocument()
+    expect(within(slotA).getByText(/SF2-B/)).toBeInTheDocument()
+
+    await user.selectOptions(slotA, 'SF2-A')
+    await user.selectOptions(screen.getByLabelText(/Emplacement B/i), 'SF2-B')
+    await user.click(screen.getByRole('button', { name: /Ajouter la paire/i }))
+    expect(screen.getByText(/SF2-A ↔ SF2-B/)).toBeInTheDocument()
+  })
+
+  it('Confrontations shows all-covered when no pairable slots remain', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({
+        status: 'Draft',
+        rounds: [{ id: 'r1', name: 'SF', fixtures: [] }],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: entryA,
+            displayName: 'Alpha',
+            coveredByCompleteFixture: true,
+          },
+          {
+            slotKey: 'SF1-B',
+            entryId: entryB,
+            displayName: 'Beta',
+            coveredByCompleteFixture: true,
+          },
+        ],
+      }),
+    )
+
+    renderStagePage()
+
+    expect(
+      await screen.findByText(
+        /Toutes les confrontations possibles sont déjà générées/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Générer les confrontations/i }),
     ).not.toBeInTheDocument()
   })
 })
