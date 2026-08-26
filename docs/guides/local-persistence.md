@@ -112,6 +112,7 @@ Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progre
 | Host port | `localhost:5432` |
 | Dev Workspace DB | name **must** end with `_dev` (e.g. `myclub_dev`) |
 | Host connection | User Secrets `ConnectionStrings:PlayUp` |
+| Media connection (optional) | User Secrets `ConnectionStrings:Media` (defaults to PlayUp string; schema `media`) |
 | DevRunner connection | User Secrets `ConnectionStrings:PlayUpDev` |
 
 ### Configuration

@@ -15,6 +15,8 @@ internal sealed class PlayUpWebApplicationFactory(string connectionString) : Web
     {
         ArgumentNullException.ThrowIfNull(builder);
         builder.UseSetting("ConnectionStrings:PlayUp", connectionString);
+        builder.UseSetting("ConnectionStrings:Media", connectionString);
+        builder.UseSetting("Media:StorageRoot", Path.Combine(Path.GetTempPath(), "myclub-media-host-tests", Guid.NewGuid().ToString("N")));
         builder.UseEnvironment("Development");
     }
 }

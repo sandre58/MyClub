@@ -5,6 +5,9 @@
 // -----------------------------------------------------------------------
 
 using System.Text.Json.Serialization;
+using MyClub.Media.Application.Media;
+using MyClub.Media.Domain;
+using MyClub.Media.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
@@ -19,18 +22,99 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("PlayUp")
                        ?? throw new InvalidOperationException("Connection string 'PlayUp' is not configured.");
 
+var mediaConnectionString = builder.Configuration.GetConnectionString("Media") ?? connectionString;
+var mediaStorageRoot = builder.Configuration["Media:StorageRoot"]
+                       ?? Path.Combine(builder.Environment.ContentRootPath, ".local", "media");
+if (!Path.IsPathRooted(mediaStorageRoot))
+{
+    mediaStorageRoot = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, mediaStorageRoot));
+}
+
 builder.Services.AddPlayUpInfrastructure(connectionString);
+builder.Services.AddMediaInfrastructure(mediaConnectionString, mediaStorageRoot);
 builder.Services.AddScoped<UseCaseExecutor>();
 builder.Services.ConfigureHttpJsonOptions(static options =>
 
     // Phase 12.8: HTTP enums as JSON strings (camelCase property names unchanged).
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<MediaExceptionHandler>();
 builder.Services.AddExceptionHandler<PlayUpExceptionHandler>();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+app.MapPost(
+    "/media",
+    async (HttpRequest request, MediaService mediaService, CancellationToken cancellationToken) =>
+    {
+        if (!request.HasFormContentType)
+        {
+            return Results.BadRequest(new { title = "Expected multipart/form-data with a 'file' field." });
+        }
+
+        var form = await request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
+        var file = form.Files.GetFile("file");
+        if (file is null || file.Length == 0)
+        {
+            return Results.BadRequest(new { title = "A non-empty 'file' form field is required." });
+        }
+
+        await using var stream = file.OpenReadStream();
+        var metadata = await mediaService
+            .CreateAsync(stream, file.ContentType, file.Length, file.FileName, cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Created(
+            $"/media/{metadata.Id}",
+            new MediaMetadataResponse(
+                metadata.Id,
+                metadata.ContentType,
+                metadata.ByteSize,
+                metadata.OriginalName,
+                metadata.CreatedAt));
+    });
+
+app.MapGet(
+    "/media/{mediaId:guid}",
+    async (Guid mediaId, MediaService mediaService, CancellationToken cancellationToken) =>
+    {
+        var metadata = await mediaService
+            .GetMetadataAsync(new MediaId(mediaId), cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Ok(
+            new MediaMetadataResponse(
+                metadata.Id,
+                metadata.ContentType,
+                metadata.ByteSize,
+                metadata.OriginalName,
+                metadata.CreatedAt));
+    });
+
+app.MapGet(
+    "/media/{mediaId:guid}/content",
+    async (Guid mediaId, MediaService mediaService, CancellationToken cancellationToken) =>
+    {
+        var content = await mediaService
+            .OpenContentAsync(new MediaId(mediaId), cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.File(
+            content.Content,
+            content.ContentType,
+            fileDownloadName: content.OriginalName,
+            enableRangeProcessing: false);
+    });
+
+app.MapDelete(
+    "/media/{mediaId:guid}",
+    async (Guid mediaId, MediaService mediaService, CancellationToken cancellationToken) =>
+    {
+        await mediaService.DeleteAsync(new MediaId(mediaId), cancellationToken).ConfigureAwait(false);
+        return Results.NoContent();
+    });
 
 app.MapPost(
     "/competitions",

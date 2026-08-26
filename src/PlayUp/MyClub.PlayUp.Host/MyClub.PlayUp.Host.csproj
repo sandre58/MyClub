@@ -3,7 +3,7 @@
     <PropertyGroup>
         <Description>Play'up HTTP host (Minimal APIs composition root).</Description>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>$(NoWarn);CA1515</NoWarn>
+        <NoWarn>$(NoWarn);CA1515;CA2007</NoWarn>
         <UserSecretsId>MyClub.PlayUp.Host</UserSecretsId>
     </PropertyGroup>
     
@@ -16,6 +16,7 @@
     <ItemGroup>
         <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj"/>
         <ProjectReference Include="..\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj"/>
+        <ProjectReference Include="..\..\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

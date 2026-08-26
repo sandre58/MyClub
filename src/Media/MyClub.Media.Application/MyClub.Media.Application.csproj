@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>MyClub Media application use cases and ports (metadata repository, binary storage).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.Media.Domain\MyClub.Media.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

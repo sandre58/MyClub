@@ -114,3 +114,8 @@ Directory.Build.local.props
 .env
 secrets.json
 appsettings.Development.json
+
+## =========================
+## Local Media storage (dev)
+## =========================
+.local/

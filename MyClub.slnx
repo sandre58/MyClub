@@ -10,6 +10,11 @@
     <Project Path="src/PlayUp/MyClub.PlayUp.Development/MyClub.PlayUp.Development.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.DevRunner/MyClub.PlayUp.DevRunner.csproj" />
   </Folder>
+  <Folder Name="/src/Media/">
+    <Project Path="src/Media/MyClub.Media.Domain/MyClub.Media.Domain.csproj" />
+    <Project Path="src/Media/MyClub.Media.Application/MyClub.Media.Application.csproj" />
+    <Project Path="src/Media/MyClub.Media.Infrastructure/MyClub.Media.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MyClub.PlayUp.Domain.Tests/MyClub.PlayUp.Domain.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.Application.Tests/MyClub.PlayUp.Application.Tests.csproj" />
@@ -17,6 +22,9 @@
     <Project Path="tests/MyClub.PlayUp.Host.Tests/MyClub.PlayUp.Host.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.Development.Tests/MyClub.PlayUp.Development.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.DevRunner.Tests/MyClub.PlayUp.DevRunner.Tests.csproj" />
+    <Project Path="tests/MyClub.Media.Domain.Tests/MyClub.Media.Domain.Tests.csproj" />
+    <Project Path="tests/MyClub.Media.Application.Tests/MyClub.Media.Application.Tests.csproj" />
+    <Project Path="tests/MyClub.Media.Infrastructure.Tests/MyClub.Media.Infrastructure.Tests.csproj" />
   </Folder>
   <Folder Name="/build/">
     <File Path=".editorconfig" />
@@ -55,6 +63,7 @@
   <Folder Name="/docs/guides/">
     <File Path="docs/guides/http-api-contract.md" />
     <File Path="docs/guides/local-persistence.md" />
+    <File Path="docs/guides/media.md" />
     <File Path="docs/guides/README.md" />
   </Folder>
   <Folder Name="/git/">
