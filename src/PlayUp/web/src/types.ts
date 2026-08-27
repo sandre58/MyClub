@@ -202,15 +202,26 @@ export interface CockpitOperationalFocus {
   stages: CockpitStageFocus[]
   draws: CockpitDrawFocus[]
   matchCounts: CockpitMatchCounts
-  upcomingMatches: CockpitUpcomingMatch[]
   /** Swiss bye pairing events — never fixtures/matches. */
   swissByes: CockpitSwissBye[]
-  /** Live matches for pilotage (≤3). Score null until Finish. */
-  liveMatches: CockpitMatchLine[]
-  /** Recently finished matches with scores (≤5). */
-  recentFinishedMatches: CockpitMatchLine[]
+  /** Dernières — last engaged unit on ReferenceStage; null → empty state. */
+  recentUnit: CockpitSportUnit | null
+  /** Prochaines — next unit (or first before kickoff); null → empty state. */
+  nextUnit: CockpitSportUnit | null
   /** Compact standing; null when not applicable (Cup / no structure). */
   standingCompact: CockpitStandingCompact | null
+}
+
+/** Matchday or Round slice for Vue d'ensemble temporal panels. */
+export interface CockpitSportUnit {
+  stageId: string
+  stageName: string
+  unitKind: 'Matchday' | 'Round' | string
+  unitKey: string
+  matchdayNumber?: number | null
+  roundName?: string | null
+  matchCount: number
+  matches: CockpitMatchLine[]
 }
 
 export interface CockpitMatchLine {
@@ -275,14 +286,6 @@ export interface CockpitMatchCounts {
   postponed: number
   cancelled: number
   total: number
-}
-
-export interface CockpitUpcomingMatch {
-  matchId: string
-  stageId: string
-  scheduledAt: string | null
-  homeDisplayName: string
-  awayDisplayName: string
 }
 
 export interface CockpitSituation {

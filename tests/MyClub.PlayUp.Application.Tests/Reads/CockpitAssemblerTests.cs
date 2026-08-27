@@ -463,18 +463,10 @@ public sealed class CockpitAssemblerTests
         view.OperationalFocus.MatchCounts.Scheduled.Should().Be(1);
         view.OperationalFocus.MatchCounts.Finished.Should().Be(1);
         view.OperationalFocus.MatchCounts.Total.Should().Be(3);
-        view.OperationalFocus.LiveMatches.Should().ContainSingle(line =>
-            line.MatchId == live.Id.Value &&
-            line.Status == MatchStatus.Live &&
-            line.Score == null &&
-            line.HomeDisplayName == "A" &&
-            line.AwayDisplayName == "B");
-        view.OperationalFocus.RecentFinishedMatches.Should().ContainSingle(line =>
-            line.MatchId == finished.Id.Value &&
-            line.Status == MatchStatus.Finished &&
-            line.Score != null &&
-            line.Score.HomeGoals == 1 &&
-            line.Score.AwayGoals == 0);
+
+        // Draft stage → no ReferenceStage → temporal units absent
+        view.OperationalFocus.RecentUnit.Should().BeNull();
+        view.OperationalFocus.NextUnit.Should().BeNull();
         view.AvailableActions.Should().Contain(action => action.Code == CockpitAssembler.ActionPrepareStage);
         view.AvailableActions.Should().Contain(action =>
             action.Code == CockpitAssembler.ActionStartMatch && action.MatchId == scheduled.Id.Value);
@@ -934,9 +926,12 @@ public sealed class CockpitAssemblerTests
         table.Rows[0].Position.Should().Be(1);
         table.Rows.Should().OnlyContain(row =>
             !string.IsNullOrWhiteSpace(row.DisplayName) && row.Played >= 0);
-        view.OperationalFocus.RecentFinishedMatches.Should().HaveCount(3);
-        view.OperationalFocus.RecentFinishedMatches.Should().OnlyContain(line =>
+        view.OperationalFocus.RecentUnit.Should().NotBeNull();
+        view.OperationalFocus.RecentUnit!.MatchdayNumber.Should().Be(1);
+        view.OperationalFocus.RecentUnit.MatchCount.Should().Be(3);
+        view.OperationalFocus.RecentUnit.Matches.Should().OnlyContain(line =>
             line.Status == MatchStatus.Finished && line.Score != null);
+        view.OperationalFocus.NextUnit.Should().BeNull();
     }
 
     [Fact]
@@ -1064,6 +1059,10 @@ public sealed class CockpitAssemblerTests
     public void Assemble_cup_omits_standing_compact()
     {
         var (competition, stage, match) = CreateFinishedKnockoutWithProgression();
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
 
         var view = CockpitAssembler.Assemble(
             competition,
@@ -1071,11 +1070,160 @@ public sealed class CockpitAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
         view.OperationalFocus.StandingCompact.Should().BeNull();
-        view.OperationalFocus.RecentFinishedMatches.Should().ContainSingle(line =>
+        view.OperationalFocus.RecentUnit.Should().NotBeNull();
+        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(CockpitAssembler.UnitKindRound);
+        view.OperationalFocus.RecentUnit.RoundName.Should().Be("R1");
+        view.OperationalFocus.RecentUnit.Matches.Should().ContainSingle(line =>
             line.MatchId == match.Id.Value &&
             line.Score != null &&
             line.Score.HomeGoals == 2 &&
             line.Score.AwayGoals == 1);
+        view.OperationalFocus.NextUnit.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_temporal_units_mixed_matchday_and_next()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "A", _clock);
+        var b = competition.AddEntry(TeamId.New(), "B", _clock);
+        var c = competition.AddEntry(TeamId.New(), "C", _clock);
+        var d = competition.AddEntry(TeamId.New(), "D", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        var md4 = stage.AddMatchday(4, _clock);
+        var md5 = stage.AddMatchday(5, _clock);
+        var md6 = stage.AddMatchday(6, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var matches = new List<Match>();
+
+        // J4 — all finished
+        matches.Add(AttachFinished(competition, stage, md4.Id, a.Id, b.Id, 1, 0));
+        matches.Add(AttachFinished(competition, stage, md4.Id, c.Id, d.Id, 2, 1));
+
+        // J5 — finished + live + scheduled
+        matches.Add(AttachFinished(competition, stage, md5.Id, a.Id, c.Id, 1, 1));
+        var live = Match.Create(competition.Id, stage.Id, b.Id, d.Id, _clock);
+        live.Start(_clock);
+        stage.AttachMatch(stage.AddFixture(md5.Id, _clock).Id, live.Id, legIndex: 1, _clock);
+        matches.Add(live);
+        var scheduledJ5 = Match.Create(competition.Id, stage.Id, a.Id, d.Id, _clock);
+        stage.AttachMatch(stage.AddFixture(md5.Id, _clock).Id, scheduledJ5.Id, legIndex: 1, _clock);
+        matches.Add(scheduledJ5);
+
+        // J6 — all scheduled
+        var scheduledJ6 = Match.Create(competition.Id, stage.Id, b.Id, c.Id, _clock);
+        stage.AttachMatch(stage.AddFixture(md6.Id, _clock).Id, scheduledJ6.Id, legIndex: 1, _clock);
+        matches.Add(scheduledJ6);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
+
+        view.OperationalFocus.RecentUnit.Should().NotBeNull();
+        view.OperationalFocus.RecentUnit!.MatchdayNumber.Should().Be(5);
+        view.OperationalFocus.RecentUnit.MatchCount.Should().Be(3);
+        view.OperationalFocus.RecentUnit.Matches.Should().Contain(line => line.Status == MatchStatus.Live);
+        view.OperationalFocus.RecentUnit.Matches.Should().Contain(line => line.Status == MatchStatus.Scheduled);
+        view.OperationalFocus.RecentUnit.Matches.Should().Contain(line => line.Status == MatchStatus.Finished);
+        view.OperationalFocus.RecentUnit.Matches[0].Status.Should().Be(MatchStatus.Live);
+
+        view.OperationalFocus.NextUnit.Should().NotBeNull();
+        view.OperationalFocus.NextUnit!.MatchdayNumber.Should().Be(6);
+        view.OperationalFocus.NextUnit.Matches.Should().OnlyContain(line => line.Status == MatchStatus.Scheduled);
+    }
+
+    [Fact]
+    public void Assemble_temporal_units_before_kickoff_recent_empty_next_first()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "A", _clock);
+        var away = competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        var md1 = stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var scheduled = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        stage.AttachMatch(stage.AddFixture(md1.Id, _clock).Id, scheduled.Id, legIndex: 1, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [scheduled] });
+
+        view.OperationalFocus.RecentUnit.Should().BeNull();
+        view.OperationalFocus.NextUnit.Should().NotBeNull();
+        view.OperationalFocus.NextUnit!.MatchdayNumber.Should().Be(1);
+        view.OperationalFocus.NextUnit.Matches.Should().ContainSingle(line =>
+            line.MatchId == scheduled.Id.Value && line.Status == MatchStatus.Scheduled);
+    }
+
+    [Fact]
+    public void Assemble_swiss_without_next_round_next_unit_null()
+    {
+        var competition = CreateCompetition.Execute("Swiss-Next", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Swiss(3),
+            _clock);
+        var stage = configured.Stage;
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var round1 = GenerateNextRound.Execute(competition, stage, [], _clock);
+        foreach (var match in round1.CreatedMatches)
+        {
+            match.Start(_clock);
+            match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        }
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [stage.Id] = round1.CreatedMatches
+            });
+
+        view.OperationalFocus.RecentUnit.Should().NotBeNull();
+        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(CockpitAssembler.UnitKindMatchday);
+        view.OperationalFocus.RecentUnit.MatchdayNumber.Should().Be(1);
+        view.OperationalFocus.NextUnit.Should().BeNull();
+    }
+
+    private Match AttachFinished(
+        Competition competition,
+        Stage stage,
+        MatchdayId matchdayId,
+        EntryId home,
+        EntryId away,
+        int homeGoals,
+        int awayGoals)
+    {
+        var fixture = stage.AddFixture(matchdayId, _clock);
+        var match = Match.Create(competition.Id, stage.Id, home, away, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(homeGoals, awayGoals)), _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        return match;
     }
 
     private (Competition Competition, Stage Stage, Match Match) CreateFinishedKnockoutWithProgression()

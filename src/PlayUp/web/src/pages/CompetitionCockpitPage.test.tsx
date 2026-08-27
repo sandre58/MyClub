@@ -316,11 +316,12 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)
   })
 
-  it('composes En cours sport panels from Read live / recent / standingCompact', async () => {
+  it('composes En cours sport panels from Read recentUnit / nextUnit / standingCompact', async () => {
     const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     const liveMatchId = '11111111-1111-1111-1111-111111111111'
     const finishedMatchId = '22222222-2222-2222-2222-222222222222'
+    const nextMatchId = '33333333-3333-3333-3333-333333333333'
 
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
@@ -349,28 +350,55 @@ describe('CompetitionCockpitPage', () => {
             cancelled: 0,
             total: 4,
           },
-          liveMatches: [
-            {
-              matchId: liveMatchId,
-              stageId,
-              status: 'Live',
-              scheduledAt: null,
-              homeDisplayName: 'Alpha',
-              awayDisplayName: 'Bravo',
-              score: null,
-            },
-          ],
-          recentFinishedMatches: [
-            {
-              matchId: finishedMatchId,
-              stageId,
-              status: 'Finished',
-              scheduledAt: '2026-08-20T15:00:00Z',
-              homeDisplayName: 'Charlie',
-              awayDisplayName: 'Delta',
-              score: { homeGoals: 2, awayGoals: 1 },
-            },
-          ],
+          recentUnit: {
+            stageId,
+            stageName: 'Phase 1',
+            unitKind: 'Matchday',
+            unitKey: '5',
+            matchdayNumber: 5,
+            roundName: null,
+            matchCount: 2,
+            matches: [
+              {
+                matchId: liveMatchId,
+                stageId,
+                status: 'Live',
+                scheduledAt: null,
+                homeDisplayName: 'Alpha',
+                awayDisplayName: 'Bravo',
+                score: null,
+              },
+              {
+                matchId: finishedMatchId,
+                stageId,
+                status: 'Finished',
+                scheduledAt: '2026-08-20T15:00:00Z',
+                homeDisplayName: 'Charlie',
+                awayDisplayName: 'Delta',
+                score: { homeGoals: 2, awayGoals: 1 },
+              },
+            ],
+          },
+          nextUnit: {
+            stageId,
+            stageName: 'Phase 1',
+            unitKind: 'Matchday',
+            unitKey: '6',
+            matchdayNumber: 6,
+            roundName: null,
+            matchCount: 1,
+            matches: [
+              {
+                matchId: nextMatchId,
+                stageId,
+                status: 'Scheduled',
+                scheduledAt: '2026-08-27T18:00:00Z',
+                homeDisplayName: 'Echo',
+                awayDisplayName: 'Foxtrot',
+                score: null,
+              },
+            ],
+          },
           standingCompact: {
             stageId,
             stageName: 'Phase 1',
@@ -412,20 +440,57 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByTestId(`overview-standing-${entryA}`)).toHaveTextContent(
       'Alpha',
     )
-    expect(screen.getByRole('heading', { name: 'Match en cours' })).toBeInTheDocument()
-    expect(screen.getByTestId(`overview-match-${liveMatchId}`)).toHaveTextContent(
-      'Alpha',
-    )
     expect(
       screen.getByRole('heading', { name: 'Dernières rencontres' }),
     ).toBeInTheDocument()
+    expect(screen.getByText(/Journée 5/)).toBeInTheDocument()
+    expect(screen.getByTestId(`overview-match-${liveMatchId}`)).toHaveTextContent(
+      'Live',
+    )
     expect(screen.getByTestId(`overview-match-${finishedMatchId}`)).toHaveTextContent(
       '2–1',
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Prochaines rencontres' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Journée 6/)).toBeInTheDocument()
+    expect(screen.getByTestId(`overview-match-${nextMatchId}`)).toHaveTextContent(
+      'Echo',
     )
     expect(screen.queryByRole('heading', { name: 'Structure' })).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Voir le classement' }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
+  })
+
+  it('shows empty states for Dernières and Prochaines when units are null', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          recentUnit: null,
+          nextUnit: null,
+          standingCompact: null,
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Dernières rencontres' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Prochaines rencontres' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Aucune unité engagée pour le moment'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Aucune prochaine journée n’est encore générée'),
+    ).toBeInTheDocument()
   })
 
   it('uses Host readiness copy without inventing draw chrome on overview', async () => {
@@ -626,10 +691,9 @@ describe('CompetitionCockpitPage', () => {
             cancelled: 0,
             total: 0,
           },
-          upcomingMatches: [],
           swissByes: [],
-          liveMatches: [],
-          recentFinishedMatches: [],
+          recentUnit: null,
+          nextUnit: null,
           standingCompact: null,
         },
       }),

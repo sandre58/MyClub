@@ -27,6 +27,7 @@ import type {
   CockpitDimension,
   CockpitMatchLine,
   CockpitSituation,
+  CockpitSportUnit,
   CockpitStandingCompact,
   CockpitView,
   OrganisationEntry,
@@ -174,9 +175,9 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const focus = data.operationalFocus
   const showStanding =
     (inProgress || completedLike) && focus.standingCompact != null
-  const showLive = inProgress && focus.liveMatches.length > 0
-  const showRecent = inProgress && focus.recentFinishedMatches.length > 0
-  const showSport = showStanding || showLive || showRecent
+  // En cours: Dernières / Prochaines always visible (empty-state override).
+  const showTemporalUnits = inProgress
+  const showSport = showStanding || showTemporalUnits
 
   return (
     <div className="overview">
@@ -224,20 +225,18 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
               href={classementsHref}
             />
           )}
-          {(showLive || showRecent) && (
+          {showTemporalUnits && (
             <div className="overview__sport-stack">
-              {showLive && (
-                <LiveMatchesPanel
-                  matches={focus.liveMatches}
-                  matchesHref={matchesHref}
-                />
-              )}
-              {showRecent && (
-                <RecentFinishedPanel
-                  matches={focus.recentFinishedMatches}
-                  matchesHref={matchesHref}
-                />
-              )}
+              <SportUnitPanel
+                kind="recent"
+                unit={focus.recentUnit}
+                matchesHref={matchesHref}
+              />
+              <SportUnitPanel
+                kind="next"
+                unit={focus.nextUnit}
+                matchesHref={matchesHref}
+              />
             </div>
           )}
         </div>
@@ -616,23 +615,39 @@ function StandingCompactPanel({
   )
 }
 
-function LiveMatchesPanel({
-  matches,
+function SportUnitPanel({
+  kind,
+  unit,
   matchesHref,
 }: {
-  matches: CockpitMatchLine[]
+  kind: 'recent' | 'next'
+  unit: CockpitSportUnit | null
   matchesHref: string
 }) {
   const { t } = useTranslation('cockpit')
+  const titleId =
+    kind === 'recent' ? 'cockpit-recent-unit' : 'cockpit-next-unit'
   const title =
-    matches.length === 1 ? t('sport.liveTitle') : t('sport.liveTitle_other')
+    kind === 'recent' ? t('sport.recentTitle') : t('sport.nextTitle')
+  const empty =
+    kind === 'recent' ? t('sport.recentEmpty') : t('sport.nextEmpty')
+  const subtitle = unit ? sportUnitSubtitle(unit, t) : null
 
   return (
-    <section className="ds-panel" aria-labelledby="cockpit-live-matches">
-      <PanelHead id="cockpit-live-matches" icon={<MatchesNavIcon size="md" />}>
+    <section className="ds-panel" aria-labelledby={titleId}>
+      <PanelHead id={titleId} icon={<MatchesNavIcon size="md" />}>
         {title}
       </PanelHead>
-      <MatchLineList matches={matches} live />
+      {subtitle ? (
+        <p className="overview-sport-unit__subtitle">{subtitle}</p>
+      ) : null}
+      {unit == null || unit.matches.length === 0 ? (
+        <p className="overview-sport-unit__empty">{empty}</p>
+      ) : (
+        <div className="overview-match-scroll">
+          <SportMatchLineList matches={unit.matches} />
+        </div>
+      )}
       <p className="overview-panel__footer">
         <Link className="overview-link" to={matchesHref}>
           {t('dimensions.openMatches')}
@@ -645,41 +660,21 @@ function LiveMatchesPanel({
   )
 }
 
-function RecentFinishedPanel({
-  matches,
-  matchesHref,
-}: {
-  matches: CockpitMatchLine[]
-  matchesHref: string
-}) {
-  const { t } = useTranslation('cockpit')
-
-  return (
-    <section className="ds-panel" aria-labelledby="cockpit-recent-finished">
-      <PanelHead id="cockpit-recent-finished" icon={<MatchesNavIcon size="md" />}>
-        {t('sport.recentTitle')}
-      </PanelHead>
-      <MatchLineList matches={matches} live={false} />
-      <p className="overview-panel__footer">
-        <Link className="overview-link" to={matchesHref}>
-          {t('dimensions.openMatches')}
-          <span className="overview-link__arrow" aria-hidden="true">
-            <ChevronRightIcon size="sm" />
-          </span>
-        </Link>
-      </p>
-    </section>
-  )
+function sportUnitSubtitle(
+  unit: CockpitSportUnit,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  const unitLabel =
+    unit.unitKind === 'Matchday' && unit.matchdayNumber != null
+      ? t('sport.unitMatchday', { number: unit.matchdayNumber })
+      : (unit.roundName?.trim() || unit.stageName)
+  const countLabel = t('sport.unitMatchCount', { count: unit.matchCount })
+  return `${unitLabel} · ${countLabel}`
 }
 
-function MatchLineList({
-  matches,
-  live,
-}: {
-  matches: CockpitMatchLine[]
-  live: boolean
-}) {
+function SportMatchLineList({ matches }: { matches: CockpitMatchLine[] }) {
   const { t } = useTranslation('cockpit')
+  const { i18n } = useTranslation()
 
   return (
     <ul className="overview-match-list">
@@ -688,10 +683,21 @@ function MatchLineList({
           match.score != null
             ? `${match.score.homeGoals}–${match.score.awayGoals}`
             : null
+        const isLive = match.status === 'Live'
+        const isFinished = match.status === 'Finished'
+        const scheduledLabel =
+          match.scheduledAt != null
+            ? formatMatchSchedule(match.scheduledAt, i18n.language)
+            : t('sport.scheduledUnset')
+
         return (
           <li key={match.matchId}>
             <Link
-              className="overview-match"
+              className={
+                isLive
+                  ? 'overview-match overview-match--live'
+                  : 'overview-match'
+              }
               to={`/matches/${match.matchId}`}
               data-testid={`overview-match-${match.matchId}`}
             >
@@ -703,13 +709,15 @@ function MatchLineList({
                 <span className="overview-match__name">{match.awayDisplayName}</span>
               </span>
               <span className="overview-match__aside">
-                {live ? (
+                {isLive ? (
                   <Status density="context" tone="live" variant="soft" shape="rounded">
                     {t('sport.liveBadge')}
                   </Status>
-                ) : score ? (
+                ) : isFinished && score ? (
                   <span className="overview-match__score">{score}</span>
-                ) : null}
+                ) : (
+                  <span className="overview-match__when">{scheduledLabel}</span>
+                )}
                 <span className="overview-match__chevron" aria-hidden="true">
                   <ChevronRightIcon size="sm" />
                 </span>
@@ -720,6 +728,17 @@ function MatchLineList({
       })}
     </ul>
   )
+}
+
+function formatMatchSchedule(iso: string, locale: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) {
+    return iso
+  }
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date)
 }
 
 function AttentionSignalSection({

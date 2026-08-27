@@ -538,14 +538,11 @@ public static class CockpitAssembler
     /// <remarks>Retained for clients/tests; no longer attached as a standing regulation gap when absent.</remarks>
     public const string BlockerInsufficientOccupiedSlots = "InsufficientOccupiedSlots";
 
-    /// <summary>Max live matches projected on Cockpit operational focus (aligns with FinishMatch actions).</summary>
-    public const int LiveMatchesTake = 3;
+    /// <summary>Sport unit kind: championship / groups / Swiss matchday.</summary>
+    public const string UnitKindMatchday = "Matchday";
 
-    /// <summary>Max recent finished matches projected on Cockpit operational focus.</summary>
-    public const int RecentFinishedMatchesTake = 5;
-
-    /// <summary>Max upcoming scheduled matches projected on Cockpit operational focus.</summary>
-    public const int UpcomingMatchesTake = 8;
+    /// <summary>Sport unit kind: cup elimination round.</summary>
+    public const string UnitKindRound = "Round";
 
     private static CockpitOperationalFocusDto BuildOperationalFocus(
         Competition competition,
@@ -570,48 +567,6 @@ public static class CockpitAssembler
                     DrawAppliedState.IsApplied(draw, stage))))
             .ToArray();
 
-        var upcoming = matchesByStage
-            .SelectMany(pair => pair.Value
-                .Where(match => match.Status == MatchStatus.Scheduled)
-                .Select(match =>
-                {
-                    DateTimeOffset? scheduledAt = null;
-                    var stage = stages.First(candidate => candidate.Id.Equals(pair.Key));
-                    if (stage.TryGetMatchPlacement(match.Id, out var placement))
-                    {
-                        scheduledAt = placement.Start;
-                    }
-
-                    return new CockpitUpcomingMatchDto(
-                        match.Id.Value,
-                        pair.Key.Value,
-                        scheduledAt,
-                        EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
-                        EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString());
-                }))
-            .OrderBy(item => item.ScheduledAt ?? DateTimeOffset.MaxValue)
-            .ThenBy(item => item.MatchId)
-            .Take(UpcomingMatchesTake)
-            .ToArray();
-
-        var liveMatches = ProjectMatchLines(
-                stages,
-                matchesByStage,
-                names,
-                match => match.Status == MatchStatus.Live,
-                ascendingBySchedule: true)
-            .Take(LiveMatchesTake)
-            .ToArray();
-
-        var recentFinished = ProjectMatchLines(
-                stages,
-                matchesByStage,
-                names,
-                match => match is { Status: MatchStatus.Finished, Result: not null },
-                ascendingBySchedule: false)
-            .Take(RecentFinishedMatchesTake)
-            .ToArray();
-
         var swissByes = stages
             .Where(stage => stage.IsSwiss)
             .SelectMany(stage => stage.SwissByeHistory.Select(bye => new CockpitSwissByeDto(
@@ -623,63 +578,184 @@ public static class CockpitAssembler
             .ThenBy(bye => bye.EntryId)
             .ToArray();
 
+        var (recentUnit, nextUnit) = BuildTemporalSportUnits(competition, stages, matchesByStage, names);
+
         return new CockpitOperationalFocusDto(
             stageFocus,
             draws,
             matchCounts,
-            upcoming,
             swissByes,
-            liveMatches,
-            recentFinished,
+            recentUnit,
+            nextUnit,
             BuildStandingCompact(competition, stages, matchesByStage));
     }
 
-    private static IEnumerable<CockpitMatchLineDto> ProjectMatchLines(
+    /// <summary>
+    /// Dernières / Prochaines on ReferenceStage only — full Matchday or Round units (no caps).
+    /// </summary>
+    internal static (CockpitSportUnitDto? Recent, CockpitSportUnitDto? Next) BuildTemporalSportUnits(
+        Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
-        IReadOnlyDictionary<EntryId, string> names,
-        Func<Match, bool> predicate,
-        bool ascendingBySchedule)
+        IReadOnlyDictionary<EntryId, string>? names = null)
     {
-        var lines = matchesByStage
-            .SelectMany(pair =>
+        var reference = ResolveReferenceStage(competition, stages);
+        if (reference is null)
+        {
+            return (null, null);
+        }
+
+        names ??= EntryDisplayNames.ToMap(competition);
+        var matches = matchesByStage.TryGetValue(reference.Id, out var list) ? list : [];
+        var byId = matches.ToDictionary(match => match.Id);
+        var units = EnumerateSportUnits(reference, byId);
+        if (units.Count == 0)
+        {
+            return (null, null);
+        }
+
+        SportUnitSlice? recentSlice = null;
+        for (var i = units.Count - 1; i >= 0; i--)
+        {
+            var slice = units[i];
+            if (slice.Matches.Exists(match =>
+                    match.Status is MatchStatus.Live or MatchStatus.Finished))
             {
-                var stage = stages.First(candidate => candidate.Id.Equals(pair.Key));
-                return pair.Value
-                    .Where(predicate)
-                    .Select(match =>
-                    {
-                        DateTimeOffset? scheduledAt = null;
-                        if (stage.TryGetMatchPlacement(match.Id, out var placement))
-                        {
-                            scheduledAt = placement.Start;
-                        }
+                recentSlice = slice;
+                break;
+            }
+        }
 
-                        MatchScoreDto? score = null;
-                        if (match.Result is { } result)
-                        {
-                            score = new MatchScoreDto(result.Score.HomeGoals, result.Score.AwayGoals);
-                        }
+        SportUnitSlice? nextSlice = null;
+        if (recentSlice is null)
+        {
+            nextSlice = units.FirstOrDefault(slice => slice.Matches.Count > 0);
+        }
+        else
+        {
+            nextSlice = units.FirstOrDefault(slice =>
+                slice.Order > recentSlice.Order && slice.Matches.Count > 0);
+        }
 
-                        return new CockpitMatchLineDto(
-                            match.Id.Value,
-                            pair.Key.Value,
-                            match.Status,
-                            scheduledAt,
-                            EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
-                            EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString(),
-                            score);
-                    });
-            });
-
-        return ascendingBySchedule
-            ? lines
-                .OrderBy(item => item.ScheduledAt ?? DateTimeOffset.MaxValue)
-                .ThenBy(item => item.MatchId)
-            : lines
-                .OrderByDescending(item => item.ScheduledAt ?? DateTimeOffset.MinValue)
-                .ThenByDescending(item => item.MatchId);
+        return (
+            recentSlice is null ? null : ProjectSportUnit(reference, recentSlice, names),
+            nextSlice is null ? null : ProjectSportUnit(reference, nextSlice, names));
     }
+
+    private static List<SportUnitSlice> EnumerateSportUnits(
+        Stage stage,
+        IReadOnlyDictionary<MatchId, Match> matchesById)
+    {
+        if (stage.Matchdays.Count > 0)
+        {
+            return
+            [
+                .. stage.Matchdays
+                    .OrderBy(matchday => matchday.Number)
+                    .Select(matchday => new SportUnitSlice(
+                        matchday.Number,
+                        UnitKindMatchday,
+                        matchday.Number.ToString(CultureInfo.InvariantCulture),
+                        matchday.Number,
+                        RoundName: null,
+                        CollectUnitMatches(matchday.Fixtures, matchesById)))
+            ];
+        }
+
+        if (stage.Rounds.Count > 0)
+        {
+            var slices = new List<SportUnitSlice>(stage.Rounds.Count);
+            for (var index = 0; index < stage.Rounds.Count; index++)
+            {
+                var round = stage.Rounds[index];
+                slices.Add(new SportUnitSlice(
+                    index + 1,
+                    UnitKindRound,
+                    round.Id.Value.ToString(),
+                    MatchdayNumber: null,
+                    round.Name,
+                    CollectUnitMatches(round.Fixtures, matchesById)));
+            }
+
+            return slices;
+        }
+
+        return [];
+    }
+
+    private static List<Match> CollectUnitMatches(
+        IReadOnlyList<Fixture> fixtures,
+        IReadOnlyDictionary<MatchId, Match> matchesById)
+    {
+        var collected = new List<Match>();
+        foreach (var fixture in fixtures)
+        {
+            foreach (var matchId in fixture.MatchIds)
+            {
+                if (matchesById.TryGetValue(matchId, out var match))
+                {
+                    collected.Add(match);
+                }
+            }
+        }
+
+        return collected;
+    }
+
+    private static CockpitSportUnitDto ProjectSportUnit(
+        Stage stage,
+        SportUnitSlice slice,
+        IReadOnlyDictionary<EntryId, string> names)
+    {
+        var lines = slice.Matches
+            .Select(match =>
+            {
+                DateTimeOffset? scheduledAt = null;
+                if (stage.TryGetMatchPlacement(match.Id, out var placement))
+                {
+                    scheduledAt = placement.Start;
+                }
+
+                MatchScoreDto? score = null;
+                if (match is { Status: MatchStatus.Finished, Result: not null })
+                {
+                    score = new MatchScoreDto(
+                        match.Result.Score.HomeGoals,
+                        match.Result.Score.AwayGoals);
+                }
+
+                return new CockpitMatchLineDto(
+                    match.Id.Value,
+                    stage.Id.Value,
+                    match.Status,
+                    scheduledAt,
+                    EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
+                    EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString(),
+                    score);
+            })
+            .OrderBy(line => line.Status == MatchStatus.Live ? 0 : 1)
+            .ThenBy(line => line.ScheduledAt ?? DateTimeOffset.MaxValue)
+            .ThenBy(line => line.MatchId)
+            .ToArray();
+
+        return new CockpitSportUnitDto(
+            stage.Id.Value,
+            stage.Name.Value,
+            slice.UnitKind,
+            slice.UnitKey,
+            slice.MatchdayNumber,
+            slice.RoundName,
+            lines.Length,
+            lines);
+    }
+
+    private sealed record SportUnitSlice(
+        int Order,
+        string UnitKind,
+        string UnitKey,
+        int? MatchdayNumber,
+        string? RoundName,
+        List<Match> Matches);
 
     private static CockpitStandingCompactDto? BuildStandingCompact(
         Competition competition,

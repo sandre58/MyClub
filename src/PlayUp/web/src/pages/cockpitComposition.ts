@@ -190,7 +190,7 @@ export function closurePresentation(view: CockpitView): ClosurePresentation {
   return 'condensed'
 }
 
-export type OperationalBlock = 'stages' | 'draws' | 'counts' | 'upcoming'
+export type OperationalBlock = 'stages' | 'draws' | 'counts'
 
 /**
  * Which operational blocks to show — cycle + empty data (presentation only).
@@ -216,10 +216,6 @@ export function operationalBlocks(view: CockpitView): OperationalBlock[] {
 
   if (showMatchOps && focus.matchCounts.total > 0) {
     blocks.push('counts')
-  }
-
-  if (showMatchOps && focus.upcomingMatches.length > 0) {
-    blocks.push('upcoming')
   }
 
   return blocks
