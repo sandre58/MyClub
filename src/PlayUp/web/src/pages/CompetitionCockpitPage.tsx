@@ -1661,7 +1661,6 @@ function NaturalProgressionSection({
   const code = data.naturalProgression?.code
   const matched = code ? findActionByCode(data.availableActions, code) : undefined
   const orgHref = `/competitions/${data.competitionId}/organisation`
-  const matchesHref = `/competitions/${data.competitionId}/matches`
   const classementsHref = `/competitions/${data.competitionId}/classements`
   const hasPrimary = Boolean(code)
   const showLifecycle = lifecycleActions.length > 0
@@ -1701,12 +1700,6 @@ function NaturalProgressionSection({
                 {t('dimensions.openOrganisation')}
               </Link>
             </p>
-          ) : code === 'OpenMatches' ? (
-            <p className="overview-actions">
-              <Link className="ds-btn ds-btn--primary" to={matchesHref}>
-                {t('dimensions.openMatches')}
-              </Link>
-            </p>
           ) : code === 'OpenConsultation' ? (
             <p className="overview-actions">
               <Link className="ds-btn ds-btn--primary" to={classementsHref}>
@@ -1738,9 +1731,7 @@ function NaturalProgressionSection({
             emphasizeFirst
           />
         </>
-      ) : (
-        <p className="overview-panel__muted">{t('progression.none')}</p>
-      )}
+      ) : null}
       {hasPrimary && showLifecycle && (
         <ActionButtons actions={lifecycleActions} actionRunner={actionRunner} />
       )}
@@ -1759,9 +1750,6 @@ function progressionBadgeIcon(code: string) {
   }
   if (code === 'ContinueOrganisation') {
     return <TeamsIcon />
-  }
-  if (code === 'OpenMatches') {
-    return <CalendarIcon />
   }
   if (code === 'OpenConsultation') {
     return <CompletedIcon />

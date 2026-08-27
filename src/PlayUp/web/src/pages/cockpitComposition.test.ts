@@ -4,9 +4,7 @@ import {
   actionPresentationSlot,
   actionsForDraw,
   actionsForStage,
-  closurePresentation,
   isProminenceVisible,
-  operationalBlocks,
   primaryTeamActions,
   secondaryActions,
   sortConstructionSlots,
@@ -45,54 +43,6 @@ describe('cockpitComposition', () => {
     // Lifecycle Prepare/Start stay secondary — closure slot is hidden during Construction.
     expect(actionPresentationSlot('PrepareCompetition')).toBe('secondary')
     expect(actionPresentationSlot('StartCompetition')).toBe('secondary')
-  })
-
-  it('hides closure in Construction when not completable', () => {
-    expect(
-      closurePresentation(
-        cockpitView({
-          cycleReading: { code: 'Construction' },
-          closureHint: { canCompleteNormally: false, blockerCodes: [] },
-        }),
-      ),
-    ).toBe('hidden')
-  })
-
-  it('shows full closure when completable', () => {
-    expect(
-      closurePresentation(
-        cockpitView({
-          cycleReading: { code: 'InProgress' },
-          closureHint: { canCompleteNormally: true, blockerCodes: [] },
-        }),
-      ),
-    ).toBe('full')
-  })
-
-  it('omits empty match blocks in Construction', () => {
-    const blocks = operationalBlocks(
-      cockpitView({
-        cycleReading: { code: 'Construction' },
-        operationalFocus: {
-          stages: [{ stageId: 's', name: 'P', status: 'Draft' }],
-          draws: [],
-          matchCounts: {
-            live: 0,
-            scheduled: 0,
-            finished: 0,
-            postponed: 0,
-            cancelled: 0,
-            total: 0,
-          },
-          swissByes: [],
-          recentUnit: null,
-          nextUnit: null,
-          standingCompact: null,
-          referenceStageGameRules: null,
-        },
-      }),
-    )
-    expect(blocks).toEqual(['stages'])
   })
 
   it('excludes already-rendered and team-admin actions from the secondary strip', () => {

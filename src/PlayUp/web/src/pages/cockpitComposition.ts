@@ -163,68 +163,6 @@ export function stageWideOperationalActions(actions: CockpitAction[]): CockpitAc
   )
 }
 
-/**
- * Closure presentation from cycle + closureHint only.
- * Construction + not completable → hidden (not a pilotage topic).
- */
-export type ClosurePresentation = 'full' | 'condensed' | 'hidden'
-
-export function closurePresentation(view: CockpitView): ClosurePresentation {
-  const cycle = view.cycleReading.code
-  const hint = view.closureHint
-
-  if (hint.canCompleteNormally) {
-    return 'full'
-  }
-
-  if (cycle === 'Construction') {
-    return 'hidden'
-  }
-
-  if (cycle === 'InProgress' || cycle === 'Completed' || cycle === 'Archived') {
-    return hint.blockerCodes.length > 0 || cycle === 'Completed' || cycle === 'Archived'
-      ? 'full'
-      : 'condensed'
-  }
-
-  return 'condensed'
-}
-
-export type OperationalBlock = 'stages' | 'draws' | 'counts'
-
-/**
- * Which operational blocks to show — cycle + empty data (presentation only).
- */
-export function operationalBlocks(view: CockpitView): OperationalBlock[] {
-  const cycle = view.cycleReading.code
-  const focus = view.operationalFocus
-  const blocks: OperationalBlock[] = []
-
-  if (focus.stages.length > 0) {
-    blocks.push('stages')
-  }
-
-  if (focus.draws.length > 0) {
-    blocks.push('draws')
-  }
-
-  const showMatchOps =
-    cycle === 'InProgress' ||
-    cycle === 'Completed' ||
-    cycle === 'Archived' ||
-    focus.matchCounts.total > 0
-
-  if (showMatchOps && focus.matchCounts.total > 0) {
-    blocks.push('counts')
-  }
-
-  return blocks
-}
-
-export function shouldShowOperationalSection(view: CockpitView): boolean {
-  return operationalBlocks(view).length > 0
-}
-
 /** Prefer Blocking situations first for pilotage order (stable within nature). */
 export function orderSituationsForDisplay(
   situations: CockpitSituation[],
@@ -243,11 +181,6 @@ export function panelProminenceClass(prominence: string): string {
     return 'ds-panel overview-dimension--condensed'
   }
   return 'ds-panel'
-}
-
-/** @deprecated Use panelProminenceClass — legacy card classes during migration. */
-export function cardProminenceClass(prominence: string): string {
-  return panelProminenceClass(prominence)
 }
 
 export type { CockpitProminence }

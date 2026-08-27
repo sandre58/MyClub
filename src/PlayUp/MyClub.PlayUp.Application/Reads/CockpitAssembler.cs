@@ -145,10 +145,7 @@ public static class CockpitAssembler
     /// <summary>Continue organisation (natural progression).</summary>
     public const string ProgressionContinueOrganisation = "ContinueOrganisation";
 
-    /// <summary>Open matches (natural progression).</summary>
-    public const string ProgressionOpenMatches = "OpenMatches";
-
-    /// <summary>Open consultation (natural progression).</summary>
+    /// <summary>Open consultation (natural progression — Completed/Archived).</summary>
     public const string ProgressionOpenConsultation = "OpenConsultation";
 
     /// <summary>
@@ -1365,7 +1362,7 @@ public static class CockpitAssembler
 
     /// <summary>
     /// En cours structural tip priority — first matching <see cref="CockpitActionDto.Code"/> wins.
-    /// Semantic order (not incidental list order). OpenMatches is never a tip in Running/Suspended.
+    /// Semantic order (not incidental list order). No consultation / match-hub fallback tip.
     /// </summary>
     internal static readonly string[] InProgressStructuralProgressionPriority =
     [

@@ -204,6 +204,60 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task Get_cockpit_running_projects_in_progress_without_open_matches_tipAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedRunningWithScheduledMatchAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        body.Should().NotBeNull();
+        body.Status.Should().Be(CompetitionStatus.Running);
+        body.CycleReading.Code.Should().Be(CockpitAssembler.CycleInProgress);
+        body.NaturalProgression.Should().BeNull();
+        body.ClosureHint.CanCompleteNormally.Should().BeFalse();
+        body.ClosureHint.BlockerCodes.Should().Contain(CompletionAnalyzer.ReasonScheduledMatches);
+        body.ConstructionDimensions.Teams.Prominence.Should().Be(CockpitAssembler.ProminenceCondensed);
+        body.ConstructionDimensions.Structure.Prominence.Should().Be(CockpitAssembler.ProminenceCondensed);
+        body.ConstructionDimensions.Regulation.Prominence.Should().Be(CockpitAssembler.ProminenceCondensed);
+        body.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeFalse();
+        body.ConstructionDimensions.Regulation.TransitionReadiness.Should().BeEmpty();
+        body.AvailableActions.Should().NotContain(action =>
+            action.Code is CockpitAssembler.ActionPrepareCompetition
+                or CockpitAssembler.ActionStartCompetition
+                or "OpenMatches");
+        body.Situations.Should().NotContain(item =>
+            item.Source is "InsufficientParticipants" or "MissingStage");
+        body.OperationalFocus.MatchCounts.Scheduled.Should().Be(1);
+        await AssertNoWinnerPropertyAsync(response);
+    }
+
+    [IntegrationFact]
+    public async Task Get_cockpit_suspended_projects_in_progress_informational_not_in_attentionAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedSuspendedWithScheduledMatchAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        body.Should().NotBeNull();
+        body.Status.Should().Be(CompetitionStatus.Suspended);
+        body.CycleReading.Code.Should().Be(CockpitAssembler.CycleInProgress);
+        body.NaturalProgression.Should().BeNull();
+        body.Situations.Should().Contain(item =>
+            item.Source == CockpitAssembler.SourceCompetitionSuspended
+            && item.Nature == CockpitAssembler.NatureInformational);
+        body.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == CockpitAssembler.SourceCompetitionSuspended);
+        body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == CockpitAssembler.NatureBlocking);
+        await AssertNoWinnerPropertyAsync(response);
+    }
+
+    [IntegrationFact]
     public async Task Get_cockpit_unknown_returns_404Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -275,6 +329,59 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         await unitOfWork.SaveChangesAsync();
 
         return new ReadSeed(competition.Id, stage.Id, addFixture.Id, home.Id, away.Id);
+    }
+
+    private async Task<ReadSeed> SeedRunningWithScheduledMatchAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Running Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Beta", _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        stages.Add(stage);
+        matches.Add(match);
+        await unitOfWork.SaveChangesAsync();
+
+        return new ReadSeed(competition.Id, stage.Id, FixtureId: default, home.Id, away.Id);
+    }
+
+    private async Task<ReadSeed> SeedSuspendedWithScheduledMatchAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Suspended Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Beta", _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Suspend(_clock);
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        stages.Add(stage);
+        matches.Add(match);
+        await unitOfWork.SaveChangesAsync();
+
+        return new ReadSeed(competition.Id, stage.Id, FixtureId: default, home.Id, away.Id);
     }
 
     private static async Task AssertNoWinnerPropertyAsync(HttpResponseMessage response)
