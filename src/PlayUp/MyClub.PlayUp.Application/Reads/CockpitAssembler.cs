@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -177,7 +178,12 @@ public static class CockpitAssembler
         var attentionSummary = BuildAttentionSummary(situations);
 
         var matchCounts = BuildMatchCounts(matchesByStage);
-        var operationalFocus = BuildOperationalFocus(competition, stages, matchesByStage, matchCounts);
+        var operationalFocus = BuildOperationalFocus(
+            competition,
+            stages,
+            matchesByStage,
+            matchCounts,
+            organisation.Format.Kind);
         var dimensions = BuildDimensions(competition, organisation, stages, matchCounts, matchesByStage);
         var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
         var fromSlotsOpportunities = stages
@@ -548,7 +554,8 @@ public static class CockpitAssembler
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
-        CockpitMatchCountsDto matchCounts)
+        CockpitMatchCountsDto matchCounts,
+        StructureFormatKind? formatKind)
     {
         var names = EntryDisplayNames.ToMap(competition);
         var stageFocus = stages
@@ -587,7 +594,72 @@ public static class CockpitAssembler
             swissByes,
             recentUnit,
             nextUnit,
-            BuildStandingCompact(competition, stages, matchesByStage));
+            BuildStandingCompact(competition, stages, matchesByStage),
+            BuildReferenceStageGameRules(competition, stages, formatKind));
+    }
+
+    /// <summary>
+    /// Game-rule facts for Vue d'ensemble Règlement — ReferenceStage only.
+    /// </summary>
+    internal static CockpitReferenceStageGameRulesDto? BuildReferenceStageGameRules(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        StructureFormatKind? competitionFormatKind)
+    {
+        var reference = ResolveReferenceStage(competition, stages);
+        if (reference is null)
+        {
+            return null;
+        }
+
+        var match = reference.Regulation.MatchRules;
+        var standing = reference.Regulation.StandingRules.Points;
+        var tie = TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
+        var formatKind = ResolveGameRulesFormatKind(reference, competitionFormatKind);
+
+        return new CockpitReferenceStageGameRulesDto(
+            reference.Id.Value,
+            reference.Name.Value,
+            formatKind.ToString(),
+            standing.WinPoints,
+            standing.DrawPoints,
+            standing.LossPoints,
+            match.Duration.NumberOfPeriods,
+            match.Duration.DurationPerPeriod,
+            HasExtraTime: match.ExtraTimePolicy is not null,
+            HasPenaltyShootout: match.PenaltyShootoutPolicy is not null,
+            NumberOfLegs: tie.NumberOfLegs,
+            AggregateScoring: tie.AggregateScoring,
+            HasTieExtraTime: tie.ExtraTimeRule is not null,
+            HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null,
+            SwissPlannedRounds: reference.SwissSettings?.RoundCount);
+    }
+
+    private static StructureFormatKind ResolveGameRulesFormatKind(
+        Stage stage,
+        StructureFormatKind? competitionFormatKind)
+    {
+        if (stage.IsSwiss)
+        {
+            return StructureFormatKind.Swiss;
+        }
+
+        if (competitionFormatKind is { } kind)
+        {
+            return kind;
+        }
+
+        if (stage.Rounds.Count > 0 && stage.Matchdays.Count == 0)
+        {
+            return StructureFormatKind.Cup;
+        }
+
+        if (stage.Groups.Count > 0)
+        {
+            return StructureFormatKind.Groups;
+        }
+
+        return StructureFormatKind.Championship;
     }
 
     /// <summary>

@@ -88,6 +88,7 @@ describe('cockpitComposition', () => {
           recentUnit: null,
           nextUnit: null,
           standingCompact: null,
+          referenceStageGameRules: null,
         },
       }),
     )

@@ -210,6 +210,30 @@ export interface CockpitOperationalFocus {
   nextUnit: CockpitSportUnit | null
   /** Compact standing; null when not applicable (Cup / no structure). */
   standingCompact: CockpitStandingCompact | null
+  /**
+   * Game-rule facts for En cours Règlement (ReferenceStage).
+   * Null when no ReferenceStage — SPA hides the card.
+   */
+  referenceStageGameRules: CockpitReferenceStageGameRules | null
+}
+
+/** Machine facts for En cours Règlement — SPA picks 2–3 by formatKind. */
+export interface CockpitReferenceStageGameRules {
+  stageId: string
+  stageName: string
+  formatKind: string
+  winPoints: number
+  drawPoints: number
+  lossPoints: number
+  numberOfPeriods: number
+  durationPerPeriod: number
+  hasExtraTime: boolean
+  hasPenaltyShootout: boolean
+  numberOfLegs: number
+  aggregateScoring: boolean
+  hasTieExtraTime: boolean
+  hasTiePenaltyShootout: boolean
+  swissPlannedRounds?: number | null
 }
 
 /** Matchday or Round slice for Vue d'ensemble temporal panels. */

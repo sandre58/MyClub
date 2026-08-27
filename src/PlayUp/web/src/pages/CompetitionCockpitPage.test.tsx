@@ -13,7 +13,7 @@ import {
   startCompetition,
 } from '../api'
 import { CompetitionCockpitPage } from './CompetitionCockpitPage'
-import { cockpitIds, cockpitSituation, cockpitView } from '../test/cockpitFixtures'
+import { cockpitIds, cockpitSituation, cockpitView, referenceStageGameRules } from '../test/cockpitFixtures'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -442,6 +442,7 @@ describe('CompetitionCockpitPage', () => {
               },
             ],
           },
+          referenceStageGameRules: referenceStageGameRules(),
         },
         naturalProgression: { code: 'OpenMatches' },
         availableActions: [{ code: 'OpenMatches', guaranteed: false }],
@@ -475,12 +476,27 @@ describe('CompetitionCockpitPage', () => {
     )
     expect(screen.getByTestId('overview-structure-condensed')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Structure' })).toBeInTheDocument()
+    expect(screen.getByTestId('overview-structure-format')).toHaveTextContent(
+      'Championnat',
+    )
     expect(screen.getByText(/34 journées/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(screen.getByText('équipes')).toBeInTheDocument()
     expect(screen.queryByText(/complètes/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Max\./)).not.toBeInTheDocument()
     expect(screen.queryByText(/Minimum .* démarrer/)).not.toBeInTheDocument()
+    expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
+    expect(screen.getByText('3 pts')).toBeInTheDocument()
+    expect(screen.getByText('Victoire')).toBeInTheDocument()
+    expect(screen.getByText('1 pts')).toBeInTheDocument()
+    expect(screen.getByText('Nul')).toBeInTheDocument()
+    expect(screen.getByText('0 pts')).toBeInTheDocument()
+    expect(screen.getByText('Défaite')).toBeInTheDocument()
+    expect(screen.getByText('2×45 min')).toBeInTheDocument()
+    expect(screen.queryByText(/Règlement prêt/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/2–64 équipes/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/conditions à lever/)).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Voir le classement' }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
@@ -718,6 +734,7 @@ describe('CompetitionCockpitPage', () => {
           recentUnit: null,
           nextUnit: null,
           standingCompact: null,
+          referenceStageGameRules: null,
         },
       }),
     )
@@ -729,6 +746,87 @@ describe('CompetitionCockpitPage', () => {
       screen.queryByRole('heading', { name: 'Matchs', level: 3 }),
     ).not.toBeInTheDocument()
     expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
+  })
+
+  it('hides En cours Règlement when referenceStageGameRules is null', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          structure: {
+            prominence: 'Condensed',
+            facts: { formatKind: 'Championship', matchdayCount: '10' },
+          },
+          teams: {
+            prominence: 'Condensed',
+            facts: { activeCount: '4', minimumTeams: '2' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          referenceStageGameRules: null,
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByTestId('overview-structure-condensed'),
+    ).toBeInTheDocument()
+    expect(screen.queryByTestId('overview-regulation-game')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Règlement' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows Cup game-rule facts without standing points', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          structure: {
+            prominence: 'Condensed',
+            facts: { formatKind: 'Cup', roundCount: '7' },
+          },
+          teams: { prominence: 'Absent', facts: {} },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          referenceStageGameRules: referenceStageGameRules({
+            formatKind: 'Cup',
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            hasExtraTime: true,
+            hasPenaltyShootout: true,
+          }),
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByTestId('overview-regulation-game'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('2 manches · cumul des scores')).toBeInTheDocument()
+    expect(screen.getByText('2×45 min')).toBeInTheDocument()
+    expect(screen.getByText('Prolongation · Tirs au but')).toBeInTheDocument()
+    expect(
+      screen.queryByText(/pts victoire/),
+    ).not.toBeInTheDocument()
   })
 
   it('navigates to organisation from a dimension panel', async () => {

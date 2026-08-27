@@ -26,6 +26,7 @@ import type {
   CockpitAction,
   CockpitDimension,
   CockpitMatchLine,
+  CockpitReferenceStageGameRules,
   CockpitSituation,
   CockpitSportUnit,
   CockpitStandingCompact,
@@ -165,6 +166,9 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const teamsVisible = slots.includes('teams')
   const regulationVisible = slots.includes('regulation')
   const structureVisible = slots.includes('structure')
+  const gameRules = data.operationalFocus.referenceStageGameRules
+  const gameRegulationVisible =
+    inProgress && regulationVisible && gameRules != null
   const stageActions = data.operationalFocus.stages.flatMap((stage) =>
     actionsForStage(data.availableActions, stage.stageId),
   )
@@ -208,6 +212,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
         )}
         {!inProgress && regulationVisible && (
           <RegulationDimensionCard
+            variant="construction"
             regulation={data.constructionDimensions.regulation}
             href={orgHref}
             hrefLabel={t('dimensions.openRegulation')}
@@ -243,7 +248,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
       )}
 
       {inProgress &&
-        (structureVisible || teamsVisible || regulationVisible) && (
+        (structureVisible || teamsVisible || gameRegulationVisible) && (
         <div className="overview__mid overview__mid--condensed-config">
           {structureVisible && (
             <StructurePanel
@@ -269,12 +274,14 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
               actionRunner={actionRunner}
             />
           )}
-          {regulationVisible && (
+          {gameRegulationVisible && gameRules && (
             <RegulationDimensionCard
+              variant="game"
               regulation={data.constructionDimensions.regulation}
+              gameRules={gameRules}
               href={orgHref}
               hrefLabel={t('dimensions.openRegulation')}
-              actions={slotActions('regulation')}
+              actions={[]}
               actionRunner={actionRunner}
             />
           )}
@@ -871,19 +878,92 @@ function OverviewAttentionItem({
 }
 
 function RegulationDimensionCard({
+  variant = 'construction',
   regulation,
+  gameRules,
   href,
   hrefLabel,
   actions,
   actionRunner,
 }: {
+  variant?: 'construction' | 'game'
   regulation: CockpitView['constructionDimensions']['regulation']
+  gameRules?: CockpitReferenceStageGameRules | null
   href: string
   hrefLabel: string
   actions: CockpitAction[]
   actionRunner: ActionRunner
 }) {
   const { t } = useTranslation('cockpit')
+
+  if (variant === 'game') {
+    if (!gameRules) {
+      return null
+    }
+
+    const isCup = gameRules.formatKind === 'Cup'
+    const textFacts = buildGameRegulationTextFacts(gameRules, t)
+    const showPoints = !isCup
+
+    return (
+      <article
+        className={`${panelProminenceClass(regulation.prominence)} overview-config-card`}
+        aria-labelledby="overview-regulation"
+        data-testid="overview-regulation-game"
+      >
+        <PanelHead id="overview-regulation" icon={<RegulationIcon size="md" />}>
+          {t('dimensions.regulation.title')}
+        </PanelHead>
+        <div className="overview-regulation-game">
+          {showPoints && (
+            <ul className="overview-chips overview-chips--game">
+              <PointsChip
+                tone="win"
+                value={gameRules.winPoints}
+                label={t('dimensions.regulation.pointsWin')}
+              />
+              <PointsChip
+                tone="draw"
+                value={gameRules.drawPoints}
+                label={t('dimensions.regulation.pointsDraw')}
+              />
+              <PointsChip
+                tone="loss"
+                value={gameRules.lossPoints}
+                label={t('dimensions.regulation.pointsLoss')}
+              />
+            </ul>
+          )}
+          {textFacts.length > 0 && (
+            <ul
+              className={
+                isCup
+                  ? 'overview-game-facts overview-game-facts--cup'
+                  : 'overview-game-facts overview-game-facts--support'
+              }
+            >
+              {textFacts.map((fact, index) => (
+                <li
+                  key={fact}
+                  className={
+                    isCup && index === 0
+                      ? 'overview-game-facts__primary'
+                      : undefined
+                  }
+                >
+                  {fact}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <p className="overview-panel__footer">
+          <OverviewLink to={href}>{hrefLabel}</OverviewLink>
+        </p>
+      </article>
+    )
+  }
+
   const competition = regulation.competition
   const condensed = isProminenceCondensed(regulation.prominence)
   const primaryGap = regulation.transitionReadiness.find((item) => !item.ready)
@@ -1119,10 +1199,13 @@ function StructurePanel({
   const stageNames = stages.map((stage) => stage.name).filter(Boolean)
 
   if (variant === 'condensed') {
-    const summary = buildStructureCondensedSummary({
+    const formatLabel =
+      formatConfigured && formatKind
+        ? structureFormatKindLabel(formatKind as StructureFormatKind)
+        : t('dimensions.structure.none')
+    const metrics = buildStructureCondensedMetrics({
       t,
       formatKind,
-      formatConfigured,
       stages,
       stageNames,
       groupCount,
@@ -1133,14 +1216,30 @@ function StructurePanel({
 
     return (
       <article
-        className={panelProminenceClass(dimension.prominence)}
+        className={`${panelProminenceClass(dimension.prominence)} overview-config-card`}
         aria-labelledby="overview-structure"
         data-testid="overview-structure-condensed"
       >
         <PanelHead id="overview-structure" icon={<StructureIcon size="md" />}>
           {t('dimensions.structure.title')}
         </PanelHead>
-        <p className="overview-structure-summary">{summary}</p>
+        <div className="overview-structure-hero">
+          <p
+            className="overview-structure-format"
+            data-testid="overview-structure-format"
+          >
+            {formatLabel}
+          </p>
+          {metrics.length > 0 && (
+            <ul className="overview-structure-pills">
+              {metrics.map((metric) => (
+                <li key={metric} className="overview-structure-pill">
+                  {metric}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <p className="overview-panel__footer">
           <OverviewLink to={href}>{hrefLabel}</OverviewLink>
         </p>
@@ -1249,10 +1348,9 @@ function StructurePanel({
   )
 }
 
-function buildStructureCondensedSummary({
+function buildStructureCondensedMetrics({
   t,
   formatKind,
-  formatConfigured,
   stages,
   stageNames,
   groupCount,
@@ -1262,53 +1360,139 @@ function buildStructureCondensedSummary({
 }: {
   t: (key: string, options?: Record<string, unknown>) => string
   formatKind: string | undefined
-  formatConfigured: boolean
   stages: CockpitView['operationalFocus']['stages']
   stageNames: string[]
   groupCount: number
   roundCount: number
   matchdayCount: number
   swissRoundCount: number
-}): string {
-  const parts: string[] = []
-
-  if (formatConfigured && formatKind) {
-    parts.push(structureFormatKindLabel(formatKind as StructureFormatKind))
-  } else {
-    parts.push(t('dimensions.structure.none'))
+}): string[] {
+  const metrics: string[] = []
+  const push = (value: string | null | undefined) => {
+    if (value && metrics.length < 3) {
+      metrics.push(value)
+    }
   }
 
-  if (stages.length > 0) {
-    parts.push(
-      stageNames.length > 0
+  const phasesLabel =
+    stages.length > 0
+      ? stageNames.length > 0
         ? t('dimensions.structure.phasesDetail', {
             count: stages.length,
             names: stageNames.join(' · '),
           })
-        : t('dimensions.structure.phases', { count: stages.length }),
-    )
+        : t('dimensions.structure.phases', { count: stages.length })
+      : null
+
+  switch (formatKind) {
+    case 'Championship':
+      push(phasesLabel)
+      if (matchdayCount > 0) {
+        push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+      }
+      if (groupCount > 0) {
+        push(t('dimensions.structure.groups', { count: groupCount }))
+      }
+      break
+    case 'Groups':
+      push(phasesLabel)
+      if (groupCount > 0) {
+        push(t('dimensions.structure.groups', { count: groupCount }))
+      }
+      if (matchdayCount > 0) {
+        push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+      }
+      break
+    case 'Cup':
+      push(phasesLabel)
+      if (roundCount > 0) {
+        push(t('dimensions.structure.rounds', { count: roundCount }))
+      }
+      break
+    case 'Swiss':
+      push(phasesLabel)
+      if (swissRoundCount > 0 || matchdayCount > 0) {
+        push(
+          t('dimensions.structure.swissRounds', {
+            generated: matchdayCount,
+            planned: swissRoundCount,
+          }),
+        )
+      }
+      break
+    default:
+      push(phasesLabel)
+      if (groupCount > 0) {
+        push(t('dimensions.structure.groups', { count: groupCount }))
+      }
+      if (roundCount > 0) {
+        push(t('dimensions.structure.rounds', { count: roundCount }))
+      }
+      if (matchdayCount > 0) {
+        push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+      }
+      break
   }
 
-  if (groupCount > 0) {
-    parts.push(t('dimensions.structure.groups', { count: groupCount }))
+  return metrics
+}
+
+/** Text facts for En cours Règlement (points rendered separately as chips). */
+function buildGameRegulationTextFacts(
+  rules: CockpitReferenceStageGameRules,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string[] {
+  const facts: string[] = []
+  const push = (value: string | null | undefined) => {
+    if (value && facts.length < 3) {
+      facts.push(value)
+    }
   }
 
-  if (roundCount > 0) {
-    parts.push(t('dimensions.structure.rounds', { count: roundCount }))
+  const duration = t('dimensions.regulation.formatDuration', {
+    periods: rules.numberOfPeriods,
+    duration: rules.durationPerPeriod,
+  })
+
+  if (rules.formatKind === 'Cup') {
+    if (rules.numberOfLegs >= 2) {
+      push(
+        rules.aggregateScoring
+          ? t('dimensions.regulation.twoLegsAggregate')
+          : t('dimensions.regulation.twoLegs'),
+      )
+    } else {
+      push(t('dimensions.regulation.elimination'))
+    }
+    push(duration)
+
+    const extras: string[] = []
+    if (rules.hasExtraTime || rules.hasTieExtraTime) {
+      extras.push(t('dimensions.regulation.extraTime'))
+    }
+    if (rules.hasPenaltyShootout || rules.hasTiePenaltyShootout) {
+      extras.push(t('dimensions.regulation.penalties'))
+    }
+    if (extras.length > 0) {
+      push(extras.join(' · '))
+    }
+    return facts
   }
 
-  if (formatKind === 'Swiss' && swissRoundCount > 0) {
-    parts.push(
-      t('dimensions.structure.swissRounds', {
-        generated: matchdayCount,
-        planned: swissRoundCount,
+  push(duration)
+  if (
+    rules.formatKind === 'Swiss' &&
+    rules.swissPlannedRounds != null &&
+    rules.swissPlannedRounds > 0
+  ) {
+    push(
+      t('dimensions.regulation.swissPlannedRounds', {
+        count: rules.swissPlannedRounds,
       }),
     )
-  } else if (formatKind !== 'Swiss' && matchdayCount > 0) {
-    parts.push(t('dimensions.structure.matchdays', { count: matchdayCount }))
   }
 
-  return parts.join(' · ')
+  return facts
 }
 
 function StructureRow({

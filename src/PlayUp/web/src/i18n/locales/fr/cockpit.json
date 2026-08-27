@@ -90,7 +90,16 @@
       "pointsWin": "Victoire",
       "pointsDraw": "Nul",
       "pointsLoss": "Défaite",
-      "formatMeta": "{{periods}}×{{duration}} min · {{min}}–{{max}} équipes"
+      "formatMeta": "{{periods}}×{{duration}} min · {{min}}–{{max}} équipes",
+      "formatDuration": "{{periods}}×{{duration}} min",
+      "pointsLine": "{{win}} pts victoire · {{draw}} pt nul · {{loss}} pt défaite",
+      "elimination": "Élimination directe",
+      "twoLegs": "2 manches",
+      "twoLegsAggregate": "2 manches · cumul des scores",
+      "extraTime": "Prolongation",
+      "penalties": "Tirs au but",
+      "swissPlannedRounds_one": "{{count}} journée planifiée",
+      "swissPlannedRounds_other": "{{count}} journées planifiées"
     },
     "matches": {
       "title": "Matchs",

@@ -133,6 +133,10 @@ public sealed record CockpitTransitionReadinessDto(
 /// Prochaines rencontres — next sport unit after RecentUnit, or first unit before kickoff (null → SPA empty state).
 /// </param>
 /// <param name="StandingCompact">Compact standing for En cours / Terminée; null when not applicable (Cup / no structure).</param>
+/// <param name="ReferenceStageGameRules">
+/// Game-rule facts for Vue d'ensemble Règlement (ReferenceStage). Null when no ReferenceStage.
+/// SPA picks 2–3 explanatory facts by formatKind — does not dump all fields.
+/// </param>
 public sealed record CockpitOperationalFocusDto(
     IReadOnlyList<CockpitStageFocusDto> Stages,
     IReadOnlyList<CockpitDrawFocusDto> Draws,
@@ -140,7 +144,44 @@ public sealed record CockpitOperationalFocusDto(
     IReadOnlyList<CockpitSwissByeDto> SwissByes,
     CockpitSportUnitDto? RecentUnit,
     CockpitSportUnitDto? NextUnit,
-    CockpitStandingCompactDto? StandingCompact);
+    CockpitStandingCompactDto? StandingCompact,
+    CockpitReferenceStageGameRulesDto? ReferenceStageGameRules);
+
+/// <summary>
+/// Machine facts for En cours Règlement — derived from ReferenceStage Domain regulation.
+/// Organizer copy is SPA i18n; presence flags enable selective display (not a full regulation dump).
+/// </summary>
+/// <param name="StageId">Reference stage identity.</param>
+/// <param name="StageName">Reference stage display name.</param>
+/// <param name="FormatKind">Championship | Groups | Cup | Swiss (competition format, or inferred from stage).</param>
+/// <param name="WinPoints">Standing win points.</param>
+/// <param name="DrawPoints">Standing draw points.</param>
+/// <param name="LossPoints">Standing loss points.</param>
+/// <param name="NumberOfPeriods">Match periods.</param>
+/// <param name="DurationPerPeriod">Minutes per period.</param>
+/// <param name="HasExtraTime">Match ExtraTimePolicy present.</param>
+/// <param name="HasPenaltyShootout">Match PenaltyShootoutPolicy present.</param>
+/// <param name="NumberOfLegs">Effective tie legs (1 or 2); from stage TieFormat or default one-leg.</param>
+/// <param name="AggregateScoring">Whether two-legged ties aggregate scores.</param>
+/// <param name="HasTieExtraTime">TieFormat ExtraTimeRule present.</param>
+/// <param name="HasTiePenaltyShootout">TieFormat PenaltyShootoutRule present.</param>
+/// <param name="SwissPlannedRounds">SwissSettings.RoundCount when Swiss; otherwise null.</param>
+public sealed record CockpitReferenceStageGameRulesDto(
+    Guid StageId,
+    string StageName,
+    string FormatKind,
+    int WinPoints,
+    int DrawPoints,
+    int LossPoints,
+    int NumberOfPeriods,
+    int DurationPerPeriod,
+    bool HasExtraTime,
+    bool HasPenaltyShootout,
+    int NumberOfLegs,
+    bool AggregateScoring,
+    bool HasTieExtraTime,
+    bool HasTiePenaltyShootout,
+    int? SwissPlannedRounds);
 
 /// <summary>
 /// One sport unit (Matchday or Round) on the ReferenceStage for Vue d'ensemble temporal panels.

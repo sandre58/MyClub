@@ -101,7 +101,8 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
     "swissByes": [],
     "recentUnit": null,
     "nextUnit": null,
-    "standingCompact": null
+    "standingCompact": null,
+    "referenceStageGameRules": null
   },
   "situations": [{
     "source": "InsufficientParticipants",
@@ -154,6 +155,9 @@ Contract notes:
   - Shape: `{ stageId, stageName, unitKind, unitKey, matchdayNumber?, roundName?, matchCount, matches[] }` where each match is `{ matchId, stageId, status, scheduledAt?, homeDisplayName, awayDisplayName, score? }` (`score` only when Finished; Domain has no in-progress score/minute).
   - No separate `liveMatches` panel — Live is a status inside `recentUnit` (SPA badge).
   - Distinct from cycle **Calendrier** signal (still OPEN).
+- `operationalFocus.referenceStageGameRules`: machine facts for En cours **Règlement** from **ReferenceStage** only (`null` when none). SPA selects 2–3 explanatory facts by `formatKind` — does not dump all fields.
+  - Includes standing points, match duration, extra-time / shootout presence, effective tie legs / aggregate, optional `swissPlannedRounds`.
+  - Distinct from `constructionDimensions.regulation` (construction readiness + competition summary / primary-stage flags).
 - `operationalFocus.standingCompact`: compact standing for pilotage derived from **ReferenceStage** only:
   - ReferenceStage = first `StageIds[i]` with `Stage.Status` in (`Running`, `Suspended`), else last `StageIds[i]` with `Completed`, else none → `standingCompact` null.
   - For Vue d’ensemble display, **Suspended = Running**. Multiple active candidates → first wins (no error in V1).

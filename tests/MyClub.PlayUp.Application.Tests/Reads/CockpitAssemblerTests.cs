@@ -932,6 +932,10 @@ public sealed class CockpitAssemblerTests
         view.OperationalFocus.RecentUnit.Matches.Should().OnlyContain(line =>
             line.Status == MatchStatus.Finished && line.Score != null);
         view.OperationalFocus.NextUnit.Should().BeNull();
+        view.OperationalFocus.ReferenceStageGameRules.Should().NotBeNull();
+        view.OperationalFocus.ReferenceStageGameRules!.FormatKind.Should().Be("Championship");
+        view.OperationalFocus.ReferenceStageGameRules.WinPoints.Should().Be(3);
+        view.OperationalFocus.ReferenceStageGameRules.NumberOfPeriods.Should().Be(2);
     }
 
     [Fact]
@@ -1079,6 +1083,9 @@ public sealed class CockpitAssemblerTests
             line.Score.HomeGoals == 2 &&
             line.Score.AwayGoals == 1);
         view.OperationalFocus.NextUnit.Should().BeNull();
+        view.OperationalFocus.ReferenceStageGameRules.Should().NotBeNull();
+        view.OperationalFocus.ReferenceStageGameRules!.FormatKind.Should().Be("Cup");
+        view.OperationalFocus.ReferenceStageGameRules.NumberOfLegs.Should().Be(1);
     }
 
     [Fact]

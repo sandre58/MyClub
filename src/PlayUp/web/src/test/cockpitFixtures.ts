@@ -1,9 +1,36 @@
-import type { CockpitView } from '../types'
+import type {
+  CockpitReferenceStageGameRules,
+  CockpitView,
+} from '../types'
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const drawId = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+
+/** Sample ReferenceStage game rules for En cours Règlement tests. */
+export function referenceStageGameRules(
+  overrides: Partial<CockpitReferenceStageGameRules> = {},
+): CockpitReferenceStageGameRules {
+  return {
+    stageId,
+    stageName: 'Phase 1',
+    formatKind: 'Championship',
+    winPoints: 3,
+    drawPoints: 1,
+    lossPoints: 0,
+    numberOfPeriods: 2,
+    durationPerPeriod: 45,
+    hasExtraTime: false,
+    hasPenaltyShootout: false,
+    numberOfLegs: 1,
+    aggregateScoring: false,
+    hasTieExtraTime: false,
+    hasTiePenaltyShootout: false,
+    swissPlannedRounds: null,
+    ...overrides,
+  }
+}
 
 /** Minimal valid CockpitView for SPA tests (mirrors Host CockpitViewDto). */
 export function cockpitView(
@@ -89,6 +116,7 @@ export function cockpitView(
       recentUnit: null,
       nextUnit: null,
       standingCompact: null,
+      referenceStageGameRules: null,
     },
     situations: [],
     attentionSummary: { count: 0, items: [] },
