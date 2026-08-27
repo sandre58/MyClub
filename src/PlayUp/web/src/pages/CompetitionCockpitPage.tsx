@@ -175,6 +175,10 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const orgHref = `/competitions/${data.competitionId}/organisation`
   const matchesHref = `/competitions/${data.competitionId}/matches`
   const classementsHref = `/competitions/${data.competitionId}/classements`
+  const showWhereAreWe = !inProgress
+  const showProgression =
+    Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0
+  const showPilotage = showWhereAreWe || showProgression
   const focus = data.operationalFocus
   const showStanding =
     (inProgress || completedLike) && focus.standingCompact != null
@@ -182,124 +186,191 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const showTemporalUnits = inProgress
   const showSport = showStanding || showTemporalUnits
 
-  return (
-    <div className="overview">
-      <div className="overview__pilotage">
-        <WhereAreWePanel data={data} />
-        <NaturalProgressionSection
-          data={data}
-          actionRunner={actionRunner}
-          lifecycleActions={lifecycleActions}
-        />
-      </div>
+  const attentionItems = orderSituationsForDisplay(data.attentionSummary.items)
+  const attentionCount = data.attentionSummary.count
+  const showAttention = attentionCount > 0 && attentionItems.length > 0
+  const showPrepMid = !inProgress && (teamsVisible || regulationVisible)
+  const showMid = !inProgress && (showAttention || showPrepMid)
+  const showInProgressConfig =
+    structureVisible || teamsVisible || gameRegulationVisible
 
-      <div className={inProgress ? 'overview__mid overview__mid--running' : 'overview__mid'}>
-        <AttentionSignalSection
-          items={orderSituationsForDisplay(data.attentionSummary.items)}
-          count={data.attentionSummary.count}
-          competitionId={data.competitionId}
-        />
-        {!inProgress && teamsVisible && (
+  const inProgressConfigBand =
+    inProgress && showInProgressConfig ? (
+      <div
+        className="overview__config overview__mid overview__mid--condensed-config"
+        data-testid="overview-region-config"
+      >
+        {structureVisible && (
+          <StructurePanel
+            variant="condensed"
+            dimension={data.constructionDimensions.structure}
+            stages={data.operationalFocus.stages}
+            matchTotal={data.operationalFocus.matchCounts.total}
+            swissByes={data.operationalFocus.swissByes}
+            href={orgHref}
+            hrefLabel={t('dimensions.openStructure')}
+            actions={[]}
+            actionRunner={actionRunner}
+          />
+        )}
+        {teamsVisible && (
           <TeamsPanel
-            variant="construction"
+            variant="identity"
             dimension={data.constructionDimensions.teams}
             entries={orgQuery.data?.participants.entries ?? []}
             href={orgHref}
             hrefLabel={t('dimensions.openTeams')}
-            actions={slotActions('teams')}
+            actions={[]}
             actionRunner={actionRunner}
           />
         )}
-        {!inProgress && regulationVisible && (
+        {gameRegulationVisible && gameRules && (
           <RegulationDimensionCard
-            variant="construction"
+            variant="game"
             regulation={data.constructionDimensions.regulation}
+            gameRules={gameRules}
             href={orgHref}
             hrefLabel={t('dimensions.openRegulation')}
-            actions={slotActions('regulation')}
+            actions={[]}
             actionRunner={actionRunner}
           />
         )}
       </div>
+    ) : null
 
-      {showSport && (
-        <div className="overview__sport">
-          {showStanding && focus.standingCompact && (
-            <StandingCompactPanel
-              standing={focus.standingCompact}
-              href={classementsHref}
-            />
-          )}
-          {showTemporalUnits && (
-            <div className="overview__sport-stack">
-              <SportUnitPanel
-                kind="recent"
-                unit={focus.recentUnit}
-                matchesHref={matchesHref}
-              />
-              <SportUnitPanel
-                kind="next"
-                unit={focus.nextUnit}
-                matchesHref={matchesHref}
+  const sportBand = showSport ? (
+    <div
+      className={
+        showStanding && showTemporalUnits
+          ? 'overview__sport'
+          : 'overview__sport overview__sport--solo'
+      }
+      data-testid="overview-region-sport"
+    >
+      {showStanding && focus.standingCompact && (
+        <StandingCompactPanel
+          standing={focus.standingCompact}
+          href={classementsHref}
+        />
+      )}
+      {showTemporalUnits && (
+        <div className="overview__sport-stack">
+          <SportUnitPanel
+            kind="recent"
+            unit={focus.recentUnit}
+            matchesHref={matchesHref}
+          />
+          <SportUnitPanel
+            kind="next"
+            unit={focus.nextUnit}
+            matchesHref={matchesHref}
+          />
+        </div>
+      )}
+    </div>
+  ) : null
+
+  return (
+    <div className="overview">
+      {inProgress ? (
+        <>
+          {showAttention && (
+            <div
+              className="overview__signals"
+              data-testid="overview-region-attention"
+            >
+              <AttentionSignalSection
+                items={attentionItems}
+                count={attentionCount}
+                competitionId={data.competitionId}
               />
             </div>
           )}
-        </div>
-      )}
+          {inProgressConfigBand}
+          {showProgression && (
+            <div
+              className="overview__signals"
+              data-testid="overview-region-progression"
+            >
+              <NaturalProgressionSection
+                data={data}
+                actionRunner={actionRunner}
+                lifecycleActions={lifecycleActions}
+              />
+            </div>
+          )}
+          {sportBand}
+        </>
+      ) : (
+        <>
+          {showPilotage && (
+            <div
+              className={
+                showWhereAreWe && showProgression
+                  ? 'overview__pilotage'
+                  : 'overview__pilotage overview__pilotage--solo'
+              }
+            >
+              {showWhereAreWe && <WhereAreWePanel data={data} />}
+              {showProgression && (
+                <NaturalProgressionSection
+                  data={data}
+                  actionRunner={actionRunner}
+                  lifecycleActions={lifecycleActions}
+                />
+              )}
+            </div>
+          )}
 
-      {inProgress &&
-        (structureVisible || teamsVisible || gameRegulationVisible) && (
-        <div className="overview__mid overview__mid--condensed-config">
+          {showMid && (
+            <div className="overview__mid">
+              {showAttention && (
+                <AttentionSignalSection
+                  items={attentionItems}
+                  count={attentionCount}
+                  competitionId={data.competitionId}
+                />
+              )}
+              {teamsVisible && (
+                <TeamsPanel
+                  variant="construction"
+                  dimension={data.constructionDimensions.teams}
+                  entries={orgQuery.data?.participants.entries ?? []}
+                  href={orgHref}
+                  hrefLabel={t('dimensions.openTeams')}
+                  actions={slotActions('teams')}
+                  actionRunner={actionRunner}
+                />
+              )}
+              {regulationVisible && (
+                <RegulationDimensionCard
+                  variant="construction"
+                  regulation={data.constructionDimensions.regulation}
+                  href={orgHref}
+                  hrefLabel={t('dimensions.openRegulation')}
+                  actions={slotActions('regulation')}
+                  actionRunner={actionRunner}
+                />
+              )}
+            </div>
+          )}
+
+          {sportBand}
+
           {structureVisible && (
             <StructurePanel
-              variant="condensed"
+              variant="construction"
               dimension={data.constructionDimensions.structure}
               stages={data.operationalFocus.stages}
               matchTotal={data.operationalFocus.matchCounts.total}
               swissByes={data.operationalFocus.swissByes}
               href={orgHref}
               hrefLabel={t('dimensions.openStructure')}
-              actions={[]}
+              actions={[...slotActions('structure'), ...stageActions]}
               actionRunner={actionRunner}
             />
           )}
-          {teamsVisible && (
-            <TeamsPanel
-              variant="identity"
-              dimension={data.constructionDimensions.teams}
-              entries={orgQuery.data?.participants.entries ?? []}
-              href={orgHref}
-              hrefLabel={t('dimensions.openTeams')}
-              actions={[]}
-              actionRunner={actionRunner}
-            />
-          )}
-          {gameRegulationVisible && gameRules && (
-            <RegulationDimensionCard
-              variant="game"
-              regulation={data.constructionDimensions.regulation}
-              gameRules={gameRules}
-              href={orgHref}
-              hrefLabel={t('dimensions.openRegulation')}
-              actions={[]}
-              actionRunner={actionRunner}
-            />
-          )}
-        </div>
-      )}
-
-      {!inProgress && structureVisible && (
-        <StructurePanel
-          variant="construction"
-          dimension={data.constructionDimensions.structure}
-          stages={data.operationalFocus.stages}
-          matchTotal={data.operationalFocus.matchCounts.total}
-          swissByes={data.operationalFocus.swissByes}
-          href={orgHref}
-          hrefLabel={t('dimensions.openStructure')}
-          actions={[...slotActions('structure'), ...stageActions]}
-          actionRunner={actionRunner}
-        />
+        </>
       )}
 
       {actionRunner.materializeFollowUp && (
@@ -776,30 +847,28 @@ function AttentionSignalSection({
   const { t } = useTranslation('cockpit')
   const preview = items.slice(0, 2)
 
+  if (count === 0 || preview.length === 0) {
+    return null
+  }
+
   return (
     <section className="overview-attention" aria-labelledby="cockpit-situations">
       <PanelHead id="cockpit-situations" icon={<OverviewAttentionIcon size="md" />}>
         {t('situations.heading')}
       </PanelHead>
-      {count === 0 || preview.length === 0 ? (
-        <p className="overview-panel__muted">{t('attention.empty')}</p>
-      ) : (
-        <>
-          <ul className="shell-attention-drawer__list">
-            {preview.map((situation) => (
-              <OverviewAttentionItem
-                key={`${situation.source}:${situation.targetType}:${situation.targetId}`}
-                situation={situation}
-                competitionId={competitionId}
-              />
-            ))}
-          </ul>
-          {count > preview.length && (
-            <p className="overview-panel__muted">
-              {t('attention.triageHint', { count })}
-            </p>
-          )}
-        </>
+      <ul className="shell-attention-drawer__list">
+        {preview.map((situation) => (
+          <OverviewAttentionItem
+            key={`${situation.source}:${situation.targetType}:${situation.targetId}`}
+            situation={situation}
+            competitionId={competitionId}
+          />
+        ))}
+      </ul>
+      {count > 2 && (
+        <p className="overview-panel__muted">
+          {t('attention.triageHint', { count })}
+        </p>
       )}
     </section>
   )

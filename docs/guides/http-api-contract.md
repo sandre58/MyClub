@@ -166,14 +166,15 @@ Contract notes:
   - Cup / no standing for ReferenceStage → null.
   - Projected only when competition is Running / Suspended / Completed / Archived.
   - Same `CalculateStanding` path as Consultation (`ProjectStandingsForStage`) — not a second ranking algorithm.
-- Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage). While Running, Swiss prefers `GenerateNextRound` when ready (before generic `OpenMatches`).
+- Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage).
+- `naturalProgression` (Running / Suspended): **0 or 1** structural tip from `availableActions` in fixed priority — `MaterializeFromOccupiedSlots` → `GenerateNextRound` → `PublishDraw` → `ApplyDraw` → `ApplyProgression` → `ApplyQualification` → `PrepareStage` → `StartStage` → `CompleteCompetition`. **`null` is a valid calm state** (no `OpenMatches` fallback; SPA hides the card). Distinct from `availableActions` and from À traiter.
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
 - Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
 - **`MaterializeFromOccupiedSlots` (Cockpit):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Cockpit does **not** choose SlotA/SlotB pairs and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects pairs explicitly on the Stage surface, then calls `POST …/matches/materialize-from-slots`.
 - Stage overview `slots[].coveredByCompleteFixture`: true when that slot key is already on a Fixture with the expected legs attached. Confrontations pairing UI excludes those slots (same coverage rule as Cockpit opportunity).
-- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip.
+- `naturalProgression` replaces the workspace `nextAction*` stub for Cockpit consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip. On Running/Suspended may be **null** when no structural tip applies.
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
 
 DTO source: `MyClub.PlayUp.Application.Reads.CockpitViewDto`.

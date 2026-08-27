@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="MyNet.Generator" />
     <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+    <InternalsVisibleTo Include="MyClub.PlayUp.Application.Tests" />
   </ItemGroup>
 
 </Project>

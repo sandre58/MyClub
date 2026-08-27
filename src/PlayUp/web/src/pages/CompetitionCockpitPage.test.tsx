@@ -14,6 +14,7 @@ import {
 } from '../api'
 import { CompetitionCockpitPage } from './CompetitionCockpitPage'
 import { cockpitIds, cockpitSituation, cockpitView, referenceStageGameRules } from '../test/cockpitFixtures'
+import type { CockpitView } from '../types'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -69,6 +70,69 @@ function renderCockpitPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   )
+}
+
+function inProgressLayoutBase(overrides: Partial<CockpitView> = {}): CockpitView {
+  return cockpitView({
+    status: 'Running',
+    cycleReading: { code: 'InProgress' },
+    constructionDimensions: {
+      ...cockpitView().constructionDimensions,
+      teams: {
+        prominence: 'Condensed',
+        facts: { activeCount: '4', minimumTeams: '2', maximumTeams: '64' },
+      },
+      structure: {
+        prominence: 'Condensed',
+        facts: {
+          formatKind: 'Championship',
+          groupCount: '0',
+          roundCount: '0',
+          matchdayCount: '34',
+          slotCount: '0',
+        },
+      },
+      regulation: {
+        ...cockpitView().constructionDimensions.regulation,
+        prominence: 'Condensed',
+      },
+      matches: {
+        prominence: 'Dominant',
+        facts: { live: '0', scheduled: '0', finished: '0', total: '0' },
+      },
+    },
+    operationalFocus: {
+      ...cockpitView().operationalFocus,
+      referenceStageGameRules: referenceStageGameRules(),
+    },
+    naturalProgression: null,
+    availableActions: [],
+    attentionSummary: { count: 0, items: [] },
+    ...overrides,
+  })
+}
+
+function expectOverviewRegionOrder(...regionTestIds: string[]) {
+  const overview = document.querySelector('.overview')
+  expect(overview).not.toBeNull()
+  const elements = regionTestIds.map((id) =>
+    overview!.querySelector(`[data-testid="${id}"]`),
+  )
+  for (const el of elements) {
+    expect(el).not.toBeNull()
+  }
+  for (let i = 0; i < elements.length - 1; i++) {
+    const relation = elements[i]!.compareDocumentPosition(elements[i + 1]!)
+    expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  }
+}
+
+function expectOverviewRegionsAbsent(...regionTestIds: string[]) {
+  const overview = document.querySelector('.overview')
+  expect(overview).not.toBeNull()
+  for (const id of regionTestIds) {
+    expect(overview!.querySelector(`[data-testid="${id}"]`)).toBeNull()
+  }
 }
 
 describe('CompetitionCockpitPage', () => {
@@ -283,6 +347,7 @@ describe('CompetitionCockpitPage', () => {
         cockpitView({
           status: 'Running',
           cycleReading: { code: 'InProgress' },
+          naturalProgression: null,
           availableActions: [],
         }),
       )
@@ -313,7 +378,9 @@ describe('CompetitionCockpitPage', () => {
         screen.queryByRole('button', { name: /Démarrer la compétition/i }),
       ).not.toBeInTheDocument()
     })
-    expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)
+    expect(
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
   })
 
   it('composes En cours sport panels from Read recentUnit / nextUnit / standingCompact', async () => {
@@ -444,8 +511,8 @@ describe('CompetitionCockpitPage', () => {
           },
           referenceStageGameRules: referenceStageGameRules(),
         },
-        naturalProgression: { code: 'OpenMatches' },
-        availableActions: [{ code: 'OpenMatches', guaranteed: false }],
+        naturalProgression: null,
+        availableActions: [],
       }),
     )
 
@@ -454,6 +521,12 @@ describe('CompetitionCockpitPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Classement' }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Prochaine action' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
     expect(screen.getByTestId(`overview-standing-${entryA}`)).toHaveTextContent(
       'Alpha',
     )
@@ -500,6 +573,12 @@ describe('CompetitionCockpitPage', () => {
     expect(
       screen.getByRole('link', { name: 'Voir le classement' }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
+    expect(
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('overview-region-sport')).not.toHaveClass(
+      'overview__sport--solo',
+    )
   })
 
   it('shows empty states for Dernières and Prochaines when units are null', async () => {
@@ -507,6 +586,7 @@ describe('CompetitionCockpitPage', () => {
       cockpitView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
+        naturalProgression: null,
         operationalFocus: {
           ...cockpitView().operationalFocus,
           recentUnit: null,
@@ -530,6 +610,172 @@ describe('CompetitionCockpitPage', () => {
     expect(
       screen.getByText('Aucune prochaine journée n’est encore générée'),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Prochaine action' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('overview-region-sport')).toHaveClass(
+      'overview__sport--solo',
+    )
+  })
+
+  it('shows Prochaine action when En cours has a structural tip', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        naturalProgression: { code: 'GenerateNextRound' },
+        availableActions: [
+          {
+            code: 'GenerateNextRound',
+            guaranteed: false,
+            stageId,
+            params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+          },
+        ],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Prochaine action' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Générez le prochain tour Swiss/),
+    ).toBeInTheDocument()
+  })
+
+  describe('En cours layout DOM order', () => {
+    it('orders Config then Sport when calm', async () => {
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(inProgressLayoutBase())
+
+      renderCockpitPage()
+
+      await screen.findByTestId('overview-region-config')
+      expectOverviewRegionOrder('overview-region-config', 'overview-region-sport')
+      expectOverviewRegionsAbsent(
+        'overview-region-attention',
+        'overview-region-progression',
+      )
+    })
+
+    it('orders Config then Prochaine action then Sport when tip only', async () => {
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+        inProgressLayoutBase({
+          naturalProgression: { code: 'GenerateNextRound' },
+          availableActions: [
+            {
+              code: 'GenerateNextRound',
+              guaranteed: false,
+              stageId,
+              params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+            },
+          ],
+        }),
+      )
+
+      renderCockpitPage()
+
+      await screen.findByTestId('overview-region-progression')
+      expectOverviewRegionOrder(
+        'overview-region-config',
+        'overview-region-progression',
+        'overview-region-sport',
+      )
+      expectOverviewRegionsAbsent('overview-region-attention')
+    })
+
+    it('orders À traiter before Config when attention only', async () => {
+      const situation = cockpitSituation()
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+        inProgressLayoutBase({
+          situations: [situation],
+          attentionSummary: { count: 1, items: [situation] },
+        }),
+      )
+
+      renderCockpitPage()
+
+      await screen.findByTestId('overview-region-attention')
+      expectOverviewRegionOrder(
+        'overview-region-attention',
+        'overview-region-config',
+        'overview-region-sport',
+      )
+      expectOverviewRegionsAbsent('overview-region-progression')
+    })
+
+    it('orders À traiter before Config before Prochaine action when both signals exist', async () => {
+      const situation = cockpitSituation()
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+        inProgressLayoutBase({
+          situations: [situation],
+          attentionSummary: { count: 1, items: [situation] },
+          naturalProgression: { code: 'GenerateNextRound' },
+          availableActions: [
+            {
+              code: 'GenerateNextRound',
+              guaranteed: false,
+              stageId,
+              params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+            },
+          ],
+        }),
+      )
+
+      renderCockpitPage()
+
+      await screen.findByTestId('overview-region-attention')
+      expectOverviewRegionOrder(
+        'overview-region-attention',
+        'overview-region-config',
+        'overview-region-progression',
+        'overview-region-sport',
+      )
+    })
+  })
+
+  it('keeps WhereAreWePanel when cycle is Completed', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          standingCompact: {
+            stageId,
+            stageName: 'Phase 1',
+            tables: [
+              {
+                scope: 'Overall',
+                groupId: null,
+                groupName: null,
+                rows: [
+                  {
+                    position: 1,
+                    entryId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+                    displayName: 'Alpha',
+                    played: 10,
+                    points: 24,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    const whereHeading = await screen.findByRole('heading', {
+      name: 'Où en est-on ?',
+    })
+    expect(whereHeading).toBeInTheDocument()
+    expect(whereHeading.closest('section')).toHaveTextContent('Terminée')
   })
 
   it('uses Host readiness copy without inventing draw chrome on overview', async () => {
@@ -712,6 +958,48 @@ describe('CompetitionCockpitPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('hides À traiter when attention count is 0', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        naturalProgression: null,
+        situations: [],
+        attentionSummary: { count: 0, items: [] },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Dernières rencontres' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'À traiter' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/Rien à traiter/)).not.toBeInTheDocument()
+  })
+
+  it('does not show quantity hint when attention count is 1', async () => {
+    const situation = cockpitSituation()
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        situations: [situation],
+        attentionSummary: { count: 1, items: [situation] },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'À traiter' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
+    expect(
+      screen.queryByText(/situation\(s\) — détail dans le panneau/),
+    ).not.toBeInTheDocument()
+  })
+
   it('hides Absent match dimension and console operational chrome', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
@@ -753,6 +1041,7 @@ describe('CompetitionCockpitPage', () => {
       cockpitView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
+        naturalProgression: null,
         constructionDimensions: {
           ...cockpitView().constructionDimensions,
           regulation: {
@@ -784,6 +1073,9 @@ describe('CompetitionCockpitPage', () => {
     expect(
       screen.queryByRole('heading', { name: 'Règlement' }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
   })
 
   it('shows Cup game-rule facts without standing points', async () => {
@@ -791,6 +1083,7 @@ describe('CompetitionCockpitPage', () => {
       cockpitView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
+        naturalProgression: null,
         constructionDimensions: {
           ...cockpitView().constructionDimensions,
           regulation: {

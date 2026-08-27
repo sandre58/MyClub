@@ -28,7 +28,11 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Situations">Derived pilotage situations (not persisted alerts).</param>
 /// <param name="AttentionSummary">Attention subset derived from <paramref name="Situations"/>.</param>
 /// <param name="AvailableActions">Semantic actions/transitions available from known state.</param>
-/// <param name="NaturalProgression">Natural next progression hint (replaces workspace nextAction stub).</param>
+/// <param name="NaturalProgression">
+/// One structural tip to highlight, or null when none.
+/// Running/Suspended: null is a valid calm state (no OpenMatches fallback).
+/// Distinct from <paramref name="AvailableActions"/> (full opportunity set).
+/// </param>
 /// <param name="ClosureHint">Completion synthesis (distinct from Attention).</param>
 /// <param name="NavigationHints">Navigable targets including resolved match ids.</param>
 public sealed record CockpitViewDto(

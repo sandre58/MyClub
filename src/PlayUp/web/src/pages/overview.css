@@ -45,11 +45,29 @@
     .overview__pilotage {
         grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     }
+
+    .overview__pilotage--solo {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .overview__mid {
     display: grid;
     gap: var(--space-16);
+}
+
+/* En cours — signaux (À traiter, Prochaine action) : priorité ≠ largeur pleine */
+.overview__signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-16);
+    align-items: start;
+}
+
+.overview__signals > * {
+    flex: 0 1 auto;
+    width: fit-content;
+    max-width: 100%;
 }
 
 @media (min-width: 52rem) {
@@ -531,6 +549,10 @@
         grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
         align-items: start;
     }
+
+    .overview__sport--solo {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .overview__sport-stack {
@@ -658,10 +680,6 @@
 }
 
 @media (min-width: 52rem) {
-    .overview__mid--running {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
     .overview__mid--condensed-config {
         grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
         align-items: stretch;

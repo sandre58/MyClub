@@ -190,20 +190,11 @@ public static class CockpitAssembler
             .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))
             .Select(stage => stage.Id)
             .ToArray();
-        var swissNextRoundReady = TryEvaluateSwissGenerateNextRound(
-            competition,
-            organisation,
-            stages,
-            matchesByStage,
-            out _,
-            out _) is { Ready: true };
         var progression = ResolveNaturalProgression(
             competition,
             organisation,
-            completion,
-            attentionSummary.Count,
-            fromSlotsOpportunities.Length > 0,
-            swissNextRoundReady);
+            actions,
+            fromSlotsOpportunities.Length > 0);
         var closure = new CockpitClosureHintDto(
             completion?.CanCompleteNormally ?? false,
             completion?.Reasons.Select(reason => reason.Code).ToArray() ?? []);
@@ -1372,13 +1363,33 @@ public static class CockpitAssembler
             .Select(group => group.First())
     ];
 
+    /// <summary>
+    /// En cours structural tip priority — first matching <see cref="CockpitActionDto.Code"/> wins.
+    /// Semantic order (not incidental list order). OpenMatches is never a tip in Running/Suspended.
+    /// </summary>
+    internal static readonly string[] InProgressStructuralProgressionPriority =
+    [
+        ActionMaterializeFromOccupiedSlots,
+        ActionGenerateNextRound,
+        ActionPublishDraw,
+        ActionApplyDraw,
+        ActionApplyProgression,
+        ActionApplyQualification,
+        ActionPrepareStage,
+        ActionStartStage,
+        ActionCompleteCompetition
+    ];
+
+    /// <summary>
+    /// Natural progression hint: one structural tip, or null when none.
+    /// Running/Suspended: scan <paramref name="actions"/> by <see cref="InProgressStructuralProgressionPriority"/> —
+    /// null is a valid calm-competition outcome (not OpenMatches fallback).
+    /// </summary>
     private static CockpitNaturalProgressionDto? ResolveNaturalProgression(
         Competition competition,
         OrganisationViewDto organisation,
-        CompletionAnalysis? completion,
-        int attentionCount,
-        bool fromSlotsOpportunity,
-        bool swissGenerateNextRoundReady) =>
+        IReadOnlyList<CockpitActionDto> actions,
+        bool fromSlotsOpportunity) =>
         competition.Status switch
         {
             // From-slots (later Cup stage) before skeleton MaterializeMatches — avoid concurrent
@@ -1391,20 +1402,30 @@ public static class CockpitAssembler
                 new CockpitNaturalProgressionDto(ActionPublishDraw),
             CompetitionStatus.Draft or CompetitionStatus.Ready =>
                 new CockpitNaturalProgressionDto(ProgressionContinueOrganisation),
-            CompetitionStatus.Running or CompetitionStatus.Suspended when fromSlotsOpportunity && attentionCount == 0 =>
-                new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
-            CompetitionStatus.Running or CompetitionStatus.Suspended when swissGenerateNextRoundReady && attentionCount == 0 =>
-                new CockpitNaturalProgressionDto(ActionGenerateNextRound),
-            CompetitionStatus.Running or CompetitionStatus.Suspended when completion?.CanCompleteNormally == true =>
-                new CockpitNaturalProgressionDto(ActionCompleteCompetition),
-            CompetitionStatus.Running or CompetitionStatus.Suspended when attentionCount > 0 =>
-                new CockpitNaturalProgressionDto(ProgressionOpenMatches),
             CompetitionStatus.Running or CompetitionStatus.Suspended =>
-                new CockpitNaturalProgressionDto(ProgressionOpenMatches),
+                ResolveInProgressStructuralProgression(actions),
             CompetitionStatus.Completed or CompetitionStatus.Archived =>
                 new CockpitNaturalProgressionDto(ProgressionOpenConsultation),
             _ => null
         };
+
+    /// <summary>
+    /// Picks the highest-priority structural transition among projected actions.
+    /// Returns null when none — valid En cours calm state.
+    /// </summary>
+    internal static CockpitNaturalProgressionDto? ResolveInProgressStructuralProgression(
+        IReadOnlyList<CockpitActionDto> actions)
+    {
+        foreach (var code in InProgressStructuralProgressionPriority)
+        {
+            if (actions.Any(action => action.Code == code))
+            {
+                return new CockpitNaturalProgressionDto(code);
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// Evaluates whether Swiss <see cref="ActionGenerateNextRound"/> is an opportunity.

@@ -882,6 +882,80 @@ public sealed class CockpitAssemblerTests
     }
 
     [Fact]
+    public void Assemble_running_championship_without_structural_tip_projects_null_natural_progression()
+    {
+        var competition = Competition.Create(new CompetitionName("Calm League"), SampleRegulations.Standard(), _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var e2 = competition.AddEntry(TeamId.New(), "Bravo", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        var md = stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var match = Match.Create(competition.Id, stage.Id, e1.Id, e2.Id, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
+
+        view.Status.Should().Be(CompetitionStatus.Running);
+        view.AvailableActions.Should().Contain(item => item.Code == CockpitAssembler.ActionStartMatch);
+        view.NaturalProgression.Should().BeNull(
+            "En cours calm: OpenMatches is not a tip; null is a valid business state");
+    }
+
+    [Theory]
+    [InlineData(
+        CockpitAssembler.ActionMaterializeFromOccupiedSlots,
+        CockpitAssembler.ActionGenerateNextRound,
+        CockpitAssembler.ActionMaterializeFromOccupiedSlots)]
+    [InlineData(
+        CockpitAssembler.ActionGenerateNextRound,
+        CockpitAssembler.ActionPublishDraw,
+        CockpitAssembler.ActionGenerateNextRound)]
+    [InlineData(
+        CockpitAssembler.ActionPublishDraw,
+        CockpitAssembler.ActionApplyDraw,
+        CockpitAssembler.ActionPublishDraw)]
+    [InlineData(
+        CockpitAssembler.ActionApplyProgression,
+        CockpitAssembler.ActionCompleteCompetition,
+        CockpitAssembler.ActionApplyProgression)]
+    [InlineData(
+        CockpitAssembler.ActionPrepareStage,
+        CockpitAssembler.ActionCompleteCompetition,
+        CockpitAssembler.ActionPrepareStage)]
+    public void ResolveInProgressStructuralProgression_priority_is_semantic_not_list_order(
+        string lowerListedFirst,
+        string higherOrEqualSecond,
+        string expectedWinner)
+    {
+        // Intentionally reverse list order vs priority: second code is lower priority when
+        // lowerListedFirst wins; verifies scan uses InProgressStructuralProgressionPriority.
+        var stageId = Guid.NewGuid();
+        var actions = new[]
+        {
+            new CockpitActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
+            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId),
+        };
+
+        var tip = CockpitAssembler.ResolveInProgressStructuralProgression(actions);
+
+        tip.Should().NotBeNull();
+        tip!.Code.Should().Be(expectedWinner);
+    }
+
+    [Fact]
+    public void ResolveInProgressStructuralProgression_empty_actions_is_null()
+    {
+        CockpitAssembler.ResolveInProgressStructuralProgression([]).Should().BeNull();
+    }
+
+    [Fact]
     public void Assemble_championship_projects_standing_compact_top_rows()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
