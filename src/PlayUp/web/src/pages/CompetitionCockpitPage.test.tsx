@@ -329,8 +329,24 @@ describe('CompetitionCockpitPage', () => {
         cycleReading: { code: 'InProgress' },
         constructionDimensions: {
           ...cockpitView().constructionDimensions,
-          teams: { prominence: 'Condensed', facts: { activeCount: '4', minimumTeams: '2' } },
-          structure: { prominence: 'Condensed', facts: { formatKind: 'Championship' } },
+          teams: {
+            prominence: 'Condensed',
+            facts: {
+              activeCount: '4',
+              minimumTeams: '2',
+              maximumTeams: '64',
+            },
+          },
+          structure: {
+            prominence: 'Condensed',
+            facts: {
+              formatKind: 'Championship',
+              groupCount: '0',
+              roundCount: '0',
+              matchdayCount: '34',
+              slotCount: '0',
+            },
+          },
           regulation: {
             ...cockpitView().constructionDimensions.regulation,
             prominence: 'Condensed',
@@ -457,7 +473,14 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByTestId(`overview-match-${nextMatchId}`)).toHaveTextContent(
       'Echo',
     )
-    expect(screen.queryByRole('heading', { name: 'Structure' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('overview-structure-condensed')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Structure' })).toBeInTheDocument()
+    expect(screen.getByText(/34 journées/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByText('équipes')).toBeInTheDocument()
+    expect(screen.queryByText(/complètes/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Max\./)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Minimum .* démarrer/)).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Voir le classement' }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)

@@ -164,8 +164,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const slots = sortConstructionSlots(data).filter((slot) => slot !== 'matches')
   const teamsVisible = slots.includes('teams')
   const regulationVisible = slots.includes('regulation')
-  // Structure cède au sport en En cours (mockup 20.0) — même si Read Condensed.
-  const structureVisible = !inProgress && slots.includes('structure')
+  const structureVisible = slots.includes('structure')
   const stageActions = data.operationalFocus.stages.flatMap((stage) =>
     actionsForStage(data.availableActions, stage.stageId),
   )
@@ -198,6 +197,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
         />
         {!inProgress && teamsVisible && (
           <TeamsPanel
+            variant="construction"
             dimension={data.constructionDimensions.teams}
             entries={orgQuery.data?.participants.entries ?? []}
             href={orgHref}
@@ -242,15 +242,30 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
         </div>
       )}
 
-      {inProgress && (teamsVisible || regulationVisible) && (
+      {inProgress &&
+        (structureVisible || teamsVisible || regulationVisible) && (
         <div className="overview__mid overview__mid--condensed-config">
+          {structureVisible && (
+            <StructurePanel
+              variant="condensed"
+              dimension={data.constructionDimensions.structure}
+              stages={data.operationalFocus.stages}
+              matchTotal={data.operationalFocus.matchCounts.total}
+              swissByes={data.operationalFocus.swissByes}
+              href={orgHref}
+              hrefLabel={t('dimensions.openStructure')}
+              actions={[]}
+              actionRunner={actionRunner}
+            />
+          )}
           {teamsVisible && (
             <TeamsPanel
+              variant="identity"
               dimension={data.constructionDimensions.teams}
               entries={orgQuery.data?.participants.entries ?? []}
               href={orgHref}
               hrefLabel={t('dimensions.openTeams')}
-              actions={slotActions('teams')}
+              actions={[]}
               actionRunner={actionRunner}
             />
           )}
@@ -266,8 +281,9 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
         </div>
       )}
 
-      {structureVisible && (
+      {!inProgress && structureVisible && (
         <StructurePanel
+          variant="construction"
           dimension={data.constructionDimensions.structure}
           stages={data.operationalFocus.stages}
           matchTotal={data.operationalFocus.matchCounts.total}
@@ -966,6 +982,7 @@ function OverviewLink({ to, children }: { to: string; children: ReactNode }) {
 }
 
 function TeamsPanel({
+  variant = 'construction',
   dimension,
   entries,
   href,
@@ -973,6 +990,7 @@ function TeamsPanel({
   actions,
   actionRunner,
 }: {
+  variant?: 'construction' | 'identity'
   dimension: CockpitDimension
   entries: OrganisationEntry[]
   href: string
@@ -981,6 +999,7 @@ function TeamsPanel({
   actionRunner: ActionRunner
 }) {
   const { t } = useTranslation('cockpit')
+  const identity = variant === 'identity'
   const activeCount = Number(dimension.facts.activeCount ?? '0')
   const minimumTeams = Number(dimension.facts.minimumTeams ?? '0')
   const maximumTeams = dimension.facts.maximumTeams
@@ -1000,11 +1019,20 @@ function TeamsPanel({
       <p className="overview-figure">
         <span className="overview-figure__value">{activeCount}</span>
         <span className="overview-figure__label">
-          {t('dimensions.teams.figureLabel')}
+          {identity
+            ? t('dimensions.teams.figureLabelIdentity')
+            : t('dimensions.teams.figureLabel')}
         </span>
       </p>
       {preview.length > 0 && (
-        <ul className="overview-crests" aria-label={t('dimensions.teams.crestsLabel')}>
+        <ul
+          className="overview-crests"
+          aria-label={
+            identity
+              ? t('dimensions.teams.crestsLabelIdentity')
+              : t('dimensions.teams.crestsLabel')
+          }
+        >
           {preview.map((entry) => (
             <li
               key={entry.entryId}
@@ -1024,25 +1052,29 @@ function TeamsPanel({
           )}
         </ul>
       )}
-      <div className="overview-flags">
-        {meetsMinimum ? (
-          <span className="overview-flag overview-flag--ok">
-            <CheckIcon size="sm" aria-hidden="true" />
-            {t('dimensions.teams.complete', { count: activeCount })}
-          </span>
-        ) : (
-          <span className="overview-flag overview-flag--warn">
-            <OverviewAttentionIcon size="sm" aria-hidden="true" />
-            {t('dimensions.teams.minimum', { minimumTeams })}
-          </span>
-        )}
-        {maximumTeams && (
-          <span className="overview-flag">
-            {t('dimensions.teams.capacity', { max: maximumTeams })}
-          </span>
-        )}
-      </div>
-      <ActionButtons actions={actions} actionRunner={actionRunner} />
+      {!identity && (
+        <div className="overview-flags">
+          {meetsMinimum ? (
+            <span className="overview-flag overview-flag--ok">
+              <CheckIcon size="sm" aria-hidden="true" />
+              {t('dimensions.teams.complete', { count: activeCount })}
+            </span>
+          ) : (
+            <span className="overview-flag overview-flag--warn">
+              <OverviewAttentionIcon size="sm" aria-hidden="true" />
+              {t('dimensions.teams.minimum', { minimumTeams })}
+            </span>
+          )}
+          {maximumTeams && (
+            <span className="overview-flag">
+              {t('dimensions.teams.capacity', { max: maximumTeams })}
+            </span>
+          )}
+        </div>
+      )}
+      {!identity && (
+        <ActionButtons actions={actions} actionRunner={actionRunner} />
+      )}
       <p className="overview-panel__footer">
         <OverviewLink to={href}>{hrefLabel}</OverviewLink>
       </p>
@@ -1051,11 +1083,11 @@ function TeamsPanel({
 }
 
 /**
- * Structure — editorial rows from Cockpit facts (format · groups · rounds ·
- * matchdays · slots · matches). Journées détaillées / noms de groupes absents
- * du Read — pas inventés ici.
+ * Structure — editorial rows (construction) or one-line facts (En cours condensed).
+ * Journées détaillées / noms de groupes absents du Read — pas inventés ici.
  */
 function StructurePanel({
+  variant = 'construction',
   dimension,
   stages,
   matchTotal,
@@ -1065,6 +1097,7 @@ function StructurePanel({
   actions,
   actionRunner,
 }: {
+  variant?: 'construction' | 'condensed'
   dimension: CockpitDimension
   stages: CockpitView['operationalFocus']['stages']
   matchTotal: number
@@ -1084,6 +1117,36 @@ function StructurePanel({
   const swissRoundCount = Number(dimension.facts.swissRoundCount ?? '0')
   const swissByeCount = Number(dimension.facts.swissByeCount ?? '0')
   const stageNames = stages.map((stage) => stage.name).filter(Boolean)
+
+  if (variant === 'condensed') {
+    const summary = buildStructureCondensedSummary({
+      t,
+      formatKind,
+      formatConfigured,
+      stages,
+      stageNames,
+      groupCount,
+      roundCount,
+      matchdayCount,
+      swissRoundCount,
+    })
+
+    return (
+      <article
+        className={panelProminenceClass(dimension.prominence)}
+        aria-labelledby="overview-structure"
+        data-testid="overview-structure-condensed"
+      >
+        <PanelHead id="overview-structure" icon={<StructureIcon size="md" />}>
+          {t('dimensions.structure.title')}
+        </PanelHead>
+        <p className="overview-structure-summary">{summary}</p>
+        <p className="overview-panel__footer">
+          <OverviewLink to={href}>{hrefLabel}</OverviewLink>
+        </p>
+      </article>
+    )
+  }
 
   return (
     <article
@@ -1184,6 +1247,68 @@ function StructurePanel({
       </p>
     </article>
   )
+}
+
+function buildStructureCondensedSummary({
+  t,
+  formatKind,
+  formatConfigured,
+  stages,
+  stageNames,
+  groupCount,
+  roundCount,
+  matchdayCount,
+  swissRoundCount,
+}: {
+  t: (key: string, options?: Record<string, unknown>) => string
+  formatKind: string | undefined
+  formatConfigured: boolean
+  stages: CockpitView['operationalFocus']['stages']
+  stageNames: string[]
+  groupCount: number
+  roundCount: number
+  matchdayCount: number
+  swissRoundCount: number
+}): string {
+  const parts: string[] = []
+
+  if (formatConfigured && formatKind) {
+    parts.push(structureFormatKindLabel(formatKind as StructureFormatKind))
+  } else {
+    parts.push(t('dimensions.structure.none'))
+  }
+
+  if (stages.length > 0) {
+    parts.push(
+      stageNames.length > 0
+        ? t('dimensions.structure.phasesDetail', {
+            count: stages.length,
+            names: stageNames.join(' · '),
+          })
+        : t('dimensions.structure.phases', { count: stages.length }),
+    )
+  }
+
+  if (groupCount > 0) {
+    parts.push(t('dimensions.structure.groups', { count: groupCount }))
+  }
+
+  if (roundCount > 0) {
+    parts.push(t('dimensions.structure.rounds', { count: roundCount }))
+  }
+
+  if (formatKind === 'Swiss' && swissRoundCount > 0) {
+    parts.push(
+      t('dimensions.structure.swissRounds', {
+        generated: matchdayCount,
+        planned: swissRoundCount,
+      }),
+    )
+  } else if (formatKind !== 'Swiss' && matchdayCount > 0) {
+    parts.push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+  }
+
+  return parts.join(' · ')
 }
 
 function StructureRow({

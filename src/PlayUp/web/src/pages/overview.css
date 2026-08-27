@@ -539,13 +539,20 @@
     gap: var(--space-16);
 }
 
+.overview-structure-summary {
+    margin: 0;
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-primary);
+    line-height: var(--leading-snug, 1.35);
+}
+
 @media (min-width: 52rem) {
     .overview__mid--running {
         grid-template-columns: minmax(0, 1fr);
     }
 
     .overview__mid--condensed-config {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
     }
 }
 

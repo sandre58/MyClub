@@ -33,7 +33,9 @@
     "teams": {
       "title": "Équipes",
       "figureLabel": "équipes inscrites",
+      "figureLabelIdentity": "équipes",
       "crestsLabel": "Équipes inscrites",
+      "crestsLabelIdentity": "Équipes participantes",
       "minimum": "Minimum {{minimumTeams}} pour démarrer",
       "complete_one": "{{count}} complète",
       "complete_other": "{{count}} complètes",
