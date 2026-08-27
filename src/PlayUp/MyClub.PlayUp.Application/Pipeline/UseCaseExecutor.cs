@@ -39,6 +39,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// <param name="competitions">Competition persistence port (StageIds for multi-stage load).</param>
 /// <param name="unitOfWork">Unit of work for a single commit after the use case.</param>
 /// <param name="clock">Clock forwarded to Domain / Application.</param>
+/// <param name="mediaReferences">Port that verifies Media identities exist before storing logo refs.</param>
 public sealed class UseCaseExecutor(
     IStageRepository stages,
     IMatchRepository matches,

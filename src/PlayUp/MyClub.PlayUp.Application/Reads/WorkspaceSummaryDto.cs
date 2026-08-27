@@ -24,6 +24,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="CompletionMode">How the competition was completed, when Completed/Archived.</param>
 /// <param name="CanCompleteNormally">Whether Complete(Normal) is currently allowed.</param>
 /// <param name="CompletionBlockers">Machine reason codes when not sportively complete.</param>
+/// <param name="ShortName">Optional abbreviated display name.</param>
+/// <param name="LogoMediaId">Optional Media identity for the competition logo.</param>
 public sealed record WorkspaceSummaryDto(
     Guid Id,
     string Name,
