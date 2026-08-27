@@ -1,18 +1,190 @@
-import { useState, type SVGProps } from 'react'
+import { useState } from 'react'
+import {
+  Status,
+  type StatusShape,
+  type StatusTone,
+  type StatusVariant,
+} from '../design-system/components/Status'
+import { TeamCrest } from '../design-system/TeamCrest'
 import '../design-system/fonts'
 import '../design-system/index.css'
+import {
+  AttentionBellIcon,
+  AttentionIcon,
+  ClassementsNavIcon,
+  CloseIcon,
+  MatchesNavIcon,
+  OrganisationNavIcon,
+  OverviewNavIcon,
+  SettingsNavIcon,
+  SidebarCollapseIcon,
+  SwapIcon,
+} from '../design-system/icons/shellIcons'
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  CreateMatchesIcon,
+  NextActionIcon,
+  PendingCircleIcon,
+  PreparationIcon,
+  RegulationIcon,
+  StructureIcon,
+  WhereAreWeIcon,
+} from '../design-system/icons/overviewIcons'
 import './foundations-playground.css'
 
-type Palette = 'warm-ink' | 'teal' | 'slate'
 type Density = 'compact' | 'standard' | 'comfortable'
 
+const semanticRoles: Array<{
+  token: string
+  role: string
+  usage: string
+  antiUsage: string
+}> = [
+  {
+    token: '--color-canvas',
+    role: 'Fond de page',
+    usage: 'Surface de page / Shell content',
+    antiUsage: 'Pas pour panneau ou chrome',
+  },
+  {
+    token: '--color-surface',
+    role: 'Surface élevée',
+    usage: 'Contrôles, chips light, edge toggle',
+    antiUsage: 'Pas le fond de page par défaut',
+  },
+  {
+    token: '--color-surface-secondary',
+    role: 'Surface secondaire',
+    usage: 'Hover léger, zones regroupées',
+    antiUsage: 'Pas une « card » universelle',
+  },
+  {
+    token: '--color-ink',
+    role: 'Encre forte',
+    usage: 'Titres, liens de contenu, contraste max',
+    antiUsage: 'Pas sur le rail chrome',
+  },
+  {
+    token: '--color-text-primary',
+    role: 'Texte principal',
+    usage: 'Corps de texte contenu',
+    antiUsage: 'Pas labels secondaires',
+  },
+  {
+    token: '--color-text-secondary',
+    role: 'Texte secondaire',
+    usage: 'Meta, hints, labels discrets',
+    antiUsage: 'Pas titres principaux',
+  },
+  {
+    token: '--color-border',
+    role: 'Bordure douce',
+    usage: 'Séparations légères',
+    antiUsage: 'Pas focus ring',
+  },
+  {
+    token: '--color-border-strong',
+    role: 'Bordure forte',
+    usage: 'Contrôles, contours affirmés',
+    antiUsage: 'Pas décoration seule',
+  },
+  {
+    token: '--color-brand',
+    role: 'Marque / primaire',
+    usage: 'Fill bouton primary, une CTA / région',
+    antiUsage: 'Pas identité seule (hiérarchie > couleur)',
+  },
+  {
+    token: '--color-brand-hover',
+    role: 'Marque hover',
+    usage: 'Hover primary uniquement',
+    antiUsage: 'Pas état sémantique D9',
+  },
+  {
+    token: '--color-success',
+    role: 'Succès',
+    usage: 'D9 / Status success',
+    antiUsage: 'Pas CTA primaire',
+  },
+  {
+    token: '--color-attention',
+    role: 'Attention',
+    usage: 'À traiter > 0 ; D9 attention',
+    antiUsage: '≠ error',
+  },
+  {
+    token: '--color-error',
+    role: 'Erreur',
+    usage: 'Cassé / invalide / bloqué',
+    antiUsage: 'Pas « à traiter »',
+  },
+  {
+    token: '--color-info',
+    role: 'Info',
+    usage: 'État neutre informatif',
+    antiUsage: 'Pas marque',
+  },
+  {
+    token: '--color-focus',
+    role: 'Focus clavier',
+    usage: 'Anneau focus-visible',
+    antiUsage: 'Pas fill de bouton',
+  },
+  {
+    token: '--color-on-ink',
+    role: 'Sur encre',
+    usage: 'Texte sur fond ink (skip link…)',
+    antiUsage: 'Pas texte sur canvas',
+  },
+  {
+    token: '--color-on-brand',
+    role: 'Sur brand',
+    usage: 'Texte sur fill primary',
+    antiUsage: 'Pas texte sur canvas',
+  },
+  {
+    token: '--color-chrome',
+    role: 'Fond chrome',
+    usage: 'Rail Shell sombre uniquement',
+    antiUsage: 'Pas contenu métier',
+  },
+  {
+    token: '--color-on-chrome',
+    role: 'Sur chrome',
+    usage: 'Texte / icônes du rail',
+    antiUsage: 'Pas texte de page',
+  },
+  {
+    token: '--color-chrome-border',
+    role: 'Bordure chrome',
+    usage: 'Séparateurs du rail',
+    antiUsage: 'Pas bordures de contenu',
+  },
+  {
+    token: '--color-chrome-accent',
+    role: 'Accent chrome',
+    usage: 'Nav active (barre + icône)',
+    antiUsage: 'Pas CTA contenu ; ≠ brand page',
+  },
+]
+
+const statusTones: StatusTone[] = [
+  'neutral',
+  'info',
+  'success',
+  'live',
+  'done',
+  'attention',
+  'error',
+]
+
 /**
- * Visual validation terrain for Design System foundations (14.5).
- * Not a component library and not the Shell.
- * Product face is fixed to IBM Plex Sans (bake-off closed).
+ * Visual validation terrain for Design System foundations.
+ * Not a component library and not the product Shell.
+ * Reveals the final language — does not invent tokens.
  */
 export function FoundationsPlayground() {
-  const [palette, setPalette] = useState<Palette>('warm-ink')
   const [grayscale, setGrayscale] = useState(false)
   const [density, setDensity] = useState<Density>('standard')
 
@@ -20,7 +192,7 @@ export function FoundationsPlayground() {
     <div
       className="ds-root"
       data-font="plex"
-      data-palette={palette}
+      data-palette="slate"
       data-density={density}
     >
       <a className="ds-skip" href="#ds-preview">
@@ -28,39 +200,10 @@ export function FoundationsPlayground() {
       </a>
       <form
         className="ds-toolbar"
-        aria-label="Bake-off"
+        aria-label="Contrôles du terrain"
         onSubmit={(event) => event.preventDefault()}
       >
-        <fieldset className="ds-toolbar__group">
-          <legend>Palette</legend>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="palette"
-              checked={palette === 'warm-ink'}
-              onChange={() => setPalette('warm-ink')}
-            />
-            warm-ink
-          </label>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="palette"
-              checked={palette === 'teal'}
-              onChange={() => setPalette('teal')}
-            />
-            teal
-          </label>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="palette"
-              checked={palette === 'slate'}
-              onChange={() => setPalette('slate')}
-            />
-            slate
-          </label>
-        </fieldset>
+        <p className="ds-toolbar__meta ds-meta">Palette : slate (seule)</p>
         <fieldset className="ds-toolbar__group">
           <legend>Niveaux de gris</legend>
           <label className="ds-toolbar__option">
@@ -74,33 +217,17 @@ export function FoundationsPlayground() {
         </fieldset>
         <fieldset className="ds-toolbar__group">
           <legend>Densité</legend>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="density"
-              checked={density === 'compact'}
-              onChange={() => setDensity('compact')}
-            />
-            compact
-          </label>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="density"
-              checked={density === 'standard'}
-              onChange={() => setDensity('standard')}
-            />
-            standard
-          </label>
-          <label className="ds-toolbar__option">
-            <input
-              type="radio"
-              name="density"
-              checked={density === 'comfortable'}
-              onChange={() => setDensity('comfortable')}
-            />
-            comfortable
-          </label>
+          {(['compact', 'standard', 'comfortable'] as const).map((value) => (
+            <label key={value} className="ds-toolbar__option">
+              <input
+                type="radio"
+                name="density"
+                checked={density === value}
+                onChange={() => setDensity(value)}
+              />
+              {value}
+            </label>
+          ))}
         </fieldset>
       </form>
 
@@ -112,25 +239,94 @@ export function FoundationsPlayground() {
         <header className="ds-stack">
           <p className="ds-wordmark">Play’up</p>
           <p className="ds-meta">
-            Terrain de validation 14.5 — foundations, pas le Shell.
+            Terrain de validation — foundations + primitives React. Les pages
+            legacy restent hors scope.
           </p>
-          <nav className="ds-nav-concept" aria-label="Navigation conceptuelle">
-            <span className="ds-nav-concept__item ds-nav-concept__item--active" aria-current="page">
-              Cockpit
-            </span>
-            <span className="ds-nav-concept__item">Calendrier</span>
-            <span className="ds-nav-concept__item">Équipes</span>
-          </nav>
         </header>
+
+        <section className="ds-section" aria-labelledby="section-roles">
+          <p className="ds-section__kicker">0 — Rôles sémantiques</p>
+          <h1 id="section-roles" className="ds-heading">
+            API publique `--color-*`
+          </h1>
+          <p className="ds-body">
+            Les primitives (`--primitive-*`) ne sont pas l’API. Consommer
+            uniquement les rôles ci-dessous.
+          </p>
+          <div className="ds-token-table-wrap">
+            <table className="ds-token-table">
+              <thead>
+                <tr>
+                  <th scope="col">Swatch</th>
+                  <th scope="col">Token</th>
+                  <th scope="col">Rôle</th>
+                  <th scope="col">Cas d’usage</th>
+                  <th scope="col">Anti-usage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {semanticRoles.map((row) => (
+                  <tr key={row.token}>
+                    <td>
+                      <span
+                        className="ds-swatch"
+                        style={{ background: `var(${row.token})` }}
+                        title={row.token}
+                      />
+                    </td>
+                    <td>
+                      <code className="ds-code">{row.token}</code>
+                    </td>
+                    <td className="ds-body">{row.role}</td>
+                    <td className="ds-meta">{row.usage}</td>
+                    <td className="ds-meta">{row.antiUsage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-chrome">
+          <p className="ds-section__kicker">1 — Chrome rail</p>
+          <h2 id="section-chrome" className="ds-heading">
+            Tokens chrome sur fond sombre
+          </h2>
+          <p className="ds-body">
+            Mini-rail de validation (pas le Shell produit). Liens hors
+            `.shell-main` — doivent rester lisibles en `on-chrome`.
+          </p>
+          <aside className="ds-chrome-rail" aria-label="Exemple de rail chrome">
+            <a className="ds-chrome-rail__brand" href="#ds-preview">
+              Play’up
+            </a>
+            <nav className="ds-chrome-rail__nav" aria-label="Exemple nav chrome">
+              <a className="ds-chrome-rail__link" href="#ds-preview" data-active="true">
+                <OverviewNavIcon className="ds-chrome-rail__icon" />
+                Vue d’ensemble
+              </a>
+              <a className="ds-chrome-rail__link" href="#ds-preview">
+                <OrganisationNavIcon className="ds-chrome-rail__icon" />
+                Organisation
+              </a>
+              <a className="ds-chrome-rail__link" href="#ds-preview">
+                <MatchesNavIcon className="ds-chrome-rail__icon" />
+                Matchs
+              </a>
+            </nav>
+          </aside>
+        </section>
 
         <section className="ds-section" aria-labelledby="section-type">
           <p className="ds-section__kicker">A — Typography</p>
-          <h1 id="section-type" className="ds-heading">
+          <h2 id="section-type" className="ds-heading">
             Coupe du District — Seniors A
-          </h1>
+          </h2>
+          <p className="ds-display">Display</p>
           <p className="ds-body">Racing Club de Strasbourg Alsace</p>
           <p className="ds-label">Prochain match</p>
           <p className="ds-meta">Stade de la Meinau · samedi</p>
+          <p className="ds-body ds-tabular">14:30 · tabular</p>
         </section>
 
         <section className="ds-section" aria-labelledby="section-numbers">
@@ -147,13 +343,9 @@ export function FoundationsPlayground() {
               Étoile Filante de Metz
             </p>
           </div>
-          <p>
-            <span className="ds-heading ds-tabular">14:30</span>
-            <span className="ds-meta"> · horaire, pas un scoreboard</span>
-          </p>
           <div className="ds-state ds-state--attention" aria-label="3 à traiter">
             <span className="ds-state__figure">3</span>
-            <AttentionIcon className="ds-state__icon" />
+            <AttentionIcon className="ds-state__icon" size="sm" />
             <span className="ds-state__label">À traiter</span>
           </div>
           <div className="ds-group">
@@ -180,10 +372,6 @@ export function FoundationsPlayground() {
               <p className="ds-label">Groupe</p>
               <p className="ds-body">Prochain match · 14:30</p>
               <p className="ds-meta">Lié par le titre et la proximité — pas une boîte.</p>
-            </div>
-            <div className="ds-group">
-              <p className="ds-label">Autre groupe</p>
-              <p className="ds-body">Phase de poules · 8 équipes</p>
             </div>
             <div className="ds-panel">
               <p className="ds-label">Panneau</p>
@@ -213,7 +401,7 @@ export function FoundationsPlayground() {
             </div>
             <div className="ds-state ds-state--info ds-state--block" aria-label="4 prêts">
               <span className="ds-state__figure">4</span>
-              <InfoIcon className="ds-state__icon" />
+              <PendingCircleIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">Prêts</span>
             </div>
             <div
@@ -221,7 +409,7 @@ export function FoundationsPlayground() {
               aria-label="12 complets"
             >
               <span className="ds-state__figure">12</span>
-              <SuccessIcon className="ds-state__icon" />
+              <CheckIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">Complets</span>
             </div>
             <div
@@ -229,14 +417,51 @@ export function FoundationsPlayground() {
               aria-label="3 à traiter"
             >
               <span className="ds-state__figure">3</span>
-              <AttentionIcon className="ds-state__icon" />
+              <AttentionIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">À traiter</span>
             </div>
             <div className="ds-state ds-state--error ds-state--block" aria-label="1 bloqué">
               <span className="ds-state__figure">1</span>
-              <ErrorIcon className="ds-state__icon" />
+              <AttentionIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">Bloqué</span>
             </div>
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-status">
+          <p className="ds-section__kicker">D2 — Status</p>
+          <h2 id="section-status" className="ds-heading">
+            Primitive Status
+          </h2>
+          <p className="ds-label">Context · soft · rounded</p>
+          <div className="ds-row">
+            {statusTones.map((tone) => (
+              <Status key={tone} density="context" tone={tone} variant="soft">
+                {tone}
+              </Status>
+            ))}
+          </div>
+          <p className="ds-label">Context · outline · pill</p>
+          <div className="ds-row">
+            {statusTones.map((tone) => (
+              <Status
+                key={`outline-${tone}`}
+                density="context"
+                tone={tone}
+                variant={'outline' satisfies StatusVariant}
+                shape={'pill' satisfies StatusShape}
+              >
+                {tone}
+              </Status>
+            ))}
+          </div>
+          <p className="ds-label">Dense (texte secondaire, sans fill)</p>
+          <div className="ds-row">
+            {statusTones.map((tone) => (
+              <Status key={`dense-${tone}`} density="dense" tone={tone}>
+                {tone}
+              </Status>
+            ))}
           </div>
         </section>
 
@@ -279,15 +504,70 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
+        <section className="ds-section" aria-labelledby="section-crests">
+          <p className="ds-section__kicker">G — TeamCrest</p>
+          <h2 id="section-crests" className="ds-heading">
+            Écussons
+          </h2>
+          <div className="ds-row">
+            {(['RCSA', 'EFM', 'FCSM', 'ASNL', 'OM'] as const).map((name) => (
+              <TeamCrest key={name} name={name} size="md" />
+            ))}
+          </div>
+          <div className="ds-row">
+            {(['RCSA', 'EFM', 'FCSM'] as const).map((name) => (
+              <TeamCrest key={`sm-${name}`} name={name} size="sm" />
+            ))}
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-icons">
+          <p className="ds-section__kicker">H — Icônes</p>
+          <h2 id="section-icons" className="ds-heading">
+            Shell et contenu
+          </h2>
+          <p className="ds-label">Shell (fond clair)</p>
+          <div className="ds-icon-grid">
+            <OverviewNavIcon />
+            <OrganisationNavIcon />
+            <MatchesNavIcon />
+            <ClassementsNavIcon />
+            <SettingsNavIcon />
+            <SidebarCollapseIcon />
+            <AttentionBellIcon />
+            <AttentionIcon />
+            <SwapIcon />
+            <CloseIcon />
+          </div>
+          <p className="ds-label">Overview</p>
+          <div className="ds-icon-grid">
+            <WhereAreWeIcon />
+            <NextActionIcon />
+            <CreateMatchesIcon />
+            <PreparationIcon />
+            <RegulationIcon />
+            <StructureIcon />
+            <CheckIcon />
+            <PendingCircleIcon />
+            <ArrowRightIcon />
+          </div>
+          <p className="ds-label">Sur chrome</p>
+          <div className="ds-icon-grid ds-icon-grid--chrome">
+            <OverviewNavIcon />
+            <OrganisationNavIcon />
+            <MatchesNavIcon />
+            <AttentionBellIcon />
+          </div>
+        </section>
+
         <section className="ds-section" aria-labelledby="section-density">
-          <p className="ds-section__kicker">F — Density / accessibility</p>
+          <p className="ds-section__kicker">F — Density / controls</p>
           <h2 id="section-density" className="ds-heading">
-            Densité et focus
+            Densité et contrôles natifs
           </h2>
           <p className="ds-body">
-            La densité courante change la hauteur des contrôles de cette page (
-            {density}). Les trois hauteurs restent visibles ci-dessous pour
-            comparaison.
+            Densité courante : {density}. Les trois hauteurs restent visibles
+            pour comparaison.
           </p>
           <div className="ds-stack">
             <div className="ds-density-rail ds-density-rail--compact">compact 32</div>
@@ -296,15 +576,26 @@ export function FoundationsPlayground() {
               comfortable 40
             </div>
           </div>
-          <div className="ds-row">
+          <div className="ds-controls-demo">
             <label className="ds-label" htmlFor="ds-sample-input">
-              Contrôle
+              Texte
             </label>
             <input id="ds-sample-input" type="text" defaultValue="14:30" />
+            <label className="ds-label" htmlFor="ds-sample-select">
+              Liste
+            </label>
+            <select id="ds-sample-select" defaultValue="poules">
+              <option value="poules">Phase de poules</option>
+              <option value="elim">Élimination directe</option>
+            </select>
+            <label className="ds-label" htmlFor="ds-sample-textarea">
+              Notes
+            </label>
+            <textarea id="ds-sample-textarea" rows={3} defaultValue="Terrain de validation." />
           </div>
           <p className="ds-meta">
-            Tab jusqu’à un bouton ou un champ : anneau 2px + offset 2px. Couleur
-            jamais seule (D9). prefers-reduced-motion est respecté.
+            Tab jusqu’à un bouton ou un champ : anneau 2px + offset 2px.
+            prefers-reduced-motion est respecté.
           </p>
         </section>
 
@@ -319,68 +610,11 @@ export function FoundationsPlayground() {
             <li>3 No grid — hors classement, pas de quadrillage par défaut.</li>
             <li>4 Numbers — le score et l’horaire sautent sans tout transformer en scoreboard.</li>
             <li>5 D9 — « À traiter » se lit sans dépendre de la couleur seule.</li>
-            <li>6 Brand swap — changer la palette ne demande pas de modifier les exemples.</li>
+            <li>6 Chrome — le rail sombre reste lisible (on-chrome, pas ink page).</li>
+            <li>7 Status / Crest / Icons — primitives React branchées sur le DS.</li>
           </ul>
         </section>
       </main>
     </div>
-  )
-}
-
-function AttentionIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
-      <path
-        d="M10 3.5 17.5 16.5H2.5L10 3.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinejoin="round"
-      />
-      <path d="M10 8.5v4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="10" cy="14.25" r="0.8" fill="currentColor" />
-    </svg>
-  )
-}
-
-function SuccessIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
-      <path
-        d="M4.5 10.5 8 14l7.5-8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function InfoIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
-      <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M10 9v4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="10" cy="6.75" r="0.8" fill="currentColor" />
-    </svg>
-  )
-}
-
-function ErrorIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
-      <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="1.75" />
-      <path d="m7.5 7.5 5 5M12.5 7.5l-5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function CloseIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" {...props}>
-      <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
   )
 }

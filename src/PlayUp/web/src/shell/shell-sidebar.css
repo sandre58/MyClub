@@ -1,17 +1,16 @@
 /*
  * Shell sidebar chrome (20.2) — navy rail, nav, edge toggle, footer.
- * Sidebar-scoped tokens live on .shell-sidebar (hex scoped here, not shell-wide).
+ *
+ * Colors: DS semantic chrome tokens (--color-chrome*). Layout widths /
+ * opacities stay local (not color roles).
+ *
+ * Extraction: do not package Shell/Sidebar for MyClub until a second
+ * application actually consumes the same Shell contract.
  */
 
 .shell-sidebar {
     --shell-sidebar-width-expanded: 18rem;
     --shell-sidebar-width-collapsed: 3.5rem;
-    --shell-sidebar-bg: #0f1728;
-    --shell-sidebar-border: color-mix(in srgb, #e8ecf5 14%, transparent);
-    --shell-sidebar-text: #e8ecf5;
-    --shell-sidebar-text-muted: color-mix(in srgb, #e8ecf5 68%, transparent);
-    --shell-sidebar-active-bg: color-mix(in srgb, #ffffff 12%, transparent);
-    --shell-sidebar-accent: #6b8cff;
     --shell-sidebar-opacity-idle: 0.68;
     --shell-sidebar-opacity-hover: 0.92;
     --shell-sidebar-opacity-active: 1;
@@ -27,9 +26,9 @@
     min-height: 0;
     width: var(--shell-sidebar-width-expanded);
     min-width: var(--shell-sidebar-width-expanded);
-    border-inline-end: var(--border-width) solid var(--shell-sidebar-border);
-    background: var(--shell-sidebar-bg);
-    color: var(--shell-sidebar-text);
+    border-inline-end: var(--border-width) solid var(--color-chrome-border);
+    background: var(--color-chrome);
+    color: var(--color-on-chrome);
     transition: width var(--motion-duration) var(--motion-easing);
 }
 
@@ -38,7 +37,7 @@
     min-width: var(--shell-sidebar-width-collapsed);
 }
 
-/* Overrides global ds-root link ink on the dark rail. */
+/* Content-link ink is scoped to .shell-main — rail links inherit on-chrome. */
 .shell-sidebar a {
     color: inherit;
     text-decoration: none;
@@ -57,7 +56,7 @@
     gap: var(--space-8);
     min-height: calc(var(--control-height) + var(--space-24));
     padding: var(--space-16);
-    border-bottom: var(--border-width) solid var(--shell-sidebar-border);
+    border-bottom: var(--border-width) solid var(--color-chrome-border);
 }
 
 .shell-sidebar__brand {
@@ -66,14 +65,14 @@
     gap: var(--space-12);
     flex: 1;
     min-width: 0;
-    color: var(--shell-sidebar-text);
+    color: var(--color-on-chrome);
     font-size: var(--text-body);
     font-weight: var(--font-weight-bold);
     text-decoration: none;
 }
 
 .shell-sidebar__brand:hover {
-    color: var(--shell-sidebar-text);
+    color: var(--color-on-chrome);
 }
 
 .shell-sidebar__brand-mark {
@@ -83,8 +82,8 @@
     width: 1.25rem;
     height: 1.25rem;
     border-radius: var(--radius-control);
-    background: color-mix(in srgb, var(--shell-sidebar-text) 14%, transparent);
-    color: var(--shell-sidebar-text);
+    background: color-mix(in srgb, var(--color-on-chrome) 14%, transparent);
+    color: var(--color-on-chrome);
     font-size: var(--text-label);
     font-weight: var(--font-weight-bold);
     line-height: 1;
@@ -143,7 +142,7 @@
     min-height: var(--control-height);
     padding: var(--space-8) var(--space-12);
     border-radius: var(--radius-control);
-    color: var(--shell-sidebar-text);
+    color: var(--color-on-chrome);
     font-size: var(--text-body);
     font-weight: var(--font-weight-regular);
     line-height: var(--leading-tight);
@@ -161,7 +160,7 @@
 }
 
 .shell-sidebar__link:hover {
-    background: color-mix(in srgb, var(--shell-sidebar-text) 8%, transparent);
+    background: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
 }
 
 .shell-sidebar__link:hover .shell-sidebar__icon,
@@ -169,10 +168,10 @@
     opacity: var(--shell-sidebar-opacity-hover);
 }
 
-/* Selected — fond léger (variant A) + barre accent + icône accent. */
+/* Selected — light wash + accent bar/icon (no separate chrome-active token). */
 .shell-sidebar__link[data-active='true'] {
-    background: var(--shell-sidebar-active-bg);
-    color: var(--shell-sidebar-text);
+    background: color-mix(in srgb, #ffffff 12%, transparent);
+    color: var(--color-on-chrome);
     font-weight: var(--font-weight-regular);
 }
 
@@ -182,7 +181,7 @@
 }
 
 .shell-sidebar__link[data-active='true'] .shell-sidebar__icon {
-    color: var(--shell-sidebar-accent);
+    color: var(--color-chrome-accent);
 }
 
 .shell-sidebar__link-indicator {
@@ -195,7 +194,7 @@
 }
 
 .shell-sidebar__link[data-active='true'] .shell-sidebar__link-indicator {
-    background: var(--shell-sidebar-accent);
+    background: var(--color-chrome-accent);
 }
 
 .shell-sidebar__icon {
@@ -212,7 +211,7 @@
     gap: var(--space-4);
     margin-top: auto;
     padding: var(--space-12);
-    border-top: var(--border-width) solid var(--shell-sidebar-border);
+    border-top: var(--border-width) solid var(--color-chrome-border);
 }
 
 .shell-sidebar__footer-control {
@@ -225,7 +224,7 @@
     border: 0;
     border-radius: var(--radius-control);
     background: transparent;
-    color: var(--shell-sidebar-text);
+    color: var(--color-on-chrome);
     font-family: inherit;
     font-size: var(--text-label);
     font-weight: var(--font-weight-regular);
@@ -242,7 +241,7 @@
 }
 
 .shell-sidebar__footer-control:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--shell-sidebar-text) 8%, transparent);
+    background: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
 }
 
 .shell-sidebar__footer-control:hover:not(:disabled) .shell-sidebar__icon,

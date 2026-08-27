@@ -1,8 +1,11 @@
 /*
- * Palette piste: slate / neutres froids + accent vert Play'up (réf. V9).
- * Distincte du teal et du bleu 13.5 (#3452d8).
- * Brand = vert sportif (action) · success = vert d'état, même famille.
+ * Slate — sole product palette (Identité).
+ * Brand = cool desaturated blue (action fill). Focus = green (keyboard ring).
+ * Distinct from abandoned teal / warm-ink and from 13.5 #3452d8.
+ *
+ * Chrome primitives: Shell rail only — never for content surfaces.
  */
+.ds-root,
 .ds-root[data-palette='slate'] {
     --primitive-canvas: #f6f7f9;
     --primitive-surface: #ffffff;
@@ -21,4 +24,8 @@
     --primitive-focus: #1b8f5a;
     --primitive-on-ink: #f4f5f7;
     --primitive-on-brand: #f3faf6;
+    --primitive-chrome: #0f1728;
+    --primitive-on-chrome: #e8ecf5;
+    --primitive-chrome-border: color-mix(in srgb, #e8ecf5 14%, transparent);
+    --primitive-chrome-accent: #6b8cff;
 }

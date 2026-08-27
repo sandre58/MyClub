@@ -109,9 +109,15 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 
 Default locale is **`fr`**. See [docs/i18n.md](./docs/i18n.md) for conventions, namespaces, and the rule that new UI strings must go through i18n.
 
+## Design System
+
+Foundations live under `src/design-system/`. Operational rules: [docs/design-system.md](./docs/design-system.md). Validate at `/dev/foundations` (Slate-only playground). Product SoT: Notion Identité visuelle.
+
+Shell/Sidebar stay **Play’up-local** until a second MyClub app consumes the same Shell.
+
 ## Page migration (13.5 → Design System)
 
-When reworking a business page, follow [docs/page-migration.md](./docs/page-migration.md). Pilot: `NotFoundPage`. Do not mass-migrate.
+When reworking a business page, follow [docs/page-migration.md](./docs/page-migration.md). Pilot: `NotFoundPage`. Do not mass-migrate. Stabilise foundations first (see design-system.md) before a dedicated migration lot.
 
 ## Out of scope (later — explicit trigger only)
 

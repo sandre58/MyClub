@@ -32,30 +32,32 @@ body:has(.shell),
 }
 
 /*
- * Liens de contenu uniquement. Les actions (.ds-btn) et liens de sortie
- * overview / classements portent leur propre couleur — sans ça, l’encre /
- * le soulignement UA écrasent brand et primaire.
+ * Content links only — scoped to shell main + playground preview.
+ * Chrome (sidebar) and overlays are outside this scope so they keep
+ * on-chrome / local colors. Exit links carry their own color.
  */
-.ds-root a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
+.shell-main a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
     ):not(.classements-result):not(.matches-link):not(.matches__back):not(
         .matches-result
     ):not(.organisation-link):not(.organisation__back):not(
         .organisation-stage-link
-    ) {
+    ),
+.ds-preview a:not(.ds-btn) {
     color: var(--color-ink);
     text-decoration-thickness: 0.08em;
     text-underline-offset: 0.18em;
 }
 
-.ds-root
+.shell-main
     a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
     ):not(.classements-result):not(.matches-link):not(.matches__back):not(
         .matches-result
     ):not(.organisation-link):not(.organisation__back):not(
         .organisation-stage-link
-    ):hover {
+    ):hover,
+.ds-preview a:not(.ds-btn):hover {
     color: var(--color-ink);
     text-decoration-thickness: 0.12em;
 }

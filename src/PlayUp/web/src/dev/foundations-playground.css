@@ -228,7 +228,122 @@
     list-style: none;
 }
 
-.ds-checks li {
-    color: var(--color-text-secondary);
+.ds-toolbar__meta {
+    margin: 0;
+    align-self: center;
+}
+
+.ds-token-table-wrap {
+    overflow-x: auto;
+}
+
+.ds-token-table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: var(--text-label);
 }
+
+.ds-token-table th,
+.ds-token-table td {
+    padding: var(--space-8) var(--space-12);
+    border-bottom: var(--border-width) solid var(--color-border);
+    text-align: start;
+    vertical-align: top;
+}
+
+.ds-token-table th {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+}
+
+.ds-swatch {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+}
+
+.ds-code {
+    font-family: ui-monospace, monospace;
+    font-size: var(--text-meta);
+}
+
+.ds-chrome-rail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    max-width: 16rem;
+    padding: var(--space-16);
+    border: var(--border-width) solid var(--color-chrome-border);
+    border-radius: var(--radius-panel);
+    background: var(--color-chrome);
+    color: var(--color-on-chrome);
+}
+
+.ds-chrome-rail__brand {
+    color: var(--color-on-chrome);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+}
+
+.ds-chrome-rail__nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.ds-chrome-rail__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-height: var(--control-height);
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-control);
+    color: var(--color-on-chrome);
+    text-decoration: none;
+}
+
+.ds-chrome-rail__link[data-active='true'] {
+    background: color-mix(in srgb, #ffffff 12%, transparent);
+}
+
+.ds-chrome-rail__link[data-active='true'] .ds-chrome-rail__icon {
+    color: var(--color-chrome-accent);
+}
+
+.ds-chrome-rail__icon {
+    flex: none;
+    opacity: 0.92;
+}
+
+.ds-icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-12);
+    color: var(--color-ink);
+}
+
+.ds-icon-grid--chrome {
+    padding: var(--space-16);
+    border-radius: var(--radius-panel);
+    background: var(--color-chrome);
+    color: var(--color-on-chrome);
+}
+
+.ds-controls-demo {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-8) var(--space-12);
+    align-items: center;
+    max-width: 28rem;
+}
+
+.ds-controls-demo .ds-label {
+    margin: 0;
+}
+
+.ds-controls-demo textarea {
+    grid-column: 2;
+}
+

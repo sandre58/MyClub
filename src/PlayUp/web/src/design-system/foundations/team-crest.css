@@ -54,7 +54,7 @@
 }
 
 .team-crest--b {
-  color: color-mix(in srgb, var(--color-accent) 75%, var(--color-ink));
+  color: color-mix(in srgb, var(--color-info) 75%, var(--color-ink));
 }
 
 .team-crest--c {
@@ -62,9 +62,9 @@
 }
 
 .team-crest--d {
-  color: color-mix(in srgb, var(--color-warning) 70%, var(--color-ink));
+  color: color-mix(in srgb, var(--color-attention) 70%, var(--color-ink));
 }
 
 .team-crest--e {
-  color: color-mix(in srgb, var(--color-danger) 65%, var(--color-ink));
+  color: color-mix(in srgb, var(--color-error) 65%, var(--color-ink));
 }

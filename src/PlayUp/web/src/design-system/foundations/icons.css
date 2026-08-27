@@ -38,5 +38,6 @@
     --icon-size-sm: 1rem;
     --icon-size-md: 1.25rem;
     --icon-size-lg: 1.5rem;
-    --icon-stroke-width: 1.75;
+    /* Aligns with Icon.tsx strokeWidth={2} and Identité §13. */
+    --icon-stroke-width: 2;
 }

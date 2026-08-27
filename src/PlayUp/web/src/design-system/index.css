@@ -4,12 +4,11 @@
  * Scoped to .ds-root — does not replace the 13.5 :root in index.css.
  * Components and pages must not read --primitive-* ; semantic tokens are the API.
  *
- * Semantic token budget: 46 / ~50 (ceiling 70)
- *   color 16 · spacing 6 · geometry 7 · typography 11 · density 4 · motion 2
+ * Semantic token budget: 51 / ceiling 70
+ *   color 21 (content 17 + chrome 4) · spacing 6 · geometry 7 · typography 11 · density 4 · motion 2
+ * Icon size tokens live in foundations/icons.css (not counted in the color budget).
  */
 
-@import './palettes/warm-ink.css';
-@import './palettes/teal.css';
 @import './palettes/slate.css';
 @import './tokens/colors.css';
 @import './tokens/typography.css';
