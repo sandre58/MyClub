@@ -538,6 +538,15 @@ public static class CockpitAssembler
     /// <remarks>Retained for clients/tests; no longer attached as a standing regulation gap when absent.</remarks>
     public const string BlockerInsufficientOccupiedSlots = "InsufficientOccupiedSlots";
 
+    /// <summary>Max live matches projected on Cockpit operational focus (aligns with FinishMatch actions).</summary>
+    public const int LiveMatchesTake = 3;
+
+    /// <summary>Max recent finished matches projected on Cockpit operational focus.</summary>
+    public const int RecentFinishedMatchesTake = 5;
+
+    /// <summary>Max upcoming scheduled matches projected on Cockpit operational focus.</summary>
+    public const int UpcomingMatchesTake = 8;
+
     private static CockpitOperationalFocusDto BuildOperationalFocus(
         Competition competition,
         IReadOnlyList<Stage> stages,
@@ -582,7 +591,25 @@ public static class CockpitAssembler
                 }))
             .OrderBy(item => item.ScheduledAt ?? DateTimeOffset.MaxValue)
             .ThenBy(item => item.MatchId)
-            .Take(8)
+            .Take(UpcomingMatchesTake)
+            .ToArray();
+
+        var liveMatches = ProjectMatchLines(
+                stages,
+                matchesByStage,
+                names,
+                match => match.Status == MatchStatus.Live,
+                ascendingBySchedule: true)
+            .Take(LiveMatchesTake)
+            .ToArray();
+
+        var recentFinished = ProjectMatchLines(
+                stages,
+                matchesByStage,
+                names,
+                match => match is { Status: MatchStatus.Finished, Result: not null },
+                ascendingBySchedule: false)
+            .Take(RecentFinishedMatchesTake)
             .ToArray();
 
         var swissByes = stages
@@ -596,7 +623,143 @@ public static class CockpitAssembler
             .ThenBy(bye => bye.EntryId)
             .ToArray();
 
-        return new CockpitOperationalFocusDto(stageFocus, draws, matchCounts, upcoming, swissByes);
+        return new CockpitOperationalFocusDto(
+            stageFocus,
+            draws,
+            matchCounts,
+            upcoming,
+            swissByes,
+            liveMatches,
+            recentFinished,
+            BuildStandingCompact(competition, stages, matchesByStage));
+    }
+
+    private static IEnumerable<CockpitMatchLineDto> ProjectMatchLines(
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<EntryId, string> names,
+        Func<Match, bool> predicate,
+        bool ascendingBySchedule)
+    {
+        var lines = matchesByStage
+            .SelectMany(pair =>
+            {
+                var stage = stages.First(candidate => candidate.Id.Equals(pair.Key));
+                return pair.Value
+                    .Where(predicate)
+                    .Select(match =>
+                    {
+                        DateTimeOffset? scheduledAt = null;
+                        if (stage.TryGetMatchPlacement(match.Id, out var placement))
+                        {
+                            scheduledAt = placement.Start;
+                        }
+
+                        MatchScoreDto? score = null;
+                        if (match.Result is { } result)
+                        {
+                            score = new MatchScoreDto(result.Score.HomeGoals, result.Score.AwayGoals);
+                        }
+
+                        return new CockpitMatchLineDto(
+                            match.Id.Value,
+                            pair.Key.Value,
+                            match.Status,
+                            scheduledAt,
+                            EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
+                            EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString(),
+                            score);
+                    });
+            });
+
+        return ascendingBySchedule
+            ? lines
+                .OrderBy(item => item.ScheduledAt ?? DateTimeOffset.MaxValue)
+                .ThenBy(item => item.MatchId)
+            : lines
+                .OrderByDescending(item => item.ScheduledAt ?? DateTimeOffset.MinValue)
+                .ThenByDescending(item => item.MatchId);
+    }
+
+    private static CockpitStandingCompactDto? BuildStandingCompact(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        // Pilotage En cours / Terminée — not useful during construction.
+        if (competition.Status is not (
+            CompetitionStatus.Running or
+            CompetitionStatus.Suspended or
+            CompetitionStatus.Completed or
+            CompetitionStatus.Archived))
+        {
+            return null;
+        }
+
+        var reference = ResolveReferenceStage(competition, stages);
+        if (reference is null)
+        {
+            return null;
+        }
+
+        var matches = matchesByStage.TryGetValue(reference.Id, out var list) ? list : [];
+        var section = ConsultationAssembler.ProjectStandingsForStage(competition, reference, matches);
+        if (!section.Applicable || section.Tables.Count == 0)
+        {
+            return null;
+        }
+
+        return new CockpitStandingCompactDto(
+            reference.Id.Value,
+            reference.Name.Value,
+            [
+                .. section.Tables.Select(table => new CockpitStandingCompactTableDto(
+                    table.Scope,
+                    table.GroupId,
+                    table.GroupName,
+                    [
+                        .. table.Rows.Select(row => new CockpitStandingCompactRowDto(
+                            row.Position,
+                            row.EntryId,
+                            row.DisplayName,
+                            row.Played,
+                            row.Points))
+                    ]))
+            ]);
+    }
+
+    /// <summary>
+    /// Reference stage for compact standing (V1):
+    /// first Running or Suspended in StageIds order; else last Completed in StageIds order; else null.
+    /// For Vue d'ensemble display, Suspended is treated as Running. Multiple candidates → first wins (no error).
+    /// </summary>
+    public static Stage? ResolveReferenceStage(
+        Competition competition,
+        IReadOnlyList<Stage> stages)
+    {
+        var byId = stages.ToDictionary(stage => stage.Id);
+        Stage? firstActive = null;
+        Stage? lastCompleted = null;
+
+        foreach (var stageId in competition.StageIds)
+        {
+            if (!byId.TryGetValue(stageId, out var stage))
+            {
+                continue;
+            }
+
+            if (firstActive is null && stage.Status is StageStatus.Running or StageStatus.Suspended)
+            {
+                firstActive = stage;
+            }
+
+            if (stage.Status == StageStatus.Completed)
+            {
+                lastCompleted = stage;
+            }
+        }
+
+        return firstActive ?? lastCompleted;
     }
 
     private static CockpitMatchCountsDto BuildMatchCounts(

@@ -316,6 +316,118 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getAllByText('En cours').length).toBeGreaterThan(0)
   })
 
+  it('composes En cours sport panels from Read live / recent / standingCompact', async () => {
+    const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+    const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    const liveMatchId = '11111111-1111-1111-1111-111111111111'
+    const finishedMatchId = '22222222-2222-2222-2222-222222222222'
+
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          teams: { prominence: 'Condensed', facts: { activeCount: '4', minimumTeams: '2' } },
+          structure: { prominence: 'Condensed', facts: { formatKind: 'Championship' } },
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          matches: {
+            prominence: 'Dominant',
+            facts: { live: '1', scheduled: '2', finished: '1', total: '4' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          matchCounts: {
+            live: 1,
+            scheduled: 2,
+            finished: 1,
+            postponed: 0,
+            cancelled: 0,
+            total: 4,
+          },
+          liveMatches: [
+            {
+              matchId: liveMatchId,
+              stageId,
+              status: 'Live',
+              scheduledAt: null,
+              homeDisplayName: 'Alpha',
+              awayDisplayName: 'Bravo',
+              score: null,
+            },
+          ],
+          recentFinishedMatches: [
+            {
+              matchId: finishedMatchId,
+              stageId,
+              status: 'Finished',
+              scheduledAt: '2026-08-20T15:00:00Z',
+              homeDisplayName: 'Charlie',
+              awayDisplayName: 'Delta',
+              score: { homeGoals: 2, awayGoals: 1 },
+            },
+          ],
+          standingCompact: {
+            stageId,
+            stageName: 'Phase 1',
+            tables: [
+              {
+                scope: 'Overall',
+                groupId: null,
+                groupName: null,
+                rows: [
+                  {
+                    position: 1,
+                    entryId: entryA,
+                    displayName: 'Alpha',
+                    played: 2,
+                    points: 6,
+                  },
+                  {
+                    position: 2,
+                    entryId: entryB,
+                    displayName: 'Bravo',
+                    played: 2,
+                    points: 3,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        naturalProgression: { code: 'OpenMatches' },
+        availableActions: [{ code: 'OpenMatches', guaranteed: false }],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Classement' }),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId(`overview-standing-${entryA}`)).toHaveTextContent(
+      'Alpha',
+    )
+    expect(screen.getByRole('heading', { name: 'Match en cours' })).toBeInTheDocument()
+    expect(screen.getByTestId(`overview-match-${liveMatchId}`)).toHaveTextContent(
+      'Alpha',
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Dernières rencontres' }),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId(`overview-match-${finishedMatchId}`)).toHaveTextContent(
+      '2–1',
+    )
+    expect(screen.queryByRole('heading', { name: 'Structure' })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Voir le classement' }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
+  })
+
   it('uses Host readiness copy without inventing draw chrome on overview', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
@@ -516,6 +628,9 @@ describe('CompetitionCockpitPage', () => {
           },
           upcomingMatches: [],
           swissByes: [],
+          liveMatches: [],
+          recentFinishedMatches: [],
+          standingCompact: null,
         },
       }),
     )

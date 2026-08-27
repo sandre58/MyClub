@@ -99,7 +99,10 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
       "live": 0, "scheduled": 0, "finished": 0, "postponed": 0, "cancelled": 0, "total": 0
     },
     "upcomingMatches": [],
-    "swissByes": []
+    "swissByes": [],
+    "liveMatches": [],
+    "recentFinishedMatches": [],
+    "standingCompact": null
   },
   "situations": [{
     "source": "InsufficientParticipants",
@@ -146,6 +149,16 @@ Contract notes:
 - `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots` | `GenerateNextRound`. `Draw` / `MaterializeMatches` reuse Organisation readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. **Championship** and **Swiss** omit `Draw`. **Swiss** omits `MaterializeMatches` and projects `GenerateNextRound` instead (ready when stage Running, previous round Finished, rounds remaining).
 - `transitionReadiness` for Draw / MaterializeMatches reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system. **Cup `ReadyForMaterialization`** means the primary stage still needs its empty Fixture **skeleton** (fixture count below `slotCount / 2`) — it is **not** the from-slots path and is **not** equal to `ReadyForDraw` after the skeleton exists. From-slots uses its own opportunity check; the Cockpit projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction). Swiss `GenerateNextRound` blockers: `SwissStageNotRunning` | `SwissAwaitingRoundResults` | `SwissRoundsComplete` | `SwissInsufficientParticipants`.
 - Structure facts may include `swissRoundCount` / `swissByeCount` when Kind is Swiss. `operationalFocus.swissByes[]` lists recorded bye pairing events (`roundIndex`, `entryId`, `entryDisplayName`) — **not** fixtures/matches.
+- `operationalFocus.liveMatches[]` (≤3): Live matches with display names; `score` is **null** until Finish (Domain has no in-progress score). Empty → SPA hides the live panel.
+- `operationalFocus.recentFinishedMatches[]` (≤5): Finished matches with play `score` (`homeGoals` / `awayGoals`), newest placement first.
+- `operationalFocus.standingCompact`: compact standing for pilotage derived from **ReferenceStage** only:
+  - ReferenceStage = first `StageIds[i]` with `Stage.Status` in (`Running`, `Suspended`), else last `StageIds[i]` with `Completed`, else none → `standingCompact` null.
+  - For Vue d’ensemble display, **Suspended = Running**. Multiple active candidates → first wins (no error in V1).
+  - Shape: `{ stageId, stageName, tables[] }` where each table is `{ scope, groupId?, groupName?, rows[] }` (Pos · displayName · played · points — **all** rows, no silent top-N truncation).
+  - Championship / Swiss → one `Overall` table. Groups → **all** group tables for that stage (SPA may show one at a time).
+  - Cup / no standing for ReferenceStage → null.
+  - Projected only when competition is Running / Suspended / Completed / Archived.
+  - Same `CalculateStanding` path as Consultation (`ProjectStandingsForStage`) — not a second ranking algorithm.
 - Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage). While Running, Swiss prefers `GenerateNextRound` when ready (before generic `OpenMatches`).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
 - Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.

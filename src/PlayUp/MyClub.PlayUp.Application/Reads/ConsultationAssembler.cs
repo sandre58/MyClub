@@ -73,6 +73,90 @@ public static class ConsultationAssembler
             structure);
     }
 
+    /// <summary>
+    /// Projects standings tables using the same CalculateStanding path as Consultation.
+    /// Reused by Cockpit compact standing — does not invent a second ranking algorithm.
+    /// </summary>
+    public static ConsultationStandingsSectionDto ProjectStandings(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+        ArgumentNullException.ThrowIfNull(matchesByStage);
+
+        var primary = ResolvePrimaryStage(competition, stages);
+        var formatKind = primary is null ? null : InferFormat(primary);
+        var names = EntryDisplayNames.ToMap(competition);
+        return AssembleStandings(competition, stages, matchesByStage, names, formatKind);
+    }
+
+    /// <summary>
+    /// Projects standing tables for a single stage (Championship / Groups / Swiss).
+    /// Cup or unstructured stages return not-applicable — used by Cockpit ReferenceStage standing.
+    /// </summary>
+    public static ConsultationStandingsSectionDto ProjectStandingsForStage(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Match> matches)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(matches);
+
+        var format = InferFormat(stage);
+        if (format is StructureFormatKind.Cup)
+        {
+            return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
+        }
+
+        if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
+        {
+            return new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, []);
+        }
+
+        var names = EntryDisplayNames.ToMap(competition);
+        var penalties = CalculateStanding.ToStandingPenalties(stage.Penalties);
+        var rules = stage.Regulation.StandingRules;
+        var tables = new List<ConsultationStandingTableDto>();
+
+        if (format is StructureFormatKind.Championship or StructureFormatKind.Swiss)
+        {
+            var participants = ResolveOverallParticipants(competition, matches);
+            if (participants.Length == 0)
+            {
+                return new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, []);
+            }
+
+            var standing = CalculateStanding.Execute(participants, matches, rules, MatchFilter.All, penalties);
+            tables.Add(new ConsultationStandingTableDto(
+                ScopeOverall,
+                stage.Id.Value,
+                stage.Name.Value,
+                GroupId: null,
+                GroupName: null,
+                MapRows(standing, names)));
+        }
+        else
+        {
+            tables.AddRange(from @group in stage.Groups
+                where @group.EntryIds.Count > 0
+                let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties)
+                select new ConsultationStandingTableDto(
+                    ScopeGroup,
+                    stage.Id.Value,
+                    stage.Name.Value,
+                    @group.Id.Value,
+                    @group.Name,
+                    MapRows(standing, names)));
+        }
+
+        return tables.Count == 0
+            ? new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, [])
+            : new ConsultationStandingsSectionDto(true, null, tables);
+    }
+
     private static Stage? ResolvePrimaryStage(Competition competition, IReadOnlyList<Stage> stages)
     {
         if (competition.StageIds.Count == 0)
@@ -201,7 +285,10 @@ public static class ConsultationAssembler
             }
             else
             {
-                tables.AddRange(from @group in stage.Groups let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties) select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
+                tables.AddRange(from @group in stage.Groups
+                    where @group.EntryIds.Count > 0
+                    let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties)
+                    select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
             }
         }
 

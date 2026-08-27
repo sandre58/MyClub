@@ -193,6 +193,22 @@
       "desc": "Classements de la compétition."
     }
   },
+  "sport": {
+    "standingTitle": "Classement",
+    "standingGroupTitle": "Groupe {{name}}",
+    "standingOpen": "Voir le classement",
+    "groupNav": "Groupes",
+    "liveTitle": "Match en cours",
+    "liveTitle_other": "Matchs en cours",
+    "liveBadge": "En cours",
+    "recentTitle": "Dernières rencontres",
+    "cols": {
+      "position": "Pos.",
+      "team": "Équipe",
+      "played": "MJ",
+      "points": "Pts"
+    }
+  },
   "nature": {
     "Blocking": "Bloquant",
     "Informational": "Information"

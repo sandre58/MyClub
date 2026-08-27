@@ -6,6 +6,8 @@ Operational SoT for the foundations under `src/design-system/`. Product intent: 
 
 > Foundations define the language; the playground verifies it; the Shell consumes it; legacy pages stay temporarily outside.
 
+**Agent rule:** every visual change asks whether the DS must evolve; if yes, update FoundationsPlayground in the same change (`.cursor/rules/design-system.mdc`).
+
 ## Layers
 
 | Layer | Role | Rule |

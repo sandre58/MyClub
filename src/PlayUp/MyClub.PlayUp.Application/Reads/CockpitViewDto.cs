@@ -24,7 +24,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Period">Operational calendar span from match placements (null when none scheduled).</param>
 /// <param name="CycleReading">Minimal cycle interpretation for pilotage (machine codes only).</param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
-/// <param name="OperationalFocus">Stages, draws, match counters, upcoming matches.</param>
+/// <param name="OperationalFocus">Stages, draws, match counters, upcoming / live / recent matches, compact standing.</param>
 /// <param name="Situations">Derived pilotage situations (not persisted alerts).</param>
 /// <param name="AttentionSummary">Attention subset derived from <paramref name="Situations"/>.</param>
 /// <param name="AvailableActions">Semantic actions/transitions available from known state.</param>
@@ -125,14 +125,20 @@ public sealed record CockpitTransitionReadinessDto(
 /// <param name="Stages">Stage focus lines.</param>
 /// <param name="Draws">Draw pipeline projection.</param>
 /// <param name="MatchCounts">Match status counters.</param>
-/// <param name="UpcomingMatches">Upcoming scheduled matches.</param>
+/// <param name="UpcomingMatches">Upcoming scheduled matches (≤8).</param>
 /// <param name="SwissByes">Recorded Swiss byes (pairing events — not fixtures/matches).</param>
+/// <param name="LiveMatches">Live matches for pilotage (≤3). Score is null until Finish (Domain).</param>
+/// <param name="RecentFinishedMatches">Recently finished matches with scores (≤5).</param>
+/// <param name="StandingCompact">Compact standing for En cours / Terminée; null when not applicable (Cup / no structure).</param>
 public sealed record CockpitOperationalFocusDto(
     IReadOnlyList<CockpitStageFocusDto> Stages,
     IReadOnlyList<CockpitDrawFocusDto> Draws,
     CockpitMatchCountsDto MatchCounts,
     IReadOnlyList<CockpitUpcomingMatchDto> UpcomingMatches,
-    IReadOnlyList<CockpitSwissByeDto> SwissByes);
+    IReadOnlyList<CockpitSwissByeDto> SwissByes,
+    IReadOnlyList<CockpitMatchLineDto> LiveMatches,
+    IReadOnlyList<CockpitMatchLineDto> RecentFinishedMatches,
+    CockpitStandingCompactDto? StandingCompact);
 
 /// <summary>Swiss bye projection — pairing event, never a fake match.</summary>
 /// <param name="StageId">Owning Swiss stage.</param>
@@ -174,6 +180,54 @@ public sealed record CockpitUpcomingMatchDto(
     DateTimeOffset? ScheduledAt,
     string HomeDisplayName,
     string AwayDisplayName);
+
+/// <summary>Match line for Cockpit operational panels (live / recent finished).</summary>
+/// <param name="MatchId">Match identity.</param>
+/// <param name="StageId">Owning stage.</param>
+/// <param name="Status">Live or Finished (other statuses are not projected here).</param>
+/// <param name="ScheduledAt">Placement start when known.</param>
+/// <param name="HomeDisplayName">Home entry display name.</param>
+/// <param name="AwayDisplayName">Away entry display name.</param>
+/// <param name="Score">Play score when Finished; null while Live (Domain has no in-progress score).</param>
+public sealed record CockpitMatchLineDto(
+    Guid MatchId,
+    Guid StageId,
+    MatchStatus Status,
+    DateTimeOffset? ScheduledAt,
+    string HomeDisplayName,
+    string AwayDisplayName,
+    MatchScoreDto? Score);
+
+/// <summary>Compact standing for Vue d'ensemble — derived from ReferenceStage only (Running or Suspended preferred, else last Completed).</summary>
+/// <param name="StageId">Reference stage identity.</param>
+/// <param name="StageName">Reference stage display name.</param>
+/// <param name="Tables">
+/// Overall: one table. Group: one table per group (SPA may show one at a time).
+/// Empty collection is not projected — StandingCompact is null instead.
+/// </param>
+public sealed record CockpitStandingCompactDto(
+    Guid StageId,
+    string StageName,
+    IReadOnlyList<CockpitStandingCompactTableDto> Tables);
+
+/// <summary>One compact standing table (Overall or a single Group).</summary>
+/// <param name="Scope">Overall | Group (same codes as Consultation).</param>
+/// <param name="GroupId">Group identity when Scope is Group.</param>
+/// <param name="GroupName">Group display name when Scope is Group.</param>
+/// <param name="Rows">All rows ordered by position (full table — no silent truncation).</param>
+public sealed record CockpitStandingCompactTableDto(
+    string Scope,
+    Guid? GroupId,
+    string? GroupName,
+    IReadOnlyList<CockpitStandingCompactRowDto> Rows);
+
+/// <summary>One compact standing row — pilotage subset of ConsultationStandingRowDto.</summary>
+public sealed record CockpitStandingCompactRowDto(
+    int Position,
+    Guid EntryId,
+    string DisplayName,
+    int Played,
+    int Points);
 
 /// <summary>Derived situation unit (R8–R9) — codes + targets; copy in SPA i18n.</summary>
 /// <remarks>

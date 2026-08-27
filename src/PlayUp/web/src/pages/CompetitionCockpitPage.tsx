@@ -8,6 +8,8 @@ import { Status } from '../design-system/components/Status'
 import {
   AttentionMarkIcon,
   ChevronRightIcon,
+  ClassementsNavIcon,
+  MatchesNavIcon,
 } from '../design-system/icons/shellIcons'
 import { actionLabel } from '../i18n/actionLabels'
 import {
@@ -23,7 +25,9 @@ import {
 import type {
   CockpitAction,
   CockpitDimension,
+  CockpitMatchLine,
   CockpitSituation,
+  CockpitStandingCompact,
   CockpitView,
   OrganisationEntry,
   StructureFormatKind,
@@ -152,14 +156,27 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
     (action) =>
       action.code === 'PrepareCompetition' || action.code === 'StartCompetition',
   )
+  const inProgress = data.cycleReading.code === 'InProgress'
+  const completedLike =
+    data.cycleReading.code === 'Completed' ||
+    data.cycleReading.code === 'Archived'
   const slots = sortConstructionSlots(data).filter((slot) => slot !== 'matches')
   const teamsVisible = slots.includes('teams')
   const regulationVisible = slots.includes('regulation')
-  const structureVisible = slots.includes('structure')
+  // Structure cède au sport en En cours (mockup 20.0) — même si Read Condensed.
+  const structureVisible = !inProgress && slots.includes('structure')
   const stageActions = data.operationalFocus.stages.flatMap((stage) =>
     actionsForStage(data.availableActions, stage.stageId),
   )
   const orgHref = `/competitions/${data.competitionId}/organisation`
+  const matchesHref = `/competitions/${data.competitionId}/matches`
+  const classementsHref = `/competitions/${data.competitionId}/classements`
+  const focus = data.operationalFocus
+  const showStanding =
+    (inProgress || completedLike) && focus.standingCompact != null
+  const showLive = inProgress && focus.liveMatches.length > 0
+  const showRecent = inProgress && focus.recentFinishedMatches.length > 0
+  const showSport = showStanding || showLive || showRecent
 
   return (
     <div className="overview">
@@ -172,13 +189,13 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
         />
       </div>
 
-      <div className="overview__mid">
+      <div className={inProgress ? 'overview__mid overview__mid--running' : 'overview__mid'}>
         <AttentionSignalSection
           items={orderSituationsForDisplay(data.attentionSummary.items)}
           count={data.attentionSummary.count}
           competitionId={data.competitionId}
         />
-        {teamsVisible && (
+        {!inProgress && teamsVisible && (
           <TeamsPanel
             dimension={data.constructionDimensions.teams}
             entries={orgQuery.data?.participants.entries ?? []}
@@ -188,7 +205,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
             actionRunner={actionRunner}
           />
         )}
-        {regulationVisible && (
+        {!inProgress && regulationVisible && (
           <RegulationDimensionCard
             regulation={data.constructionDimensions.regulation}
             href={orgHref}
@@ -198,6 +215,57 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
           />
         )}
       </div>
+
+      {showSport && (
+        <div className="overview__sport">
+          {showStanding && focus.standingCompact && (
+            <StandingCompactPanel
+              standing={focus.standingCompact}
+              href={classementsHref}
+            />
+          )}
+          {(showLive || showRecent) && (
+            <div className="overview__sport-stack">
+              {showLive && (
+                <LiveMatchesPanel
+                  matches={focus.liveMatches}
+                  matchesHref={matchesHref}
+                />
+              )}
+              {showRecent && (
+                <RecentFinishedPanel
+                  matches={focus.recentFinishedMatches}
+                  matchesHref={matchesHref}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {inProgress && (teamsVisible || regulationVisible) && (
+        <div className="overview__mid overview__mid--condensed-config">
+          {teamsVisible && (
+            <TeamsPanel
+              dimension={data.constructionDimensions.teams}
+              entries={orgQuery.data?.participants.entries ?? []}
+              href={orgHref}
+              hrefLabel={t('dimensions.openTeams')}
+              actions={slotActions('teams')}
+              actionRunner={actionRunner}
+            />
+          )}
+          {regulationVisible && (
+            <RegulationDimensionCard
+              regulation={data.constructionDimensions.regulation}
+              href={orgHref}
+              hrefLabel={t('dimensions.openRegulation')}
+              actions={slotActions('regulation')}
+              actionRunner={actionRunner}
+            />
+          )}
+        </div>
+      )}
 
       {structureVisible && (
         <StructurePanel
@@ -452,6 +520,205 @@ function WhereAreWePanel({ data }: { data: CockpitView }) {
       </div>
       <CycleLine data={data} />
     </section>
+  )
+}
+
+function StandingCompactPanel({
+  standing,
+  href,
+}: {
+  standing: CockpitStandingCompact
+  href: string
+}) {
+  const { t } = useTranslation('cockpit')
+  const tables = standing.tables
+  const isGroups = tables.length > 1 || tables[0]?.scope === 'Group'
+  const [tableIndex, setTableIndex] = useState(0)
+  const safeIndex = Math.min(tableIndex, Math.max(tables.length - 1, 0))
+  const table = tables[safeIndex]
+  if (!table) {
+    return null
+  }
+
+  const title =
+    isGroups && table.groupName
+      ? t('sport.standingGroupTitle', { name: table.groupName })
+      : t('sport.standingTitle')
+
+  return (
+    <section className="ds-panel" aria-labelledby="cockpit-standing-compact">
+      <PanelHead id="cockpit-standing-compact" icon={<ClassementsNavIcon size="md" />}>
+        {title}
+      </PanelHead>
+      {tables.length > 1 && (
+        <div className="overview-standing-nav" role="tablist" aria-label={t('sport.groupNav')}>
+          {tables.map((candidate, index) => (
+            <button
+              key={candidate.groupId ?? `${candidate.scope}-${index}`}
+              type="button"
+              role="tab"
+              aria-selected={index === safeIndex}
+              className={
+                index === safeIndex
+                  ? 'overview-standing-nav__tab overview-standing-nav__tab--active'
+                  : 'overview-standing-nav__tab'
+              }
+              onClick={() => setTableIndex(index)}
+            >
+              {candidate.groupName ?? t('sport.standingTitle')}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="overview-standing-wrap">
+        <table className="overview-standing">
+          <thead>
+            <tr>
+              <th scope="col" className="overview-standing__num">
+                {t('sport.cols.position')}
+              </th>
+              <th scope="col">{t('sport.cols.team')}</th>
+              <th scope="col" className="overview-standing__num">
+                {t('sport.cols.played')}
+              </th>
+              <th scope="col" className="overview-standing__pts">
+                {t('sport.cols.points')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.map((row) => (
+              <tr
+                key={row.entryId}
+                data-testid={`overview-standing-${row.entryId}`}
+                className={
+                  row.position === 1 ? 'overview-standing__row--leader' : undefined
+                }
+              >
+                <td className="overview-standing__num">{row.position}</td>
+                <td className="overview-standing__team">{row.displayName}</td>
+                <td className="overview-standing__num">{row.played}</td>
+                <td className="overview-standing__pts">{row.points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="overview-panel__footer">
+        <Link className="overview-link" to={href}>
+          {t('sport.standingOpen')}
+          <span className="overview-link__arrow" aria-hidden="true">
+            <ChevronRightIcon size="sm" />
+          </span>
+        </Link>
+      </p>
+    </section>
+  )
+}
+
+function LiveMatchesPanel({
+  matches,
+  matchesHref,
+}: {
+  matches: CockpitMatchLine[]
+  matchesHref: string
+}) {
+  const { t } = useTranslation('cockpit')
+  const title =
+    matches.length === 1 ? t('sport.liveTitle') : t('sport.liveTitle_other')
+
+  return (
+    <section className="ds-panel" aria-labelledby="cockpit-live-matches">
+      <PanelHead id="cockpit-live-matches" icon={<MatchesNavIcon size="md" />}>
+        {title}
+      </PanelHead>
+      <MatchLineList matches={matches} live />
+      <p className="overview-panel__footer">
+        <Link className="overview-link" to={matchesHref}>
+          {t('dimensions.openMatches')}
+          <span className="overview-link__arrow" aria-hidden="true">
+            <ChevronRightIcon size="sm" />
+          </span>
+        </Link>
+      </p>
+    </section>
+  )
+}
+
+function RecentFinishedPanel({
+  matches,
+  matchesHref,
+}: {
+  matches: CockpitMatchLine[]
+  matchesHref: string
+}) {
+  const { t } = useTranslation('cockpit')
+
+  return (
+    <section className="ds-panel" aria-labelledby="cockpit-recent-finished">
+      <PanelHead id="cockpit-recent-finished" icon={<MatchesNavIcon size="md" />}>
+        {t('sport.recentTitle')}
+      </PanelHead>
+      <MatchLineList matches={matches} live={false} />
+      <p className="overview-panel__footer">
+        <Link className="overview-link" to={matchesHref}>
+          {t('dimensions.openMatches')}
+          <span className="overview-link__arrow" aria-hidden="true">
+            <ChevronRightIcon size="sm" />
+          </span>
+        </Link>
+      </p>
+    </section>
+  )
+}
+
+function MatchLineList({
+  matches,
+  live,
+}: {
+  matches: CockpitMatchLine[]
+  live: boolean
+}) {
+  const { t } = useTranslation('cockpit')
+
+  return (
+    <ul className="overview-match-list">
+      {matches.map((match) => {
+        const score =
+          match.score != null
+            ? `${match.score.homeGoals}–${match.score.awayGoals}`
+            : null
+        return (
+          <li key={match.matchId}>
+            <Link
+              className="overview-match"
+              to={`/matches/${match.matchId}`}
+              data-testid={`overview-match-${match.matchId}`}
+            >
+              <span className="overview-match__teams">
+                <span className="overview-match__name">{match.homeDisplayName}</span>
+                <span className="overview-match__vs" aria-hidden="true">
+                  –
+                </span>
+                <span className="overview-match__name">{match.awayDisplayName}</span>
+              </span>
+              <span className="overview-match__aside">
+                {live ? (
+                  <Status density="context" tone="live" variant="soft" shape="rounded">
+                    {t('sport.liveBadge')}
+                  </Status>
+                ) : score ? (
+                  <span className="overview-match__score">{score}</span>
+                ) : null}
+                <span className="overview-match__chevron" aria-hidden="true">
+                  <ChevronRightIcon size="sm" />
+                </span>
+              </span>
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

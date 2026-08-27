@@ -86,6 +86,9 @@ describe('cockpitComposition', () => {
           },
           upcomingMatches: [],
           swissByes: [],
+          liveMatches: [],
+          recentFinishedMatches: [],
+          standingCompact: null,
         },
       }),
     )

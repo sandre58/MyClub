@@ -205,6 +205,44 @@ export interface CockpitOperationalFocus {
   upcomingMatches: CockpitUpcomingMatch[]
   /** Swiss bye pairing events — never fixtures/matches. */
   swissByes: CockpitSwissBye[]
+  /** Live matches for pilotage (≤3). Score null until Finish. */
+  liveMatches: CockpitMatchLine[]
+  /** Recently finished matches with scores (≤5). */
+  recentFinishedMatches: CockpitMatchLine[]
+  /** Compact standing; null when not applicable (Cup / no structure). */
+  standingCompact: CockpitStandingCompact | null
+}
+
+export interface CockpitMatchLine {
+  matchId: string
+  stageId: string
+  status: MatchStatus | string
+  scheduledAt?: string | null
+  homeDisplayName: string
+  awayDisplayName: string
+  score?: MatchScore | null
+}
+
+export interface CockpitStandingCompact {
+  stageId: string
+  stageName: string
+  /** Overall: one table. Group: one table per group (SPA may show one at a time). */
+  tables: CockpitStandingCompactTable[]
+}
+
+export interface CockpitStandingCompactTable {
+  scope: string
+  groupId?: string | null
+  groupName?: string | null
+  rows: CockpitStandingCompactRow[]
+}
+
+export interface CockpitStandingCompactRow {
+  position: number
+  entryId: string
+  displayName: string
+  played: number
+  points: number
 }
 
 export interface CockpitSwissBye {

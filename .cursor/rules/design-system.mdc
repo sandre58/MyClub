@@ -1,0 +1,46 @@
+---
+description: Play’up design system evolution — foundations, playground, page CSS
+globs: src/PlayUp/web/**/*.{css,tsx,ts,md}
+alwaysApply: false
+---
+
+# Design System evolution (Play’up web)
+
+Operational SoT: `src/PlayUp/web/docs/design-system.md`. Product intent: Notion **Identité visuelle**.
+
+## Gate — every visual change
+
+Before shipping UI/CSS in Play’up web, answer:
+
+1. **Is this a one-off page quirk?** → page-local CSS (`pages/*.css`) only if foundations cannot express it.
+2. **Is this a reusable visual language?** → evolve the design system (tokens / foundations / thin React primitives).
+3. **If the DS evolves** → update **FoundationsPlayground** (`/dev/foundations`) in the **same** change. No silent DS growth without playground coverage.
+
+> Foundations define the language; the playground verifies it; the Shell consumes it; legacy pages stay temporarily outside.
+
+## What counts as DS evolution
+
+- New or changed semantic tokens (`--color-*`, spacing, radius, …)
+- New or changed foundations (`.ds-*` recipes)
+- New shared React primitives over foundations (`Status`, `TeamCrest`, …)
+- New shared icons meant for multiple surfaces
+
+**Not** DS evolution: copy/i18n, page composition/layout wiring, Read-driven prominence, one-off spacing tweaks that stay page-local.
+
+## Playground duty
+
+- Route `/dev/foundations` is the **terrain of truth** — not Storybook.
+- New foundation / token / primitive → visible demo section (usage + anti-usage when useful).
+- Do not demo full Shell or full product pages in the playground (except minimal chrome rail / composition sketches already established).
+
+## Anti-patterns
+
+- Inventing a parallel mini-system in page CSS when a foundation should exist
+- Expanding foundations “just in case” without a real reuse need (`no-cargo-cult.mdc`)
+- Changing tokens/foundations without playground + `docs/design-system.md` when the public API or budget changes
+- Migrating all pages in a big-bang — apply `docs/page-migration.md` when a product task already touches the page
+
+## Docs
+
+- Token budget / layers / legacy boundary → update `docs/design-system.md`
+- Product/visual truth change → Notion Identité / Expérience produit (per `documentation.mdc`)
