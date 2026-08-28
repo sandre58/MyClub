@@ -738,13 +738,46 @@ describe('CompetitionCockpitPage', () => {
     })
   })
 
-  it('keeps WhereAreWePanel when cycle is Completed', async () => {
+  it('composes Terminée like En cours without WhereAreWe or Prochaines when nextUnit is null', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
+        naturalProgression: null,
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          teams: {
+            prominence: 'Condensed',
+            facts: { activeCount: '4', minimumTeams: '2', maximumTeams: '64' },
+          },
+          structure: {
+            prominence: 'Condensed',
+            facts: {
+              formatKind: 'Championship',
+              groupCount: '0',
+              roundCount: '0',
+              matchdayCount: '34',
+              slotCount: '0',
+            },
+          },
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+        },
         operationalFocus: {
           ...cockpitView().operationalFocus,
+          recentUnit: {
+            stageId,
+            stageName: 'Phase 1',
+            unitKind: 'Matchday',
+            unitKey: '34',
+            matchdayNumber: 34,
+            roundName: null,
+            matchCount: 0,
+            matches: [],
+          },
+          nextUnit: null,
           standingCompact: {
             stageId,
             stageName: 'Phase 1',
@@ -765,17 +798,67 @@ describe('CompetitionCockpitPage', () => {
               },
             ],
           },
+          referenceStageGameRules: referenceStageGameRules(),
         },
       }),
     )
 
     renderCockpitPage()
 
-    const whereHeading = await screen.findByRole('heading', {
-      name: 'Où en est-on ?',
-    })
-    expect(whereHeading).toBeInTheDocument()
-    expect(whereHeading.closest('section')).toHaveTextContent('Terminée')
+    expect(
+      await screen.findByRole('heading', { name: 'Classement' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Prochaine action' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByTestId('overview-structure-condensed')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Dernières rencontres' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Prochaines rencontres' }),
+    ).not.toBeInTheDocument()
+    expectOverviewRegionOrder('overview-region-config', 'overview-region-sport')
+  })
+
+  it('shows Prochaines on Terminée only when nextUnit is projected', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        naturalProgression: null,
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          recentUnit: null,
+          nextUnit: {
+            stageId,
+            stageName: 'Phase 1',
+            unitKind: 'Matchday',
+            unitKey: '35',
+            matchdayNumber: 35,
+            roundName: null,
+            matchCount: 0,
+            matches: [],
+          },
+          standingCompact: null,
+          referenceStageGameRules: null,
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Prochaines rencontres' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Dernières rencontres' }),
+    ).toBeInTheDocument()
   })
 
   it('uses Host readiness copy without inventing draw chrome on overview', async () => {

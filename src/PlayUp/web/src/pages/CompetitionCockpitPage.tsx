@@ -162,40 +162,44 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const completedLike =
     data.cycleReading.code === 'Completed' ||
     data.cycleReading.code === 'Archived'
+  /** En cours + Terminée share Config + Sport composition (not Préparation). */
+  const operationalOverview = inProgress || completedLike
   const slots = sortConstructionSlots(data).filter((slot) => slot !== 'matches')
   const teamsVisible = slots.includes('teams')
   const regulationVisible = slots.includes('regulation')
   const structureVisible = slots.includes('structure')
   const gameRules = data.operationalFocus.referenceStageGameRules
   const gameRegulationVisible =
-    inProgress && regulationVisible && gameRules != null
+    operationalOverview && regulationVisible && gameRules != null
   const stageActions = data.operationalFocus.stages.flatMap((stage) =>
     actionsForStage(data.availableActions, stage.stageId),
   )
   const orgHref = `/competitions/${data.competitionId}/organisation`
   const matchesHref = `/competitions/${data.competitionId}/matches`
   const classementsHref = `/competitions/${data.competitionId}/classements`
-  const showWhereAreWe = !inProgress
+  const showWhereAreWe = data.cycleReading.code === 'Construction'
   const showProgression =
     Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0
   const showPilotage = showWhereAreWe || showProgression
   const focus = data.operationalFocus
   const showStanding =
-    (inProgress || completedLike) && focus.standingCompact != null
-  // En cours: Dernières / Prochaines always visible (empty-state override).
-  const showTemporalUnits = inProgress
+    operationalOverview && focus.standingCompact != null
+  // En cours: always Dernières + Prochaines (empty-state). Terminée: Dernières always; Prochaines only if nextUnit.
+  const showRecentUnit = operationalOverview
+  const showNextUnit = inProgress || (completedLike && focus.nextUnit != null)
+  const showTemporalUnits = showRecentUnit || showNextUnit
   const showSport = showStanding || showTemporalUnits
 
   const attentionItems = orderSituationsForDisplay(data.attentionSummary.items)
   const attentionCount = data.attentionSummary.count
   const showAttention = attentionCount > 0 && attentionItems.length > 0
-  const showPrepMid = !inProgress && (teamsVisible || regulationVisible)
-  const showMid = !inProgress && (showAttention || showPrepMid)
-  const showInProgressConfig =
+  const showPrepMid = !operationalOverview && (teamsVisible || regulationVisible)
+  const showMid = !operationalOverview && (showAttention || showPrepMid)
+  const showOperationalConfig =
     structureVisible || teamsVisible || gameRegulationVisible
 
-  const inProgressConfigBand =
-    inProgress && showInProgressConfig ? (
+  const operationalConfigBand =
+    operationalOverview && showOperationalConfig ? (
       <div
         className="overview__config overview__mid overview__mid--condensed-config"
         data-testid="overview-region-config"
@@ -255,16 +259,20 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
       )}
       {showTemporalUnits && (
         <div className="overview__sport-stack">
-          <SportUnitPanel
-            kind="recent"
-            unit={focus.recentUnit}
-            matchesHref={matchesHref}
-          />
-          <SportUnitPanel
-            kind="next"
-            unit={focus.nextUnit}
-            matchesHref={matchesHref}
-          />
+          {showRecentUnit && (
+            <SportUnitPanel
+              kind="recent"
+              unit={focus.recentUnit}
+              matchesHref={matchesHref}
+            />
+          )}
+          {showNextUnit && (
+            <SportUnitPanel
+              kind="next"
+              unit={focus.nextUnit}
+              matchesHref={matchesHref}
+            />
+          )}
         </div>
       )}
     </div>
@@ -272,7 +280,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
 
   return (
     <div className="overview">
-      {inProgress ? (
+      {operationalOverview ? (
         <>
           {showAttention && (
             <div
@@ -286,7 +294,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
               />
             </div>
           )}
-          {inProgressConfigBand}
+          {operationalConfigBand}
           {showProgression && (
             <div
               className="overview__signals"
@@ -354,8 +362,6 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
               )}
             </div>
           )}
-
-          {sportBand}
 
           {structureVisible && (
             <StructurePanel
@@ -1151,11 +1157,10 @@ function TeamsPanel({
   const identity = variant === 'identity'
   const activeCount = Number(dimension.facts.activeCount ?? '0')
   const minimumTeams = Number(dimension.facts.minimumTeams ?? '0')
-  const maximumTeams = dimension.facts.maximumTeams
   const activeEntries = entries.filter((entry) => entry.status === 'Active')
   const preview = activeEntries.slice(0, 6)
   const overflow = Math.max(0, activeCount - preview.length)
-  const meetsMinimum = activeCount >= minimumTeams && minimumTeams > 0
+  const belowMinimum = minimumTeams > 0 && activeCount < minimumTeams
 
   return (
     <article
@@ -1201,25 +1206,11 @@ function TeamsPanel({
           )}
         </ul>
       )}
-      {!identity && (
-        <div className="overview-flags">
-          {meetsMinimum ? (
-            <span className="overview-flag overview-flag--ok">
-              <CheckIcon size="sm" aria-hidden="true" />
-              {t('dimensions.teams.complete', { count: activeCount })}
-            </span>
-          ) : (
-            <span className="overview-flag overview-flag--warn">
-              <OverviewAttentionIcon size="sm" aria-hidden="true" />
-              {t('dimensions.teams.minimum', { minimumTeams })}
-            </span>
-          )}
-          {maximumTeams && (
-            <span className="overview-flag">
-              {t('dimensions.teams.capacity', { max: maximumTeams })}
-            </span>
-          )}
-        </div>
+      {!identity && belowMinimum && (
+        <p className="overview-teams-minimum">
+          <OverviewAttentionIcon size="sm" aria-hidden="true" />
+          {t('dimensions.teams.minimumRequired', { minimumTeams })}
+        </p>
       )}
       {!identity && (
         <ActionButtons actions={actions} actionRunner={actionRunner} />
@@ -1661,7 +1652,6 @@ function NaturalProgressionSection({
   const code = data.naturalProgression?.code
   const matched = code ? findActionByCode(data.availableActions, code) : undefined
   const orgHref = `/competitions/${data.competitionId}/organisation`
-  const classementsHref = `/competitions/${data.competitionId}/classements`
   const hasPrimary = Boolean(code)
   const showLifecycle = lifecycleActions.length > 0
 
@@ -1698,12 +1688,6 @@ function NaturalProgressionSection({
             <p className="overview-actions">
               <Link className="ds-btn ds-btn--primary" to={orgHref}>
                 {t('dimensions.openOrganisation')}
-              </Link>
-            </p>
-          ) : code === 'OpenConsultation' ? (
-            <p className="overview-actions">
-              <Link className="ds-btn ds-btn--primary" to={classementsHref}>
-                {t('nav.classements.title')}
               </Link>
             </p>
           ) : null}
@@ -1750,9 +1734,6 @@ function progressionBadgeIcon(code: string) {
   }
   if (code === 'ContinueOrganisation') {
     return <TeamsIcon />
-  }
-  if (code === 'OpenConsultation') {
-    return <CompletedIcon />
   }
   if (code === 'CompleteCompetition' || code === 'PrepareCompetition') {
     return <CheckIcon />

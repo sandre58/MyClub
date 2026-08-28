@@ -145,9 +145,6 @@ public static class CockpitAssembler
     /// <summary>Continue organisation (natural progression).</summary>
     public const string ProgressionContinueOrganisation = "ContinueOrganisation";
 
-    /// <summary>Open consultation (natural progression — Completed/Archived).</summary>
-    public const string ProgressionOpenConsultation = "OpenConsultation";
-
     /// <summary>
     /// Builds the Cockpit view.
     /// </summary>
@@ -1402,7 +1399,7 @@ public static class CockpitAssembler
             CompetitionStatus.Running or CompetitionStatus.Suspended =>
                 ResolveInProgressStructuralProgression(actions),
             CompetitionStatus.Completed or CompetitionStatus.Archived =>
-                new CockpitNaturalProgressionDto(ProgressionOpenConsultation),
+                null,
             _ => null
         };
 

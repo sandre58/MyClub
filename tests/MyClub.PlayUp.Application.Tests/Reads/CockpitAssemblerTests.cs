@@ -215,6 +215,8 @@ public sealed class CockpitAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>>());
         completed.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
         completed.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+        completed.NaturalProgression.Should().BeNull();
+        completed.CycleReading.Code.Should().Be(CockpitAssembler.CycleCompleted);
 
         competition.Archive(_clock);
         var archived = CockpitAssembler.Assemble(
@@ -223,6 +225,8 @@ public sealed class CockpitAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>>());
         archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
         archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+        archived.NaturalProgression.Should().BeNull();
+        archived.CycleReading.Code.Should().Be(CockpitAssembler.CycleArchived);
     }
 
     [Fact]

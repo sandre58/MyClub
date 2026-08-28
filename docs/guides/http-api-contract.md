@@ -168,6 +168,7 @@ Contract notes:
   - Same `CalculateStanding` path as Consultation (`ProjectStandingsForStage`) — not a second ranking algorithm.
 - Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage).
 - `naturalProgression` (Running / Suspended): **0 or 1** structural tip from `availableActions` in fixed priority — `MaterializeFromOccupiedSlots` → `GenerateNextRound` → `PublishDraw` → `ApplyDraw` → `ApplyProgression` → `ApplyQualification` → `PrepareStage` → `StartStage` → `CompleteCompetition`. **`null` is a valid calm state** (no `OpenMatches` fallback; SPA hides the card). Distinct from `availableActions` and from À traiter.
+- `naturalProgression` (Completed / Archived): **`null`** — no Cockpit tip (consultation is not a “next action”; `OpenConsultation` may still appear on other surfaces such as workspace).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
 - Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
