@@ -23,6 +23,13 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="CompletionMode">Completion mode when Completed/Archived.</param>
 /// <param name="Period">Operational calendar span from match placements (null when none scheduled).</param>
 /// <param name="CycleReading">Minimal cycle interpretation for pilotage (machine codes only).</param>
+/// <param name="PreparationFocus">
+/// Préparation sub-situation (Host-owned): Setup | GeneratedCalendar.
+/// Not a cycle code — Draft/Ready stay Construction. SPA composes Prep variants from this field only.
+/// </param>
+/// <param name="CalendarSummary">
+/// Overview calendar synthesis when <paramref name="PreparationFocus"/> is GeneratedCalendar; otherwise null.
+/// </param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, temporal sport units, compact standing.</param>
 /// <param name="Situations">Derived pilotage situations (not persisted alerts).</param>
@@ -44,6 +51,8 @@ public sealed record CockpitViewDto(
     CompletionMode? CompletionMode,
     CockpitCompetitionPeriodDto? Period,
     CockpitCycleReadingDto CycleReading,
+    string PreparationFocus,
+    CockpitCalendarSummaryDto? CalendarSummary,
     CockpitConstructionDimensionsDto ConstructionDimensions,
     CockpitOperationalFocusDto OperationalFocus,
     IReadOnlyList<CockpitSituationDto> Situations,
@@ -52,6 +61,33 @@ public sealed record CockpitViewDto(
     CockpitNaturalProgressionDto? NaturalProgression,
     CockpitClosureHintDto ClosureHint,
     IReadOnlyList<CockpitNavigationHintDto> NavigationHints);
+
+/// <summary>
+/// Overview calendar synthesis for Préparation / GeneratedCalendar (not Match hub duplication).
+/// </summary>
+/// <param name="MatchdayCount">Number of matchdays on the reference Championship stage.</param>
+/// <param name="MatchCount">Total matches in the competition projection (same as matchCounts.total).</param>
+/// <param name="Matchdays">First matchdays preview (capped by Host).</param>
+/// <param name="NextMatch">Earliest upcoming Scheduled match when identifiable; otherwise null.</param>
+public sealed record CockpitCalendarSummaryDto(
+    int MatchdayCount,
+    int MatchCount,
+    IReadOnlyList<CockpitCalendarMatchdayPreviewDto> Matchdays,
+    CockpitCalendarNextMatchDto? NextMatch);
+
+/// <summary>One matchday line in the calendar overview preview.</summary>
+/// <param name="MatchdayNumber">Matchday number.</param>
+/// <param name="MatchCount">Matches attached on that matchday.</param>
+public sealed record CockpitCalendarMatchdayPreviewDto(int MatchdayNumber, int MatchCount);
+
+/// <summary>Next rendez-vous hint for calendar overview (Scheduled only).</summary>
+public sealed record CockpitCalendarNextMatchDto(
+    Guid MatchId,
+    Guid StageId,
+    int? MatchdayNumber,
+    DateTimeOffset? ScheduledAt,
+    string HomeDisplayName,
+    string AwayDisplayName);
 
 /// <summary>
 /// Operational competition period derived from placed match starts (Read fact, not Domain season dates).

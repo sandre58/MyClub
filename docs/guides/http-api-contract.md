@@ -44,6 +44,8 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
   "status": "Draft",
   "completionMode": null,
   "cycleReading": { "code": "Construction" },
+  "preparationFocus": "Setup",
+  "calendarSummary": null,
   "constructionDimensions": {
     "teams": { "prominence": "Present", "facts": { "activeCount": "1", "minimumTeams": "2" } },
     "structure": { "prominence": "Present", "facts": { "formatKind": "None" } },
@@ -137,6 +139,15 @@ Contract notes:
 
 - `status` is the Domain lifecycle status — distinct from `situations` / attention.
 - `cycleReading.code`: `Construction` | `InProgress` | `Completed` | `Archived` (Suspended → `InProgress` + informational situation `CompetitionSuspended`).
+- `preparationFocus`: Host-owned Préparation sub-situation — **not** a cycle code. Wire values: `Setup` | `GeneratedCalendar`.
+  - V1 `GeneratedCalendar` iff **all**: `cycleReading = Construction` · format = `Championship` · `status = Ready` · `matchCounts.total > 0`.
+  - Otherwise `Setup` (includes Draft+matches, Ready without matches, Swiss/Cup/Groups, Running+).
+  - SPA composes Préparation variants from this field only — must **not** infer from `Ready && total > 0`.
+  - Header/Shell pill stays **Préparation** (Domain status / cycle UI) — no « Calendrier » cycle label.
+- `calendarSummary`: overview calendar synthesis when `preparationFocus = GeneratedCalendar`; otherwise `null`.
+  - Shape: `{ matchdayCount, matchCount, matchdays: [{ matchdayNumber, matchCount }], nextMatch? }` where `nextMatch` is `{ matchId, stageId, matchdayNumber?, scheduledAt?, homeDisplayName, awayDisplayName }` (first upcoming `Scheduled`, placements preferred).
+  - Matchdays come from the **primary** Championship stage (may still be Draft/Ready) — not ReferenceStage (Running/Completed).
+  - `matchdays` preview capped (Host `CalendarPreviewMatchdayLimit` = 3). Not a Match hub dump.
 - No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy (`source` + `params` → reason templates; `impactCode` → impact copy).
 - Situation identity = `source` + `targetType` + `targetId` (stable; not translated text).
 - `actionable` is Host-projected (`true` iff `actionCode` is set). SPA must not infer actionability from `source`.
@@ -154,7 +165,7 @@ Contract notes:
   - `nextUnit` = first unit with order strictly greater than `recentUnit` that has matches; before kickoff (`recentUnit` null) = first unit with matches. Null → SPA empty state « Prochaines ».
   - Shape: `{ stageId, stageName, unitKind, unitKey, matchdayNumber?, roundName?, matchCount, matches[] }` where each match is `{ matchId, stageId, status, scheduledAt?, homeDisplayName, awayDisplayName, score? }` (`score` only when Finished; Domain has no in-progress score/minute).
   - No separate `liveMatches` panel — Live is a status inside `recentUnit` (SPA badge).
-  - Distinct from cycle **Calendrier** signal (still OPEN).
+  - Distinct from `preparationFocus` / `calendarSummary` (Préparation calendar overview — not En cours temporal units).
 - `operationalFocus.referenceStageGameRules`: machine facts for En cours **Règlement** from **ReferenceStage** only (`null` when none). SPA selects 2–3 explanatory facts by `formatKind` — does not dump all fields.
   - Includes standing points, match duration, extra-time / shootout presence, effective tie legs / aggregate, optional `swissPlannedRounds`.
   - Distinct from `constructionDimensions.regulation` (construction readiness + competition summary / primary-stage flags).

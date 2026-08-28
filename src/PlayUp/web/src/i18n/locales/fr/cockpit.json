@@ -46,6 +46,18 @@
       "swissPlannedRounds_one": "{{count}} journée planifiée",
       "swissPlannedRounds_other": "{{count}} journées planifiées"
     },
+    "calendar": {
+      "title": "Calendrier sportif",
+      "matchdays_one": "{{count}} journée",
+      "matchdays_other": "{{count}} journées",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matchs",
+      "matchdayLine_one": "Journée {{number}} · {{count}} match",
+      "matchdayLine_other": "Journée {{number}} · {{count}} matchs",
+      "nextHeading": "Prochain rendez-vous",
+      "nextLine": "{{home}} – {{away}}",
+      "nextMatchday": "J{{number}}"
+    },
     "openMatches": "Voir les matchs",
     "openTeams": "Voir les équipes",
     "openRegulation": "Voir le règlement",

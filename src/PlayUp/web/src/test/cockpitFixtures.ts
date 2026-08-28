@@ -42,6 +42,8 @@ export function cockpitView(
     status: 'Draft',
     completionMode: null,
     cycleReading: { code: 'Construction' },
+    preparationFocus: 'Setup',
+    calendarSummary: null,
     constructionDimensions: {
       teams: {
         prominence: 'Present',

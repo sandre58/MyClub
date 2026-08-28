@@ -37,6 +37,15 @@ public static class CockpitAssembler
     /// <summary>Cycle reading: archived.</summary>
     public const string CycleArchived = "Archived";
 
+    /// <summary>Préparation focus: configuration / structure work.</summary>
+    public const string PreparationFocusSetup = "Setup";
+
+    /// <summary>Préparation focus: Championship calendar generated, ready to start.</summary>
+    public const string PreparationFocusGeneratedCalendar = "GeneratedCalendar";
+
+    /// <summary>Max matchdays in calendar overview preview.</summary>
+    public const int CalendarPreviewMatchdayLimit = 3;
+
     /// <summary>Situation nature: blocking attention.</summary>
     public const string NatureBlocking = "Blocking";
 
@@ -169,6 +178,20 @@ public static class CockpitAssembler
         var attentionSummary = BuildAttentionSummary(situations);
 
         var matchCounts = BuildMatchCounts(matchesByStage);
+        var cycleReading = BuildCycleReading(competition.Status);
+        var preparationFocus = ResolvePreparationFocus(
+            cycleReading.Code,
+            competition.Status,
+            organisation.Format.Kind,
+            matchCounts.Total);
+        var calendarSummary = preparationFocus == PreparationFocusGeneratedCalendar
+            ? BuildCalendarSummary(
+                competition,
+                stages,
+                matchesByStage,
+                matchCounts.Total,
+                organisation.Format.PrimaryStageId)
+            : null;
         var operationalFocus = BuildOperationalFocus(
             competition,
             stages,
@@ -196,7 +219,9 @@ public static class CockpitAssembler
             competition.Status,
             competition.CompletionMode,
             BuildPeriod(stages),
-            BuildCycleReading(competition.Status),
+            cycleReading,
+            preparationFocus,
+            calendarSummary,
             dimensions,
             operationalFocus,
             situations,
@@ -205,6 +230,107 @@ public static class CockpitAssembler
             progression,
             closure,
             navigation);
+    }
+
+    /// <summary>
+    /// Host-owned Préparation sub-situation — not a cycleReading code.
+    /// V1 GeneratedCalendar: Construction + Championship + Ready + matches.total &gt; 0.
+    /// </summary>
+    internal static string ResolvePreparationFocus(
+        string cycleReadingCode,
+        CompetitionStatus status,
+        StructureFormatKind? formatKind,
+        int matchTotal) =>
+        cycleReadingCode == CycleConstruction
+        && status == CompetitionStatus.Ready
+        && formatKind == StructureFormatKind.Championship
+        && matchTotal > 0
+            ? PreparationFocusGeneratedCalendar
+            : PreparationFocusSetup;
+
+    /// <summary>
+    /// Calendar overview synthesis for GeneratedCalendar — primary Championship stage (may still be Draft/Ready).
+    /// Does not use ReferenceStage (Running/Completed only).
+    /// </summary>
+    internal static CockpitCalendarSummaryDto BuildCalendarSummary(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        int matchTotal,
+        Guid? primaryStageId)
+    {
+        Stage? stage = null;
+        if (primaryStageId is { } id)
+        {
+            stage = stages.FirstOrDefault(candidate => candidate.Id.Value == id);
+        }
+
+        stage ??= stages.FirstOrDefault();
+        if (stage is null)
+        {
+            return new CockpitCalendarSummaryDto(0, matchTotal, [], null);
+        }
+
+        var names = EntryDisplayNames.ToMap(competition);
+        var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
+        var byId = matches.ToDictionary(match => match.Id);
+        var units = EnumerateSportUnits(stage, byId)
+            .Where(unit => unit.UnitKind == UnitKindMatchday)
+            .ToArray();
+
+        var preview = units
+            .Take(CalendarPreviewMatchdayLimit)
+            .Select(unit => new CockpitCalendarMatchdayPreviewDto(
+                unit.MatchdayNumber ?? unit.Order,
+                unit.Matches.Count))
+            .ToArray();
+
+        return new CockpitCalendarSummaryDto(
+            units.Length,
+            matchTotal,
+            preview,
+            ResolveCalendarNextMatch(stage, units, names));
+    }
+
+    private static CockpitCalendarNextMatchDto? ResolveCalendarNextMatch(
+        Stage stage,
+        IReadOnlyList<SportUnitSlice> units,
+        IReadOnlyDictionary<EntryId, string> names)
+    {
+        var candidates = new List<(CockpitCalendarNextMatchDto Dto, DateTimeOffset? Start)>();
+        foreach (var unit in units)
+        {
+            foreach (var match in unit.Matches)
+            {
+                if (match.Status != MatchStatus.Scheduled)
+                {
+                    continue;
+                }
+
+                DateTimeOffset? scheduledAt = null;
+                if (stage.TryGetMatchPlacement(match.Id, out var placement))
+                {
+                    scheduledAt = placement.Start;
+                }
+
+                candidates.Add((
+                    new CockpitCalendarNextMatchDto(
+                        match.Id.Value,
+                        stage.Id.Value,
+                        unit.MatchdayNumber,
+                        scheduledAt,
+                        EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
+                        EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString()),
+                    scheduledAt));
+            }
+        }
+
+        return candidates
+            .OrderBy(candidate => candidate.Start is null ? 1 : 0)
+            .ThenBy(candidate => candidate.Start ?? DateTimeOffset.MaxValue)
+            .ThenBy(candidate => candidate.Dto.MatchdayNumber ?? int.MaxValue)
+            .Select(candidate => candidate.Dto)
+            .FirstOrDefault();
     }
 
     /// <summary>
@@ -233,12 +359,7 @@ public static class CockpitAssembler
             }
         }
 
-        if (earliest is null && latest is null)
-        {
-            return null;
-        }
-
-        return new CockpitCompetitionPeriodDto(earliest, latest);
+        return earliest is null && latest is null ? null : new CockpitCompetitionPeriodDto(earliest, latest);
     }
 
     private static CockpitCycleReadingDto BuildCycleReading(CompetitionStatus status) =>

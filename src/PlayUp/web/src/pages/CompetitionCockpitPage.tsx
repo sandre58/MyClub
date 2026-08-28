@@ -11,6 +11,7 @@ import {
   ClassementsNavIcon,
   MatchesNavIcon,
 } from '../design-system/icons/shellIcons'
+import { CalendarIcon } from '../design-system/icons/overviewIcons'
 import { actionLabel } from '../i18n/actionLabels'
 import {
   attentionTargetTypeLabel,
@@ -20,6 +21,7 @@ import { situationTitle } from '../i18n/situationCopy'
 import { queryKeys } from '../queryKeys'
 import type {
   CockpitAction,
+  CockpitCalendarSummary,
   CockpitDimension,
   CockpitMatchLine,
   CockpitReferenceStageGameRules,
@@ -154,10 +156,12 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
     data.cycleReading.code === 'Archived'
   /** En cours + Terminée share Config + Sport composition (not Préparation). */
   const operationalOverview = inProgress || completedLike
+  const generatedCalendar =
+    !operationalOverview && data.preparationFocus === 'GeneratedCalendar'
   const slots = sortConstructionSlots(data).filter((slot) => slot !== 'matches')
   const teamsVisible = slots.includes('teams')
   const regulationVisible = slots.includes('regulation')
-  const structureVisible = slots.includes('structure')
+  const structureVisible = slots.includes('structure') && !generatedCalendar
   const gameRules = data.operationalFocus.referenceStageGameRules
   const gameRegulationVisible =
     operationalOverview && regulationVisible && gameRules != null
@@ -174,6 +178,8 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const showNextUnit = inProgress || (completedLike && focus.nextUnit != null)
   const showTemporalUnits = showRecentUnit || showNextUnit
   const showSport = showStanding || showTemporalUnits
+  const showCalendar =
+    generatedCalendar && data.calendarSummary != null
 
   const attentionItems = orderSituationsForDisplay(data.attentionSummary.items)
   const attentionCount = data.attentionSummary.count
@@ -320,19 +326,35 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
             </div>
           )}
 
+          {showCalendar && data.calendarSummary && (
+            <div
+              className="overview__sport overview__sport--solo"
+              data-testid="overview-region-calendar"
+            >
+              <CalendarSummaryPanel
+                summary={data.calendarSummary}
+                matchesHref={matchesHref}
+              />
+            </div>
+          )}
+
           {showPrepConfig && (
             <div
-              className="overview__config overview__mid"
+              className={
+                generatedCalendar
+                  ? 'overview__config overview__mid overview__mid--condensed-config'
+                  : 'overview__config overview__mid'
+              }
               data-testid="overview-region-config"
             >
               {teamsVisible && (
                 <TeamsPanel
-                  variant="construction"
+                  variant={generatedCalendar ? 'identity' : 'construction'}
                   dimension={data.constructionDimensions.teams}
                   entries={orgQuery.data?.participants.entries ?? []}
                   href={orgHref}
                   hrefLabel={t('dimensions.openTeams')}
-                  actions={slotActions('teams')}
+                  actions={generatedCalendar ? [] : slotActions('teams')}
                   actionRunner={actionRunner}
                 />
               )}
@@ -342,7 +364,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
                   regulation={data.constructionDimensions.regulation}
                   href={orgHref}
                   hrefLabel={t('dimensions.openRegulation')}
-                  actions={slotActions('regulation')}
+                  actions={generatedCalendar ? [] : slotActions('regulation')}
                   actionRunner={actionRunner}
                 />
               )}
@@ -627,6 +649,71 @@ function StandingCompactPanel({
       <p className="overview-panel__footer">
         <Link className="overview-link" to={href}>
           {t('sport.standingOpen')}
+          <span className="overview-link__arrow" aria-hidden="true">
+            <ChevronRightIcon size="sm" />
+          </span>
+        </Link>
+      </p>
+    </section>
+  )
+}
+
+function CalendarSummaryPanel({
+  summary,
+  matchesHref,
+}: {
+  summary: CockpitCalendarSummary
+  matchesHref: string
+}) {
+  const { t } = useTranslation('cockpit')
+  const titleId = 'cockpit-calendar-summary'
+  const next = summary.nextMatch
+
+  return (
+    <section
+      className="ds-panel overview-calendar"
+      aria-labelledby={titleId}
+      data-testid="overview-calendar-panel"
+    >
+      <PanelHead id={titleId} icon={<CalendarIcon size="md" />}>
+        {t('dimensions.calendar.title')}
+      </PanelHead>
+      <p className="overview-calendar__totals">
+        {t('dimensions.calendar.matchdays', { count: summary.matchdayCount })}
+        {' · '}
+        {t('dimensions.calendar.matches', { count: summary.matchCount })}
+      </p>
+      {summary.matchdays.length > 0 ? (
+        <ul className="overview-calendar__matchdays">
+          {summary.matchdays.map((matchday) => (
+            <li key={matchday.matchdayNumber}>
+              {t('dimensions.calendar.matchdayLine', {
+                number: matchday.matchdayNumber,
+                count: matchday.matchCount,
+              })}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {next ? (
+        <div className="overview-calendar__next">
+          <p className="overview-calendar__next-heading">
+            {t('dimensions.calendar.nextHeading')}
+            {next.matchdayNumber != null
+              ? ` · ${t('dimensions.calendar.nextMatchday', { number: next.matchdayNumber })}`
+              : null}
+          </p>
+          <p className="overview-calendar__next-line">
+            {t('dimensions.calendar.nextLine', {
+              home: next.homeDisplayName,
+              away: next.awayDisplayName,
+            })}
+          </p>
+        </div>
+      ) : null}
+      <p className="overview-panel__footer">
+        <Link className="overview-link" to={matchesHref}>
+          {t('dimensions.openMatches')}
           <span className="overview-link__arrow" aria-hidden="true">
             <ChevronRightIcon size="sm" />
           </span>

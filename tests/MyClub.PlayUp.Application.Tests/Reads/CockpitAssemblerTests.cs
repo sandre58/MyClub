@@ -34,6 +34,8 @@ public sealed class CockpitAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
+        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.CalendarSummary.Should().BeNull();
         view.Status.Should().Be(CompetitionStatus.Draft);
         view.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().BeGreaterThan(0);
         view.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
@@ -1324,6 +1326,157 @@ public sealed class CockpitAssemblerTests
         view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(CockpitAssembler.UnitKindMatchday);
         view.OperationalFocus.RecentUnit.MatchdayNumber.Should().Be(1);
         view.OperationalFocus.NextUnit.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_championship_ready_with_matches_projects_GeneratedCalendar()
+    {
+        var competition = CreateCompetition.Execute("Champ-Cal", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+        competition.Prepare(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [configured.Stage.Id] = materialize.CreatedMatches
+            });
+
+        view.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
+        view.Status.Should().Be(CompetitionStatus.Ready);
+        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusGeneratedCalendar);
+        view.CalendarSummary.Should().NotBeNull();
+        view.CalendarSummary!.MatchCount.Should().Be(6);
+        view.CalendarSummary.MatchdayCount.Should().BeGreaterThan(0);
+        view.CalendarSummary.Matchdays.Should().NotBeEmpty();
+        view.CalendarSummary.Matchdays.Count.Should().BeLessThanOrEqualTo(
+            CockpitAssembler.CalendarPreviewMatchdayLimit);
+        view.CalendarSummary.NextMatch.Should().NotBeNull();
+        view.CalendarSummary.NextMatch!.HomeDisplayName.Should().NotBeNullOrWhiteSpace();
+        view.AvailableActions.Should().Contain(action =>
+            action.Code == CockpitAssembler.ActionStartCompetition);
+    }
+
+    [Fact]
+    public void Assemble_championship_draft_with_matches_stays_Setup()
+    {
+        var competition = CreateCompetition.Execute("Champ-Draft-Matches", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [configured.Stage.Id] = materialize.CreatedMatches
+            });
+
+        view.Status.Should().Be(CompetitionStatus.Draft);
+        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.CalendarSummary.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_championship_ready_without_matches_stays_Setup()
+    {
+        var competition = CreateCompetition.Execute("Champ-Ready-Empty", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(2),
+            _clock);
+        competition.Prepare(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.Status.Should().Be(CompetitionStatus.Ready);
+        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.CalendarSummary.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_cup_ready_with_skeleton_matches_stays_Setup()
+    {
+        var competition = CreateCompetition.Execute("Cup-Ready-Skeleton", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock);
+        var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+        competition.Prepare(_clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [configured.Stage.Id] = materialize.CreatedMatches
+            });
+
+        view.Status.Should().Be(CompetitionStatus.Ready);
+        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.CalendarSummary.Should().BeNull();
+    }
+
+    [Fact]
+    public void ResolvePreparationFocus_requires_all_championship_ready_predicates()
+    {
+        CockpitAssembler.ResolvePreparationFocus(
+                CockpitAssembler.CycleConstruction,
+                CompetitionStatus.Ready,
+                StructureFormatKind.Championship,
+                matchTotal: 1)
+            .Should().Be(CockpitAssembler.PreparationFocusGeneratedCalendar);
+
+        CockpitAssembler.ResolvePreparationFocus(
+                CockpitAssembler.CycleConstruction,
+                CompetitionStatus.Draft,
+                StructureFormatKind.Championship,
+                matchTotal: 1)
+            .Should().Be(CockpitAssembler.PreparationFocusSetup);
+
+        CockpitAssembler.ResolvePreparationFocus(
+                CockpitAssembler.CycleInProgress,
+                CompetitionStatus.Running,
+                StructureFormatKind.Championship,
+                matchTotal: 1)
+            .Should().Be(CockpitAssembler.PreparationFocusSetup);
+
+        CockpitAssembler.ResolvePreparationFocus(
+                CockpitAssembler.CycleConstruction,
+                CompetitionStatus.Ready,
+                StructureFormatKind.Swiss,
+                matchTotal: 1)
+            .Should().Be(CockpitAssembler.PreparationFocusSetup);
     }
 
     private Match AttachFinished(

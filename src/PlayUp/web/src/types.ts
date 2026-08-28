@@ -135,6 +135,13 @@ export interface CockpitView {
   /** Optional competition period — populated when Read exposes boundaries. */
   period?: CockpitCompetitionPeriod | null
   cycleReading: CockpitCycleReading
+  /**
+   * Préparation sub-situation (Host-owned) — not a cycle code.
+   * Setup | GeneratedCalendar. SPA must not infer from Ready + match counts.
+   */
+  preparationFocus: CockpitPreparationFocus | string
+  /** Calendar overview synthesis when preparationFocus is GeneratedCalendar; else null. */
+  calendarSummary: CockpitCalendarSummary | null
   constructionDimensions: CockpitConstructionDimensions
   operationalFocus: CockpitOperationalFocus
   situations: CockpitSituation[]
@@ -143,6 +150,30 @@ export interface CockpitView {
   naturalProgression: CockpitNaturalProgression | null
   closureHint: CockpitClosureHint
   navigationHints: CockpitNavigationHint[]
+}
+
+/** Host-owned Préparation focus — wire codes. */
+export type CockpitPreparationFocus = 'Setup' | 'GeneratedCalendar'
+
+export interface CockpitCalendarSummary {
+  matchdayCount: number
+  matchCount: number
+  matchdays: CockpitCalendarMatchdayPreview[]
+  nextMatch: CockpitCalendarNextMatch | null
+}
+
+export interface CockpitCalendarMatchdayPreview {
+  matchdayNumber: number
+  matchCount: number
+}
+
+export interface CockpitCalendarNextMatch {
+  matchId: string
+  stageId: string
+  matchdayNumber?: number | null
+  scheduledAt?: string | null
+  homeDisplayName: string
+  awayDisplayName: string
 }
 
 export interface CockpitCycleReading {

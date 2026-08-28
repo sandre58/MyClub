@@ -61,8 +61,8 @@ export function InProgressIcon({ size, ...props }: OverviewIconProps) {
 }
 
 /**
- * Calendrier — glyphe Matches nav.
- * Conservé pour le futur signal cycle Calendrier (OPEN) — pas d'usage Cockpit V1.
+ * Calendrier sportif — glyphe Matches nav.
+ * Used by Préparation / GeneratedCalendar overview panel.
  */
 export function CalendarIcon({ size, ...props }: OverviewIconProps) {
   return <MatchesNavIcon size={size} {...props} />

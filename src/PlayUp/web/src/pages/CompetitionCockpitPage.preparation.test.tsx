@@ -955,4 +955,83 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
     await user.click(screen.getByRole('link', { name: /Voir les matchs/i }))
     expect(screen.getByText('Match hub route')).toBeInTheDocument()
   })
+
+  it('composes GeneratedCalendar from preparationFocus without Structure', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Ready',
+        preparationFocus: 'GeneratedCalendar',
+        calendarSummary: {
+          matchdayCount: 3,
+          matchCount: 6,
+          matchdays: [
+            { matchdayNumber: 1, matchCount: 2 },
+            { matchdayNumber: 2, matchCount: 2 },
+            { matchdayNumber: 3, matchCount: 2 },
+          ],
+          nextMatch: {
+            matchId: cockpitIds.matchId,
+            stageId,
+            matchdayNumber: 1,
+            scheduledAt: null,
+            homeDisplayName: 'Alpha',
+            awayDisplayName: 'Bravo',
+          },
+        },
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Present',
+            facts: {
+              formatKind: 'Championship',
+              matchdayCount: '3',
+            },
+          },
+          matches: {
+            prominence: 'Condensed',
+            facts: { total: '6' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          matchCounts: {
+            live: 0,
+            scheduled: 6,
+            finished: 0,
+            postponed: 0,
+            cancelled: 0,
+            total: 6,
+          },
+        },
+        availableActions: [
+          { code: 'StartCompetition', guaranteed: false },
+        ],
+        naturalProgression: null,
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: /Calendrier sportif/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('overview-calendar-panel')).toHaveTextContent(
+      /3 journées/,
+    )
+    expect(screen.getByTestId('overview-calendar-panel')).toHaveTextContent(
+      /Alpha – Bravo/,
+    )
+    expectOverviewRegionOrder(
+      'overview-region-progression',
+      'overview-region-calendar',
+      'overview-region-config',
+    )
+    expectOverviewRegionsAbsent('overview-region-structure')
+    expect(
+      screen.queryByRole('heading', { name: /^Structure$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /Prochaine action/i }),
+    ).toBeInTheDocument()
+  })
 })
