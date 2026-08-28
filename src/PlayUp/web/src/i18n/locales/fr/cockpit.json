@@ -1,33 +1,4 @@
 {
-  "eyebrow": "Vue d'ensemble",
-  "titleFallback": "Vue d'ensemble",
-  "back": "Retour aux compétitions",
-  "cycle": {
-    "Construction": "Préparation",
-    "InProgress": "En cours",
-    "Completed": "Terminée",
-    "Archived": "Terminée",
-    "heading": "Où en est-on ?",
-    "lede": "Cycle de la compétition"
-  },
-  "cycleDesc": {
-    "Construction": "Équipes, structure et règlement se mettent en place.",
-    "InProgress": "Les rencontres se jouent et les résultats arrivent.",
-    "Completed": "La compétition est allée au bout de son cycle.",
-    "Archived": "La compétition est allée au bout de son cycle."
-  },
-  "cycleUi": {
-    "Preparation": "Préparation",
-    "Calendar": "Calendrier",
-    "InProgress": "En cours",
-    "Completed": "Terminée"
-  },
-  "prominence": {
-    "Present": "Présent",
-    "Condensed": "Condensé",
-    "Dominant": "Dominant",
-    "Absent": "Absent"
-  },
   "dimensions": {
     "teams": {
       "title": "Équipes",
@@ -40,7 +11,6 @@
     "structure": {
       "title": "Structure",
       "none": "Format non configuré",
-      "summary": "{{formatKind}}",
       "phases_one": "{{count}} phase",
       "phases_other": "{{count}} phases",
       "phasesDetail_one": "{{count}} phase · {{names}}",
@@ -55,40 +25,19 @@
       "swissByes_one": "{{count}} bye (événement d’appariement)",
       "swissByes_other": "{{count}} byes (événements d’appariement)",
       "swissByesHint": "Pas un match — l’équipe est exemptée pour le tour.",
-      "swissByeLine": "Tour {{round}} · {{name}}",
       "slots_one": "{{count}} emplacement",
       "slots_other": "{{count}} emplacements",
       "matches_one": "{{count}} match",
       "matches_other": "{{count}} matchs",
-      "matchesNone": "Aucun match créé",
-      "matchesPending_one": "{{count}} match à créer",
-      "matchesPending_other": "{{count}} matchs à créer"
+      "matchesNone": "Aucun match créé"
     },
     "regulation": {
       "title": "Règlement",
-      "summary": "{{periods}}×{{duration}} min · points {{win}}/{{draw}}/{{loss}} · équipes {{min}}–{{max}}",
-      "summaryCompact": "{{min}}–{{max}} équipes · {{periods}}×{{duration}} min · {{win}}/{{draw}}/{{loss}} pts",
-      "flagYes": "oui",
-      "flagNo": "non",
-      "potsNone": "—",
-      "allReady": "Règlement prêt pour la suite",
-      "ready": "Prêt",
-      "notReady": "Pas prêt",
-      "transitions": {
-        "Draw": "Tirage",
-        "MaterializeMatches": "Matérialisation",
-        "MaterializeFromOccupiedSlots": "Confrontations depuis les emplacements",
-        "GenerateNextRound": "Tour Swiss suivant"
-      },
-      "readinessReady": "Le règlement permet d’envisager {{transition}}.",
-      "readinessNotReady": "{{transition}} : conditions à lever",
       "pointsValue": "{{value}} pts",
       "pointsWin": "Victoire",
       "pointsDraw": "Nul",
       "pointsLoss": "Défaite",
-      "formatMeta": "{{periods}}×{{duration}} min · {{min}}–{{max}} équipes",
       "formatDuration": "{{periods}}×{{duration}} min",
-      "pointsLine": "{{win}} pts victoire · {{draw}} pt nul · {{loss}} pt défaite",
       "elimination": "Élimination directe",
       "twoLegs": "2 manches",
       "twoLegsAggregate": "2 manches · cumul des scores",
@@ -97,34 +46,31 @@
       "swissPlannedRounds_one": "{{count}} journée planifiée",
       "swissPlannedRounds_other": "{{count}} journées planifiées"
     },
-    "openOrganisation": "Ouvrir l’organisation",
     "openMatches": "Voir les matchs",
     "openTeams": "Voir les équipes",
     "openRegulation": "Voir le règlement",
     "openStructure": "Voir la structure"
   },
   "situations": {
-    "heading": "À traiter",
-    "open": "Ouvrir",
-    "actionable": "Action possible",
-    "notActionable": "Sans action directe"
+    "heading": "À traiter"
   },
   "attention": {
-    "heading": "À traiter",
     "triageHint": "{{count}} situation(s) — détail dans le panneau À traiter (en-tête)."
   },
   "progression": {
     "heading": "Prochaine action",
-    "hint": "Orientation proposée à partir de l’état connu.",
     "codes": {
-      "ContinueOrganisation": "Complétez les équipes, la structure et le règlement.",
-      "OpenConsultation": "Consultez les classements de la compétition.",
       "MaterializeMatches": "Créez les fixtures / matchs pour avancer (championnat) ou le squelette de confrontations (coupe).",
       "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — ouvrez la phase pour configurer les confrontations (SlotA ↔ SlotB).",
       "GenerateNextRound": "Générez le prochain tour Swiss (appariements + matchs) — après résultats du tour courant si besoin.",
       "PublishDraw": "Publiez le tirage pour figer la composition.",
+      "ApplyDraw": "Appliquez le tirage publié pour placer les équipes.",
+      "ApplyProgression": "Appliquez la progression pour avancer la phase.",
+      "ApplyQualification": "Appliquez la qualification pour alimenter la phase suivante.",
       "PrepareCompetition": "Passez la compétition en état prêt.",
       "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",
+      "PrepareStage": "Finalisez la configuration de la phase avant les opérations sportives.",
+      "StartStage": "Ouvrez la phase pour les matchs et le pilotage sportif.",
       "CompleteCompetition": "La clôture normale de la compétition est envisageable."
     }
   },
@@ -138,21 +84,6 @@
   "actions": {
     "busy": "Exécution…",
     "openSpace": "Continuer"
-  },
-  "nav": {
-    "heading": "Espaces",
-    "organisation": {
-      "title": "Organisation",
-      "desc": "Participants, règlement et structure."
-    },
-    "matches": {
-      "title": "Matchs",
-      "desc": "Matchs et situations opérationnelles."
-    },
-    "classements": {
-      "title": "Classements",
-      "desc": "Classements de la compétition."
-    }
   },
   "sport": {
     "standingTitle": "Classement",

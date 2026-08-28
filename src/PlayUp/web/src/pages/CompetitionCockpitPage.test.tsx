@@ -199,7 +199,7 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
-  it('renders V9 overview structure without console blocks', async () => {
+  it('renders Préparation overview without cycle panel or console blocks', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         situations: [
@@ -232,7 +232,7 @@ describe('CompetitionCockpitPage', () => {
             params: { stageName: 'Phase 1' },
           },
         ],
-        naturalProgression: { code: 'ContinueOrganisation' },
+        naturalProgression: { code: 'PrepareStage' },
         closureHint: {
           canCompleteNormally: false,
           blockerCodes: ['ScheduledMatches'],
@@ -243,12 +243,11 @@ describe('CompetitionCockpitPage', () => {
     renderCockpitPage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Où en est-on ?' }),
-    ).toBeInTheDocument()
+      screen.queryByRole('heading', { name: 'Où en est-on ?' }),
+    ).not.toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Prochaine action' }),
+      await screen.findByRole('heading', { name: 'Prochaine action' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('Préparation').length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Structure' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
@@ -259,7 +258,7 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument()
     expect(screen.queryByText(/Bloque la préparation/)).not.toBeInTheDocument()
     expect(
-      screen.getByText(/Complétez les équipes, la structure et le règlement/),
+      screen.getByText(/Finalisez la configuration de la phase/),
     ).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Clôture' })).not.toBeInTheDocument()
     expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
@@ -271,12 +270,114 @@ describe('CompetitionCockpitPage', () => {
     expect(
       screen.getByRole('button', { name: /Préparer la phase/i }),
     ).toBeInTheDocument()
+    const structure = screen.getByTestId('overview-structure-construction')
+    expect(
+      within(structure).queryByRole('button', { name: /Préparer la phase/i }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: /Ajouter une équipe/i }),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Renommer une équipe/i }),
     ).not.toBeInTheDocument()
+    expectOverviewRegionOrder(
+      'overview-region-progression',
+      'overview-region-attention',
+      'overview-region-config',
+      'overview-region-structure',
+    )
+  })
+
+  describe('Préparation layout DOM order', () => {
+    it('orders Prochaine action then config then Structure when tip only', async () => {
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+        cockpitView({
+          naturalProgression: { code: 'PrepareStage' },
+          availableActions: [
+            {
+              code: 'PrepareStage',
+              guaranteed: false,
+              stageId,
+              params: { stageName: 'Phase 1' },
+            },
+          ],
+          situations: [],
+          attentionSummary: { count: 0, items: [] },
+        }),
+      )
+
+      renderCockpitPage()
+
+      await screen.findByTestId('overview-region-progression')
+      expectOverviewRegionOrder(
+        'overview-region-progression',
+        'overview-region-config',
+        'overview-region-structure',
+      )
+      expectOverviewRegionsAbsent('overview-region-attention')
+    })
+
+    it('orders À traiter then config then Structure when attention only', async () => {
+      const situation = cockpitSituation()
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+        cockpitView({
+          naturalProgression: null,
+          availableActions: [{ code: 'AddEntry', guaranteed: false }],
+          situations: [situation],
+          attentionSummary: { count: 1, items: [situation] },
+        }),
+      )
+
+      renderCockpitPage()
+
+      await screen.findByTestId('overview-region-attention')
+      expectOverviewRegionOrder(
+        'overview-region-attention',
+        'overview-region-config',
+        'overview-region-structure',
+      )
+      expectOverviewRegionsAbsent('overview-region-progression')
+    })
+
+    it('keeps InsufficientParticipants on À traiter and minimum on Équipes without tip AddEntry', async () => {
+      const situation = cockpitSituation({
+        params: { minimumTeams: '2', activeCount: '1' },
+      })
+      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+        cockpitView({
+          naturalProgression: { code: 'PrepareStage' },
+          availableActions: [
+            { code: 'AddEntry', guaranteed: false },
+            {
+              code: 'PrepareStage',
+              guaranteed: false,
+              stageId,
+              params: { stageName: 'Phase 1' },
+            },
+          ],
+          situations: [situation],
+          attentionSummary: { count: 1, items: [situation] },
+        }),
+      )
+
+      renderCockpitPage()
+
+      expect(
+        await screen.findByRole('heading', { name: 'À traiter' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
+      expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /Préparer la phase/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /Continuer la préparation/i }),
+      ).not.toBeInTheDocument()
+      const progression = screen.getByTestId('overview-region-progression')
+      expect(
+        within(progression).queryByRole('link', { name: /Ajouter une équipe/i }),
+      ).not.toBeInTheDocument()
+    })
   })
 
   it('Préparation Équipes — minimum insuffisant : signal requis, pas de badge complet ni max', async () => {
@@ -384,7 +485,7 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await screen.findByRole('heading', { name: 'Où en est-on ?' })
+    await screen.findByRole('heading', { name: 'Équipes' })
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
     ).not.toBeInTheDocument()
@@ -412,6 +513,73 @@ describe('CompetitionCockpitPage', () => {
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Démarrer la compétition/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('Préparation Prochaine action — calme : carte absente (null + pas de lifecycle)', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        naturalProgression: null,
+        availableActions: [{ code: 'AddEntry', guaranteed: false }],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Prochaine action' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/Continuer la préparation/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/Complétez les équipes/i),
+    ).not.toBeInTheDocument()
+  })
+
+  it('Préparation Prochaine action — lifecycle seul quand naturalProgression est null', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        naturalProgression: null,
+        availableActions: [{ code: 'StartCompetition', guaranteed: false }],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Prochaine action' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Démarrer la compétition/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('Préparation Prochaine action — tip structurante sans empiler PrepareCompetition', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        naturalProgression: { code: 'PrepareStage' },
+        availableActions: [
+          {
+            code: 'PrepareStage',
+            guaranteed: false,
+            stageId,
+            params: { stageName: 'Phase 1' },
+          },
+          { code: 'PrepareCompetition', guaranteed: false },
+        ],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Prochaine action' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Préparer la phase/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Préparer la compétition/i }),
     ).not.toBeInTheDocument()
   })
 
@@ -831,7 +999,7 @@ describe('CompetitionCockpitPage', () => {
     })
   })
 
-  it('composes Terminée like En cours without WhereAreWe or Prochaines when nextUnit is null', async () => {
+  it('composes Terminée like En cours without Prochaines when nextUnit is null', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         status: 'Completed',
@@ -975,7 +1143,7 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await screen.findByRole('heading', { name: 'Où en est-on ?' })
+    await screen.findByRole('heading', { name: 'Équipes' })
     expect(screen.queryByText(/Appliqué/)).not.toBeInTheDocument()
     expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
   })
@@ -1039,6 +1207,7 @@ describe('CompetitionCockpitPage', () => {
               params: { stageName: 'Phase 1' },
             },
           ],
+          naturalProgression: { code: 'PrepareStage' },
         }),
       )
       .mockResolvedValueOnce(
@@ -1051,6 +1220,7 @@ describe('CompetitionCockpitPage', () => {
               params: { stageName: 'Phase 1' },
             },
           ],
+          naturalProgression: { code: 'StartStage' },
           operationalFocus: {
             ...cockpitView().operationalFocus,
             stages: [{ stageId, name: 'Phase 1', status: 'Ready' }],
@@ -1116,6 +1286,86 @@ describe('CompetitionCockpitPage', () => {
     expect(within(regulation).queryByText(/Règlement prêt/i)).not.toBeInTheDocument()
     expect(within(regulation).queryByText(/Matérialisation/i)).not.toBeInTheDocument()
     expect(within(regulation).queryByText(/–/)).not.toBeInTheDocument()
+  })
+
+  it('Préparation Structure — faits only (format, rows, ConfigureStructure, pas de pilotage phase)', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Present',
+            facts: {
+              formatKind: 'Championship',
+              groupCount: '0',
+              roundCount: '0',
+              matchdayCount: '2',
+              slotCount: '0',
+            },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          stages: [{ stageId, name: 'Phase 1', status: 'Draft' }],
+          matchCounts: {
+            live: 0,
+            scheduled: 0,
+            finished: 0,
+            postponed: 0,
+            cancelled: 0,
+            total: 0,
+          },
+        },
+        availableActions: [
+          { code: 'ConfigureStructure', guaranteed: false },
+          {
+            code: 'PrepareStage',
+            guaranteed: false,
+            stageId,
+            params: { stageName: 'Phase 1' },
+          },
+        ],
+        naturalProgression: { code: 'PrepareStage' },
+      }),
+    )
+
+    renderCockpitPage()
+
+    const structure = await screen.findByTestId('overview-structure-construction')
+    expect(within(structure).getByText('Championnat')).toBeInTheDocument()
+    expect(within(structure).getByText(/Phase 1/)).toBeInTheDocument()
+    expect(within(structure).getByText(/2 journées/)).toBeInTheDocument()
+    expect(within(structure).getByText(/Aucun match créé/)).toBeInTheDocument()
+    expect(
+      within(structure).getByRole('link', { name: /Configurer la structure/i }),
+    ).toBeInTheDocument()
+    expect(
+      within(structure).queryByRole('button', { name: /Préparer la phase/i }),
+    ).not.toBeInTheDocument()
+    expect(within(structure).queryByText(/matchs? à créer/i)).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Préparer la phase/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('Préparation Structure — format non configuré sans checkmark', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Present',
+            facts: { formatKind: 'None' },
+          },
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    const structure = await screen.findByTestId('overview-structure-construction')
+    expect(within(structure).getByText('Format non configuré')).toBeInTheDocument()
+    expect(structure.querySelector('.overview-row__mark')).not.toBeInTheDocument()
   })
 
   it('renders regulation factual summary without transition readiness UI', async () => {
@@ -1250,7 +1500,7 @@ describe('CompetitionCockpitPage', () => {
 
     renderCockpitPage()
 
-    await screen.findByRole('heading', { name: 'Où en est-on ?' })
+    await screen.findByRole('heading', { name: 'Équipes' })
     expect(
       screen.queryByRole('heading', { name: 'Matchs', level: 3 }),
     ).not.toBeInTheDocument()

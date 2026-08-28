@@ -38,8 +38,8 @@ public sealed class CockpitAssemblerTests
         view.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().BeGreaterThan(0);
         view.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotBeEmpty();
-        view.NaturalProgression.Should().NotBeNull();
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
+        view.NaturalProgression.Should().BeNull(
+            "Construction calm: no structural tip and no ContinueOrganisation fallback");
         view.AvailableActions.Should().Contain(action => action.Code == OrganisationViewAssembler.ActionAddEntry);
 
         // Entry without stage — PrepareCompetition must not be projected (Domain precondition).
@@ -67,7 +67,7 @@ public sealed class CockpitAssemblerTests
         view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
 
         // Intentional lifecycle stays in availableActions — not naturalProgression (L7 / Option B).
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionPrepareStage);
     }
 
     [Fact]
@@ -155,8 +155,8 @@ public sealed class CockpitAssemblerTests
             action.Code == CockpitAssembler.ActionStartCompetition && !action.Guaranteed);
         view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
 
-        // Ready without materialize/draw readiness — operational tip unchanged (Option B).
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ProgressionContinueOrganisation);
+        // Ready without materialize/draw — stage still Draft → PrepareStage tip.
+        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionPrepareStage);
     }
 
     [Fact]
@@ -694,6 +694,8 @@ public sealed class CockpitAssemblerTests
             null,
             StructureIntent.Cup(4),
             _clock);
+        configured.Stage.Prepare(_clock);
+        configured.Stage.Start(_clock);
 
         var view = CockpitAssembler.Assemble(
             competition,
@@ -910,6 +912,45 @@ public sealed class CockpitAssemblerTests
         view.AvailableActions.Should().Contain(item => item.Code == CockpitAssembler.ActionStartMatch);
         view.NaturalProgression.Should().BeNull(
             "En cours calm: OpenMatches is not a tip; null is a valid business state");
+    }
+
+    [Theory]
+    [InlineData(
+        CockpitAssembler.ActionStartStage,
+        CockpitAssembler.ActionMaterializeMatches,
+        CockpitAssembler.ActionStartStage)]
+    [InlineData(
+        CockpitAssembler.ActionMaterializeMatches,
+        CockpitAssembler.ActionPublishDraw,
+        CockpitAssembler.ActionMaterializeMatches)]
+    [InlineData(
+        CockpitAssembler.ActionPrepareStage,
+        CockpitAssembler.ActionStartStage,
+        CockpitAssembler.ActionPrepareStage)]
+    [InlineData(
+        CockpitAssembler.ActionPublishDraw,
+        CockpitAssembler.ActionApplyDraw,
+        CockpitAssembler.ActionPublishDraw)]
+    public void ResolveConstructionStructuralProgression_priority_is_semantic_not_list_order(
+        string lowerListedFirst,
+        string higherOrEqualSecond,
+        string expectedWinner)
+    {
+        var stageId = Guid.NewGuid();
+        var actions = new[]
+        {
+            new CockpitActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
+            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId),
+        };
+
+        CockpitAssembler.ResolveConstructionStructuralProgression(actions)!
+            .Code.Should().Be(expectedWinner);
+    }
+
+    [Fact]
+    public void ResolveConstructionStructuralProgression_empty_actions_is_null()
+    {
+        CockpitAssembler.ResolveConstructionStructuralProgression([]).Should().BeNull();
     }
 
     [Theory]

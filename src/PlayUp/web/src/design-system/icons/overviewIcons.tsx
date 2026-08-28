@@ -2,7 +2,6 @@ import type { SVGProps } from 'react'
 import { Icon, type IconSize } from './Icon'
 import {
   AttentionIcon,
-  ClassementsNavIcon,
   MatchesNavIcon,
   OrganisationNavIcon,
 } from './shellIcons'
@@ -15,18 +14,7 @@ type OverviewIconProps = SVGProps<SVGSVGElement> & { size?: IconSize }
  * SoT: Identité §13 · foundations/icons.css · Icon.tsx
  */
 
-/** Où en est-on ? — question mark in circle (réf. V9). */
-export function WhereAreWeIcon({ size, ...props }: OverviewIconProps) {
-  return (
-    <Icon size={size} {...props}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
-    </Icon>
-  )
-}
-
-/** Prochaine action — flag (en-tête générique, réf. V9). */
+/** Prochaine action — flag (en-tête générique). */
 export function NextActionIcon({ size, ...props }: OverviewIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -50,7 +38,7 @@ export function CreateMatchesIcon({ size, ...props }: OverviewIconProps) {
   )
 }
 
-/** Cycle — Préparation (presse-papier). */
+/** Préparation (presse-papier) — playground / surfaces futures. */
 export function PreparationIcon({ size, ...props }: OverviewIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -62,7 +50,7 @@ export function PreparationIcon({ size, ...props }: OverviewIconProps) {
   )
 }
 
-/** Cycle — En cours (play). */
+/** En cours (play). */
 export function InProgressIcon({ size, ...props }: OverviewIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -72,12 +60,10 @@ export function InProgressIcon({ size, ...props }: OverviewIconProps) {
   )
 }
 
-/** Cycle — Terminée (trophée). */
-export function CompletedIcon({ size, ...props }: OverviewIconProps) {
-  return <ClassementsNavIcon size={size} {...props} />
-}
-
-/** Cycle — Calendrier. */
+/**
+ * Calendrier — glyphe Matches nav.
+ * Conservé pour le futur signal cycle Calendrier (OPEN) — pas d'usage Cockpit V1.
+ */
 export function CalendarIcon({ size, ...props }: OverviewIconProps) {
   return <MatchesNavIcon size={size} {...props} />
 }

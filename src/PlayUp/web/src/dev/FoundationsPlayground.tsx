@@ -29,7 +29,6 @@ import {
   PreparationIcon,
   RegulationIcon,
   StructureIcon,
-  WhereAreWeIcon,
 } from '../design-system/icons/overviewIcons'
 import './foundations-playground.css'
 
@@ -541,7 +540,6 @@ export function FoundationsPlayground() {
           </div>
           <p className="ds-label">Overview</p>
           <div className="ds-icon-grid">
-            <WhereAreWeIcon />
             <NextActionIcon />
             <CreateMatchesIcon />
             <PreparationIcon />

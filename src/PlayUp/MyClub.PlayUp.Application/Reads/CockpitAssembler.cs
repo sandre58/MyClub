@@ -142,9 +142,6 @@ public static class CockpitAssembler
     /// <summary>Start competition (Ready → Running).</summary>
     public const string ActionStartCompetition = "StartCompetition";
 
-    /// <summary>Continue organisation (natural progression).</summary>
-    public const string ProgressionContinueOrganisation = "ContinueOrganisation";
-
     /// <summary>
     /// Builds the Cockpit view.
     /// </summary>
@@ -1358,6 +1355,21 @@ public static class CockpitAssembler
     ];
 
     /// <summary>
+    /// Préparation structural tip priority — first matching projected action wins.
+    /// From-slots is handled separately before this scan (<see cref="ResolveNaturalProgression"/>).
+    /// PrepareCompetition / StartCompetition stay in availableActions only (L7) — never naturalProgression.
+    /// AddEntry is never a tip (Équipes / À traiter).
+    /// </summary>
+    internal static readonly string[] ConstructionStructuralProgressionPriority =
+    [
+        ActionPrepareStage,
+        ActionStartStage,
+        ActionMaterializeMatches,
+        ActionPublishDraw,
+        ActionApplyDraw
+    ];
+
+    /// <summary>
     /// En cours structural tip priority — first matching <see cref="CockpitActionDto.Code"/> wins.
     /// Semantic order (not incidental list order). No consultation / match-hub fallback tip.
     /// </summary>
@@ -1376,7 +1388,9 @@ public static class CockpitAssembler
 
     /// <summary>
     /// Natural progression hint: one structural tip, or null when none.
-    /// Running/Suspended: scan <paramref name="actions"/> by <see cref="InProgressStructuralProgressionPriority"/> —
+    /// Draft/Ready: from-slots or <see cref="ConstructionStructuralProgressionPriority"/> —
+    /// null is a valid calm Construction state (no ContinueOrganisation fallback).
+    /// Running/Suspended: <see cref="InProgressStructuralProgressionPriority"/> —
     /// null is a valid calm-competition outcome (not OpenMatches fallback).
     /// </summary>
     private static CockpitNaturalProgressionDto? ResolveNaturalProgression(
@@ -1390,18 +1404,32 @@ public static class CockpitAssembler
             // "create matches" vs "configure confrontations" when multi-stage slots are ready.
             CompetitionStatus.Draft or CompetitionStatus.Ready when fromSlotsOpportunity =>
                 new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
-            CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForMaterialization =>
-                new CockpitNaturalProgressionDto(ActionMaterializeMatches),
-            CompetitionStatus.Draft or CompetitionStatus.Ready when organisation.Readiness.ReadyForDraw =>
-                new CockpitNaturalProgressionDto(ActionPublishDraw),
             CompetitionStatus.Draft or CompetitionStatus.Ready =>
-                new CockpitNaturalProgressionDto(ProgressionContinueOrganisation),
+                ResolveConstructionStructuralProgression(actions),
             CompetitionStatus.Running or CompetitionStatus.Suspended =>
                 ResolveInProgressStructuralProgression(actions),
             CompetitionStatus.Completed or CompetitionStatus.Archived =>
                 null,
             _ => null
         };
+
+    /// <summary>
+    /// Picks the highest-priority structural transition during Préparation (Draft/Ready).
+    /// Returns null when none — valid calm Construction state (SPA may still show lifecycle alone).
+    /// </summary>
+    internal static CockpitNaturalProgressionDto? ResolveConstructionStructuralProgression(
+        IReadOnlyList<CockpitActionDto> actions)
+    {
+        foreach (var code in ConstructionStructuralProgressionPriority)
+        {
+            if (actions.Any(action => action.Code == code))
+            {
+                return new CockpitNaturalProgressionDto(code);
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// Picks the highest-priority structural transition among projected actions.

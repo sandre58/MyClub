@@ -1,9 +1,14 @@
 /*
- * Vue d'ensemble (20.2) — langage visuel du mockup V9 :
- * panneaux blancs aérés, badges graphiques, chips de règlement,
- * section À traiter hors panneau, Structure éditoriale pleine largeur.
+ * Vue d'ensemble (20.2) — layout par cycle (composition SPA).
  *
- * Radius : token DS `--radius-panel` respecté (pas d'override local — arbitré 2026-08-22).
+ * Préparation : signals (Prochaine action · À traiter) → config (Équipes | Règlement)
+ *   → structure pleine largeur.
+ * En cours / Terminée : attention? → config condensée → tip? → sport.
+ *
+ * Invariants : zone absente = silence ; signals = fit-content (pas de largeur forcée) ;
+ * dimensions = faits ; À traiter = blockers ; Prochaine action = transition 0|1.
+ *
+ * Radius : token DS `--radius-panel` (pas d'override local — arbitré 2026-08-22).
  */
 
 .page.page--overview {
@@ -36,27 +41,12 @@
     box-shadow: var(--overview-shadow);
 }
 
-.overview__pilotage {
-    display: grid;
-    gap: var(--space-16);
-}
-
-@media (min-width: 52rem) {
-    .overview__pilotage {
-        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    }
-
-    .overview__pilotage--solo {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
 .overview__mid {
     display: grid;
     gap: var(--space-16);
 }
 
-/* En cours — signaux (À traiter, Prochaine action) : priorité ≠ largeur pleine */
+/* Signaux de pilotage (À traiter, Prochaine action) : priorité ≠ largeur pleine */
 .overview__signals {
     display: flex;
     flex-wrap: wrap;
@@ -70,9 +60,16 @@
     max-width: 100%;
 }
 
+.overview__structure {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
 @media (min-width: 52rem) {
     .overview__mid {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr);
+        /* Préparation config : Équipes | Règlement */
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 }
 
@@ -188,17 +185,6 @@
     color: var(--color-on-brand);
 }
 
-/* Cycle badge — teinte marque : graphique sans affirmer un état « prêt ». */
-.overview-badge--tint {
-    background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
-    color: var(--color-brand);
-}
-
-.overview-badge--success {
-    background: var(--color-success);
-    color: var(--color-on-brand);
-}
-
 .overview-hero__body {
     display: flex;
     flex-direction: column;
@@ -231,43 +217,6 @@
     flex-wrap: wrap;
     gap: var(--space-8);
     margin: 0;
-}
-
-/* ---------- Ligne de cycle ---------- */
-
-.overview-cycle-line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-8);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--text-label);
-    line-height: var(--leading-tight);
-}
-
-.overview-cycle-line__item {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
-}
-
-.overview-cycle-line__phase {
-    color: var(--color-text-secondary);
-    padding-bottom: var(--space-4);
-    border-bottom: 2px solid transparent;
-}
-
-.overview-cycle-line__phase[data-active='true'] {
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-semibold);
-    border-bottom-color: var(--color-brand);
-}
-
-.overview-cycle-line__sep {
-    color: var(--color-border-strong);
-    user-select: none;
 }
 
 /* ---------- À traiter (section hors panneau — items = classes drawer) ---------- */
@@ -356,30 +305,6 @@
     font-size: var(--text-meta);
 }
 
-.overview-flags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-8);
-    margin: 0;
-}
-
-.overview-flag {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-4);
-    color: var(--color-text-secondary);
-    font-size: var(--text-meta);
-    line-height: var(--leading-tight);
-}
-
-.overview-flag--ok {
-    color: var(--color-success);
-}
-
-.overview-flag--warn {
-    color: var(--color-attention);
-}
-
 .overview-teams-minimum {
     display: inline-flex;
     align-items: center;
@@ -391,38 +316,6 @@
 }
 
 /* ---------- Règlement ---------- */
-
-.overview-status {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-semibold);
-}
-
-.overview-status__icon {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 1.125rem;
-    height: 1.125rem;
-    border-radius: 50%;
-    background: var(--color-success);
-    color: var(--color-on-brand);
-}
-
-.overview-status__icon .ds-icon {
-    width: 0.75rem;
-    height: 0.75rem;
-}
-
-.overview-status--attention {
-    color: var(--color-attention);
-    font-weight: var(--font-weight-regular);
-}
 
 .overview-chips {
     display: flex;
@@ -503,32 +396,6 @@
 .overview-row:first-child {
     border-top: none;
     padding-top: 0;
-}
-
-.overview-row__mark {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 1.125rem;
-    height: 1.125rem;
-    color: var(--color-text-secondary);
-}
-
-.overview-row__mark--done {
-    border-radius: 50%;
-    background: var(--color-success);
-    color: var(--color-on-brand);
-}
-
-.overview-row__mark .ds-icon {
-    width: 0.75rem;
-    height: 0.75rem;
-}
-
-.overview-row__mark--pending .ds-icon {
-    width: 1.125rem;
-    height: 1.125rem;
 }
 
 .overview-row__label {

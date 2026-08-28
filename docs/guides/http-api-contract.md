@@ -125,7 +125,7 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
     "fixtureId": null,
     "params": null
   }],
-  "naturalProgression": { "code": "ContinueOrganisation" },
+  "naturalProgression": null,
   "closureHint": { "canCompleteNormally": false, "blockerCodes": [] },
   "navigationHints": [
     { "targetType": "Fixture", "targetId": "<guid>", "matchId": "<guid>", "stageId": "<guid>", "competitionId": "<guid>" }
@@ -167,10 +167,11 @@ Contract notes:
   - Projected only when competition is Running / Suspended / Completed / Archived.
   - Same `CalculateStanding` path as Consultation (`ProjectStandingsForStage`) — not a second ranking algorithm.
 - Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage).
+- `naturalProgression` (Draft / Ready): **0 or 1** structural tip — from-slots when applicable, else scan projected actions by priority `PrepareStage` → `StartStage` → `MaterializeMatches` → `PublishDraw` → `ApplyDraw`. **`null` is a valid calm Construction state** (no `ContinueOrganisation` fallback; SPA hides the card unless a lifecycle Prepare/Start competition action is available alone). Distinct from `availableActions` and from À traiter. `AddEntry` is never a tip.
 - `naturalProgression` (Running / Suspended): **0 or 1** structural tip from `availableActions` in fixed priority — `MaterializeFromOccupiedSlots` → `GenerateNextRound` → `PublishDraw` → `ApplyDraw` → `ApplyProgression` → `ApplyQualification` → `PrepareStage` → `StartStage` → `CompleteCompetition`. **`null` is a valid calm state** (no `OpenMatches` fallback; SPA hides the card). Distinct from `availableActions` and from À traiter.
 - `naturalProgression` (Completed / Archived): **`null`** — no Cockpit tip (consultation is not a “next action”; `OpenConsultation` may still appear on other surfaces such as workspace).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
-- Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7; operational tip remains Materialize / Draw / ContinueOrganisation). Resume (Suspended) remains Domain-only — not projected as an action.
+- Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Cockpit `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7). SPA may show **one** of them on Prochaine action **only when** `naturalProgression` is null — never stacked with a structural tip. Stage `PrepareStage` / `StartStage` **are** eligible as Préparation tips when projected. Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
 - **`MaterializeFromOccupiedSlots` (Cockpit):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Cockpit does **not** choose SlotA/SlotB pairs and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects pairs explicitly on the Stage surface, then calls `POST …/matches/materialize-from-slots`.

@@ -121,7 +121,7 @@ export function cockpitView(
     situations: [],
     attentionSummary: { count: 0, items: [] },
     availableActions: [],
-    naturalProgression: { code: 'ContinueOrganisation' },
+    naturalProgression: null,
     closureHint: { canCompleteNormally: false, blockerCodes: [] },
     navigationHints: [],
     ...overrides,

@@ -18,10 +18,6 @@ import {
 } from '../i18n/enumLabels'
 import { situationTitle } from '../i18n/situationCopy'
 import { queryKeys } from '../queryKeys'
-import {
-  activeUiCyclePhaseIndex,
-  UI_CYCLE_PHASES,
-} from '../shell/cycleUi'
 import type {
   CockpitAction,
   CockpitDimension,
@@ -50,7 +46,6 @@ import {
   actionsForSlot,
   actionsForStage,
   findActionByCode,
-  isProminenceCondensed,
   isTeamAdminAction,
   orderSituationsForDisplay,
   panelProminenceClass,
@@ -61,19 +56,14 @@ import {
 } from './cockpitComposition'
 import './overview.css'
 import {
-  CalendarIcon,
   CheckIcon,
-  CompletedIcon,
   CreateMatchesIcon,
   InProgressIcon,
   NextActionIcon,
   OverviewAttentionIcon,
-  PendingCircleIcon,
-  PreparationIcon,
   RegulationIcon,
   StructureIcon,
   TeamsIcon,
-  WhereAreWeIcon,
 } from '../design-system/icons/overviewIcons'
 
 /**
@@ -171,16 +161,11 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const gameRules = data.operationalFocus.referenceStageGameRules
   const gameRegulationVisible =
     operationalOverview && regulationVisible && gameRules != null
-  const stageActions = data.operationalFocus.stages.flatMap((stage) =>
-    actionsForStage(data.availableActions, stage.stageId),
-  )
   const orgHref = `/competitions/${data.competitionId}/organisation`
   const matchesHref = `/competitions/${data.competitionId}/matches`
   const classementsHref = `/competitions/${data.competitionId}/classements`
-  const showWhereAreWe = data.cycleReading.code === 'Construction'
   const showProgression =
     Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0
-  const showPilotage = showWhereAreWe || showProgression
   const focus = data.operationalFocus
   const showStanding =
     operationalOverview && focus.standingCompact != null
@@ -193,8 +178,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const attentionItems = orderSituationsForDisplay(data.attentionSummary.items)
   const attentionCount = data.attentionSummary.count
   const showAttention = attentionCount > 0 && attentionItems.length > 0
-  const showPrepMid = !operationalOverview && (teamsVisible || regulationVisible)
-  const showMid = !operationalOverview && (showAttention || showPrepMid)
+  const showPrepConfig = !operationalOverview && (teamsVisible || regulationVisible)
   const showOperationalConfig =
     structureVisible || teamsVisible || gameRegulationVisible
 
@@ -210,7 +194,6 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
             dimension={data.constructionDimensions.structure}
             stages={data.operationalFocus.stages}
             matchTotal={data.operationalFocus.matchCounts.total}
-            swissByes={data.operationalFocus.swissByes}
             href={orgHref}
             hrefLabel={t('dimensions.openStructure')}
             actions={[]}
@@ -311,34 +294,37 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
         </>
       ) : (
         <>
-          {showPilotage && (
+          {showProgression && (
             <div
-              className={
-                showWhereAreWe && showProgression
-                  ? 'overview__pilotage'
-                  : 'overview__pilotage overview__pilotage--solo'
-              }
+              className="overview__signals"
+              data-testid="overview-region-progression"
             >
-              {showWhereAreWe && <WhereAreWePanel data={data} />}
-              {showProgression && (
-                <NaturalProgressionSection
-                  data={data}
-                  actionRunner={actionRunner}
-                  lifecycleActions={lifecycleActions}
-                />
-              )}
+              <NaturalProgressionSection
+                data={data}
+                actionRunner={actionRunner}
+                lifecycleActions={lifecycleActions}
+              />
             </div>
           )}
 
-          {showMid && (
-            <div className="overview__mid">
-              {showAttention && (
-                <AttentionSignalSection
-                  items={attentionItems}
-                  count={attentionCount}
-                  competitionId={data.competitionId}
-                />
-              )}
+          {showAttention && (
+            <div
+              className="overview__signals"
+              data-testid="overview-region-attention"
+            >
+              <AttentionSignalSection
+                items={attentionItems}
+                count={attentionCount}
+                competitionId={data.competitionId}
+              />
+            </div>
+          )}
+
+          {showPrepConfig && (
+            <div
+              className="overview__config overview__mid"
+              data-testid="overview-region-config"
+            >
               {teamsVisible && (
                 <TeamsPanel
                   variant="construction"
@@ -364,17 +350,21 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
           )}
 
           {structureVisible && (
-            <StructurePanel
-              variant="construction"
-              dimension={data.constructionDimensions.structure}
-              stages={data.operationalFocus.stages}
-              matchTotal={data.operationalFocus.matchCounts.total}
-              swissByes={data.operationalFocus.swissByes}
-              href={orgHref}
-              hrefLabel={t('dimensions.openStructure')}
-              actions={[...slotActions('structure'), ...stageActions]}
-              actionRunner={actionRunner}
-            />
+            <div
+              className="overview__structure"
+              data-testid="overview-region-structure"
+            >
+              <StructurePanel
+                variant="construction"
+                dimension={data.constructionDimensions.structure}
+                stages={data.operationalFocus.stages}
+                matchTotal={data.operationalFocus.matchCounts.total}
+                href={orgHref}
+                hrefLabel={t('dimensions.openStructure')}
+                actions={slotActions('structure')}
+                actionRunner={actionRunner}
+              />
+            </div>
           )}
         </>
       )}
@@ -534,34 +524,6 @@ function MaterializeFollowUpBanner({
   )
 }
 
-function CycleLine({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const activeIndex = activeUiCyclePhaseIndex(data.cycleReading.code)
-
-  return (
-    <nav aria-label={t('cycle.lede')}>
-      <ol className="overview-cycle-line">
-        {UI_CYCLE_PHASES.map((phase, index) => (
-          <li key={phase} className="overview-cycle-line__item">
-            {index > 0 && (
-              <span className="overview-cycle-line__sep" aria-hidden="true">
-                →
-              </span>
-            )}
-            <span
-              className="overview-cycle-line__phase"
-              data-active={index === activeIndex ? 'true' : 'false'}
-              aria-current={index === activeIndex ? 'step' : undefined}
-            >
-              {t(`cycleUi.${phase}`, { defaultValue: phase })}
-            </span>
-          </li>
-        ))}
-      </ol>
-    </nav>
-  )
-}
-
 function PanelHead({
   id,
   icon,
@@ -578,47 +540,6 @@ function PanelHead({
       </span>
       <span className="overview-panel__title-text">{children}</span>
     </h2>
-  )
-}
-
-/** Cycle glyph — presentation of the known phase, no readiness claim. */
-function cycleBadgeIcon(code: string) {
-  if (code === 'Calendar') {
-    return <CalendarIcon />
-  }
-  if (code === 'InProgress') {
-    return <InProgressIcon />
-  }
-  if (code === 'Completed' || code === 'Archived') {
-    return <CompletedIcon />
-  }
-  return <PreparationIcon />
-}
-
-function WhereAreWePanel({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const code = data.cycleReading.code
-
-  return (
-    <section className="ds-panel" aria-labelledby="cockpit-where">
-      <PanelHead id="cockpit-where" icon={<WhereAreWeIcon size="md" />}>
-        {t('cycle.heading')}
-      </PanelHead>
-      <div className="overview-hero">
-        <span className="overview-badge overview-badge--tint" aria-hidden="true">
-          {cycleBadgeIcon(code)}
-        </span>
-        <div className="overview-hero__body">
-          <p className="overview-hero__title">
-            {t(`cycle.${code}`, { defaultValue: code })}
-          </p>
-          <p className="overview-hero__sub">
-            {t(`cycleDesc.${code}`, { defaultValue: t('cycle.lede') })}
-          </p>
-        </div>
-      </div>
-      <CycleLine data={data} />
-    </section>
   )
 }
 
@@ -1209,7 +1130,6 @@ function StructurePanel({
   dimension,
   stages,
   matchTotal,
-  swissByes,
   href,
   hrefLabel,
   actions,
@@ -1219,7 +1139,6 @@ function StructurePanel({
   dimension: CockpitDimension
   stages: CockpitView['operationalFocus']['stages']
   matchTotal: number
-  swissByes: CockpitView['operationalFocus']['swissByes']
   href: string
   hrefLabel: string
   actions: CockpitAction[]
@@ -1289,13 +1208,13 @@ function StructurePanel({
     <article
       className={panelProminenceClass(dimension.prominence)}
       aria-labelledby="overview-structure"
+      data-testid="overview-structure-construction"
     >
       <PanelHead id="overview-structure" icon={<StructureIcon size="md" />}>
         {t('dimensions.structure.title')}
       </PanelHead>
       <ul className="overview-rows">
-        <StructureRow
-          done={formatConfigured}
+        <StructureFactRow
           label={
             formatConfigured
               ? structureFormatKindLabel(formatKind as StructureFormatKind)
@@ -1311,20 +1230,17 @@ function StructurePanel({
           }
         />
         {groupCount > 0 && (
-          <StructureRow
-            done
+          <StructureFactRow
             label={t('dimensions.structure.groups', { count: groupCount })}
           />
         )}
         {roundCount > 0 && (
-          <StructureRow
-            done
+          <StructureFactRow
             label={t('dimensions.structure.rounds', { count: roundCount })}
           />
         )}
         {formatKind === 'Swiss' && swissRoundCount > 0 && (
-          <StructureRow
-            done={matchdayCount > 0}
+          <StructureFactRow
             label={t('dimensions.structure.swissRounds', {
               generated: matchdayCount,
               planned: swissRoundCount,
@@ -1332,49 +1248,26 @@ function StructurePanel({
           />
         )}
         {formatKind !== 'Swiss' && matchdayCount > 0 && (
-          <StructureRow
-            done
+          <StructureFactRow
             label={t('dimensions.structure.matchdays', { count: matchdayCount })}
           />
         )}
         {formatKind === 'Swiss' && swissByeCount > 0 && (
-          <StructureRow
-            done
+          <StructureFactRow
             label={t('dimensions.structure.swissByes', { count: swissByeCount })}
             detail={t('dimensions.structure.swissByesHint')}
           />
         )}
-        {formatKind === 'Swiss' && swissByes.length > 0 && (
-          <li className="overview-row overview-row--stack">
-            <ul className="overview-rows overview-rows--nested">
-              {swissByes.map((bye) => (
-                <li key={`${bye.stageId}:${bye.roundIndex}:${bye.entryId}`}>
-                  {t('dimensions.structure.swissByeLine', {
-                    round: bye.roundIndex,
-                    name: bye.entryDisplayName,
-                  })}
-                </li>
-              ))}
-            </ul>
-          </li>
-        )}
         {slotCount > 0 && (
-          <StructureRow
-            done
+          <StructureFactRow
             label={t('dimensions.structure.slots', { count: slotCount })}
           />
         )}
-        <StructureRow
-          done={matchTotal > 0}
+        <StructureFactRow
           label={
             matchTotal > 0
               ? t('dimensions.structure.matches', { count: matchTotal })
               : t('dimensions.structure.matchesNone')
-          }
-          detail={
-            matchTotal === 0 && slotCount > 0
-              ? t('dimensions.structure.matchesPending', { count: slotCount })
-              : undefined
           }
         />
       </ul>
@@ -1533,25 +1426,15 @@ function buildGameRegulationTextFacts(
   return facts
 }
 
-function StructureRow({
-  done,
+function StructureFactRow({
   label,
   detail,
 }: {
-  done: boolean
   label: string
   detail?: string
 }) {
   return (
     <li className="overview-row">
-      <span
-        className={`overview-row__mark ${
-          done ? 'overview-row__mark--done' : 'overview-row__mark--pending'
-        }`}
-        aria-hidden="true"
-      >
-        {done ? <CheckIcon /> : <PendingCircleIcon />}
-      </span>
       <span className="overview-row__label">{label}</span>
       {detail && <span className="overview-row__detail">{detail}</span>}
     </li>
@@ -1623,15 +1506,55 @@ function NaturalProgressionSection({
 }: {
   data: CockpitView
   actionRunner: ActionRunner
-  /** Prepare/Start leftovers — folded here (no separate Transitions card, réf. V9). */
+  /**
+   * PrepareCompetition / StartCompetition leftovers — occupy Prochaine action only when
+   * naturalProgression is null (never stacked with a structural tip).
+   */
   lifecycleActions: CockpitAction[]
 }) {
   const { t } = useTranslation('cockpit')
   const code = data.naturalProgression?.code
   const matched = code ? findActionByCode(data.availableActions, code) : undefined
-  const orgHref = `/competitions/${data.competitionId}/organisation`
+  const lifecycle = lifecycleActions[0]
   const hasPrimary = Boolean(code)
-  const showLifecycle = lifecycleActions.length > 0
+
+  // Structural tip XOR lifecycle — never both (Préparation V1 P5).
+  if (hasPrimary) {
+    return (
+      <section
+        className="ds-panel overview-panel--next"
+        aria-labelledby="cockpit-progression"
+      >
+        <PanelHead id="cockpit-progression" icon={<NextActionIcon size="md" />}>
+          {t('progression.heading')}
+        </PanelHead>
+        <div className="overview-hero">
+          <span className="overview-badge overview-badge--brand" aria-hidden="true">
+            {progressionBadgeIcon(code!)}
+          </span>
+          <div className="overview-hero__body">
+            <p className="overview-hero__title">{actionLabel(code!)}</p>
+            <p className="overview-hero__sub">
+              {t(`progression.codes.${code}`, {
+                defaultValue: actionLabel(code!),
+              })}
+            </p>
+          </div>
+        </div>
+        {matched ? (
+          <ActionButtons
+            actions={[matched]}
+            actionRunner={actionRunner}
+            emphasizeFirst
+          />
+        ) : null}
+      </section>
+    )
+  }
+
+  if (!lifecycle) {
+    return null
+  }
 
   return (
     <section
@@ -1641,62 +1564,24 @@ function NaturalProgressionSection({
       <PanelHead id="cockpit-progression" icon={<NextActionIcon size="md" />}>
         {t('progression.heading')}
       </PanelHead>
-      {hasPrimary ? (
-        <>
-          <div className="overview-hero">
-            <span className="overview-badge overview-badge--brand" aria-hidden="true">
-              {progressionBadgeIcon(code!)}
-            </span>
-            <div className="overview-hero__body">
-              <p className="overview-hero__title">{actionLabel(code!)}</p>
-              <p className="overview-hero__sub">
-                {t(`progression.codes.${code}`, {
-                  defaultValue: actionLabel(code!),
-                })}
-              </p>
-            </div>
-          </div>
-          {matched ? (
-            <ActionButtons
-              actions={[matched]}
-              actionRunner={actionRunner}
-              emphasizeFirst
-            />
-          ) : code === 'ContinueOrganisation' ? (
-            <p className="overview-actions">
-              <Link className="ds-btn ds-btn--primary" to={orgHref}>
-                {t('dimensions.openOrganisation')}
-              </Link>
-            </p>
-          ) : null}
-        </>
-      ) : showLifecycle ? (
-        <>
-          <div className="overview-hero">
-            <span className="overview-badge overview-badge--brand" aria-hidden="true">
-              {progressionBadgeIcon(lifecycleActions[0].code)}
-            </span>
-            <div className="overview-hero__body">
-              <p className="overview-hero__title">
-                {actionLabel(lifecycleActions[0].code)}
-              </p>
-              <p className="overview-hero__sub">
-                {t(`progression.codes.${lifecycleActions[0].code}`, {
-                  defaultValue: actionLabel(lifecycleActions[0].code),
-                })}
-              </p>
-            </div>
-          </div>
-          <ActionButtons
-            actions={lifecycleActions}
-            actionRunner={actionRunner}
-            emphasizeFirst
-          />
-        </>
-      ) : null}
-      {hasPrimary && showLifecycle && (
-        <ActionButtons actions={lifecycleActions} actionRunner={actionRunner} />
-      )}
+      <div className="overview-hero">
+        <span className="overview-badge overview-badge--brand" aria-hidden="true">
+          {progressionBadgeIcon(lifecycle.code)}
+        </span>
+        <div className="overview-hero__body">
+          <p className="overview-hero__title">{actionLabel(lifecycle.code)}</p>
+          <p className="overview-hero__sub">
+            {t(`progression.codes.${lifecycle.code}`, {
+              defaultValue: actionLabel(lifecycle.code),
+            })}
+          </p>
+        </div>
+      </div>
+      <ActionButtons
+        actions={[lifecycle]}
+        actionRunner={actionRunner}
+        emphasizeFirst
+      />
     </section>
   )
 }
@@ -1709,9 +1594,6 @@ function progressionBadgeIcon(code: string) {
     code === 'GenerateNextRound'
   ) {
     return <CreateMatchesIcon />
-  }
-  if (code === 'ContinueOrganisation') {
-    return <TeamsIcon />
   }
   if (code === 'CompleteCompetition' || code === 'PrepareCompetition') {
     return <CheckIcon />
