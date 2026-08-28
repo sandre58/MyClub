@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -1073,7 +1073,52 @@ describe('CompetitionCockpitPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders regulation summary and Host readiness without inventing rules', async () => {
+  it('Préparation Règlement — faits only (points, durée, action locale)', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          regulation: {
+            prominence: 'Present',
+            competition: {
+              minimumTeams: 2,
+              maximumTeams: 64,
+              durationPerPeriod: 45,
+              numberOfPeriods: 2,
+              winPoints: 3,
+              drawPoints: 1,
+              lossPoints: 0,
+            },
+            stage: null,
+            competitionRegulationMutable: true,
+            transitionReadiness: [
+              {
+                transition: 'MaterializeMatches',
+                ready: false,
+                blockerCodes: ['InsufficientParticipants'],
+              },
+            ],
+          },
+        },
+        availableActions: [{ code: 'ReplaceRegulation', guaranteed: false }],
+      }),
+    )
+
+    renderCockpitPage()
+
+    const regulation = await screen.findByTestId('overview-regulation-construction')
+    expect(regulation).toBeInTheDocument()
+    expect(within(regulation).getByText('2×45 min')).toBeInTheDocument()
+    expect(within(regulation).getByText('Victoire')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Modifier le règlement/i }),
+    ).toBeInTheDocument()
+    expect(within(regulation).queryByText(/Règlement prêt/i)).not.toBeInTheDocument()
+    expect(within(regulation).queryByText(/Matérialisation/i)).not.toBeInTheDocument()
+    expect(within(regulation).queryByText(/–/)).not.toBeInTheDocument()
+  })
+
+  it('renders regulation factual summary without transition readiness UI', async () => {
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         constructionDimensions: {
@@ -1106,7 +1151,7 @@ describe('CompetitionCockpitPage', () => {
     renderCockpitPage()
 
     expect(await screen.findByText(/2×45 min/)).toBeInTheDocument()
-    expect(screen.getByText(/Règlement prêt pour la suite/)).toBeInTheDocument()
+    expect(screen.queryByText(/Règlement prêt pour la suite/)).not.toBeInTheDocument()
     expect(screen.queryByText('Tirage')).not.toBeInTheDocument()
   })
 

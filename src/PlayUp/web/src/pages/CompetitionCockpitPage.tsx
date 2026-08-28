@@ -1040,36 +1040,16 @@ function RegulationDimensionCard({
   }
 
   const competition = regulation.competition
-  const condensed = isProminenceCondensed(regulation.prominence)
-  const primaryGap = regulation.transitionReadiness.find((item) => !item.ready)
 
   return (
     <article
       className={panelProminenceClass(regulation.prominence)}
       aria-labelledby="overview-regulation"
+      data-testid="overview-regulation-construction"
     >
       <PanelHead id="overview-regulation" icon={<RegulationIcon size="md" />}>
         {t('dimensions.regulation.title')}
       </PanelHead>
-      {!condensed && primaryGap && (
-        <p className="overview-status overview-status--attention">
-          <OverviewAttentionIcon size="sm" aria-hidden="true" />
-          {t('dimensions.regulation.readinessNotReady', {
-            transition: t(
-              `dimensions.regulation.transitions.${primaryGap.transition}`,
-              { defaultValue: primaryGap.transition },
-            ),
-          })}
-        </p>
-      )}
-      {!condensed && !primaryGap && regulation.transitionReadiness.length > 0 && (
-        <p className="overview-status">
-          <span className="overview-status__icon" aria-hidden="true">
-            <CheckIcon />
-          </span>
-          {t('dimensions.regulation.allReady')}
-        </p>
-      )}
       <ul className="overview-chips">
         <PointsChip
           tone="win"
@@ -1088,11 +1068,9 @@ function RegulationDimensionCard({
         />
       </ul>
       <p className="overview-panel__muted">
-        {t('dimensions.regulation.formatMeta', {
+        {t('dimensions.regulation.formatDuration', {
           periods: competition.numberOfPeriods,
           duration: competition.durationPerPeriod,
-          min: competition.minimumTeams,
-          max: competition.maximumTeams,
         })}
       </p>
       <ActionButtons actions={actions} actionRunner={actionRunner} />
