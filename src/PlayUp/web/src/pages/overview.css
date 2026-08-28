@@ -380,6 +380,16 @@
     color: var(--color-attention);
 }
 
+.overview-teams-minimum {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin: 0;
+    color: var(--color-attention);
+    font-size: var(--text-meta);
+    line-height: var(--leading-tight);
+}
+
 /* ---------- Règlement ---------- */
 
 .overview-status {

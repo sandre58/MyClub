@@ -256,6 +256,7 @@ describe('CompetitionCockpitPage', () => {
     expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
     expect(screen.queryByText(/situation\(s\) à traiter/i)).not.toBeInTheDocument()
     expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
+    expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument()
     expect(screen.queryByText(/Bloque la préparation/)).not.toBeInTheDocument()
     expect(
       screen.getByText(/Complétez les équipes, la structure et le règlement/),
@@ -276,6 +277,98 @@ describe('CompetitionCockpitPage', () => {
     expect(
       screen.queryByRole('button', { name: /Renommer une équipe/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('Préparation Équipes — minimum insuffisant : signal requis, pas de badge complet ni max', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          teams: {
+            prominence: 'Dominant',
+            facts: { activeCount: '1', minimumTeams: '4', maximumTeams: '8' },
+          },
+        },
+        availableActions: [{ code: 'AddEntry', guaranteed: false }],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByText('Minimum requis : 4')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ajouter une équipe/i })).toBeInTheDocument()
+    expect(screen.queryByText(/complète/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Max\./i)).not.toBeInTheDocument()
+  })
+
+  it('Préparation Équipes — minimum atteint : count + crests, silence readiness', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue({
+      competitionId,
+      name: 'Spring Cup',
+      status: 'Draft',
+      participants: {
+        activeCount: 4,
+        occupyingCount: 4,
+        entries: [
+          { entryId: 'e1', displayName: 'A', status: 'Active' },
+          { entryId: 'e2', displayName: 'B', status: 'Active' },
+          { entryId: 'e3', displayName: 'C', status: 'Active' },
+          { entryId: 'e4', displayName: 'D', status: 'Active' },
+        ],
+      },
+      regulation: {
+        minimumTeams: 4,
+        maximumTeams: 8,
+        durationPerPeriod: 45,
+        numberOfPeriods: 2,
+        winPoints: 3,
+        drawPoints: 1,
+        lossPoints: 0,
+      },
+      format: { kind: 'Championship', primaryStageId: stageId },
+      structure: {
+        groupCount: 0,
+        roundCount: 0,
+        matchdayCount: 0,
+        slotCount: 0,
+        hasDrawRules: false,
+        numberOfPots: null,
+        matchGenerationFormat: 'SingleRoundRobin',
+      },
+      actions: [],
+      readiness: {
+        readyForNextSlice: false,
+        readyForDraw: false,
+        readyForMaterialization: false,
+        readyForSchedule: false,
+        readyForMatchOperation: false,
+        readyForSchedulePath: false,
+        attachedMatchCount: 0,
+        blockers: [],
+      },
+    })
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          teams: {
+            prominence: 'Present',
+            facts: { activeCount: '4', minimumTeams: '4', maximumTeams: '8' },
+          },
+        },
+        availableActions: [{ code: 'AddEntry', guaranteed: false }],
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByText('4')).toBeInTheDocument()
+    expect(screen.queryByText(/Minimum requis/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/complète/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Max\./i)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ajouter une équipe/i })).toBeInTheDocument()
   })
 
   it('does not invent actions absent from availableActions', async () => {
