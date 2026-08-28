@@ -52,7 +52,8 @@ public sealed class CockpitAssemblerTests
     [Fact]
     public void Assemble_draft_with_stage_and_active_entry_projects_PrepareCompetition()
     {
-        var competition = Competition.Create(new CompetitionName("Ready to prepare"), SampleRegulations.Standard(), _clock);
+        var competition =
+            Competition.Create(new CompetitionName("Ready to prepare"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Alpha", _clock);
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         competition.AddStage(stage.Id, _clock);
@@ -181,7 +182,8 @@ public sealed class CockpitAssemblerTests
     [Fact]
     public void Assemble_suspended_does_not_project_Prepare_or_Start()
     {
-        var competition = Competition.Create(new CompetitionName("Suspended Cup"), SampleRegulations.Standard(), _clock);
+        var competition =
+            Competition.Create(new CompetitionName("Suspended Cup"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Alpha", _clock);
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         competition.AddStage(stage.Id, _clock);
@@ -213,8 +215,10 @@ public sealed class CockpitAssemblerTests
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
-        completed.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
-        completed.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+        completed.AvailableActions.Should()
+            .NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        completed.AvailableActions.Should()
+            .NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
         completed.NaturalProgression.Should().BeNull();
         completed.CycleReading.Code.Should().Be(CockpitAssembler.CycleCompleted);
 
@@ -223,7 +227,8 @@ public sealed class CockpitAssemblerTests
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
-        archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        archived.AvailableActions.Should()
+            .NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
         archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
         archived.NaturalProgression.Should().BeNull();
         archived.CycleReading.Code.Should().Be(CockpitAssembler.CycleArchived);
@@ -458,10 +463,7 @@ public sealed class CockpitAssemblerTests
         var view = CockpitAssembler.Assemble(
             competition,
             [stage],
-            new Dictionary<StageId, IReadOnlyList<Match>>
-            {
-                [stage.Id] = [scheduled, live, finished]
-            });
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [scheduled, live, finished] });
 
         view.OperationalFocus.MatchCounts.Live.Should().Be(1);
         view.OperationalFocus.MatchCounts.Scheduled.Should().Be(1);
@@ -862,10 +864,7 @@ public sealed class CockpitAssemblerTests
         var view = CockpitAssembler.Assemble(
             competition,
             [stage],
-            new Dictionary<StageId, IReadOnlyList<Match>>
-            {
-                [stage.Id] = round1.CreatedMatches
-            });
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = round1.CreatedMatches });
 
         view.AvailableActions.Should().Contain(item =>
             item.Code == CockpitAssembler.ActionGenerateNextRound);
@@ -876,10 +875,7 @@ public sealed class CockpitAssemblerTests
         var awaiting = CockpitAssembler.Assemble(
             competition,
             [stage],
-            new Dictionary<StageId, IReadOnlyList<Match>>
-            {
-                [stage.Id] = []
-            });
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [] });
         var transition = awaiting.ConstructionDimensions.Regulation.TransitionReadiness
             .Should().ContainSingle(item => item.Transition == CockpitAssembler.TransitionGenerateNextRound)
             .Subject;
@@ -894,7 +890,7 @@ public sealed class CockpitAssemblerTests
         var e1 = competition.AddEntry(TeamId.New(), "Alpha", _clock);
         var e2 = competition.AddEntry(TeamId.New(), "Bravo", _clock);
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
-        var md = stage.AddMatchday(1, _clock);
+        _ = stage.AddMatchday(1, _clock);
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
@@ -940,7 +936,7 @@ public sealed class CockpitAssemblerTests
         var actions = new[]
         {
             new CockpitActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
-            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId),
+            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId)
         };
 
         CockpitAssembler.ResolveConstructionStructuralProgression(actions)!
@@ -948,10 +944,8 @@ public sealed class CockpitAssemblerTests
     }
 
     [Fact]
-    public void ResolveConstructionStructuralProgression_empty_actions_is_null()
-    {
+    public void ResolveConstructionStructuralProgression_empty_actions_is_null() =>
         CockpitAssembler.ResolveConstructionStructuralProgression([]).Should().BeNull();
-    }
 
     [Theory]
     [InlineData(
@@ -985,20 +979,18 @@ public sealed class CockpitAssemblerTests
         var actions = new[]
         {
             new CockpitActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
-            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId),
+            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId)
         };
 
         var tip = CockpitAssembler.ResolveInProgressStructuralProgression(actions);
 
         tip.Should().NotBeNull();
-        tip!.Code.Should().Be(expectedWinner);
+        tip.Code.Should().Be(expectedWinner);
     }
 
     [Fact]
-    public void ResolveInProgressStructuralProgression_empty_actions_is_null()
-    {
+    public void ResolveInProgressStructuralProgression_empty_actions_is_null() =>
         CockpitAssembler.ResolveInProgressStructuralProgression([]).Should().BeNull();
-    }
 
     [Fact]
     public void Assemble_championship_projects_standing_compact_top_rows()
@@ -1120,7 +1112,7 @@ public sealed class CockpitAssemblerTests
         var reference = CockpitAssembler.ResolveReferenceStage(competition, [completed, running]);
 
         reference.Should().NotBeNull();
-        reference!.Id.Should().Be(running.Id);
+        reference.Id.Should().Be(running.Id);
     }
 
     [Fact]
@@ -1147,7 +1139,7 @@ public sealed class CockpitAssemblerTests
         var reference = CockpitAssembler.ResolveReferenceStage(competition, [completed, suspended]);
 
         reference.Should().NotBeNull();
-        reference!.Id.Should().Be(suspended.Id);
+        reference.Id.Should().Be(suspended.Id);
         reference.Status.Should().Be(StageStatus.Suspended);
     }
 
@@ -1175,7 +1167,7 @@ public sealed class CockpitAssemblerTests
         var reference = CockpitAssembler.ResolveReferenceStage(competition, [first, second]);
 
         reference.Should().NotBeNull();
-        reference!.Id.Should().Be(second.Id);
+        reference.Id.Should().Be(second.Id);
     }
 
     [Fact]
@@ -1223,14 +1215,16 @@ public sealed class CockpitAssemblerTests
         competition.Prepare(_clock);
         competition.Start(_clock);
 
-        var matches = new List<Match>();
+        var matches = new List<Match>
+        {
+            // J4 — all finished
+            AttachFinished(competition, stage, md4.Id, a.Id, b.Id, 1, 0),
+            AttachFinished(competition, stage, md4.Id, c.Id, d.Id, 2, 1),
 
-        // J4 — all finished
-        matches.Add(AttachFinished(competition, stage, md4.Id, a.Id, b.Id, 1, 0));
-        matches.Add(AttachFinished(competition, stage, md4.Id, c.Id, d.Id, 2, 1));
+            // J5 — finished + live + scheduled
+            AttachFinished(competition, stage, md5.Id, a.Id, c.Id, 1, 1)
+        };
 
-        // J5 — finished + live + scheduled
-        matches.Add(AttachFinished(competition, stage, md5.Id, a.Id, c.Id, 1, 1));
         var live = Match.Create(competition.Id, stage.Id, b.Id, d.Id, _clock);
         live.Start(_clock);
         stage.AttachMatch(stage.AddFixture(md5.Id, _clock).Id, live.Id, legIndex: 1, _clock);
@@ -1324,10 +1318,7 @@ public sealed class CockpitAssemblerTests
         var view = CockpitAssembler.Assemble(
             competition,
             [stage],
-            new Dictionary<StageId, IReadOnlyList<Match>>
-            {
-                [stage.Id] = round1.CreatedMatches
-            });
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = round1.CreatedMatches });
 
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
         view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(CockpitAssembler.UnitKindMatchday);

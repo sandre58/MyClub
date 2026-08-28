@@ -183,7 +183,6 @@ public static class CockpitAssembler
             .ToArray();
         var progression = ResolveNaturalProgression(
             competition,
-            organisation,
             actions,
             fromSlotsOpportunities.Length > 0);
         var closure = new CockpitClosureHintDto(
@@ -619,30 +618,12 @@ public static class CockpitAssembler
 
     private static StructureFormatKind ResolveGameRulesFormatKind(
         Stage stage,
-        StructureFormatKind? competitionFormatKind)
-    {
-        if (stage.IsSwiss)
-        {
-            return StructureFormatKind.Swiss;
-        }
-
-        if (competitionFormatKind is { } kind)
-        {
-            return kind;
-        }
-
-        if (stage.Rounds.Count > 0 && stage.Matchdays.Count == 0)
-        {
-            return StructureFormatKind.Cup;
-        }
-
-        if (stage.Groups.Count > 0)
-        {
-            return StructureFormatKind.Groups;
-        }
-
-        return StructureFormatKind.Championship;
-    }
+        StructureFormatKind? competitionFormatKind) =>
+        stage.IsSwiss
+            ? StructureFormatKind.Swiss
+            : competitionFormatKind ?? (stage.Rounds.Count > 0 && stage.Matchdays.Count == 0
+                ? StructureFormatKind.Cup
+                : stage.Groups.Count > 0 ? StructureFormatKind.Groups : StructureFormatKind.Championship);
 
     /// <summary>
     /// Dernières / Prochaines on ReferenceStage only — full Matchday or Round units (no caps).
@@ -672,24 +653,15 @@ public static class CockpitAssembler
         for (var i = units.Count - 1; i >= 0; i--)
         {
             var slice = units[i];
-            if (slice.Matches.Exists(match =>
-                    match.Status is MatchStatus.Live or MatchStatus.Finished))
-            {
-                recentSlice = slice;
-                break;
-            }
+            if (!slice.Matches.Exists(match => match.Status is MatchStatus.Live or MatchStatus.Finished)) continue;
+            recentSlice = slice;
+            break;
         }
 
-        SportUnitSlice? nextSlice = null;
-        if (recentSlice is null)
-        {
-            nextSlice = units.FirstOrDefault(slice => slice.Matches.Count > 0);
-        }
-        else
-        {
-            nextSlice = units.FirstOrDefault(slice =>
+        var nextSlice = recentSlice is null
+            ? units.FirstOrDefault(slice => slice.Matches.Count > 0)
+            : units.FirstOrDefault(slice =>
                 slice.Order > recentSlice.Order && slice.Matches.Count > 0);
-        }
 
         return (
             recentSlice is null ? null : ProjectSportUnit(reference, recentSlice, names),
@@ -716,25 +688,11 @@ public static class CockpitAssembler
             ];
         }
 
-        if (stage.Rounds.Count > 0)
-        {
-            var slices = new List<SportUnitSlice>(stage.Rounds.Count);
-            for (var index = 0; index < stage.Rounds.Count; index++)
-            {
-                var round = stage.Rounds[index];
-                slices.Add(new SportUnitSlice(
-                    index + 1,
-                    UnitKindRound,
-                    round.Id.Value.ToString(),
-                    MatchdayNumber: null,
-                    round.Name,
-                    CollectUnitMatches(round.Fixtures, matchesById)));
-            }
+        if (stage.Rounds.Count == 0) return [];
+        var slices = new List<SportUnitSlice>(stage.Rounds.Count);
+        slices.AddRange(stage.Rounds.Select((round, index) => new SportUnitSlice(index + 1, UnitKindRound, round.Id.Value.ToString(), MatchdayNumber: null, round.Name, CollectUnitMatches(round.Fixtures, matchesById))));
 
-            return slices;
-        }
-
-        return [];
+        return slices;
     }
 
     private static List<Match> CollectUnitMatches(
@@ -1395,7 +1353,6 @@ public static class CockpitAssembler
     /// </summary>
     private static CockpitNaturalProgressionDto? ResolveNaturalProgression(
         Competition competition,
-        OrganisationViewDto organisation,
         IReadOnlyList<CockpitActionDto> actions,
         bool fromSlotsOpportunity) =>
         competition.Status switch
@@ -1408,8 +1365,6 @@ public static class CockpitAssembler
                 ResolveConstructionStructuralProgression(actions),
             CompetitionStatus.Running or CompetitionStatus.Suspended =>
                 ResolveInProgressStructuralProgression(actions),
-            CompetitionStatus.Completed or CompetitionStatus.Archived =>
-                null,
             _ => null
         };
 
@@ -1418,36 +1373,16 @@ public static class CockpitAssembler
     /// Returns null when none — valid calm Construction state (SPA may still show lifecycle alone).
     /// </summary>
     internal static CockpitNaturalProgressionDto? ResolveConstructionStructuralProgression(
-        IReadOnlyList<CockpitActionDto> actions)
-    {
-        foreach (var code in ConstructionStructuralProgressionPriority)
-        {
-            if (actions.Any(action => action.Code == code))
-            {
-                return new CockpitNaturalProgressionDto(code);
-            }
-        }
-
-        return null;
-    }
+        IReadOnlyList<CockpitActionDto> actions) =>
+        (from code in ConstructionStructuralProgressionPriority where actions.Any(action => action.Code == code) select new CockpitNaturalProgressionDto(code)).FirstOrDefault();
 
     /// <summary>
     /// Picks the highest-priority structural transition among projected actions.
     /// Returns null when none — valid En cours calm state.
     /// </summary>
     internal static CockpitNaturalProgressionDto? ResolveInProgressStructuralProgression(
-        IReadOnlyList<CockpitActionDto> actions)
-    {
-        foreach (var code in InProgressStructuralProgressionPriority)
-        {
-            if (actions.Any(action => action.Code == code))
-            {
-                return new CockpitNaturalProgressionDto(code);
-            }
-        }
-
-        return null;
-    }
+        IReadOnlyList<CockpitActionDto> actions) =>
+        (from code in InProgressStructuralProgressionPriority where actions.Any(action => action.Code == code) select new CockpitNaturalProgressionDto(code)).FirstOrDefault();
 
     /// <summary>
     /// Evaluates whether Swiss <see cref="ActionGenerateNextRound"/> is an opportunity.

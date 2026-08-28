@@ -225,11 +225,11 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeFalse();
         body.ConstructionDimensions.Regulation.TransitionReadiness.Should().BeEmpty();
         body.AvailableActions.Should().NotContain(action =>
-            action.Code is CockpitAssembler.ActionPrepareCompetition
-                or CockpitAssembler.ActionStartCompetition
-                or "OpenMatches");
+            action.Code == CockpitAssembler.ActionPrepareCompetition
+            || action.Code == CockpitAssembler.ActionStartCompetition
+            || action.Code == "OpenMatches");
         body.Situations.Should().NotContain(item =>
-            item.Source is "InsufficientParticipants" or "MissingStage");
+            item.Source == "InsufficientParticipants" || item.Source == "MissingStage");
         body.OperationalFocus.MatchCounts.Scheduled.Should().Be(1);
         await AssertNoWinnerPropertyAsync(response);
     }
@@ -349,6 +349,8 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         stages.Add(stage);
         matches.Add(match);
@@ -365,7 +367,8 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        var competition = Competition.Create(new CompetitionName("Suspended Cup"), SampleRegulations.Standard(), _clock);
+        var competition =
+            Competition.Create(new CompetitionName("Suspended Cup"), SampleRegulations.Standard(), _clock);
         var home = competition.AddEntry(TeamId.New(), "Alpha", _clock);
         var away = competition.AddEntry(TeamId.New(), "Beta", _clock);
         competitions.Add(competition);
@@ -375,6 +378,8 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
         competition.Suspend(_clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         stages.Add(stage);
