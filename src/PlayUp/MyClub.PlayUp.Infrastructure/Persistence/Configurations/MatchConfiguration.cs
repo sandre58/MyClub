@@ -70,6 +70,11 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.Ignore(match => match.DomainEvents);
         builder.Metadata.AddIgnored("_domainEvents");
 
+        builder.OwnsMany(match => match.DeclaredParticipations, ConfigureDeclaredParticipations);
+        builder.Navigation(nameof(Match.DeclaredParticipations))
+            .HasField("_declaredParticipations")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne<Competition>()
             .WithMany()
             .HasForeignKey(match => match.CompetitionId)
@@ -79,5 +84,39 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .WithMany()
             .HasForeignKey(match => match.StageId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+
+    private static void ConfigureDeclaredParticipations(OwnedNavigationBuilder<Match, DeclaredParticipation> participations)
+    {
+        participations.ToTable("match_declared_participations");
+        participations.WithOwner().HasForeignKey("match_id");
+        participations.HasKey(participation => participation.Id);
+
+        participations.Property(participation => participation.Id)
+            .HasColumnName("id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<MemberId>());
+
+        participations.Property(participation => participation.Side)
+            .HasColumnName("side")
+            .HasConversion<int>()
+            .IsRequired();
+
+        participations.Property(participation => participation.CompositionStatus)
+            .HasColumnName("composition_status")
+            .HasConversion<int>()
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        participations.Property(participation => participation.JerseyNumber)
+            .HasColumnName("jersey_number")
+            .IsRequired(false)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        participations.Property<int>("SortOrder")
+            .HasColumnName("sort_order")
+            .IsRequired();
+
+        participations.HasIndex("match_id", "SortOrder").IsUnique();
     }
 }

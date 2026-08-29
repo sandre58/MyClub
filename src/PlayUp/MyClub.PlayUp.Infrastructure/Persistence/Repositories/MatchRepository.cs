@@ -17,8 +17,20 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepository
 {
     /// <inheritdoc />
-    public Task<Match?> GetByIdAsync(MatchId id, CancellationToken cancellationToken = default) =>
-        context.Set<Match>().SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+    public async Task<Match?> GetByIdAsync(MatchId id, CancellationToken cancellationToken = default)
+    {
+        var match = await context.Set<Match>()
+            .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        HydrateDeclaredParticipations(match);
+        return match;
+    }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Match>> ListByStageAsync(
@@ -30,6 +42,12 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
             .Where(candidate => candidate.StageId == stageId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        foreach (var match in matches)
+        {
+            HydrateDeclaredParticipations(match);
+        }
+
         return [.. matches.OrderBy(candidate => candidate.Id.Value)];
     }
 
@@ -38,5 +56,13 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
     {
         ArgumentNullException.ThrowIfNull(match);
         context.Set<Match>().Add(match);
+    }
+
+    private void HydrateDeclaredParticipations(Match match)
+    {
+        var ordered = match.DeclaredParticipations
+            .OrderBy(participation => context.Entry(participation).Property<int>("SortOrder").CurrentValue)
+            .ToList();
+        MatchDeclaredParticipationsAccessor.Hydrate(match, ordered);
     }
 }

@@ -16,6 +16,8 @@ namespace MyClub.PlayUp.Domain.Matches;
 [DebuggerDisplay("{HomeEntryId} vs {AwayEntryId} ({Status})")]
 public sealed class Match : AggregateRoot<MatchId>
 {
+    private readonly List<DeclaredParticipation> _declaredParticipations = [];
+
     private Match(
         MatchId id,
         CompetitionId competitionId,
@@ -60,6 +62,11 @@ public sealed class Match : AggregateRoot<MatchId>
     /// Gets the match result when finished; otherwise <see langword="null"/>.
     /// </summary>
     public MatchResult? Result { get; private set; }
+
+    /// <summary>
+    /// Gets the declared composition for this match (not live on-field presence).
+    /// </summary>
+    public IReadOnlyList<DeclaredParticipation> DeclaredParticipations => _declaredParticipations.AsReadOnly();
 
     /// <summary>
     /// Creates a new match in Scheduled status.
@@ -117,7 +124,7 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
-    /// Starts the match (Scheduled to Live).
+    /// Starts the match (Scheduled to Live). Composition may be empty.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
     public void Start(IClock clock)
@@ -192,6 +199,124 @@ public sealed class Match : AggregateRoot<MatchId>
 
         Status = MatchStatus.Cancelled;
         Raise(new MatchCancelled(Id, clock));
+    }
+
+    /// <summary>
+    /// Adds a declared participation to the match composition.
+    /// </summary>
+    /// <remarks>
+    /// Eligibility (member declared as Player on the side's entry, etc.) is an Application orchestration rule — not verified here.
+    /// </remarks>
+    public DeclaredParticipation AddDeclaredParticipation(
+        MemberId memberId,
+        Side side,
+        CompositionStatus compositionStatus,
+        IClock clock,
+        int? jerseyNumber = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureCompositionMutable();
+
+        if (_declaredParticipations.Exists(participation => participation.Id.Equals(memberId)))
+        {
+            throw new DomainException(
+                $"Declared participation '{memberId}' already exists on match '{Id}'.",
+                MatchErrorCodes.DuplicateParticipation);
+        }
+
+        EnsureJerseyAvailable(side, jerseyNumber, excludingMemberId: null);
+
+        var participation = new DeclaredParticipation(memberId, side, compositionStatus, jerseyNumber);
+        _declaredParticipations.Add(participation);
+        Raise(new MatchDeclaredParticipationAdded(
+            Id, memberId, side, compositionStatus, jerseyNumber, clock));
+        return participation;
+    }
+
+    /// <summary>
+    /// Removes a declared participation from the match composition.
+    /// </summary>
+    public void RemoveDeclaredParticipation(MemberId memberId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureCompositionMutable();
+
+        var participation = GetDeclaredParticipation(memberId);
+        _declaredParticipations.Remove(participation);
+        Raise(new MatchDeclaredParticipationRemoved(Id, memberId, clock));
+    }
+
+    /// <summary>
+    /// Changes the composition status (starter / bench) of a declared participation.
+    /// </summary>
+    public void ChangeDeclaredParticipationCompositionStatus(
+        MemberId memberId,
+        CompositionStatus compositionStatus,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureCompositionMutable();
+
+        var participation = GetDeclaredParticipation(memberId);
+        participation.ChangeCompositionStatus(compositionStatus);
+        Raise(new MatchDeclaredParticipationCompositionStatusChanged(
+            Id, memberId, compositionStatus, clock));
+    }
+
+    /// <summary>
+    /// Sets or clears the jersey number of a declared participation.
+    /// </summary>
+    public void SetDeclaredParticipationJerseyNumber(MemberId memberId, int? jerseyNumber, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureCompositionMutable();
+
+        var participation = GetDeclaredParticipation(memberId);
+        EnsureJerseyAvailable(participation.Side, jerseyNumber, excludingMemberId: memberId);
+        participation.SetJerseyNumber(jerseyNumber);
+        Raise(new MatchDeclaredParticipationJerseyNumberChanged(Id, memberId, jerseyNumber, clock));
+    }
+
+    /// <summary>
+    /// Returns whether the match composition references the given member.
+    /// </summary>
+    public bool HasDeclaredParticipation(MemberId memberId) =>
+        _declaredParticipations.Exists(participation => participation.Id.Equals(memberId));
+
+    private DeclaredParticipation GetDeclaredParticipation(MemberId memberId) =>
+        _declaredParticipations.FirstOrDefault(participation => participation.Id.Equals(memberId))
+        ?? throw new DomainException(
+            $"Declared participation '{memberId}' was not found on match '{Id}'.",
+            MatchErrorCodes.ParticipationNotFound);
+
+    private void EnsureCompositionMutable()
+    {
+        if (Status is not (MatchStatus.Scheduled or MatchStatus.Postponed))
+        {
+            throw new DomainException(
+                $"Match composition cannot be mutated when status is '{Status}'.",
+                MatchErrorCodes.CompositionImmutable);
+        }
+    }
+
+    private void EnsureJerseyAvailable(Side side, int? jerseyNumber, MemberId? excludingMemberId)
+    {
+        if (jerseyNumber is null)
+        {
+            return;
+        }
+
+        var duplicate = _declaredParticipations.Exists(participation =>
+            participation.Side == side
+            && participation.JerseyNumber == jerseyNumber
+            && (excludingMemberId is null || !participation.Id.Equals(excludingMemberId.Value)));
+
+        if (duplicate)
+        {
+            throw new DomainException(
+                $"Jersey number '{jerseyNumber}' is already used on the {side} side of match '{Id}'.",
+                MatchErrorCodes.DuplicateJerseyNumber);
+        }
     }
 
     private void EnsureStatus(MatchStatus expected, string message)

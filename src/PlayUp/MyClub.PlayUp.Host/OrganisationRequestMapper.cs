@@ -82,15 +82,13 @@ internal static class OrganisationRequestMapper
                 ]));
     }
 
-    private static MatchGenerationFormat ParseMatchGenerationFormat(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
+    private static MatchGenerationFormat ParseMatchGenerationFormat(string? value) =>
+        string.IsNullOrWhiteSpace(value)
             ? MatchGenerationFormat.SingleRoundRobin
             : Enum.TryParse<MatchGenerationFormat>(value.Trim(), ignoreCase: true, out var parsed)
-               && Enum.IsDefined(parsed)
-            ? parsed
-            : throw new ApplicationFailureException(
-                $"Unknown MatchGenerationFormat '{value}'. Expected SingleRoundRobin or DoubleRoundRobin.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-    }
+              && Enum.IsDefined(parsed)
+                ? parsed
+                : throw new ApplicationFailureException(
+                    $"Unknown MatchGenerationFormat '{value}'. Expected SingleRoundRobin or DoubleRoundRobin.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
 }

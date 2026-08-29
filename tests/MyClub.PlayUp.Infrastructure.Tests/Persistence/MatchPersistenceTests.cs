@@ -150,6 +150,82 @@ public sealed class MatchPersistenceTests
         }
     }
 
+    [Fact]
+    public async Task Declared_participations_round_trip_with_order_status_and_jerseyAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var starter = match.AddDeclaredParticipation(
+            MemberId.New(), Side.Home, CompositionStatus.Starter, _clock, jerseyNumber: 10);
+        var bench = match.AddDeclaredParticipation(
+            MemberId.New(), Side.Away, CompositionStatus.Bench, _clock);
+        var removed = match.AddDeclaredParticipation(
+            MemberId.New(), Side.Home, CompositionStatus.Bench, _clock, jerseyNumber: 7);
+        match.RemoveDeclaredParticipation(removed.Id, _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new MatchRepository(context);
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.DeclaredParticipations.Select(p => p.Id).Should().Equal(starter.Id, bench.Id);
+            loaded.DeclaredParticipations[0].Side.Should().Be(Side.Home);
+            loaded.DeclaredParticipations[0].CompositionStatus.Should().Be(CompositionStatus.Starter);
+            loaded.DeclaredParticipations[0].JerseyNumber.Should().Be(10);
+            loaded.DeclaredParticipations[1].Side.Should().Be(Side.Away);
+            loaded.DeclaredParticipations[1].CompositionStatus.Should().Be(CompositionStatus.Bench);
+            loaded.DeclaredParticipations[1].JerseyNumber.Should().BeNull();
+
+            loaded.ChangeDeclaredParticipationCompositionStatus(starter.Id, CompositionStatus.Bench, _clock);
+            loaded.SetDeclaredParticipationJerseyNumber(bench.Id, 99, _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.DeclaredParticipations.Should().HaveCount(2);
+            reloaded.DeclaredParticipations.Single(p => p.Id == starter.Id).CompositionStatus
+                .Should().Be(CompositionStatus.Bench);
+            reloaded.DeclaredParticipations.Single(p => p.Id == bench.Id).JerseyNumber.Should().Be(99);
+        }
+    }
+
+    [Fact]
+    public async Task Finish_keeps_declared_participations_after_reloadAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var memberId = MemberId.New();
+        match.AddDeclaredParticipation(memberId, Side.Home, CompositionStatus.Starter, _clock, 9);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.Status.Should().Be(MatchStatus.Finished);
+            loaded.DeclaredParticipations.Should().ContainSingle()
+                .Which.Id.Should().Be(memberId);
+        }
+    }
+
     private async Task<MatchId> SeedFinishedAsync(string databaseName, MatchResult result)
     {
         await using var context = PlayUpInMemory.CreateContext(databaseName);

@@ -18,7 +18,8 @@ internal static class PlayUpInMemory
             .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
             .AddInterceptors(
                 new CompetitionOrderedCollectionsInterceptor(),
-                new StageOrderedCollectionsInterceptor())
+                new StageOrderedCollectionsInterceptor(),
+                new MatchOrderedCollectionsInterceptor())
             .Options;
 
         return new PlayUpDbContext(options);

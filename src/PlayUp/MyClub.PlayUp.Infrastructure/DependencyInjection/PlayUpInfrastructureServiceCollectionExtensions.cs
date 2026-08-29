@@ -33,12 +33,14 @@ public static class PlayUpInfrastructureServiceCollectionExtensions
 
         services.AddSingleton<CompetitionOrderedCollectionsInterceptor>();
         services.AddSingleton<StageOrderedCollectionsInterceptor>();
+        services.AddSingleton<MatchOrderedCollectionsInterceptor>();
         services.AddDbContext<PlayUpDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(connectionString);
             options.AddInterceptors(
                 serviceProvider.GetRequiredService<CompetitionOrderedCollectionsInterceptor>(),
-                serviceProvider.GetRequiredService<StageOrderedCollectionsInterceptor>());
+                serviceProvider.GetRequiredService<StageOrderedCollectionsInterceptor>(),
+                serviceProvider.GetRequiredService<MatchOrderedCollectionsInterceptor>());
         });
         services.AddScoped<IUnitOfWork>(static sp => sp.GetRequiredService<PlayUpDbContext>());
         services.AddScoped<ICompetitionRepository, CompetitionRepository>();
