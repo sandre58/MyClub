@@ -48,7 +48,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
         stage.Should().NotBeNull();
-        stage!.Regulation.PlacementAwardRules.Should().NotBeNull();
+        stage.Regulation.PlacementAwardRules.Should().NotBeNull();
         stage.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
         stage.FindSlot("Unused")!.EntryId.Should().BeNull();
     }
@@ -129,7 +129,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
 
         var stage = Stage.Create(competition.Id, new StageName("Final"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        var addFixture = stage.AddFixture(round.Id, _clock);
         stage.AddSlot("Unused", _clock);
         competition.AddStage(stage.Id, _clock);
 
@@ -137,6 +137,6 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return (stage.Id, fixture.Id);
+        return (stage.Id, addFixture.Id);
     }
 }

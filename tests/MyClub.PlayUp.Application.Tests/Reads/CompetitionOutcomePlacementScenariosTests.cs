@@ -60,8 +60,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         // Home always wins each pair → odd ranks = Team01,03,… even = Team02,04,…
         for (var rank = 1; rank <= 12; rank++)
         {
-            var teamIndex = rank; // Team01..Team12 paired (1,2), (3,4), …
-            view.CompetitionOutcome.Places[rank - 1].DisplayName.Should().Be($"Team{teamIndex:00}");
+            view.CompetitionOutcome.Places[rank - 1].DisplayName.Should().Be($"Team{rank:00}");
             view.CompetitionOutcome.Places[rank - 1].EntryId.Should().Be(scenario.Entries[rank - 1].Value);
         }
 
@@ -251,14 +250,19 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         var fixtureId = scenario.FixtureIds[fixtureIndex];
         var matchId = scenario.Stage.GetFixture(fixtureId).Attachments[0].MatchId;
         var match = scenario.Matches.Single(m => m.Id.Equals(matchId));
-        if (match.Status == MatchStatus.Finished)
+        switch (match.Status)
         {
-            return;
-        }
-
-        if (match.Status == MatchStatus.Scheduled)
-        {
-            match.Start(_clock);
+            case MatchStatus.Finished:
+                return;
+            case MatchStatus.Scheduled:
+                match.Start(_clock);
+                break;
+            case MatchStatus.Live:
+            case MatchStatus.Postponed:
+            case MatchStatus.Cancelled:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(scenario));
         }
 
         match.Finish(

@@ -936,14 +936,11 @@ public static class CockpitAssembler
         }
 
         // Championship RR (and Swiss Overall): final Standing is the competition result → Podium.
-        if (formatKind is StructureFormatKind.Championship or StructureFormatKind.Swiss)
-        {
-            var standing = ProjectStandingOutcomePlaces(competition, stages, matchesByStage);
-            return standing is null ? null : TryCreateOutcome(standing, fromStanding: true);
-        }
+        if (formatKind is not (StructureFormatKind.Championship or StructureFormatKind.Swiss)) return null;
+        var standing = ProjectStandingOutcomePlaces(competition, stages, matchesByStage);
+        return standing is null ? null : TryCreateOutcome(standing, fromStanding: true);
 
         // Groups-only / Cup without PlacementAwardRules → no inventable competition outcome.
-        return null;
     }
 
     /// <summary>
@@ -968,17 +965,12 @@ public static class CockpitAssembler
         var hasRank2 = places.Any(place => place.Rank == 2);
         var hasRank3 = places.Any(place => place.Rank == 3);
 
-        if (rank1Count == 1 && hasRank2 && hasRank3)
+        return rank1Count switch
         {
-            return OutcomePresentationPodium;
-        }
-
-        if (rank1Count == 1)
-        {
-            return OutcomePresentationWinner;
-        }
-
-        return null;
+            1 when hasRank2 && hasRank3 => OutcomePresentationPodium,
+            1 => OutcomePresentationWinner,
+            _ => null
+        };
     }
 
     private static CompetitionOutcomeDto? TryCreateOutcome(

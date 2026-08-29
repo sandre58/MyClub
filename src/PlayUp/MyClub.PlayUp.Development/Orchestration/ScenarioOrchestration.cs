@@ -335,10 +335,7 @@ internal static class ScenarioOrchestration
         competition.Start(context.Clock);
     }
 
-    public static void CompleteRunning(ScenarioContext context, Competition competition, Stage stage)
-    {
-        CompleteAllRunning(context, competition, [stage]);
-    }
+    public static void CompleteRunning(ScenarioContext context, Competition competition, Stage stage) => CompleteAllRunning(context, competition, [stage]);
 
     /// <summary>
     /// Completes every Running/Suspended stage, then the competition (Normal).
@@ -737,8 +734,7 @@ internal static class ScenarioOrchestration
         ApplyAllProgressions(context, stage, fixtures, matches, allStages);
     }
 
-    private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock)
-    {
+    private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock) =>
         final.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
@@ -746,7 +742,6 @@ internal static class ScenarioOrchestration
                 new PlacementAwardPath(finalFixture.Id, ProgressionOutcome.Loser, rank: 2)
             ]),
             clock);
-    }
 
     private static void WireFinalAndBronzePlacementAwards(
         Stage final,

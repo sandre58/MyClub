@@ -22,7 +22,7 @@ public sealed class ResolvePlacementAwardsTests
     [Fact]
     public void Execute_final_fixture_awards_ranks_1_and_2()
     {
-        var (stage, fixtureId, winner, loser, match) = CreateAwardStage(
+        var (stage, _, winner, loser, match) = CreateAwardStage(
             winnerRank: 1,
             loserRank: 2,
             homeGoals: 2,
