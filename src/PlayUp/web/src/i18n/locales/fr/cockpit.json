@@ -101,6 +101,8 @@
     "standingTitle": "Classement",
     "standingGroupTitle": "Groupe {{name}}",
     "standingOpen": "Voir le classement",
+    "outcomeTitle": "Résultat",
+    "outcomeOpenFull": "Voir le classement complet",
     "groupNav": "Groupes",
     "recentTitle": "Dernières rencontres",
     "nextTitle": "Prochaines rencontres",

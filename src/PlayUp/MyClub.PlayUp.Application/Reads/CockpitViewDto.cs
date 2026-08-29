@@ -30,6 +30,11 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="CalendarSummary">
 /// Overview calendar synthesis when <paramref name="PreparationFocus"/> is GeneratedCalendar; otherwise null.
 /// </param>
+/// <param name="CompetitionOutcome">
+/// Derived final placements when Terminée can conclude them (Championship V1: final Standing).
+/// Null when not Completed/Archived, Abandoned, non-Championship, or no Overall standing.
+/// Full <c>places[]</c> — SPA Podium is Top-N only; Classements remains the consultation surface.
+/// </param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, temporal sport units, compact standing.</param>
 /// <param name="Situations">Derived pilotage situations (not persisted alerts).</param>
@@ -53,6 +58,7 @@ public sealed record CockpitViewDto(
     CockpitCycleReadingDto CycleReading,
     string PreparationFocus,
     CockpitCalendarSummaryDto? CalendarSummary,
+    CompetitionOutcomeDto? CompetitionOutcome,
     CockpitConstructionDimensionsDto ConstructionDimensions,
     CockpitOperationalFocusDto OperationalFocus,
     IReadOnlyList<CockpitSituationDto> Situations,
@@ -61,6 +67,21 @@ public sealed record CockpitViewDto(
     CockpitNaturalProgressionDto? NaturalProgression,
     CockpitClosureHintDto ClosureHint,
     IReadOnlyList<CockpitNavigationHintDto> NavigationHints);
+
+/// <summary>
+/// Read projection of competition final placements — not Domain, not UX Podium.
+/// </summary>
+/// <param name="Places">
+/// All determined final placements (full table when Championship Standing is the source).
+/// May be partial in future formats; V1 Championship projects the complete Overall standing.
+/// </param>
+public sealed record CompetitionOutcomeDto(IReadOnlyList<FinalPlacementDto> Places);
+
+/// <summary>One final placement in a <see cref="CompetitionOutcomeDto"/>.</summary>
+/// <param name="Rank">1-based final rank (Standing Position for Championship V1).</param>
+/// <param name="EntryId">Entry identity.</param>
+/// <param name="DisplayName">Entry display name for SPA.</param>
+public sealed record FinalPlacementDto(int Rank, Guid EntryId, string DisplayName);
 
 /// <summary>
 /// Overview calendar synthesis for Préparation / GeneratedCalendar (not Match hub duplication).

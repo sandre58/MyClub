@@ -388,12 +388,25 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     })
   })
 
-  it('composes Terminée like En cours without Prochaines when nextUnit is null', async () => {
+  it('composes Terminée with Outcome podium Top-3 and without standing compact dump', async () => {
+    const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+    const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    const entryC = '11111111-1111-1111-1111-111111111111'
+    const entryD = '22222222-2222-2222-2222-222222222222'
     vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
       cockpitView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
+        completionMode: 'Normal',
         naturalProgression: null,
+        competitionOutcome: {
+          places: [
+            { rank: 1, entryId: entryA, displayName: 'Alpha' },
+            { rank: 2, entryId: entryB, displayName: 'Bravo' },
+            { rank: 3, entryId: entryC, displayName: 'Charlie' },
+            { rank: 4, entryId: entryD, displayName: 'Delta' },
+          ],
+        },
         constructionDimensions: {
           ...cockpitView().constructionDimensions,
           teams: {
@@ -439,7 +452,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
                 rows: [
                   {
                     position: 1,
-                    entryId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+                    entryId: entryA,
                     displayName: 'Alpha',
                     played: 10,
                     points: 24,
@@ -456,8 +469,27 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     renderCockpitPage()
 
     expect(
-      await screen.findByRole('heading', { name: 'Classement' }),
+      await screen.findByRole('heading', { name: 'Résultat' }),
     ).toBeInTheDocument()
+    expect(screen.getByTestId('overview-outcome-podium')).toBeInTheDocument()
+    expect(screen.getByTestId(`overview-outcome-${entryA}`)).toHaveTextContent(
+      '1Alpha',
+    )
+    expect(screen.getByTestId(`overview-outcome-${entryB}`)).toHaveTextContent(
+      '2Bravo',
+    )
+    expect(screen.getByTestId(`overview-outcome-${entryC}`)).toHaveTextContent(
+      '3Charlie',
+    )
+    expect(
+      screen.queryByTestId(`overview-outcome-${entryD}`),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Voir le classement complet/i }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
+    expect(
+      screen.queryByRole('heading', { name: 'Classement' }),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
     ).not.toBeInTheDocument()

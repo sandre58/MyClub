@@ -46,6 +46,7 @@ Aggregated Cockpit Read projection (Application interpretation). Does **not** re
   "cycleReading": { "code": "Construction" },
   "preparationFocus": "Setup",
   "calendarSummary": null,
+  "competitionOutcome": null,
   "constructionDimensions": {
     "teams": { "prominence": "Present", "facts": { "activeCount": "1", "minimumTeams": "2" } },
     "structure": { "prominence": "Present", "facts": { "formatKind": "None" } },
@@ -148,6 +149,12 @@ Contract notes:
   - Shape: `{ matchdayCount, matchCount, matchdays: [{ matchdayNumber, matchCount }], nextMatch? }` where `nextMatch` is `{ matchId, stageId, matchdayNumber?, scheduledAt?, homeDisplayName, awayDisplayName }` (first upcoming `Scheduled`, placements preferred).
   - Matchdays come from the **primary** Championship stage (may still be Draft/Ready) — not ReferenceStage (Running/Completed).
   - `matchdays` preview capped (Host `CalendarPreviewMatchdayLimit` = 3). Not a Match hub dump.
+- `competitionOutcome`: derived final placements for Terminée (Read only — not Domain persistence).
+  - Shape: `{ places: [{ rank, entryId, displayName }, …] }` — **full** determined placements (Championship V1 = complete Overall Standing).
+  - V1 projection when **all**: `status` in (`Completed`, `Archived`) · `completionMode ≠ Abandoned` · format = `Championship` · ReferenceStage Overall standing has rows.
+  - Otherwise `null` (Running, Cup, Groups-only, Abandoned, no standing, …).
+  - SPA **Podium** = Top-N UI of `places` (`rank ≤ 3`); Classements remains the full consultation surface — one truth.
+  - Does **not** invent Cup/consolante ranks (PlacementAward Domain seam — later).
 - No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy (`source` + `params` → reason templates; `impactCode` → impact copy).
 - Situation identity = `source` + `targetType` + `targetId` (stable; not translated text).
 - `actionable` is Host-projected (`true` iff `actionCode` is set). SPA must not infer actionability from `source`.

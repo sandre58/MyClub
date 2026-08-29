@@ -142,6 +142,12 @@ export interface CockpitView {
   preparationFocus: CockpitPreparationFocus | string
   /** Calendar overview synthesis when preparationFocus is GeneratedCalendar; else null. */
   calendarSummary: CockpitCalendarSummary | null
+  /**
+   * Derived final placements (Championship V1: full Standing).
+   * Null when not Terminée, Abandoned, non-Championship, or no Overall standing.
+   * SPA Podium = Top-N of places[]; Classements = full truth elsewhere.
+   */
+  competitionOutcome: CompetitionOutcome | null
   constructionDimensions: CockpitConstructionDimensions
   operationalFocus: CockpitOperationalFocus
   situations: CockpitSituation[]
@@ -150,6 +156,17 @@ export interface CockpitView {
   naturalProgression: CockpitNaturalProgression | null
   closureHint: CockpitClosureHint
   navigationHints: CockpitNavigationHint[]
+}
+
+/** Read projection — competition final placements (not Domain, not UX Podium). */
+export interface CompetitionOutcome {
+  places: FinalPlacement[]
+}
+
+export interface FinalPlacement {
+  rank: number
+  entryId: string
+  displayName: string
 }
 
 /** Host-owned Préparation focus — wire codes. */

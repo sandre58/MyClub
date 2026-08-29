@@ -198,6 +198,11 @@ public static class CockpitAssembler
             matchesByStage,
             matchCounts,
             organisation.Format.Kind);
+        var competitionOutcome = BuildCompetitionOutcome(
+            competition,
+            stages,
+            matchesByStage,
+            organisation.Format.Kind);
         var dimensions = BuildDimensions(competition, organisation, stages, matchCounts, matchesByStage);
         var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
         var fromSlotsOpportunities = stages
@@ -222,6 +227,7 @@ public static class CockpitAssembler
             cycleReading,
             preparationFocus,
             calendarSummary,
+            competitionOutcome,
             dimensions,
             operationalFocus,
             situations,
@@ -889,6 +895,58 @@ public static class CockpitAssembler
         int? MatchdayNumber,
         string? RoundName,
         List<Match> Matches);
+
+    /// <summary>
+    /// Championship V1: final Overall Standing → CompetitionOutcome (full places[]).
+    /// No Domain change — Cup / Groups / PlacementAward remain null until Domain seam exists.
+    /// </summary>
+    internal static CompetitionOutcomeDto? BuildCompetitionOutcome(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        StructureFormatKind? formatKind)
+    {
+        if (competition.Status is not (CompetitionStatus.Completed or CompetitionStatus.Archived))
+        {
+            return null;
+        }
+
+        // Abandoned: no final sporting result to project (G7 — Completed ≠ outcome).
+        if (competition.CompletionMode == CompletionMode.Abandoned)
+        {
+            return null;
+        }
+
+        if (formatKind != StructureFormatKind.Championship)
+        {
+            return null;
+        }
+
+        var reference = ResolveReferenceStage(competition, stages);
+        if (reference is null)
+        {
+            return null;
+        }
+
+        var matches = matchesByStage.TryGetValue(reference.Id, out var list) ? list : [];
+        var section = ConsultationAssembler.ProjectStandingsForStage(competition, reference, matches);
+        if (!section.Applicable)
+        {
+            return null;
+        }
+
+        var overall = section.Tables.FirstOrDefault(table =>
+            string.Equals(table.Scope, ConsultationAssembler.ScopeOverall, StringComparison.Ordinal));
+        return overall is null || overall.Rows.Count == 0
+            ? null
+            : new CompetitionOutcomeDto(
+            [
+                .. overall.Rows.Select(row => new FinalPlacementDto(
+                    row.Position,
+                    row.EntryId,
+                    row.DisplayName))
+            ]);
+    }
 
     private static CockpitStandingCompactDto? BuildStandingCompact(
         Competition competition,

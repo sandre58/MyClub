@@ -1049,6 +1049,121 @@ public sealed class CockpitAssemblerTests
         view.OperationalFocus.ReferenceStageGameRules!.FormatKind.Should().Be("Championship");
         view.OperationalFocus.ReferenceStageGameRules.WinPoints.Should().Be(3);
         view.OperationalFocus.ReferenceStageGameRules.NumberOfPeriods.Should().Be(2);
+        view.CompetitionOutcome.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_completed_championship_projects_full_competition_outcome_from_standing()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var e2 = competition.AddEntry(TeamId.New(), "Bravo", _clock);
+        var e3 = competition.AddEntry(TeamId.New(), "Charlie", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        var md = stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var entries = new[] { e1.Id, e2.Id, e3.Id };
+        var matches = new List<Match>();
+        for (var i = 0; i < entries.Length; i++)
+        {
+            for (var j = i + 1; j < entries.Length; j++)
+            {
+                var fixture = stage.AddFixture(md.Id, _clock);
+                var match = Match.Create(competition.Id, stage.Id, entries[i], entries[j], _clock);
+                match.Start(_clock);
+                match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+                stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+                matches.Add(match);
+            }
+        }
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Complete(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
+
+        view.CycleReading.Code.Should().Be(CockpitAssembler.CycleCompleted);
+        view.CompetitionOutcome.Should().NotBeNull();
+        view.CompetitionOutcome!.Places.Should().HaveCount(3);
+        view.CompetitionOutcome.Places[0].Rank.Should().Be(1);
+        view.CompetitionOutcome.Places[0].DisplayName.Should().Be("Alpha");
+        view.CompetitionOutcome.Places.Select(place => place.EntryId).Should().OnlyContain(id =>
+            id == e1.Id.Value || id == e2.Id.Value || id == e3.Id.Value);
+        view.CompetitionOutcome.Places.Should().OnlyContain(place =>
+            !string.IsNullOrWhiteSpace(place.DisplayName));
+    }
+
+    [Fact]
+    public void Assemble_abandoned_championship_does_not_project_competition_outcome()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var e2 = competition.AddEntry(TeamId.New(), "Bravo", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        var md = stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var fixture = stage.AddFixture(md.Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, e1.Id, e2.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Complete(CompletionMode.Abandoned, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
+
+        view.CompetitionOutcome.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_completed_groups_does_not_project_competition_outcome()
+    {
+        var competition = Competition.Create(new CompetitionName("Groups"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "A", _clock);
+        var b = competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var g1 = stage.AddGroup("G1", _clock);
+        stage.AssignEntryToGroup(g1.Id, a.Id, _clock);
+        stage.AssignEntryToGroup(g1.Id, b.Id, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var md = stage.AddMatchday(1, _clock);
+        var f1 = stage.AddFixture(md.Id, _clock);
+        var m1 = Match.Create(competition.Id, stage.Id, a.Id, b.Id, _clock);
+        m1.Start(_clock);
+        m1.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        stage.AttachMatch(f1.Id, m1.Id, legIndex: 1, _clock);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Complete(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [m1] });
+
+        view.CompetitionOutcome.Should().BeNull();
+        view.OperationalFocus.StandingCompact.Should().NotBeNull();
     }
 
     [Fact]

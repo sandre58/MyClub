@@ -28,6 +28,7 @@ import type {
   CockpitSituation,
   CockpitSportUnit,
   CockpitStandingCompact,
+  CompetitionOutcome,
   CockpitView,
   OrganisationEntry,
   StructureFormatKind,
@@ -171,13 +172,17 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const showProgression =
     Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0
   const focus = data.operationalFocus
-  const showStanding =
-    operationalOverview && focus.standingCompact != null
+  // En cours: live standing compact. Terminée: Outcome podium (not standing dump).
+  const showStanding = inProgress && focus.standingCompact != null
+  const showOutcome =
+    completedLike &&
+    data.competitionOutcome != null &&
+    data.competitionOutcome.places.length > 0
   // En cours: always Dernières + Prochaines (empty-state). Terminée: Dernières always; Prochaines only if nextUnit.
   const showRecentUnit = operationalOverview
   const showNextUnit = inProgress || (completedLike && focus.nextUnit != null)
   const showTemporalUnits = showRecentUnit || showNextUnit
-  const showSport = showStanding || showTemporalUnits
+  const showSport = showStanding || showOutcome || showTemporalUnits
   const showCalendar =
     generatedCalendar && data.calendarSummary != null
 
@@ -234,12 +239,18 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const sportBand = showSport ? (
     <div
       className={
-        showStanding && showTemporalUnits
+        (showStanding || showOutcome) && showTemporalUnits
           ? 'overview__sport'
           : 'overview__sport overview__sport--solo'
       }
       data-testid="overview-region-sport"
     >
+      {showOutcome && data.competitionOutcome && (
+        <OutcomePodiumPanel
+          outcome={data.competitionOutcome}
+          href={classementsHref}
+        />
+      )}
       {showStanding && focus.standingCompact && (
         <StandingCompactPanel
           standing={focus.standingCompact}
@@ -562,6 +573,55 @@ function PanelHead({
       </span>
       <span className="overview-panel__title-text">{children}</span>
     </h2>
+  )
+}
+
+function OutcomePodiumPanel({
+  outcome,
+  href,
+}: {
+  outcome: CompetitionOutcome
+  href: string
+}) {
+  const { t } = useTranslation('cockpit')
+  const podium = outcome.places
+    .filter((place) => place.rank >= 1 && place.rank <= 3)
+    .sort((a, b) => a.rank - b.rank)
+
+  if (podium.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="ds-panel" aria-labelledby="cockpit-outcome-podium">
+      <PanelHead id="cockpit-outcome-podium" icon={<ClassementsNavIcon size="md" />}>
+        {t('sport.outcomeTitle')}
+      </PanelHead>
+      <ol className="overview-outcome" data-testid="overview-outcome-podium">
+        {podium.map((place) => (
+          <li
+            key={place.entryId}
+            className={
+              place.rank === 1
+                ? 'overview-outcome__row overview-outcome__row--first'
+                : 'overview-outcome__row'
+            }
+            data-testid={`overview-outcome-${place.entryId}`}
+          >
+            <span className="overview-outcome__rank ds-tabular">{place.rank}</span>
+            <span className="overview-outcome__team">{place.displayName}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="overview-panel__footer">
+        <Link className="overview-link" to={href}>
+          {t('sport.outcomeOpenFull')}
+          <span className="overview-link__arrow" aria-hidden="true">
+            <ChevronRightIcon size="sm" />
+          </span>
+        </Link>
+      </p>
+    </section>
   )
 }
 

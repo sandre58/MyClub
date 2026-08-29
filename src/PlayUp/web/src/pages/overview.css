@@ -662,6 +662,44 @@
     font-weight: var(--font-weight-bold);
 }
 
+.overview-outcome {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.overview-outcome__row {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: var(--space-12);
+    align-items: baseline;
+    padding: var(--space-8) var(--space-4);
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.overview-outcome__row:last-child {
+    border-bottom: none;
+}
+
+.overview-outcome__rank {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+    text-align: end;
+}
+
+.overview-outcome__row--first .overview-outcome__team {
+    color: var(--color-brand);
+}
+
+.overview-outcome__team {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    min-width: 0;
+}
+
 .overview-match-list {
     display: flex;
     flex-direction: column;
