@@ -143,9 +143,10 @@ export interface CockpitView {
   /** Calendar overview synthesis when preparationFocus is GeneratedCalendar; else null. */
   calendarSummary: CockpitCalendarSummary | null
   /**
-   * Derived final placements (Championship V1: full Standing).
-   * Null when not Terminée, Abandoned, non-Championship, or no Overall standing.
-   * SPA Podium = Top-N of places[]; Classements = full truth elsewhere.
+   * Derived final placements (`places[]`) when Terminée and presentable.
+   * Null when not Terminée/Archived, Abandoned, or no Host presentation (Winner|Podium).
+   * `presentation` is Host UX hint — independent of standingCompact.
+   * SPA Résultat uses presentation; Classements = full consultation truth.
    */
   competitionOutcome: CompetitionOutcome | null
   constructionDimensions: CockpitConstructionDimensions
@@ -158,9 +159,11 @@ export interface CockpitView {
   navigationHints: CockpitNavigationHint[]
 }
 
-/** Read projection — competition final placements (not Domain, not UX Podium). */
+/** Read projection — competition final placements (not Domain). */
 export interface CompetitionOutcome {
   places: FinalPlacement[]
+  /** Host UX: Winner = hero; Podium = Top-3 mise en scène. */
+  presentation: 'Winner' | 'Podium'
 }
 
 export interface FinalPlacement {

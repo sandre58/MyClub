@@ -149,15 +149,18 @@ Contract notes:
   - Shape: `{ matchdayCount, matchCount, matchdays: [{ matchdayNumber, matchCount }], nextMatch? }` where `nextMatch` is `{ matchId, stageId, matchdayNumber?, scheduledAt?, homeDisplayName, awayDisplayName }` (first upcoming `Scheduled`, placements preferred).
   - Matchdays come from the **primary** Championship stage (may still be Draft/Ready) — not ReferenceStage (Running/Completed).
   - `matchdays` preview capped (Host `CalendarPreviewMatchdayLimit` = 3). Not a Match hub dump.
-- `competitionOutcome`: derived final placements for Terminée (Read only — not Domain persistence).
-  - Shape: `{ places: [{ rank, entryId, displayName }, …] }` — **only determined** placements (gaps allowed; missing ranks are **not** invented).
+- `competitionOutcome`: derived final placements for Terminée Résultat surface (Read only — not Domain persistence).
+  - Shape: `{ places: [{ rank, entryId, displayName }, …], presentation: "Winner" | "Podium" }` — **only determined** placements (gaps allowed; missing ranks are **not** invented).
+  - `presentation` is a **Host UX hint** (not Domain): `Winner` = hero vainqueur; `Podium` = Top-3 mise en scène. Independent of `standingCompact`.
   - Projection asks *which truth sources determine final placements for this competition?* — not a blind Standing ∪ awards merge:
     1. If any stage has `PlacementAwardRules` and decided fixtures → places from `ResolvePlacementAwards` (Cup / classification / consolantes).
-    2. Else if format is `Championship` or `Swiss` → Overall Standing of ReferenceStage (full table when available).
+       - Ranks 1+2+3 present with unique rank 1 → `Podium` (e.g. World Cup Final+Bronze).
+       - Unique rank 1 without full Top-3 → `Winner` (e.g. Cup final only).
+       - No unique rank 1 → `null` (no fake champion).
+    2. Else if format is `Championship` or `Swiss` → Overall Standing of ReferenceStage + `presentation: Podium`.
     3. Else `null` (e.g. Groups-only without global ranking rule; Cup without PlacementAwardRules).
-  - Also `null` when: not Completed/Archived · `completionMode = Abandoned` · no determinable places.
-  - SPA **Podium** = Top-N UI of `places` (`rank ≤ 3`); Classements remains the full consultation surface — one truth.
-  - Does **not** invent ranks from bracket graphics or “two eliminated teams” heuristics (I4).
+  - Also `null` when: not Completed/Archived · `completionMode = Abandoned` · no presentable Result.
+  - SPA Résultat consumes `presentation` + `places`; **Classement** Terminée uses `standingCompact` when projected (independent). Classements nav remains full consultation.
 - No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy (`source` + `params` → reason templates; `impactCode` → impact copy).
 - Situation identity = `source` + `targetType` + `targetId` (stable; not translated text).
 - `actionable` is Host-projected (`true` iff `actionCode` is set). SPA must not infer actionability from `source`.

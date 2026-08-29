@@ -31,10 +31,10 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Overview calendar synthesis when <paramref name="PreparationFocus"/> is GeneratedCalendar; otherwise null.
 /// </param>
 /// <param name="CompetitionOutcome">
-/// Derived final placements when Terminée can conclude them.
-/// Sources (format-aware): PlacementAwardRules + FixtureOutcome, else Championship/Swiss Overall Standing.
-/// <c>places[]</c> lists only determined ranks (partial OK). Null when Abandoned / no determinable places.
-/// SPA Podium is Top-N only; Classements remains the consultation surface.
+/// Derived final placements when Terminée can conclude them for the Résultat surface.
+/// Sources: PlacementAwardRules + FixtureOutcome, else Championship/Swiss Overall Standing.
+/// Includes Host <c>presentation</c> (<c>Winner</c> | <c>Podium</c>) — Read UX hint, not Domain.
+/// Null when Abandoned / no presentable Result (no unique winner and not a podium case).
 /// </param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, temporal sport units, compact standing.</param>
@@ -70,13 +70,19 @@ public sealed record CockpitViewDto(
     IReadOnlyList<CockpitNavigationHintDto> NavigationHints);
 
 /// <summary>
-/// Read projection of competition final placements — not Domain, not UX Podium.
+/// Read projection of competition final placements — not Domain.
+/// <paramref name="Presentation"/> is Host UX composition (<c>Winner</c> | <c>Podium</c>), not a Domain concept.
 /// </summary>
 /// <param name="Places">
 /// All determined final placements (full table when Championship Standing is the source).
-/// May be partial in future formats; V1 Championship projects the complete Overall standing.
+/// May be partial; missing ranks are omitted.
 /// </param>
-public sealed record CompetitionOutcomeDto(IReadOnlyList<FinalPlacementDto> Places);
+/// <param name="Presentation">
+/// <c>Winner</c> — hero vainqueur; <c>Podium</c> — Top-3 mise en scène.
+/// </param>
+public sealed record CompetitionOutcomeDto(
+    IReadOnlyList<FinalPlacementDto> Places,
+    string Presentation);
 
 /// <summary>One final placement in a <see cref="CompetitionOutcomeDto"/>.</summary>
 /// <param name="Rank">1-based final rank (Standing Position for Championship V1).</param>

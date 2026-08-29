@@ -160,7 +160,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Coupe_de_france_multi_stage_fills_r16_slots_and_projects_from_slotsAsync()
+    public async Task Coupe_de_france_completes_with_final_placement_outcomeAsync()
     {
         var runner = fixture.Services.GetRequiredService<TemplateRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse("coupe-de-france")]);
@@ -170,7 +170,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
-        competition.Status.Should().Be(CompetitionStatus.Running);
+        competition.Status.Should().Be(CompetitionStatus.Completed);
         competition.StageIds.Should().HaveCount(5);
 
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
@@ -182,13 +182,10 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             loaded.Add(stage);
         }
 
-        var roundOf32 = loaded[0];
-        var roundOf16 = loaded[1];
-        roundOf32.Status.Should().Be(StageStatus.Running);
-        roundOf16.Status.Should().Be(StageStatus.Draft);
-        roundOf16.Slots.Count(slot => slot.EntryId is not null).Should().Be(16);
-        roundOf16.Rounds[0].Fixtures.Should().BeEmpty();
-        loaded.Should().HaveCount(5);
+        var final = loaded[^1];
+        final.Status.Should().Be(StageStatus.Completed);
+        final.Regulation.PlacementAwardRules.Should().NotBeNull();
+        final.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
 
         var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
         foreach (var stage in loaded)
@@ -198,17 +195,22 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
                 .ListByStageAsync(stage.Id);
         }
 
-        matchesByStage[roundOf32.Id].Should().HaveCount(16);
-        matchesByStage[roundOf32.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
+        matchesByStage[loaded[0].Id].Should().HaveCount(16);
+        matchesByStage[loaded[1].Id].Should().HaveCount(8);
+        matchesByStage[loaded[2].Id].Should().HaveCount(4);
+        matchesByStage[loaded[3].Id].Should().HaveCount(2);
+        matchesByStage[final.Id].Should().HaveCount(1);
+        matchesByStage[final.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
 
         var cockpit = CockpitAssembler.Assemble(competition, loaded, matchesByStage);
-        cockpit.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
-            && action.StageId == roundOf16.Id.Value);
+        cockpit.CompetitionOutcome.Should().NotBeNull();
+        cockpit.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationWinner);
+        cockpit.CompetitionOutcome.Places.Should().HaveCount(2);
+        cockpit.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2]);
     }
 
     [Fact]
-    public async Task World_cup_groups_to_ko_fills_final_and_bronze_slotsAsync()
+    public async Task World_cup_completes_with_final_and_bronze_placement_outcomeAsync()
     {
         var runner = fixture.Services.GetRequiredService<TemplateRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse("world-cup")]);
@@ -218,7 +220,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
         var competition = await competitions.GetByIdAsync(summary.Id);
         competition.Should().NotBeNull();
-        competition.Status.Should().Be(CompetitionStatus.Running);
+        competition.Status.Should().Be(CompetitionStatus.Completed);
         competition.StageIds.Should().HaveCount(6);
 
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
@@ -238,15 +240,9 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var bronze = loaded[5];
 
         groups.Groups.Should().HaveCount(8);
-        roundOf16.Slots.Count(slot => slot.EntryId is not null).Should().Be(16);
-        quarter.Slots.Count(slot => slot.EntryId is not null).Should().Be(8);
-        semi.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
-        final.Status.Should().Be(StageStatus.Draft);
-        bronze.Status.Should().Be(StageStatus.Draft);
-        final.Slots.Count(slot => slot.EntryId is not null).Should().Be(2);
-        bronze.Slots.Count(slot => slot.EntryId is not null).Should().Be(2);
-        final.Rounds[0].Fixtures.Should().BeEmpty();
-        bronze.Rounds[0].Fixtures.Should().BeEmpty();
+        loaded.Should().OnlyContain(stage => stage.Status == StageStatus.Completed);
+        final.Regulation.PlacementAwardRules.Should().NotBeNull();
+        bronze.Regulation.PlacementAwardRules.Should().NotBeNull();
 
         var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
         foreach (var stage in loaded)
@@ -259,13 +255,17 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         matchesByStage[roundOf16.Id].Should().HaveCount(8);
         matchesByStage[quarter.Id].Should().HaveCount(4);
         matchesByStage[semi.Id].Should().HaveCount(2);
-        matchesByStage[final.Id].Should().BeEmpty();
-        matchesByStage[bronze.Id].Should().BeEmpty();
+        matchesByStage[final.Id].Should().HaveCount(1);
+        matchesByStage[bronze.Id].Should().HaveCount(1);
+        matchesByStage[final.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
+        matchesByStage[bronze.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
 
         var cockpit = CockpitAssembler.Assemble(competition, loaded, matchesByStage);
-        cockpit.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
-            && (action.StageId == final.Id.Value || action.StageId == bronze.Id.Value));
+        cockpit.CompetitionOutcome.Should().NotBeNull();
+        cockpit.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationPodium);
+        cockpit.CompetitionOutcome.Places.Should().HaveCount(4);
+        cockpit.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2, 3, 4]);
+        cockpit.CompetitionOutcome.Places.Select(p => p.EntryId).Should().OnlyHaveUniqueItems();
     }
 
     [Fact]

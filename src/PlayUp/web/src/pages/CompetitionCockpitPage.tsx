@@ -172,8 +172,9 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   const showProgression =
     Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0
   const focus = data.operationalFocus
-  // En cours: live standing compact. Terminée: Outcome podium (not standing dump).
-  const showStanding = inProgress && focus.standingCompact != null
+  // En cours + Terminée: standingCompact when Host projects it (independent of Outcome).
+  // Terminée Résultat: Host presentation Winner|Podium — silence when Outcome null.
+  const showStanding = operationalOverview && focus.standingCompact != null
   const showOutcome =
     completedLike &&
     data.competitionOutcome != null &&
@@ -236,29 +237,40 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
       </div>
     ) : null
 
+  const showResultColumn = showStanding || showOutcome
   const sportBand = showSport ? (
     <div
       className={
-        (showStanding || showOutcome) && showTemporalUnits
+        showResultColumn && showTemporalUnits
           ? 'overview__sport'
           : 'overview__sport overview__sport--solo'
       }
       data-testid="overview-region-sport"
     >
-      {showOutcome && data.competitionOutcome && (
-        <OutcomePodiumPanel
-          outcome={data.competitionOutcome}
-          href={classementsHref}
-        />
-      )}
-      {showStanding && focus.standingCompact && (
-        <StandingCompactPanel
-          standing={focus.standingCompact}
-          href={classementsHref}
-        />
+      {showResultColumn && (
+        <div
+          className="overview__sport-stack"
+          data-testid="overview-sport-result-column"
+        >
+          {showOutcome && data.competitionOutcome && (
+            <OutcomePodiumPanel
+              outcome={data.competitionOutcome}
+              href={classementsHref}
+            />
+          )}
+          {showStanding && focus.standingCompact && (
+            <StandingCompactPanel
+              standing={focus.standingCompact}
+              href={classementsHref}
+            />
+          )}
+        </div>
       )}
       {showTemporalUnits && (
-        <div className="overview__sport-stack">
+        <div
+          className="overview__sport-stack"
+          data-testid="overview-sport-temporal-column"
+        >
           {showRecentUnit && (
             <SportUnitPanel
               kind="recent"
@@ -584,35 +596,68 @@ function OutcomePodiumPanel({
   href: string
 }) {
   const { t } = useTranslation('cockpit')
-  const podium = outcome.places
-    .filter((place) => place.rank >= 1 && place.rank <= 3)
-    .sort((a, b) => a.rank - b.rank)
+  const byRank = (rank: number) =>
+    outcome.places.find((place) => place.rank === rank)
 
-  if (podium.length === 0) {
+  const first = byRank(1)
+  if (!first) {
     return null
   }
+
+  const isPodium = outcome.presentation === 'Podium'
+  const second = isPodium ? byRank(2) : undefined
+  const third = isPodium ? byRank(3) : undefined
+  const winnerLabel = isPodium
+    ? t('sport.outcomeChampionLabel')
+    : t('sport.outcomeWinnerLabel')
 
   return (
     <section className="ds-panel" aria-labelledby="cockpit-outcome-podium">
       <PanelHead id="cockpit-outcome-podium" icon={<ClassementsNavIcon size="md" />}>
         {t('sport.outcomeTitle')}
       </PanelHead>
-      <ol className="overview-outcome" data-testid="overview-outcome-podium">
-        {podium.map((place) => (
-          <li
-            key={place.entryId}
-            className={
-              place.rank === 1
-                ? 'overview-outcome__row overview-outcome__row--first'
-                : 'overview-outcome__row'
-            }
-            data-testid={`overview-outcome-${place.entryId}`}
-          >
-            <span className="overview-outcome__rank ds-tabular">{place.rank}</span>
-            <span className="overview-outcome__team">{place.displayName}</span>
-          </li>
-        ))}
-      </ol>
+      <div
+        className={
+          isPodium
+            ? 'overview-outcome overview-outcome--podium'
+            : 'overview-outcome overview-outcome--winner'
+        }
+        data-testid="overview-outcome-podium"
+        data-presentation={outcome.presentation}
+      >
+        <div
+          className="overview-outcome__hero"
+          data-testid={`overview-outcome-${first.entryId}`}
+        >
+          <span className="overview-outcome__hero-rank ds-tabular" aria-hidden="true">
+            1
+          </span>
+          <p className="overview-outcome__hero-name">{first.displayName}</p>
+          <p className="overview-outcome__hero-label">{winnerLabel}</p>
+        </div>
+        {isPodium && (second || third) && (
+          <ol className="overview-outcome__steps">
+            {second && (
+              <li
+                className="overview-outcome__step overview-outcome__step--second"
+                data-testid={`overview-outcome-${second.entryId}`}
+              >
+                <span className="overview-outcome__step-rank ds-tabular">2</span>
+                <span className="overview-outcome__step-name">{second.displayName}</span>
+              </li>
+            )}
+            {third && (
+              <li
+                className="overview-outcome__step overview-outcome__step--third"
+                data-testid={`overview-outcome-${third.entryId}`}
+              >
+                <span className="overview-outcome__step-rank ds-tabular">3</span>
+                <span className="overview-outcome__step-name">{third.displayName}</span>
+              </li>
+            )}
+          </ol>
+        )}
+      </div>
       <p className="overview-panel__footer">
         <Link className="overview-link" to={href}>
           {t('sport.outcomeOpenFull')}

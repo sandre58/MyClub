@@ -102,6 +102,8 @@
     "standingGroupTitle": "Groupe {{name}}",
     "standingOpen": "Voir le classement",
     "outcomeTitle": "Résultat",
+    "outcomeWinnerLabel": "Vainqueur",
+    "outcomeChampionLabel": "Champion",
     "outcomeOpenFull": "Voir le classement complet",
     "groupNav": "Groupes",
     "recentTitle": "Dernières rencontres",

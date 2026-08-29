@@ -44,6 +44,12 @@ public static class CockpitAssembler
     /// <summary>Préparation focus: Championship calendar generated, ready to start.</summary>
     public const string PreparationFocusGeneratedCalendar = "GeneratedCalendar";
 
+    /// <summary>Résultat presentation: hero vainqueur (Cup KO without Top-3).</summary>
+    public const string OutcomePresentationWinner = "Winner";
+
+    /// <summary>Résultat presentation: Top-3 podium (Championship / Swiss / PlacementAwards 1–3).</summary>
+    public const string OutcomePresentationPodium = "Podium";
+
     /// <summary>Max matchdays in calendar overview preview.</summary>
     public const int CalendarPreviewMatchdayLimit = 3;
 
@@ -898,9 +904,10 @@ public static class CockpitAssembler
         List<Match> Matches);
 
     /// <summary>
-    /// Projects CompetitionOutcome from the truth sources that can determine final placements.
-    /// Championship → Overall Standing. PlacementAwardRules → determined awards only (partial OK).
-    /// Missing ranks are omitted — never invented. Abandoned → null.
+    /// Projects CompetitionOutcome for the Terminée Résultat surface.
+    /// Includes Host <see cref="CompetitionOutcomeDto.Presentation"/> (Winner | Podium).
+    /// Null when Abandoned, no places, or places that cannot conclude a presentable Result
+    /// (no unique rank-1 and not a Top-3 podium case).
     /// </summary>
     internal static CompetitionOutcomeDto? BuildCompetitionOutcome(
         Competition competition,
@@ -925,17 +932,61 @@ public static class CockpitAssembler
         var awardPlaces = ProjectPlacementAwardPlaces(stages, matchesByStage, names);
         if (awardPlaces.Count > 0)
         {
-            return new CompetitionOutcomeDto(awardPlaces);
+            return TryCreateOutcome(awardPlaces, fromStanding: false);
         }
 
-        // Championship RR (and Swiss Overall): final Standing is the competition result.
+        // Championship RR (and Swiss Overall): final Standing is the competition result → Podium.
         if (formatKind is StructureFormatKind.Championship or StructureFormatKind.Swiss)
         {
-            return ProjectStandingOutcome(competition, stages, matchesByStage);
+            var standing = ProjectStandingOutcomePlaces(competition, stages, matchesByStage);
+            return standing is null ? null : TryCreateOutcome(standing, fromStanding: true);
         }
 
         // Groups-only / Cup without PlacementAwardRules → no inventable competition outcome.
         return null;
+    }
+
+    /// <summary>
+    /// Host presentation for Résultat: Podium (standing or ranks 1–3) vs Winner (unique rank 1 only).
+    /// Returns null when neither mode applies — SPA silence (no fake champion).
+    /// </summary>
+    internal static string? ResolveOutcomePresentation(
+        IReadOnlyList<FinalPlacementDto> places,
+        bool fromStanding)
+    {
+        if (places.Count == 0)
+        {
+            return null;
+        }
+
+        if (fromStanding)
+        {
+            return OutcomePresentationPodium;
+        }
+
+        var rank1Count = places.Count(place => place.Rank == 1);
+        var hasRank2 = places.Any(place => place.Rank == 2);
+        var hasRank3 = places.Any(place => place.Rank == 3);
+
+        if (rank1Count == 1 && hasRank2 && hasRank3)
+        {
+            return OutcomePresentationPodium;
+        }
+
+        if (rank1Count == 1)
+        {
+            return OutcomePresentationWinner;
+        }
+
+        return null;
+    }
+
+    private static CompetitionOutcomeDto? TryCreateOutcome(
+        IReadOnlyList<FinalPlacementDto> places,
+        bool fromStanding)
+    {
+        var presentation = ResolveOutcomePresentation(places, fromStanding);
+        return presentation is null ? null : new CompetitionOutcomeDto(places, presentation);
     }
 
     private static IReadOnlyList<FinalPlacementDto> ProjectPlacementAwardPlaces(
@@ -963,7 +1014,7 @@ public static class CockpitAssembler
         ];
     }
 
-    private static CompetitionOutcomeDto? ProjectStandingOutcome(
+    private static IReadOnlyList<FinalPlacementDto>? ProjectStandingOutcomePlaces(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
@@ -988,13 +1039,13 @@ public static class CockpitAssembler
             return null;
         }
 
-        return new CompetitionOutcomeDto(
-            [
-                .. overall.Rows.Select(row => new FinalPlacementDto(
-                    row.Position,
-                    row.EntryId,
-                    row.DisplayName))
-            ]);
+        return
+        [
+            .. overall.Rows.Select(row => new FinalPlacementDto(
+                row.Position,
+                row.EntryId,
+                row.DisplayName))
+        ];
     }
 
     private static CockpitStandingCompactDto? BuildStandingCompact(

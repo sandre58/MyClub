@@ -1092,7 +1092,8 @@ public sealed class CockpitAssemblerTests
 
         view.CycleReading.Code.Should().Be(CockpitAssembler.CycleCompleted);
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Places.Should().HaveCount(3);
+        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationPodium);
+        view.CompetitionOutcome.Places.Should().HaveCount(3);
         view.CompetitionOutcome.Places[0].Rank.Should().Be(1);
         view.CompetitionOutcome.Places[0].DisplayName.Should().Be("Alpha");
         view.CompetitionOutcome.Places.Select(place => place.EntryId).Should().OnlyContain(id =>
@@ -1137,7 +1138,8 @@ public sealed class CockpitAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Places.Should().HaveCount(2);
+        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationWinner);
+        view.CompetitionOutcome.Places.Should().HaveCount(2);
         view.CompetitionOutcome.Places[0].Should().Be(new FinalPlacementDto(1, alpha.Id.Value, "Alpha"));
         view.CompetitionOutcome.Places[1].Should().Be(new FinalPlacementDto(2, bravo.Id.Value, "Bravo"));
     }
@@ -1181,8 +1183,60 @@ public sealed class CockpitAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Places.Select(p => p.Rank).Should().Equal(1, 2);
+        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationWinner);
+        view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2);
         view.CompetitionOutcome.Places.Should().NotContain(p => p.Rank == 3 || p.Rank == 4);
+    }
+
+    [Fact]
+    public void Assemble_completed_cup_with_bronze_projects_podium_presentation()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "A", _clock);
+        var b = competition.AddEntry(TeamId.New(), "B", _clock);
+        var c = competition.AddEntry(TeamId.New(), "C", _clock);
+        var d = competition.AddEntry(TeamId.New(), "D", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("Finals", _clock);
+        var final = stage.AddFixture(round.Id, _clock);
+        var bronze = stage.AddFixture(round.Id, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var finalMatch = Match.Create(competition.Id, stage.Id, a.Id, b.Id, _clock);
+        finalMatch.Start(_clock);
+        finalMatch.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        stage.AttachMatch(final.Id, finalMatch.Id, legIndex: 1, _clock);
+
+        var bronzeMatch = Match.Create(competition.Id, stage.Id, c.Id, d.Id, _clock);
+        bronzeMatch.Start(_clock);
+        bronzeMatch.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);
+        stage.AttachMatch(bronze.Id, bronzeMatch.Id, legIndex: 1, _clock);
+
+        stage.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(final.Id, ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(final.Id, ProgressionOutcome.Loser, 2),
+                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Winner, 3),
+                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Loser, 4)
+            ]),
+            _clock);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Complete(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch, bronzeMatch] });
+
+        view.CompetitionOutcome.Should().NotBeNull();
+        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationPodium);
+        view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2, 3, 4);
     }
 
     [Fact]

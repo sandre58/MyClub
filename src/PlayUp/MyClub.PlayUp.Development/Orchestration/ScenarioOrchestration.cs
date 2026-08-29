@@ -337,9 +337,27 @@ internal static class ScenarioOrchestration
 
     public static void CompleteRunning(ScenarioContext context, Competition competition, Stage stage)
     {
-        if (stage.Status == StageStatus.Running)
+        CompleteAllRunning(context, competition, [stage]);
+    }
+
+    /// <summary>
+    /// Completes every Running/Suspended stage, then the competition (Normal).
+    /// </summary>
+    public static void CompleteAllRunning(
+        ScenarioContext context,
+        Competition competition,
+        IEnumerable<Stage> stages)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+
+        foreach (var stage in stages)
         {
-            stage.Complete(context.Clock);
+            if (stage.Status is StageStatus.Running or StageStatus.Suspended)
+            {
+                stage.Complete(context.Clock);
+            }
         }
 
         competition.Complete(CompletionMode.Normal, context.Clock);
@@ -478,8 +496,9 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Coupe de France multi-stage: R32 played → R16 slots filled; stops before from-slots.
-    /// Ignores <see cref="ScenarioContext.Progress"/> (fixed seed, like <c>cup-qf-sf</c>).
+    /// Coupe de France multi-stage: R32→R16→QF→SF→Final played through; Final PlacementAwards (1–2);
+    /// competition Completed with derivable <c>CompetitionOutcome</c>.
+    /// Ignores <see cref="ScenarioContext.Progress"/> (fixed seed). Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
     /// </summary>
     public static async Task BuildCoupeDeFranceMultiStageAsync(
         ScenarioContext context,
@@ -517,12 +536,14 @@ internal static class ScenarioOrchestration
 
         var roundOf16 = CreateKnockoutStage(
             context, competition, "r16", "16es de finale", "16es de finale", r16SlotKeys);
-        _ = CreateKnockoutStage(
+        var quarter = CreateKnockoutStage(
             context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
-        _ = CreateKnockoutStage(
+        var semi = CreateKnockoutStage(
             context, competition, "sf", "Demis de finale", "Demis de finale", sfSlotKeys);
-        _ = CreateKnockoutStage(
+        var final = CreateKnockoutStage(
             context, competition, "final", "Finale", "Finale", finalSlotKeys);
+
+        Stage[] allStages = [roundOf32, roundOf16, quarter, semi, final];
 
         var r32Fixtures = roundOf32.Rounds[0].Fixtures
             .OrderBy(fixture => fixture.Id.Value)
@@ -542,19 +563,51 @@ internal static class ScenarioOrchestration
         competition.Start(context.Clock);
 
         PlayDecisiveMatches(context, r32Matches);
-        ApplyAllProgressions(
+        ApplyAllProgressions(context, roundOf32, r32Fixtures, r32Matches, allStages);
+
+        PlayKnockoutRound(
             context,
-            roundOf32,
-            r32Fixtures,
-            r32Matches,
-            [roundOf32, roundOf16]);
+            competition,
+            roundOf16,
+            AdjacentPairs(r16SlotKeys),
+            expectedFixtures: 8,
+            nextStage: quarter,
+            nextSlotKeys: qfSlotKeys,
+            allStages);
+        PlayKnockoutRound(
+            context,
+            competition,
+            quarter,
+            AdjacentPairs(qfSlotKeys),
+            expectedFixtures: 4,
+            nextStage: semi,
+            nextSlotKeys: sfSlotKeys,
+            allStages);
+        PlayKnockoutRound(
+            context,
+            competition,
+            semi,
+            AdjacentPairs(sfSlotKeys),
+            expectedFixtures: 2,
+            nextStage: final,
+            nextSlotKeys: finalSlotKeys,
+            allStages);
+
+        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
+        var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
+        WireFinalPlacementAwards(final, finalFixture, context.Clock);
+        PrepareAndStartStage(context, final);
+        PlayDecisiveMatches(context, finalMatches);
+
+        CompleteAllRunning(context, competition, allStages);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// World Cup: Groups 8×4 → Top2 qualify → play R16→QF→SF → Final+Bronze slots filled;
-    /// stops before materialize Final/Bronze. Ignores progress (fixed seed).
+    /// World Cup: Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze played through;
+    /// PlacementAwards ranks 1–4; competition Completed with derivable <c>CompetitionOutcome</c>.
+    /// Ignores progress (fixed seed). Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
     /// </summary>
     public static async Task BuildWorldCupAsync(
         ScenarioContext context,
@@ -622,30 +675,94 @@ internal static class ScenarioOrchestration
             allStages,
             context.Clock);
 
-        var r16Matches = MaterializeFromSlots(context, competition, roundOf16, r16Pairs);
-        var r16Fixtures = OrderedFixtures(roundOf16, expectedCount: 8);
-        WireWinnerProgression(roundOf16, quarter, r16Fixtures, qfSlotKeys, context.Clock);
-        PrepareAndStartStage(context, roundOf16);
-        PlayDecisiveMatches(context, r16Matches);
-        ApplyAllProgressions(context, roundOf16, r16Fixtures, r16Matches, allStages);
+        PlayKnockoutRound(
+            context,
+            competition,
+            roundOf16,
+            r16Pairs,
+            expectedFixtures: 8,
+            nextStage: quarter,
+            nextSlotKeys: qfSlotKeys,
+            allStages);
+        PlayKnockoutRound(
+            context,
+            competition,
+            quarter,
+            AdjacentPairs(qfSlotKeys),
+            expectedFixtures: 4,
+            nextStage: semi,
+            nextSlotKeys: sfSlotKeys,
+            allStages);
 
-        var qfPairs = AdjacentPairs(qfSlotKeys);
-        var qfMatches = MaterializeFromSlots(context, competition, quarter, qfPairs);
-        var qfFixtures = OrderedFixtures(quarter, expectedCount: 4);
-        WireWinnerProgression(quarter, semi, qfFixtures, sfSlotKeys, context.Clock);
-        PrepareAndStartStage(context, quarter);
-        PlayDecisiveMatches(context, qfMatches);
-        ApplyAllProgressions(context, quarter, qfFixtures, qfMatches, allStages);
-
-        var sfPairs = AdjacentPairs(sfSlotKeys);
-        var sfMatches = MaterializeFromSlots(context, competition, semi, sfPairs);
+        var sfMatches = MaterializeFromSlots(context, competition, semi, AdjacentPairs(sfSlotKeys));
         var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
         WireSemiToFinalAndBronze(semi, final, bronze, sfFixtures, context.Clock);
         PrepareAndStartStage(context, semi);
         PlayDecisiveMatches(context, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
+        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
+        var bronzeMatches = MaterializeFromSlots(context, competition, bronze, AdjacentPairs(bronzeSlotKeys));
+        var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
+        var bronzeFixture = OrderedFixtures(bronze, expectedCount: 1)[0];
+        WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
+        PrepareAndStartStage(context, final);
+        PrepareAndStartStage(context, bronze);
+        PlayDecisiveMatches(context, finalMatches);
+        PlayDecisiveMatches(context, bronzeMatches);
+
+        CompleteAllRunning(context, competition, allStages);
+
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Materialize → wire Winner progression to next → start → play → apply progression.
+    /// </summary>
+    private static void PlayKnockoutRound(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<CupSlotPair> pairs,
+        int expectedFixtures,
+        Stage nextStage,
+        string[] nextSlotKeys,
+        IReadOnlyList<Stage> allStages)
+    {
+        var matches = MaterializeFromSlots(context, competition, stage, pairs);
+        var fixtures = OrderedFixtures(stage, expectedFixtures);
+        WireWinnerProgression(stage, nextStage, fixtures, nextSlotKeys, context.Clock);
+        PrepareAndStartStage(context, stage);
+        PlayDecisiveMatches(context, matches);
+        ApplyAllProgressions(context, stage, fixtures, matches, allStages);
+    }
+
+    private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock)
+    {
+        final.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(finalFixture.Id, ProgressionOutcome.Winner, rank: 1),
+                new PlacementAwardPath(finalFixture.Id, ProgressionOutcome.Loser, rank: 2)
+            ]),
+            clock);
+    }
+
+    private static void WireFinalAndBronzePlacementAwards(
+        Stage final,
+        Fixture finalFixture,
+        Stage bronze,
+        Fixture bronzeFixture,
+        IClock clock)
+    {
+        WireFinalPlacementAwards(final, finalFixture, clock);
+        bronze.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(bronzeFixture.Id, ProgressionOutcome.Winner, rank: 3),
+                new PlacementAwardPath(bronzeFixture.Id, ProgressionOutcome.Loser, rank: 4)
+            ]),
+            clock);
     }
 
     public static void ApplyProgress(

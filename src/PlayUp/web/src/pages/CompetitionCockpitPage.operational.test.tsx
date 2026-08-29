@@ -388,7 +388,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     })
   })
 
-  it('composes Terminée with Outcome podium Top-3 and without standing compact dump', async () => {
+  it('composes Terminée with Podium Résultat and standing compact Classement', async () => {
     const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
     const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     const entryC = '11111111-1111-1111-1111-111111111111'
@@ -400,6 +400,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
         completionMode: 'Normal',
         naturalProgression: null,
         competitionOutcome: {
+          presentation: 'Podium',
           places: [
             { rank: 1, entryId: entryA, displayName: 'Alpha' },
             { rank: 2, entryId: entryB, displayName: 'Bravo' },
@@ -471,15 +472,19 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     expect(
       await screen.findByRole('heading', { name: 'Résultat' }),
     ).toBeInTheDocument()
-    expect(screen.getByTestId('overview-outcome-podium')).toBeInTheDocument()
+    const result = screen.getByTestId('overview-outcome-podium')
+    expect(result).toHaveAttribute('data-presentation', 'Podium')
     expect(screen.getByTestId(`overview-outcome-${entryA}`)).toHaveTextContent(
-      '1Alpha',
+      /Alpha/,
+    )
+    expect(screen.getByTestId(`overview-outcome-${entryA}`)).toHaveTextContent(
+      /Champion/,
     )
     expect(screen.getByTestId(`overview-outcome-${entryB}`)).toHaveTextContent(
-      '2Bravo',
+      /Bravo/,
     )
     expect(screen.getByTestId(`overview-outcome-${entryC}`)).toHaveTextContent(
-      '3Charlie',
+      /Charlie/,
     )
     expect(
       screen.queryByTestId(`overview-outcome-${entryD}`),
@@ -488,8 +493,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       screen.getByRole('link', { name: /Voir le classement complet/i }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
     expect(
-      screen.queryByRole('heading', { name: 'Classement' }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('heading', { name: 'Classement' }),
+    ).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
     ).not.toBeInTheDocument()
@@ -506,6 +511,269 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       screen.queryByRole('heading', { name: 'Prochaines rencontres' }),
     ).not.toBeInTheDocument()
     expectOverviewRegionOrder('overview-region-config', 'overview-region-sport')
+    expectOverviewRegionOrder(
+      'overview-sport-result-column',
+      'overview-sport-temporal-column',
+    )
+    const resultHeading = screen.getByRole('heading', { name: 'Résultat' })
+    const standingHeading = screen.getByRole('heading', { name: 'Classement' })
+    expect(
+      resultHeading.compareDocumentPosition(standingHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('shows Cup Winner hero — finalist not staged as podium', async () => {
+    const winner = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1'
+    const runnerUp = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2'
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        completionMode: 'Normal',
+        naturalProgression: null,
+        competitionOutcome: {
+          presentation: 'Winner',
+          places: [
+            { rank: 1, entryId: winner, displayName: 'Finaliste A' },
+            { rank: 2, entryId: runnerUp, displayName: 'Finaliste B' },
+          ],
+        },
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Condensed',
+            facts: {
+              formatKind: 'Cup',
+              groupCount: '0',
+              roundCount: '1',
+              matchdayCount: '0',
+              slotCount: '2',
+            },
+          },
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          teams: {
+            prominence: 'Condensed',
+            facts: { activeCount: '2', minimumTeams: '2', maximumTeams: '64' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          standingCompact: null,
+          recentUnit: null,
+          nextUnit: null,
+          referenceStageGameRules: referenceStageGameRules({
+            formatKind: 'Cup',
+          }),
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Résultat' }),
+    ).toBeInTheDocument()
+    const result = screen.getByTestId('overview-outcome-podium')
+    expect(result).toHaveAttribute('data-presentation', 'Winner')
+    expect(screen.getByTestId(`overview-outcome-${winner}`)).toHaveTextContent(
+      /Finaliste A/,
+    )
+    expect(screen.getByTestId(`overview-outcome-${winner}`)).toHaveTextContent(
+      /Vainqueur/,
+    )
+    expect(
+      screen.queryByTestId(`overview-outcome-${runnerUp}`),
+    ).not.toBeInTheDocument()
+    expect(result.querySelectorAll('li')).toHaveLength(0)
+    expect(
+      screen.queryByRole('heading', { name: 'Classement' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows Cup + bronze as Host Podium Top-3', async () => {
+    const a = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1'
+    const b = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2'
+    const c = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3'
+    const d = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4'
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        completionMode: 'Normal',
+        competitionOutcome: {
+          presentation: 'Podium',
+          places: [
+            { rank: 1, entryId: a, displayName: 'Champ' },
+            { rank: 2, entryId: b, displayName: 'Runner' },
+            { rank: 3, entryId: c, displayName: 'Bronze' },
+            { rank: 4, entryId: d, displayName: 'Fourth' },
+          ],
+        },
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Condensed',
+            facts: { formatKind: 'Cup', roundCount: '2' },
+          },
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          teams: {
+            prominence: 'Condensed',
+            facts: { activeCount: '4', minimumTeams: '2' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          standingCompact: null,
+          referenceStageGameRules: referenceStageGameRules({
+            formatKind: 'Cup',
+          }),
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByTestId('overview-outcome-podium'),
+    ).toHaveAttribute('data-presentation', 'Podium')
+    expect(screen.getByTestId(`overview-outcome-${c}`)).toHaveTextContent(
+      /Bronze/,
+    )
+    expect(screen.queryByTestId(`overview-outcome-${d}`)).not.toBeInTheDocument()
+  })
+
+  it('shows Groups-only Terminée Classement without Résultat', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        completionMode: 'Normal',
+        competitionOutcome: null,
+        naturalProgression: null,
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Condensed',
+            facts: { formatKind: 'Groups', groupCount: '2' },
+          },
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          teams: {
+            prominence: 'Condensed',
+            facts: { activeCount: '8', minimumTeams: '2' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          recentUnit: null,
+          nextUnit: null,
+          standingCompact: {
+            stageId,
+            stageName: 'Phase de groupes',
+            tables: [
+              {
+                scope: 'Group',
+                groupId: 'g1',
+                groupName: 'A',
+                rows: [
+                  {
+                    position: 1,
+                    entryId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+                    displayName: 'Team A1',
+                    played: 3,
+                    points: 9,
+                  },
+                ],
+              },
+              {
+                scope: 'Group',
+                groupId: 'g2',
+                groupName: 'B',
+                rows: [
+                  {
+                    position: 1,
+                    entryId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+                    displayName: 'Team B1',
+                    played: 3,
+                    points: 7,
+                  },
+                ],
+              },
+            ],
+          },
+          referenceStageGameRules: referenceStageGameRules({
+            formatKind: 'Groups',
+          }),
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Groupe A' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Résultat' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides Résultat when Terminée has no CompetitionOutcome (Abandoned / Groups-only)', async () => {
+    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      cockpitView({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        completionMode: 'Abandoned',
+        competitionOutcome: null,
+        naturalProgression: null,
+        constructionDimensions: {
+          ...cockpitView().constructionDimensions,
+          structure: {
+            prominence: 'Condensed',
+            facts: { formatKind: 'Championship' },
+          },
+          regulation: {
+            ...cockpitView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          teams: {
+            prominence: 'Condensed',
+            facts: { activeCount: '4', minimumTeams: '2' },
+          },
+        },
+        operationalFocus: {
+          ...cockpitView().operationalFocus,
+          standingCompact: null,
+          recentUnit: null,
+          nextUnit: null,
+          referenceStageGameRules: referenceStageGameRules(),
+        },
+      }),
+    )
+
+    renderCockpitPage()
+
+    expect(
+      await screen.findByTestId('overview-region-config'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Résultat' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('overview-outcome-podium'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Classement' }),
+    ).not.toBeInTheDocument()
   })
 
   it('shows Prochaines on Terminée only when nextUnit is projected', async () => {

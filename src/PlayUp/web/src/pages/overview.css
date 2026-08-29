@@ -663,41 +663,82 @@
 }
 
 .overview-outcome {
-    list-style: none;
     margin: 0;
-    padding: 0;
+    padding: var(--space-8) 0 var(--space-4);
+}
+
+.overview-outcome--winner .overview-outcome__hero {
+    padding-block: var(--space-24) var(--space-16);
+}
+
+.overview-outcome__hero {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-4);
+    padding: var(--space-16) var(--space-8) var(--space-12);
 }
 
-.overview-outcome__row {
-    display: grid;
-    grid-template-columns: 2rem 1fr;
-    gap: var(--space-12);
-    align-items: baseline;
-    padding: var(--space-8) var(--space-4);
-    border-bottom: var(--border-width) solid var(--color-border);
-}
-
-.overview-outcome__row:last-child {
-    border-bottom: none;
-}
-
-.overview-outcome__rank {
-    font-variant-numeric: tabular-nums;
-    color: var(--color-text-secondary);
+.overview-outcome__hero-rank {
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
-    text-align: end;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
 }
 
-.overview-outcome__row--first .overview-outcome__team {
-    color: var(--color-brand);
-}
-
-.overview-outcome__team {
+.overview-outcome__hero-name {
+    margin: 0;
+    font-family: var(--font-family-display, var(--font-family-sans));
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.15;
     color: var(--color-text-primary);
+    max-width: 18ch;
+}
+
+.overview-outcome__hero-label {
+    margin: 0;
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
+    color: var(--color-brand);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.overview-outcome__steps {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-12) 0 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-12);
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.overview-outcome__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-4);
+    padding: var(--space-12) var(--space-8);
     min-width: 0;
+}
+
+.overview-outcome__step-rank {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+}
+
+.overview-outcome__step-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    line-height: 1.25;
+    max-width: 14ch;
 }
 
 .overview-match-list {

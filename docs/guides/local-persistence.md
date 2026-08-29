@@ -73,10 +73,10 @@ Templates are **capacity demos**, not full real multi-phase calendars:
 
 | Id | Approximation |
 | :--- | :------------ |
-| `ligue-1` | Championship, 18 clubs (JSON) — **`DoubleRoundRobin`**, 34 matchdays, PairMirror (`N×(N−1)` = 306). Capacity demo, not a real L1 calendar. |
-| `champions-league` | Groups 8×4 only. **Not** UEFA League Phase (future distinct track). **Not** Swiss classique (Lot 2 Kind — do not wire here). |
-| `world-cup` | Groups 8×4 → Top2 qualify → R16→QF→SF → Final + Bronze (`Loser`). Stops before materialize Final/Bronze. `:progress` ignored. |
-| `coupe-de-france` | Cup multi-stage R32→R16→QF→SF→Final. R32 played, R16 slots filled — **stops before** from-slots (like `cup-qf-sf`). `:progress` ignored. |
+| `ligue-1` | Championship, 18 clubs (JSON) — **`DoubleRoundRobin`**, 34 matchdays, PairMirror (`N×(N−1)` = 306). Capacity demo, not a real L1 calendar. Use `:finished` for Standing → `CompetitionOutcome`. |
+| `champions-league` | Groups 8×4 only. **Not** UEFA League Phase (future distinct track). **Not** Swiss classique. Groups-only → **no** competition Outcome (aligned Domain). |
+| `world-cup` | Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze played · PlacementAwards ranks 1–4 · **Completed** + `CompetitionOutcome`. `:progress` ignored. |
+| `coupe-de-france` | Cup multi-stage R32→R16→QF→SF→Final played · PlacementAwards ranks 1–2 · **Completed** + `CompetitionOutcome`. `:progress` ignored. Mid-bracket from-slots demo = `cup-qf-sf`. |
 
 Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, `logoAsset`).
 
@@ -141,7 +141,7 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios cup-qf-sf
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios random:prepared --seed 7
 ```
 
-Generation demos (Lot 1–3): `--templates ligue-1:prepared` (Double RR) · `--templates coupe-de-france` (multi-stage from-slots) · `--templates world-cup` (Groups→KO+Bronze) · `--scenarios cup-qf-sf` · `--scenarios swiss-8x3:running` (Swiss progressive rounds).
+Generation demos (Lot 1–3): `--templates ligue-1:finished` (Championship Outcome) · `--templates coupe-de-france` (full cup + Outcome) · `--templates world-cup` (Groups→KO+Bronze + Outcome) · `--scenarios cup-qf-sf` (mid-bracket from-slots) · `--scenarios swiss-8x3:running` (Swiss progressive rounds).
 
 Reset is refused unless the DB name ends with `_dev`, the host is localhost/loopback, and the environment is not Production. Host has **no** reset/seed capability.
 

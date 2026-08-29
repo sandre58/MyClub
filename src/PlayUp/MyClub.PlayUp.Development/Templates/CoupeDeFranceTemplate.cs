@@ -14,8 +14,9 @@ namespace MyClub.PlayUp.Development.Templates;
 /// Coupe de France inspired multi-stage cup (R32 → R16 → QF → SF → Final).
 /// </summary>
 /// <remarks>
-/// Seed stops after R32 is played and R16 slots are filled (Cockpit from-slots).
-/// <c>:progress</c> is ignored — fixed seed like <c>cup-qf-sf</c>.
+/// Seed plays the full bracket through Final with PlacementAwards (ranks 1–2) and Completes the
+/// competition so Cockpit Terminée can show <c>CompetitionOutcome</c>. Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
+/// <c>:progress</c> is ignored — fixed seed.
 /// </remarks>
 public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
 {
@@ -27,7 +28,7 @@ public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 32 (JSON) · R32→R16→QF→SF→Final · R32 played, R16 slots filled — stop before from-slots. :progress ignored.";
+        "Cup 32 (JSON) · R32→R16→QF→SF→Final played · PlacementAwards 1–2 · Completed + Outcome. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()
