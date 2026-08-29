@@ -293,6 +293,92 @@ public sealed class CompetitionPersistenceTests
     }
 
     [Fact]
+    public async Task Declared_members_round_trip_with_order_role_and_mutationsAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var entry = competition.AddEntry(TeamId.New(), "FC Local", _clock);
+        var player = competition.AddDeclaredMember(entry.Id, "Dupont", DeclaredMemberRole.Player, _clock);
+        var staff = competition.AddDeclaredMember(entry.Id, "Coach", DeclaredMemberRole.Staff, _clock);
+        var removed = competition.AddDeclaredMember(entry.Id, "Temp", DeclaredMemberRole.Player, _clock);
+        competition.RemoveDeclaredMember(entry.Id, removed.Id, _clock);
+        var id = competition.Id;
+        var entryId = entry.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new CompetitionRepository(context).Add(competition);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new CompetitionRepository(context);
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            var loadedEntry = loaded.Entries.Should().ContainSingle(e => e.Id == entryId).Subject;
+            loadedEntry.DeclaredMembers.Select(m => m.Id).Should().Equal(player.Id, staff.Id);
+            loadedEntry.DeclaredMembers[0].DisplayName.Should().Be("Dupont");
+            loadedEntry.DeclaredMembers[0].Role.Should().Be(DeclaredMemberRole.Player);
+            loadedEntry.DeclaredMembers[1].DisplayName.Should().Be("Coach");
+            loadedEntry.DeclaredMembers[1].Role.Should().Be(DeclaredMemberRole.Staff);
+
+            loaded.RenameDeclaredMember(entryId, player.Id, "J. Dupont", _clock);
+            loaded.ChangeDeclaredMemberRole(entryId, staff.Id, DeclaredMemberRole.Player, _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            var members = reloaded.Entries.Single(e => e.Id == entryId).DeclaredMembers;
+            members.Should().HaveCount(2);
+            members.Single(m => m.Id == player.Id).DisplayName.Should().Be("J. Dupont");
+            members.Single(m => m.Id == staff.Id).Role.Should().Be(DeclaredMemberRole.Player);
+        }
+    }
+
+    [Fact]
+    public async Task Reentry_starts_with_empty_declared_members_after_reloadAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var teamId = TeamId.New();
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var first = competition.AddEntry(teamId, "Team A", _clock);
+        competition.AddDeclaredMember(first.Id, "Dupont", DeclaredMemberRole.Player, _clock);
+        competition.WithdrawEntry(first.Id, _clock);
+        var id = competition.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new CompetitionRepository(context).Add(competition);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        EntryId secondId;
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new CompetitionRepository(context);
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            var second = loaded.AddEntry(teamId, "Team A return", _clock);
+            secondId = second.Id;
+            second.DeclaredMembers.Should().BeEmpty();
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.Entries.Single(e => e.Id == first.Id).DeclaredMembers.Should().ContainSingle()
+                .Which.DisplayName.Should().Be("Dupont");
+            reloaded.Entries.Single(e => e.Id == secondId).DeclaredMembers.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public async Task Presentation_metadata_round_trips_after_reloadAsync()
     {
         var databaseName = Guid.NewGuid().ToString();

@@ -327,6 +327,70 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     }
 
     /// <summary>
+    /// Adds a declared member to an entry roster.
+    /// </summary>
+    public DeclaredMember AddDeclaredMember(
+        EntryId entryId,
+        string displayName,
+        DeclaredMemberRole role,
+        IClock clock) =>
+        AddDeclaredMember(entryId, displayName, role, MemberId.New(), clock);
+
+    /// <summary>
+    /// Adds a declared member with an explicit member identity.
+    /// </summary>
+    public DeclaredMember AddDeclaredMember(
+        EntryId entryId,
+        string displayName,
+        DeclaredMemberRole role,
+        MemberId memberId,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        var entry = GetEntryForDeclaredRosterMutation(entryId);
+        var member = entry.AddDeclaredMember(memberId, displayName, role);
+        Raise(new CompetitionDeclaredMemberAdded(Id, entryId, member.Id, member.Role, clock));
+        return member;
+    }
+
+    /// <summary>
+    /// Removes a declared member from an entry roster.
+    /// </summary>
+    /// <remarks>
+    /// Does not define consequences when the member is already referenced by a match sheet or event (#2+).
+    /// </remarks>
+    public void RemoveDeclaredMember(EntryId entryId, MemberId memberId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        var entry = GetEntryForDeclaredRosterMutation(entryId);
+        entry.RemoveDeclaredMember(memberId);
+        Raise(new CompetitionDeclaredMemberRemoved(Id, entryId, memberId, clock));
+    }
+
+    /// <summary>
+    /// Renames a declared member display name.
+    /// </summary>
+    public void RenameDeclaredMember(EntryId entryId, MemberId memberId, string displayName, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        var entry = GetEntryForDeclaredRosterMutation(entryId);
+        entry.RenameDeclaredMember(memberId, displayName);
+        var member = entry.GetDeclaredMember(memberId);
+        Raise(new CompetitionDeclaredMemberRenamed(Id, entryId, memberId, member.DisplayName, clock));
+    }
+
+    /// <summary>
+    /// Changes a declared member role within the entry roster.
+    /// </summary>
+    public void ChangeDeclaredMemberRole(EntryId entryId, MemberId memberId, DeclaredMemberRole role, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        var entry = GetEntryForDeclaredRosterMutation(entryId);
+        entry.ChangeDeclaredMemberRole(memberId, role);
+        Raise(new CompetitionDeclaredMemberRoleChanged(Id, entryId, memberId, role, clock));
+    }
+
+    /// <summary>
     /// Adds a stage reference to the competition.
     /// </summary>
     /// <param name="stageId">The stage identity.</param>
@@ -533,6 +597,32 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         throw new DomainException(
             $"Operation is not allowed when status is '{Status}'.",
             CompetitionErrorCodes.InvalidTransition);
+    }
+
+    /// <summary>
+    /// Declared-roster mutations: Competition Draft|Ready|Running|Suspended and EntryStatus Active
+    /// (not <see cref="CompetitionEntry.IsOccupying"/>).
+    /// </summary>
+    private CompetitionEntry GetEntryForDeclaredRosterMutation(EntryId entryId)
+    {
+        if (Status is not (
+            CompetitionStatus.Draft or CompetitionStatus.Ready
+            or CompetitionStatus.Running or CompetitionStatus.Suspended))
+        {
+            throw new DomainException(
+                $"Declared roster cannot be mutated when competition status is '{Status}'.",
+                CompetitionErrorCodes.InvalidTransition);
+        }
+
+        var entry = GetEntry(entryId);
+        if (entry.Status != EntryStatus.Active)
+        {
+            throw new DomainException(
+                $"Declared roster cannot be mutated when entry status is '{entry.Status}'.",
+                CompetitionErrorCodes.InvalidTransition);
+        }
+
+        return entry;
     }
 
     private void EnsureStatus(CompetitionStatus expected, string message)

@@ -20,6 +20,8 @@ public sealed class CompetitionEntry : Entity<EntryId>
     /// </summary>
     public const int DisplayNameMaxLength = 100;
 
+    private readonly List<DeclaredMember> _declaredMembers = [];
+
     internal CompetitionEntry(EntryId id, TeamId teamId, string displayName)
         : base(id)
     {
@@ -68,6 +70,11 @@ public sealed class CompetitionEntry : Entity<EntryId>
     /// </summary>
     public bool IsOccupying => Status is EntryStatus.Active or EntryStatus.Qualified or EntryStatus.Eliminated;
 
+    /// <summary>
+    /// Gets the members declared for this participation.
+    /// </summary>
+    public IReadOnlyList<DeclaredMember> DeclaredMembers => _declaredMembers.AsReadOnly();
+
     internal void Rename(string displayName) => DisplayName = NormalizeDisplayName(displayName);
 
     internal void UpdatePresentation(EntryPresentation presentation)
@@ -87,6 +94,38 @@ public sealed class CompetitionEntry : Entity<EntryId>
         EnsureActive();
         Status = EntryStatus.Excluded;
     }
+
+    internal DeclaredMember AddDeclaredMember(MemberId memberId, string displayName, DeclaredMemberRole role)
+    {
+        if (_declaredMembers.Exists(member => member.Id.Equals(memberId)))
+        {
+            throw new DomainException(
+                $"Declared member '{memberId}' already exists on entry '{Id}'.",
+                CompetitionErrorCodes.DuplicateMember);
+        }
+
+        var member = new DeclaredMember(memberId, displayName, role);
+        _declaredMembers.Add(member);
+        return member;
+    }
+
+    internal DeclaredMember GetDeclaredMember(MemberId memberId) =>
+        _declaredMembers.FirstOrDefault(member => member.Id.Equals(memberId))
+        ?? throw new DomainException(
+            $"Declared member '{memberId}' was not found on entry '{Id}'.",
+            CompetitionErrorCodes.MemberNotFound);
+
+    internal void RemoveDeclaredMember(MemberId memberId)
+    {
+        var member = GetDeclaredMember(memberId);
+        _declaredMembers.Remove(member);
+    }
+
+    internal void RenameDeclaredMember(MemberId memberId, string displayName) =>
+        GetDeclaredMember(memberId).Rename(displayName);
+
+    internal void ChangeDeclaredMemberRole(MemberId memberId, DeclaredMemberRole role) =>
+        GetDeclaredMember(memberId).ChangeRole(role);
 
     private static string NormalizeDisplayName(string displayName)
     {

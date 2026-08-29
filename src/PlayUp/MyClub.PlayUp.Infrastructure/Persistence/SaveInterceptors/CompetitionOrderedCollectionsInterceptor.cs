@@ -48,6 +48,7 @@ internal sealed class CompetitionOrderedCollectionsInterceptor : SaveChangesInte
         {
             SyncStageIds(context, entry);
             SyncEntrySortOrder(context, entry.Entity);
+            SyncDeclaredMemberSortOrder(context, entry.Entity);
         }
 
         context.ChangeTracker.DetectChanges();
@@ -118,6 +119,28 @@ internal sealed class CompetitionOrderedCollectionsInterceptor : SaveChangesInte
             if (!Equals(sortOrder.CurrentValue, index))
             {
                 sortOrder.CurrentValue = index;
+            }
+        }
+    }
+
+    private static void SyncDeclaredMemberSortOrder(DbContext context, Competition competition)
+    {
+        foreach (var entry in competition.Entries)
+        {
+            var members = entry.DeclaredMembers;
+            for (var index = 0; index < members.Count; index++)
+            {
+                var owned = context.Entry(members[index]);
+                if (owned.State is EntityState.Detached)
+                {
+                    continue;
+                }
+
+                var sortOrder = owned.Property<int>("SortOrder");
+                if (!Equals(sortOrder.CurrentValue, index))
+                {
+                    sortOrder.CurrentValue = index;
+                }
             }
         }
     }

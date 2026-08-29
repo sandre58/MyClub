@@ -70,4 +70,24 @@ public static class CompetitionErrorCodes
     /// Gets the code when declared schedule dates are inconsistent.
     /// </summary>
     public const string InvalidSchedule = "Competition.InvalidSchedule";
+
+    /// <summary>
+    /// Gets the code when a declared member cannot be found on an entry.
+    /// </summary>
+    public const string MemberNotFound = "Competition.MemberNotFound";
+
+    /// <summary>
+    /// Gets the code when a declared member display name is invalid.
+    /// </summary>
+    public const string InvalidMemberDisplayName = "Competition.InvalidMemberDisplayName";
+
+    /// <summary>
+    /// Gets the code when a declared member role is invalid.
+    /// </summary>
+    public const string InvalidMemberRole = "Competition.InvalidMemberRole";
+
+    /// <summary>
+    /// Gets the code when a MemberId is already present on the entry roster.
+    /// </summary>
+    public const string DuplicateMember = "Competition.DuplicateMember";
 }

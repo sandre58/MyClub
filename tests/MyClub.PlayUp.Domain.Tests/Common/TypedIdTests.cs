@@ -50,7 +50,8 @@ public sealed class TypedIdTests
             (v => new RoundId(v), nameof(RoundId)),
             (v => new FixtureId(v), nameof(FixtureId)),
             (v => new MatchdayId(v), nameof(MatchdayId)),
-            (v => new TeamId(v), nameof(TeamId))
+            (v => new TeamId(v), nameof(TeamId)),
+            (v => new MemberId(v), nameof(MemberId))
         };
 
         // Act / Assert
@@ -78,7 +79,8 @@ public sealed class TypedIdTests
             () => RoundId.New(),
             () => FixtureId.New(),
             () => MatchdayId.New(),
-            () => TeamId.New()
+            () => TeamId.New(),
+            () => MemberId.New()
         };
 
         // Act / Assert

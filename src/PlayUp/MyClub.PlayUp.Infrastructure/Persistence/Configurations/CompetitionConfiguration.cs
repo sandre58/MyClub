@@ -163,5 +163,40 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
             .IsRequired();
 
         entries.HasIndex("competition_id", "SortOrder").IsUnique();
+
+        entries.OwnsMany(entry => entry.DeclaredMembers, ConfigureDeclaredMembers);
+        entries.Navigation(nameof(CompetitionEntry.DeclaredMembers))
+            .HasField("_declaredMembers")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+
+    private static void ConfigureDeclaredMembers(OwnedNavigationBuilder<CompetitionEntry, DeclaredMember> members)
+    {
+        members.ToTable("competition_entry_declared_members");
+        members.WithOwner().HasForeignKey("entry_id");
+        members.HasKey(member => member.Id);
+
+        members.Property(member => member.Id)
+            .HasColumnName("id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<MemberId>());
+
+        members.Property(member => member.DisplayName)
+            .HasColumnName("display_name")
+            .HasMaxLength(DeclaredMember.DisplayNameMaxLength)
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        members.Property(member => member.Role)
+            .HasColumnName("role")
+            .HasConversion<int>()
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        members.Property<int>("SortOrder")
+            .HasColumnName("sort_order")
+            .IsRequired();
+
+        members.HasIndex("entry_id", "SortOrder").IsUnique();
     }
 }

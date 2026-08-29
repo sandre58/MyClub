@@ -41,6 +41,14 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
             .ToList();
         CompetitionEntriesAccessor.Hydrate(competition, orderedEntries);
 
+        foreach (var entry in competition.Entries)
+        {
+            var orderedMembers = entry.DeclaredMembers
+                .OrderBy(member => context.Entry(member).Property<int>("SortOrder").CurrentValue)
+                .ToList();
+            CompetitionDeclaredMembersAccessor.Hydrate(entry, orderedMembers);
+        }
+
         return competition;
     }
 
