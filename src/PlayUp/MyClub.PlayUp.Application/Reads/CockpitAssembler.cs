@@ -987,13 +987,9 @@ public static class CockpitAssembler
         IReadOnlyDictionary<EntryId, string> names)
     {
         var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
-        if (instructions.Count == 0)
-        {
-            return [];
-        }
-
-        return
-        [
+        return instructions.Count == 0
+            ? []
+            : [
             .. instructions.Select(instruction =>
             {
                 var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
@@ -1026,13 +1022,9 @@ public static class CockpitAssembler
 
         var overall = section.Tables.FirstOrDefault(table =>
             string.Equals(table.Scope, ConsultationAssembler.ScopeOverall, StringComparison.Ordinal));
-        if (overall is null || overall.Rows.Count == 0)
-        {
-            return null;
-        }
-
-        return
-        [
+        return overall is null || overall.Rows.Count == 0
+            ? null
+            : [
             .. overall.Rows.Select(row => new FinalPlacementDto(
                 row.Position,
                 row.EntryId,
@@ -1063,12 +1055,9 @@ public static class CockpitAssembler
 
         var matches = matchesByStage.TryGetValue(reference.Id, out var list) ? list : [];
         var section = ConsultationAssembler.ProjectStandingsForStage(competition, reference, matches);
-        if (!section.Applicable || section.Tables.Count == 0)
-        {
-            return null;
-        }
-
-        return new CockpitStandingCompactDto(
+        return !section.Applicable || section.Tables.Count == 0
+            ? null
+            : new CockpitStandingCompactDto(
             reference.Id.Value,
             reference.Name.Value,
             [

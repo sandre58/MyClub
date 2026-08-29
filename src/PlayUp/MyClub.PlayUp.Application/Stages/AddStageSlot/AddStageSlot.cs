@@ -22,20 +22,14 @@ public static class AddStageSlot
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
+        return stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed
+            ? throw new ApplicationFailureException(
                 $"Slots cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
-        }
-
-        if (string.IsNullOrWhiteSpace(slotKey))
-        {
-            throw new ApplicationFailureException(
+                ApplicationErrorCodes.OrganisationNotMutable)
+            : string.IsNullOrWhiteSpace(slotKey)
+            ? throw new ApplicationFailureException(
                 "Slot key must be non-empty.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        return stage.AddSlot(slotKey, clock);
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : stage.AddSlot(slotKey, clock);
     }
 }

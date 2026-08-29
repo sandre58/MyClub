@@ -78,12 +78,9 @@ public static class ResolvePlacementAwards
         ArgumentNullException.ThrowIfNull(matches);
 
         var rules = stage.Regulation.PlacementAwardRules;
-        if (rules is null)
-        {
-            return [];
-        }
-
-        return TryResolveFixtureAwards(stage, fixtureId, matches, rules, out var instructions)
+        return rules is null
+            ? []
+            : TryResolveFixtureAwards(stage, fixtureId, matches, rules, out var instructions)
             ? instructions
             : [];
     }

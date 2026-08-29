@@ -23,12 +23,9 @@ public static class CompetitionRecipeValidator
         ArgumentNullException.ThrowIfNull(recipe);
         ArgumentException.ThrowIfNullOrWhiteSpace(recipe.DisplayName);
 
-        if (recipe.TeamCount < 0)
-        {
-            throw new InvalidOperationException("Recipe TeamCount cannot be negative.");
-        }
-
-        return recipe.Format switch
+        return recipe.TeamCount < 0
+            ? throw new InvalidOperationException("Recipe TeamCount cannot be negative.")
+            : recipe.Format switch
         {
             RecipeFormat.Championship => ValidateChampionship(recipe),
             RecipeFormat.Groups => ValidateGroups(recipe),

@@ -1039,13 +1039,10 @@ internal static class ScenarioOrchestration
             .OrderBy(fixture => fixture.Id.Value)
             .Take(expectedCount)
             .ToArray();
-        if (fixtures.Length != expectedCount)
-        {
-            throw new InvalidOperationException(
-                $"Expected {expectedCount} fixtures on stage '{stage.Name.Value}', found {fixtures.Length}.");
-        }
-
-        return fixtures;
+        return fixtures.Length != expectedCount
+            ? throw new InvalidOperationException(
+                $"Expected {expectedCount} fixtures on stage '{stage.Name.Value}', found {fixtures.Length}.")
+            : fixtures;
     }
 
     private static IReadOnlyList<Match> MaterializeFromSlots(

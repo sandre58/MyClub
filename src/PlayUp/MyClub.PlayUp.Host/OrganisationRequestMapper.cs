@@ -26,16 +26,12 @@ internal static class OrganisationRequestMapper
         var format = request.Format.Trim();
         var matchGenerationFormat = ParseMatchGenerationFormat(request.MatchGenerationFormat);
 
-        if (format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase))
-        {
-            return StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName, matchGenerationFormat);
-        }
-
-        if (format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase))
-        {
-            return request.GroupCount is null || request.ParticipantsPerGroup is null
+        return format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
+            || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase)
+            ? StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName, matchGenerationFormat)
+            : format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
+            || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase)
+            ? request.GroupCount is null || request.ParticipantsPerGroup is null
                 ? throw new ApplicationFailureException(
                     "Groups format requires GroupCount and ParticipantsPerGroup.",
                     ApplicationErrorCodes.InvalidStructureIntent)
@@ -43,29 +39,21 @@ internal static class OrganisationRequestMapper
                     request.GroupCount.Value,
                     request.ParticipantsPerGroup.Value,
                     request.StageName,
-                    matchGenerationFormat);
-        }
-
-        if (format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Coupe", StringComparison.OrdinalIgnoreCase))
-        {
-            return request.BracketSize is null
+                    matchGenerationFormat)
+            : format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
+            || format.Equals("Coupe", StringComparison.OrdinalIgnoreCase)
+            ? request.BracketSize is null
                 ? throw new ApplicationFailureException(
                     "Cup format requires BracketSize (power of two, 2–64).",
                     ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Cup(request.BracketSize.Value, request.StageName);
-        }
-
-        if (format.Equals("Swiss", StringComparison.OrdinalIgnoreCase))
-        {
-            return request.SwissRoundCount is null
+                : StructureIntent.Cup(request.BracketSize.Value, request.StageName)
+            : format.Equals("Swiss", StringComparison.OrdinalIgnoreCase)
+            ? request.SwissRoundCount is null
                 ? throw new ApplicationFailureException(
                     "Swiss format requires SwissRoundCount (≥ 1).",
                     ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Swiss(request.SwissRoundCount.Value, request.StageName);
-        }
-
-        throw new ApplicationFailureException(
+                : StructureIntent.Swiss(request.SwissRoundCount.Value, request.StageName)
+            : throw new ApplicationFailureException(
             $"Unknown organisation format '{request.Format}'. Expected Championship, Groups, Cup, or Swiss.",
             ApplicationErrorCodes.InvalidStructureIntent);
     }
@@ -96,12 +84,9 @@ internal static class OrganisationRequestMapper
 
     private static MatchGenerationFormat ParseMatchGenerationFormat(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return MatchGenerationFormat.SingleRoundRobin;
-        }
-
-        return Enum.TryParse<MatchGenerationFormat>(value.Trim(), ignoreCase: true, out var parsed)
+        return string.IsNullOrWhiteSpace(value)
+            ? MatchGenerationFormat.SingleRoundRobin
+            : Enum.TryParse<MatchGenerationFormat>(value.Trim(), ignoreCase: true, out var parsed)
                && Enum.IsDefined(parsed)
             ? parsed
             : throw new ApplicationFailureException(

@@ -53,18 +53,12 @@ public static class MediaPolicies
         }
 
         var trimmed = Path.GetFileName(originalName.Trim());
-        if (string.IsNullOrWhiteSpace(trimmed))
-        {
-            return null;
-        }
-
-        if (trimmed.Length > MaxOriginalNameLength)
-        {
-            throw new DomainException(
+        return string.IsNullOrWhiteSpace(trimmed)
+            ? null
+            : trimmed.Length > MaxOriginalNameLength
+            ? throw new DomainException(
                 $"Original file name cannot exceed {MaxOriginalNameLength} characters.",
-                MediaErrorCodes.InvalidOriginalName);
-        }
-
-        return trimmed;
+                MediaErrorCodes.InvalidOriginalName)
+            : trimmed;
     }
 }

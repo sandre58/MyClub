@@ -135,12 +135,9 @@ public static class MatchReadAssembler
     {
         ArgumentNullException.ThrowIfNull(summary);
 
-        if (summary.RoundName is { Length: > 0 })
-        {
-            return summary.RoundName;
-        }
-
-        return summary.MatchdayNumber is { } number
+        return summary.RoundName is { Length: > 0 }
+            ? summary.RoundName
+            : summary.MatchdayNumber is { } number
             ? $"Journée {number}"
             : null;
     }
