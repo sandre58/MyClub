@@ -120,6 +120,71 @@ public sealed class ThinAuthoringTests
     }
 
     [Fact]
+    public void ReplacePlacementAwardRules_authors_final_ranks_without_slots()
+    {
+        var competition = CreateCompetition.Execute("Cup-Awards", _clock);
+        var stage = AddCompetitionStage.Execute(competition, "Final", _clock);
+        var round = AddStageRound.Execute(stage, "Final", null, _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+
+        ReplaceStagePlacementAwardRules.Execute(
+            stage,
+            [
+                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Winner, Rank: 1),
+                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Loser, Rank: 2)
+            ],
+            _clock);
+
+        stage.Regulation.PlacementAwardRules.Should().NotBeNull();
+        stage.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
+        stage.Regulation.PlacementAwardRules.Paths.Should().Contain(p =>
+            p.Outcome == ProgressionOutcome.Winner && p.Rank == 1);
+        stage.Regulation.PlacementAwardRules.Paths.Should().Contain(p =>
+            p.Outcome == ProgressionOutcome.Loser && p.Rank == 2);
+        stage.Slots.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ReplacePlacementAwardRules_clears_when_paths_empty()
+    {
+        var competition = CreateCompetition.Execute("Cup-Awards-Clear", _clock);
+        var stage = AddCompetitionStage.Execute(competition, "Final", _clock);
+        var round = AddStageRound.Execute(stage, "Final", null, _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        ReplaceStagePlacementAwardRules.Execute(
+            stage,
+            [
+                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Winner, 1)
+            ],
+            _clock);
+
+        ReplaceStagePlacementAwardRules.Execute(stage, [], _clock);
+
+        stage.Regulation.PlacementAwardRules.Should().BeNull();
+    }
+
+    [Fact]
+    public void ReplacePlacementAwardRules_rejects_when_stage_running()
+    {
+        var competition = CreateCompetition.Execute("Cup-Awards-Lock", _clock);
+        var stage = AddCompetitionStage.Execute(competition, "Final", _clock);
+        var round = AddStageRound.Execute(stage, "R1", null, _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => ReplaceStagePlacementAwardRules.Execute(
+            stage,
+            [
+                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Winner, 1)
+            ],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+    }
+
+    [Fact]
     public void ReplaceProgressionRules_rejects_when_stage_running()
     {
         var competition = CreateCompetition.Execute("Cup-D1-ProgLock", _clock);

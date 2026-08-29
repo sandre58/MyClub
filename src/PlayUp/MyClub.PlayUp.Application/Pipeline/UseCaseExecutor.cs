@@ -688,6 +688,19 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Replaces placement award rules on a stage (null/empty clears). Configuration only — no award resolution.
+    /// </summary>
+    public async Task ReplaceStagePlacementAwardRulesAsync(
+        StageId stageId,
+        IReadOnlyList<PlacementAwardPathSpec>? paths,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStagePlacementAwardRules.Execute(stage, paths, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Assembles <see cref="OrganisationViewDto"/> for the Organisation hub.
     /// </summary>
     public async Task<OrganisationViewDto> GetOrganisationViewAsync(

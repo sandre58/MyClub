@@ -415,6 +415,34 @@ app.MapPut(
         return Results.NoContent();
     });
 
+app.MapPut(
+    "/stages/{stageId:guid}/placement-award-rules",
+    async (
+        Guid stageId,
+        ReplaceStagePlacementAwardRulesRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        IReadOnlyList<PlacementAwardPathSpec>? paths = null;
+        if (request.Paths is { Count: > 0 })
+        {
+            paths =
+            [
+                .. request.Paths
+                    .Select(path => new PlacementAwardPathSpec(
+                        new FixtureId(path.SourceFixtureId),
+                        path.Outcome,
+                        path.Rank))
+            ];
+        }
+
+        await executor
+            .ReplaceStagePlacementAwardRulesAsync(new StageId(stageId), paths, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.NoContent();
+    });
+
 app.MapGet(
     "/competitions/{competitionId:guid}",
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>

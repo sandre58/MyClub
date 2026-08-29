@@ -27,7 +27,7 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 | `DrawResolutionState` | draw summaries / stage overview / cockpit draws |
 | `StructureFormatKind` | organisation / consultation format (`Championship` \| `Groups` \| `Cup` \| `Swiss`) |
 | `MatchGenerationFormat` | organisation `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
-| `ProgressionOutcome` | progression-rules paths (`Winner` \| `Loser`) |
+| `ProgressionOutcome` | progression-rules / placement-award-rules paths (`Winner` \| `Loser`) |
 
 ## Named response contracts (Phase 12.8)
 
@@ -313,6 +313,29 @@ Additional stages / rounds / slots / progression rules without Domain seeding. D
 ```
 
 Empty or null `paths` clears rules. Domain validates source fixture ownership and local destinations.
+
+#### `PUT /stages/{stageId}/placement-award-rules` → 204 No Content
+
+Configuration only — does **not** resolve awards, mutate slots, or compute `CompetitionOutcome`.
+
+```json
+{
+  "paths": [
+    {
+      "sourceFixtureId": "<guid>",
+      "outcome": "Winner",
+      "rank": 1
+    },
+    {
+      "sourceFixtureId": "<guid>",
+      "outcome": "Loser",
+      "rank": 2
+    }
+  ]
+}
+```
+
+Empty or null `paths` clears rules. Domain validates source fixture ownership, unique `(fixture, outcome)` pairs, and unique ranks (`rank ≥ 1`). Rejected while stage is Running / Suspended / Completed (`OrganisationNotMutable`).
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 
