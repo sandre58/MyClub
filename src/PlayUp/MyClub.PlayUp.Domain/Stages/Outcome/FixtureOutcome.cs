@@ -15,7 +15,8 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// Derived from <see cref="FixtureOutcomeResolver"/> using <see cref="Rules.TieFormat"/> and
 /// confrontation legs (EntryId referential). Does not carry a <see cref="FixtureId"/>.
 /// The fixture identity is supplied by Application (and checked by
-/// <see cref="Progression.ProgressionApplier"/>) from the surrounding orchestration context.
+/// <see cref="Progression.ProgressionApplier"/> / <see cref="Placement.PlacementAwardApplier"/>)
+/// from the surrounding orchestration context.
 /// Undecided draws throw <c>Stage.FixtureOutcomeUndecided</c> — this type has no resolution status.
 /// </remarks>
 public sealed record FixtureOutcome

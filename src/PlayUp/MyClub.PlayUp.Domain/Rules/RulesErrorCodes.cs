@@ -60,4 +60,9 @@ public static class RulesErrorCodes
     /// Gets the code when progression rules are invalid.
     /// </summary>
     public const string ProgressionRulesInvalid = "Rules.ProgressionRulesInvalid";
+
+    /// <summary>
+    /// Gets the code when placement award rules are invalid.
+    /// </summary>
+    public const string PlacementAwardRulesInvalid = "Rules.PlacementAwardRulesInvalid";
 }

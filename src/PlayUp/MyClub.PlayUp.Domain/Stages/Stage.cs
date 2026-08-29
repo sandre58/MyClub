@@ -449,6 +449,36 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Replaces placement award rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Each path fixture must belong to this stage.
+    /// Distinct from <see cref="ReplaceProgressionRules"/> — awards final ranks, does not feed slots.
+    /// </summary>
+    /// <param name="placementAwardRules">The new placement award rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplacePlacementAwardRules(PlacementAwardRules? placementAwardRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (placementAwardRules is not null)
+        {
+            foreach (var path in placementAwardRules.Paths)
+            {
+                if (!HasFixture(path.SourceFixtureId))
+                {
+                    throw new DomainException(
+                        $"Fixture '{path.SourceFixtureId}' was not found.",
+                        StageErrorCodes.FixtureNotFound);
+                }
+            }
+        }
+
+        DemoteToDraftIfReady();
+        Regulation = Regulation.WithPlacementAwardRules(placementAwardRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
     /// Replaces the default stage tie format (source for new rounds). Allowed in Draft or Ready.
     /// </summary>
     /// <param name="tieFormat">The new default tie format, or <see langword="null"/>.</param>

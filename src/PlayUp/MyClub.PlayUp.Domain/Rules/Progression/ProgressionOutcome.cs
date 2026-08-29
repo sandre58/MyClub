@@ -7,8 +7,12 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Outcome of a Fixture/Tie used by a progression path (never a single Match).
+/// Outcome of a Fixture/Tie used by progression and placement-award paths (never a single Match).
 /// </summary>
+/// <remarks>
+/// Shared selector for <see cref="ProgressionPath"/> (slot routing) and
+/// <see cref="PlacementAwardPath"/> (final rank). The two rule families remain distinct.
+/// </remarks>
 public enum ProgressionOutcome
 {
     /// <summary>

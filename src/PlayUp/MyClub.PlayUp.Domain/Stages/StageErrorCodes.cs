@@ -147,6 +147,11 @@ public static class StageErrorCodes
     public const string ProgressionApplyFixtureMismatch = "Stage.ProgressionApplyFixtureMismatch";
 
     /// <summary>
+    /// Gets the code when a placement award path source fixture does not match the supplied fixture identity.
+    /// </summary>
+    public const string PlacementAwardApplyFixtureMismatch = "Stage.PlacementAwardApplyFixtureMismatch";
+
+    /// <summary>
     /// Gets the code when a draw cannot be found.
     /// </summary>
     public const string DrawNotFound = "Stage.DrawNotFound";

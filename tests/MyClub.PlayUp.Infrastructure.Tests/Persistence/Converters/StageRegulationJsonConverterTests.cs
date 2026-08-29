@@ -31,7 +31,7 @@ public sealed class StageRegulationJsonConverterTests
     }
 
     [Fact]
-    public void StageRegulation_convert_round_trips_draw_qualification_and_progression_families()
+    public void StageRegulation_convert_round_trips_draw_qualification_progression_and_placement_award_families()
     {
         var groupId = GroupId.New();
         var destinationStageId = StageId.New();
@@ -71,6 +71,12 @@ public sealed class StageRegulationJsonConverterTests
                         fixtureId,
                         ProgressionOutcome.Loser,
                         new ProgressionDestination(progressionStageId, "Consolante-1"))
+                ]))
+            .WithPlacementAwardRules(
+                new PlacementAwardRules(
+                [
+                    new PlacementAwardPath(fixtureId, ProgressionOutcome.Winner, rank: 3),
+                    new PlacementAwardPath(fixtureId, ProgressionOutcome.Loser, rank: 4)
                 ]));
 
         var json = _converter.ConvertToProvider(regulation).Should().BeOfType<string>().Subject;
@@ -83,6 +89,7 @@ public sealed class StageRegulationJsonConverterTests
         json.Should().Contain("\"DrawRules\"");
         json.Should().Contain("\"QualificationRules\"");
         json.Should().Contain("\"ProgressionRules\"");
+        json.Should().Contain("\"PlacementAwardRules\"");
     }
 
     [Fact]
