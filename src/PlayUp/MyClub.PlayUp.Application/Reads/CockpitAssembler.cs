@@ -6,6 +6,7 @@
 
 using System.Globalization;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -897,8 +898,9 @@ public static class CockpitAssembler
         List<Match> Matches);
 
     /// <summary>
-    /// Championship V1: final Overall Standing → CompetitionOutcome (full places[]).
-    /// No Domain change — Cup / Groups / PlacementAward remain null until Domain seam exists.
+    /// Projects CompetitionOutcome from the truth sources that can determine final placements.
+    /// Championship → Overall Standing. PlacementAwardRules → determined awards only (partial OK).
+    /// Missing ranks are omitted — never invented. Abandoned → null.
     /// </summary>
     internal static CompetitionOutcomeDto? BuildCompetitionOutcome(
         Competition competition,
@@ -917,11 +919,55 @@ public static class CockpitAssembler
             return null;
         }
 
-        if (formatKind != StructureFormatKind.Championship)
+        var names = EntryDisplayNames.ToMap(competition);
+
+        // Explicit placement awards (Cup / classification / consolantes) when rules exist and fixtures are decided.
+        var awardPlaces = ProjectPlacementAwardPlaces(stages, matchesByStage, names);
+        if (awardPlaces.Count > 0)
         {
-            return null;
+            return new CompetitionOutcomeDto(awardPlaces);
         }
 
+        // Championship RR (and Swiss Overall): final Standing is the competition result.
+        if (formatKind is StructureFormatKind.Championship or StructureFormatKind.Swiss)
+        {
+            return ProjectStandingOutcome(competition, stages, matchesByStage);
+        }
+
+        // Groups-only / Cup without PlacementAwardRules → no inventable competition outcome.
+        return null;
+    }
+
+    private static IReadOnlyList<FinalPlacementDto> ProjectPlacementAwardPlaces(
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<EntryId, string> names)
+    {
+        var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
+        if (instructions.Count == 0)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. instructions.Select(instruction =>
+            {
+                var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
+                    ?? instruction.EntryId.Value.ToString();
+                return new FinalPlacementDto(
+                    instruction.Rank,
+                    instruction.EntryId.Value,
+                    displayName);
+            })
+        ];
+    }
+
+    private static CompetitionOutcomeDto? ProjectStandingOutcome(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
         var reference = ResolveReferenceStage(competition, stages);
         if (reference is null)
         {
@@ -937,9 +983,12 @@ public static class CockpitAssembler
 
         var overall = section.Tables.FirstOrDefault(table =>
             string.Equals(table.Scope, ConsultationAssembler.ScopeOverall, StringComparison.Ordinal));
-        return overall is null || overall.Rows.Count == 0
-            ? null
-            : new CompetitionOutcomeDto(
+        if (overall is null || overall.Rows.Count == 0)
+        {
+            return null;
+        }
+
+        return new CompetitionOutcomeDto(
             [
                 .. overall.Rows.Select(row => new FinalPlacementDto(
                     row.Position,

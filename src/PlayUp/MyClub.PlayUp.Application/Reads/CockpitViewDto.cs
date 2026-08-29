@@ -31,9 +31,10 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Overview calendar synthesis when <paramref name="PreparationFocus"/> is GeneratedCalendar; otherwise null.
 /// </param>
 /// <param name="CompetitionOutcome">
-/// Derived final placements when Terminée can conclude them (Championship V1: final Standing).
-/// Null when not Completed/Archived, Abandoned, non-Championship, or no Overall standing.
-/// Full <c>places[]</c> — SPA Podium is Top-N only; Classements remains the consultation surface.
+/// Derived final placements when Terminée can conclude them.
+/// Sources (format-aware): PlacementAwardRules + FixtureOutcome, else Championship/Swiss Overall Standing.
+/// <c>places[]</c> lists only determined ranks (partial OK). Null when Abandoned / no determinable places.
+/// SPA Podium is Top-N only; Classements remains the consultation surface.
 /// </param>
 /// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, temporal sport units, compact standing.</param>

@@ -1102,6 +1102,121 @@ public sealed class CockpitAssemblerTests
     }
 
     [Fact]
+    public void Assemble_completed_cup_projects_outcome_from_placement_awards()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var alpha = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var bravo = competition.AddEntry(TeamId.New(), "Bravo", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Final"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("Final", _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var match = Match.Create(competition.Id, stage.Id, alpha.Id, bravo.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(fixture.Id, ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(fixture.Id, ProgressionOutcome.Loser, 2)
+            ]),
+            _clock);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Complete(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
+
+        view.CompetitionOutcome.Should().NotBeNull();
+        view.CompetitionOutcome!.Places.Should().HaveCount(2);
+        view.CompetitionOutcome.Places[0].Should().Be(new FinalPlacementDto(1, alpha.Id.Value, "Alpha"));
+        view.CompetitionOutcome.Places[1].Should().Be(new FinalPlacementDto(2, bravo.Id.Value, "Bravo"));
+    }
+
+    [Fact]
+    public void Assemble_completed_cup_projects_partial_outcome_when_bronze_undecided()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "A", _clock);
+        var b = competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("Finals", _clock);
+        var final = stage.AddFixture(round.Id, _clock);
+        var bronze = stage.AddFixture(round.Id, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var finalMatch = Match.Create(competition.Id, stage.Id, a.Id, b.Id, _clock);
+        finalMatch.Start(_clock);
+        finalMatch.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        stage.AttachMatch(final.Id, finalMatch.Id, legIndex: 1, _clock);
+        stage.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(final.Id, ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(final.Id, ProgressionOutcome.Loser, 2),
+                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Winner, 3),
+                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Loser, 4)
+            ]),
+            _clock);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Complete(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch] });
+
+        view.CompetitionOutcome.Should().NotBeNull();
+        view.CompetitionOutcome!.Places.Select(p => p.Rank).Should().Equal(1, 2);
+        view.CompetitionOutcome.Places.Should().NotContain(p => p.Rank == 3 || p.Rank == 4);
+    }
+
+    [Fact]
+    public void Assemble_completed_cup_without_placement_rules_has_no_outcome()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "A", _clock);
+        var b = competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Final"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("Final", _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var match = Match.Create(competition.Id, stage.Id, a.Id, b.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Complete(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        var view = CockpitAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
+
+        view.CompetitionOutcome.Should().BeNull();
+    }
+
+    [Fact]
     public void Assemble_abandoned_championship_does_not_project_competition_outcome()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);

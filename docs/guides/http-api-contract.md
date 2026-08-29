@@ -150,11 +150,14 @@ Contract notes:
   - Matchdays come from the **primary** Championship stage (may still be Draft/Ready) — not ReferenceStage (Running/Completed).
   - `matchdays` preview capped (Host `CalendarPreviewMatchdayLimit` = 3). Not a Match hub dump.
 - `competitionOutcome`: derived final placements for Terminée (Read only — not Domain persistence).
-  - Shape: `{ places: [{ rank, entryId, displayName }, …] }` — **full** determined placements (Championship V1 = complete Overall Standing).
-  - V1 projection when **all**: `status` in (`Completed`, `Archived`) · `completionMode ≠ Abandoned` · format = `Championship` · ReferenceStage Overall standing has rows.
-  - Otherwise `null` (Running, Cup, Groups-only, Abandoned, no standing, …).
+  - Shape: `{ places: [{ rank, entryId, displayName }, …] }` — **only determined** placements (gaps allowed; missing ranks are **not** invented).
+  - Projection asks *which truth sources determine final placements for this competition?* — not a blind Standing ∪ awards merge:
+    1. If any stage has `PlacementAwardRules` and decided fixtures → places from `ResolvePlacementAwards` (Cup / classification / consolantes).
+    2. Else if format is `Championship` or `Swiss` → Overall Standing of ReferenceStage (full table when available).
+    3. Else `null` (e.g. Groups-only without global ranking rule; Cup without PlacementAwardRules).
+  - Also `null` when: not Completed/Archived · `completionMode = Abandoned` · no determinable places.
   - SPA **Podium** = Top-N UI of `places` (`rank ≤ 3`); Classements remains the full consultation surface — one truth.
-  - Does **not** invent Cup/consolante ranks (PlacementAward Domain seam — later).
+  - Does **not** invent ranks from bracket graphics or “two eliminated teams” heuristics (I4).
 - No `label` / `reason` / `summary` / cycle `note` fields — SPA i18n owns copy (`source` + `params` → reason templates; `impactCode` → impact copy).
 - Situation identity = `source` + `targetType` + `targetId` (stable; not translated text).
 - `actionable` is Host-projected (`true` iff `actionCode` is set). SPA must not infer actionability from `source`.
