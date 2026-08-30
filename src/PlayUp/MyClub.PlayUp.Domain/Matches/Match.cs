@@ -64,6 +64,14 @@ public sealed class Match : AggregateRoot<MatchId>
     public MatchResult? Result { get; private set; }
 
     /// <summary>
+    /// Gets the current running score when the match has been started; otherwise <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// Null exclusively means the match was never started. Distinct from <see cref="MatchResult.Score"/>.
+    /// </remarks>
+    public RunningScore? RunningScore { get; private set; }
+
+    /// <summary>
     /// Gets the declared composition for this match (not live on-field presence).
     /// </summary>
     public IReadOnlyList<DeclaredParticipation> DeclaredParticipations => _declaredParticipations.AsReadOnly();
@@ -124,7 +132,7 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
-    /// Starts the match (Scheduled to Live). Composition may be empty.
+    /// Starts the match (Scheduled to Live). Composition may be empty. Initializes running score to 0–0.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
     public void Start(IClock clock)
@@ -132,7 +140,33 @@ public sealed class Match : AggregateRoot<MatchId>
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStatus(MatchStatus.Scheduled, "Match can only be started from Scheduled.");
         Status = MatchStatus.Live;
+        RunningScore = new RunningScore(0, 0);
         Raise(new MatchStarted(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces the running score while the match is Live.
+    /// </summary>
+    /// <param name="runningScore">The absolute current running score.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void SetRunningScore(RunningScore runningScore, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (Status != MatchStatus.Live)
+        {
+            throw new DomainException(
+                $"Running score cannot be mutated when status is '{Status}'.",
+                MatchErrorCodes.RunningScoreImmutable);
+        }
+
+        if (RunningScore == runningScore)
+        {
+            return;
+        }
+
+        RunningScore = runningScore;
+        Raise(new MatchRunningScoreChanged(Id, runningScore, clock));
     }
 
     /// <summary>

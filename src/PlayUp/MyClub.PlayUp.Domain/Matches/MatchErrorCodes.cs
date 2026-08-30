@@ -60,4 +60,14 @@ public static class MatchErrorCodes
     /// Gets the code when a match side value is invalid.
     /// </summary>
     public const string InvalidSide = "Match.InvalidSide";
+
+    /// <summary>
+    /// Gets the code when a running score value is invalid.
+    /// </summary>
+    public const string InvalidRunningScore = "Match.InvalidRunningScore";
+
+    /// <summary>
+    /// Gets the code when the running score cannot be mutated in the current status.
+    /// </summary>
+    public const string RunningScoreImmutable = "Match.RunningScoreImmutable";
 }

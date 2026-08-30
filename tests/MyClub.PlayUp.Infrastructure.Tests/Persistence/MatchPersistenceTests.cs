@@ -226,6 +226,65 @@ public sealed class MatchPersistenceTests
         }
     }
 
+    [Fact]
+    public async Task Running_score_round_trips_and_survives_finishAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        match.Start(_clock);
+        match.SetRunningScore(new RunningScore(2, 1), _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new MatchRepository(context);
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.Status.Should().Be(MatchStatus.Live);
+            loaded.RunningScore.Should().Be(new RunningScore(2, 1));
+
+            loaded.SetRunningScore(new RunningScore(2, 2), _clock);
+            loaded.Finish(new MatchResult(ResultType.Played, new Score(3, 2)), _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.Status.Should().Be(MatchStatus.Finished);
+            reloaded.RunningScore.Should().Be(new RunningScore(2, 2));
+            reloaded.Result!.Score.Should().Be(new Score(3, 2));
+        }
+    }
+
+    [Fact]
+    public async Task Scheduled_match_persists_null_running_scoreAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.RunningScore.Should().BeNull();
+        }
+    }
+
     private async Task<MatchId> SeedFinishedAsync(string databaseName, MatchResult result)
     {
         await using var context = PlayUpInMemory.CreateContext(databaseName);

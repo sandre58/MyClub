@@ -67,6 +67,13 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .HasConversion(new MatchResultJsonConverter(), MatchResultJsonConverter.Comparer)
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(match => match.RunningScore)
+            .HasColumnName("running_score")
+            .HasColumnType("jsonb")
+            .IsRequired(false)
+            .HasConversion(new RunningScoreJsonConverter(), RunningScoreJsonConverter.Comparer)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Ignore(match => match.DomainEvents);
         builder.Metadata.AddIgnored("_domainEvents");
 
