@@ -96,4 +96,35 @@ public static class MatchErrorCodes
     /// Gets the code when removing a declared participation that is still referenced by a recorded goal.
     /// </summary>
     public const string ParticipationReferencedByRecordedGoal = "Match.ParticipationReferencedByRecordedGoal";
+
+    /// <summary>
+    /// Gets the code when a substitution mutation is not allowed in the current status
+    /// (or when create/remove is attempted after Finish with an observed Live).
+    /// </summary>
+    public const string SubstitutionMutationNotAllowed = "Match.SubstitutionMutationNotAllowed";
+
+    /// <summary>
+    /// Gets the code when a recorded substitution is not found on the match.
+    /// </summary>
+    public const string SubstitutionNotFound = "Match.SubstitutionNotFound";
+
+    /// <summary>
+    /// Gets the code when the outgoing and incoming members are the same.
+    /// </summary>
+    public const string SubstitutionSameMember = "Match.SubstitutionSameMember";
+
+    /// <summary>
+    /// Gets the code when out/in members are not both on the substitution side.
+    /// </summary>
+    public const string SubstitutionSideMismatch = "Match.SubstitutionSideMismatch";
+
+    /// <summary>
+    /// Gets the code when a substitution is inconsistent with derived on-field presence.
+    /// </summary>
+    public const string SubstitutionPresenceInvalid = "Match.SubstitutionPresenceInvalid";
+
+    /// <summary>
+    /// Gets the code when removing a declared participation that is still referenced by a recorded substitution.
+    /// </summary>
+    public const string ParticipationReferencedBySubstitution = "Match.ParticipationReferencedBySubstitution";
 }

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Infrastructure.Persistence;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 
@@ -28,7 +29,7 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
             return null;
         }
 
-        HydrateDeclaredParticipations(match);
+        HydrateOrderedCollections(match);
         return match;
     }
 
@@ -45,7 +46,7 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
 
         foreach (var match in matches)
         {
-            HydrateDeclaredParticipations(match);
+            HydrateOrderedCollections(match);
         }
 
         return [.. matches.OrderBy(candidate => candidate.Id.Value)];
@@ -58,11 +59,21 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         context.Set<Match>().Add(match);
     }
 
-    private void HydrateDeclaredParticipations(Match match)
+    private void HydrateOrderedCollections(Match match)
     {
-        var ordered = match.DeclaredParticipations
-            .OrderBy(participation => context.Entry(participation).Property<int>("SortOrder").CurrentValue)
-            .ToList();
-        MatchDeclaredParticipationsAccessor.Hydrate(match, ordered);
+        MatchDeclaredParticipationsAccessor.Hydrate(
+            match,
+            match.DeclaredParticipations
+                .OrderBy(participation => context.Entry(participation).Property<int>("SortOrder").CurrentValue));
+
+        MatchRecordedGoalsAccessor.Hydrate(
+            match,
+            match.RecordedGoals
+                .OrderBy(goal => context.Entry(goal).Property<int>("SortOrder").CurrentValue));
+
+        MatchRecordedSubstitutionsAccessor.Hydrate(
+            match,
+            match.RecordedSubstitutions
+                .OrderBy(substitution => context.Entry(substitution).Property<int>("SortOrder").CurrentValue));
     }
 }

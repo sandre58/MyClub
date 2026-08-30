@@ -87,6 +87,11 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .HasField("_recordedGoals")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(match => match.RecordedSubstitutions, ConfigureRecordedSubstitutions);
+        builder.Navigation(nameof(Match.RecordedSubstitutions))
+            .HasField("_recordedSubstitutions")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne<Competition>()
             .WithMany()
             .HasForeignKey(match => match.CompetitionId)
@@ -168,5 +173,43 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .IsRequired();
 
         goals.HasIndex("match_id", "SortOrder").IsUnique();
+    }
+
+    private static void ConfigureRecordedSubstitutions(OwnedNavigationBuilder<Match, RecordedSubstitution> substitutions)
+    {
+        substitutions.ToTable("match_recorded_substitutions");
+        substitutions.WithOwner().HasForeignKey("match_id");
+        substitutions.HasKey(substitution => substitution.Id);
+
+        substitutions.Property(substitution => substitution.Id)
+            .HasColumnName("id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<SubstitutionId>());
+
+        substitutions.Property(substitution => substitution.Side)
+            .HasColumnName("side")
+            .HasConversion<int>()
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        substitutions.Property(substitution => substitution.OutMemberId)
+            .HasColumnName("out_member_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<MemberId>())
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        substitutions.Property(substitution => substitution.InMemberId)
+            .HasColumnName("in_member_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<MemberId>())
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        substitutions.Property<int>("SortOrder")
+            .HasColumnName("sort_order")
+            .IsRequired();
+
+        substitutions.HasIndex("match_id", "SortOrder").IsUnique();
     }
 }

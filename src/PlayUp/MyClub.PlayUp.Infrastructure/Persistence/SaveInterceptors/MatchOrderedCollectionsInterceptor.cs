@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Matches;
 namespace MyClub.PlayUp.Infrastructure.Persistence.SaveInterceptors;
 
 /// <summary>
-/// Writes Domain DeclaredParticipations order into shadow sort_order.
+/// Writes Domain collection order into shadow sort_order for Match owned collections.
 /// </summary>
 internal sealed class MatchOrderedCollectionsInterceptor : SaveChangesInterceptor
 {
@@ -46,18 +46,20 @@ internal sealed class MatchOrderedCollectionsInterceptor : SaveChangesIntercepto
 
         foreach (var match in matches)
         {
-            SyncDeclaredParticipationSortOrder(context, match);
+            SyncSortOrder(context, match.DeclaredParticipations);
+            SyncSortOrder(context, match.RecordedGoals);
+            SyncSortOrder(context, match.RecordedSubstitutions);
         }
 
         context.ChangeTracker.DetectChanges();
     }
 
-    private static void SyncDeclaredParticipationSortOrder(DbContext context, Match match)
+    private static void SyncSortOrder<TEntity>(DbContext context, IReadOnlyList<TEntity> items)
+        where TEntity : class
     {
-        var participations = match.DeclaredParticipations;
-        for (var index = 0; index < participations.Count; index++)
+        for (var index = 0; index < items.Count; index++)
         {
-            var owned = context.Entry(participations[index]);
+            var owned = context.Entry(items[index]);
             if (owned.State is EntityState.Detached)
             {
                 continue;

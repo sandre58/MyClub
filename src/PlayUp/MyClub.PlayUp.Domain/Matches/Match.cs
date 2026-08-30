@@ -18,6 +18,7 @@ public sealed class Match : AggregateRoot<MatchId>
 {
     private readonly List<DeclaredParticipation> _declaredParticipations = [];
     private readonly List<RecordedGoal> _recordedGoals = [];
+    private readonly List<RecordedSubstitution> _recordedSubstitutions = [];
 
     private Match(
         MatchId id,
@@ -90,6 +91,14 @@ public sealed class Match : AggregateRoot<MatchId>
     /// Gets the nominative goal attributions recorded on this match (distinct from running / official score).
     /// </summary>
     public IReadOnlyList<RecordedGoal> RecordedGoals => _recordedGoals.AsReadOnly();
+
+    /// <summary>
+    /// Gets the ordered substitution facts recorded on this match (distinct from declared composition).
+    /// </summary>
+    /// <remarks>
+    /// Order is the business recording order preserved by the Domain and used to derive on-field presence.
+    /// </remarks>
+    public IReadOnlyList<RecordedSubstitution> RecordedSubstitutions => _recordedSubstitutions.AsReadOnly();
 
     /// <summary>
     /// Creates a new match in Scheduled status.
@@ -337,6 +346,15 @@ public sealed class Match : AggregateRoot<MatchId>
                 MatchErrorCodes.ParticipationReferencedByRecordedGoal);
         }
 
+        if (_recordedSubstitutions.Exists(substitution =>
+                substitution.OutMemberId.Equals(memberId)
+                || substitution.InMemberId.Equals(memberId)))
+        {
+            throw new DomainException(
+                $"Declared participation '{memberId}' is referenced by a recorded substitution on match '{Id}'.",
+                MatchErrorCodes.ParticipationReferencedBySubstitution);
+        }
+
         _declaredParticipations.Remove(participation);
         Raise(new MatchDeclaredParticipationRemoved(Id, memberId, clock));
     }
@@ -463,6 +481,105 @@ public sealed class Match : AggregateRoot<MatchId>
         return GetDeclaredParticipation(goal.ScorerMemberId).Side != goal.CreditedSide;
     }
 
+    /// <summary>
+    /// Records an ordered substitution fact (player out / player in).
+    /// Does not mutate declared composition, <see cref="RunningScore"/>, or <see cref="Result"/>.
+    /// </summary>
+    public RecordedSubstitution RecordSubstitution(
+        MemberId outMemberId,
+        MemberId inMemberId,
+        Side side,
+        IClock clock) =>
+        RecordSubstitution(SubstitutionId.New(), outMemberId, inMemberId, side, clock);
+
+    /// <summary>
+    /// Records an ordered substitution fact with an explicit identity.
+    /// </summary>
+    public RecordedSubstitution RecordSubstitution(
+        SubstitutionId substitutionId,
+        MemberId outMemberId,
+        MemberId inMemberId,
+        Side side,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSubstitutionCreateOrRemoveAllowed();
+        EnsureValidSubstitutionFact(outMemberId, inMemberId, side);
+
+        var tentative = _recordedSubstitutions.ToList();
+        tentative.Add(new RecordedSubstitution(substitutionId, side, outMemberId, inMemberId));
+        EnsureSubstitutionSequenceValid(tentative);
+
+        var substitution = tentative[^1];
+        _recordedSubstitutions.Add(substitution);
+        Raise(new MatchRecordedSubstitutionAdded(
+            Id, substitution.Id, side, outMemberId, inMemberId, clock));
+        return substitution;
+    }
+
+    /// <summary>
+    /// Corrects an existing substitution fact (atomic Side / Out / In replace).
+    /// </summary>
+    public void CorrectRecordedSubstitution(
+        SubstitutionId substitutionId,
+        MemberId outMemberId,
+        MemberId inMemberId,
+        Side side,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSubstitutionCorrectAllowed();
+        EnsureValidSubstitutionFact(outMemberId, inMemberId, side);
+
+        var index = _recordedSubstitutions.FindIndex(item => item.Id.Equals(substitutionId));
+        if (index < 0)
+        {
+            throw new DomainException(
+                $"Recorded substitution '{substitutionId}' was not found on match '{Id}'.",
+                MatchErrorCodes.SubstitutionNotFound);
+        }
+
+        var existing = _recordedSubstitutions[index];
+        if (existing.Side == side
+            && existing.OutMemberId.Equals(outMemberId)
+            && existing.InMemberId.Equals(inMemberId))
+        {
+            return;
+        }
+
+        var tentative = _recordedSubstitutions.ToList();
+        tentative[index] = new RecordedSubstitution(substitutionId, side, outMemberId, inMemberId);
+        EnsureSubstitutionSequenceValid(tentative);
+
+        existing.Correct(side, outMemberId, inMemberId);
+        Raise(new MatchRecordedSubstitutionChanged(
+            Id, substitutionId, side, outMemberId, inMemberId, clock));
+    }
+
+    /// <summary>
+    /// Removes a substitution fact.
+    /// </summary>
+    public void RemoveRecordedSubstitution(SubstitutionId substitutionId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSubstitutionCreateOrRemoveAllowed();
+
+        var index = _recordedSubstitutions.FindIndex(item => item.Id.Equals(substitutionId));
+        if (index < 0)
+        {
+            throw new DomainException(
+                $"Recorded substitution '{substitutionId}' was not found on match '{Id}'.",
+                MatchErrorCodes.SubstitutionNotFound);
+        }
+
+        var tentative = _recordedSubstitutions.ToList();
+        tentative.RemoveAt(index);
+        EnsureSubstitutionSequenceValid(tentative);
+
+        _recordedSubstitutions.RemoveAt(index);
+        Raise(new MatchRecordedSubstitutionRemoved(Id, substitutionId, clock));
+    }
+
     private void ApplyRecordedGoalCorrection(
         GoalId goalId,
         MemberId scorerMemberId,
@@ -499,23 +616,21 @@ public sealed class Match : AggregateRoot<MatchId>
 
         var scorerParticipation = GetDeclaredParticipation(scorerMemberId);
 
-        if (assisterMemberId is { } assister)
+        if (assisterMemberId is not { } assister) return;
+        if (assister.Equals(scorerMemberId))
         {
-            if (assister.Equals(scorerMemberId))
-            {
-                throw new DomainException(
-                    "Assister cannot be the same member as the scorer.",
-                    MatchErrorCodes.AssisterSameAsScorer);
-            }
+            throw new DomainException(
+                "Assister cannot be the same member as the scorer.",
+                MatchErrorCodes.AssisterSameAsScorer);
+        }
 
-            _ = GetDeclaredParticipation(assister);
+        _ = GetDeclaredParticipation(assister);
 
-            if (scorerParticipation.Side != creditedSide)
-            {
-                throw new DomainException(
-                    "Assister is not allowed on an own goal (credited side differs from scorer sheet side).",
-                    MatchErrorCodes.AssisterNotAllowedOnOwnGoal);
-            }
+        if (scorerParticipation.Side != creditedSide)
+        {
+            throw new DomainException(
+                "Assister is not allowed on an own goal (credited side differs from scorer sheet side).",
+                MatchErrorCodes.AssisterNotAllowedOnOwnGoal);
         }
     }
 
@@ -553,6 +668,96 @@ public sealed class Match : AggregateRoot<MatchId>
             $"Recorded goal '{goalId}' was not found on match '{Id}'.",
             MatchErrorCodes.RecordedGoalNotFound);
 
+    private bool CanMutateSubstitutionsFreely =>
+        Status == MatchStatus.Live
+        || (Status == MatchStatus.Finished && !HasObservedLive);
+
+    private void EnsureSubstitutionCreateOrRemoveAllowed()
+    {
+        if (!CanMutateSubstitutionsFreely)
+        {
+            throw new DomainException(
+                $"Substitution create/remove is not allowed when status is '{Status}'"
+                + (HasObservedLive ? " with an observed Live." : "."),
+                MatchErrorCodes.SubstitutionMutationNotAllowed);
+        }
+    }
+
+    private void EnsureSubstitutionCorrectAllowed()
+    {
+        if (CanMutateSubstitutionsFreely
+            || (Status == MatchStatus.Finished && HasObservedLive))
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Substitution correction is not allowed when status is '{Status}'.",
+            MatchErrorCodes.SubstitutionMutationNotAllowed);
+    }
+
+    private void EnsureValidSubstitutionFact(MemberId outMemberId, MemberId inMemberId, Side side)
+    {
+        if (!Enum.IsDefined(side))
+        {
+            throw new DomainException(
+                $"Unknown match side '{side}'.",
+                MatchErrorCodes.InvalidSide);
+        }
+
+        if (outMemberId.Equals(inMemberId))
+        {
+            throw new DomainException(
+                "Substitution out and in members must be different.",
+                MatchErrorCodes.SubstitutionSameMember);
+        }
+
+        var outParticipation = GetDeclaredParticipation(outMemberId);
+        var inParticipation = GetDeclaredParticipation(inMemberId);
+
+        if (outParticipation.Side != side || inParticipation.Side != side)
+        {
+            throw new DomainException(
+                $"Substitution members must both belong to side '{side}'.",
+                MatchErrorCodes.SubstitutionSideMismatch);
+        }
+    }
+
+    /// <summary>
+    /// Validates that a substitution sequence is consistent with derived presence
+    /// (Starter baseline on-field, Bench off-field, then ordered replay).
+    /// </summary>
+    private void EnsureSubstitutionSequenceValid(IReadOnlyList<RecordedSubstitution> sequence)
+    {
+        var onFieldBySide = new Dictionary<Side, HashSet<MemberId>>
+        {
+            [Side.Home] = [],
+            [Side.Away] = []
+        };
+
+        foreach (var participation in _declaredParticipations)
+        {
+            if (participation.CompositionStatus == CompositionStatus.Starter)
+            {
+                onFieldBySide[participation.Side].Add(participation.Id);
+            }
+        }
+
+        foreach (var substitution in sequence)
+        {
+            var onField = onFieldBySide[substitution.Side];
+            if (!onField.Contains(substitution.OutMemberId) || onField.Contains(substitution.InMemberId))
+            {
+                throw new DomainException(
+                    "Substitution is inconsistent with derived on-field presence.",
+                    MatchErrorCodes.SubstitutionPresenceInvalid);
+            }
+
+            onField.Remove(substitution.OutMemberId);
+            onField.Add(substitution.InMemberId);
+        }
+    }
+
     private DeclaredParticipation GetDeclaredParticipation(MemberId memberId) =>
         _declaredParticipations.FirstOrDefault(participation => participation.Id.Equals(memberId))
         ?? throw new DomainException(
@@ -561,20 +766,17 @@ public sealed class Match : AggregateRoot<MatchId>
 
     private void EnsureCompositionMutable()
     {
-        if (Status is MatchStatus.Scheduled or MatchStatus.Postponed)
+        switch (Status)
         {
-            return;
+            case MatchStatus.Scheduled or MatchStatus.Postponed:
+            case MatchStatus.Finished when !HasObservedLive:
+                return;
+            default:
+                throw new DomainException(
+                    $"Match composition cannot be mutated when status is '{Status}'"
+                    + (HasObservedLive ? " with an observed Live." : "."),
+                    MatchErrorCodes.CompositionImmutable);
         }
-
-        if (Status == MatchStatus.Finished && !HasObservedLive)
-        {
-            return;
-        }
-
-        throw new DomainException(
-            $"Match composition cannot be mutated when status is '{Status}'"
-            + (HasObservedLive ? " with an observed Live." : "."),
-            MatchErrorCodes.CompositionImmutable);
     }
 
     private void EnsureJerseyAvailable(Side side, int? jerseyNumber, MemberId? excludingMemberId)

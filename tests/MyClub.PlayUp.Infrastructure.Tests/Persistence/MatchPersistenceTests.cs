@@ -383,6 +383,88 @@ public sealed class MatchPersistenceTests
         }
     }
 
+    [Fact]
+    public async Task Recorded_substitutions_round_trip_preserves_order_and_correctionAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var dupont = MemberId.New();
+        var martin = MemberId.New();
+        var bernard = MemberId.New();
+        match.AddDeclaredParticipation(dupont, Side.Home, CompositionStatus.Starter, _clock);
+        match.AddDeclaredParticipation(martin, Side.Home, CompositionStatus.Bench, _clock);
+        match.AddDeclaredParticipation(bernard, Side.Home, CompositionStatus.Bench, _clock);
+        match.Start(_clock);
+
+        var first = match.RecordSubstitution(dupont, martin, Side.Home, _clock);
+        var second = match.RecordSubstitution(martin, bernard, Side.Home, _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.RecordedSubstitutions.Select(s => s.Id).Should().Equal(first.Id, second.Id);
+            loaded.RecordedSubstitutions[0].OutMemberId.Should().Be(dupont);
+            loaded.RecordedSubstitutions[0].InMemberId.Should().Be(martin);
+            loaded.RecordedSubstitutions[1].OutMemberId.Should().Be(martin);
+            loaded.RecordedSubstitutions[1].InMemberId.Should().Be(bernard);
+            loaded.DeclaredParticipations.Single(p => p.Id == dupont).CompositionStatus
+                .Should().Be(CompositionStatus.Starter);
+
+            loaded.RemoveRecordedSubstitution(second.Id, _clock);
+            loaded.CorrectRecordedSubstitution(first.Id, dupont, bernard, Side.Home, _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.RecordedSubstitutions.Should().ContainSingle();
+            reloaded.RecordedSubstitutions[0].Id.Should().Be(first.Id);
+            reloaded.RecordedSubstitutions[0].InMemberId.Should().Be(bernard);
+            reloaded.DeclaredParticipations.Single(p => p.Id == dupont).CompositionStatus
+                .Should().Be(CompositionStatus.Starter);
+        }
+    }
+
+    [Fact]
+    public async Task Finished_without_live_substitution_reconstruction_round_tripAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var dupont = MemberId.New();
+        var martin = MemberId.New();
+        match.AddDeclaredParticipation(dupont, Side.Home, CompositionStatus.Starter, _clock);
+        match.AddDeclaredParticipation(martin, Side.Home, CompositionStatus.Bench, _clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);
+        var sub = match.RecordSubstitution(dupont, martin, Side.Home, _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.HasObservedLive.Should().BeFalse();
+            loaded.RunningScore.Should().BeNull();
+            loaded.RecordedSubstitutions.Should().ContainSingle().Which.Id.Should().Be(sub.Id);
+            loaded.Status.Should().Be(MatchStatus.Finished);
+        }
+    }
+
     private async Task<MatchId> SeedFinishedAsync(string databaseName, MatchResult result)
     {
         await using var context = PlayUpInMemory.CreateContext(databaseName);
