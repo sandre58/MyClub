@@ -17,6 +17,7 @@ namespace MyClub.PlayUp.Domain.Matches;
 public sealed class Match : AggregateRoot<MatchId>
 {
     private readonly List<DeclaredParticipation> _declaredParticipations = [];
+    private readonly List<RecordedGoal> _recordedGoals = [];
 
     private Match(
         MatchId id,
@@ -75,6 +76,11 @@ public sealed class Match : AggregateRoot<MatchId>
     /// Gets the declared composition for this match (not live on-field presence).
     /// </summary>
     public IReadOnlyList<DeclaredParticipation> DeclaredParticipations => _declaredParticipations.AsReadOnly();
+
+    /// <summary>
+    /// Gets the nominative goal attributions recorded on this match (distinct from running / official score).
+    /// </summary>
+    public IReadOnlyList<RecordedGoal> RecordedGoals => _recordedGoals.AsReadOnly();
 
     /// <summary>
     /// Creates a new match in Scheduled status.
@@ -316,6 +322,174 @@ public sealed class Match : AggregateRoot<MatchId>
     /// </summary>
     public bool HasDeclaredParticipation(MemberId memberId) =>
         _declaredParticipations.Exists(participation => participation.Id.Equals(memberId));
+
+    /// <summary>
+    /// Records a nominative goal attribution while the match is Live.
+    /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
+    /// </summary>
+    public RecordedGoal RecordGoal(
+        MemberId scorerMemberId,
+        Side creditedSide,
+        IClock clock,
+        MemberId? assisterMemberId = null) =>
+        RecordGoal(GoalId.New(), scorerMemberId, creditedSide, clock, assisterMemberId);
+
+    /// <summary>
+    /// Records a nominative goal attribution while the match is Live, with an explicit identity.
+    /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
+    /// </summary>
+    public RecordedGoal RecordGoal(
+        GoalId goalId,
+        MemberId scorerMemberId,
+        Side creditedSide,
+        IClock clock,
+        MemberId? assisterMemberId = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureLiveRecordedGoalMutation();
+        EnsureValidRecordedGoalAttribution(scorerMemberId, creditedSide, assisterMemberId);
+
+        var goal = new RecordedGoal(goalId, scorerMemberId, creditedSide, assisterMemberId);
+        _recordedGoals.Add(goal);
+        Raise(new MatchRecordedGoalAdded(
+            Id, goal.Id, scorerMemberId, creditedSide, assisterMemberId, clock));
+        return goal;
+    }
+
+    /// <summary>
+    /// Corrects an existing nominative goal attribution while the match is Live.
+    /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
+    /// </summary>
+    public void CorrectRecordedGoal(
+        GoalId goalId,
+        MemberId scorerMemberId,
+        Side creditedSide,
+        IClock clock,
+        MemberId? assisterMemberId = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureLiveRecordedGoalMutation();
+        ApplyRecordedGoalCorrection(goalId, scorerMemberId, creditedSide, assisterMemberId, clock);
+    }
+
+    /// <summary>
+    /// Removes a nominative goal attribution while the match is Live.
+    /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
+    /// </summary>
+    public void RemoveRecordedGoal(GoalId goalId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureLiveRecordedGoalMutation();
+
+        var goal = GetRecordedGoal(goalId);
+        _recordedGoals.Remove(goal);
+        Raise(new MatchRecordedGoalRemoved(Id, goalId, clock));
+    }
+
+    /// <summary>
+    /// Corrects an existing nominative goal attribution after Finish.
+    /// Explicit post-finish operation only — does not allow create or remove; does not mutate scores.
+    /// </summary>
+    public void CorrectRecordedGoalAfterFinish(
+        GoalId goalId,
+        MemberId scorerMemberId,
+        Side creditedSide,
+        IClock clock,
+        MemberId? assisterMemberId = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (Status != MatchStatus.Finished)
+        {
+            throw new DomainException(
+                $"Post-finish recorded goal correction is only allowed when status is Finished (current: '{Status}').",
+                MatchErrorCodes.RecordedGoalMutationNotAllowed);
+        }
+
+        ApplyRecordedGoalCorrection(goalId, scorerMemberId, creditedSide, assisterMemberId, clock);
+    }
+
+    /// <summary>
+    /// Returns whether the recorded goal is an own goal (scorer's sheet side differs from credited side).
+    /// Derived — not stored on <see cref="RecordedGoal"/>.
+    /// </summary>
+    public bool IsOwnGoal(RecordedGoal goal)
+    {
+        ArgumentNullException.ThrowIfNull(goal);
+        return GetDeclaredParticipation(goal.ScorerMemberId).Side != goal.CreditedSide;
+    }
+
+    private void ApplyRecordedGoalCorrection(
+        GoalId goalId,
+        MemberId scorerMemberId,
+        Side creditedSide,
+        MemberId? assisterMemberId,
+        IClock clock)
+    {
+        EnsureValidRecordedGoalAttribution(scorerMemberId, creditedSide, assisterMemberId);
+
+        var goal = GetRecordedGoal(goalId);
+        if (goal.ScorerMemberId.Equals(scorerMemberId)
+            && goal.CreditedSide == creditedSide
+            && Equals(goal.AssisterMemberId, assisterMemberId))
+        {
+            return;
+        }
+
+        goal.Correct(scorerMemberId, creditedSide, assisterMemberId);
+        Raise(new MatchRecordedGoalChanged(
+            Id, goal.Id, scorerMemberId, creditedSide, assisterMemberId, clock));
+    }
+
+    private void EnsureValidRecordedGoalAttribution(
+        MemberId scorerMemberId,
+        Side creditedSide,
+        MemberId? assisterMemberId)
+    {
+        if (!Enum.IsDefined(creditedSide))
+        {
+            throw new DomainException(
+                $"Unknown match side '{creditedSide}'.",
+                MatchErrorCodes.InvalidSide);
+        }
+
+        var scorerParticipation = GetDeclaredParticipation(scorerMemberId);
+
+        if (assisterMemberId is { } assister)
+        {
+            if (assister.Equals(scorerMemberId))
+            {
+                throw new DomainException(
+                    "Assister cannot be the same member as the scorer.",
+                    MatchErrorCodes.AssisterSameAsScorer);
+            }
+
+            _ = GetDeclaredParticipation(assister);
+
+            if (scorerParticipation.Side != creditedSide)
+            {
+                throw new DomainException(
+                    "Assister is not allowed on an own goal (credited side differs from scorer sheet side).",
+                    MatchErrorCodes.AssisterNotAllowedOnOwnGoal);
+            }
+        }
+    }
+
+    private void EnsureLiveRecordedGoalMutation()
+    {
+        if (Status != MatchStatus.Live)
+        {
+            throw new DomainException(
+                $"Recorded goal create/correct/remove is only allowed while Live (current: '{Status}').",
+                MatchErrorCodes.RecordedGoalMutationNotAllowed);
+        }
+    }
+
+    private RecordedGoal GetRecordedGoal(GoalId goalId) =>
+        _recordedGoals.FirstOrDefault(goal => goal.Id.Equals(goalId))
+        ?? throw new DomainException(
+            $"Recorded goal '{goalId}' was not found on match '{Id}'.",
+            MatchErrorCodes.RecordedGoalNotFound);
 
     private DeclaredParticipation GetDeclaredParticipation(MemberId memberId) =>
         _declaredParticipations.FirstOrDefault(participation => participation.Id.Equals(memberId))

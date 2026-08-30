@@ -70,4 +70,25 @@ public static class MatchErrorCodes
     /// Gets the code when the running score cannot be mutated in the current status.
     /// </summary>
     public const string RunningScoreImmutable = "Match.RunningScoreImmutable";
+
+    /// <summary>
+    /// Gets the code when a nominative goal mutation is not allowed in the current status
+    /// (or when a non-correction operation is attempted after Finish).
+    /// </summary>
+    public const string RecordedGoalMutationNotAllowed = "Match.RecordedGoalMutationNotAllowed";
+
+    /// <summary>
+    /// Gets the code when a recorded goal is not found on the match.
+    /// </summary>
+    public const string RecordedGoalNotFound = "Match.RecordedGoalNotFound";
+
+    /// <summary>
+    /// Gets the code when an assister is supplied for an own goal (CSC).
+    /// </summary>
+    public const string AssisterNotAllowedOnOwnGoal = "Match.AssisterNotAllowedOnOwnGoal";
+
+    /// <summary>
+    /// Gets the code when the assister member identity equals the scorer.
+    /// </summary>
+    public const string AssisterSameAsScorer = "Match.AssisterSameAsScorer";
 }

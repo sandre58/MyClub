@@ -82,6 +82,11 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .HasField("_declaredParticipations")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(match => match.RecordedGoals, ConfigureRecordedGoals);
+        builder.Navigation(nameof(Match.RecordedGoals))
+            .HasField("_recordedGoals")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne<Competition>()
             .WithMany()
             .HasForeignKey(match => match.CompetitionId)
@@ -125,5 +130,43 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .IsRequired();
 
         participations.HasIndex("match_id", "SortOrder").IsUnique();
+    }
+
+    private static void ConfigureRecordedGoals(OwnedNavigationBuilder<Match, RecordedGoal> goals)
+    {
+        goals.ToTable("match_recorded_goals");
+        goals.WithOwner().HasForeignKey("match_id");
+        goals.HasKey(goal => goal.Id);
+
+        goals.Property(goal => goal.Id)
+            .HasColumnName("id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<GoalId>());
+
+        goals.Property(goal => goal.ScorerMemberId)
+            .HasColumnName("scorer_member_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<MemberId>())
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        goals.Property(goal => goal.CreditedSide)
+            .HasColumnName("credited_side")
+            .HasConversion<int>()
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        goals.Property(goal => goal.AssisterMemberId)
+            .HasColumnName("assister_member_id")
+            .HasColumnType("uuid")
+            .IsRequired(false)
+            .HasConversion(new GuidTypedIdConverter<MemberId>())
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        goals.Property<int>("SortOrder")
+            .HasColumnName("sort_order")
+            .IsRequired();
+
+        goals.HasIndex("match_id", "SortOrder").IsUnique();
     }
 }

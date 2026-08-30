@@ -200,6 +200,104 @@ public sealed class MatchPersistenceTests
     }
 
     [Fact]
+    public async Task Recorded_goals_round_trip_with_order_assister_own_goal_and_correctionAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var dupont = MemberId.New();
+        var martin = MemberId.New();
+        var rossi = MemberId.New();
+        match.AddDeclaredParticipation(dupont, Side.Home, CompositionStatus.Starter, _clock);
+        match.AddDeclaredParticipation(martin, Side.Home, CompositionStatus.Bench, _clock);
+        match.AddDeclaredParticipation(rossi, Side.Away, CompositionStatus.Starter, _clock);
+        match.Start(_clock);
+
+        var withAssister = match.RecordGoal(dupont, Side.Home, _clock, assisterMemberId: martin);
+        var ownGoal = match.RecordGoal(dupont, Side.Away, _clock);
+        var removed = match.RecordGoal(rossi, Side.Away, _clock);
+        match.RemoveRecordedGoal(removed.Id, _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new MatchRepository(context);
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.RecordedGoals.Select(g => g.Id).Should().Equal(withAssister.Id, ownGoal.Id);
+            loaded.RecordedGoals[0].ScorerMemberId.Should().Be(dupont);
+            loaded.RecordedGoals[0].CreditedSide.Should().Be(Side.Home);
+            loaded.RecordedGoals[0].AssisterMemberId.Should().Be(martin);
+            loaded.RecordedGoals[1].CreditedSide.Should().Be(Side.Away);
+            loaded.RecordedGoals[1].AssisterMemberId.Should().BeNull();
+            loaded.IsOwnGoal(loaded.RecordedGoals[1]).Should().BeTrue();
+            loaded.RunningScore.Should().Be(new RunningScore(0, 0));
+
+            loaded.CorrectRecordedGoal(withAssister.Id, martin, Side.Home, _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.RecordedGoals.Should().HaveCount(2);
+            var corrected = reloaded.RecordedGoals.Single(g => g.Id == withAssister.Id);
+            corrected.ScorerMemberId.Should().Be(martin);
+            corrected.AssisterMemberId.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public async Task Finish_keeps_recorded_goals_and_allows_after_finish_correction_round_tripAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var dupont = MemberId.New();
+        var martin = MemberId.New();
+        match.AddDeclaredParticipation(dupont, Side.Home, CompositionStatus.Starter, _clock);
+        match.AddDeclaredParticipation(martin, Side.Home, CompositionStatus.Bench, _clock);
+        match.Start(_clock);
+        var goal = match.RecordGoal(dupont, Side.Home, _clock);
+        match.SetRunningScore(new RunningScore(1, 0), _clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new MatchRepository(context);
+            var loaded = await repository.GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.Status.Should().Be(MatchStatus.Finished);
+            loaded.RecordedGoals.Should().ContainSingle().Which.Id.Should().Be(goal.Id);
+            loaded.Result!.Score.Should().Be(new Score(2, 0));
+            loaded.RunningScore.Should().Be(new RunningScore(1, 0));
+
+            loaded.CorrectRecordedGoalAfterFinish(goal.Id, martin, Side.Home, _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.RecordedGoals.Single().ScorerMemberId.Should().Be(martin);
+            reloaded.Result!.Score.Should().Be(new Score(2, 0));
+        }
+    }
+
+    [Fact]
     public async Task Finish_keeps_declared_participations_after_reloadAsync()
     {
         var databaseName = Guid.NewGuid().ToString();
