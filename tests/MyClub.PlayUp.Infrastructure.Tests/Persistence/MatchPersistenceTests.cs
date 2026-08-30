@@ -254,7 +254,7 @@ public sealed class MatchPersistenceTests
     }
 
     [Fact]
-    public async Task Finish_keeps_recorded_goals_and_allows_after_finish_correction_round_tripAsync()
+    public async Task Finish_keeps_recorded_goals_and_allows_correction_round_tripAsync()
     {
         var databaseName = Guid.NewGuid().ToString();
         var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
@@ -284,7 +284,7 @@ public sealed class MatchPersistenceTests
             loaded.Result!.Score.Should().Be(new Score(2, 0));
             loaded.RunningScore.Should().Be(new RunningScore(1, 0));
 
-            loaded.CorrectRecordedGoalAfterFinish(goal.Id, martin, Side.Home, _clock);
+            loaded.CorrectRecordedGoal(goal.Id, martin, Side.Home, _clock);
             await ((IUnitOfWork)context).SaveChangesAsync();
         }
 

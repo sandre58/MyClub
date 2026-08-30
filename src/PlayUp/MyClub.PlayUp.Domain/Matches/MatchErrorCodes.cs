@@ -73,7 +73,7 @@ public static class MatchErrorCodes
 
     /// <summary>
     /// Gets the code when a nominative goal mutation is not allowed in the current status
-    /// (or when a non-correction operation is attempted after Finish).
+    /// (or when create/remove is attempted after Finish with an observed Live).
     /// </summary>
     public const string RecordedGoalMutationNotAllowed = "Match.RecordedGoalMutationNotAllowed";
 
@@ -91,4 +91,9 @@ public static class MatchErrorCodes
     /// Gets the code when the assister member identity equals the scorer.
     /// </summary>
     public const string AssisterSameAsScorer = "Match.AssisterSameAsScorer";
+
+    /// <summary>
+    /// Gets the code when removing a declared participation that is still referenced by a recorded goal.
+    /// </summary>
+    public const string ParticipationReferencedByRecordedGoal = "Match.ParticipationReferencedByRecordedGoal";
 }

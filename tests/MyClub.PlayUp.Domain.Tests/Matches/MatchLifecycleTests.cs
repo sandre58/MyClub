@@ -150,23 +150,87 @@ public sealed class MatchLifecycleTests
     }
 
     [Fact]
-    public void Finish_from_Scheduled_Postponed_or_Cancelled_is_rejected()
+    public void Finish_from_Scheduled_records_result_without_running_score()
     {
-        // Arrange
-        var scheduled = CreateScheduled();
-        var postponed = CreateScheduled();
-        postponed.Postpone(_clock);
+        var match = CreateScheduled();
+        match.ClearDomainEvents();
+        var result = new MatchResult(ResultType.Played, new Score(2, 1));
+
+        match.Finish(result, _clock);
+
+        match.Status.Should().Be(MatchStatus.Finished);
+        match.Result.Should().Be(result);
+        match.RunningScore.Should().BeNull();
+        match.HasObservedLive.Should().BeFalse();
+        match.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<MatchFinished>();
+    }
+
+    [Fact]
+    public void Finish_from_Postponed_records_result_without_running_score()
+    {
+        var match = CreateScheduled();
+        match.Postpone(_clock);
+        match.ClearDomainEvents();
+        var result = new MatchResult(ResultType.Played, new Score(2, 1));
+
+        match.Finish(result, _clock);
+
+        match.Status.Should().Be(MatchStatus.Finished);
+        match.Result.Should().Be(result);
+        match.RunningScore.Should().BeNull();
+        match.HasObservedLive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Finish_from_Cancelled_is_rejected()
+    {
         var cancelled = CreateScheduled();
         cancelled.Cancel(_clock);
         var result = new MatchResult(ResultType.Played, new Score(1, 0));
 
-        // Act & Assert
-        ((Action)(() => scheduled.Finish(result, _clock))).Should().Throw<DomainException>()
-            .Which.Code.Should().Be(MatchErrorCodes.InvalidTransition);
-        ((Action)(() => postponed.Finish(result, _clock))).Should().Throw<DomainException>()
-            .Which.Code.Should().Be(MatchErrorCodes.InvalidTransition);
-        ((Action)(() => cancelled.Finish(result, _clock))).Should().Throw<DomainException>()
-            .Which.Code.Should().Be(MatchErrorCodes.InvalidTransition);
+        var act = () => cancelled.Finish(result, _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.InvalidTransition);
+    }
+
+    [Fact]
+    public void CorrectMatchResult_on_Finished_replaces_result_without_status_or_running_score_change()
+    {
+        var match = CreateFinished();
+        var previousRunning = match.RunningScore;
+        match.ClearDomainEvents();
+        var corrected = new MatchResult(ResultType.Played, new Score(3, 1));
+
+        match.CorrectMatchResult(corrected, _clock);
+
+        match.Status.Should().Be(MatchStatus.Finished);
+        match.Result.Should().Be(corrected);
+        match.RunningScore.Should().Be(previousRunning);
+        match.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<MatchResultCorrected>()
+            .Which.Result.Should().Be(corrected);
+    }
+
+    [Fact]
+    public void CorrectMatchResult_noop_when_identical_raises_no_event()
+    {
+        var match = CreateFinished();
+        var current = match.Result!;
+        match.ClearDomainEvents();
+
+        match.CorrectMatchResult(current, _clock);
+
+        match.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void CorrectMatchResult_before_Finished_is_rejected()
+    {
+        var live = CreateLive();
+        var result = new MatchResult(ResultType.Played, new Score(1, 0));
+
+        var act = () => live.CorrectMatchResult(result, _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.InvalidTransition);
     }
 
     [Fact]

@@ -111,13 +111,15 @@ public sealed class MatchRecordedGoalsTests
     }
 
     [Fact]
-    public void Case8_record_goal_rejected_when_scheduled()
+    public void Case8_record_goal_allowed_when_scheduled()
     {
         var match = CreateMatchWithSheet();
 
-        var act = () => match.RecordGoal(_dupont, Side.Home, _clock);
+        var goal = match.RecordGoal(_dupont, Side.Home, _clock);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.RecordedGoalMutationNotAllowed);
+        goal.ScorerMemberId.Should().Be(_dupont);
+        match.RecordedGoals.Should().ContainSingle();
+        match.HasObservedLive.Should().BeFalse();
     }
 
     [Fact]
@@ -135,23 +137,27 @@ public sealed class MatchRecordedGoalsTests
     }
 
     [Fact]
-    public void Case10_finished_rejects_normal_live_mutations()
+    public void Case10_finished_with_observed_live_rejects_create_and_remove_allows_correct()
     {
         var match = CreateLiveMatchWithSheet();
         var goal = match.RecordGoal(_dupont, Side.Home, _clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        match.ClearDomainEvents();
 
         var record = () => match.RecordGoal(_rossi, Side.Away, _clock);
-        var correct = () => match.CorrectRecordedGoal(goal.Id, _martin, Side.Home, _clock);
         var remove = () => match.RemoveRecordedGoal(goal.Id, _clock);
 
         record.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.RecordedGoalMutationNotAllowed);
-        correct.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.RecordedGoalMutationNotAllowed);
         remove.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.RecordedGoalMutationNotAllowed);
+
+        match.CorrectRecordedGoal(goal.Id, _martin, Side.Home, _clock);
+
+        goal.ScorerMemberId.Should().Be(_martin);
+        match.DomainEvents.OfType<MatchRecordedGoalChanged>().Should().ContainSingle();
     }
 
     [Fact]
-    public void Case11_finished_allows_explicit_after_finish_correction_without_score_align()
+    public void Case11_finished_with_observed_live_correct_does_not_align_scores()
     {
         var match = CreateLiveMatchWithSheet();
         var goal = match.RecordGoal(_dupont, Side.Home, _clock);
@@ -159,7 +165,7 @@ public sealed class MatchRecordedGoalsTests
         match.Finish(result, _clock);
         match.ClearDomainEvents();
 
-        match.CorrectRecordedGoalAfterFinish(goal.Id, _martin, Side.Home, _clock);
+        match.CorrectRecordedGoal(goal.Id, _martin, Side.Home, _clock);
 
         goal.ScorerMemberId.Should().Be(_martin);
         match.Result.Should().Be(result);
@@ -265,15 +271,14 @@ public sealed class MatchRecordedGoalsTests
     }
 
     [Fact]
-    public void Finished_rejects_record_and_remove_even_via_after_finish_surface_is_correction_only()
+    public void Finished_with_observed_live_correct_on_missing_goal_is_not_found()
     {
         var match = CreateLiveMatchWithSheet();
         match.Finish(new MatchResult(ResultType.Played, new Score(0, 0)), _clock);
 
-        var afterFinishOnMissing = () => match.CorrectRecordedGoalAfterFinish(
-            GoalId.New(), _dupont, Side.Home, _clock);
+        var correctMissing = () => match.CorrectRecordedGoal(GoalId.New(), _dupont, Side.Home, _clock);
 
-        afterFinishOnMissing.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.RecordedGoalNotFound);
+        correctMissing.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.RecordedGoalNotFound);
     }
 
     private Match CreateMatchWithSheet()

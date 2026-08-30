@@ -65,12 +65,21 @@ public sealed class Match : AggregateRoot<MatchId>
     public MatchResult? Result { get; private set; }
 
     /// <summary>
-    /// Gets the current running score when the match has been started; otherwise <see langword="null"/>.
+    /// Gets the observed Live running score when MyClub opened Live; otherwise <see langword="null"/>.
     /// </summary>
     /// <remarks>
-    /// Null exclusively means the match was never started. Distinct from <see cref="MatchResult.Score"/>.
+    /// Null means no Live was opened in Domain — not that the match was never played.
+    /// Distinct from <see cref="MatchResult.Score"/>. Legitimate on Finished when the result was entered without Live.
     /// </remarks>
     public RunningScore? RunningScore { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether MyClub opened a Live for this match (<see cref="RunningScore"/> is not null).
+    /// </summary>
+    /// <remarks>
+    /// Derived convenience only — not persisted. Means observed Live, not “the match was played in reality”.
+    /// </remarks>
+    public bool HasObservedLive => RunningScore is not null;
 
     /// <summary>
     /// Gets the declared composition for this match (not live on-field presence).
@@ -176,8 +185,12 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
-    /// Finishes the match with a result (Live to Finished).
+    /// Finishes the match with an official result (Scheduled, Postponed, or Live → Finished).
     /// </summary>
+    /// <remarks>
+    /// Does not open Live, does not create <see cref="RunningScore"/>.
+    /// Finished describes business state, not whether MyClub observed play.
+    /// </remarks>
     /// <param name="result">The match result.</param>
     /// <param name="clock">The clock used for domain events.</param>
     public void Finish(MatchResult result, IClock clock)
@@ -192,11 +205,44 @@ public sealed class Match : AggregateRoot<MatchId>
                 MatchErrorCodes.ResultAlreadyRecorded);
         }
 
-        EnsureStatus(MatchStatus.Live, "Match can only be finished from Live.");
+        if (Status is not (MatchStatus.Scheduled or MatchStatus.Postponed or MatchStatus.Live))
+        {
+            throw new DomainException(
+                $"Match can only be finished from Scheduled, Postponed, or Live (current: '{Status}').",
+                MatchErrorCodes.InvalidTransition);
+        }
 
         Status = MatchStatus.Finished;
         Result = result;
         Raise(new MatchFinished(Id, result.Type, result.Score, clock));
+    }
+
+    /// <summary>
+    /// Replaces the official result of a finished match (administrative correction).
+    /// </summary>
+    /// <remarks>
+    /// No-op when the new value equals the current result. Does not change Status,
+    /// <see cref="RunningScore"/>, or <see cref="RecordedGoals"/>.
+    /// </remarks>
+    public void CorrectMatchResult(MatchResult result, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (Status != MatchStatus.Finished || Result is null)
+        {
+            throw new DomainException(
+                $"Match result can only be corrected when status is Finished (current: '{Status}').",
+                MatchErrorCodes.InvalidTransition);
+        }
+
+        if (Result.Equals(result))
+        {
+            return;
+        }
+
+        Result = result;
+        Raise(new MatchResultCorrected(Id, result, clock));
     }
 
     /// <summary>
@@ -282,6 +328,15 @@ public sealed class Match : AggregateRoot<MatchId>
         EnsureCompositionMutable();
 
         var participation = GetDeclaredParticipation(memberId);
+        if (_recordedGoals.Exists(goal =>
+                goal.ScorerMemberId.Equals(memberId)
+                || (goal.AssisterMemberId is { } assister && assister.Equals(memberId))))
+        {
+            throw new DomainException(
+                $"Declared participation '{memberId}' is referenced by a recorded goal on match '{Id}'.",
+                MatchErrorCodes.ParticipationReferencedByRecordedGoal);
+        }
+
         _declaredParticipations.Remove(participation);
         Raise(new MatchDeclaredParticipationRemoved(Id, memberId, clock));
     }
@@ -324,9 +379,13 @@ public sealed class Match : AggregateRoot<MatchId>
         _declaredParticipations.Exists(participation => participation.Id.Equals(memberId));
 
     /// <summary>
-    /// Records a nominative goal attribution while the match is Live.
+    /// Records a nominative goal attribution.
     /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
     /// </summary>
+    /// <remarks>
+    /// Allowed when Scheduled, Postponed, Live, or Finished without observed Live.
+    /// Forbidden when Finished with observed Live, or Cancelled.
+    /// </remarks>
     public RecordedGoal RecordGoal(
         MemberId scorerMemberId,
         Side creditedSide,
@@ -335,7 +394,7 @@ public sealed class Match : AggregateRoot<MatchId>
         RecordGoal(GoalId.New(), scorerMemberId, creditedSide, clock, assisterMemberId);
 
     /// <summary>
-    /// Records a nominative goal attribution while the match is Live, with an explicit identity.
+    /// Records a nominative goal attribution with an explicit identity.
     /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
     /// </summary>
     public RecordedGoal RecordGoal(
@@ -346,7 +405,7 @@ public sealed class Match : AggregateRoot<MatchId>
         MemberId? assisterMemberId = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureLiveRecordedGoalMutation();
+        EnsureRecordedGoalCreateOrRemoveAllowed();
         EnsureValidRecordedGoalAttribution(scorerMemberId, creditedSide, assisterMemberId);
 
         var goal = new RecordedGoal(goalId, scorerMemberId, creditedSide, assisterMemberId);
@@ -357,9 +416,13 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
-    /// Corrects an existing nominative goal attribution while the match is Live.
+    /// Corrects an existing nominative goal attribution.
     /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
     /// </summary>
+    /// <remarks>
+    /// Allowed while Scheduled, Postponed, Live, Finished (with or without observed Live).
+    /// Forbidden when Cancelled.
+    /// </remarks>
     public void CorrectRecordedGoal(
         GoalId goalId,
         MemberId scorerMemberId,
@@ -368,45 +431,26 @@ public sealed class Match : AggregateRoot<MatchId>
         MemberId? assisterMemberId = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureLiveRecordedGoalMutation();
+        EnsureRecordedGoalCorrectAllowed();
         ApplyRecordedGoalCorrection(goalId, scorerMemberId, creditedSide, assisterMemberId, clock);
     }
 
     /// <summary>
-    /// Removes a nominative goal attribution while the match is Live.
+    /// Removes a nominative goal attribution.
     /// Does not mutate <see cref="RunningScore"/> or <see cref="Result"/>.
     /// </summary>
+    /// <remarks>
+    /// Allowed when Scheduled, Postponed, Live, or Finished without observed Live.
+    /// Forbidden when Finished with observed Live, or Cancelled.
+    /// </remarks>
     public void RemoveRecordedGoal(GoalId goalId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureLiveRecordedGoalMutation();
+        EnsureRecordedGoalCreateOrRemoveAllowed();
 
         var goal = GetRecordedGoal(goalId);
         _recordedGoals.Remove(goal);
         Raise(new MatchRecordedGoalRemoved(Id, goalId, clock));
-    }
-
-    /// <summary>
-    /// Corrects an existing nominative goal attribution after Finish.
-    /// Explicit post-finish operation only — does not allow create or remove; does not mutate scores.
-    /// </summary>
-    public void CorrectRecordedGoalAfterFinish(
-        GoalId goalId,
-        MemberId scorerMemberId,
-        Side creditedSide,
-        IClock clock,
-        MemberId? assisterMemberId = null)
-    {
-        ArgumentNullException.ThrowIfNull(clock);
-
-        if (Status != MatchStatus.Finished)
-        {
-            throw new DomainException(
-                $"Post-finish recorded goal correction is only allowed when status is Finished (current: '{Status}').",
-                MatchErrorCodes.RecordedGoalMutationNotAllowed);
-        }
-
-        ApplyRecordedGoalCorrection(goalId, scorerMemberId, creditedSide, assisterMemberId, clock);
     }
 
     /// <summary>
@@ -475,14 +519,32 @@ public sealed class Match : AggregateRoot<MatchId>
         }
     }
 
-    private void EnsureLiveRecordedGoalMutation()
+    private bool CanMutateRecordedGoalsFreely =>
+        Status is MatchStatus.Scheduled or MatchStatus.Postponed or MatchStatus.Live
+        || (Status == MatchStatus.Finished && !HasObservedLive);
+
+    private void EnsureRecordedGoalCreateOrRemoveAllowed()
     {
-        if (Status != MatchStatus.Live)
+        if (!CanMutateRecordedGoalsFreely)
         {
             throw new DomainException(
-                $"Recorded goal create/correct/remove is only allowed while Live (current: '{Status}').",
+                $"Recorded goal create/remove is not allowed when status is '{Status}'"
+                + (HasObservedLive ? " with an observed Live." : "."),
                 MatchErrorCodes.RecordedGoalMutationNotAllowed);
         }
+    }
+
+    private void EnsureRecordedGoalCorrectAllowed()
+    {
+        if (CanMutateRecordedGoalsFreely
+            || (Status == MatchStatus.Finished && HasObservedLive))
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Recorded goal correction is not allowed when status is '{Status}'.",
+            MatchErrorCodes.RecordedGoalMutationNotAllowed);
     }
 
     private RecordedGoal GetRecordedGoal(GoalId goalId) =>
@@ -499,12 +561,20 @@ public sealed class Match : AggregateRoot<MatchId>
 
     private void EnsureCompositionMutable()
     {
-        if (Status is not (MatchStatus.Scheduled or MatchStatus.Postponed))
+        if (Status is MatchStatus.Scheduled or MatchStatus.Postponed)
         {
-            throw new DomainException(
-                $"Match composition cannot be mutated when status is '{Status}'.",
-                MatchErrorCodes.CompositionImmutable);
+            return;
         }
+
+        if (Status == MatchStatus.Finished && !HasObservedLive)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Match composition cannot be mutated when status is '{Status}'"
+            + (HasObservedLive ? " with an observed Live." : "."),
+            MatchErrorCodes.CompositionImmutable);
     }
 
     private void EnsureJerseyAvailable(Side side, int? jerseyNumber, MemberId? excludingMemberId)
