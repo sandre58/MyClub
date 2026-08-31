@@ -7,6 +7,7 @@
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches.Events;
+using MyClub.PlayUp.Domain.Rules;
 
 namespace MyClub.PlayUp.Domain.Matches;
 
@@ -19,6 +20,7 @@ public sealed class Match : AggregateRoot<MatchId>
     private readonly List<DeclaredParticipation> _declaredParticipations = [];
     private readonly List<RecordedGoal> _recordedGoals = [];
     private readonly List<RecordedSubstitution> _recordedSubstitutions = [];
+    private readonly List<RecordedDisciplinaryEvent> _recordedDisciplinaryEvents = [];
 
     private Match(
         MatchId id,
@@ -99,6 +101,12 @@ public sealed class Match : AggregateRoot<MatchId>
     /// Order is the business recording order preserved by the Domain and used to derive on-field presence.
     /// </remarks>
     public IReadOnlyList<RecordedSubstitution> RecordedSubstitutions => _recordedSubstitutions.AsReadOnly();
+
+    /// <summary>
+    /// Gets the disciplinary facts recorded on this match (no Domain consequences in V1).
+    /// </summary>
+    public IReadOnlyList<RecordedDisciplinaryEvent> RecordedDisciplinaryEvents =>
+        _recordedDisciplinaryEvents.AsReadOnly();
 
     /// <summary>
     /// Creates a new match in Scheduled status.
@@ -355,6 +363,13 @@ public sealed class Match : AggregateRoot<MatchId>
                 MatchErrorCodes.ParticipationReferencedBySubstitution);
         }
 
+        if (_recordedDisciplinaryEvents.Exists(evt => evt.MemberId.Equals(memberId)))
+        {
+            throw new DomainException(
+                $"Declared participation '{memberId}' is referenced by a recorded disciplinary event on match '{Id}'.",
+                MatchErrorCodes.ParticipationReferencedByDisciplinaryEvent);
+        }
+
         _declaredParticipations.Remove(participation);
         Raise(new MatchDeclaredParticipationRemoved(Id, memberId, clock));
     }
@@ -580,6 +595,71 @@ public sealed class Match : AggregateRoot<MatchId>
         Raise(new MatchRecordedSubstitutionRemoved(Id, substitutionId, clock));
     }
 
+    /// <summary>
+    /// Records a disciplinary fact. Does not mutate presence, substitutions, scores, or result.
+    /// AllowedTypes authorization is an Application concern (Match does not load Competition).
+    /// </summary>
+    public RecordedDisciplinaryEvent RecordDisciplinaryEvent(
+        MemberId memberId,
+        DisciplinaryType type,
+        IClock clock) =>
+        RecordDisciplinaryEvent(DisciplinaryEventId.New(), memberId, type, clock);
+
+    /// <summary>
+    /// Records a disciplinary fact with an explicit identity.
+    /// </summary>
+    public RecordedDisciplinaryEvent RecordDisciplinaryEvent(
+        DisciplinaryEventId disciplinaryEventId,
+        MemberId memberId,
+        DisciplinaryType type,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDisciplinaryEventCreateOrRemoveAllowed();
+        EnsureValidDisciplinaryEvent(memberId, type);
+
+        var evt = new RecordedDisciplinaryEvent(disciplinaryEventId, memberId, type);
+        _recordedDisciplinaryEvents.Add(evt);
+        Raise(new MatchRecordedDisciplinaryEventAdded(Id, evt.Id, memberId, type, clock));
+        return evt;
+    }
+
+    /// <summary>
+    /// Corrects an existing disciplinary fact. Does not produce Domain consequences.
+    /// </summary>
+    public void CorrectRecordedDisciplinaryEvent(
+        DisciplinaryEventId disciplinaryEventId,
+        MemberId memberId,
+        DisciplinaryType type,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDisciplinaryEventCorrectAllowed();
+        EnsureValidDisciplinaryEvent(memberId, type);
+
+        var evt = GetRecordedDisciplinaryEvent(disciplinaryEventId);
+        if (evt.MemberId.Equals(memberId) && evt.Type == type)
+        {
+            return;
+        }
+
+        evt.Correct(memberId, type);
+        Raise(new MatchRecordedDisciplinaryEventChanged(Id, evt.Id, memberId, type, clock));
+    }
+
+    /// <summary>
+    /// Removes a disciplinary fact.
+    /// </summary>
+    public void RemoveRecordedDisciplinaryEvent(DisciplinaryEventId disciplinaryEventId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDisciplinaryEventCreateOrRemoveAllowed();
+
+        var evt = GetRecordedDisciplinaryEvent(disciplinaryEventId);
+        _recordedDisciplinaryEvents.Remove(evt);
+        Raise(new MatchRecordedDisciplinaryEventRemoved(Id, disciplinaryEventId, clock));
+    }
+
     private void ApplyRecordedGoalCorrection(
         GoalId goalId,
         MemberId scorerMemberId,
@@ -735,12 +815,9 @@ public sealed class Match : AggregateRoot<MatchId>
             [Side.Away] = []
         };
 
-        foreach (var participation in _declaredParticipations)
+        foreach (var participation in _declaredParticipations.Where(participation => participation.CompositionStatus == CompositionStatus.Starter))
         {
-            if (participation.CompositionStatus == CompositionStatus.Starter)
-            {
-                onFieldBySide[participation.Side].Add(participation.Id);
-            }
+            onFieldBySide[participation.Side].Add(participation.Id);
         }
 
         foreach (var substitution in sequence)
@@ -806,4 +883,50 @@ public sealed class Match : AggregateRoot<MatchId>
             throw new DomainException(message, MatchErrorCodes.InvalidTransition);
         }
     }
+
+    private bool CanMutateDisciplinaryEventsFreely =>
+        Status is MatchStatus.Scheduled or MatchStatus.Postponed or MatchStatus.Live
+        || (Status == MatchStatus.Finished && !HasObservedLive);
+
+    private void EnsureDisciplinaryEventCreateOrRemoveAllowed()
+    {
+        if (!CanMutateDisciplinaryEventsFreely)
+        {
+            throw new DomainException(
+                $"Disciplinary event create/remove is not allowed when status is '{Status}'"
+                + (HasObservedLive ? " with an observed Live." : "."),
+                MatchErrorCodes.DisciplinaryEventMutationNotAllowed);
+        }
+    }
+
+    private void EnsureDisciplinaryEventCorrectAllowed()
+    {
+        if (CanMutateDisciplinaryEventsFreely
+            || (Status == MatchStatus.Finished && HasObservedLive))
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Disciplinary event correction is not allowed when status is '{Status}'.",
+            MatchErrorCodes.DisciplinaryEventMutationNotAllowed);
+    }
+
+    private void EnsureValidDisciplinaryEvent(MemberId memberId, DisciplinaryType type)
+    {
+        if (!Enum.IsDefined(type))
+        {
+            throw new DomainException(
+                $"Unknown disciplinary type '{type}'.",
+                MatchErrorCodes.InvalidDisciplinaryType);
+        }
+
+        _ = GetDeclaredParticipation(memberId);
+    }
+
+    private RecordedDisciplinaryEvent GetRecordedDisciplinaryEvent(DisciplinaryEventId disciplinaryEventId) =>
+        _recordedDisciplinaryEvents.FirstOrDefault(evt => evt.Id.Equals(disciplinaryEventId))
+        ?? throw new DomainException(
+            $"Recorded disciplinary event '{disciplinaryEventId}' was not found on match '{Id}'.",
+            MatchErrorCodes.DisciplinaryEventNotFound);
 }

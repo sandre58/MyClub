@@ -49,6 +49,7 @@ internal sealed class MatchOrderedCollectionsInterceptor : SaveChangesIntercepto
             SyncSortOrder(context, match.DeclaredParticipations);
             SyncSortOrder(context, match.RecordedGoals);
             SyncSortOrder(context, match.RecordedSubstitutions);
+            SyncSortOrder(context, match.RecordedDisciplinaryEvents);
         }
 
         context.ChangeTracker.DetectChanges();

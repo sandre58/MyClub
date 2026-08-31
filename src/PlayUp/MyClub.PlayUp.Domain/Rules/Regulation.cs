@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Competition regulation value object: entry, match, and standing rules.
+/// Competition regulation value object: entry, match, standing, and disciplinary rules.
 /// Immutable; replace as a whole on change.
 /// </summary>
 public sealed record Regulation
@@ -18,7 +18,15 @@ public sealed record Regulation
     /// <param name="entryRules">Registration constraints.</param>
     /// <param name="matchRules">How an individual match is played.</param>
     /// <param name="standingRules">How standings are calculated.</param>
-    public Regulation(EntryRules entryRules, MatchRules matchRules, StandingRules standingRules)
+    /// <param name="disciplinaryRules">
+    /// Disciplinary types allowed for the competition (V1: AllowedTypes only).
+    /// When omitted, defaults to <see cref="DisciplinaryRules.None"/> (no events authorized).
+    /// </param>
+    public Regulation(
+        EntryRules entryRules,
+        MatchRules matchRules,
+        StandingRules standingRules,
+        DisciplinaryRules? disciplinaryRules = null)
     {
         ArgumentNullException.ThrowIfNull(entryRules);
         ArgumentNullException.ThrowIfNull(matchRules);
@@ -27,6 +35,7 @@ public sealed record Regulation
         EntryRules = entryRules;
         MatchRules = matchRules;
         StandingRules = standingRules;
+        DisciplinaryRules = disciplinaryRules ?? DisciplinaryRules.None;
     }
 
     /// <summary>
@@ -45,6 +54,11 @@ public sealed record Regulation
     public StandingRules StandingRules { get; }
 
     /// <summary>
+    /// Gets the disciplinary rules (V1: AllowedTypes catalogue only; no consequences).
+    /// </summary>
+    public DisciplinaryRules DisciplinaryRules { get; }
+
+    /// <summary>
     /// Returns an independent copy (new nested value-object instances).
     /// </summary>
     /// <returns>A deep copy of this regulation.</returns>
@@ -52,7 +66,8 @@ public sealed record Regulation
         new(
             new EntryRules(EntryRules.MinimumTeams, EntryRules.MaximumTeams),
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules));
+            CloneStandingRules(StandingRules),
+            CloneDisciplinaryRules(DisciplinaryRules));
 
     private static MatchRules CloneMatchRules(MatchRules source)
     {
@@ -77,4 +92,7 @@ public sealed record Regulation
         new(
             new PointsPolicy(source.Points.WinPoints, source.Points.DrawPoints, source.Points.LossPoints),
             [..source.RankingCriteria]);
+
+    private static DisciplinaryRules CloneDisciplinaryRules(DisciplinaryRules source) =>
+        new([..source.AllowedTypes]);
 }

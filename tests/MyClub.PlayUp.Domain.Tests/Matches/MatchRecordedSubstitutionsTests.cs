@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Matches.Events;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
 
@@ -104,12 +105,10 @@ public sealed class MatchRecordedSubstitutionsTests
     }
 
     [Fact]
-    public void B3_out_only_or_in_only_is_not_a_substitution_api()
-    {
+    public void B3_out_only_or_in_only_is_not_a_substitution_api() =>
         // Atomic couple is enforced by the API surface (no single-member operation).
         typeof(Match).GetMethod(nameof(Match.RecordSubstitution), [typeof(MemberId), typeof(Side), typeof(IClock)])
             .Should().BeNull();
-    }
 
     [Fact]
     public void C1_cross_side_substitution_is_rejected()
@@ -301,11 +300,15 @@ public sealed class MatchRecordedSubstitutionsTests
     }
 
     [Fact]
-    public void E2_no_automatic_substitution_surface_for_cards()
+    public void E2_red_card_does_not_create_automatic_substitution()
     {
-        typeof(Match).GetMethods().Select(m => m.Name)
-            .Should().NotContain(name => name.Contains("Card", StringComparison.Ordinal)
-                                         || name.Contains("Disciplinary", StringComparison.Ordinal));
+        var match = CreateLiveWithHomeSheet();
+        match.ClearDomainEvents();
+
+        match.RecordDisciplinaryEvent(_dupont, DisciplinaryType.Red, _clock);
+
+        match.RecordedSubstitutions.Should().BeEmpty();
+        match.DomainEvents.OfType<MatchRecordedSubstitutionAdded>().Should().BeEmpty();
     }
 
     [Fact]

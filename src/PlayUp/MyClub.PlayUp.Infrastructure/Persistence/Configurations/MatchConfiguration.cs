@@ -92,6 +92,11 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .HasField("_recordedSubstitutions")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(match => match.RecordedDisciplinaryEvents, ConfigureRecordedDisciplinaryEvents);
+        builder.Navigation(nameof(Match.RecordedDisciplinaryEvents))
+            .HasField("_recordedDisciplinaryEvents")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne<Competition>()
             .WithMany()
             .HasForeignKey(match => match.CompetitionId)
@@ -211,5 +216,37 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
             .IsRequired();
 
         substitutions.HasIndex("match_id", "SortOrder").IsUnique();
+    }
+
+    private static void ConfigureRecordedDisciplinaryEvents(
+        OwnedNavigationBuilder<Match, RecordedDisciplinaryEvent> events)
+    {
+        events.ToTable("match_recorded_disciplinary_events");
+        events.WithOwner().HasForeignKey("match_id");
+        events.HasKey(evt => evt.Id);
+
+        events.Property(evt => evt.Id)
+            .HasColumnName("id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<DisciplinaryEventId>());
+
+        events.Property(evt => evt.MemberId)
+            .HasColumnName("member_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<MemberId>())
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        events.Property(evt => evt.Type)
+            .HasColumnName("type")
+            .HasConversion<int>()
+            .IsRequired()
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        events.Property<int>("SortOrder")
+            .HasColumnName("sort_order")
+            .IsRequired();
+
+        events.HasIndex("match_id", "SortOrder").IsUnique();
     }
 }

@@ -65,4 +65,9 @@ public static class RulesErrorCodes
     /// Gets the code when placement award rules are invalid.
     /// </summary>
     public const string PlacementAwardRulesInvalid = "Rules.PlacementAwardRulesInvalid";
+
+    /// <summary>
+    /// Gets the code when disciplinary rules (AllowedTypes) are invalid.
+    /// </summary>
+    public const string DisciplinaryRulesInvalid = "Rules.DisciplinaryRulesInvalid";
 }

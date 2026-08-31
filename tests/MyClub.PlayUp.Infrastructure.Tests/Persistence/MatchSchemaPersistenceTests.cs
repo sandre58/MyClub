@@ -47,10 +47,14 @@ public sealed class MatchSchemaPersistenceTests(PostgresFixture fixture)
             "home_entry_id",
             "away_entry_id",
             "status",
-            "result");
+            "result",
+            "running_score");
         columns.Single(column => column.Name == "result").DataType.Should().Be("jsonb");
         columns.Single(column => column.Name == "result").IsNullable.Should().Be("YES");
-        columns.Where(column => column.Name != "result").Should().OnlyContain(column => column.IsNullable == "NO");
+        columns.Single(column => column.Name == "running_score").DataType.Should().Be("jsonb");
+        columns.Single(column => column.Name == "running_score").IsNullable.Should().Be("YES");
+        columns.Where(column => column.Name is not ("result" or "running_score"))
+            .Should().OnlyContain(column => column.IsNullable == "NO");
     }
 
     [IntegrationFact]

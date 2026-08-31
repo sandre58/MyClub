@@ -23,6 +23,7 @@ public sealed class RegulationTests
         regulation.EntryRules.MinimumTeams.Should().Be(2);
         regulation.MatchRules.Duration.DurationPerPeriod.Should().Be(45);
         regulation.StandingRules.Points.WinPoints.Should().Be(3);
+        regulation.DisciplinaryRules.Should().Be(DisciplinaryRules.None);
     }
 
     [Fact]

@@ -127,4 +127,25 @@ public static class MatchErrorCodes
     /// Gets the code when removing a declared participation that is still referenced by a recorded substitution.
     /// </summary>
     public const string ParticipationReferencedBySubstitution = "Match.ParticipationReferencedBySubstitution";
+
+    /// <summary>
+    /// Gets the code when a disciplinary event mutation is not allowed in the current status
+    /// (or when create/remove is attempted after Finish with an observed Live).
+    /// </summary>
+    public const string DisciplinaryEventMutationNotAllowed = "Match.DisciplinaryEventMutationNotAllowed";
+
+    /// <summary>
+    /// Gets the code when a recorded disciplinary event is not found on the match.
+    /// </summary>
+    public const string DisciplinaryEventNotFound = "Match.DisciplinaryEventNotFound";
+
+    /// <summary>
+    /// Gets the code when a disciplinary type value is invalid.
+    /// </summary>
+    public const string InvalidDisciplinaryType = "Match.InvalidDisciplinaryType";
+
+    /// <summary>
+    /// Gets the code when removing a declared participation that is still referenced by a disciplinary event.
+    /// </summary>
+    public const string ParticipationReferencedByDisciplinaryEvent = "Match.ParticipationReferencedByDisciplinaryEvent";
 }

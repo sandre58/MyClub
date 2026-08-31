@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Infrastructure.Persistence;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 
@@ -75,5 +74,10 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
             match,
             match.RecordedSubstitutions
                 .OrderBy(substitution => context.Entry(substitution).Property<int>("SortOrder").CurrentValue));
+
+        MatchRecordedDisciplinaryEventsAccessor.Hydrate(
+            match,
+            match.RecordedDisciplinaryEvents
+                .OrderBy(evt => context.Entry(evt).Property<int>("SortOrder").CurrentValue));
     }
 }

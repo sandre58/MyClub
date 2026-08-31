@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Infrastructure.Persistence.Converters;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
@@ -48,6 +49,36 @@ public sealed class RegulationJsonConverterTests
 
         json.Should().Contain("\"EntryRules\"");
         json.Should().Contain("\"RankingCriteria\":[0,1,2,5]");
+        json.Should().Contain("\"DisciplinaryRules\"");
         json.Should().NotContain("\"GoalDifference\"");
+    }
+
+    [Fact]
+    public void Convert_round_trips_disciplinary_allowed_types()
+    {
+        var regulation = new Regulation(
+            SampleRegulations.Standard().EntryRules,
+            SampleRegulations.Standard().MatchRules,
+            SampleRegulations.Standard().StandingRules,
+            new DisciplinaryRules([DisciplinaryType.Yellow, DisciplinaryType.White, DisciplinaryType.Red]));
+
+        var json = _converter.ConvertToProvider(regulation);
+        var restored = _converter.ConvertFromProvider(json);
+
+        restored.Should().Be(regulation);
+        restored.Should().BeOfType<Regulation>().Which.DisciplinaryRules.Allows(DisciplinaryType.White).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Convert_defaults_missing_disciplinary_rules_to_none()
+    {
+        const string legacyJson =
+            """
+            {"EntryRules":{"MinimumTeams":2,"MaximumTeams":64},"MatchRules":{"Duration":{"DurationPerPeriod":45,"NumberOfPeriods":2,"HalfTimeDuration":15},"AdministrativeResultPolicy":{"ForfeitWinnerGoals":3,"ForfeitLoserGoals":0},"ExtraTimePolicy":null,"PenaltyShootoutPolicy":null},"StandingRules":{"Points":{"WinPoints":3,"DrawPoints":1,"LossPoints":0},"RankingCriteria":[0,1,2,5]}}
+            """;
+
+        var restored = _converter.ConvertFromProvider(legacyJson);
+
+        restored.Should().BeOfType<Regulation>().Which.DisciplinaryRules.Should().Be(DisciplinaryRules.None);
     }
 }

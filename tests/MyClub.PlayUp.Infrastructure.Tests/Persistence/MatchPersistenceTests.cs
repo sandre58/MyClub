@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
@@ -461,6 +462,82 @@ public sealed class MatchPersistenceTests
             loaded.HasObservedLive.Should().BeFalse();
             loaded.RunningScore.Should().BeNull();
             loaded.RecordedSubstitutions.Should().ContainSingle().Which.Id.Should().Be(sub.Id);
+            loaded.Status.Should().Be(MatchStatus.Finished);
+        }
+    }
+
+    [Fact]
+    public async Task Recorded_disciplinary_events_round_trip_preserves_order_and_correctionAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var dupont = MemberId.New();
+        var martin = MemberId.New();
+        match.AddDeclaredParticipation(dupont, Side.Home, CompositionStatus.Starter, _clock);
+        match.AddDeclaredParticipation(martin, Side.Home, CompositionStatus.Bench, _clock);
+        match.Start(_clock);
+
+        var yellow = match.RecordDisciplinaryEvent(dupont, DisciplinaryType.Yellow, _clock);
+        var white = match.RecordDisciplinaryEvent(martin, DisciplinaryType.White, _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.RecordedDisciplinaryEvents.Select(e => e.Id).Should().Equal(yellow.Id, white.Id);
+            loaded.RecordedDisciplinaryEvents[0].Type.Should().Be(DisciplinaryType.Yellow);
+            loaded.RecordedDisciplinaryEvents[0].MemberId.Should().Be(dupont);
+            loaded.RecordedDisciplinaryEvents[1].Type.Should().Be(DisciplinaryType.White);
+            loaded.RecordedSubstitutions.Should().BeEmpty();
+            loaded.RunningScore.Should().Be(new RunningScore(0, 0));
+
+            loaded.RemoveRecordedDisciplinaryEvent(white.Id, _clock);
+            loaded.CorrectRecordedDisciplinaryEvent(yellow.Id, dupont, DisciplinaryType.Red, _clock);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            reloaded.Should().NotBeNull();
+            reloaded.RecordedDisciplinaryEvents.Should().ContainSingle();
+            reloaded.RecordedDisciplinaryEvents[0].Id.Should().Be(yellow.Id);
+            reloaded.RecordedDisciplinaryEvents[0].Type.Should().Be(DisciplinaryType.Red);
+            reloaded.RecordedSubstitutions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public async Task Finished_without_live_disciplinary_reconstruction_round_tripAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var dupont = MemberId.New();
+        match.AddDeclaredParticipation(dupont, Side.Home, CompositionStatus.Starter, _clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        var evt = match.RecordDisciplinaryEvent(dupont, DisciplinaryType.Yellow, _clock);
+        var id = match.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new MatchRepository(context).Add(match);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            loaded.Should().NotBeNull();
+            loaded.HasObservedLive.Should().BeFalse();
+            loaded.RunningScore.Should().BeNull();
+            loaded.RecordedDisciplinaryEvents.Should().ContainSingle().Which.Id.Should().Be(evt.Id);
             loaded.Status.Should().Be(MatchStatus.Finished);
         }
     }
