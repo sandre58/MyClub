@@ -298,6 +298,87 @@ app.MapPost(
         return Results.Ok(view);
     });
 
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/declared-members",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        AddDeclaredMemberRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .AddDeclaredMemberAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                request.DisplayName,
+                request.Role,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapDelete(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/declared-members/{memberId:guid}",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        Guid memberId,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .RemoveDeclaredMemberAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                new MemberId(memberId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/declared-members/{memberId:guid}/rename",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        Guid memberId,
+        RenameDeclaredMemberRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .RenameDeclaredMemberAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                new MemberId(memberId),
+                request.DisplayName,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPut(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/declared-members/{memberId:guid}/role",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        Guid memberId,
+        ChangeDeclaredMemberRoleRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .ChangeDeclaredMemberRoleAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                new MemberId(memberId),
+                request.Role,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
 app.MapPut(
     "/competitions/{competitionId:guid}/regulation",
     async (

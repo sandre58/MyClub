@@ -104,7 +104,13 @@ public static class OrganisationViewAssembler
                 entry.ShortName?.Value,
                 entry.LogoMediaId?.Value,
                 entry.PrimaryColor?.Value,
-                entry.SecondaryColor?.Value))
+                entry.SecondaryColor?.Value,
+                [
+                    .. entry.DeclaredMembers.Select(member => new DeclaredMemberDto(
+                        member.Id.Value,
+                        member.DisplayName,
+                        member.Role))
+                ]))
             .ToList();
         var active = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
         var occupying = competition.Entries.Count(entry => entry.IsOccupying);

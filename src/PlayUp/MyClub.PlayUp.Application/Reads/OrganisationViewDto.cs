@@ -57,6 +57,7 @@ public sealed record OrganisationParticipantsSummaryDto(
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color.</param>
 /// <param name="SecondaryColor">Optional secondary kit color.</param>
+/// <param name="DeclaredMembers">Declared roster members for this entry.</param>
 public sealed record OrganisationEntryDto(
     Guid EntryId,
     string DisplayName,
@@ -64,7 +65,8 @@ public sealed record OrganisationEntryDto(
     string? ShortName = null,
     Guid? LogoMediaId = null,
     string? PrimaryColor = null,
-    string? SecondaryColor = null);
+    string? SecondaryColor = null,
+    IReadOnlyList<DeclaredMemberDto>? DeclaredMembers = null);
 
 /// <summary>Format summary (Application inference — not Domain Format aggregate).</summary>
 /// <param name="Kind">Inferred format, or null when structure empty (authoritative for SPA i18n).</param>
