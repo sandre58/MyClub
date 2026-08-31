@@ -124,5 +124,32 @@
     "noRoster": "Aucun joueur dans l’effectif.",
     "noneEligible": "Tous les joueurs de l’effectif sont déjà sur la feuille.",
     "manageRoster": "Gérer l’effectif"
+  },
+  "goals": {
+    "heading": "Buts",
+    "hint": "Faits nominatifs de but. Distincts du score live et du résultat officiel.",
+    "readOnly": "Les buts ne sont plus modifiables dans cet état.",
+    "needSheet": "Ajoutez des joueurs sur la feuille avant d’enregistrer un but.",
+    "emptyTitle": "Aucun but enregistré",
+    "emptyBody": "Enregistrez un but nominatif depuis la feuille de match.",
+    "credited": "Crédit {{side}}",
+    "ownGoal": "CSC",
+    "ownGoalHint": "But contre son camp : le crédit diffère du côté feuille du buteur. Pas de passeur.",
+    "assist": "Passeur {{name}}",
+    "correct": "Corriger",
+    "remove": "Retirer",
+    "removing": "Retrait…",
+    "removeConsequence": "Retirer le but de « {{name}} » ?",
+    "confirmRemove": "Confirmer le retrait",
+    "saveCorrect": "Enregistrer la correction",
+    "saving": "Enregistrement…",
+    "scorer": "Buteur",
+    "scorerPlaceholder": "Choisir un buteur",
+    "creditedSide": "Côté crédité",
+    "assister": "Passeur (optionnel)",
+    "assisterNone": "Aucun",
+    "addAction": "Enregistrer le but",
+    "adding": "Enregistrement…",
+    "runningScoreDesync": "Le but est enregistré, mais la mise à jour du score live a échoué. Rechargez l’état affiché et corrigez le compteur si besoin."
   }
 }

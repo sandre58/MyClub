@@ -664,3 +664,94 @@
     margin: 0;
     color: var(--color-text-secondary);
 }
+
+.match-goals__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+}
+
+.match-goals__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-8);
+    padding-block: var(--space-12);
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.match-goals__list > li:first-child .match-goals__row {
+    border-top: none;
+    padding-top: 0;
+}
+
+.match-goals__identity {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.match-goals__scorer {
+    font-weight: var(--font-weight-semibold, 600);
+}
+
+.match-goals__meta {
+    color: var(--color-text-secondary);
+    font-size: var(--text-caption);
+}
+
+.match-goals__row-actions,
+.match-goals__confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+}
+
+.match-goals__confirm,
+.match-goals__form {
+    flex-basis: 100%;
+    display: grid;
+    gap: var(--space-12);
+    margin: 0;
+}
+
+.match-goals__form {
+    margin-top: var(--space-16);
+    padding-top: var(--space-16);
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.match-goals__side-fieldset {
+    border: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-12);
+}
+
+.match-goals__side-fieldset legend {
+    padding: 0;
+    margin-bottom: var(--space-8);
+}
+
+.match-goals__radio {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.match-goals__csc {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-caption);
+}
+
+.match-goals__errors {
+    display: grid;
+    gap: var(--space-8);
+    margin-top: var(--space-12);
+}

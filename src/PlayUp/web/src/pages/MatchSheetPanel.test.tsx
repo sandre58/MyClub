@@ -230,7 +230,9 @@ describe('MatchPage sheet (Lot 2)', () => {
         jerseyNumber: 9,
       })
     })
-    expect(await screen.findByText('Dupont')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Dupont', { selector: '.match-sheet__name' }),
+    ).toBeInTheDocument()
     expect(screen.getByText('n°9')).toBeInTheDocument()
   })
 
@@ -304,7 +306,9 @@ describe('MatchPage sheet (Lot 2)', () => {
 
     renderMatchPage()
 
-    expect(await screen.findByText('Dupont')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Dupont', { selector: '.match-sheet__name' }),
+    ).toBeInTheDocument()
     expect(
       screen.getByText(/n’est plus modifiable/i),
     ).toBeInTheDocument()

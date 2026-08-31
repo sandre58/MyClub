@@ -687,6 +687,47 @@ export interface MatchScore {
   awayGoals: number
 }
 
+/** Host Side — string enum member names. */
+export type MatchSide = 'Home' | 'Away'
+
+/** Host CompositionStatus — string enum member names. */
+export type CompositionStatus = 'Starter' | 'Bench'
+
+/** GET match detail declaredParticipations[] */
+export interface DeclaredParticipation {
+  memberId: string
+  displayName: string | null
+  side: MatchSide
+  compositionStatus: CompositionStatus
+  jerseyNumber: number | null
+}
+
+/** POST /matches/{id}/declared-participations */
+export interface AddDeclaredParticipationRequest {
+  memberId: string
+  side: MatchSide
+  compositionStatus: CompositionStatus
+  jerseyNumber?: number | null
+}
+
+/** GET match detail recordedGoals[] */
+export interface RecordedGoal {
+  goalId: string
+  scorerMemberId: string
+  scorerDisplayName: string | null
+  creditedSide: MatchSide
+  assisterMemberId: string | null
+  assisterDisplayName: string | null
+  isOwnGoal: boolean
+}
+
+/** POST/PUT /matches/{id}/recorded-goals */
+export interface RecordGoalRequest {
+  scorerMemberId: string
+  creditedSide: MatchSide
+  assisterMemberId?: string | null
+}
+
 export interface MatchResult {
   type: ResultType
   homeGoals: number
@@ -727,32 +768,9 @@ export interface MatchDetail {
   hasObservedLive?: boolean
   runningScore?: MatchScore | null
   declaredParticipations?: DeclaredParticipation[]
-  recordedGoals?: unknown[]
+  recordedGoals?: RecordedGoal[]
   recordedSubstitutions?: unknown[]
   recordedDisciplinaryEvents?: unknown[]
-}
-
-/** Host Side — string enum member names. */
-export type MatchSide = 'Home' | 'Away'
-
-/** Host CompositionStatus — string enum member names. */
-export type CompositionStatus = 'Starter' | 'Bench'
-
-/** GET match detail declaredParticipations[] */
-export interface DeclaredParticipation {
-  memberId: string
-  displayName: string | null
-  side: MatchSide
-  compositionStatus: CompositionStatus
-  jerseyNumber: number | null
-}
-
-/** POST /matches/{id}/declared-participations */
-export interface AddDeclaredParticipationRequest {
-  memberId: string
-  side: MatchSide
-  compositionStatus: CompositionStatus
-  jerseyNumber?: number | null
 }
 
 /**

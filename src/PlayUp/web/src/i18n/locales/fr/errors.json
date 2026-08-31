@@ -46,7 +46,12 @@
     "DuplicateJerseyNumber": "Ce numéro de maillot est déjà utilisé de ce côté.",
     "ParticipationReferencedByRecordedGoal": "Ce joueur est encore lié à un but enregistré. Corrigez les faits avant de le retirer de la feuille.",
     "ParticipationReferencedBySubstitution": "Ce joueur est encore lié à un remplacement. Corrigez les faits avant de le retirer de la feuille.",
-    "ParticipationReferencedByDisciplinaryEvent": "Ce joueur est encore lié à un fait disciplinaire. Corrigez les faits avant de le retirer de la feuille."
+    "ParticipationReferencedByDisciplinaryEvent": "Ce joueur est encore lié à un fait disciplinaire. Corrigez les faits avant de le retirer de la feuille.",
+    "RecordedGoalMutationNotAllowed": "Cette opération sur les buts n’est pas autorisée dans l’état actuel du match.",
+    "RecordedGoalNotFound": "But introuvable sur ce match.",
+    "AssisterNotAllowedOnOwnGoal": "Un passeur n’est pas autorisé sur un but contre son camp.",
+    "AssisterSameAsScorer": "Le passeur ne peut pas être le même joueur que le buteur.",
+    "InvalidSide": "Côté de match invalide."
   },
   "Stage": {
     "InvalidTransition": "Transition de phase interdite.",

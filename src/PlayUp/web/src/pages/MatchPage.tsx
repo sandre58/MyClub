@@ -31,6 +31,7 @@ import {
   type MatchScore,
 } from '../types'
 import { formatMatchKickoff } from './matchListMeta'
+import { MatchGoalsPanel } from './MatchGoalsPanel'
 import { MatchSheetPanel } from './MatchSheetPanel'
 import './matches.css'
 
@@ -245,6 +246,8 @@ function MatchDetailView({
       </section>
 
       <MatchSheetPanel match={data} />
+
+      <MatchGoalsPanel match={data} />
 
       {(canStart || canSetRunningScore || canFinish) && (
         <div className="match-detail__ops" aria-busy={busy}>

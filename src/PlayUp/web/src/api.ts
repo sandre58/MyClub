@@ -13,9 +13,11 @@ import type {
   FinishMatchRequest,
   MatchDetail,
   MatchScore,
+  MatchSide,
   MatchSummary,
   NeedsAttention,
   OrganisationView,
+  RecordGoalRequest,
   RenameDeclaredMemberRequest,
   RenameEntryRequest,
   ReplaceRegulationRequest,
@@ -411,6 +413,35 @@ export function setDeclaredParticipationJerseyNumber(
     `/matches/${matchId}/declared-participations/${memberId}/jersey-number`,
     { jerseyNumber },
   )
+}
+
+/** POST /matches/{id}/recorded-goals → 204 (faits-only; Live RS is a separate call). */
+export function recordGoal(
+  matchId: string,
+  request: RecordGoalRequest,
+): Promise<void> {
+  return postNoContent(`/matches/${matchId}/recorded-goals`, request)
+}
+
+/** PUT /matches/{id}/recorded-goals/{goalId} → 204 */
+export function correctRecordedGoal(
+  matchId: string,
+  goalId: string,
+  request: RecordGoalRequest,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/matches/${matchId}/recorded-goals/${goalId}`,
+    request,
+  )
+}
+
+/** DELETE /matches/{id}/recorded-goals/{goalId} → 204 */
+export function removeRecordedGoal(
+  matchId: string,
+  goalId: string,
+): Promise<void> {
+  return sendNoContent('DELETE', `/matches/${matchId}/recorded-goals/${goalId}`)
 }
 
 /** POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression → 204 */
