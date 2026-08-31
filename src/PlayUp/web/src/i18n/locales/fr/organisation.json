@@ -57,6 +57,26 @@
     "secondaryColor": "Couleur secondaire",
     "savePresentation": "Enregistrer la présentation"
   },
+  "roster": {
+    "back": "Organisation",
+    "playersHeading": "Joueurs",
+    "emptyTitle": "Aucun joueur",
+    "emptyBody": "Ajoutez les joueurs de cette équipe. Une liste vide est normale tant qu’aucun joueur n’est inscrit.",
+    "addName": "Nom du joueur",
+    "addPlaceholder": "ex. Dupont",
+    "addAction": "Ajouter",
+    "adding": "Ajout…",
+    "rename": "Renommer",
+    "renameName": "Nouveau nom",
+    "confirmRename": "Enregistrer",
+    "renaming": "Enregistrement…",
+    "remove": "Retirer",
+    "removing": "Retrait…",
+    "removeConsequence": "Retirer « {{name}} » de cette équipe ? Cette inscription sera perdue. Le même nom plus tard ne sera pas la même personne.",
+    "confirmRemove": "Confirmer le retrait",
+    "readOnly": "Les joueurs de cette équipe ne peuvent plus être modifiés.",
+    "entryMissing": "Cette équipe n’est plus dans la compétition."
+  },
   "identity": {
     "heading": "Identité",
     "shortName": "Nom court",

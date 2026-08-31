@@ -48,7 +48,7 @@ export function resolveActiveDestination(pathname: string): ShellDestinationKey 
     return 'cockpit'
   }
 
-  if (/^\/competitions\/[^/]+\/organisation$/.test(pathname)) {
+  if (/^\/competitions\/[^/]+\/organisation(?:\/|$)/.test(pathname)) {
     return 'organisation'
   }
 

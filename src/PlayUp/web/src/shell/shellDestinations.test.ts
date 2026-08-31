@@ -58,6 +58,11 @@ describe('resolveActiveDestination', () => {
         `/competitions/${competitionId}/organisation`,
       ),
     ).toBe('organisation')
+    expect(
+      resolveActiveDestination(
+        `/competitions/${competitionId}/organisation/entries/${competitionId}`,
+      ),
+    ).toBe('organisation')
   })
 
   it('maps match hub and stage routes to Matchs', () => {

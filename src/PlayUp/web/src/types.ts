@@ -89,6 +89,30 @@ export interface CreateCompetitionRequest {
 /** Domain CompetitionName.MaxLength — client hint; Host remains authority. */
 export const COMPETITION_NAME_MAX_LENGTH = 100
 
+/** Domain DeclaredMember.DisplayNameMaxLength — client hint; Host remains authority. */
+export const MEMBER_DISPLAY_NAME_MAX_LENGTH = 100
+
+/** Host DeclaredMemberRole — string enum member names. */
+export type DeclaredMemberRole = 'Player' | 'Staff'
+
+/** GET organisation `entries[].declaredMembers[]`. */
+export interface DeclaredMember {
+  memberId: string
+  displayName: string
+  role: DeclaredMemberRole
+}
+
+/** POST .../declared-members — SPA always sends Player. */
+export interface AddDeclaredMemberRequest {
+  displayName: string
+  role: DeclaredMemberRole
+}
+
+/** POST .../declared-members/{memberId}/rename */
+export interface RenameDeclaredMemberRequest {
+  displayName: string
+}
+
 /**
  * GET /competitions/{id}/workspace — Accueil / competition landing.
  * nextActionCode and attention/completion fields are Read facts from the Host.
@@ -468,6 +492,7 @@ export interface OrganisationEntry {
   logoMediaId?: string | null
   primaryColor?: string | null
   secondaryColor?: string | null
+  declaredMembers?: DeclaredMember[]
 }
 
 export interface OrganisationFormatSummary {

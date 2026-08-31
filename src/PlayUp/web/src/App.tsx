@@ -10,6 +10,7 @@ import { HomePage } from './pages/HomePage'
 import { MatchHubPage } from './pages/MatchHubPage'
 import { MatchPage } from './pages/MatchPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { EntryRosterPage } from './pages/EntryRosterPage'
 import { OrganisationPage } from './pages/OrganisationPage'
 import { StageMatchesPage } from './pages/StageMatchesPage'
 import { StagePage } from './pages/StagePage'
@@ -45,6 +46,10 @@ export default function App() {
         <Route
           path="/competitions/:competitionId"
           element={<CompetitionCockpitPage />}
+        />
+        <Route
+          path="/competitions/:competitionId/organisation/entries/:entryId"
+          element={<EntryRosterPage />}
         />
         <Route
           path="/competitions/:competitionId/organisation"

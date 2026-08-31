@@ -23,14 +23,16 @@
     "FixtureInvalid": "La confrontation est incohérente.",
     "TieFormatRequired": "Un format de confrontation (TieFormat) est requis.",
     "DanglingFeedTarget": "La cible d’alimentation est introuvable.",
-    "StageNotInCompetition": "La phase n’appartient pas à cette compétition."
+    "StageNotInCompetition": "La phase n’appartient pas à cette compétition.",
+    "DeclaredMemberReferencedByMatchSheet": "Ce joueur figure encore sur une feuille de match. Retirez-le de la feuille avant de le retirer de l’équipe."
   },
   "Competition": {
     "NameInvalid": "Le nom de la compétition est invalide.",
     "DuplicateTeam": "Cette équipe est déjà inscrite.",
     "InvalidTransition": "Transition de cycle interdite.",
     "EntryNotFound": "Participant introuvable.",
-    "InvalidDisplayName": "Le nom affiché est invalide."
+    "InvalidDisplayName": "Le nom affiché est invalide.",
+    "InvalidMemberDisplayName": "Le nom du joueur est invalide."
   },
   "Match": {
     "InvalidTransition": "Transition de match interdite.",

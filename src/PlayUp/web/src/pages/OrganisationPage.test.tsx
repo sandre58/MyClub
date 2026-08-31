@@ -112,6 +112,10 @@ function renderOrganisationPage() {
       >
         <Routes>
           <Route
+            path="/competitions/:competitionId/organisation/entries/:entryId"
+            element={<p>Roster route</p>}
+          />
+          <Route
             path="/competitions/:competitionId/organisation"
             element={<OrganisationPage />}
           />
@@ -185,6 +189,12 @@ describe('OrganisationPage', () => {
     ).toBeInTheDocument()
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     expect(
+      screen.getByRole('link', { name: /Alpha/ }),
+    ).toHaveAttribute(
+      'href',
+      `/competitions/${competitionId}/organisation/entries/${entryId}`,
+    )
+    expect(
       screen.getByLabelText('Inscription complète'),
     ).toBeInTheDocument()
     expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
@@ -192,6 +202,25 @@ describe('OrganisationPage', () => {
     expect(
       screen.getByText(/Encore 2 éléments avant de démarrer/i),
     ).toBeInTheDocument()
+  })
+
+  it('enters the roster job from the whole entry row without opening Gérer', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderOrganisationPage()
+
+    expect(
+      await screen.findByRole('button', { name: /Gérer les équipes/i }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('link', { name: /Alpha/ }))
+
+    expect(screen.getByText('Roster route')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Gérer les équipes/i }),
+    ).not.toBeInTheDocument()
   })
 
   it('does not render redundant competition section navigation', async () => {

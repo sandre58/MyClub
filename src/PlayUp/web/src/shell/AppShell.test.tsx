@@ -33,6 +33,10 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             element={<p>Workspace page</p>}
           />
           <Route
+            path="/competitions/:competitionId/organisation/entries/:entryId"
+            element={<p>Roster page</p>}
+          />
+          <Route
             path="/competitions/:competitionId/organisation"
             element={<p>Organisation page</p>}
           />
@@ -130,6 +134,18 @@ describe('AppShell', () => {
       'aria-current',
       'page',
     )
+  })
+
+  it('marks Organisation active for nested roster routes', () => {
+    renderWithShell(
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/organisation/entries/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    )
+
+    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.getByText('Roster page')).toBeInTheDocument()
   })
 
   it('maps stage deep links to Matchs', () => {

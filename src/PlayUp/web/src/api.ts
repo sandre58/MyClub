@@ -1,4 +1,5 @@
 import type {
+  AddDeclaredMemberRequest,
   AddEntryRequest,
   ApplyDrawRequest,
   CockpitView,
@@ -13,6 +14,7 @@ import type {
   MatchSummary,
   NeedsAttention,
   OrganisationView,
+  RenameDeclaredMemberRequest,
   RenameEntryRequest,
   ReplaceRegulationRequest,
   SetCompetitionScheduleRequest,
@@ -83,7 +85,7 @@ async function getJson<T>(url: string): Promise<T> {
  * POST/PUT helpers for Host commands that return a JSON body (Organisation mutations).
  */
 async function sendJson<T>(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'DELETE',
   url: string,
   body?: unknown,
 ): Promise<T> {
@@ -250,6 +252,45 @@ export function withdrawCompetitionEntry(
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/withdraw`,
+  )
+}
+
+/** POST .../entries/{entryId}/declared-members → OrganisationView */
+export function addDeclaredMember(
+  competitionId: string,
+  entryId: string,
+  request: AddDeclaredMemberRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/declared-members`,
+    request,
+  )
+}
+
+/** DELETE .../declared-members/{memberId} → OrganisationView */
+export function removeDeclaredMember(
+  competitionId: string,
+  entryId: string,
+  memberId: string,
+): Promise<OrganisationView> {
+  return sendJson(
+    'DELETE',
+    `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}`,
+  )
+}
+
+/** POST .../declared-members/{memberId}/rename → OrganisationView */
+export function renameDeclaredMember(
+  competitionId: string,
+  entryId: string,
+  memberId: string,
+  request: RenameDeclaredMemberRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}/rename`,
+    request,
   )
 }
 

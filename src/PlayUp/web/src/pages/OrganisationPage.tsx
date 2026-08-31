@@ -602,7 +602,10 @@ function ParticipantsSection({
           <ul className="organisation-entries">
             {entries.map((entry) => (
               <li key={entry.entryId}>
-                <div className="organisation-entry organisation-entry--read">
+                <Link
+                  className="organisation-entry organisation-entry--read"
+                  to={`/competitions/${data.competitionId}/organisation/entries/${entry.entryId}`}
+                >
                   <TeamCrest
                     name={entry.displayName}
                     logoMediaId={entry.logoMediaId}
@@ -624,7 +627,10 @@ function ParticipantsSection({
                       <EntryStatusBadge status={entry.status} />
                     )}
                   </p>
-                </div>
+                  <span className="organisation-entry__chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
