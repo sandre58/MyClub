@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -181,5 +183,80 @@ public sealed class MatchReadAssemblerTests
         detail.LegIndex.Should().BeNull();
         detail.ScheduledAt.Should().BeNull();
         detail.ResourceId.Should().BeNull();
+        detail.HasObservedLive.Should().BeFalse();
+        detail.RunningScore.Should().BeNull();
+        detail.DeclaredParticipations.Should().BeEmpty();
+        detail.RecordedGoals.Should().BeEmpty();
+        detail.RecordedSubstitutions.Should().BeEmpty();
+        detail.RecordedDisciplinaryEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AssembleDetail_maps_sheet_running_score_and_recorded_facts_with_display_names()
+    {
+        var standard = SampleRegulations.Standard();
+        var regulation = new Regulation(
+            standard.EntryRules,
+            standard.MatchRules,
+            standard.StandingRules,
+            new DisciplinaryRules([DisciplinaryType.Yellow, DisciplinaryType.Red]));
+        var competition = CreateCompetition.Execute("Facts Cup", regulation, _clock);
+        var home = AddEntry.Execute(competition, "Home", _clock);
+        var away = AddEntry.Execute(competition, "Away", _clock);
+        var dupont = AddDeclaredMember.Execute(competition, home.Id, "Dupont", DeclaredMemberRole.Player, _clock);
+        var martin = AddDeclaredMember.Execute(competition, home.Id, "Martin", DeclaredMemberRole.Player, _clock);
+        var awayPlayer = AddDeclaredMember.Execute(competition, away.Id, "Rival", DeclaredMemberRole.Player, _clock);
+
+        var stage = Stage.Create(competition.Id, new StageName("Stage 1"), competition.Regulation, _clock);
+        competition.AddStage(stage.Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        match.AddDeclaredParticipation(dupont.Id, Side.Home, CompositionStatus.Starter, _clock, jerseyNumber: 9);
+        match.AddDeclaredParticipation(martin.Id, Side.Home, CompositionStatus.Bench, _clock);
+        match.AddDeclaredParticipation(awayPlayer.Id, Side.Away, CompositionStatus.Starter, _clock);
+        match.Start(_clock);
+        SetRunningScore.Execute(match, 2, 0, _clock);
+
+        var goal = RecordGoal.Execute(match, dupont.Id, Side.Home, _clock, assisterMemberId: martin.Id);
+        var substitution = RecordSubstitution.Execute(match, dupont.Id, martin.Id, Side.Home, _clock);
+        var disciplinary = RecordDisciplinaryEvent.Execute(
+            match, competition, awayPlayer.Id, DisciplinaryType.Yellow, _clock);
+
+        var detail = MatchReadAssembler.AssembleDetail(match, competition, stage);
+
+        detail.HasObservedLive.Should().BeTrue();
+        detail.RunningScore.Should().Be(new MatchScoreDto(2, 0));
+
+        detail.DeclaredParticipations.Should().HaveCount(3);
+        detail.DeclaredParticipations.Should().ContainEquivalentOf(new DeclaredParticipationDto(
+            dupont.Id.Value, "Dupont", Side.Home, CompositionStatus.Starter, 9));
+        detail.DeclaredParticipations.Should().ContainEquivalentOf(new DeclaredParticipationDto(
+            martin.Id.Value, "Martin", Side.Home, CompositionStatus.Bench, null));
+        detail.DeclaredParticipations.Should().ContainEquivalentOf(new DeclaredParticipationDto(
+            awayPlayer.Id.Value, "Rival", Side.Away, CompositionStatus.Starter, null));
+
+        detail.RecordedGoals.Should().ContainSingle().Which.Should().BeEquivalentTo(new RecordedGoalDto(
+            goal.Id.Value,
+            dupont.Id.Value,
+            "Dupont",
+            Side.Home,
+            martin.Id.Value,
+            "Martin",
+            IsOwnGoal: false));
+
+        detail.RecordedSubstitutions.Should().ContainSingle().Which.Should().BeEquivalentTo(
+            new RecordedSubstitutionDto(
+                substitution.Id.Value,
+                Side.Home,
+                dupont.Id.Value,
+                "Dupont",
+                martin.Id.Value,
+                "Martin"));
+
+        detail.RecordedDisciplinaryEvents.Should().ContainSingle().Which.Should().BeEquivalentTo(
+            new RecordedDisciplinaryEventDto(
+                disciplinary.Id.Value,
+                awayPlayer.Id.Value,
+                "Rival",
+                DisciplinaryType.Yellow));
     }
 }

@@ -78,51 +78,41 @@ public static class MatchReadAssembler
         var entries = EntryDisplayNames.ToEntries(competition);
         DateTimeOffset? scheduledAt = null;
         Guid? resourceId = null;
-        if (stage is not null)
-        {
-            ResolveCalendarPlacement(stage, match.Id, out scheduledAt, out resourceId);
-        }
+        Guid? fixtureId = null;
+        int? legIndex = null;
 
         if (stage is null)
         {
-            return new MatchDetailDto(
-                match.Id.Value,
-                match.CompetitionId.Value,
-                match.StageId.Value,
-                match.Status,
-                EntryDisplayNames.ToSide(entries, match.HomeEntryId),
-                EntryDisplayNames.ToSide(entries, match.AwayEntryId),
-                MapResult(match.Result),
-                FixtureId: null,
-                LegIndex: null,
+            return BuildDetail(
+                match,
+                entries,
+                fixtureId,
+                legIndex,
                 scheduledAt,
                 resourceId);
         }
 
+        ResolveCalendarPlacement(stage, match.Id, out scheduledAt, out resourceId);
         var attachment = FindAttachment(stage, match.Id);
-        return attachment is not { } found
-            ? new MatchDetailDto(
-                match.Id.Value,
-                match.CompetitionId.Value,
-                match.StageId.Value,
-                match.Status,
-                EntryDisplayNames.ToSide(entries, match.HomeEntryId),
-                EntryDisplayNames.ToSide(entries, match.AwayEntryId),
-                MapResult(match.Result),
-                FixtureId: null,
-                LegIndex: null,
+        if (attachment is not { } found)
+        {
+            return BuildDetail(
+                match,
+                entries,
+                fixtureId,
+                legIndex,
                 scheduledAt,
-                resourceId)
-            : new MatchDetailDto(
-            match.Id.Value,
-            match.CompetitionId.Value,
-            match.StageId.Value,
-            match.Status,
-            EntryDisplayNames.ToSide(entries, match.HomeEntryId),
-            EntryDisplayNames.ToSide(entries, match.AwayEntryId),
-            MapResult(match.Result),
-            found.FixtureId.Value,
-            found.LegIndex,
+                resourceId);
+        }
+
+        fixtureId = found.FixtureId.Value;
+        legIndex = found.LegIndex;
+
+        return BuildDetail(
+            match,
+            entries,
+            fixtureId,
+            legIndex,
             scheduledAt,
             resourceId);
     }
@@ -161,6 +151,124 @@ public static class MatchReadAssembler
 
     private static MatchScoreDto? MapScore(MatchResult? result) =>
         result is null ? null : new MatchScoreDto(result.Score.HomeGoals, result.Score.AwayGoals);
+
+    private static MatchScoreDto? MapRunningScore(RunningScore? runningScore) =>
+        runningScore is { } score ? new MatchScoreDto(score.HomeGoals, score.AwayGoals) : null;
+
+    private static MatchDetailDto BuildDetail(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        Guid? fixtureId,
+        int? legIndex,
+        DateTimeOffset? scheduledAt,
+        Guid? resourceId) =>
+        new(
+            match.Id.Value,
+            match.CompetitionId.Value,
+            match.StageId.Value,
+            match.Status,
+            EntryDisplayNames.ToSide(entries, match.HomeEntryId),
+            EntryDisplayNames.ToSide(entries, match.AwayEntryId),
+            MapResult(match.Result),
+            fixtureId,
+            legIndex,
+            scheduledAt,
+            resourceId,
+            match.HasObservedLive,
+            MapRunningScore(match.RunningScore),
+            MapDeclaredParticipations(match, entries),
+            MapRecordedGoals(match, entries),
+            MapRecordedSubstitutions(match, entries),
+            MapRecordedDisciplinaryEvents(match, entries));
+
+    private static IReadOnlyList<DeclaredParticipationDto> MapDeclaredParticipations(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries) =>
+    [
+        .. match.DeclaredParticipations.Select(participation => new DeclaredParticipationDto(
+            participation.Id.Value,
+            ResolveSheetMemberDisplayName(match, entries, participation.Id),
+            participation.Side,
+            participation.CompositionStatus,
+            participation.JerseyNumber))
+    ];
+
+    private static IReadOnlyList<RecordedGoalDto> MapRecordedGoals(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries) =>
+    [
+        .. match.RecordedGoals.Select(goal => MapRecordedGoal(match, entries, goal))
+    ];
+
+    private static RecordedGoalDto MapRecordedGoal(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        RecordedGoal goal)
+    {
+        var assisterDisplayName = goal.AssisterMemberId is { } assister
+            ? ResolveSheetMemberDisplayName(match, entries, assister)
+            : null;
+
+        return new RecordedGoalDto(
+            goal.Id.Value,
+            goal.ScorerMemberId.Value,
+            ResolveSheetMemberDisplayName(match, entries, goal.ScorerMemberId),
+            goal.CreditedSide,
+            goal.AssisterMemberId?.Value,
+            assisterDisplayName,
+            match.IsOwnGoal(goal));
+    }
+
+    private static IReadOnlyList<RecordedSubstitutionDto> MapRecordedSubstitutions(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries) =>
+    [
+        .. match.RecordedSubstitutions.Select(substitution => new RecordedSubstitutionDto(
+            substitution.Id.Value,
+            substitution.Side,
+            substitution.OutMemberId.Value,
+            ResolveSideMemberDisplayName(match, entries, substitution.Side, substitution.OutMemberId),
+            substitution.InMemberId.Value,
+            ResolveSideMemberDisplayName(match, entries, substitution.Side, substitution.InMemberId)))
+    ];
+
+    private static IReadOnlyList<RecordedDisciplinaryEventDto> MapRecordedDisciplinaryEvents(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries) =>
+    [
+        .. match.RecordedDisciplinaryEvents.Select(evt => new RecordedDisciplinaryEventDto(
+            evt.Id.Value,
+            evt.MemberId.Value,
+            ResolveSheetMemberDisplayName(match, entries, evt.MemberId),
+            evt.Type))
+    ];
+
+    private static EntryId EntryIdForSide(Match match, Side side) =>
+        side == Side.Home ? match.HomeEntryId : match.AwayEntryId;
+
+    private static string? ResolveSideMemberDisplayName(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        Side side,
+        MemberId memberId) =>
+        EntryDisplayNames.ResolveMemberDisplayName(entries, EntryIdForSide(match, side), memberId);
+
+    private static string? ResolveSheetMemberDisplayName(
+        Match match,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        MemberId memberId)
+    {
+        var participation = match.DeclaredParticipations.FirstOrDefault(p => p.Id.Equals(memberId));
+        if (participation is null)
+        {
+            return null;
+        }
+
+        return EntryDisplayNames.ResolveMemberDisplayName(
+            entries,
+            EntryIdForSide(match, participation.Side),
+            memberId);
+    }
 
     private static MatchResultDto? MapResult(MatchResult? result)
     {

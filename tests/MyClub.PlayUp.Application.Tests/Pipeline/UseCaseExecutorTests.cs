@@ -485,6 +485,7 @@ public sealed class UseCaseExecutorTests
     {
         var competition = CreateOpenCompetition();
         var match = DomainMatch.Create(competition.Id, StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        match.Cancel(_clock);
         var result = new DomainMatchResult(ResultType.Played, new DomainScore(1, 0));
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);

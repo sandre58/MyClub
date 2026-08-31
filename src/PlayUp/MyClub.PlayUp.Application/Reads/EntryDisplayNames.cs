@@ -51,4 +51,13 @@ internal static class EntryDisplayNames
                 entry.PrimaryColor?.Value,
                 entry.SecondaryColor?.Value)
             : new EntrySideDto(entryId.Value, null);
+
+    /// <summary>
+    /// Resolves a declared member display name from a competition entry, or <see langword="null"/> when unknown.
+    /// </summary>
+    public static string? ResolveMemberDisplayName(
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        EntryId entryId,
+        MemberId memberId) =>
+        !entries.TryGetValue(entryId, out var entry) ? null : entry.DeclaredMembers.FirstOrDefault(member => member.Id.Equals(memberId))?.DisplayName;
 }

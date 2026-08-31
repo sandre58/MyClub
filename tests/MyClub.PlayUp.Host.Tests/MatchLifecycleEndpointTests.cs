@@ -119,10 +119,10 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Finish_when_Scheduled_returns_409_InvalidTransitionAsync()
+    public async Task Finish_when_Cancelled_returns_409_InvalidTransitionAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var matchId = await SeedScheduledMatchAsync(factory);
+        var matchId = await SeedCancelledMatchAsync(factory);
         var body = new FinishMatchRequest(ResultType.Played, 1, 0);
 
         using var client = factory.CreateClient();
@@ -135,7 +135,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
-        loaded!.Status.Should().Be(MatchStatus.Scheduled);
+        loaded!.Status.Should().Be(MatchStatus.Cancelled);
         loaded.Result.Should().BeNull();
     }
 
@@ -330,7 +330,10 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
     private Task<MatchId> SeedLiveMatchAsync(PlayUpWebApplicationFactory factory) =>
         SeedMatchAsync(factory, start: true);
 
-    private async Task<MatchId> SeedMatchAsync(PlayUpWebApplicationFactory factory, bool start)
+    private Task<MatchId> SeedCancelledMatchAsync(PlayUpWebApplicationFactory factory) =>
+        SeedMatchAsync(factory, cancel: true);
+
+    private async Task<MatchId> SeedMatchAsync(PlayUpWebApplicationFactory factory, bool start = false, bool cancel = false)
     {
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -350,6 +353,11 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         if (start)
         {
             match.Start(_clock);
+        }
+
+        if (cancel)
+        {
+            match.Cancel(_clock);
         }
 
         matches.Add(match);

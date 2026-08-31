@@ -106,6 +106,7 @@ public sealed class MatchRecordedSubstitutionsTests
 
     [Fact]
     public void B3_out_only_or_in_only_is_not_a_substitution_api() =>
+
         // Atomic couple is enforced by the API surface (no single-member operation).
         typeof(Match).GetMethod(nameof(Match.RecordSubstitution), [typeof(MemberId), typeof(Side), typeof(IClock)])
             .Should().BeNull();

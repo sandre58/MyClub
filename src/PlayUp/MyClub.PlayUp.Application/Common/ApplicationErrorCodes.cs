@@ -177,4 +177,44 @@ public static class ApplicationErrorCodes
     /// Gets the code when a logo Media reference does not exist.
     /// </summary>
     public const string MediaNotFound = "Application.MediaNotFound";
+
+    /// <summary>
+    /// Gets the code when an inbound declared member role is not a defined enum value.
+    /// </summary>
+    public const string InvalidDeclaredMemberRole = "Application.InvalidDeclaredMemberRole";
+
+    /// <summary>
+    /// Gets the code when removing a declared member is refused because a match sheet still references them.
+    /// </summary>
+    public const string DeclaredMemberReferencedByMatchSheet = "Application.DeclaredMemberReferencedByMatchSheet";
+
+    /// <summary>
+    /// Gets the code when an inbound match side is not a defined enum value.
+    /// </summary>
+    public const string InvalidSide = "Application.InvalidSide";
+
+    /// <summary>
+    /// Gets the code when an inbound composition status is not a defined enum value.
+    /// </summary>
+    public const string InvalidCompositionStatus = "Application.InvalidCompositionStatus";
+
+    /// <summary>
+    /// Gets the code when a member cannot be added to a match sheet (roster, role, entry status).
+    /// </summary>
+    public const string ParticipationNotEligible = "Application.ParticipationNotEligible";
+
+    /// <summary>
+    /// Gets the code when a match does not belong to the supplied competition.
+    /// </summary>
+    public const string MatchNotInCompetition = "Application.MatchNotInCompetition";
+
+    /// <summary>
+    /// Gets the code when an inbound disciplinary type is not a defined enum value.
+    /// </summary>
+    public const string InvalidDisciplinaryType = "Application.InvalidDisciplinaryType";
+
+    /// <summary>
+    /// Gets the code when a disciplinary type is not authorized by competition rules.
+    /// </summary>
+    public const string DisciplinaryTypeNotAllowed = "Application.DisciplinaryTypeNotAllowed";
 }

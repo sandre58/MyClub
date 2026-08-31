@@ -29,8 +29,13 @@ public sealed class PlayUpDbContextTests
             .BeEquivalentTo(
                 "competitions",
                 "competition_entries",
+                "competition_entry_declared_members",
                 "competition_stage_refs",
                 "matches",
+                "match_declared_participations",
+                "match_recorded_disciplinary_events",
+                "match_recorded_goals",
+                "match_recorded_substitutions",
                 "stages",
                 "groups",
                 "group_entries",
