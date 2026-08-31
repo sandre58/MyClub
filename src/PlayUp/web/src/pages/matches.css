@@ -445,3 +445,83 @@
     border-top: none;
     padding-top: 0;
 }
+
+/* ---------- Fiche match ---------- */
+
+.match-detail__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-12);
+}
+
+.match-detail__meta {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    line-height: var(--leading-tight);
+}
+
+.match-detail__scoreboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-16);
+}
+
+.match-detail__side {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+    text-align: center;
+}
+
+.match-detail__role {
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.match-detail__name {
+    color: var(--color-text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+}
+
+.match-detail__score {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.match-detail__score--empty {
+    color: var(--color-text-secondary);
+}
+
+.match-detail__sep {
+    margin-inline: var(--space-8);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-regular);
+}
+
+.match-detail__caption {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    text-align: center;
+}
+
+.match-detail__ops {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+}

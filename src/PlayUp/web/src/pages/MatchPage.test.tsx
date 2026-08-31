@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  applyProgressionOutcome,
   fetchMatchDetail,
   fetchStageOverview,
   finishMatch,
+  setRunningScore,
   startMatch,
 } from '../api'
 import type { MatchDetail, StageOverview } from '../types'
@@ -21,18 +21,19 @@ vi.mock('../api', async (importOriginal) => {
     fetchStageOverview: vi.fn(),
     startMatch: vi.fn(),
     finishMatch: vi.fn(),
-    applyProgressionOutcome: vi.fn(),
+    setRunningScore: vi.fn(),
   }
 })
 
 const matchId = '11111111-1111-1111-1111-111111111111'
 const stageId = '22222222-2222-2222-2222-222222222222'
+const competitionId = '33333333-3333-3333-3333-333333333333'
 const fixtureId = '44444444-4444-4444-4444-444444444444'
 
 function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
   return {
     matchId,
-    competitionId: '33333333-3333-3333-3333-333333333333',
+    competitionId,
     stageId,
     status: 'Scheduled',
     home: { entryId: 'home', displayName: 'Alpha' },
@@ -46,11 +47,11 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
 
 const stageOverview: StageOverview = {
   id: stageId,
-  competitionId: '33333333-3333-3333-3333-333333333333',
-  name: 'QF',
+  competitionId,
+  name: 'Journée 1',
   status: 'Draft',
   rounds: [],
-  slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
+  slots: [],
   draws: [],
 }
 
@@ -81,11 +82,13 @@ describe('MatchPage', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview)
     vi.mocked(startMatch).mockResolvedValue(undefined)
     vi.mocked(finishMatch).mockResolvedValue(undefined)
-    vi.mocked(applyProgressionOutcome).mockResolvedValue(undefined)
+    vi.mocked(setRunningScore).mockResolvedValue(undefined)
   })
 
-  it('read state: Scheduled match shows Start and empty scoreboard', async () => {
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 'Scheduled' }))
+  it('Scheduled: Start and after-the-fact Finish, empty scoreboard, no GUIDs', async () => {
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({ status: 'Scheduled' }),
+    )
 
     renderMatchPage()
 
@@ -97,13 +100,21 @@ describe('MatchPage', () => {
       screen.getByRole('button', { name: 'Démarrer le match' }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Terminer le match' }),
+      screen.getByRole('button', { name: 'Terminer le match' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(matchId)).not.toBeInTheDocument()
+    expect(screen.queryByText(stageId)).not.toBeInTheDocument()
+    expect(screen.queryByText(fixtureId)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Appliquer la progression' }),
     ).not.toBeInTheDocument()
   })
 
   it('Start button triggers startMatch mutation', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 'Scheduled' }))
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({ status: 'Scheduled' }),
+    )
 
     renderMatchPage()
 
@@ -116,16 +127,18 @@ describe('MatchPage', () => {
     })
   })
 
-  it('Finish form submits the FinishMatch request body', async () => {
+  it('Finish from Scheduled does not Start', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch({ status: 'Live' }))
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({ status: 'Scheduled' }),
+    )
 
     renderMatchPage()
 
     await screen.findByRole('button', { name: 'Terminer le match' })
 
-    const homeGoals = screen.getByLabelText(/Alpha buts/i)
-    const awayGoals = screen.getByLabelText(/Beta buts/i)
+    const homeGoals = screen.getByLabelText(/Alpha — résultat/i)
+    const awayGoals = screen.getByLabelText(/Beta — résultat/i)
     await user.clear(homeGoals)
     await user.type(homeGoals, '2')
     await user.clear(awayGoals)
@@ -140,18 +153,76 @@ describe('MatchPage', () => {
         extraTimePlayed: false,
       })
     })
+    expect(startMatch).not.toHaveBeenCalled()
+  })
+
+  it('Live: running score update and Finish prefills from the counter', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({
+        status: 'Live',
+        hasObservedLive: true,
+        runningScore: { homeGoals: 3, awayGoals: 1 },
+      }),
+    )
+
+    renderMatchPage()
+
+    expect(await screen.findByText('En direct')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Démarrer le match' }),
+    ).not.toBeInTheDocument()
+
+    const runningHome = screen.getByLabelText(/Alpha — compteur/i)
+    const runningAway = screen.getByLabelText(/Beta — compteur/i)
+    await user.clear(runningHome)
+    await user.type(runningHome, '4')
+    await user.clear(runningAway)
+    await user.type(runningAway, '1')
+    await user.click(
+      screen.getByRole('button', { name: 'Mettre à jour le compteur' }),
+    )
+
+    await waitFor(() => {
+      expect(setRunningScore).toHaveBeenCalledWith(matchId, {
+        homeGoals: 4,
+        awayGoals: 1,
+      })
+    })
+
+    expect(screen.getByLabelText(/Alpha — résultat/i)).toHaveValue(3)
+    expect(screen.getByLabelText(/Beta — résultat/i)).toHaveValue(1)
+
+    await user.click(screen.getByRole('button', { name: 'Terminer le match' }))
+
+    await waitFor(() => {
+      expect(finishMatch).toHaveBeenCalledWith(matchId, {
+        type: 'Played',
+        homeGoals: 3,
+        awayGoals: 1,
+        extraTimePlayed: false,
+      })
+    })
   })
 
   it('successful Start refetches and shows Live', async () => {
     const user = userEvent.setup()
     const fetchMatch = vi.mocked(fetchMatchDetail)
-    fetchMatch.mockImplementation(async () => baseMatch({ status: 'Scheduled' }))
+    fetchMatch.mockImplementation(async () =>
+      baseMatch({ status: 'Scheduled' }),
+    )
 
     renderMatchPage()
     await screen.findByRole('button', { name: 'Démarrer le match' })
     const callsBeforeClick = fetchMatch.mock.calls.length
 
-    fetchMatch.mockImplementation(async () => baseMatch({ status: 'Live' }))
+    fetchMatch.mockImplementation(async () =>
+      baseMatch({
+        status: 'Live',
+        hasObservedLive: true,
+        runningScore: { homeGoals: 0, awayGoals: 0 },
+      }),
+    )
 
     await user.click(screen.getByRole('button', { name: 'Démarrer le match' }))
 
@@ -162,10 +233,7 @@ describe('MatchPage', () => {
     expect(fetchMatch.mock.calls.length).toBeGreaterThan(callsBeforeClick)
   })
 
-  it('Apply progression calls the Host route and shows slot fill', async () => {
-    const user = userEvent.setup()
-    let progressed = false
-
+  it('Finished: official score, no Cup progression, no GUIDs', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
       baseMatch({
         status: 'Finished',
@@ -178,41 +246,21 @@ describe('MatchPage', () => {
         },
       }),
     )
-    vi.mocked(fetchStageOverview).mockImplementation(async () => {
-      if (!progressed) {
-        return stageOverview
-      }
-      return {
-        ...stageOverview,
-        slots: [
-          {
-            slotKey: 'SF1-A',
-            entryId: 'home',
-            displayName: 'Alpha',
-            coveredByCompleteFixture: false,
-          },
-        ],
-      }
-    })
-    vi.mocked(applyProgressionOutcome).mockImplementation(async () => {
-      progressed = true
-    })
 
     renderMatchPage()
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Appliquer la progression' }),
-    )
-
-    await waitFor(() => {
-      expect(applyProgressionOutcome).toHaveBeenCalledWith(stageId, fixtureId)
-    })
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/Progression appliquée : emplacement SF1-A/i),
-      ).toBeInTheDocument()
-      expect(screen.getByText('Alpha', { selector: 'strong' })).toBeInTheDocument()
-    })
+    expect(
+      await screen.findByRole('heading', { name: 'Alpha vs Beta' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Résultat officiel')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Terminer le match' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Appliquer la progression' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(matchId)).not.toBeInTheDocument()
+    expect(screen.queryByText(competitionId)).not.toBeInTheDocument()
+    expect(screen.queryByText(fixtureId)).not.toBeInTheDocument()
   })
 })

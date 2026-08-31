@@ -20,11 +20,13 @@ export function matchSportingContext(
 }
 
 /** Kickoff display from Read scheduledAt (ISO). */
-export function matchScheduledLabel(match: MatchSummary): string | null {
-  if (!match.scheduledAt) {
+export function formatMatchKickoff(
+  scheduledAt: string | null | undefined,
+): string | null {
+  if (!scheduledAt) {
     return null
   }
-  const date = new Date(match.scheduledAt)
+  const date = new Date(scheduledAt)
   if (Number.isNaN(date.getTime())) {
     return null
   }
@@ -32,6 +34,10 @@ export function matchScheduledLabel(match: MatchSummary): string | null {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date)
+}
+
+export function matchScheduledLabel(match: MatchSummary): string | null {
+  return formatMatchKickoff(match.scheduledAt)
 }
 
 /** Result type label from Read — null when Domain has no result. */

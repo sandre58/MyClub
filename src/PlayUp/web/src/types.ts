@@ -698,6 +698,9 @@ export interface MatchDetail {
   result: MatchResult | null
   fixtureId: string | null
   legIndex: number | null
+  scheduledAt?: string | null
+  hasObservedLive?: boolean
+  runningScore?: MatchScore | null
 }
 
 /**

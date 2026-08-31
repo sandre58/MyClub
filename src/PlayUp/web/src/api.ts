@@ -9,6 +9,7 @@ import type {
   CreateCompetitionRequest,
   FinishMatchRequest,
   MatchDetail,
+  MatchScore,
   MatchSummary,
   NeedsAttention,
   OrganisationView,
@@ -99,15 +100,16 @@ async function sendJson<T>(
 }
 
 /**
- * POST for Host commands that return 204 No Content.
+ * POST/PUT for Host commands that return 204 No Content.
  * Do not call response.json() — an empty body is not JSON.
  */
-async function postNoContent(
+async function sendNoContent(
+  method: 'POST' | 'PUT',
   url: string,
   body?: unknown,
 ): Promise<void> {
   const response = await fetch(url, {
-    method: 'POST',
+    method,
     headers:
       body === undefined
         ? undefined
@@ -115,6 +117,13 @@ async function postNoContent(
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   await throwIfNotOk(response)
+}
+
+async function postNoContent(
+  url: string,
+  body?: unknown,
+): Promise<void> {
+  return sendNoContent('POST', url, body)
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions */
@@ -303,6 +312,17 @@ export function finishMatch(
   request: FinishMatchRequest,
 ): Promise<void> {
   return postNoContent(`/matches/${matchId}/finish`, request)
+}
+
+/** PUT /matches/{id}/running-score → 204 (Live only; absolute). */
+export function setRunningScore(
+  matchId: string,
+  score: MatchScore,
+): Promise<void> {
+  return sendNoContent('PUT', `/matches/${matchId}/running-score`, {
+    homeGoals: score.homeGoals,
+    awayGoals: score.awayGoals,
+  })
 }
 
 /** POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression → 204 */
