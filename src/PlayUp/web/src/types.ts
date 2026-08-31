@@ -510,7 +510,12 @@ export interface OrganisationRegulationSummary {
   winPoints: number
   drawPoints: number
   lossPoints: number
+  /** Authorized disciplinary catalogue types (empty = none). Omitted only in older fixtures. */
+  allowedTypes?: DisciplinaryType[]
 }
+
+/** Host DisciplinaryType — string enum member names. */
+export type DisciplinaryType = 'Yellow' | 'Red' | 'White'
 
 export interface OrganisationStructureSummary {
   groupCount: number
@@ -582,6 +587,11 @@ export interface ReplaceRegulationRequest {
   lossPoints: number
   forfeitWinnerGoals?: number
   forfeitLoserGoals?: number
+  /**
+   * Omit to preserve server DisciplinaryRules; send [] for None;
+   * send explicit catalogue to replace.
+   */
+  allowedTypes?: DisciplinaryType[] | null
 }
 
 /** POST /competitions/{id}/organisation/structure */
@@ -728,6 +738,37 @@ export interface RecordGoalRequest {
   assisterMemberId?: string | null
 }
 
+/** GET match detail recordedSubstitutions[] */
+export interface RecordedSubstitution {
+  substitutionId: string
+  side: MatchSide
+  outMemberId: string
+  outDisplayName: string | null
+  inMemberId: string
+  inDisplayName: string | null
+}
+
+/** POST/PUT /matches/{id}/recorded-substitutions */
+export interface RecordSubstitutionRequest {
+  outMemberId: string
+  inMemberId: string
+  side: MatchSide
+}
+
+/** GET match detail recordedDisciplinaryEvents[] */
+export interface RecordedDisciplinaryEvent {
+  disciplinaryEventId: string
+  memberId: string
+  memberDisplayName: string | null
+  type: DisciplinaryType
+}
+
+/** POST/PUT /matches/{id}/recorded-disciplinary-events */
+export interface RecordDisciplinaryEventRequest {
+  memberId: string
+  type: DisciplinaryType
+}
+
 export interface MatchResult {
   type: ResultType
   homeGoals: number
@@ -769,8 +810,8 @@ export interface MatchDetail {
   runningScore?: MatchScore | null
   declaredParticipations?: DeclaredParticipation[]
   recordedGoals?: RecordedGoal[]
-  recordedSubstitutions?: unknown[]
-  recordedDisciplinaryEvents?: unknown[]
+  recordedSubstitutions?: RecordedSubstitution[]
+  recordedDisciplinaryEvents?: RecordedDisciplinaryEvent[]
 }
 
 /**

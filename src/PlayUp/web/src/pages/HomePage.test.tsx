@@ -1,40 +1,257 @@
-import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError, createCompetition, fetchCompetitions } from '../api'
+import type { CompetitionListItem, WorkspaceSummary } from '../types'
 import { HomePage } from './HomePage'
 
-function renderHome() {
+vi.mock('../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api')>()
+  return {
+    ...actual,
+    fetchCompetitions: vi.fn(),
+    createCompetition: vi.fn(),
+  }
+})
+
+const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+
+function listItem(
+  overrides: Partial<CompetitionListItem> = {},
+): CompetitionListItem {
+  return {
+    id: competitionId,
+    name: 'Spring Cup',
+    status: 'Draft',
+    ...overrides,
+  }
+}
+
+function createdSummary(
+  overrides: Partial<WorkspaceSummary> = {},
+): WorkspaceSummary {
+  return {
+    id: competitionId,
+    name: 'New Cup',
+    status: 'Draft',
+    nextActionCode: 'ContinueOrganisation',
+    attentionCount: 0,
+    completionMode: null,
+    canCompleteNormally: false,
+    completionBlockers: null,
+    ...overrides,
+  }
+}
+
+function renderHomePage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  })
+
   render(
-    <MemoryRouter initialEntries={['/']}>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/competitions" element={<p>Competitions list</p>} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/competitions/:competitionId"
+            element={<p>Cockpit route</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/organisation"
+            element={<p>Organisation route</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/overview"
+            element={<p>Overview route</p>}
+          />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
 describe('HomePage', () => {
-  it('exposes Competition list as the product entry point', () => {
-    renderHome()
-
-    expect(
-      screen.getByRole('heading', { name: 'Bienvenue' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: /Liste des compétitions/i }),
-    ).toHaveAttribute('href', '/competitions')
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('navigates to the competition list', async () => {
-    const user = userEvent.setup()
-    renderHome()
+  it('renders Accueil hub chrome outside Shell (ds-root, no marketing vestibule)', async () => {
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
 
-    await user.click(
-      screen.getByRole('link', { name: /Liste des compétitions/i }),
+    renderHomePage()
+
+    expect(document.querySelector('.ds-root.accueil')).toBeInTheDocument()
+    expect(document.querySelector('.shell')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /Play’up|Play'up/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Bienvenue' }),
+    ).not.toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', {
+        name: /Votre première compétition/i,
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows loading while the list is pending', () => {
+    vi.mocked(fetchCompetitions).mockReturnValue(new Promise(() => {}))
+
+    renderHomePage()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
+  })
+
+  it('shows first-run empty state with create CTA', async () => {
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+
+    renderHomePage()
+
+    expect(
+      await screen.findByText(
+        /Créez votre compétition pour commencer à la préparer/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Créer une compétition/i }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('renders competition rows with status and navigates to Cockpit', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([
+      listItem({ status: 'Running' }),
+      listItem({
+        id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        name: 'Autumn League',
+        status: 'Ready',
+      }),
+    ])
+
+    renderHomePage()
+
+    expect(
+      await screen.findByRole('link', { name: /Spring Cup/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Choisissez une compétition ou créez-en une nouvelle/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /^Compétitions$/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('En cours')).toBeInTheDocument()
+    expect(screen.getByText('Autumn League')).toBeInTheDocument()
+    expect(screen.getByText('Prêt')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('link', { name: /Spring Cup/i }))
+    expect(screen.getByText('Cockpit route')).toBeInTheDocument()
+  })
+
+  it('keeps create CTA available when the list read fails (I4)', async () => {
+    vi.mocked(fetchCompetitions).mockRejectedValue(
+      new ApiError(500, 'Host unavailable'),
     )
 
-    expect(screen.getByText('Competitions list')).toBeInTheDocument()
+    renderHomePage()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Host unavailable (500)',
+    )
+    expect(
+      screen.getByRole('button', { name: /Créer une compétition/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('opens name dialog from CTA and creates then navigates to Organisation', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    vi.mocked(createCompetition).mockResolvedValue(
+      createdSummary({ name: 'Tournoi printemps' }),
+    )
+
+    renderHomePage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Créer une compétition/i }),
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByRole('heading', { name: /Nouvelle compétition/i }),
+    ).toBeInTheDocument()
+
+    await user.type(within(dialog).getByLabelText(/^Nom$/i), 'Tournoi printemps')
+    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }))
+
+    await waitFor(() => {
+      expect(createCompetition).toHaveBeenCalledWith({
+        name: 'Tournoi printemps',
+      })
+    })
+
+    expect(await screen.findByText('Organisation route')).toBeInTheDocument()
+  })
+
+  it('shows API error inside dialog and does not navigate on create failure', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    vi.mocked(createCompetition).mockRejectedValue(
+      new ApiError(400, 'Competition name cannot be empty.'),
+    )
+
+    renderHomePage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Créer une compétition/i }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText(/^Nom$/i), 'X')
+    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }))
+
+    expect(await within(dialog).findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Organisation route')).not.toBeInTheDocument()
+  })
+
+  it('closes dialog on Escape and returns focus to create CTA', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([listItem()])
+
+    renderHomePage()
+
+    const createButton = await screen.findByRole('button', {
+      name: /Créer une compétition/i,
+    })
+    await user.click(createButton)
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(createButton).toHaveFocus()
+  })
+
+  it('keeps submit disabled when the name is blank', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchCompetitions).mockResolvedValue([])
+
+    renderHomePage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Créer une compétition/i }),
+    )
+    expect(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: /^Créer$/i,
+      }),
+    ).toBeDisabled()
   })
 })

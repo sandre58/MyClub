@@ -1,16 +1,4 @@
 {
-  "eyebrow": "Play’up · Organisateur",
-  "title": "Bienvenue",
-  "lede": "Ouvrez une compétition pour préparer son organisation, suivre les matchs qui vous concernent et saisir les résultats.",
-  "competitions": {
-    "title": "Liste des compétitions",
-    "desc": "Parcourez toutes les compétitions de cet hôte et ouvrez leur espace de travail."
-  },
-  "seed": {
-    "title": "Compétition seed",
-    "descBefore": "Raccourci de développement configuré dans",
-    "descAfter": "."
-  },
-  "deepLinksBefore": "Les liens directs fonctionnent aussi pour",
-  "deepLinksAnd": "et"
+  "title": "Play’up",
+  "lede": "Choisissez une compétition ou créez-en une nouvelle."
 }

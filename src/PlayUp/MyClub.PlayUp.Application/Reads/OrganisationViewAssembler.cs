@@ -127,7 +127,8 @@ public static class OrganisationViewAssembler
             regulation.MatchRules.Duration.NumberOfPeriods,
             regulation.StandingRules.Points.WinPoints,
             regulation.StandingRules.Points.DrawPoints,
-            regulation.StandingRules.Points.LossPoints);
+            regulation.StandingRules.Points.LossPoints,
+            regulation.DisciplinaryRules.AllowedTypes);
     }
 
     private static OrganisationFormatSummaryDto BuildFormatSummary(Stage? primary) =>

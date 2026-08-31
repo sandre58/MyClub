@@ -102,6 +102,8 @@
     "loss": "Défaite",
     "matchMeta": "{{periods}}×{{minutes}} min",
     "teamsMeta": "{{min}}–{{max}} équipes",
+    "allowedTypesNone": "Aucun type disciplinaire autorisé",
+    "allowedTypesMeta": "Discipline : {{types}}",
     "editAction": "Modifier le règlement",
     "replaceLegend": "Remplacer le règlement",
     "minimumTeams": "Minimum d’équipes",
@@ -112,6 +114,13 @@
     "winPoints": "Points victoire",
     "drawPoints": "Points nul",
     "lossPoints": "Points défaite",
+    "allowedTypesLegend": "Types disciplinaires autorisés",
+    "allowedTypesHint": "Catalogue V1 — aucun type = aucun fait disciplinaire autorisé sur les matchs.",
+    "type": {
+      "Yellow": "Jaune",
+      "Red": "Rouge",
+      "White": "Blanc"
+    },
     "save": "Enregistrer le règlement",
     "saving": "Enregistrement…",
     "saveHint": "Remplace l’ensemble du règlement de la compétition."

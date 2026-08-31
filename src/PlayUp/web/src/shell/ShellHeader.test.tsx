@@ -11,7 +11,6 @@ import {
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
-import { HomePage } from '../pages/HomePage'
 import { cockpitView } from '../test/cockpitFixtures'
 import type { CockpitSituation } from '../types'
 
@@ -65,7 +64,14 @@ function renderWithShell(initialEntry: string) {
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/"
+              element={
+                <main id="main">
+                  <h1>Play’up</h1>
+                </main>
+              }
+            />
             <Route
               path="/competitions"
               element={<p>Competition list page</p>}
@@ -138,7 +144,7 @@ describe('ShellHeader', () => {
     expect(await screen.findByText('En cours')).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Changer de compétition' }),
-    ).toHaveAttribute('href', '/competitions')
+    ).toHaveAttribute('href', '/')
     const crest = document.querySelector('.shell-header__crest img')
     expect(crest).toHaveAttribute(
       'src',
@@ -152,7 +158,7 @@ describe('ShellHeader', () => {
     expect(await screen.findByText('Choisir une compétition')).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Changer de compétition' }),
-    ).toHaveAttribute('href', '/competitions')
+    ).toHaveAttribute('href', '/')
   })
 
   it('renders the empty-host state when no competitions exist', async () => {
@@ -164,7 +170,7 @@ describe('ShellHeader', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Ouvrir la liste des compétitions' }),
-    ).toHaveAttribute('href', '/competitions')
+    ).toHaveAttribute('href', '/')
   })
 
   it('resolves competition context from a stage deep link', async () => {
@@ -286,6 +292,6 @@ describe('ShellHeader', () => {
     await waitFor(() => {
       expect(screen.getByText('Choisir une compétition')).toBeInTheDocument()
     })
-    expect(screen.getByRole('heading', { name: 'Bienvenue' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Play’up' })).toBeInTheDocument()
   })
 })

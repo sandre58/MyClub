@@ -390,7 +390,9 @@ app.MapPut(
         var view = await executor
             .ReplaceRegulationAsync(
                 new CompetitionId(competitionId),
-                OrganisationRequestMapper.ToRegulation(request),
+                existing => OrganisationRequestMapper.ToRegulation(
+                    request,
+                    existing.DisciplinaryRules),
                 cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(view);

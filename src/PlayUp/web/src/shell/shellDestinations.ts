@@ -19,7 +19,7 @@ export function shellDestinationHrefs({
   stageId?: string
   matchId?: string
 }): ShellDestinationHrefs {
-  const competitionListHref = '/competitions'
+  const competitionListHref = '/'
 
   return {
     cockpit: competitionId ? `/competitions/${competitionId}` : '/',

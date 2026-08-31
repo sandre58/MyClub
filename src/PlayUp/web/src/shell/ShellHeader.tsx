@@ -182,7 +182,7 @@ function CompetitionSwapLink({ label }: { label: string }) {
   return (
     <Link
       className="ds-btn ds-btn--ghost ds-icon-button shell-header__change shell-header__icon-control"
-      to="/competitions"
+      to="/"
       aria-label={label}
       title={label}
     >

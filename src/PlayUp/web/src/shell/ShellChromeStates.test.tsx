@@ -12,7 +12,6 @@ import {
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
-import { HomePage } from '../pages/HomePage'
 import { cockpitView } from '../test/cockpitFixtures'
 
 vi.mock('../api', async (importOriginal) => {
@@ -44,7 +43,14 @@ function renderWithShell(initialEntry: string) {
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/"
+              element={
+                <main id="main">
+                  <h1>Play’up</h1>
+                </main>
+              }
+            />
             <Route path="/competitions" element={<p>Competition list page</p>} />
             <Route
               path="/competitions/:competitionId"
@@ -125,11 +131,11 @@ describe('Shell chrome context states', () => {
     await screen.findByText('Choisir une compétition')
     expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
       'href',
-      '/competitions',
+      '/',
     )
     expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
       'href',
-      '/competitions',
+      '/',
     )
   })
 

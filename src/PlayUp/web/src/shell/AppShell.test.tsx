@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { AppLayout } from '../AppLayout'
-import { HomePage } from '../pages/HomePage'
 
 function renderWithShell(initialEntry: string) {
   const queryClient = new QueryClient({
@@ -26,7 +25,14 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/"
+            element={
+              <main id="main">
+                <h1>Play’up</h1>
+              </main>
+            }
+          />
           <Route path="/competitions" element={<p>Competition list</p>} />
           <Route
             path="/competitions/:competitionId"
@@ -72,9 +78,7 @@ describe('AppShell', () => {
   it('renders the matched page through Outlet', () => {
     renderWithShell('/')
 
-    expect(
-      screen.getByRole('heading', { name: 'Bienvenue' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Play’up' })).toBeInTheDocument()
   })
 
   it('exposes the main landmark from the page content', () => {

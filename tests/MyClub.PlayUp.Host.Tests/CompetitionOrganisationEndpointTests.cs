@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
 
@@ -174,6 +175,66 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         regulated!.Regulation.MinimumTeams.Should().Be(3);
         regulated.Regulation.MaximumTeams.Should().Be(32);
         regulated.Regulation.DurationPerPeriod.Should().Be(40);
+        regulated.Regulation.AllowedTypes.Should().BeEmpty();
+    }
+
+    [IntegrationFact]
+    public async Task Replace_regulation_allowed_types_roundtrip_and_preserve_when_omittedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+        var competitionId = await CreateCompetitionAsync(client, "AllowedTypes");
+
+        using var setTypes = await client.PutAsJsonAsync(
+            $"/competitions/{competitionId}/regulation",
+            new ReplaceRegulationRequest(
+                MinimumTeams: 2,
+                MaximumTeams: 64,
+                DurationPerPeriod: 45,
+                NumberOfPeriods: 2,
+                HalfTimeDuration: 15,
+                WinPoints: 3,
+                DrawPoints: 1,
+                LossPoints: 0,
+                AllowedTypes: [DisciplinaryType.Yellow, DisciplinaryType.Red]));
+        setTypes.StatusCode.Should().Be(HttpStatusCode.OK);
+        var withTypes = await setTypes.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        withTypes!.Regulation.AllowedTypes.Should().BeEquivalentTo(
+            [DisciplinaryType.Yellow, DisciplinaryType.Red]);
+
+        using var omitTypes = await client.PutAsJsonAsync(
+            $"/competitions/{competitionId}/regulation",
+            new ReplaceRegulationRequest(
+                MinimumTeams: 4,
+                MaximumTeams: 32,
+                DurationPerPeriod: 40,
+                NumberOfPeriods: 2,
+                HalfTimeDuration: 10,
+                WinPoints: 3,
+                DrawPoints: 1,
+                LossPoints: 0));
+        omitTypes.StatusCode.Should().Be(HttpStatusCode.OK);
+        var preserved = await omitTypes.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        preserved!.Regulation.MinimumTeams.Should().Be(4);
+        preserved.Regulation.AllowedTypes.Should().BeEquivalentTo(
+            [DisciplinaryType.Yellow, DisciplinaryType.Red],
+            "omitting AllowedTypes must not wipe DisciplinaryRules to None");
+
+        using var clearTypes = await client.PutAsJsonAsync(
+            $"/competitions/{competitionId}/regulation",
+            new ReplaceRegulationRequest(
+                MinimumTeams: 4,
+                MaximumTeams: 32,
+                DurationPerPeriod: 40,
+                NumberOfPeriods: 2,
+                HalfTimeDuration: 10,
+                WinPoints: 3,
+                DrawPoints: 1,
+                LossPoints: 0,
+                AllowedTypes: []));
+        clearTypes.StatusCode.Should().Be(HttpStatusCode.OK);
+        var cleared = await clearTypes.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        cleared!.Regulation.AllowedTypes.Should().BeEmpty();
     }
 
     [IntegrationFact]

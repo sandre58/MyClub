@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Host;
 /// <summary>
 /// Maps Organisation HTTP contracts to Application commands (no business logic).
 /// </summary>
-internal static class OrganisationRequestMapper
+public static class OrganisationRequestMapper
 {
     /// <summary>
     /// Maps <see cref="ConfigureStructureRequest"/> to <see cref="StructureIntent"/>.
@@ -61,9 +61,21 @@ internal static class OrganisationRequestMapper
     /// <summary>
     /// Maps <see cref="ReplaceRegulationRequest"/> to Domain <see cref="Regulation"/>.
     /// </summary>
-    public static Regulation ToRegulation(ReplaceRegulationRequest request)
+    /// <param name="request">HTTP replace body.</param>
+    /// <param name="existingDisciplinaryRules">
+    /// Current competition disciplinary rules — used when <see cref="ReplaceRegulationRequest.AllowedTypes"/> is omitted.
+    /// </param>
+    public static Regulation ToRegulation(
+        ReplaceRegulationRequest request,
+        DisciplinaryRules existingDisciplinaryRules)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(existingDisciplinaryRules);
+
+        var disciplinary = request.AllowedTypes is null
+            ? existingDisciplinaryRules
+            : new DisciplinaryRules(request.AllowedTypes);
+
         return new Regulation(
             new EntryRules(request.MinimumTeams, request.MaximumTeams),
             new MatchRules(
@@ -79,7 +91,8 @@ internal static class OrganisationRequestMapper
                     RankingCriterion.GoalDifference,
                     RankingCriterion.GoalsFor,
                     RankingCriterion.HeadToHead
-                ]));
+                ]),
+            disciplinary);
     }
 
     private static MatchGenerationFormat ParseMatchGenerationFormat(string? value) =>

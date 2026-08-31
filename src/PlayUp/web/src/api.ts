@@ -17,7 +17,9 @@ import type {
   MatchSummary,
   NeedsAttention,
   OrganisationView,
+  RecordDisciplinaryEventRequest,
   RecordGoalRequest,
+  RecordSubstitutionRequest,
   RenameDeclaredMemberRequest,
   RenameEntryRequest,
   ReplaceRegulationRequest,
@@ -442,6 +444,73 @@ export function removeRecordedGoal(
   goalId: string,
 ): Promise<void> {
   return sendNoContent('DELETE', `/matches/${matchId}/recorded-goals/${goalId}`)
+}
+
+/** POST /matches/{id}/recorded-substitutions → 204 */
+export function recordSubstitution(
+  matchId: string,
+  request: RecordSubstitutionRequest,
+): Promise<void> {
+  return postNoContent(`/matches/${matchId}/recorded-substitutions`, request)
+}
+
+/** PUT /matches/{id}/recorded-substitutions/{substitutionId} → 204 */
+export function correctRecordedSubstitution(
+  matchId: string,
+  substitutionId: string,
+  request: RecordSubstitutionRequest,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/matches/${matchId}/recorded-substitutions/${substitutionId}`,
+    request,
+  )
+}
+
+/** DELETE /matches/{id}/recorded-substitutions/{substitutionId} → 204 */
+export function removeRecordedSubstitution(
+  matchId: string,
+  substitutionId: string,
+): Promise<void> {
+  return sendNoContent(
+    'DELETE',
+    `/matches/${matchId}/recorded-substitutions/${substitutionId}`,
+  )
+}
+
+/** POST /matches/{id}/recorded-disciplinary-events → 204 */
+export function recordDisciplinaryEvent(
+  matchId: string,
+  request: RecordDisciplinaryEventRequest,
+): Promise<void> {
+  return postNoContent(
+    `/matches/${matchId}/recorded-disciplinary-events`,
+    request,
+  )
+}
+
+/** PUT /matches/{id}/recorded-disciplinary-events/{disciplinaryEventId} → 204 */
+export function correctRecordedDisciplinaryEvent(
+  matchId: string,
+  disciplinaryEventId: string,
+  request: RecordDisciplinaryEventRequest,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/matches/${matchId}/recorded-disciplinary-events/${disciplinaryEventId}`,
+    request,
+  )
+}
+
+/** DELETE /matches/{id}/recorded-disciplinary-events/{disciplinaryEventId} → 204 */
+export function removeRecordedDisciplinaryEvent(
+  matchId: string,
+  disciplinaryEventId: string,
+): Promise<void> {
+  return sendNoContent(
+    'DELETE',
+    `/matches/${matchId}/recorded-disciplinary-events/${disciplinaryEventId}`,
+  )
 }
 
 /** POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression → 204 */

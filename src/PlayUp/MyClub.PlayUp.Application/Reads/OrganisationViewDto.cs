@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
 
 namespace MyClub.PlayUp.Application.Reads;
 
@@ -87,6 +88,7 @@ public sealed record OrganisationFormatSummaryDto(
 /// <param name="WinPoints">Standing win points.</param>
 /// <param name="DrawPoints">Standing draw points.</param>
 /// <param name="LossPoints">Standing loss points.</param>
+/// <param name="AllowedTypes">Authorized disciplinary catalogue types (empty = none).</param>
 public sealed record OrganisationRegulationSummaryDto(
     int MinimumTeams,
     int MaximumTeams,
@@ -94,7 +96,8 @@ public sealed record OrganisationRegulationSummaryDto(
     int NumberOfPeriods,
     int WinPoints,
     int DrawPoints,
-    int LossPoints);
+    int LossPoints,
+    IReadOnlyList<DisciplinaryType> AllowedTypes);
 
 /// <summary>Structure counts for the primary stage.</summary>
 /// <param name="GroupCount">Groups.</param>

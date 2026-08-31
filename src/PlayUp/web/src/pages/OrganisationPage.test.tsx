@@ -200,7 +200,33 @@ describe('OrganisationPage', () => {
     expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
     expect(
+      screen.getByText('Aucun type disciplinaire autorisé'),
+    ).toBeInTheDocument()
+    expect(
       screen.getByText(/Encore 2 éléments avant de démarrer/i),
+    ).toBeInTheDocument()
+  })
+
+  it('shows AllowedTypes on the regulation summary', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        regulation: {
+          minimumTeams: 2,
+          maximumTeams: 64,
+          durationPerPeriod: 45,
+          numberOfPeriods: 2,
+          winPoints: 3,
+          drawPoints: 1,
+          lossPoints: 0,
+          allowedTypes: ['Yellow', 'Red'],
+        },
+      }),
+    )
+
+    renderOrganisationPage()
+
+    expect(
+      await screen.findByText('Discipline : Jaune, Rouge'),
     ).toBeInTheDocument()
   })
 
@@ -454,6 +480,7 @@ describe('OrganisationPage', () => {
           winPoints: 3,
           drawPoints: 1,
           lossPoints: 0,
+          allowedTypes: [],
         }),
       )
     })

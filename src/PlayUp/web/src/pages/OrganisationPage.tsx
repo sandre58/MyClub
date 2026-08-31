@@ -50,6 +50,7 @@ import {
   StageStatusBadge,
 } from '../ui'
 import {
+  type DisciplinaryType,
   type MatchGenerationFormat,
   type OrganisationEntry,
   type OrganisationView,
@@ -1111,6 +1112,15 @@ function RegulationSection({
             max: regulation.maximumTeams,
           })}
         </li>
+        <li>
+          {(regulation.allowedTypes ?? []).length === 0
+            ? t('regulation.allowedTypesNone')
+            : t('regulation.allowedTypesMeta', {
+                types: (regulation.allowedTypes ?? [])
+                  .map((type) => t(`regulation.type.${type}`))
+                  .join(', '),
+              })}
+        </li>
       </ul>
 
       {canReplace && (
@@ -1150,6 +1160,7 @@ function RegulationEditorDialog({
     lossPoints: regulation.lossPoints,
     forfeitWinnerGoals: 3,
     forfeitLoserGoals: 0,
+    allowedTypes: [...(regulation.allowedTypes ?? [])],
   })
 
   const mutation = useMutation({
@@ -1171,6 +1182,16 @@ function RegulationEditorDialog({
         [key]: Number.isFinite(parsed) ? parsed : current[key],
       }))
     }
+
+  function toggleAllowedType(type: DisciplinaryType) {
+    setForm((current) => {
+      const selected = current.allowedTypes ?? []
+      const next = selected.includes(type)
+        ? selected.filter((item) => item !== type)
+        : [...selected, type]
+      return { ...current, allowedTypes: next }
+    })
+  }
 
   return (
     <OrganisationDialog title={t('regulation.replaceLegend')} onClose={onClose}>
@@ -1280,6 +1301,26 @@ function RegulationEditorDialog({
               />
             </label>
           </div>
+          <fieldset className="fieldset fieldset--nested">
+            <legend className="fieldset__legend">
+              {t('regulation.allowedTypesLegend')}
+            </legend>
+            <p className="organisation-panel__muted">
+              {t('regulation.allowedTypesHint')}
+            </p>
+            <div className="form-row">
+              {(['Yellow', 'Red', 'White'] as const).map((type) => (
+                <label key={type} className="field field--checkbox">
+                  <input
+                    type="checkbox"
+                    checked={(form.allowedTypes ?? []).includes(type)}
+                    onChange={() => toggleAllowedType(type)}
+                  />
+                  {t(`regulation.type.${type}`)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </fieldset>
         <div className="button-row">
           <button

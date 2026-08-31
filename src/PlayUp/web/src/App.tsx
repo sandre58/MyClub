@@ -23,6 +23,9 @@ const FoundationsPlayground = lazy(async () => {
 /**
  * Route table only.
  *
+ * / and /competitions (legacy redirect) are outside AppLayout: Accueil hub
+ * (pré-compétition). Shell V1 starts at /competitions/:id….
+ *
  * /dev/foundations is outside AppLayout: 14.5 validation terrain,
  * not organizer chrome. Lazy so Plex and DS CSS stay off the 13.5 bundle.
  *
@@ -40,9 +43,9 @@ export default function App() {
           </Suspense>
         }
       />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/competitions" element={<CompetitionsPage />} />
       <Route element={<AppLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/competitions" element={<CompetitionsPage />} />
         <Route
           path="/competitions/:competitionId"
           element={<CompetitionCockpitPage />}

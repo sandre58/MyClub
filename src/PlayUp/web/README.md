@@ -6,7 +6,7 @@ Independent Vite + React + TypeScript app under `src/PlayUp/web/`. **Not** a .NE
 
 1. PostgreSQL with Play’up schema (local compose).
 2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`).
-3. Host reachable (create competitions from the SPA list — Phase 19.1). DevRunner remains optional for seeded UX demos.
+3. Host reachable (create competitions from the Accueil hub on `/` — Phase 19.1 / Accueil hub). DevRunner remains optional for seeded UX demos.
 
 ### Seed competitions (optional, local)
 
@@ -18,19 +18,19 @@ dotnet run --project ../MyClub.PlayUp.DevRunner -- --reset --templates ligue-1:r
 dotnet run --project ../MyClub.PlayUp.DevRunner -- --scenarios groups:running,cup:finished
 ```
 
-Copy a printed `competitionId` into `.env.local` as `VITE_SEED_COMPETITION_ID` when useful.
+Seeded competitions appear in the Accueil list (`GET /competitions`). Open a row to enter its Cockpit.
 
 Progress: `prepared` | `running` (default) | `finished` via `id:progress`.
 
 ## Dev
 
 ```bash
-cp .env.example .env.local   # then set VITE_SEED_COMPETITION_ID
+cp .env.example .env.local   # optional: VITE_API_PROXY_TARGET
 npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173/` → redirects to `/competitions/<seed-id>`.
+Open `http://127.0.0.1:5173/` — Accueil hub (list + create). Legacy `/competitions` redirects to `/`.
 
 ### Rider (Host + Vite in one click)
 

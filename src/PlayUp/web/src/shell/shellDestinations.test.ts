@@ -9,9 +9,9 @@ describe('shellDestinationHrefs', () => {
   it('routes competition-scoped links to the list when context is absent', () => {
     expect(shellDestinationHrefs({})).toEqual({
       cockpit: '/',
-      organisation: '/competitions',
-      matches: '/competitions',
-      classements: '/competitions',
+      organisation: '/',
+      matches: '/',
+      classements: '/',
     })
   })
 
@@ -27,18 +27,18 @@ describe('shellDestinationHrefs', () => {
   it('keeps stage deep-link fallbacks while competition resolves', () => {
     expect(shellDestinationHrefs({ stageId })).toEqual({
       cockpit: '/',
-      organisation: '/competitions',
+      organisation: '/',
       matches: `/stages/${stageId}/matches`,
-      classements: '/competitions',
+      classements: '/',
     })
   })
 
   it('keeps match deep-link fallbacks while competition resolves', () => {
     expect(shellDestinationHrefs({ matchId })).toEqual({
       cockpit: '/',
-      organisation: '/competitions',
+      organisation: '/',
       matches: `/matches/${matchId}`,
-      classements: '/competitions',
+      classements: '/',
     })
   })
 })

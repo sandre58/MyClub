@@ -855,12 +855,21 @@ public sealed class UseCaseExecutor(
     /// <summary>
     /// Replaces competition regulation and returns the updated organisation view.
     /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="buildReplacement">
+    /// Builds the replacement regulation from the current persisted regulation
+    /// (so omitted disciplinary AllowedTypes can preserve existing rules).
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<OrganisationViewDto> ReplaceRegulationAsync(
         CompetitionId competitionId,
-        Regulation regulation,
+        Func<Regulation, Regulation> buildReplacement,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(buildReplacement);
+
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var regulation = buildReplacement(competition.Regulation);
         ReplaceRegulation.Execute(competition, regulation, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);

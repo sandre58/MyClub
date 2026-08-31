@@ -25,7 +25,9 @@
     "DanglingFeedTarget": "La cible d’alimentation est introuvable.",
     "StageNotInCompetition": "La phase n’appartient pas à cette compétition.",
     "DeclaredMemberReferencedByMatchSheet": "Ce joueur figure encore sur une feuille de match. Retirez-le de la feuille avant de le retirer de l’équipe.",
-    "ParticipationNotEligible": "Ce joueur n’est pas éligible pour cette feuille (effectif, rôle ou côté)."
+    "ParticipationNotEligible": "Ce joueur n’est pas éligible pour cette feuille (effectif, rôle ou côté).",
+    "InvalidDisciplinaryType": "Type disciplinaire invalide.",
+    "DisciplinaryTypeNotAllowed": "Ce type disciplinaire n’est pas autorisé par le règlement de la compétition."
   },
   "Competition": {
     "NameInvalid": "Le nom de la compétition est invalide.",
@@ -51,7 +53,15 @@
     "RecordedGoalNotFound": "But introuvable sur ce match.",
     "AssisterNotAllowedOnOwnGoal": "Un passeur n’est pas autorisé sur un but contre son camp.",
     "AssisterSameAsScorer": "Le passeur ne peut pas être le même joueur que le buteur.",
-    "InvalidSide": "Côté de match invalide."
+    "InvalidSide": "Côté de match invalide.",
+    "SubstitutionMutationNotAllowed": "Cette opération sur les remplacements n’est pas autorisée dans l’état actuel du match.",
+    "SubstitutionNotFound": "Remplacement introuvable sur ce match.",
+    "SubstitutionSameMember": "Le sortant et l’entrant doivent être des joueurs distincts.",
+    "SubstitutionSideMismatch": "Le sortant et l’entrant doivent appartenir au même côté.",
+    "SubstitutionPresenceInvalid": "Ce remplacement est incohérent avec la présence dérivée (sortant hors terrain ou entrant déjà présent).",
+    "DisciplinaryEventMutationNotAllowed": "Cette opération disciplinaire n’est pas autorisée dans l’état actuel du match.",
+    "DisciplinaryEventNotFound": "Fait disciplinaire introuvable sur ce match.",
+    "InvalidDisciplinaryType": "Type disciplinaire invalide."
   },
   "Stage": {
     "InvalidTransition": "Transition de phase interdite.",
