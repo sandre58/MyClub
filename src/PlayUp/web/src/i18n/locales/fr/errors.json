@@ -24,7 +24,8 @@
     "TieFormatRequired": "Un format de confrontation (TieFormat) est requis.",
     "DanglingFeedTarget": "La cible d’alimentation est introuvable.",
     "StageNotInCompetition": "La phase n’appartient pas à cette compétition.",
-    "DeclaredMemberReferencedByMatchSheet": "Ce joueur figure encore sur une feuille de match. Retirez-le de la feuille avant de le retirer de l’équipe."
+    "DeclaredMemberReferencedByMatchSheet": "Ce joueur figure encore sur une feuille de match. Retirez-le de la feuille avant de le retirer de l’équipe.",
+    "ParticipationNotEligible": "Ce joueur n’est pas éligible pour cette feuille (effectif, rôle ou côté)."
   },
   "Competition": {
     "NameInvalid": "Le nom de la compétition est invalide.",
@@ -38,7 +39,14 @@
     "InvalidTransition": "Transition de match interdite.",
     "SameParticipant": "Les deux participants doivent être distincts.",
     "InvalidResult": "Résultat de match invalide.",
-    "ResultAlreadyRecorded": "Un résultat est déjà enregistré."
+    "ResultAlreadyRecorded": "Un résultat est déjà enregistré.",
+    "CompositionImmutable": "La feuille de match n’est plus modifiable dans cet état.",
+    "DuplicateParticipation": "Ce joueur est déjà sur la feuille.",
+    "ParticipationNotFound": "Participation introuvable sur la feuille.",
+    "DuplicateJerseyNumber": "Ce numéro de maillot est déjà utilisé de ce côté.",
+    "ParticipationReferencedByRecordedGoal": "Ce joueur est encore lié à un but enregistré. Corrigez les faits avant de le retirer de la feuille.",
+    "ParticipationReferencedBySubstitution": "Ce joueur est encore lié à un remplacement. Corrigez les faits avant de le retirer de la feuille.",
+    "ParticipationReferencedByDisciplinaryEvent": "Ce joueur est encore lié à un fait disciplinaire. Corrigez les faits avant de le retirer de la feuille."
   },
   "Stage": {
     "InvalidTransition": "Transition de phase interdite.",

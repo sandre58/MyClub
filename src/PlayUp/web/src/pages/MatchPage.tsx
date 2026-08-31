@@ -31,12 +31,13 @@ import {
   type MatchScore,
 } from '../types'
 import { formatMatchKickoff } from './matchListMeta'
+import { MatchSheetPanel } from './MatchSheetPanel'
 import './matches.css'
 
 /**
- * Championship match detail — two jobs, not one mega-form:
+ * Championship match detail — two jobs for score, plus Lot 2 sheet:
  * live observed counter (`SetRunningScore`) ≠ official close (`Finish`).
- * After-the-fact Finish does not Start. No Cup progression, no sheet/goals UI.
+ * Sheet = composition déclarée (Starter/Bench/jersey). No goals UI yet (Lot 3).
  */
 export function MatchPage() {
   const { matchId = '' } = useParams()
@@ -242,6 +243,8 @@ function MatchDetailView({
           </p>
         )}
       </section>
+
+      <MatchSheetPanel match={data} />
 
       {(canStart || canSetRunningScore || canFinish) && (
         <div className="match-detail__ops" aria-busy={busy}>

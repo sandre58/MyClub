@@ -5,12 +5,13 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   fetchMatchDetail,
+  fetchOrganisationView,
   fetchStageOverview,
   finishMatch,
   setRunningScore,
   startMatch,
 } from '../api'
-import type { MatchDetail, StageOverview } from '../types'
+import type { MatchDetail, OrganisationView, StageOverview } from '../types'
 import { MatchPage } from './MatchPage'
 
 vi.mock('../api', async (importOriginal) => {
@@ -19,6 +20,7 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchMatchDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
+    fetchOrganisationView: vi.fn(),
     startMatch: vi.fn(),
     finishMatch: vi.fn(),
     setRunningScore: vi.fn(),
@@ -55,6 +57,55 @@ const stageOverview: StageOverview = {
   draws: [],
 }
 
+const emptyOrganisation: OrganisationView = {
+  competitionId,
+  name: 'Spring Cup',
+  status: 'Ready',
+  participants: {
+    activeCount: 2,
+    occupyingCount: 2,
+    entries: [
+      { entryId: 'home', displayName: 'Alpha', status: 'Active', declaredMembers: [] },
+      { entryId: 'away', displayName: 'Beta', status: 'Active', declaredMembers: [] },
+    ],
+  },
+  format: {
+    kind: null,
+    primaryStageId: null,
+    primaryStageName: null,
+    primaryStageStatus: null,
+  },
+  regulation: {
+    minimumTeams: 2,
+    maximumTeams: 64,
+    durationPerPeriod: 45,
+    numberOfPeriods: 2,
+    winPoints: 3,
+    drawPoints: 1,
+    lossPoints: 0,
+  },
+  structure: {
+    groupCount: 0,
+    roundCount: 0,
+    matchdayCount: 0,
+    slotCount: 0,
+    hasDrawRules: false,
+    numberOfPots: null,
+    matchGenerationFormat: 'SingleRoundRobin',
+  },
+  actions: [],
+  readiness: {
+    readyForNextSlice: false,
+    readyForDraw: false,
+    readyForMaterialization: false,
+    readyForSchedule: false,
+    readyForMatchOperation: false,
+    readyForSchedulePath: false,
+    attachedMatchCount: 0,
+    blockers: [],
+  },
+}
+
 function renderMatchPage() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -80,6 +131,7 @@ describe('MatchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview)
+    vi.mocked(fetchOrganisationView).mockResolvedValue(emptyOrganisation)
     vi.mocked(startMatch).mockResolvedValue(undefined)
     vi.mocked(finishMatch).mockResolvedValue(undefined)
     vi.mocked(setRunningScore).mockResolvedValue(undefined)

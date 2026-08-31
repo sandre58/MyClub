@@ -1,10 +1,12 @@
 import type {
   AddDeclaredMemberRequest,
+  AddDeclaredParticipationRequest,
   AddEntryRequest,
   ApplyDrawRequest,
   CockpitView,
   CompetitionListItem,
   CompetitionOverview,
+  CompositionStatus,
   ConfigureStructureRequest,
   ConsultationView,
   CreateCompetitionRequest,
@@ -106,7 +108,7 @@ async function sendJson<T>(
  * Do not call response.json() — an empty body is not JSON.
  */
 async function sendNoContent(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'DELETE',
   url: string,
   body?: unknown,
 ): Promise<void> {
@@ -364,6 +366,51 @@ export function setRunningScore(
     homeGoals: score.homeGoals,
     awayGoals: score.awayGoals,
   })
+}
+
+/** POST /matches/{id}/declared-participations → 204 */
+export function addDeclaredParticipation(
+  matchId: string,
+  request: AddDeclaredParticipationRequest,
+): Promise<void> {
+  return postNoContent(`/matches/${matchId}/declared-participations`, request)
+}
+
+/** DELETE /matches/{id}/declared-participations/{memberId} → 204 */
+export function removeDeclaredParticipation(
+  matchId: string,
+  memberId: string,
+): Promise<void> {
+  return sendNoContent(
+    'DELETE',
+    `/matches/${matchId}/declared-participations/${memberId}`,
+  )
+}
+
+/** PUT .../declared-participations/{memberId}/composition-status → 204 */
+export function changeDeclaredParticipationCompositionStatus(
+  matchId: string,
+  memberId: string,
+  compositionStatus: CompositionStatus,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/matches/${matchId}/declared-participations/${memberId}/composition-status`,
+    { compositionStatus },
+  )
+}
+
+/** PUT .../declared-participations/{memberId}/jersey-number → 204 */
+export function setDeclaredParticipationJerseyNumber(
+  matchId: string,
+  memberId: string,
+  jerseyNumber: number | null,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/matches/${matchId}/declared-participations/${memberId}/jersey-number`,
+    { jerseyNumber },
+  )
 }
 
 /** POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression → 204 */
