@@ -46,7 +46,7 @@ export function ShellHeader({
   )
 
   return (
-    <header className="shell-header">
+    <header className="shell-header ds-shell-header">
       <ShellHeaderCompetitionContext
         competitionName={competitionName}
         logoMediaId={logoMediaId}
@@ -54,6 +54,8 @@ export function ShellHeader({
         periodLabel={periodLabel}
         state={state}
       />
+
+      <span className="ds-shell-header__spacer" aria-hidden="true" />
 
       <div className="shell-header__actions">
         <AttentionTrigger
@@ -106,7 +108,7 @@ function ShellHeaderCompetitionContext({
 
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
-        <span className="shell-header__crest" aria-hidden="true">
+        <span className="ds-shell-header__crest shell-header__crest" aria-hidden="true">
           <TeamCrest
             name={competitionName}
             logoMediaId={logoMediaId}
@@ -115,11 +117,11 @@ function ShellHeaderCompetitionContext({
           />
         </span>
 
-        <div className="shell-header__identity">
-          <span className="shell-header__competition-name">{competitionName}</span>
+        <div className="ds-shell-header__identity">
+          <span className="ds-shell-header__name">{competitionName}</span>
 
           {(statusLabel || periodLabel) && (
-            <div className="shell-header__meta-row">
+            <div className="ds-shell-header__meta">
               {statusLabel && statusTone && (
                 <Status density="context" tone={statusTone} variant="soft" shape="rounded">
                   {statusLabel}
@@ -213,7 +215,7 @@ function AttentionTrigger({
     <button
       ref={buttonRef}
       type="button"
-      className="shell-header__attention shell-header__icon-control ds-btn ds-btn--ghost ds-icon-button"
+      className="ds-shell-header__bell ds-btn ds-btn--ghost ds-icon-button shell-header__attention shell-header__icon-control"
       aria-expanded={hasAttention ? drawerOpen : undefined}
       aria-haspopup={hasAttention ? 'dialog' : undefined}
       aria-controls={hasAttention ? drawerId : undefined}
@@ -228,7 +230,7 @@ function AttentionTrigger({
         aria-hidden="true"
       />
       {hasAttention && (
-        <span className="shell-header__attention-badge" aria-hidden="true">
+        <span className="ds-shell-header__badge ds-num" aria-hidden="true">
           {count}
         </span>
       )}

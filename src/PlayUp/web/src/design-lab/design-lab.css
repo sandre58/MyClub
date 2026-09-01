@@ -1,40 +1,11 @@
 /*
- * Design Lab — direction « Grille de compétition, exécutée ».
+ * Design Lab — layout et surfaces prototype (/design-lab).
  *
- * Prototype de référence visuelle (/design-lab). Scopé .dlab sous .ds-root :
- * consomme les tokens DS 14.5 et ajoute des extensions candidates (--dlab-*).
- * Rien ici n'est importé par les surfaces produit.
- *
- * Extensions candidates au DS si la direction est validée :
- *   1. Gamme brand unifiée (deep / brand / bright) — supprime le 3e bleu chrome.
- *   2. Rôle `live` distinct de `success`.
- *   3. Rôle typographique numérique (score / hero) en chiffres tabulaires.
- *   4. Système d'angle 9° : wordmark, indicateur nav actif, indicateurs de tendance.
- *   5. Atmosphère Accueil (halos brand/info désaturés — décision 2026-09-01).
+ * Consomme les foundations DS Lot 1 (brand, numbers, live, tokens).
+ * Pas de tokens parallèles — le lab reste l'arbitre visuel, le DS porte le quoi.
  */
 
 .dlab {
-  /* Gamme brand unifiée — les extrémités du dégradé logo deviennent des tokens. */
-  --dlab-brand-deep: #154a8f;
-  --dlab-brand-bright: #2f86e0;
-
-  /* Live ≠ success : l'activité n'est ni un succès ni une alarme. */
-  --dlab-live: #0e9152;
-
-  /* Rôles numériques — chiffres tabulaires, vecteur d'identité. */
-  --dlab-text-score: 3.25rem;
-  --dlab-text-hero-num: 3.25rem;
-
-  /*
-   * Système d'angle unique — 12° arbitré 2026-09-01 (voir vue Arbitrage).
-   * Une variable, une valeur, partout : monogramme, wordmark, tendances,
-   * barre nav active.
-   */
-  --dlab-skew: -12deg;
-
-  /* Le rail chrome consomme la gamme brand au lieu d'un bleu isolé. */
-  --color-chrome-accent: var(--dlab-brand-bright);
-
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -107,52 +78,10 @@
   color: var(--color-text-secondary);
 }
 
-/* ------------------------------------------------------------------ */
-/* Wordmark — IBM Plex obliquée + flèche fromStem (angle système)      */
-/* ------------------------------------------------------------------ */
-
-.dlab-wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.08em;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
-  line-height: 1;
-  transform: skewX(var(--dlab-skew));
-  white-space: nowrap;
-}
-
-.dlab-wordmark[data-skew='9'] {
-  --dlab-skew: -9deg;
-}
-
-.dlab-wordmark[data-skew='12'] {
-  --dlab-skew: -12deg;
-}
-
-.dlab-wordmark__up {
-  position: relative;
-  display: inline-block;
-}
-
-.dlab-wordmark__arrow {
-  position: absolute;
-  left: calc(100% - 0.08em);
-  bottom: 0.72em;
-  width: 0.62em;
-  height: 0.62em;
-}
-
-.dlab-wordmark__arrow path {
-  stroke: currentColor;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
+/* Wordmark / trend / live / numeric roles → design-system foundations (Lot 1). */
 
 /* ------------------------------------------------------------------ */
-/* Shell proposé                                                       */
+/* Shell proposé — grammar in design-system/foundations/shell.css      */
 /* ------------------------------------------------------------------ */
 
 .dlab-shell {
@@ -162,85 +91,7 @@
 }
 
 .dlab-rail {
-  display: flex;
-  flex-direction: column;
   width: 15rem;
-  flex-shrink: 0;
-  background: var(--color-chrome);
-  color: var(--color-on-chrome);
-  border-right: var(--border-width) solid var(--color-chrome-border);
-}
-
-.dlab-rail__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-  padding: var(--space-16);
-  color: var(--color-on-chrome);
-  text-decoration: none;
-  font-size: 1.05rem;
-}
-
-.dlab-rail__nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-8);
-  flex: 1;
-}
-
-.dlab-rail__link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-  min-height: var(--control-height);
-  padding: 0 var(--space-12) 0 var(--space-16);
-  border: none;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--color-on-chrome);
-  opacity: 0.66;
-  font: inherit;
-  font-weight: var(--font-weight-semibold);
-  text-align: left;
-  cursor: pointer;
-  transition: opacity var(--motion-duration) var(--motion-easing),
-    background-color var(--motion-duration) var(--motion-easing);
-}
-
-.dlab-rail__link:hover {
-  opacity: 0.94;
-  background: color-mix(in srgb, #ffffff 8%, transparent);
-}
-
-.dlab-rail__link[data-active='true'] {
-  opacity: 1;
-  background: color-mix(in srgb, #ffffff 12%, transparent);
-}
-
-/* Indicateur actif : barre inclinée à l'angle système — la signature. */
-.dlab-rail__link[data-active='true']::before {
-  content: '';
-  position: absolute;
-  left: 3px;
-  top: 7px;
-  bottom: 7px;
-  width: 3px;
-  background: var(--color-chrome-accent);
-  border-radius: 2px;
-  transform: skewY(var(--dlab-skew));
-}
-
-.dlab-rail__icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
-}
-
-.dlab-rail__footer {
-  padding: var(--space-8);
-  border-top: var(--border-width) solid var(--color-chrome-border);
 }
 
 .dlab-column {
@@ -250,75 +101,14 @@
   min-width: 0;
 }
 
-.dlab-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-16);
-  min-height: 3.5rem;
-  padding: var(--space-8) var(--space-24);
-  background: var(--color-surface);
-  border-bottom: var(--border-width) solid var(--color-border);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent);
-}
-
+/* Lab placeholder crest (product uses TeamCrest). */
 .dlab-header__crest {
-  width: 2.25rem;
-  height: 2.25rem;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-control);
   background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
   color: var(--color-brand);
   font-size: var(--text-label);
   font-weight: var(--font-weight-bold);
-}
-
-.dlab-header__id {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dlab-header__name {
-  font-weight: var(--font-weight-bold);
-  line-height: var(--leading-tight);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dlab-header__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  font-size: var(--text-meta);
-  color: var(--color-text-secondary);
-}
-
-.dlab-header__spacer {
-  flex: 1;
-}
-
-.dlab-header__bell {
-  position: relative;
-}
-
-.dlab-header__badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 1rem;
-  height: 1rem;
-  padding: 0 3px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--color-attention);
-  color: #fff;
-  font-size: 0.66rem;
-  font-weight: var(--font-weight-bold);
-  line-height: 1;
 }
 
 .dlab-main {
@@ -340,13 +130,8 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Grammaire commune                                                   */
+/* Grammaire commune (lab-specific layout; numbers → ds-num*)          */
 /* ------------------------------------------------------------------ */
-
-.dlab-num {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
 
 .dlab-eyebrow {
   font-size: var(--text-meta);
@@ -401,77 +186,6 @@
   letter-spacing: 0.05em;
 }
 
-/* Indicateur de tendance — flèche 9°, montée = brand, descente = neutre. */
-.dlab-trend {
-  display: inline-block;
-  width: 0.75rem;
-  height: 0.75rem;
-  vertical-align: -1px;
-}
-
-.dlab-trend path {
-  stroke: currentColor;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
-
-.dlab-trend--up {
-  color: var(--color-brand);
-}
-
-.dlab-trend--down {
-  color: var(--color-text-secondary);
-}
-
-/* Tendance — légère rotation selon l'angle système (comparaison + cohérence). */
-.dlab-trend[data-skew='9'] {
-  transform: rotate(-3deg);
-}
-
-.dlab-trend[data-skew='12'] {
-  transform: rotate(-5deg);
-}
-
-/* Pastille live — pulsation sobre. */
-.dlab-live-dot {
-  display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  background: var(--dlab-live);
-  animation: dlab-pulse 2.2s ease-in-out infinite;
-}
-
-@keyframes dlab-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dlab-live) 36%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--dlab-live) 14%, transparent);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dlab-live-dot {
-    animation: none;
-  }
-}
-
-.dlab-status-live {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-4) var(--space-12);
-  border-radius: var(--radius-control);
-  background: color-mix(in srgb, var(--dlab-live) 12%, var(--color-surface));
-  color: var(--dlab-live);
-  font-size: var(--text-label);
-  font-weight: var(--font-weight-semibold);
-}
-
 /* ------------------------------------------------------------------ */
 /* Cockpit (Vue d'ensemble)                                            */
 /* ------------------------------------------------------------------ */
@@ -501,7 +215,7 @@
 }
 
 .dlab-situation__num {
-  font-size: var(--dlab-text-hero-num);
+  font-size: var(--text-hero-num);
   font-weight: var(--font-weight-bold);
   line-height: 1;
   letter-spacing: -0.02em;
@@ -971,7 +685,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-16);
-  font-size: var(--dlab-text-score);
+  font-size: var(--text-score);
   font-weight: var(--font-weight-bold);
   line-height: 1;
   letter-spacing: -0.02em;

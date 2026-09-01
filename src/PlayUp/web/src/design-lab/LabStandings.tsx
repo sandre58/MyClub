@@ -58,7 +58,7 @@ export function LabStandings() {
           <tbody>
             {labStandings.map((row) => (
               <tr key={row.team.id} data-zone={row.zone} data-rank={row.rank}>
-                <td className="rank dlab-num">{row.rank}</td>
+                <td className="rank ds-num">{row.rank}</td>
                 <td className="team">
                   <span className="dlab-standings__team">
                     <Crest team={row.team} />
@@ -105,9 +105,9 @@ export function LabStandings() {
         <section className="ds-panel">
           <PanelHead title="Règlement du classement" />
           <p className="dlab-situation__label">
-            Victoire <strong className="dlab-num">3 pts</strong> · nul{' '}
-            <strong className="dlab-num">1 pt</strong> · défaite{' '}
-            <strong className="dlab-num">0 pt</strong>. Départage : différence
+            Victoire <strong className="ds-num">3 pts</strong> · nul{' '}
+            <strong className="ds-num">1 pt</strong> · défaite{' '}
+            <strong className="ds-num">0 pt</strong>. Départage : différence
             de buts, puis confrontation directe. Le premier est qualifié pour
             le tournoi régional ; le dernier est relégué.
           </p>

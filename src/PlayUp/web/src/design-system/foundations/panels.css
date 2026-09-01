@@ -1,0 +1,99 @@
+/*
+ * Panels — shared panel grammar (Lot 3+, Design Lab SoT).
+ * Panel heads, eyebrows, empty states, asymmetric grids.
+ */
+
+.ds-eyebrow {
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+}
+
+.ds-panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-16);
+    margin-bottom: var(--space-12);
+}
+
+.ds-panel-head__title {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+}
+
+.ds-panel-head__icon {
+    display: inline-flex;
+    color: var(--color-text-secondary);
+}
+
+.ds-panel-head__icon svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.ds-panel-head .ds-eyebrow {
+    letter-spacing: 0.05em;
+}
+
+.ds-page {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+}
+
+.ds-page__title-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-16);
+}
+
+.ds-page__title {
+    margin: 0;
+    font-size: var(--text-heading);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+}
+
+.ds-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-16);
+}
+
+.ds-grid-2--major {
+    grid-template-columns: 1.45fr 1fr;
+}
+
+@media (max-width: 56rem) {
+    .ds-grid-2,
+    .ds-grid-2--major {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ds-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+    padding: var(--space-24) 0;
+}
+
+.ds-empty__title {
+    font-weight: var(--font-weight-bold);
+}
+
+.ds-empty__body {
+    font-size: var(--text-label);
+    color: var(--color-text-secondary);
+    max-width: 26rem;
+}

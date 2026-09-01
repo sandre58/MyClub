@@ -26,7 +26,7 @@ export function LabAngleCompare() {
         <p className="dlab-angle-intro__verdict">
           <strong>Arbitrage retenu : 12°.</strong> Plus affirmé et plus lisible
           aux petites tailles ; aligné sur le monogramme implémenté. Variable
-          unique <code>--dlab-skew: -12deg</code>.
+          unique <code>--brand-skew: -12deg</code>.
         </p>
       </header>
 
@@ -34,7 +34,7 @@ export function LabAngleCompare() {
         <div className="dlab-angle-grid__head">
           <span />
           {ANGLES.map((angle) => (
-            <span key={angle} className="dlab-angle-grid__col-label dlab-num">
+            <span key={angle} className="dlab-angle-grid__col-label ds-num">
               {angle}°
             </span>
           ))}
@@ -49,9 +49,9 @@ export function LabAngleCompare() {
         <AngleRow label="Tendance">
           {ANGLES.map((angle) => (
             <span key={angle} className="dlab-angle-trend-demo">
-              <span className="dlab-num">3e</span>
+              <span className="ds-num">3e</span>
               <TrendIcon direction="up" skewDeg={angle} />
-              <span className="dlab-num">+2</span>
+              <span className="ds-num">+2</span>
             </span>
           ))}
         </AngleRow>

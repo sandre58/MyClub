@@ -169,10 +169,10 @@ function LabRail({
   onView: (v: LabView) => void
 }) {
   return (
-    <aside className="dlab-rail" aria-label="Navigation">
+    <aside className="ds-shell-rail dlab-rail" aria-label="Navigation">
       <button
         type="button"
-        className="dlab-rail__brand"
+        className="ds-shell-rail__brand"
         onClick={() => onView('cockpit')}
         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
@@ -180,27 +180,27 @@ function LabRail({
         <LabWordmark />
       </button>
 
-      <nav className="dlab-rail__nav">
+      <nav className="ds-shell-rail__nav">
         {railDestinations.map((destination) => {
           const Icon = destination.icon
           return (
             <button
               key={destination.key}
               type="button"
-              className="dlab-rail__link"
+              className="ds-shell-rail__link"
               data-active={view === destination.key}
               onClick={() => onView(destination.key)}
             >
-              <Icon className="dlab-rail__icon" />
+              <Icon className="ds-shell-rail__icon" />
               {destination.label}
             </button>
           )
         })}
       </nav>
 
-      <div className="dlab-rail__footer">
-        <button type="button" className="dlab-rail__link" disabled>
-          <SettingsNavIcon className="dlab-rail__icon" />
+      <div className="ds-shell-rail__footer">
+        <button type="button" className="ds-shell-rail__link" disabled>
+          <SettingsNavIcon className="ds-shell-rail__icon" />
           Paramètres
         </button>
       </div>
@@ -224,15 +224,15 @@ function LabHeader({ lifecycle }: { lifecycle: LabLifecycle }) {
         : 'ds-status--tone-success'
 
   return (
-    <header className="dlab-header">
-      <span className="dlab-header__crest" aria-hidden="true">
+    <header className="ds-shell-header dlab-header">
+      <span className="ds-shell-header__crest dlab-header__crest" aria-hidden="true">
         CV
       </span>
-      <div className="dlab-header__id">
-        <span className="dlab-header__name">
+      <div className="ds-shell-header__identity">
+        <span className="ds-shell-header__name">
           Championnat des Vétérans — Automne 2026
         </span>
-        <span className="dlab-header__meta">
+        <span className="ds-shell-header__meta">
           <span
             className={`ds-status ds-status--dense ds-status--rounded ds-status--soft ${statusTone}`}
             style={{ padding: '1px 8px' }}
@@ -242,16 +242,16 @@ function LabHeader({ lifecycle }: { lifecycle: LabLifecycle }) {
           <span>12 sept. — 10 oct. 2026</span>
         </span>
       </div>
-      <span className="dlab-header__spacer" />
+      <span className="ds-shell-header__spacer" aria-hidden="true" />
       <button
         type="button"
-        className="ds-btn ds-btn--ghost ds-icon-button dlab-header__bell"
+        className="ds-btn ds-btn--ghost ds-icon-button ds-shell-header__bell"
         aria-label="À traiter (2)"
         disabled={lifecycle !== 'live'}
       >
         <AttentionBellIcon />
         {lifecycle === 'live' ? (
-          <span className="dlab-header__badge dlab-num">2</span>
+          <span className="ds-shell-header__badge ds-num">2</span>
         ) : null}
       </button>
     </header>

@@ -14,13 +14,21 @@ import {
   setRunningScore,
   startMatch,
 } from '../api'
+import {
+  MatchHero,
+  MatchHeroMetaItem,
+  MatchHeroScore,
+  MatchHeroScoreActions,
+} from '../design-system/components/MatchHero'
+import { Status } from '../design-system/components/Status'
 import { TeamCrest } from '../design-system/TeamCrest'
-import { matchStatusLabel, resultTypeLabel } from '../i18n/enumLabels'
+import { CalendarIcon } from '../design-system/icons/overviewIcons'
+import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons'
+import { matchStatusLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import {
   ErrorState,
   LoadingState,
-  MatchStatusBadge,
   MutationError,
   PendingLabel,
 } from '../ui'
@@ -29,10 +37,11 @@ import {
   type FinishMatchRequest,
   type MatchDetail,
   type MatchScore,
+  type MatchStatus,
 } from '../types'
-import { formatMatchKickoff } from './matchListMeta'
+import { formatKickoffParts } from './matchListMeta'
 import { MatchDisciplinaryPanel } from './MatchDisciplinaryPanel'
-import { MatchGoalsPanel } from './MatchGoalsPanel'
+import { adjustRunningScore, MatchGoalsPanel } from './MatchGoalsPanel'
 import { MatchSheetPanel } from './MatchSheetPanel'
 import { MatchSubstitutionsPanel } from './MatchSubstitutionsPanel'
 import './matches.css'
@@ -121,7 +130,6 @@ function MatchDetailView({
   const queryClient = useQueryClient()
   const homeName = sideLabel(data.home)
   const awayName = sideLabel(data.away)
-  const kickoff = formatMatchKickoff(data.scheduledAt)
   const board = displayedScore(data)
 
   const startMutation = useMutation({
@@ -162,8 +170,35 @@ function MatchDetailView({
     awayGoals: 0,
   }
 
+  const kickoffParts = formatKickoffParts(data.scheduledAt)
+  const scoreStepper =
+    canSetRunningScore &&
+    MatchHeroScoreActions({
+      homeIncrementLabel: t('detail.scoreStepHomeUp', { name: homeName }),
+      homeDecrementLabel: t('detail.scoreStepHomeDown', { name: homeName }),
+      awayIncrementLabel: t('detail.scoreStepAwayUp', { name: awayName }),
+      awayDecrementLabel: t('detail.scoreStepAwayDown', { name: awayName }),
+      disabled: busy,
+      onHomeIncrement: () =>
+        runningScoreMutation.mutate(
+          adjustRunningScore(data.runningScore, 'Home', 1),
+        ),
+      onHomeDecrement: () =>
+        runningScoreMutation.mutate(
+          adjustRunningScore(data.runningScore, 'Home', -1),
+        ),
+      onAwayIncrement: () =>
+        runningScoreMutation.mutate(
+          adjustRunningScore(data.runningScore, 'Away', 1),
+        ),
+      onAwayDecrement: () =>
+        runningScoreMutation.mutate(
+          adjustRunningScore(data.runningScore, 'Away', -1),
+        ),
+    })
+
   return (
-    <div className="matches match-detail">
+    <div className="ds-page matches match-detail">
       <header className="matches__page-head">
         <Link
           className="matches__back"
@@ -172,114 +207,104 @@ function MatchDetailView({
           <span aria-hidden="true">←</span>
           {t('detail.backToMatches')}
         </Link>
-        <div className="match-detail__title-row">
-          <h1 className="matches__title">
-            {t('detail.titleVs', { home: homeName, away: awayName })}
-          </h1>
-          <MatchStatusBadge status={data.status} />
-        </div>
+        <h1 className="matches__title">
+          {t('detail.titleVs', { home: homeName, away: awayName })}
+        </h1>
       </header>
 
-      {(stageName || kickoff) && (
-        <p className="match-detail__meta">
-          {[stageName, kickoff].filter(Boolean).join(' · ')}
-        </p>
-      )}
-
-      <section className="ds-panel" aria-labelledby="scoreboard-heading">
-        <h2 className="matches-panel__head" id="scoreboard-heading">
-          {t('detail.scoreboard')}
-        </h2>
-        <div
-          className="match-detail__scoreboard"
-          aria-live="polite"
-          aria-label={t('detail.scoreAria', {
-            home: homeName,
-            away: awayName,
-            homeGoals: board.homeLabel,
-            awayGoals: board.awayLabel,
-          })}
-        >
-          <div className="match-detail__side">
+      <MatchHero
+        eyebrow={stageName}
+        status={
+          <MatchHeroStatus
+            status={data.status}
+            official={board.source === 'official'}
+          />
+        }
+        home={{
+          name: homeName,
+          crest: (
             <TeamCrest
               name={homeName}
               logoMediaId={data.home.logoMediaId}
               primaryColor={data.home.primaryColor}
             />
-            <span className="match-detail__role">{t('detail.home')}</span>
-            <span className="match-detail__name">{homeName}</span>
-          </div>
-          <p
-            className={
-              board.source === 'empty'
-                ? 'match-detail__score match-detail__score--empty'
-                : 'match-detail__score'
-            }
-          >
-            <span>{board.homeDisplay}</span>
-            <span className="match-detail__sep" aria-hidden="true">
-              :
-            </span>
-            <span>{board.awayDisplay}</span>
-          </p>
-          <div className="match-detail__side">
+          ),
+          scoreActions: scoreStepper ? scoreStepper.home : undefined,
+        }}
+        away={{
+          name: awayName,
+          crest: (
             <TeamCrest
               name={awayName}
               logoMediaId={data.away.logoMediaId}
               primaryColor={data.away.primaryColor}
             />
-            <span className="match-detail__role">{t('detail.away')}</span>
-            <span className="match-detail__name">{awayName}</span>
-          </div>
-        </div>
-        {board.source === 'official' && data.result && (
-          <p className="match-detail__caption">
-            {t('detail.scoreCaptionOfficial')}
-            {data.result.type !== 'Played'
-              ? ` · ${resultTypeLabel(data.result.type)}`
-              : null}
-          </p>
-        )}
-        {board.source === 'live' && (
-          <p className="match-detail__caption">
-            {t('detail.scoreCaptionLive')}
-          </p>
-        )}
-      </section>
+          ),
+          scoreActions: scoreStepper ? scoreStepper.away : undefined,
+        }}
+        center={
+          <MatchHeroCenter
+            board={board}
+            busy={busy}
+            canStart={canStart}
+            homeName={homeName}
+            awayName={awayName}
+            kickoffTime={kickoffParts.time}
+            onStart={() => startMutation.mutate()}
+            startPending={startMutation.isPending}
+          />
+        }
+        meta={
+          <>
+            {kickoffParts.date ? (
+              <MatchHeroMetaItem icon={<CalendarIcon size="sm" />}>
+                {kickoffParts.date}
+              </MatchHeroMetaItem>
+            ) : null}
+            {kickoffParts.time ? (
+              <MatchHeroMetaItem icon={<ClockIcon size="sm" />}>
+                {kickoffParts.time}
+              </MatchHeroMetaItem>
+            ) : null}
+            {stageName ? (
+              <MatchHeroMetaItem icon={<PinIcon size="sm" />}>
+                {stageName}
+              </MatchHeroMetaItem>
+            ) : null}
+          </>
+        }
+      />
 
-      <MatchSheetPanel match={data} />
+      <div
+        className="match-detail__score-live"
+        aria-live="polite"
+        aria-label={t('detail.scoreAria', {
+          home: homeName,
+          away: awayName,
+          homeGoals: board.homeLabel,
+          awayGoals: board.awayLabel,
+        })}
+      />
 
-      <MatchGoalsPanel match={data} />
+      {board.source === 'live' ? (
+        <p className="match-detail__caption">{t('detail.scoreCaptionLive')}</p>
+      ) : null}
+
+      {board.source === 'official' ? (
+        <p className="match-detail__caption">{t('detail.scoreCaptionOfficial')}</p>
+      ) : null}
+
+      <div className="ds-grid-2 ds-grid-2--major">
+        <MatchGoalsPanel match={data} />
+        <MatchSheetPanel match={data} />
+      </div>
 
       <MatchSubstitutionsPanel match={data} />
 
       <MatchDisciplinaryPanel match={data} />
 
-      {(canStart || canSetRunningScore || canFinish) && (
+      {(canSetRunningScore || canFinish) && (
         <div className="match-detail__ops" aria-busy={busy}>
-          {canStart && (
-            <section className="ds-panel" aria-labelledby="live-job-heading">
-              <h2 className="matches-panel__head" id="live-job-heading">
-                {t('detail.liveJob')}
-              </h2>
-              <div className="button-row">
-                <button
-                  type="button"
-                  className="btn btn--primary btn--lg"
-                  disabled={startMutation.isPending}
-                  onClick={() => startMutation.mutate()}
-                >
-                  {startMutation.isPending ? (
-                    <PendingLabel>{t('detail.starting')}</PendingLabel>
-                  ) : (
-                    t('detail.start')
-                  )}
-                </button>
-                <span className="caption">{t('detail.startHint')}</span>
-              </div>
-            </section>
-          )}
-
           {canSetRunningScore && (
             <section className="ds-panel" aria-labelledby="counter-job-heading">
               <h2 className="matches-panel__head" id="counter-job-heading">
@@ -344,6 +369,105 @@ function MatchDetailView({
 
       {mutationError && <MutationError error={mutationError} />}
     </div>
+  )
+}
+
+function MatchHeroStatus({
+  status,
+  official,
+}: {
+  status: MatchStatus
+  official: boolean
+}) {
+  const { t } = useTranslation('matches')
+
+  if (status === 'Live') {
+    return (
+      <span className="ds-status-live">
+        <span className="ds-live-dot" />
+        {matchStatusLabel(status)}
+      </span>
+    )
+  }
+
+  if (status === 'Finished' && official) {
+    return (
+      <Status density="context" tone="neutral" variant="soft" shape="rounded">
+        {`${matchStatusLabel(status)} · ${t('detail.scoreCaptionOfficial')}`}
+      </Status>
+    )
+  }
+
+  const tone =
+    status === 'Scheduled' || status === 'Postponed' ? 'info' : 'neutral'
+
+  return (
+    <Status density="context" tone={tone} variant="soft" shape="rounded">
+      {matchStatusLabel(status)}
+    </Status>
+  )
+}
+
+function MatchHeroCenter({
+  board,
+  canStart,
+  kickoffTime,
+  onStart,
+  startPending,
+  busy,
+  homeName,
+  awayName,
+}: {
+  board: ReturnType<typeof displayedScore>
+  canStart: boolean
+  kickoffTime: string | null
+  onStart: () => void
+  startPending: boolean
+  busy: boolean
+  homeName: string
+  awayName: string
+}) {
+  const { t } = useTranslation('matches')
+
+  if (canStart) {
+    return (
+      <>
+        <MatchHeroScore pending>{kickoffTime ?? '–'}</MatchHeroScore>
+        <button
+          type="button"
+          className="ds-btn ds-btn--primary"
+          disabled={startPending || busy}
+          onClick={onStart}
+        >
+          {startPending ? (
+            <PendingLabel>{t('detail.starting')}</PendingLabel>
+          ) : (
+            t('detail.start')
+          )}
+        </button>
+      </>
+    )
+  }
+
+  if (board.source === 'empty') {
+    return <MatchHeroScore pending>–</MatchHeroScore>
+  }
+
+  return (
+    <MatchHeroScore
+      ariaLabel={t('detail.scoreAria', {
+        home: homeName,
+        away: awayName,
+        homeGoals: board.homeLabel,
+        awayGoals: board.awayLabel,
+      })}
+    >
+      {board.homeDisplay}
+      <span className="ds-match-hero__sep" aria-hidden="true">
+        –
+      </span>
+      {board.awayDisplay}
+    </MatchHeroScore>
   )
 }
 
@@ -469,7 +593,7 @@ function OfficialScoreForm({
       <div className="button-row">
         <button
           type="submit"
-          className="btn btn--primary btn--lg"
+          className="ds-btn ds-btn--primary"
           disabled={pending}
         >
           {pending ? <PendingLabel>{pendingLabel}</PendingLabel> : submitLabel}
@@ -554,7 +678,7 @@ function RunningScoreForm({
       <div className="button-row">
         <button
           type="submit"
-          className="btn btn--primary"
+          className="ds-btn ds-btn--primary"
           disabled={pending}
         >
           {pending ? (

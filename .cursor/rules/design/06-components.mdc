@@ -12,17 +12,22 @@ Search these before building anything new. Reference implementations live in
 | Component | Role | Reference |
 |---|---|---|
 | `PlayUpMark` | Monogram, all sizes | `design-system/PlayUpMark.tsx` |
-| Wordmark | Brand name + arrow in chrome | `design-lab/LabWordmark.tsx` |
-| `PanelHead` | Panel title + optional neutral icon + right meta | `design-lab/LabShared.tsx` |
-| `MatchRow` | One match, state-driven (score / time / pill / live) | `design-lab/LabShared.tsx` |
-| Match Hero | Match object header, 3 states (scheduled/live/finished) | `design-lab/LabMatchSheet.tsx` |
+| `PlayUpWordmark` | Brand name + arrow in chrome | `design-system/PlayUpWordmark.tsx` |
+| `TrendIcon` | Slanted up/down/flat arrows | `design-system/TrendIcon.tsx` |
+| `LiveStatus` | Pulse dot + live label | `design-system/components/LiveStatus.tsx` |
+| `PanelHead` | Panel title + optional neutral icon + right meta | `design-system/components/PanelHead.tsx` |
+| `MatchRow` | One match, state-driven (score / time / pill / live) | `design-system/components/MatchRow.tsx` |
+| Match Hero | Match object header, 3 states (scheduled/live/finished) | `design-system/components/MatchHero.tsx` |
 | `Crest` | Team initials block | `design-lab/LabShared.tsx` |
-| Trend icon | Slanted up/down/flat arrows | `design-lab/LabWordmark.tsx` |
-| Status pill | `ds-status` tones (success/attention/error/info/neutral) | design system CSS |
+| Status pill | `ds-status` tones (success/attention/error/info/neutral/live) | design system CSS |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
 | Dialog / Drawer | Overlay level | existing shell components |
-| Attention row | Count + icon + label + action (D9 recipe) | `design-lab/LabCockpit.tsx` |
-| Cycle line | Lifecycle progress (Préparation → … → Terminée) | `design-lab/LabCockpit.tsx` |
+| Shell rail / header | Dark rail + light competition header | `foundations/shell.css`, `shell/` |
+| Attention row | Count + icon + label + action (D9 recipe) | `design-system/components/AttentionRow.tsx` |
+| Cycle line | Lifecycle progress (Préparation → … → Terminée) | `design-system/components/CycleLine.tsx` |
+| Cockpit situation | Hero number + label + cycle | `design-system/components/CockpitSituation.tsx` |
+| Cockpit next action | Prochaine action panel | `design-system/components/CockpitNextAction.tsx` |
+| Cockpit podium | Terminée Top-3 blocks | `design-system/components/CockpitPodium.tsx` |
 
 ## Rules
 

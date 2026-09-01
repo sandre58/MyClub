@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchCompetitionCockpit, fetchOrganisationView } from '../api'
 import { TeamCrest } from '../design-system/TeamCrest'
+import { AttentionGroup } from '../design-system/components/AttentionGroup'
+import { CockpitNextAction } from '../design-system/components/CockpitNextAction'
+import { CockpitPodium } from '../design-system/components/CockpitPodium'
+import { PanelHead } from '../design-system/components/PanelHead'
 import { Status } from '../design-system/components/Status'
 import {
   AttentionMarkIcon,
@@ -59,9 +63,6 @@ import {
 } from './cockpitComposition'
 import './overview.css'
 import {
-  CheckIcon,
-  CreateMatchesIcon,
-  InProgressIcon,
   NextActionIcon,
   OverviewAttentionIcon,
   RegulationIcon,
@@ -291,7 +292,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   ) : null
 
   return (
-    <div className="overview">
+    <div className="overview ds-page">
       {operationalOverview ? (
         <>
           {showAttention && (
@@ -542,9 +543,11 @@ function MaterializeFollowUpBanner({
       aria-labelledby="cockpit-materialize-followup"
       role="status"
     >
-      <PanelHead id="cockpit-materialize-followup" icon={<NextActionIcon size="md" />}>
-        {t('materializeFollowUp.heading')}
-      </PanelHead>
+      <PanelHead
+        id="cockpit-materialize-followup"
+        title={t('materializeFollowUp.heading')}
+        icon={<NextActionIcon size="md" />}
+      />
       <p className="overview-panel__lede">
         {followUp.alreadyComplete && followUp.createdCount === 0
           ? t('materializeFollowUp.alreadyComplete', {
@@ -566,25 +569,6 @@ function MaterializeFollowUpBanner({
         </p>
       )}
     </section>
-  )
-}
-
-function PanelHead({
-  id,
-  icon,
-  children,
-}: {
-  id: string
-  icon: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <h2 className="overview-panel__head" id={id}>
-      <span className="overview-panel__icon" aria-hidden="true">
-        {icon}
-      </span>
-      <span className="overview-panel__title-text">{children}</span>
-    </h2>
   )
 }
 
@@ -613,51 +597,60 @@ function OutcomePodiumPanel({
 
   return (
     <section className="ds-panel" aria-labelledby="cockpit-outcome-podium">
-      <PanelHead id="cockpit-outcome-podium" icon={<ClassementsNavIcon size="md" />}>
-        {t('sport.outcomeTitle')}
-      </PanelHead>
-      <div
-        className={
-          isPodium
-            ? 'overview-outcome overview-outcome--podium'
-            : 'overview-outcome overview-outcome--winner'
-        }
-        data-testid="overview-outcome-podium"
-        data-presentation={outcome.presentation}
-      >
+      <PanelHead
+        id="cockpit-outcome-podium"
+        title={t('sport.outcomeTitle')}
+        icon={<ClassementsNavIcon size="md" />}
+      />
+      {isPodium ? (
+        <CockpitPodium
+          testId="overview-outcome-podium"
+          presentation={outcome.presentation}
+          steps={[
+            {
+              rank: 1,
+              name: first.displayName,
+              subtitle: winnerLabel,
+              testId: `overview-outcome-${first.entryId}`,
+            },
+            ...(second
+              ? [
+                  {
+                    rank: 2 as const,
+                    name: second.displayName,
+                    testId: `overview-outcome-${second.entryId}`,
+                  },
+                ]
+              : []),
+            ...(third
+              ? [
+                  {
+                    rank: 3 as const,
+                    name: third.displayName,
+                    testId: `overview-outcome-${third.entryId}`,
+                  },
+                ]
+              : []),
+          ]}
+        />
+      ) : (
         <div
-          className="overview-outcome__hero"
-          data-testid={`overview-outcome-${first.entryId}`}
+          className="overview-outcome overview-outcome--winner"
+          data-testid="overview-outcome-podium"
+          data-presentation={outcome.presentation}
         >
-          <span className="overview-outcome__hero-rank ds-tabular" aria-hidden="true">
-            1
-          </span>
-          <p className="overview-outcome__hero-name">{first.displayName}</p>
-          <p className="overview-outcome__hero-label">{winnerLabel}</p>
+          <div
+            className="overview-outcome__hero"
+            data-testid={`overview-outcome-${first.entryId}`}
+          >
+            <span className="overview-outcome__hero-rank ds-tabular" aria-hidden="true">
+              1
+            </span>
+            <p className="overview-outcome__hero-name">{first.displayName}</p>
+            <p className="overview-outcome__hero-label">{winnerLabel}</p>
+          </div>
         </div>
-        {isPodium && (second || third) && (
-          <ol className="overview-outcome__steps">
-            {second && (
-              <li
-                className="overview-outcome__step overview-outcome__step--second"
-                data-testid={`overview-outcome-${second.entryId}`}
-              >
-                <span className="overview-outcome__step-rank ds-tabular">2</span>
-                <span className="overview-outcome__step-name">{second.displayName}</span>
-              </li>
-            )}
-            {third && (
-              <li
-                className="overview-outcome__step overview-outcome__step--third"
-                data-testid={`overview-outcome-${third.entryId}`}
-              >
-                <span className="overview-outcome__step-rank ds-tabular">3</span>
-                <span className="overview-outcome__step-name">{third.displayName}</span>
-              </li>
-            )}
-          </ol>
-        )}
-      </div>
+      )}
       <p className="overview-panel__footer">
         <Link className="overview-link" to={href}>
           {t('sport.outcomeOpenFull')}
@@ -694,9 +687,11 @@ function StandingCompactPanel({
 
   return (
     <section className="ds-panel" aria-labelledby="cockpit-standing-compact">
-      <PanelHead id="cockpit-standing-compact" icon={<ClassementsNavIcon size="md" />}>
-        {title}
-      </PanelHead>
+      <PanelHead
+        id="cockpit-standing-compact"
+        title={title}
+        icon={<ClassementsNavIcon size="md" />}
+      />
       {tables.length > 1 && (
         <div className="overview-standing-nav" role="tablist" aria-label={t('sport.groupNav')}>
           {tables.map((candidate, index) => (
@@ -780,9 +775,11 @@ function CalendarSummaryPanel({
       aria-labelledby={titleId}
       data-testid="overview-calendar-panel"
     >
-      <PanelHead id={titleId} icon={<CalendarIcon size="md" />}>
-        {t('dimensions.calendar.title')}
-      </PanelHead>
+      <PanelHead
+        id={titleId}
+        title={t('dimensions.calendar.title')}
+        icon={<CalendarIcon size="md" />}
+      />
       <p className="overview-calendar__totals">
         {t('dimensions.calendar.matchdays', { count: summary.matchdayCount })}
         {' · '}
@@ -848,9 +845,7 @@ function SportUnitPanel({
 
   return (
     <section className="ds-panel" aria-labelledby={titleId}>
-      <PanelHead id={titleId} icon={<MatchesNavIcon size="md" />}>
-        {title}
-      </PanelHead>
+      <PanelHead id={titleId} title={title} icon={<MatchesNavIcon size="md" />} />
       {subtitle ? (
         <p className="overview-sport-unit__subtitle">{subtitle}</p>
       ) : null}
@@ -971,10 +966,11 @@ function AttentionSignalSection({
   }
 
   return (
-    <section className="overview-attention" aria-labelledby="cockpit-situations">
-      <PanelHead id="cockpit-situations" icon={<OverviewAttentionIcon size="md" />}>
-        {t('situations.heading')}
-      </PanelHead>
+    <AttentionGroup
+      headingId="cockpit-situations"
+      heading={t('situations.heading')}
+      icon={<OverviewAttentionIcon size="md" />}
+    >
       <ul className="shell-attention-drawer__list">
         {preview.map((situation) => (
           <OverviewAttentionItem
@@ -989,7 +985,7 @@ function AttentionSignalSection({
           {t('attention.triageHint', { count })}
         </p>
       )}
-    </section>
+    </AttentionGroup>
   )
 }
 
@@ -1099,9 +1095,11 @@ function RegulationDimensionCard({
         aria-labelledby="overview-regulation"
         data-testid="overview-regulation-game"
       >
-        <PanelHead id="overview-regulation" icon={<RegulationIcon size="md" />}>
-          {t('dimensions.regulation.title')}
-        </PanelHead>
+        <PanelHead
+          id="overview-regulation"
+          title={t('dimensions.regulation.title')}
+          icon={<RegulationIcon size="md" />}
+        />
         <div className="overview-regulation-game">
           {showPoints && (
             <ul className="overview-chips overview-chips--game">
@@ -1160,9 +1158,11 @@ function RegulationDimensionCard({
       aria-labelledby="overview-regulation"
       data-testid="overview-regulation-construction"
     >
-      <PanelHead id="overview-regulation" icon={<RegulationIcon size="md" />}>
-        {t('dimensions.regulation.title')}
-      </PanelHead>
+      <PanelHead
+        id="overview-regulation"
+        title={t('dimensions.regulation.title')}
+        icon={<RegulationIcon size="md" />}
+      />
       <ul className="overview-chips">
         <PointsChip
           tone="win"
@@ -1258,11 +1258,13 @@ function TeamsPanel({
       className={panelProminenceClass(dimension.prominence)}
       aria-labelledby="overview-teams"
     >
-      <PanelHead id="overview-teams" icon={<TeamsIcon size="md" />}>
-        {t('dimensions.teams.title')}
-      </PanelHead>
+      <PanelHead
+        id="overview-teams"
+        title={t('dimensions.teams.title')}
+        icon={<TeamsIcon size="md" />}
+      />
       <p className="overview-figure">
-        <span className="overview-figure__value">{activeCount}</span>
+        <span className="ds-cockpit-situation__num ds-num">{activeCount}</span>
         <span className="overview-figure__label">
           {identity
             ? t('dimensions.teams.figureLabelIdentity')
@@ -1369,12 +1371,14 @@ function StructurePanel({
         aria-labelledby="overview-structure"
         data-testid="overview-structure-condensed"
       >
-        <PanelHead id="overview-structure" icon={<StructureIcon size="md" />}>
-          {t('dimensions.structure.title')}
-        </PanelHead>
+        <PanelHead
+          id="overview-structure"
+          title={t('dimensions.structure.title')}
+          icon={<StructureIcon size="md" />}
+        />
         <div className="overview-structure-hero">
           <p
-            className="overview-structure-format"
+            className="ds-cockpit-situation__num ds-num"
             data-testid="overview-structure-format"
           >
             {formatLabel}
@@ -1402,9 +1406,11 @@ function StructurePanel({
       aria-labelledby="overview-structure"
       data-testid="overview-structure-construction"
     >
-      <PanelHead id="overview-structure" icon={<StructureIcon size="md" />}>
-        {t('dimensions.structure.title')}
-      </PanelHead>
+      <PanelHead
+        id="overview-structure"
+        title={t('dimensions.structure.title')}
+        icon={<StructureIcon size="md" />}
+      />
       <ul className="overview-rows">
         <StructureFactRow
           label={
@@ -1713,34 +1719,24 @@ function NaturalProgressionSection({
   // Structural tip XOR lifecycle — never both (Préparation V1 P5).
   if (hasPrimary) {
     return (
-      <section
-        className="ds-panel overview-panel--next"
-        aria-labelledby="cockpit-progression"
-      >
-        <PanelHead id="cockpit-progression" icon={<NextActionIcon size="md" />}>
-          {t('progression.heading')}
-        </PanelHead>
-        <div className="overview-hero">
-          <span className="overview-badge overview-badge--brand" aria-hidden="true">
-            {progressionBadgeIcon(code!)}
-          </span>
-          <div className="overview-hero__body">
-            <p className="overview-hero__title">{actionLabel(code!)}</p>
-            <p className="overview-hero__sub">
-              {t(`progression.codes.${code}`, {
-                defaultValue: actionLabel(code!),
-              })}
-            </p>
-          </div>
-        </div>
-        {matched ? (
-          <ActionButtons
-            actions={[matched]}
-            actionRunner={actionRunner}
-            emphasizeFirst
-          />
-        ) : null}
-      </section>
+      <CockpitNextAction
+        headingId="cockpit-progression"
+        heading={t('progression.heading')}
+        icon={<NextActionIcon size="md" />}
+        title={actionLabel(code!)}
+        why={t(`progression.codes.${code}`, {
+          defaultValue: actionLabel(code!),
+        })}
+        action={
+          matched ? (
+            <ActionButtons
+              actions={[matched]}
+              actionRunner={actionRunner}
+              emphasizeFirst
+            />
+          ) : null
+        }
+      />
     )
   }
 
@@ -1749,50 +1745,22 @@ function NaturalProgressionSection({
   }
 
   return (
-    <section
-      className="ds-panel overview-panel--next"
-      aria-labelledby="cockpit-progression"
-    >
-      <PanelHead id="cockpit-progression" icon={<NextActionIcon size="md" />}>
-        {t('progression.heading')}
-      </PanelHead>
-      <div className="overview-hero">
-        <span className="overview-badge overview-badge--brand" aria-hidden="true">
-          {progressionBadgeIcon(lifecycle.code)}
-        </span>
-        <div className="overview-hero__body">
-          <p className="overview-hero__title">{actionLabel(lifecycle.code)}</p>
-          <p className="overview-hero__sub">
-            {t(`progression.codes.${lifecycle.code}`, {
-              defaultValue: actionLabel(lifecycle.code),
-            })}
-          </p>
-        </div>
-      </div>
-      <ActionButtons
-        actions={[lifecycle]}
-        actionRunner={actionRunner}
-        emphasizeFirst
-      />
-    </section>
+    <CockpitNextAction
+      headingId="cockpit-progression"
+      heading={t('progression.heading')}
+      icon={<NextActionIcon size="md" />}
+      title={actionLabel(lifecycle.code)}
+      why={t(`progression.codes.${lifecycle.code}`, {
+        defaultValue: actionLabel(lifecycle.code),
+      })}
+      action={
+        <ActionButtons
+          actions={[lifecycle]}
+          actionRunner={actionRunner}
+          emphasizeFirst
+        />
+      }
+    />
   )
-}
-
-/** Content glyph of the suggested step — flag when unmapped. */
-function progressionBadgeIcon(code: string) {
-  if (
-    code === 'MaterializeMatches' ||
-    code === 'MaterializeFromOccupiedSlots' ||
-    code === 'GenerateNextRound'
-  ) {
-    return <CreateMatchesIcon />
-  }
-  if (code === 'CompleteCompetition' || code === 'PrepareCompetition') {
-    return <CheckIcon />
-  }
-  if (code === 'StartCompetition') {
-    return <InProgressIcon />
-  }
-  return <NextActionIcon />
 }
 

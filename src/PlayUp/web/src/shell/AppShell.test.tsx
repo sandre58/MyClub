@@ -111,7 +111,7 @@ describe('AppShell', () => {
     renderWithShell('/')
 
     const navLink = screen.getByRole('link', { name: "Vue d'ensemble" })
-    expect(navLink).toHaveClass('shell-sidebar__link')
+    expect(navLink).toHaveClass('ds-shell-rail__link')
     expect(navLink).toHaveAttribute('data-active')
     expect(navLink.closest('.shell-sidebar')).not.toBeNull()
     expect(navLink.closest('.shell-main')).toBeNull()

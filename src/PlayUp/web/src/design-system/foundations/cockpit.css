@@ -1,0 +1,241 @@
+/*
+ * Cockpit — Vue d'ensemble grammar (Lot 4, Design Lab SoT).
+ * State → hero number → next action → À traiter.
+ */
+
+.ds-cockpit-hero {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: var(--space-16);
+}
+
+@media (max-width: 56rem) {
+    .ds-cockpit-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ds-cockpit-situation {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+}
+
+.ds-cockpit-situation__reading {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-16);
+}
+
+.ds-cockpit-situation__num {
+    font-size: var(--text-hero-num);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.ds-cockpit-situation__num small {
+    font-size: 0.45em;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    letter-spacing: 0;
+}
+
+.ds-cockpit-situation__label {
+    font-size: var(--text-body);
+    color: var(--color-text-secondary);
+    max-width: 24rem;
+    margin: 0;
+}
+
+.ds-cockpit-cycle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-12);
+    font-size: var(--text-meta);
+    color: var(--color-text-secondary);
+}
+
+.ds-cockpit-cycle span[data-state='current'] {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.ds-cockpit-cycle span[data-state='done'] {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    opacity: 0.7;
+}
+
+.ds-cockpit-next-action {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    justify-content: space-between;
+    border-left: 3px solid var(--color-brand);
+}
+
+.ds-cockpit-next-action__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.ds-cockpit-next-action__title {
+    font-weight: var(--font-weight-bold);
+}
+
+.ds-cockpit-next-action__why {
+    font-size: var(--text-label);
+    color: var(--color-text-secondary);
+}
+
+/* À traiter — groupe hors panneau (D9 : chiffre + icône + label + couleur). */
+.ds-cockpit-attention {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.ds-cockpit-attention__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-16);
+    padding: var(--space-12) var(--space-16);
+    border: var(--border-width) solid
+        color-mix(in srgb, var(--color-attention) 28%, var(--color-border));
+    border-radius: var(--radius-panel);
+    background: color-mix(in srgb, var(--color-attention) 6%, var(--color-surface));
+}
+
+.ds-cockpit-attention__row[data-tone='info'] {
+    border-color: color-mix(in srgb, var(--color-info) 24%, var(--color-border));
+    background: color-mix(in srgb, var(--color-info) 5%, var(--color-surface));
+}
+
+.ds-cockpit-attention__count {
+    font-size: 1.375rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-attention);
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.ds-cockpit-attention__row[data-tone='info'] .ds-cockpit-attention__count {
+    color: var(--color-info);
+}
+
+.ds-cockpit-attention__icon {
+    display: inline-flex;
+    color: var(--color-attention);
+}
+
+.ds-cockpit-attention__row[data-tone='info'] .ds-cockpit-attention__icon {
+    color: var(--color-info);
+}
+
+.ds-cockpit-attention__icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.ds-cockpit-attention__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.ds-cockpit-attention__title {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--text-body);
+}
+
+.ds-cockpit-attention__detail {
+    font-size: var(--text-label);
+    color: var(--color-text-secondary);
+}
+
+/* Classement / équipes compact (cockpit) */
+.ds-cockpit-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-label);
+}
+
+.ds-cockpit-mini-table td {
+    padding: var(--space-8) var(--space-4);
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.ds-cockpit-mini-table tr:first-child td {
+    border-top: none;
+}
+
+.ds-cockpit-mini-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.ds-cockpit-mini-table .pts {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--text-body);
+}
+
+/* Podium (Terminée) */
+.ds-cockpit-podium {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-16);
+    padding: var(--space-16) 0 0;
+}
+
+.ds-cockpit-podium__step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.ds-cockpit-podium__block {
+    width: 100%;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control) var(--radius-control) 0 0;
+    background: var(--color-surface-secondary);
+    border: var(--border-width) solid var(--color-border);
+    border-bottom: none;
+    font-size: var(--text-heading);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.ds-cockpit-podium__step[data-rank='1'] .ds-cockpit-podium__block {
+    height: 5.5rem;
+    background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
+    border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-border));
+    color: var(--color-brand);
+}
+
+.ds-cockpit-podium__step[data-rank='2'] .ds-cockpit-podium__block {
+    height: 4rem;
+}
+
+.ds-cockpit-podium__step[data-rank='3'] .ds-cockpit-podium__block {
+    height: 3rem;
+}
+
+.ds-cockpit-podium__name {
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    text-align: center;
+}
+
+.ds-cockpit-podium__subtitle {
+    font-size: var(--text-meta);
+    color: var(--color-text-secondary);
+    text-align: center;
+}

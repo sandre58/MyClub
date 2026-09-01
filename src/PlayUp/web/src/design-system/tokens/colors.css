@@ -2,8 +2,8 @@
  * Semantic color roles. Foundations and UI must use these names only.
  * Values come from palette primitives — never from a hardcoded hex here.
  *
- * Public color API: 21 / ceiling 70
- *   content 17 · chrome 4 (Shell rail only)
+ * Public color API: 24 / ceiling 70
+ *   content 20 · chrome 4 (Shell rail only)
  *
  * Chrome roles (--color-chrome*): dark product chrome only — not content.
  * No --color-chrome-active: active rail state uses accent + opacity + mix.
@@ -20,6 +20,9 @@
     --color-border-strong: var(--primitive-border-strong);
     --color-brand: var(--primitive-brand);
     --color-brand-hover: var(--primitive-brand-hover);
+    --color-brand-deep: var(--primitive-brand-deep);
+    --color-brand-bright: var(--primitive-brand-bright);
+    --color-live: var(--primitive-live);
     --color-success: var(--primitive-success);
     --color-attention: var(--primitive-attention);
     --color-error: var(--primitive-error);

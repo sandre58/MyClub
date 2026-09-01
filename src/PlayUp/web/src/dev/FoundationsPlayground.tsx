@@ -6,6 +6,9 @@ import {
   type StatusVariant,
 } from '../design-system/components/Status'
 import { PlayUpMark } from '../design-system/PlayUpMark'
+import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
+import { TrendIcon } from '../design-system/TrendIcon'
+import { LiveStatus } from '../design-system/components/LiveStatus'
 import { TeamCrest } from '../design-system/TeamCrest'
 import '../design-system/fonts'
 import '../design-system/index.css'
@@ -100,6 +103,24 @@ const semanticRoles: Array<{
     role: 'Marque hover',
     usage: 'Hover primary uniquement',
     antiUsage: 'Pas état sémantique D9',
+  },
+  {
+    token: '--color-brand-deep',
+    role: 'Brand profond',
+    usage: 'Extrémité dégradé logo (#154a8f)',
+    antiUsage: 'Pas fill CTA ni surface',
+  },
+  {
+    token: '--color-brand-bright',
+    role: 'Brand clair',
+    usage: 'Extrémité dégradé logo · accent chrome',
+    antiUsage: 'Pas texte body',
+  },
+  {
+    token: '--color-live',
+    role: 'En cours (live)',
+    usage: 'Match en cours · pulse · ds-status-live',
+    antiUsage: '≠ success · ≠ attention',
   },
   {
     token: '--color-success',
@@ -318,29 +339,33 @@ export function FoundationsPlayground() {
         </section>
 
         <section className="ds-section" aria-labelledby="section-chrome">
-          <p className="ds-section__kicker">1 — Chrome rail</p>
+          <p className="ds-section__kicker">1 — Shell rail</p>
           <h2 id="section-chrome" className="ds-heading">
-            Tokens chrome sur fond sombre
+            Rail chrome (ds-shell-rail)
           </h2>
           <p className="ds-body">
-            Mini-rail de validation (pas le Shell produit). Liens hors
-            `.shell-main` — doivent rester lisibles en `on-chrome`.
+            Grammar canonique Lot 2 — monogramme 22px + wordmark, barre active
+            inclinée 12°. Le Shell produit ajoute collapse et edge toggle.
           </p>
-          <aside className="ds-chrome-rail" aria-label="Exemple de rail chrome">
-            <a className="ds-chrome-rail__brand" href="#ds-preview">
-              Play’Up
+          <aside
+            className="ds-shell-rail ds-playground-rail"
+            aria-label="Exemple de rail shell"
+          >
+            <a className="ds-shell-rail__brand" href="#ds-preview">
+              <PlayUpMark size={22} variant="on-chrome" />
+              <PlayUpWordmark />
             </a>
-            <nav className="ds-chrome-rail__nav" aria-label="Exemple nav chrome">
-              <a className="ds-chrome-rail__link" href="#ds-preview" data-active="true">
-                <OverviewNavIcon className="ds-chrome-rail__icon" />
-                Vue d’ensemble
+            <nav className="ds-shell-rail__nav" aria-label="Exemple nav shell">
+              <a className="ds-shell-rail__link" href="#ds-preview" data-active="true">
+                <OverviewNavIcon className="ds-shell-rail__icon" />
+                Vue d&apos;ensemble
               </a>
-              <a className="ds-chrome-rail__link" href="#ds-preview">
-                <OrganisationNavIcon className="ds-chrome-rail__icon" />
+              <a className="ds-shell-rail__link" href="#ds-preview">
+                <OrganisationNavIcon className="ds-shell-rail__icon" />
                 Organisation
               </a>
-              <a className="ds-chrome-rail__link" href="#ds-preview">
-                <MatchesNavIcon className="ds-chrome-rail__icon" />
+              <a className="ds-shell-rail__link" href="#ds-preview">
+                <MatchesNavIcon className="ds-shell-rail__icon" />
                 Matchs
               </a>
             </nav>
@@ -531,6 +556,61 @@ export function FoundationsPlayground() {
                 Annuler
               </button>
             </div>
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-brand">
+          <p className="ds-section__kicker">Lot 1 — Brand</p>
+          <h2 id="section-brand" className="ds-heading">
+            Monogramme · wordmark · angle 12°
+          </h2>
+          <div className="ds-row ds-row--align-end">
+            <PlayUpMark size={48} variant="gradient" />
+            <PlayUpMark size={24} variant="brand" />
+            <PlayUpMark size={16} variant="brand" />
+            <PlayUpWordmark />
+          </div>
+          <p className="ds-label">Tendances (classement)</p>
+          <div className="ds-row">
+            <span className="ds-num">
+              3e <TrendIcon direction="up" /> +2
+            </span>
+            <span className="ds-num">
+              5e <TrendIcon direction="down" /> −1
+            </span>
+            <span className="ds-num">
+              2e <TrendIcon direction="flat" /> =
+            </span>
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-numbers">
+          <p className="ds-section__kicker">Lot 1 — Numbers</p>
+          <h2 id="section-numbers" className="ds-heading">
+            Rôles numériques
+          </h2>
+          <div className="ds-stack">
+            <p className="ds-num ds-num-hero">J3 / 5</p>
+            <p className="ds-num ds-num-score">2 – 1</p>
+            <p className="ds-num ds-num-row-score">1 – 0</p>
+            <p className="ds-num ds-num-pts">9 pts</p>
+            <p className="ds-num ds-num-counter ds-state--attention">3</p>
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-live">
+          <p className="ds-section__kicker">Lot 1 — Live</p>
+          <h2 id="section-live" className="ds-heading">
+            Live ≠ success
+          </h2>
+          <div className="ds-row">
+            <LiveStatus>67&apos; · En cours</LiveStatus>
+            <Status density="context" tone="live" variant="soft">
+              live pill
+            </Status>
+            <Status density="context" tone="success" variant="soft">
+              success
+            </Status>
           </div>
         </section>
 

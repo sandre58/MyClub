@@ -1,0 +1,7 @@
+/*
+ * Brand system tokens — angle unique arbitré 2026-09-01 (12°).
+ * Preuve visuelle : Design Lab → Arbitrage 9°/12°.
+ */
+.ds-root {
+    --brand-skew: -12deg;
+}

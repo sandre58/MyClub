@@ -94,7 +94,11 @@
     "finish": "Terminer le match",
     "finishing": "Clôture…",
     "finishHint": "Enregistre le résultat officiel et clôture le match.",
-    "errorGoals": "Les buts doivent être des entiers positifs ou nuls."
+    "errorGoals": "Les buts doivent être des entiers positifs ou nuls.",
+    "scoreStepHomeUp": "But {{name}}",
+    "scoreStepHomeDown": "Retirer un but {{name}}",
+    "scoreStepAwayUp": "But {{name}}",
+    "scoreStepAwayDown": "Retirer un but {{name}}"
   },
   "sheet": {
     "heading": "Feuille de match",

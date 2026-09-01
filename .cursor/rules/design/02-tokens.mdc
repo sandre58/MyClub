@@ -15,11 +15,16 @@ Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
 
 - Canvas `--color-canvas` / Surface `--color-surface` / Surface secondary.
 - Text: `--color-text-primary` / `--color-text-secondary`.
-- Brand `--color-brand` (+hover) — actions and brand accents only.
-- Semantic: `success`, `attention` (pending work), `error` (failures), `info`.
-- Chrome: `--color-chrome` (dark navy) + `on-chrome` + `chrome-accent` —
-  **reserved to the navigation rail**; never for content panels.
-- Live: green `success` family + pulse dot (see 09-motion).
+- Brand `--color-brand` (+hover, +deep, +bright) — actions and brand accents;
+  deep/bright = logo gradient endpoints only.
+- Semantic: `success`, `attention`, `error`, `info`, **`live`** (activity ≠ success).
+- Chrome: `--color-chrome` + `on-chrome` + `chrome-accent` (uses brand-bright).
+- Brand angle: `--brand-skew: -12deg` (`tokens/brand.css`).
+
+## Typography (numeric roles)
+
+- `--text-score`, `--text-hero-num`, `--text-row-score`, `--text-standings-pts`, `--text-counter`
+- Classes: `ds-num`, `ds-num-score`, `ds-num-hero`, `ds-num-row-score`, `ds-num-pts`, `ds-num-counter`
 
 ## Forbidden / legacy
 

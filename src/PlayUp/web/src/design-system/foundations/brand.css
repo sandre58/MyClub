@@ -1,0 +1,86 @@
+/*
+ * Brand — wordmark, trend arrows, chrome nav accent (12° system).
+ * SoT: Identité §17 · Design Lab · .cursor/rules/design/01-brand.mdc
+ */
+
+.ds-wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.08em;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    transform: skewX(var(--brand-skew));
+    white-space: nowrap;
+}
+
+/* Arbitrage view only — product always uses default --brand-skew (12°). */
+.ds-wordmark[data-skew='9'] {
+    --brand-skew: -9deg;
+}
+
+.ds-wordmark[data-skew='12'] {
+    --brand-skew: -12deg;
+}
+
+.ds-wordmark__up {
+    position: relative;
+    display: inline-block;
+}
+
+.ds-wordmark__arrow {
+    position: absolute;
+    left: calc(100% - 0.08em);
+    bottom: 0.72em;
+    width: 0.62em;
+    height: 0.62em;
+}
+
+.ds-wordmark__arrow path {
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+/* Trend — même vocabulaire que la marque. */
+.ds-trend {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    vertical-align: -0.1em;
+}
+
+.ds-trend path {
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+.ds-trend--up {
+    color: var(--color-brand);
+}
+
+.ds-trend--down {
+    color: var(--color-text-secondary);
+}
+
+.ds-trend[data-skew='9'] {
+    transform: rotate(-3deg);
+}
+
+.ds-trend[data-skew='12'] {
+    transform: rotate(-5deg);
+}
+
+/* Barre d'accent nav active (rail chrome). */
+.ds-chrome-accent-bar {
+    display: inline-block;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--color-chrome-accent);
+    transform: skewY(var(--brand-skew));
+}

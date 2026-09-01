@@ -36,6 +36,23 @@ export function formatMatchKickoff(
   }).format(date)
 }
 
+/** Date and time parts for Match Hero meta band. */
+export function formatKickoffParts(
+  scheduledAt: string | null | undefined,
+): { date: string | null; time: string | null } {
+  if (!scheduledAt) {
+    return { date: null, time: null }
+  }
+  const date = new Date(scheduledAt)
+  if (Number.isNaN(date.getTime())) {
+    return { date: null, time: null }
+  }
+  return {
+    date: new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(date),
+    time: new Intl.DateTimeFormat('fr-FR', { timeStyle: 'short' }).format(date),
+  }
+}
+
 export function matchScheduledLabel(match: MatchSummary): string | null {
   return formatMatchKickoff(match.scheduledAt)
 }

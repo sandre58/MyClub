@@ -15,22 +15,31 @@ skip lots; do not start Accueil before Shell and Match.
 - Width: fluid 100% with lateral gutters (no centered max-width column)
 - Match Hero, numeric roles, icon rules, surface hierarchy — validated in Lab V2
 
-## Lot 1 — Foundations
+## Lot 1 — Foundations ✅
 
-Tokens, typography, brand, Wordmark, PlayUpMark, live (distinct from success),
-numeric roles, icons. Port Lab patterns into `design-system/`.
+Tokens (brand-deep/bright, live), typography (numeric roles), brand CSS,
+`PlayUpWordmark`, `TrendIcon`, `LiveStatus`, `metaIcons`, numbers + live
+foundations. Design Lab consumes DS (no parallel `--dlab-*` tokens).
 
-## Lot 2 — Shell
+## Lot 2 — Shell ✅
 
-Rail + wordmark + competition context + navigation. First shared surface for all routes.
+Rail + header foundations (`foundations/shell.css`), product shell aligned
+(wordmark 22px + `PlayUpWordmark`, skewed nav bar, competition header grammar).
+Design Lab consumes `ds-shell-*`.
 
-## Lot 3 — Match
+## Lot 3 — Match ✅
 
-Match Hero → score → live → actions → events. The sport-identity showcase.
+Match Hero, MatchRow, timeline, panel grammar in `foundations/match.css` +
+`foundations/panels.css`. Product: `MatchPage` (hero + grid 1.45/1), `MatchHubPage`
+(rows), goals timeline. Design Lab consumes DS match components.
 
-## Lot 4 — Cockpit
+## Lot 4 — Cockpit ✅
 
-State → hero number → next action → À traiter.
+Cockpit grammar in `foundations/cockpit.css` — situation num, cycle, next action,
+attention rows (D9), mini-table, podium. Components: `CockpitSituation`,
+`CockpitNextAction`, `AttentionGroup`/`AttentionRow`, `CycleLine`, `CockpitPodium`.
+Product: `CompetitionCockpitPage` (next action, attention, podium, DS `PanelHead`).
+Design Lab consumes DS cockpit components.
 
 ## Lot 5 — Classements / Calendrier
 

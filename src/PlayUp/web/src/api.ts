@@ -13,7 +13,6 @@ import type {
   FinishMatchRequest,
   MatchDetail,
   MatchScore,
-  MatchSide,
   MatchSummary,
   NeedsAttention,
   OrganisationView,

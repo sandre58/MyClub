@@ -17,6 +17,9 @@
     --primitive-border-strong: #c9ced6;
     --primitive-brand: #1c67c4;
     --primitive-brand-hover: #0b52a6;
+    --primitive-brand-deep: #154a8f;
+    --primitive-brand-bright: #2f86e0;
+    --primitive-live: #0e9152;
     --primitive-success: #1b6b44;
     --primitive-attention: #8a5200;
     --primitive-error: #b4232c;
@@ -27,5 +30,5 @@
     --primitive-chrome: #0f1728;
     --primitive-on-chrome: #e8ecf5;
     --primitive-chrome-border: color-mix(in srgb, #e8ecf5 14%, transparent);
-    --primitive-chrome-accent: #6b8cff;
+    --primitive-chrome-accent: var(--primitive-brand-bright);
 }

@@ -10,10 +10,10 @@ export function LabMatches() {
   const leader = labStandings[0]
 
   return (
-    <div className="dlab-page">
-      <div className="dlab-page__title-row">
-        <h2 className="dlab-page__title">Matchs</h2>
-        <span className="dlab-eyebrow">
+    <div className="ds-page dlab-page">
+      <div className="ds-page__title-row">
+        <h2 className="ds-page__title">Matchs</h2>
+        <span className="ds-eyebrow">
           15 matchs · 5 journées · Phase principale
         </span>
       </div>
@@ -22,14 +22,14 @@ export function LabMatches() {
         <PanelHead title="Calendrier des matchs" aside="Journée 3 en cours" />
         <div>
           {labRounds.map((round) => (
-            <section key={round.id} className="dlab-round">
-              <div className="dlab-round__head">
-                <span className="dlab-round__label">{round.label}</span>
-                <span className="dlab-round__date">{round.date}</span>
+            <section key={round.id} className="ds-match-round">
+              <div className="ds-match-round__head">
+                <span className="ds-match-round__label">{round.label}</span>
+                <span className="ds-match-round__date">{round.date}</span>
                 <RoundStatus state={round.state} />
               </div>
               {round.state === 'current' ? (
-                <p className="dlab-round__sub">
+                <p className="ds-match-round__sub">
                   1 terminé · 1 en cours · 1 à venir
                 </p>
               ) : null}
@@ -43,11 +43,11 @@ export function LabMatches() {
         </div>
       </section>
 
-      <div className="dlab-grid-2 dlab-grid-2--major">
+      <div className="ds-grid-2 ds-grid-2--major">
         <section className="ds-panel">
           <PanelHead title="Résultats à saisir" aside="1" />
           <div className="dlab-attention__row">
-            <span className="dlab-attention__count dlab-num">1</span>
+            <span className="dlab-attention__count ds-num">1</span>
             <span className="dlab-attention__icon" aria-hidden="true">
               <OverviewAttentionIcon size="sm" />
             </span>
@@ -69,7 +69,7 @@ export function LabMatches() {
           <PanelHead title="Classement actuel" />
           <p className="dlab-situation__label">
             <strong>{leader.team.name}</strong> en tête ·{' '}
-            <span className="dlab-num">{leader.points} pts</span> — avant J3,
+            <span className="ds-num">{leader.points} pts</span> — avant J3,
             provisoire.
           </p>
           <button type="button" className="ds-btn ds-btn--ghost">
@@ -89,8 +89,8 @@ function RoundStatus({
   switch (state) {
     case 'current':
       return (
-        <span className="dlab-status-live">
-          <span className="dlab-live-dot" />
+        <span className="ds-status-live">
+          <span className="ds-live-dot" />
           En cours
         </span>
       )

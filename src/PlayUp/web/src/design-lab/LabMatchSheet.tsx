@@ -1,6 +1,12 @@
 import { labMatchEvents, labRounds, type LabLifecycle } from './labData'
 import { ClockIcon, PinIcon } from './LabIcons'
 import { CalendarIcon } from '../design-system/icons/overviewIcons'
+import {
+  MatchHero,
+  MatchHeroMetaItem,
+  MatchHeroScore,
+} from '../design-system/components/MatchHero'
+import { Status } from '../design-system/components/Status'
 import { Crest, PanelHead } from './LabShared'
 
 /**
@@ -28,99 +34,86 @@ export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
         : 'live'
 
   return (
-    <div className="dlab-page">
-      <div className="dlab-page__title-row">
-        <h2 className="dlab-page__title">
+    <div className="ds-page dlab-page">
+      <div className="ds-page__title-row">
+        <h2 className="ds-page__title">
           {match.home.name} — {match.away.name}
         </h2>
       </div>
 
-      <section className="ds-panel dlab-match-hero">
-        <div className="dlab-match-hero__top">
-          <span className="dlab-eyebrow">Journée 3 · Phase principale</span>
-          <HeroStatus state={heroState} minute={match.minute} />
-        </div>
-
-        <div className="dlab-match-hero__stage">
-          <div className="dlab-match-hero__team">
-            <Crest team={match.home} />
-            <span className="dlab-match-hero__name">{match.home.name}</span>
-            {heroState === 'live' ? (
-              <div className="dlab-score-actions">
-                <button type="button" className="dlab-score-btn" aria-label="But domicile">
+      <MatchHero
+        eyebrow="Journée 3 · Phase principale"
+        status={<HeroStatus state={heroState} minute={match.minute} />}
+        home={{
+          name: match.home.name,
+          crest: <Crest team={match.home} />,
+          scoreActions:
+            heroState === 'live' ? (
+              <div className="ds-match-hero__score-actions">
+                <button type="button" className="ds-match-hero__score-btn" aria-label="But domicile">
                   +
                 </button>
-                <button type="button" className="dlab-score-btn" aria-label="Retirer un but domicile">
+                <button type="button" className="ds-match-hero__score-btn" aria-label="Retirer un but domicile">
                   −
                 </button>
               </div>
-            ) : null}
-          </div>
-
-          <div className="dlab-match-hero__center">
-            {heroState === 'scheduled' ? (
-              <>
-                <span className="dlab-match-hero__score dlab-num" data-pending="true">
-                  15:00
+            ) : undefined,
+        }}
+        away={{
+          name: match.away.name,
+          crest: <Crest team={match.away} />,
+          scoreActions:
+            heroState === 'live' ? (
+              <div className="ds-match-hero__score-actions">
+                <button type="button" className="ds-match-hero__score-btn" aria-label="But extérieur">
+                  +
+                </button>
+                <button type="button" className="ds-match-hero__score-btn" aria-label="Retirer un but extérieur">
+                  −
+                </button>
+              </div>
+            ) : undefined,
+        }}
+        center={
+          heroState === 'scheduled' ? (
+            <>
+              <MatchHeroScore pending>15:00</MatchHeroScore>
+              <button type="button" className="ds-btn ds-btn--primary">
+                Démarrer le match
+              </button>
+            </>
+          ) : (
+            <>
+              <MatchHeroScore>
+                {match.homeScore}
+                <span className="ds-match-hero__sep" aria-hidden="true">
+                  –
                 </span>
+                {match.awayScore}
+              </MatchHeroScore>
+              {heroState === 'live' ? (
                 <button type="button" className="ds-btn ds-btn--primary">
-                  Démarrer le match
+                  Terminer le match
                 </button>
-              </>
-            ) : (
-              <>
-                <span className="dlab-match-hero__score dlab-num">
-                  {match.homeScore}
-                  <span className="dlab-match-hero__sep">–</span>
-                  {match.awayScore}
-                </span>
-                {heroState === 'live' ? (
-                  <button type="button" className="ds-btn ds-btn--primary">
-                    Terminer le match
-                  </button>
-                ) : (
-                  <button type="button" className="ds-btn ds-btn--ghost">
-                    Corriger le résultat
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="dlab-match-hero__team">
-            <Crest team={match.away} />
-            <span className="dlab-match-hero__name">{match.away.name}</span>
-            {heroState === 'live' ? (
-              <div className="dlab-score-actions">
-                <button type="button" className="dlab-score-btn" aria-label="But extérieur">
-                  +
+              ) : (
+                <button type="button" className="ds-btn ds-btn--ghost">
+                  Corriger le résultat
                 </button>
-                <button type="button" className="dlab-score-btn" aria-label="Retirer un but extérieur">
-                  −
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="dlab-match-hero__meta">
-          <span className="dlab-match-hero__meta-item">
-            <CalendarIcon size="sm" />
-            Sam. 26 sept. 2026
-          </span>
-          <span className="dlab-match-hero__meta-item">
-            <ClockIcon size="sm" />
-            15:00
-          </span>
-          <span className="dlab-match-hero__meta-item">
-            <PinIcon size="sm" />
-            Stade des Chênes
-          </span>
-          <span className="dlab-match-hero__meta-item">
-            Arbitre : M. Charpin
-          </span>
-        </div>
-      </section>
+              )}
+            </>
+          )
+        }
+        meta={
+          <>
+            <MatchHeroMetaItem icon={<CalendarIcon size="sm" />}>
+              Sam. 26 sept. 2026
+            </MatchHeroMetaItem>
+            <MatchHeroMetaItem icon={<ClockIcon size="sm" />}>15:00</MatchHeroMetaItem>
+            <MatchHeroMetaItem icon={<PinIcon size="sm" />}>Stade des Chênes</MatchHeroMetaItem>
+            <MatchHeroMetaItem>Arbitre : M. Charpin</MatchHeroMetaItem>
+          </>
+        }
+      />
 
       {heroState === 'scheduled' ? (
         <ScheduledBody />
@@ -140,29 +133,29 @@ function HeroStatus({
 }) {
   if (state === 'live') {
     return (
-      <span className="dlab-status-live">
-        <span className="dlab-live-dot" />
+      <span className="ds-status-live">
+        <span className="ds-live-dot" />
         {minute} · En cours
       </span>
     )
   }
   if (state === 'finished') {
     return (
-      <span className="ds-status ds-status--context ds-status--rounded ds-status--soft ds-status--tone-neutral">
+      <Status density="context" tone="neutral" variant="soft" shape="rounded">
         Terminé · Résultat officiel
-      </span>
+      </Status>
     )
   }
   return (
-    <span className="ds-status ds-status--context ds-status--rounded ds-status--soft ds-status--tone-info">
+    <Status density="context" tone="info" variant="soft" shape="rounded">
       À venir
-    </span>
+    </Status>
   )
 }
 
 function ScheduledBody() {
   return (
-    <div className="dlab-grid-2--major dlab-grid-2">
+    <div className="ds-grid-2 ds-grid-2--major">
       <section className="ds-panel">
         <PanelHead title="Feuille de match" aside="À compléter" />
         <p className="dlab-situation__label">
@@ -176,9 +169,9 @@ function ScheduledBody() {
 
       <section className="ds-panel">
         <PanelHead title="Faits de match" />
-        <div className="dlab-empty">
-          <span className="dlab-empty__title">Le match n'a pas commencé</span>
-          <span className="dlab-empty__body">
+        <div className="ds-empty">
+          <span className="ds-empty__title">Le match n'a pas commencé</span>
+          <span className="ds-empty__body">
             Buts, cartons et remplacements se saisiront ici pendant la
             rencontre.
           </span>
@@ -190,18 +183,16 @@ function ScheduledBody() {
 
 function FactsBody({ finished }: { finished: boolean }) {
   return (
-    <div className="dlab-grid-2--major dlab-grid-2">
+    <div className="ds-grid-2 ds-grid-2--major">
       <section className="ds-panel">
         <PanelHead
           title="Faits de match"
           aside={`${labMatchEvents.length} événements`}
         />
-        <div className="dlab-timeline">
+        <div className="ds-match-timeline">
           {labMatchEvents.map((event, i) => (
-            <div key={i} className="dlab-timeline__row" data-kind={event.kind}>
-              <span className="dlab-timeline__minute dlab-num">
-                {event.minute}
-              </span>
+            <div key={i} className="ds-match-timeline__row" data-kind={event.kind}>
+              <span className="ds-match-timeline__minute ds-num">{event.minute}</span>
               <span>{event.text}</span>
             </div>
           ))}
@@ -223,17 +214,17 @@ function FactsBody({ finished }: { finished: boolean }) {
           Voir la feuille complète →
         </button>
         {finished ? (
-          <div className="dlab-empty">
-            <span className="dlab-empty__title">Résultat intégré</span>
-            <span className="dlab-empty__body">
+          <div className="ds-empty">
+            <span className="ds-empty__title">Résultat intégré</span>
+            <span className="ds-empty__body">
               Le classement est à jour. Prochaine action : préparer la
               journée 4.
             </span>
           </div>
         ) : (
-          <div className="dlab-empty">
-            <span className="dlab-empty__title">Et après ?</span>
-            <span className="dlab-empty__body">
+          <div className="ds-empty">
+            <span className="ds-empty__title">Et après ?</span>
+            <span className="ds-empty__body">
               À la fin du match, le résultat alimente directement le classement
               — la prochaine action vous sera proposée ici même.
             </span>

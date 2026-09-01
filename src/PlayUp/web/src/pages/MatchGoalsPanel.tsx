@@ -12,11 +12,8 @@ import {
   setRunningScore,
 } from '../api'
 import { queryKeys } from '../queryKeys'
-import {
-  EmptyState,
-  MutationError,
-  PendingLabel,
-} from '../ui'
+import { PanelHead } from '../design-system/components/PanelHead'
+import { EmptyState, MutationError, PendingLabel } from '../ui'
 import type {
   DeclaredParticipation,
   MatchDetail,
@@ -154,9 +151,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
 
   return (
     <section className="ds-panel" aria-labelledby="goals-heading">
-      <h2 className="matches-panel__head" id="goals-heading">
-        {t('goals.heading')}
-      </h2>
+      <PanelHead id="goals-heading" title={t('goals.heading')} />
       <p className="matches-panel__meta">{t('goals.hint')}</p>
 
       {!canMutate && (
@@ -172,10 +167,13 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
           {t('goals.emptyBody')}
         </EmptyState>
       ) : (
-        <ul className="match-goals__list">
+        <div className="ds-match-timeline">
           {goals.map((goal) => (
-            <li key={goal.goalId}>
-              <div className="match-goals__row">
+            <div key={goal.goalId}>
+              <div className="ds-match-timeline__row" data-kind="goal">
+                <span className="ds-match-timeline__minute ds-num" aria-hidden="true">
+                  ·
+                </span>
                 <div className="match-goals__identity">
                   <span className="match-goals__scorer">
                     {goal.scorerDisplayName ?? goal.scorerMemberId}
@@ -193,105 +191,105 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                       : ''}
                   </span>
                 </div>
+              </div>
 
-                {canMutate &&
-                  editingGoalId !== goal.goalId &&
-                  pendingRemoveId !== goal.goalId && (
-                    <div className="match-goals__row-actions">
-                      <button
-                        type="button"
-                        className="organisation-action"
-                        disabled={busy}
-                        onClick={() => {
-                          setPendingRemoveId(null)
-                          setEditingGoalId(goal.goalId)
-                          setScorerId(goal.scorerMemberId)
-                          setCreditedSide(goal.creditedSide)
-                          setAssisterId(goal.assisterMemberId ?? '')
-                        }}
-                      >
-                        {t('goals.correct')}
-                      </button>
-                      <button
-                        type="button"
-                        className="organisation-action"
-                        disabled={busy}
-                        onClick={() => {
-                          setEditingGoalId(null)
-                          setPendingRemoveId(goal.goalId)
-                        }}
-                      >
-                        {t('goals.remove')}
-                      </button>
-                    </div>
-                  )}
-
-                {canMutate && editingGoalId === goal.goalId && (
-                  <GoalForm
-                    sheet={sheet}
-                    scorerId={scorerId}
-                    creditedSide={creditedSide}
-                    assisterId={assisterId}
-                    pending={correctMutation.isPending}
-                    submitLabel={t('goals.saveCorrect')}
-                    pendingLabel={t('goals.saving')}
-                    onScorerChange={onScorerPicked}
-                    onCreditedSideChange={setCreditedSide}
-                    onAssisterChange={setAssisterId}
-                    onCancel={() => {
-                      setEditingGoalId(null)
-                      resetCreateForm()
-                    }}
-                    onSubmit={(request) =>
-                      correctMutation.mutate({ goal, request })
-                    }
-                  />
-                )}
-
-                {canMutate && pendingRemoveId === goal.goalId && (
-                  <div
-                    className="match-goals__confirm notice notice--warning"
-                    role="group"
-                  >
-                    <p>
-                      {t('goals.removeConsequence', {
-                        name: goal.scorerDisplayName ?? goal.scorerMemberId,
-                      })}
-                    </p>
-                    <div className="match-goals__confirm-actions">
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--destructive"
-                        disabled={removeMutation.isPending}
-                        onClick={() => removeMutation.mutate(goal)}
-                      >
-                        {removeMutation.isPending ? (
-                          <PendingLabel>{t('goals.removing')}</PendingLabel>
-                        ) : (
-                          t('goals.confirmRemove')
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--ghost"
-                        disabled={removeMutation.isPending}
-                        onClick={() => setPendingRemoveId(null)}
-                      >
-                        {tc('cancel')}
-                      </button>
-                    </div>
+              {canMutate &&
+                editingGoalId !== goal.goalId &&
+                pendingRemoveId !== goal.goalId && (
+                  <div className="match-goals__row-actions">
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        setPendingRemoveId(null)
+                        setEditingGoalId(goal.goalId)
+                        setScorerId(goal.scorerMemberId)
+                        setCreditedSide(goal.creditedSide)
+                        setAssisterId(goal.assisterMemberId ?? '')
+                      }}
+                    >
+                      {t('goals.correct')}
+                    </button>
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        setEditingGoalId(null)
+                        setPendingRemoveId(goal.goalId)
+                      }}
+                    >
+                      {t('goals.remove')}
+                    </button>
                   </div>
                 )}
-              </div>
-            </li>
+
+              {canMutate && editingGoalId === goal.goalId && (
+                <GoalForm
+                  sheet={sheet}
+                  scorerId={scorerId}
+                  creditedSide={creditedSide}
+                  assisterId={assisterId}
+                  pending={correctMutation.isPending}
+                  submitLabel={t('goals.saveCorrect')}
+                  pendingLabel={t('goals.saving')}
+                  onScorerChange={onScorerPicked}
+                  onCreditedSideChange={setCreditedSide}
+                  onAssisterChange={setAssisterId}
+                  onCancel={() => {
+                    setEditingGoalId(null)
+                    resetCreateForm()
+                  }}
+                  onSubmit={(request) =>
+                    correctMutation.mutate({ goal, request })
+                  }
+                />
+              )}
+
+              {canMutate && pendingRemoveId === goal.goalId && (
+                <div
+                  className="match-goals__confirm notice notice--warning"
+                  role="group"
+                >
+                  <p>
+                    {t('goals.removeConsequence', {
+                      name: goal.scorerDisplayName ?? goal.scorerMemberId,
+                    })}
+                  </p>
+                  <div className="match-goals__confirm-actions">
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--destructive"
+                      disabled={removeMutation.isPending}
+                      onClick={() => removeMutation.mutate(goal)}
+                    >
+                      {removeMutation.isPending ? (
+                        <PendingLabel>{t('goals.removing')}</PendingLabel>
+                      ) : (
+                        t('goals.confirmRemove')
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost"
+                      disabled={removeMutation.isPending}
+                      onClick={() => setPendingRemoveId(null)}
+                    >
+                      {tc('cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
-      {(mutationError || runningScoreError) && (
+      {(mutationError != null || runningScoreError != null) && (
         <div className="match-goals__errors">
-          {mutationError && <MutationError error={mutationError} />}
-          {runningScoreError && (
+          {mutationError != null && <MutationError error={mutationError} />}
+          {runningScoreError != null && (
             <>
               <p className="notice notice--warning" role="status">
                 {t('goals.runningScoreDesync')}
