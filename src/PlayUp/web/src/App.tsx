@@ -20,6 +20,11 @@ const FoundationsPlayground = lazy(async () => {
   return { default: module.FoundationsPlayground }
 })
 
+const DesignLabPage = lazy(async () => {
+  const module = await import('./design-lab/DesignLabPage')
+  return { default: module.DesignLabPage }
+})
+
 /**
  * Route table only.
  *
@@ -28,6 +33,9 @@ const FoundationsPlayground = lazy(async () => {
  *
  * /dev/foundations is outside AppLayout: 14.5 validation terrain,
  * not organizer chrome. Lazy so Plex and DS CSS stay off the 13.5 bundle.
+ *
+ * /design-lab is outside AppLayout too: direction artistique prototype
+ * (audit Phase 20) — static data, own shell, no product surface touched.
  *
  * Nested under AppLayout so Outlet swaps page content while the 14.6 shell stays.
  * Params (:competitionId, :stageId, :matchId) are opaque ids — not business fields.
@@ -40,6 +48,14 @@ export default function App() {
         element={
           <Suspense fallback={<LoadingState />}>
             <FoundationsPlayground />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/design-lab"
+        element={
+          <Suspense fallback={<LoadingState />}>
+            <DesignLabPage />
           </Suspense>
         }
       />

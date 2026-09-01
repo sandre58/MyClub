@@ -1,0 +1,1337 @@
+/*
+ * Design Lab — direction « Grille de compétition, exécutée ».
+ *
+ * Prototype de référence visuelle (/design-lab). Scopé .dlab sous .ds-root :
+ * consomme les tokens DS 14.5 et ajoute des extensions candidates (--dlab-*).
+ * Rien ici n'est importé par les surfaces produit.
+ *
+ * Extensions candidates au DS si la direction est validée :
+ *   1. Gamme brand unifiée (deep / brand / bright) — supprime le 3e bleu chrome.
+ *   2. Rôle `live` distinct de `success`.
+ *   3. Rôle typographique numérique (score / hero) en chiffres tabulaires.
+ *   4. Système d'angle 9° : wordmark, indicateur nav actif, indicateurs de tendance.
+ *   5. Atmosphère Accueil (halos brand/info désaturés — décision 2026-09-01).
+ */
+
+.dlab {
+  /* Gamme brand unifiée — les extrémités du dégradé logo deviennent des tokens. */
+  --dlab-brand-deep: #154a8f;
+  --dlab-brand-bright: #2f86e0;
+
+  /* Live ≠ success : l'activité n'est ni un succès ni une alarme. */
+  --dlab-live: #0e9152;
+
+  /* Rôles numériques — chiffres tabulaires, vecteur d'identité. */
+  --dlab-text-score: 3.25rem;
+  --dlab-text-hero-num: 3.25rem;
+
+  /*
+   * Système d'angle unique — 12° arbitré 2026-09-01 (voir vue Arbitrage).
+   * Une variable, une valeur, partout : monogramme, wordmark, tendances,
+   * barre nav active.
+   */
+  --dlab-skew: -12deg;
+
+  /* Le rail chrome consomme la gamme brand au lieu d'un bleu isolé. */
+  --color-chrome-accent: var(--dlab-brand-bright);
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+/* ------------------------------------------------------------------ */
+/* Bandeau lab (hors produit)                                          */
+/* ------------------------------------------------------------------ */
+
+.dlab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-16);
+  padding: var(--space-8) var(--space-16);
+  background: repeating-linear-gradient(
+      -45deg,
+      transparent 0 12px,
+      color-mix(in srgb, var(--color-attention) 7%, transparent) 12px 24px
+    ),
+    var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  font-size: var(--text-label);
+}
+
+.dlab-bar__title {
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dlab-bar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.dlab-bar__group-label {
+  color: var(--color-text-secondary);
+  margin-right: var(--space-4);
+}
+
+.dlab-bar__chip {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-4) var(--space-12);
+  cursor: pointer;
+}
+
+.dlab-bar__chip[data-active='true'] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.dlab-bar__spacer {
+  flex: 1;
+}
+
+.dlab-bar a {
+  color: var(--color-text-secondary);
+}
+
+/* ------------------------------------------------------------------ */
+/* Wordmark — IBM Plex obliquée + flèche fromStem (angle système)      */
+/* ------------------------------------------------------------------ */
+
+.dlab-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.08em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  transform: skewX(var(--dlab-skew));
+  white-space: nowrap;
+}
+
+.dlab-wordmark[data-skew='9'] {
+  --dlab-skew: -9deg;
+}
+
+.dlab-wordmark[data-skew='12'] {
+  --dlab-skew: -12deg;
+}
+
+.dlab-wordmark__up {
+  position: relative;
+  display: inline-block;
+}
+
+.dlab-wordmark__arrow {
+  position: absolute;
+  left: calc(100% - 0.08em);
+  bottom: 0.72em;
+  width: 0.62em;
+  height: 0.62em;
+}
+
+.dlab-wordmark__arrow path {
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Shell proposé                                                       */
+/* ------------------------------------------------------------------ */
+
+.dlab-shell {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.dlab-rail {
+  display: flex;
+  flex-direction: column;
+  width: 15rem;
+  flex-shrink: 0;
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+  border-right: var(--border-width) solid var(--color-chrome-border);
+}
+
+.dlab-rail__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  color: var(--color-on-chrome);
+  text-decoration: none;
+  font-size: 1.05rem;
+}
+
+.dlab-rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-8);
+  flex: 1;
+}
+
+.dlab-rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--control-height);
+  padding: 0 var(--space-12) 0 var(--space-16);
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-on-chrome);
+  opacity: 0.66;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+  transition: opacity var(--motion-duration) var(--motion-easing),
+    background-color var(--motion-duration) var(--motion-easing);
+}
+
+.dlab-rail__link:hover {
+  opacity: 0.94;
+  background: color-mix(in srgb, #ffffff 8%, transparent);
+}
+
+.dlab-rail__link[data-active='true'] {
+  opacity: 1;
+  background: color-mix(in srgb, #ffffff 12%, transparent);
+}
+
+/* Indicateur actif : barre inclinée à l'angle système — la signature. */
+.dlab-rail__link[data-active='true']::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  background: var(--color-chrome-accent);
+  border-radius: 2px;
+  transform: skewY(var(--dlab-skew));
+}
+
+.dlab-rail__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.dlab-rail__footer {
+  padding: var(--space-8);
+  border-top: var(--border-width) solid var(--color-chrome-border);
+}
+
+.dlab-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dlab-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 3.5rem;
+  padding: var(--space-8) var(--space-24);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+
+.dlab-header__crest {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
+  color: var(--color-brand);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-header__id {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dlab-header__name {
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dlab-header__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.dlab-header__spacer {
+  flex: 1;
+}
+
+.dlab-header__bell {
+  position: relative;
+}
+
+.dlab-header__badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 3px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-attention);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.dlab-main {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+/*
+ * Largeur : fluide à 100 % de la zone main, gouttières latérales uniquement
+ * (padding du .dlab-main). Pas de max-width centré — le contenu remplit
+ * l'espace disponible après le rail.
+ */
+.dlab-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+/* ------------------------------------------------------------------ */
+/* Grammaire commune                                                   */
+/* ------------------------------------------------------------------ */
+
+.dlab-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.dlab-eyebrow {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.dlab-page__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-16);
+}
+
+.dlab-page__title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  margin-bottom: var(--space-12);
+}
+
+.dlab-panel-head h3 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Icône d'en-tête (V9) : petite, neutre — le contenu domine. */
+.dlab-panel-head__icon {
+  display: inline-flex;
+  color: var(--color-text-secondary);
+}
+
+.dlab-panel-head__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.dlab-panel-head .dlab-eyebrow {
+  letter-spacing: 0.05em;
+}
+
+/* Indicateur de tendance — flèche 9°, montée = brand, descente = neutre. */
+.dlab-trend {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  vertical-align: -1px;
+}
+
+.dlab-trend path {
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.dlab-trend--up {
+  color: var(--color-brand);
+}
+
+.dlab-trend--down {
+  color: var(--color-text-secondary);
+}
+
+/* Tendance — légère rotation selon l'angle système (comparaison + cohérence). */
+.dlab-trend[data-skew='9'] {
+  transform: rotate(-3deg);
+}
+
+.dlab-trend[data-skew='12'] {
+  transform: rotate(-5deg);
+}
+
+/* Pastille live — pulsation sobre. */
+.dlab-live-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--dlab-live);
+  animation: dlab-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes dlab-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dlab-live) 36%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--dlab-live) 14%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlab-live-dot {
+    animation: none;
+  }
+}
+
+.dlab-status-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--dlab-live) 12%, var(--color-surface));
+  color: var(--dlab-live);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Cockpit (Vue d'ensemble)                                            */
+/* ------------------------------------------------------------------ */
+
+.dlab-hero {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-16);
+}
+
+@media (max-width: 56rem) {
+  .dlab-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dlab-situation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.dlab-situation__reading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-16);
+}
+
+.dlab-situation__num {
+  font-size: var(--dlab-text-hero-num);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dlab-situation__num small {
+  font-size: 0.45em;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  letter-spacing: 0;
+}
+
+.dlab-situation__label {
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+  max-width: 24rem;
+}
+
+.dlab-cycle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-12);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.dlab-cycle span[data-state='current'] {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-cycle span[data-state='done'] {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  opacity: 0.7;
+}
+
+.dlab-next-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  justify-content: space-between;
+  border-left: 3px solid var(--color-brand);
+}
+
+.dlab-next-action__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dlab-next-action__title {
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-next-action__why {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+/* À traiter — groupe hors panneau (D9 : chiffre + icône + label + couleur). */
+.dlab-attention {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.dlab-attention__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-12) var(--space-16);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--color-attention) 28%, var(--color-border));
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--color-attention) 6%, var(--color-surface));
+}
+
+.dlab-attention__row[data-tone='info'] {
+  border-color: color-mix(in srgb, var(--color-info) 24%, var(--color-border));
+  background: color-mix(in srgb, var(--color-info) 5%, var(--color-surface));
+}
+
+.dlab-attention__count {
+  font-size: 1.375rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-attention);
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.dlab-attention__row[data-tone='info'] .dlab-attention__count {
+  color: var(--color-info);
+}
+
+/* D9 complet : chiffre + icône + label + couleur. */
+.dlab-attention__icon {
+  display: inline-flex;
+  color: var(--color-attention);
+}
+
+.dlab-attention__row[data-tone='info'] .dlab-attention__icon {
+  color: var(--color-info);
+}
+
+.dlab-attention__icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.dlab-attention__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dlab-attention__title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-body);
+}
+
+.dlab-attention__detail {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.dlab-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+}
+
+/* Asymétrie signifiante : la région dominante pèse visiblement plus. */
+.dlab-grid-2--major {
+  grid-template-columns: 1.45fr 1fr;
+}
+
+@media (max-width: 56rem) {
+  .dlab-grid-2,
+  .dlab-grid-2--major {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Classement compact (cockpit) */
+.dlab-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+
+.dlab-mini-table td {
+  padding: var(--space-8) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.dlab-mini-table tr:first-child td {
+  border-top: none;
+}
+
+.dlab-mini-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dlab-mini-table .pts {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-body);
+}
+
+/* Ligne match (partout la même grammaire) */
+.dlab-match-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-8) 0;
+  min-height: 2.5rem;
+}
+
+.dlab-match-row + .dlab-match-row {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.dlab-match-row__team {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-body);
+  white-space: nowrap;
+}
+
+.dlab-match-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dlab-match-row__team--away {
+  justify-content: flex-start;
+}
+
+.dlab-match-row__team--home {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.dlab-match-row__score {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 4.5rem;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+  font-size: 1.0625rem;
+}
+
+.dlab-match-row__score[data-muted='true'] {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-label);
+}
+
+.dlab-match-row__aside {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  min-width: 5rem;
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* Dans les panneaux mi-largeur, l'aside cède la place aux équipes. */
+.dlab-grid-2 .dlab-match-row__aside {
+  min-width: 0;
+}
+
+.dlab-grid-2 .dlab-match-row__aside > span:not([class]) {
+  display: none;
+}
+
+.dlab-crest {
+  width: 1.375rem;
+  height: 1.375rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-size: 0.56rem;
+  font-weight: var(--font-weight-bold);
+  color: #fff;
+  background: var(--crest, var(--color-text-secondary));
+}
+
+/* ------------------------------------------------------------------ */
+/* Calendrier (Matchs)                                                 */
+/* ------------------------------------------------------------------ */
+
+.dlab-round {
+  padding: var(--space-12) 0;
+}
+
+.dlab-round + .dlab-round {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.dlab-round__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  margin-bottom: var(--space-4);
+}
+
+.dlab-round__label {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-body);
+}
+
+.dlab-round__date {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.dlab-round__sub {
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+/* ------------------------------------------------------------------ */
+/* Classements                                                         */
+/* ------------------------------------------------------------------ */
+
+.dlab-standings {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dlab-standings th {
+  padding: var(--space-8);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  text-align: right;
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+}
+
+.dlab-standings th.team {
+  text-align: left;
+}
+
+.dlab-standings td {
+  padding: var(--space-12) var(--space-8);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-body);
+}
+
+.dlab-standings td.team {
+  text-align: left;
+}
+
+.dlab-standings tr {
+  position: relative;
+}
+
+.dlab-standings td.rank {
+  position: relative;
+  width: 2.75rem;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+/* Zones sportives : barre latérale, la couleur confirme, la légende explique. */
+.dlab-standings tr[data-zone='promotion'] td.rank::before,
+.dlab-standings tr[data-zone='relegation'] td.rank::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-brand);
+}
+
+.dlab-standings tr[data-zone='relegation'] td.rank::before {
+  background: var(--color-error);
+}
+
+.dlab-standings tr[data-rank='1'] .dlab-standings__team-name {
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-standings__team {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.dlab-standings__team-name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.dlab-standings td.pts {
+  font-weight: var(--font-weight-bold);
+  font-size: 1.0625rem;
+}
+
+.dlab-penalty {
+  display: inline-block;
+  margin-left: var(--space-8);
+  padding: 1px var(--space-8);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
+  color: var(--color-attention);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+}
+
+.dlab-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.dlab-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-legend__swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Match Hero (intensité C : l'action colle au score)                  */
+/* La fiche match est la surface la plus sportive du produit — c'est   */
+/* ici que l'identité s'exprime le plus fort, sans folklore.           */
+/* ------------------------------------------------------------------ */
+
+.dlab-match-hero {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dlab-match-hero__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-12) var(--space-24);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.dlab-match-hero__stage {
+  display: grid;
+  grid-template-columns: 1fr minmax(14rem, auto) 1fr;
+  align-items: center;
+  gap: var(--space-24);
+  padding: var(--space-32) var(--space-24);
+}
+
+.dlab-match-hero__team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  text-align: center;
+}
+
+.dlab-match-hero__team .dlab-crest {
+  width: 3rem;
+  height: 3rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+}
+
+.dlab-match-hero__name {
+  font-size: 1.0625rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-match-hero__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.dlab-match-hero__score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  font-size: var(--dlab-text-score);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dlab-match-hero__score[data-pending='true'] {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.dlab-match-hero__sep {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+.dlab-match-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8) var(--space-24);
+  padding: var(--space-12) var(--space-24);
+  background: var(--color-surface-secondary);
+  border-top: var(--border-width) solid var(--color-border);
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.dlab-match-hero__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-match-hero__meta-item svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.dlab-score-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-score-btn {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.dlab-score-btn:hover {
+  background: var(--color-surface-secondary);
+}
+
+.dlab-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.dlab-timeline__row {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: var(--space-12);
+  padding: var(--space-8) 0;
+  font-size: var(--text-label);
+}
+
+.dlab-timeline__row + .dlab-timeline__row {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.dlab-timeline__minute {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.dlab-timeline__row[data-kind='goal'] .dlab-timeline__minute {
+  color: var(--color-text-primary);
+}
+
+/* ------------------------------------------------------------------ */
+/* États vides                                                         */
+/* ------------------------------------------------------------------ */
+
+.dlab-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-24) 0;
+}
+
+.dlab-empty__title {
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-empty__body {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+  max-width: 26rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Accueil (hors Shell) — atmosphère décidée le 2026-09-01             */
+/* ------------------------------------------------------------------ */
+
+.dlab-home {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  background:
+    radial-gradient(
+      48rem 30rem at 10% -8rem,
+      color-mix(in srgb, var(--color-brand) 16%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      40rem 26rem at 92% -6rem,
+      color-mix(in srgb, var(--color-info) 12%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-brand) 4%, var(--color-canvas)),
+      var(--color-canvas) 55%
+    );
+}
+
+.dlab-home__main {
+  width: min(100%, 42rem);
+  margin: 0 auto;
+  padding: var(--space-48) var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+}
+
+.dlab-home__brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.dlab-home__mark-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.dlab-home__wordmark {
+  font-size: 2.375rem;
+}
+
+.dlab-home__lede {
+  margin: 0;
+  color: var(--color-text-secondary);
+  max-width: 30rem;
+}
+
+.dlab-home__panel {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  padding: var(--space-8) var(--space-16);
+}
+
+.dlab-home__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-12) 0;
+  min-height: var(--control-height);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+}
+
+.dlab-home__row + .dlab-home__row {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.dlab-home__row-name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.dlab-home__row-aside {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12);
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+}
+
+.dlab-home__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+/* ------------------------------------------------------------------ */
+/* Podium (Terminée)                                                   */
+/* ------------------------------------------------------------------ */
+
+.dlab-podium {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-16);
+  padding: var(--space-16) 0 0;
+}
+
+.dlab-podium__step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-podium__block {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
+  background: var(--color-surface-secondary);
+  border: var(--border-width) solid var(--color-border);
+  border-bottom: none;
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dlab-podium__step[data-rank='1'] .dlab-podium__block {
+  height: 5.5rem;
+  background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-border));
+  color: var(--color-brand);
+}
+
+.dlab-podium__step[data-rank='2'] .dlab-podium__block {
+  height: 4rem;
+}
+
+.dlab-podium__step[data-rank='3'] .dlab-podium__block {
+  height: 3rem;
+}
+
+.dlab-podium__name {
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Arbitrage 9° vs 12° — preuve visuelle, lab gelé après décision      */
+/* ------------------------------------------------------------------ */
+
+.dlab-angle-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.dlab-angle-intro__lead,
+.dlab-angle-intro__verdict {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+}
+
+.dlab-angle-intro__verdict {
+  padding: var(--space-12) var(--space-16);
+  border-left: 3px solid var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface));
+  color: var(--color-text-primary);
+}
+
+.dlab-angle-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-24);
+}
+
+.dlab-angle-grid__head,
+.dlab-angle-grid__row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 1fr;
+  gap: var(--space-24);
+  align-items: center;
+}
+
+.dlab-angle-grid__col-label {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+}
+
+.dlab-angle-grid__row-label {
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.dlab-angle-grid__row > :not(.dlab-angle-grid__row-label) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 3rem;
+  padding: var(--space-12);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+}
+
+.dlab-angle-trend-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-weight: var(--font-weight-bold);
+}
+
+.dlab-angle-nav-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.dlab-angle-nav-demo__bar {
+  width: 3px;
+  height: 1.25rem;
+  background: var(--color-brand);
+  border-radius: 2px;
+}
+
+.dlab-angle-nav-demo[data-skew='9'] .dlab-angle-nav-demo__bar {
+  transform: skewY(-9deg);
+}
+
+.dlab-angle-nav-demo[data-skew='12'] .dlab-angle-nav-demo__bar {
+  transform: skewY(-12deg);
+}
+
