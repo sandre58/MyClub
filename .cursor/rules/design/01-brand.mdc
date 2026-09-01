@@ -1,0 +1,36 @@
+---
+description: Play'Up brand elements — monogram, wordmark, arrow, angle, gradient
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Brand
+
+## Elements
+
+- **Monogram** — `PlayUpMark` (`design-system/PlayUpMark.tsx`): P + ascending arrow.
+  Gradient ≥ 24px, flat below. Never redraw.
+- **Wordmark** — "Play'Up" IBM Plex Sans bold, system angle, arrow from stem
+  (`design-lab/LabWordmark.tsx` → port to design-system in Lot 1).
+- **Arrow / "Up"** — wordmark arrow, trend indicators, active-nav slanted bar only.
+
+## Angle system — **12° (arbitrated 2026-09-01)**
+
+One angle everywhere: monogram, wordmark, trends, nav accent bar.
+Exposed as `--dlab-skew: -12deg` (lab) / token in design-system (Lot 1).
+
+Rationale: 12° survives better at small sizes (16–24px rail, trends) and reads
+as a coherent system; 9° was theoretically subtler but barely perceptible in
+small UI occurrences. Proof: Design Lab → **Arbitrage 9°/12°**.
+
+`PlayUpMark` accepts `leanDeg?: 9 | 12` for the arbitration view only; product
+code always uses the default **12**.
+
+## Gradient
+
+Only in monogram ≥ 24px and Home atmosphere. Never on buttons, text, borders, badges, panels.
+
+## Forbidden
+
+- Gradient text/buttons; monogram as watermark; skewing tables/forms/panels.
+- Brand blue as a status color.

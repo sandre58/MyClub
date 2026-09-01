@@ -1,0 +1,32 @@
+---
+description: Play'Up design tokens — colors, spacing, radius, borders, shadows
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Tokens
+
+Single source: `src/PlayUp/web/src/design-system/` (scoped to `.ds-root`).
+Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
+**Always use semantic tokens** (`--color-*`, `--space-*`, `--radius-*`,
+`--shadow-*`, `--text-*`); never primitives, never raw hex in components.
+
+## Color roles
+
+- Canvas `--color-canvas` / Surface `--color-surface` / Surface secondary.
+- Text: `--color-text-primary` / `--color-text-secondary`.
+- Brand `--color-brand` (+hover) — actions and brand accents only.
+- Semantic: `success`, `attention` (pending work), `error` (failures), `info`.
+- Chrome: `--color-chrome` (dark navy) + `on-chrome` + `chrome-accent` —
+  **reserved to the navigation rail**; never for content panels.
+- Live: green `success` family + pulse dot (see 09-motion).
+
+## Forbidden / legacy
+
+- The legacy palette in `src/index.css` (`#3452d8`, Segoe UI, pills, page
+  shadows) is **dead**: never reference it in new UI.
+- No new hex values, no `color-mix()` improvisations outside the token files.
+- No new spacing/radius/shadow values: use the existing scale
+  (`--space-4/8/12/16/24/32`, `--radius-control/panel`, `--shadow-*`).
+
+If a needed token does not exist, stop and flag it instead of hardcoding.

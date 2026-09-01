@@ -1,0 +1,27 @@
+---
+description: Play'Up surface hierarchy — Canvas, Groupe, Panneau, Overlay
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Surfaces
+
+Four levels only — each one must be earned:
+
+1. **Canvas** — `--color-canvas` page background. Never draws borders.
+2. **Groupe** — invisible grouping (spacing + optional eyebrow). Default
+   choice for sectioning. No border, no background.
+3. **Panneau** — `ds-panel`: white surface, 1px border, panel radius, at most
+   one shadow level. Used when content needs enclosure (tables, heroes,
+   attention rows).
+4. **Overlay** — dialogs/drawers. The only level with strong elevation.
+
+## Anti card-farm rules
+
+- Never nest panels inside panels; inside a panel, section typographically
+  (round headers in the calendar are the reference).
+- A panel with a single line of text is a smell — merge it or demote it to
+  a groupe.
+- Dark chrome surface is exclusive to the navigation rail.
+- Exception: the Home atmosphere (brand halos on canvas) is the only
+  decorative canvas treatment in the product.

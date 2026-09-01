@@ -1,0 +1,34 @@
+---
+description: Play'Up canonical components and reuse rules
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Canonical components
+
+Search these before building anything new. Reference implementations live in
+`design-system/` (product-ready) and `design-lab/` (visual reference to port).
+
+| Component | Role | Reference |
+|---|---|---|
+| `PlayUpMark` | Monogram, all sizes | `design-system/PlayUpMark.tsx` |
+| Wordmark | Brand name + arrow in chrome | `design-lab/LabWordmark.tsx` |
+| `PanelHead` | Panel title + optional neutral icon + right meta | `design-lab/LabShared.tsx` |
+| `MatchRow` | One match, state-driven (score / time / pill / live) | `design-lab/LabShared.tsx` |
+| Match Hero | Match object header, 3 states (scheduled/live/finished) | `design-lab/LabMatchSheet.tsx` |
+| `Crest` | Team initials block | `design-lab/LabShared.tsx` |
+| Trend icon | Slanted up/down/flat arrows | `design-lab/LabWordmark.tsx` |
+| Status pill | `ds-status` tones (success/attention/error/info/neutral) | design system CSS |
+| Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
+| Dialog / Drawer | Overlay level | existing shell components |
+| Attention row | Count + icon + label + action (D9 recipe) | `design-lab/LabCockpit.tsx` |
+| Cycle line | Lifecycle progress (Préparation → … → Terminée) | `design-lab/LabCockpit.tsx` |
+
+## Rules
+
+- A new component must have a **visual or behavioral reason to exist** —
+  technical reusability alone does not justify one.
+- Never re-style a canonical component locally (no inline overrides of
+  scores, pills, buttons).
+- State-driven rendering: normal state implicit, notable states explicit
+  (MatchRow is the model).

@@ -1,0 +1,47 @@
+---
+description: Play'Up recurring UI patterns — cockpit, next action, match hero, empty/loading/error
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Patterns
+
+Reference implementations: `src/PlayUp/web/src/design-lab/` (visual arbiter).
+
+## Cockpit (Vue d'ensemble)
+
+Composition emerges from lifecycle state, top to bottom:
+1. Hero band (≈1.6/1): "Où en est-on ?" (hero numeric + one-sentence reading
+   + cycle line) | "Prochaine action" (eyebrow + title + why + primary button).
+2. À traiter groupe (only if items exist): D9 rows.
+3. Sport band (≈1.45/1): current matchday | compact standings.
+
+## Prochaine action
+
+Always exactly one, always with a "why" line, always the only primary button
+of the surface.
+
+## Match Hero (fiche match)
+
+Object header with three states — center swaps, frame stays:
+- Scheduled: kickoff time as hero numeric, "Démarrer le match" primary.
+- Live: score hero + minute badge, +/− stepper under each team,
+  "Terminer le match" primary.
+- Finished: score hero, "Résultat officiel" pill, ghost "Corriger le résultat".
+Meta band below: calendar/clock/pin icons + referee, on surface-secondary.
+
+## Calendrier
+
+One panel; rounds as typographic sections (label + date + state pill);
+MatchRow per match; live rows outrank everything.
+
+## Classement
+
+Legend before table; zones as left bars; Pts dominant; trends slanted.
+
+## Empty / loading / error
+
+- Empty states explain **what will appear and why** ("Les matchs apparaîtront
+  ici dès que…"), optional single secondary action. Never an illustration dump.
+- Loading: quiet text/status placeholders, no shimmer.
+- Error: `error` tone, reserved for real failures — never for pending work.

@@ -1,0 +1,36 @@
+---
+description: Play'Up typography roles including numeric treatments
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Typography
+
+Typeface: **IBM Plex Sans** (via `design-system/fonts`). No other family.
+
+## Text roles
+
+| Role | Usage | Reference |
+|---|---|---|
+| Display | Page titles | `--text-title`, bold |
+| Heading | Panel titles | `--text-body`, bold |
+| Body | Content | `--text-body` |
+| Label / eyebrow | Meta, uppercase eyebrows | `--text-label`, letter-spacing +0.06em |
+
+## Numeric roles (identity carriers)
+
+All product numbers use **tabular figures** (`.dlab-num` pattern:
+`font-variant-numeric: tabular-nums`).
+
+| Role | Size | Where |
+|---|---|---|
+| Hero numeric | ~3.25rem bold, tight tracking | Cockpit "Où en est-on ?" reading, Match Hero score / kickoff |
+| Row score | ~1.0625rem bold | MatchRow scores |
+| Standings points | ~1.0625rem bold | Pts column (dominates the row) |
+| Counter | 1.375rem bold + semantic color | À traiter counts |
+
+Rules:
+- A match score is always **bigger and bolder** than the team names around it.
+- Points dominate a standings row; team name stays regular weight.
+- Dates/times are body-size, secondary color — numbers dominate only when they
+  are sport-meaningful (score, rank, points, matchday).

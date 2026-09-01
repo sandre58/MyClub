@@ -29,7 +29,11 @@ The Lab completed its research phase (V1 → audit → V2 → Design System). It
 3. **Search for an existing component** (design system, shell, Design Lab) before creating one.
 4. **If the feature cannot be expressed with the current Design System**, do **not**
    silently invent a new visual language. **Flag the gap** and propose an extension
-   to the Design Lab first — then implement in product.
+   to the Design Lab first — then validation → rules → product.
+   A feature must never modify the Lab simply because it is hard to integrate.
+   Ask: *does this feature reveal a real gap in the system?*
+   - Yes → feature → gap → Lab extension → validation → rules → product
+   - No → use existing patterns
 5. **Never introduce without explicit justification**: a new color, typographic size,
    radius, shadow, spacing value, button style, or card pattern.
 

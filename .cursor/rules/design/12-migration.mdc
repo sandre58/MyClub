@@ -1,0 +1,51 @@
+---
+description: Play'Up product migration order — Lab to real surfaces
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Migration plan (Lab → product)
+
+The Design Lab is frozen as the visual reference. Migrate in this order — do not
+skip lots; do not start Accueil before Shell and Match.
+
+## Lot 0 — Final arbitrations ✅
+
+- Angle: **12°**
+- Width: fluid 100% with lateral gutters (no centered max-width column)
+- Match Hero, numeric roles, icon rules, surface hierarchy — validated in Lab V2
+
+## Lot 1 — Foundations
+
+Tokens, typography, brand, Wordmark, PlayUpMark, live (distinct from success),
+numeric roles, icons. Port Lab patterns into `design-system/`.
+
+## Lot 2 — Shell
+
+Rail + wordmark + competition context + navigation. First shared surface for all routes.
+
+## Lot 3 — Match
+
+Match Hero → score → live → actions → events. The sport-identity showcase.
+
+## Lot 4 — Cockpit
+
+State → hero number → next action → À traiter.
+
+## Lot 5 — Classements / Calendrier
+
+Numeric grammar at full intensity (zones, trends, matchdays).
+
+## Lot 6 — Accueil
+
+Brand entry point — after the operational grammar is proven.
+
+## Lot 7 — Legacy purge
+
+Anything that does not match the Design Lab is suspect. Remove `index.css` legacy
+palette, pills, ghost tokens, duplicated components.
+
+## Rule during migration
+
+Each lot must pass the acceptance test: **could this have been designed in the Lab?**
+If not, extend the Lab first (gap only — no new artistic direction).

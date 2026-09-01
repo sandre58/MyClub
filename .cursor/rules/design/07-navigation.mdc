@@ -1,0 +1,18 @@
+---
+description: Play'Up navigation and shell rules
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Navigation & shell
+
+- **Rail** (left, dark chrome): brand (monogram + wordmark) on top, one flat
+  destination list (icon + label), settings pinned at bottom. Active item =
+  higher opacity + slanted accent bar at the system angle.
+- **Header** (light): competition identity (crest, name, status pill, dates)
+  + the À traiter bell with numeric badge. No breadcrumbs, no duplicated brand.
+- The rail is the only dark surface and the only place the wordmark appears
+  inside the app.
+- Navigation is context-first: the competition is the workspace; global brand
+  presence stays minimal outside Home.
+- Nav icons: one per destination, from `design-system/icons/shellIcons.tsx`.

@@ -1,0 +1,37 @@
+---
+description: Play'Up data display — scores, standings, trends, matchdays, counters
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Data display
+
+## Scores
+
+- Always tabular bold, bigger than team names (row: ~1.0625rem; hero: 3.25rem).
+- Separator "–" in regular weight, secondary color.
+- Unplayed match: time (or "vs") in secondary color — never "0 – 0".
+
+## Standings
+
+- Pts column: bold, largest cell in the row. Rank: tabular, quiet.
+- Sport zones (promotion/relegation) = left border bar + legend; color
+  confirms, the legend carries meaning (grayscale test).
+- Trend arrows at the system angle (up/down/flat); flat is a dash.
+- Penalties shown inline as a small neutral pill ("Pénalité −1 pt").
+
+## Matchdays / journées
+
+- "J3 / 5" pattern: current number huge, total small — the hero numeric of
+  the cockpit.
+- Round sections: typographic header (label + date + state) inside one panel,
+  not one panel per round.
+
+## Counters (À traiter)
+
+- D9 recipe, in order: **count (1.375rem bold, semantic color) + icon + label
+  + action**. Attention tone for pending, info for planning issues.
+
+## Live
+
+- Green pulse dot + minute ("67'"). Live always outranks other row states.

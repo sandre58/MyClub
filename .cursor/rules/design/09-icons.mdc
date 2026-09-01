@@ -1,0 +1,37 @@
+---
+description: Play'Up icon style and usage rules
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Icons
+
+## Style
+
+- Lucide-compatible stroke icons, 24×24 grid, `stroke-width: 2`,
+  `currentColor`, monocolor. Always through the `Icon` wrapper
+  (`design-system/icons/Icon.tsx`), sizes `sm/md/lg`.
+
+## The rule
+
+> Play'Up uses an icon when it **encodes a state or a repeated object family
+> that speeds up scanning** (navigation destinations, row statuses, D9
+> attention rows, icon-only chrome actions, meta facts like date/time/venue),
+> but **not** when it would decorate a unique label already carried by
+> typography (text buttons, one-off titles, prose).
+
+## Where icons belong
+
+- Rail destinations (always icon + label).
+- Panel heads: optional small neutral icon **only** for recurring content
+  families (Équipes, Règlement, Calendrier, Classement).
+- À traiter rows (part of the D9 recipe).
+- Match Hero meta band (calendar / clock / pin).
+- Trend and live indicators.
+
+## Where icons are forbidden
+
+- Inside standings/table cells (except trend column).
+- On text buttons ("Saisir le résultat" needs no pencil).
+- Repeated per-row decorations (no ball icon on every match row).
+- Emojis, filled icon sets, multicolor icons: never.
