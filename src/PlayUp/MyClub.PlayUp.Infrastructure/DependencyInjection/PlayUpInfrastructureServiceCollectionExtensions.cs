@@ -16,12 +16,12 @@ using MyClub.PlayUp.Infrastructure.Time;
 namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
 
 /// <summary>
-/// Registers Play'up infrastructure services for a future Host and for tests.
+/// Registers Play'Up infrastructure services for a future Host and for tests.
 /// </summary>
 public static class PlayUpInfrastructureServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds the Play'up DbContext (PostgreSQL), ordered-collection interceptors, repositories, unit of work, and system clock.
+    /// Adds the Play'Up DbContext (PostgreSQL), ordered-collection interceptors, repositories, unit of work, and system clock.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The PostgreSQL connection string.</param>

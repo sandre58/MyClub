@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <Description>Play'up HTTP host (Minimal APIs composition root).</Description>
+        <Description>Play'Up HTTP host (Minimal APIs composition root).</Description>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <NoWarn>$(NoWarn);CA1515;CA2007</NoWarn>
         <UserSecretsId>MyClub.PlayUp.Host</UserSecretsId>

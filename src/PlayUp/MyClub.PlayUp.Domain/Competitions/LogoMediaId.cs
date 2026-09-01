@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Competitions;
 
 /// <summary>
-/// Local Play'up reference to a Media item (Guid only — no dependency on Media.Domain).
+/// Local Play'Up reference to a Media item (Guid only — no dependency on Media.Domain).
 /// </summary>
 public readonly record struct LogoMediaId
 {

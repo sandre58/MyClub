@@ -29,7 +29,7 @@ alwaysApply: true
 - For important business work, use reference business cases when pertinent (`workflow.mdc` / Notion Workflow).
 - Adapt pedagogy to the developer profile (`learning-mode.mdc`, `developer-knowledge-profile.mdc`); do not lecture on KNOWN stack.
 - Non-trivial patterns/libraries need a real problem and trade-off (`no-cargo-cult.mdc`).
-- Technology learning capitalizes only in Notion Connaissances — never into Play’up docs (`knowledge-capitalization.mdc`).
+- Technology learning capitalizes only in Notion Connaissances — never into Play’Up docs (`knowledge-capitalization.mdc`).
 
 # Documentation
 
@@ -41,7 +41,7 @@ Document:
 
 Do not duplicate information already maintained elsewhere (Git history, generated API docs, README, source). Prefer links to canonical sources.
 
-Technology knowledge (React, TypeScript, …) belongs in Notion **Connaissances / Technologies** (and linked Guides), not in Play’up Domaine, Décisions, or Architecture technique as general learning material.
+Technology knowledge (React, TypeScript, …) belongs in Notion **Connaissances / Technologies** (and linked Guides), not in Play’Up Domaine, Décisions, or Architecture technique as general learning material.
 
 ## Language
 

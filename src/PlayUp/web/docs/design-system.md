@@ -1,4 +1,4 @@
-# Design System (Play’up web)
+# Design System (Play’Up web)
 
 Operational SoT for the foundations under `src/design-system/`. Product intent: Notion **Identité visuelle**.
 
@@ -31,7 +31,7 @@ Route `/dev/foundations` — `FoundationsPlayground`. Terrain of truth for token
 
 ## Shell / Sidebar
 
-`shell/` is **Play’up-local**. Do **not** extract a shared MyClub Shell/Sidebar package until a **second MyClub application** actually consumes the same Shell contract.
+`shell/` is **Play’Up-local**. Do **not** extract a shared MyClub Shell/Sidebar package until a **second MyClub application** actually consumes the same Shell contract.
 
 Content link ink is scoped to `.shell-main` (and `.ds-preview`) so chrome links keep `--color-on-chrome`.
 

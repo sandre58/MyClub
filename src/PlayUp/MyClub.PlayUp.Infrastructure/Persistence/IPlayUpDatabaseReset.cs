@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Infrastructure.Persistence;
 
 /// <summary>
-/// Wipes and recreates the Play'up PostgreSQL schema (Development Workspace only).
+/// Wipes and recreates the Play'Up PostgreSQL schema (Development Workspace only).
 /// </summary>
 public interface IPlayUpDatabaseReset
 {

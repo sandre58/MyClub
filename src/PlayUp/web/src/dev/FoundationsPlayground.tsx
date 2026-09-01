@@ -236,7 +236,7 @@ export function FoundationsPlayground() {
         data-grayscale={grayscale ? 'on' : 'off'}
       >
         <header className="ds-stack">
-          <p className="ds-wordmark">Play’up</p>
+          <p className="ds-wordmark">Play’Up</p>
           <p className="ds-meta">
             Terrain de validation — foundations + primitives React. Les pages
             legacy restent hors scope.
@@ -297,7 +297,7 @@ export function FoundationsPlayground() {
           </p>
           <aside className="ds-chrome-rail" aria-label="Exemple de rail chrome">
             <a className="ds-chrome-rail__brand" href="#ds-preview">
-              Play’up
+              Play’Up
             </a>
             <nav className="ds-chrome-rail__nav" aria-label="Exemple nav chrome">
               <a className="ds-chrome-rail__link" href="#ds-preview" data-active="true">
@@ -603,7 +603,7 @@ export function FoundationsPlayground() {
             À juger dans le navigateur
           </h2>
           <ul className="ds-checks">
-            <li>1 Grayscale — Play’up reste identifiable sans couleur de marque.</li>
+            <li>1 Grayscale — Play’Up reste identifiable sans couleur de marque.</li>
             <li>2 No card — les groupes se tiennent sans boîte autour de chaque bloc.</li>
             <li>3 No grid — hors classement, pas de quadrillage par défaut.</li>
             <li>4 Numbers — le score et l’horaire sautent sans tout transformer en scoreboard.</li>

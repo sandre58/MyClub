@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Description>Play'up persistence and infrastructure adapters (EF Core, PostgreSQL, system clock).</Description>
+        <Description>Play'Up persistence and infrastructure adapters (EF Core, PostgreSQL, system clock).</Description>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 

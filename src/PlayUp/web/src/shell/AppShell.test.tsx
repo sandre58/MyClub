@@ -29,7 +29,7 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             path="/"
             element={
               <main id="main">
-                <h1>Play’up</h1>
+                <h1>Play’Up</h1>
               </main>
             }
           />
@@ -78,7 +78,7 @@ describe('AppShell', () => {
   it('renders the matched page through Outlet', () => {
     renderWithShell('/')
 
-    expect(screen.getByRole('heading', { name: 'Play’up' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Play’Up' })).toBeInTheDocument()
   })
 
   it('exposes the main landmark from the page content', () => {

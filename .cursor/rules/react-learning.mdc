@@ -1,5 +1,5 @@
 ---
-description: React / TS / CSS learning path for a beginner building Play’up — teach on need, no backend cargo-cult
+description: React / TS / CSS learning path for a beginner building Play’Up — teach on need, no backend cargo-cult
 globs: "**/*.{tsx,jsx,ts,js,css,scss}"
 alwaysApply: false
 ---
@@ -31,4 +31,4 @@ Teach: what/why to test; component and interaction tests; user-behavior focus; u
 
 ## Capitalization
 
-Durable React concepts → propose Notion Connaissances (enrich React hub / linked Guide) per `knowledge-capitalization.mdc`. Play’up stack choices stay project decisions.
+Durable React concepts → propose Notion Connaissances (enrich React hub / linked Guide) per `knowledge-capitalization.mdc`. Play’Up stack choices stay project decisions.

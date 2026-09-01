@@ -2,7 +2,7 @@
 
 # MyClub
 
-**Software suite for amateur sports clubs** — competitions, teams, and training as focused products, starting with Play'up.
+**Software suite for amateur sports clubs** — competitions, teams, and training as focused products, starting with Play'Up.
 
 [![License](https://img.shields.io/github/license/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/issues)
@@ -36,7 +36,7 @@
 | :-------- | :---------- |
 | **Product suite** | Independent apps that stay valuable alone and stronger together. |
 | **Domain-first** | Rich domain model, clean architecture, long-term maintainability. |
-| **Play'up first** | Customizable amateur competitions are the current implementation focus. |
+| **Play'Up first** | Customizable amateur competitions are the current implementation focus. |
 | **Quality-minded** | Automated tests, analyzers, Conventional Commits, and GitHub Actions CI. |
 
 Vision, product roadmap, and architectural decisions are maintained in **Notion**. This repository is the source of truth for **code**, issues, pull requests, and releases.
@@ -55,17 +55,17 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, workspace, organisation, match hub). Cockpit UX/Read design capitalized; detailed Cockpit UI not opened. See Notion Play'up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
+| **Play'Up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, workspace, organisation, match hub). Cockpit UX/Read design capitalized; detailed Cockpit UI not opened. See Notion Play'Up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned (not started) |
 | **Train'in** | Training session design and follow-up. | Future (not started) |
 
-**Play'up** is designed to work **autonomously**: participants can be managed without requiring personal accounts. Catalog/templates are an application capability for bootstrapping competitions — not a separate bounded context.
+**Play'Up** is designed to work **autonomously**: participants can be managed without requiring personal accounts. Catalog/templates are an application capability for bootstrapping competitions — not a separate bounded context.
 
 ---
 
 ## Architecture
 
-**Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
+**Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'Up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
 **Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs + React SPA (`src/PlayUp/web`). Host exposes organizer write/read surfaces (stage prepare, draw publish/apply, match lifecycle, progression, competition/stage/match reads, and additional workspace/organisation/attention reads). Contract details: [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). Catalog bootstrap remains a later tranche.
 
@@ -118,7 +118,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see [`global.json`](global.json))
 - Git
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) — required for local PostgreSQL (`compose.yml`) and for Testcontainers integration tests
-- Node.js (LTS) + npm — for the Play'up web SPA in [`src/PlayUp/web`](src/PlayUp/web) (see that folder's README)
+- Node.js (LTS) + npm — for the Play'Up web SPA in [`src/PlayUp/web`](src/PlayUp/web) (see that folder's README)
 
 ---
 
@@ -164,7 +164,7 @@ dotnet test /p:CollectCoverage=true
 
 | Path | Purpose |
 | :--- | :------ |
-| `src/PlayUp/` | Play'up product projects (Domain / Application / Infrastructure / Host + `web/` SPA) |
+| `src/PlayUp/` | Play'Up product projects (Domain / Application / Infrastructure / Host + `web/` SPA) |
 | `tests/` | Test projects (`*Tests`) |
 | `build/` | Shared MSBuild props |
 | `compose.yml` | Local PostgreSQL 18 (Docker Compose) |

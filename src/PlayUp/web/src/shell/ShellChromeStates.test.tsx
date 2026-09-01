@@ -47,7 +47,7 @@ function renderWithShell(initialEntry: string) {
               path="/"
               element={
                 <main id="main">
-                  <h1>Play’up</h1>
+                  <h1>Play’Up</h1>
                 </main>
               }
             />

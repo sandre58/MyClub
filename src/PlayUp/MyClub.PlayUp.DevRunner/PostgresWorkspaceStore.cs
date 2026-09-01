@@ -13,13 +13,13 @@ using MyClub.PlayUp.Infrastructure.Persistence;
 namespace MyClub.PlayUp.DevRunner;
 
 /// <summary>
-/// PostgreSQL workspace reset for the DevRunner CLI (Play'up + Media schema + local files).
+/// PostgreSQL workspace reset for the DevRunner CLI (Play'Up + Media schema + local files).
 /// </summary>
 internal sealed class PostgresWorkspaceStore(IServiceScopeFactory scopeFactory, string mediaStorageRoot)
     : IWorkspaceStore
 {
     /// <summary>
-    /// Resets all Play'up data for the active persistence mode.
+    /// Resets all Play'Up data for the active persistence mode.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the store is empty.</returns>

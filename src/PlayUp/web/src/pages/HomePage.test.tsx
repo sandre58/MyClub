@@ -89,7 +89,7 @@ describe('HomePage', () => {
     expect(document.querySelector('.ds-root.accueil')).toBeInTheDocument()
     expect(document.querySelector('.shell')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: /Play’up|Play'up/i }),
+      screen.getByRole('heading', { name: /Play’Up|Play'Up/i }),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Bienvenue' }),

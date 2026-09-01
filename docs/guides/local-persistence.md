@@ -1,12 +1,12 @@
 # Local persistence environment
 
-This guide describes how Play'up developers run **PostgreSQL locally** for day-to-day Host work, and how that differs from automated tests and the **Development Workspace** (DevRunner).
+This guide describes how Play'Up developers run **PostgreSQL locally** for day-to-day Host work, and how that differs from automated tests and the **Development Workspace** (DevRunner).
 
 Product vision and architecture decisions live in **Notion**. This document is the Git-side bootstrap for the local database.
 
 ## Why Docker
 
-Play'up persists with **EF Core + PostgreSQL 18**. Local development uses **Docker Desktop** and **Docker Compose** so every developer gets the same PostgreSQL version, port layout, and volume strategy without installing PostgreSQL natively.
+Play'Up persists with **EF Core + PostgreSQL 18**. Local development uses **Docker Desktop** and **Docker Compose** so every developer gets the same PostgreSQL version, port layout, and volume strategy without installing PostgreSQL natively.
 
 Docker is also required for **Testcontainers** integration tests (including Development.Tests scenario/template seeds). That usage is separate from the persistent Compose database (see below).
 

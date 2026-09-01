@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Development.Runtime;
 public interface IWorkspaceStore
 {
     /// <summary>
-    /// Resets all Play'up data for the active persistence mode.
+    /// Resets all Play'Up data for the active persistence mode.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the store is empty.</returns>

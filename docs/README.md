@@ -12,5 +12,5 @@ Contributor-facing documentation for **MyClub**. Product vision, detailed archit
 
 - **Code / CI / releases:** this GitHub repository
 - **Vision / products / architecture / decisions:** Notion project *MyClub*
-- **Play'up technical reference:** Notion *Architecture technique*
+- **Play'Up technical reference:** Notion *Architecture technique*
 - **Development workflow:** Notion Forge *Workflow de développement* (ecosystem SoT) and MyClub *Workflow de développement* (project application); includes reference business cases / Phase Contract for important business phases; Cursor summary in `.cursor/rules/workflow.mdc`

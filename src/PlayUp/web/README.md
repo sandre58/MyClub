@@ -1,10 +1,10 @@
-# Play’up Web (organizer SPA)
+# Play’Up Web (organizer SPA)
 
 Independent Vite + React + TypeScript app under `src/PlayUp/web/`. **Not** a .NET project (no `.csproj`).
 
 ## Prerequisites
 
-1. PostgreSQL with Play’up schema (local compose).
+1. PostgreSQL with Play’Up schema (local compose).
 2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`).
 3. Host reachable (create competitions from the Accueil hub on `/` — Phase 19.1 / Accueil hub). DevRunner remains optional for seeded UX demos.
 
@@ -113,7 +113,7 @@ Default locale is **`fr`**. See [docs/i18n.md](./docs/i18n.md) for conventions, 
 
 Foundations live under `src/design-system/`. Operational rules: [docs/design-system.md](./docs/design-system.md). Validate at `/dev/foundations` (Slate-only playground). Product SoT: Notion Identité visuelle.
 
-Shell/Sidebar stay **Play’up-local** until a second MyClub app consumes the same Shell.
+Shell/Sidebar stay **Play’Up-local** until a second MyClub app consumes the same Shell.
 
 ## Page migration (13.5 → Design System)
 

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <Description>CLI composition root for Play'up Development Workspace (reset + scenario seed).</Description>
+    <Description>CLI composition root for Play'Up Development Workspace (reset + scenario seed).</Description>
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);CA2007;CA1303;CA1515;SA0001</NoWarn>
     <UserSecretsId>MyClub.PlayUp.Host</UserSecretsId>

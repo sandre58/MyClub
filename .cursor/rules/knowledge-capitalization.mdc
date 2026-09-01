@@ -1,5 +1,5 @@
 ---
-description: When and where to capitalize tech knowledge in Notion — never into Play’up docs
+description: When and where to capitalize tech knowledge in Notion — never into Play’Up docs
 alwaysApply: true
 ---
 
@@ -15,17 +15,17 @@ alwaysApply: true
 
 ## Do not capitalize (typical)
 
-Trivial JSX/TS syntax, typos, property names, one-off API details, Play’up-specific fixes, pure Play’up business decisions, anything already KNOWN.
+Trivial JSX/TS syntax, typos, property names, one-off API details, Play’Up-specific fixes, pure Play’Up business decisions, anything already KNOWN.
 
 ## Knowledge vs project decision
 
-| | Knowledge (Notion Connaissances) | Project (Play’up) |
+| | Knowledge (Notion Connaissances) | Project (Play’Up) |
 |---|---|---|
-| Example | “React — server state vs client state” | “Play’up uses TanStack Query for API data” |
-| Valid without Play’up? | Yes | No |
+| Example | “React — server state vs client state” | “Play’Up uses TanStack Query for API data” |
+| Valid without Play’Up? | Yes | No |
 | Where | Technologies hub and/or linked Guide | Décisions / Architecture technique |
 
-**Never** put technology learning into Play’up Domaine, Décisions, or Architecture as a general knowledge dump. **Never** turn a Play’up choice into a generic Knowledge page without stripping project specifics.
+**Never** put technology learning into Play’Up Domaine, Décisions, or Architecture as a general knowledge dump. **Never** turn a Play’Up choice into a generic Knowledge page without stripping project specifics.
 
 ## Notion targets (existing system)
 

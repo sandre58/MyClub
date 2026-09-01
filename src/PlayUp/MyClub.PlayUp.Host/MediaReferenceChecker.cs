@@ -11,7 +11,7 @@ using MyClub.PlayUp.Application.Abstractions;
 namespace MyClub.PlayUp.Host;
 
 /// <summary>
-/// Resolves Play'up logo Media references against the Media repository (composition root).
+/// Resolves Play'Up logo Media references against the Media repository (composition root).
 /// </summary>
 internal sealed class MediaReferenceChecker(IMediaRepository mediaRepository) : IMediaReferenceChecker
 {

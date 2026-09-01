@@ -10,7 +10,7 @@ using MyClub.PlayUp.Application.Abstractions;
 namespace MyClub.PlayUp.Infrastructure.Persistence;
 
 /// <summary>
-/// Play'up EF Core unit of work for Play'up aggregate persistence.
+/// Play'Up EF Core unit of work for Play'Up aggregate persistence.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="PlayUpDbContext"/> class.

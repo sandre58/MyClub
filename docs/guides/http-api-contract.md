@@ -1,6 +1,6 @@
-# Play'up Host HTTP contract (Phase 12.8)
+# Play'Up Host HTTP contract (Phase 12.8)
 
-Stable conventions for the Play'up Minimal API consumed by the Phase 13 frontend.
+Stable conventions for the Play'Up Minimal API consumed by the Phase 13 frontend.
 
 ## Serialization
 

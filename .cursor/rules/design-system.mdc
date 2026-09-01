@@ -1,16 +1,16 @@
 ---
-description: Play’up design system evolution — foundations, playground, page CSS
+description: Play’Up design system evolution — foundations, playground, page CSS
 globs: src/PlayUp/web/**/*.{css,tsx,ts,md}
 alwaysApply: false
 ---
 
-# Design System evolution (Play’up web)
+# Design System evolution (Play’Up web)
 
 Operational SoT: `src/PlayUp/web/docs/design-system.md`. Product intent: Notion **Identité visuelle**.
 
 ## Gate — every visual change
 
-Before shipping UI/CSS in Play’up web, answer:
+Before shipping UI/CSS in Play’Up web, answer:
 
 1. **Is this a one-off page quirk?** → page-local CSS (`pages/*.css`) only if foundations cannot express it.
 2. **Is this a reusable visual language?** → evolve the design system (tokens / foundations / thin React primitives).

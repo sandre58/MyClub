@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Host.Tests;
 internal static class HostJson
 {
     /// <summary>
-    /// Gets serializer options matching Play'up Host <c>ConfigureHttpJsonOptions</c>.
+    /// Gets serializer options matching Play'Up Host <c>ConfigureHttpJsonOptions</c>.
     /// </summary>
     public static JsonSerializerOptions Options { get; } = CreateOptions();
 

@@ -1,5 +1,5 @@
 /*
- * Play’up design-system foundations (14.5).
+ * Play’Up design-system foundations (14.5).
  *
  * Scoped to .ds-root — does not replace the 13.5 :root in index.css.
  * Components and pages must not read --primitive-* ; semantic tokens are the API.

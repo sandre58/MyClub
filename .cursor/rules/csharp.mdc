@@ -61,7 +61,7 @@ When Domain / C# conventions change, update **all** of:
 - Put `using` directives in each file that needs them.
 - Keep SDK `ImplicitUsings` for BCL namespaces (`System`, etc.).
 
-## Namespaces (Play'up Domain)
+## Namespaces (Play'Up Domain)
 
 - Under `Domain/Common/`, use a **flat** namespace `MyClub.PlayUp.Domain.Common` even when files live in physical subfolders (`Ids/`, `Enums/`).
 - Aggregate roots use a **plural** folder + namespace (`Domain.Stages`, `Domain.Matches`, `Domain.Competitions`, `Domain.Standings`) with a **singular** type (`Stage`, `Match`, …) to avoid C# type≡namespace collisions. Mirror under Application (`Application.Stages`, …).

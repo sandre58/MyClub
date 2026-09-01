@@ -16,7 +16,7 @@ namespace MyClub.PlayUp.Development.Runtime;
 public sealed class DeterministicIdFactory
 {
     /// <summary>
-    /// Fixed namespace for Play'up Development Workspace identity derivation (RFC 4122 DNS namespace).
+    /// Fixed namespace for Play'Up Development Workspace identity derivation (RFC 4122 DNS namespace).
     /// </summary>
     private static readonly Guid PlayUpDevNamespace = Guid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
