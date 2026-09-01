@@ -84,9 +84,6 @@
     border-radius: var(--radius-control);
     background: color-mix(in srgb, var(--color-on-chrome) 14%, transparent);
     color: var(--color-on-chrome);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
 }
 
 .shell-sidebar__brand-text {

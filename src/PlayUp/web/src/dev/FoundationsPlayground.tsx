@@ -5,6 +5,7 @@ import {
   type StatusTone,
   type StatusVariant,
 } from '../design-system/components/Status'
+import { PlayUpMark } from '../design-system/PlayUpMark'
 import { TeamCrest } from '../design-system/TeamCrest'
 import '../design-system/fonts'
 import '../design-system/index.css'
@@ -242,6 +243,36 @@ export function FoundationsPlayground() {
             legacy restent hors scope.
           </p>
         </header>
+
+        <section className="ds-section" aria-labelledby="section-brand">
+          <p className="ds-section__kicker">Marque — monogramme</p>
+          <h2 id="section-brand" className="ds-heading">
+            Play’Up · P + flèche ascendante
+          </h2>
+          <p className="ds-body">
+            Le dégradé est la seule exception à la règle « pas de gradient », et
+            il ne sort jamais de la marque. Sous 24 px, la version à plat prend
+            le relais : la réserve de la flèche se bouche sinon.
+          </p>
+          <div className="ds-row">
+            <PlayUpMark size={76} variant="gradient" />
+            <PlayUpMark size={48} variant="gradient" />
+            <PlayUpMark size={32} variant="gradient" />
+            <PlayUpMark size={24} variant="brand" />
+            <PlayUpMark size={18} variant="brand" />
+            <PlayUpMark size={16} variant="brand" />
+            <PlayUpMark size={32} variant="ink" />
+          </div>
+          <div className="ds-brand-chrome ds-row">
+            <PlayUpMark size={48} variant="on-chrome" />
+            <PlayUpMark size={24} variant="on-chrome" />
+            <PlayUpMark size={16} variant="on-chrome" />
+          </div>
+          <p className="ds-meta">
+            Les réserves sont de vraies transparences : la marque doit tenir sur
+            n’importe quel fond, pas seulement sur `canvas`.
+          </p>
+        </section>
 
         <section className="ds-section" aria-labelledby="section-roles">
           <p className="ds-section__kicker">0 — Rôles sémantiques</p>

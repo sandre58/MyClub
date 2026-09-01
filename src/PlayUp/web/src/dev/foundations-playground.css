@@ -104,6 +104,12 @@
     gap: var(--space-8) var(--space-12);
 }
 
+.ds-brand-chrome {
+    padding: var(--space-16);
+    border-radius: var(--radius-panel);
+    background: var(--color-chrome);
+}
+
 .ds-wordmark {
     font-size: var(--text-heading);
     font-weight: var(--font-weight-bold);

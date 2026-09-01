@@ -10,6 +10,7 @@ import {
   SidebarCollapseIcon,
   SidebarExpandIcon,
 } from '../design-system/icons/shellIcons'
+import { PlayUpMark } from '../design-system/PlayUpMark'
 import {
   resolveActiveDestination,
   shellDestinationHrefs,
@@ -71,12 +72,12 @@ export function ShellSidebar({
           aria-label={t('sidebar.home')}
         >
           <span className="shell-sidebar__brand-mark" aria-hidden="true">
-            P
+            <PlayUpMark size={14} variant="on-chrome" />
           </span>
           <span
             className={`shell-sidebar__brand-text${collapsed ? ' ds-visually-hidden' : ''}`}
           >
-            Play&apos;up
+            Play’Up
           </span>
         </Link>
 
