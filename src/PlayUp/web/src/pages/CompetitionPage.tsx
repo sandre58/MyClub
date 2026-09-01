@@ -12,6 +12,7 @@ import {
   PageHeader,
   StageStatusBadge,
 } from '../ui'
+import { PanelHead } from '../design-system/components/PanelHead'
 import { type CompetitionOverview } from '../types'
 
 /**
@@ -58,15 +59,12 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
 
   return (
     <div className="section-stack">
-      <section className="card" aria-labelledby="stages-heading">
-        <div className="card__head">
-          <h2 className="card__title" id="stages-heading">
-            {t('overview.stagesHeading')}
-          </h2>
-          <p className="card__subtitle">
-            {t('overview.stagesSubtitle', { count: data.stages.length })}
-          </p>
-        </div>
+      <section className="ds-panel" aria-labelledby="stages-heading">
+        <PanelHead
+          id="stages-heading"
+          title={t('overview.stagesHeading')}
+          aside={t('overview.stagesSubtitle', { count: data.stages.length })}
+        />
         {data.stages.length === 0 ? (
           <EmptyState title={t('overview.stagesEmptyTitle')}>
             {t('overview.stagesEmptyBody')}
@@ -92,15 +90,12 @@ function CompetitionOverviewView({ data }: { data: CompetitionOverview }) {
         )}
       </section>
 
-      <section className="card" aria-labelledby="entries-heading">
-        <div className="card__head">
-          <h2 className="card__title" id="entries-heading">
-            {t('overview.entriesHeading')}
-          </h2>
-          <p className="card__subtitle">
-            {t('overview.entriesSubtitle', { count: data.entries.length })}
-          </p>
-        </div>
+      <section className="ds-panel" aria-labelledby="entries-heading">
+        <PanelHead
+          id="entries-heading"
+          title={t('overview.entriesHeading')}
+          aside={t('overview.entriesSubtitle', { count: data.entries.length })}
+        />
         {data.entries.length === 0 ? (
           <EmptyState title={t('overview.entriesEmptyTitle')}>
             {t('overview.entriesEmptyBody')}

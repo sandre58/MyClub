@@ -125,7 +125,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       <p className="matches-panel__meta">{t('discipline.hint')}</p>
 
       {!canMutate && (
-        <p className="notice notice--info">{t('discipline.readOnly')}</p>
+        <p className="ds-notice ds-notice--info">{t('discipline.readOnly')}</p>
       )}
 
       {organisationQuery.isPending && <LoadingState />}
@@ -134,11 +134,11 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       )}
 
       {canMutate && catalogueReady && sheet.length === 0 && (
-        <p className="notice notice--info">{t('discipline.needSheet')}</p>
+        <p className="ds-notice ds-notice--info">{t('discipline.needSheet')}</p>
       )}
 
       {canMutate && noneAllowed && (
-        <p className="notice notice--info">
+        <p className="ds-notice ds-notice--info">
           {t('discipline.noneAllowed')}{' '}
           <Link to={`/competitions/${match.competitionId}/organisation`}>
             {t('discipline.configureRegulation')}
@@ -230,7 +230,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                   {canMutate &&
                     pendingRemoveId === evt.disciplinaryEventId && (
                       <div
-                        className="match-discipline__confirm notice notice--warning"
+                        className="match-discipline__confirm ds-notice ds-notice--warning"
                         role="group"
                       >
                         <p>

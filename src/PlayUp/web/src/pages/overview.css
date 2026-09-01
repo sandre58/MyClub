@@ -187,63 +187,6 @@
     color: inherit;
 }
 
-/* ---------- Bloc héro (badge + énoncé) ---------- */
-
-.overview-hero {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-}
-
-.overview-badge {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 4.5rem;
-    height: 4.5rem;
-    border-radius: 50%;
-    background: var(--color-surface-secondary);
-    color: var(--color-text-primary);
-}
-
-.overview-badge .ds-icon {
-    width: 2rem;
-    height: 2rem;
-}
-
-.overview-badge--brand {
-    background: var(--color-brand);
-    color: var(--color-on-brand);
-}
-
-.overview-hero__body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-    min-width: 0;
-}
-
-.overview-hero__title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: 1.375rem;
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-tight);
-    letter-spacing: -0.01em;
-}
-
-.overview-hero__sub {
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: var(--text-label);
-    line-height: var(--leading-normal);
-}
-
-.overview-panel--next {
-    background: color-mix(in srgb, var(--color-success) 5%, var(--color-surface));
-}
-
 .overview-actions {
     display: flex;
     flex-wrap: wrap;

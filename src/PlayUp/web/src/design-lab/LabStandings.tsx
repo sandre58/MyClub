@@ -1,6 +1,7 @@
 import { labRounds, labStandings } from './labData'
 import { Crest, MatchRow, PanelHead } from './LabShared'
 import { TrendIcon } from './LabWordmark'
+import { StandingsLegend } from '../design-system/components/StandingsLegend'
 
 /**
  * Classements — consultation sportive. Grille légitime (gate passé) :
@@ -11,10 +12,10 @@ export function LabStandings() {
   const lastDone = [...labRounds].reverse().find((r) => r.state === 'done')
 
   return (
-    <div className="dlab-page">
-      <div className="dlab-page__title-row">
-        <h2 className="dlab-page__title">Classements</h2>
-        <span className="dlab-eyebrow">
+    <div className="ds-page">
+      <div className="ds-page__title-row">
+        <h2 className="ds-page__title">Classements</h2>
+        <span className="ds-eyebrow">
           Phase principale · Championnat · 3/5 journées
         </span>
       </div>
@@ -22,80 +23,84 @@ export function LabStandings() {
       <section className="ds-panel">
         <PanelHead title="Classement général" aside="Mis à jour à l’instant" />
 
-        <div className="dlab-legend" style={{ marginBottom: 'var(--space-12)' }}>
-          <span className="dlab-legend__item">
-            <span
-              className="dlab-legend__swatch"
-              style={{ background: 'var(--color-brand)' }}
-            />
-            Qualification tournoi régional
-          </span>
-          <span className="dlab-legend__item">
-            <span
-              className="dlab-legend__swatch"
-              style={{ background: 'var(--color-error)' }}
-            />
-            Relégation
-          </span>
-        </div>
+        <StandingsLegend
+          className="ds-standings-legend--spaced"
+          items={[
+            {
+              label: 'Qualification tournoi régional',
+              color: 'var(--color-brand)',
+            },
+            { label: 'Relégation', color: 'var(--color-error)' },
+          ]}
+        />
 
-        <table className="dlab-standings">
-          <thead>
-            <tr>
-              <th scope="col" aria-label="Rang" />
-              <th scope="col" className="team">
-                Équipe
-              </th>
-              <th scope="col" aria-label="Tendance" />
-              <th scope="col">J</th>
-              <th scope="col">G</th>
-              <th scope="col">N</th>
-              <th scope="col">P</th>
-              <th scope="col">Diff</th>
-              <th scope="col">Pts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {labStandings.map((row) => (
-              <tr key={row.team.id} data-zone={row.zone} data-rank={row.rank}>
-                <td className="rank ds-num">{row.rank}</td>
-                <td className="team">
-                  <span className="dlab-standings__team">
-                    <Crest team={row.team} />
-                    <span className="dlab-standings__team-name">
-                      {row.team.name}
-                    </span>
-                    {row.penalty ? (
-                      <span className="dlab-penalty">
-                        Pénalité −{row.penalty} pt
-                      </span>
-                    ) : null}
-                  </span>
-                </td>
-                <td>
-                  <TrendIcon direction={row.trend} />
-                </td>
-                <td>{row.played}</td>
-                <td>{row.won}</td>
-                <td>{row.drawn}</td>
-                <td>{row.lost}</td>
-                <td>
-                  {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
-                </td>
-                <td className="pts">{row.points}</td>
+        <div className="ds-standings-wrap">
+          <table className="ds-standings">
+            <thead>
+              <tr>
+                <th scope="col" aria-label="Rang" />
+                <th scope="col" className="team">
+                  Équipe
+                </th>
+                <th scope="col" aria-label="Tendance" />
+                <th scope="col">J</th>
+                <th scope="col">G</th>
+                <th scope="col">N</th>
+                <th scope="col">P</th>
+                <th scope="col">Diff</th>
+                <th scope="col">Pts</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {labStandings.map((row) => (
+                <tr
+                  key={row.team.id}
+                  data-zone={row.zone}
+                  data-rank={row.rank}
+                >
+                  <td className="rank ds-num">{row.rank}</td>
+                  <td className="team">
+                    <span className="ds-standings__team">
+                      <Crest team={row.team} />
+                      <span className="ds-standings__team-name">
+                        {row.team.name}
+                      </span>
+                      {row.penalty ? (
+                        <span className="ds-standings-penalty">
+                          Pénalité −{row.penalty} pt
+                        </span>
+                      ) : null}
+                    </span>
+                  </td>
+                  <td>
+                    <TrendIcon direction={row.trend} />
+                  </td>
+                  <td className="ds-num">{row.played}</td>
+                  <td className="ds-num">{row.won}</td>
+                  <td className="ds-num">{row.drawn}</td>
+                  <td className="ds-num">{row.lost}</td>
+                  <td className="ds-num">
+                    {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
+                  </td>
+                  <td className="pts ds-num ds-num-pts">{row.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      <div className="dlab-grid-2 dlab-grid-2--major">
+      <div className="ds-grid-2 ds-grid-2--major">
         <section className="ds-panel">
           <PanelHead
-            title={lastDone ? `Dernière journée · ${lastDone.label}` : 'Dernière journée'}
+            title={
+              lastDone ? `Dernière journée · ${lastDone.label}` : 'Dernière journée'
+            }
           />
           <div>
-            {lastDone?.matches.map((m) => <MatchRow key={m.id} match={m} />)}
+            {lastDone?.matches.map((m) => (
+              <MatchRow key={m.id} match={m} />
+            ))}
           </div>
           <button type="button" className="ds-btn ds-btn--ghost">
             Voir tous les matchs →
@@ -104,7 +109,7 @@ export function LabStandings() {
 
         <section className="ds-panel">
           <PanelHead title="Règlement du classement" />
-          <p className="dlab-situation__label">
+          <p className="ds-cockpit-situation__label">
             Victoire <strong className="ds-num">3 pts</strong> · nul{' '}
             <strong className="ds-num">1 pt</strong> · défaite{' '}
             <strong className="ds-num">0 pt</strong>. Départage : différence

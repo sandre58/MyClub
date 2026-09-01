@@ -14,9 +14,9 @@ const ANGLES = [9, 12] as const
  */
 export function LabAngleCompare() {
   return (
-    <div className="dlab-page">
+    <div className="ds-page">
       <header className="dlab-angle-intro">
-        <h2 className="dlab-page__title">Arbitrage d'angle — 9° vs 12°</h2>
+        <h2 className="ds-page__title">Arbitrage d'angle — 9° vs 12°</h2>
         <p className="dlab-angle-intro__lead">
           Choisir le meilleur <strong>système global</strong>, pas le logo le
           plus joli isolé. Critères : lisibilité à petite taille, cohérence

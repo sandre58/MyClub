@@ -155,11 +155,11 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
       <p className="matches-panel__meta">{t('goals.hint')}</p>
 
       {!canMutate && (
-        <p className="notice notice--info">{t('goals.readOnly')}</p>
+        <p className="ds-notice ds-notice--info">{t('goals.readOnly')}</p>
       )}
 
       {sheet.length === 0 && canMutate && (
-        <p className="notice notice--info">{t('goals.needSheet')}</p>
+        <p className="ds-notice ds-notice--info">{t('goals.needSheet')}</p>
       )}
 
       {goals.length === 0 ? (
@@ -249,7 +249,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
 
               {canMutate && pendingRemoveId === goal.goalId && (
                 <div
-                  className="match-goals__confirm notice notice--warning"
+                  className="match-goals__confirm ds-notice ds-notice--warning"
                   role="group"
                 >
                   <p>
@@ -291,7 +291,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
           {mutationError != null && <MutationError error={mutationError} />}
           {runningScoreError != null && (
             <>
-              <p className="notice notice--warning" role="status">
+              <p className="ds-notice ds-notice--warning" role="status">
                 {t('goals.runningScoreDesync')}
               </p>
               <MutationError error={runningScoreError} />

@@ -1,0 +1,72 @@
+/*
+ * Feedback — loading, notices, spinner (Lot 7).
+ * Shared by ui.tsx and admin panels until all surfaces use DS patterns directly.
+ */
+
+.ds-notice {
+    display: flex;
+    gap: var(--space-8);
+    padding: var(--space-12) var(--space-16);
+    border: var(--border-width) solid var(--color-border);
+    border-inline-start-width: 3px;
+    border-radius: var(--radius-panel);
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--text-label);
+}
+
+.ds-notice--danger {
+    border-color: color-mix(in srgb, var(--color-error) 35%, var(--color-border));
+    border-inline-start-color: var(--color-error);
+    background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
+    color: var(--color-error);
+}
+
+.ds-notice--warning {
+    border-color: color-mix(in srgb, var(--color-attention) 35%, var(--color-border));
+    border-inline-start-color: var(--color-attention);
+    background: color-mix(in srgb, var(--color-attention) 8%, var(--color-surface));
+    color: var(--color-attention);
+}
+
+.ds-notice--info {
+    border-color: color-mix(in srgb, var(--color-info) 35%, var(--color-border));
+    border-inline-start-color: var(--color-info);
+    background: color-mix(in srgb, var(--color-info) 8%, var(--color-surface));
+    color: var(--color-info);
+}
+
+.ds-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-24);
+    border: var(--border-width) dashed var(--color-border-strong);
+    border-radius: var(--radius-panel);
+    background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+}
+
+.ds-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid color-mix(in srgb, var(--color-text-secondary) 25%, transparent);
+    border-top-color: var(--color-brand);
+    border-radius: 50%;
+    animation: ds-spin 0.7s linear infinite;
+    flex: none;
+}
+
+@keyframes ds-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-spinner {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}

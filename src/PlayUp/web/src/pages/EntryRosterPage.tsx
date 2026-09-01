@@ -183,7 +183,7 @@ function EntryRosterView({
             {t('roster.back')}
           </Link>
         </header>
-        <p className="notice notice--danger" role="alert">
+        <p className="ds-notice ds-notice--danger" role="alert">
           {t('roster.entryMissing')}
         </p>
       </div>
@@ -231,7 +231,7 @@ function EntryRosterView({
         </PanelHead>
 
         {!canMutate && (
-          <p className="notice notice--info">{t('roster.readOnly')}</p>
+          <p className="ds-notice ds-notice--info">{t('roster.readOnly')}</p>
         )}
 
         {players.length === 0 ? (
@@ -345,7 +345,7 @@ function EntryRosterView({
                   )}
                   {canMutate && pendingRemoveId === player.memberId && (
                     <div
-                      className="organisation-roster__confirm notice notice--warning"
+                      className="organisation-roster__confirm ds-notice ds-notice--warning"
                       role="group"
                       aria-label={t('roster.removeConsequence', {
                         name: player.displayName,

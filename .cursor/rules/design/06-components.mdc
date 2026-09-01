@@ -28,6 +28,10 @@ Search these before building anything new. Reference implementations live in
 | Cockpit situation | Hero number + label + cycle | `design-system/components/CockpitSituation.tsx` |
 | Cockpit next action | Prochaine action panel | `design-system/components/CockpitNextAction.tsx` |
 | Cockpit podium | Terminée Top-3 blocks | `design-system/components/CockpitPodium.tsx` |
+| Standings table | Full grid + zones + trends | `foundations/standings.css`, `StandingsLegend.tsx` |
+| Match round | Journée section in calendar | `design-system/components/MatchRound.tsx` |
+| Match round status | Journée state pill / live | `design-system/components/MatchRoundStatus.tsx` |
+| Home brand | Accueil mark + wordmark | `design-system/components/HomeBrand.tsx` |
 
 ## Rules
 

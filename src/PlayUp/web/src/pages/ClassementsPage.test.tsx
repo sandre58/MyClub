@@ -468,14 +468,14 @@ describe('ClassementsPage', () => {
     renderClassementsPage()
 
     expect(await screen.findByRole('heading', { name: 'Journée 1' })).toBeInTheDocument()
-    const score = document.querySelector('.classements-result__score')
-    expect(score).toHaveTextContent('3–1')
+    expect(await screen.findByText('3–1')).toBeInTheDocument()
     expect(screen.queryByText('Finished')).not.toBeInTheDocument()
 
-    const matchLink = document.querySelector(
-      'a.classements-result',
-    ) as HTMLAnchorElement | null
-    expect(matchLink?.getAttribute('href')).toBe(
+    const matchLink = screen.getByRole('link', {
+      name: /Alpha.*Beta.*3–1/i,
+    })
+    expect(matchLink).toHaveAttribute(
+      'href',
       '/matches/ffffffff-ffff-ffff-ffff-ffffffffffff',
     )
 

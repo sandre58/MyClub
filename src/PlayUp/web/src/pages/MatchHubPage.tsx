@@ -3,9 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchCompetitionOverview, fetchMatchesByStage } from '../api'
 import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
+import { AttentionRow } from '../design-system/components/AttentionRow'
+import { MatchRound } from '../design-system/components/MatchRound'
+import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus'
 import { PanelHead } from '../design-system/components/PanelHead'
 import { Status } from '../design-system/components/Status'
 import { TeamCrest } from '../design-system/TeamCrest'
+import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons'
 import {
   ClassementsNavIcon,
   MatchesNavIcon,
@@ -233,30 +237,37 @@ function MatchdaySection({ bucket }: { bucket: SportingBucket }) {
   const { t } = useTranslation('matches')
   const status = journéeStatus(bucket.rows.map((row) => row.match.status))
   const breakdown = journéeBreakdown(bucket.rows.map((row) => row.match.status), t)
+  const roundState = dayStatusToRoundState(status)
 
   return (
-    <section className="ds-match-round matches-day" aria-labelledby={`day-${bucket.key}`}>
-      <div className="ds-match-round__head matches-day__head">
-        <h3 id={`day-${bucket.key}`} className="ds-match-round__label matches-day__title">
+    <MatchRound
+      id={`day-${bucket.key}`}
+      label={
+        <h3 id={`day-${bucket.key}`} className="ds-match-round__label">
           {bucket.label}
         </h3>
-        <span className="ds-match-round__date">{/* date slot reserved */}</span>
-        <span className="matches-day__status">{t(`calendar.dayStatus.${status}`)}</span>
-      </div>
-      {breakdown ? (
-        <p className="ds-match-round__sub matches-day__breakdown">{breakdown}</p>
-      ) : null}
-
-      <div className="matches-day__list">
-        <ul className="matches-day__rows">
-          {bucket.rows.map(({ match, stageName }) => (
-            <li key={match.matchId}>
-              <MatchResultRow match={match} stageName={stageName} />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
+      }
+      status={
+        roundState ? (
+          <MatchRoundStatus
+            state={roundState}
+            labels={{
+              current: t('calendar.dayStatus.live'),
+              partial: t('calendar.dayStatus.partial'),
+              done: t('calendar.dayStatus.finished'),
+              upcoming: t('calendar.dayStatus.upcoming'),
+            }}
+          />
+        ) : (
+          <span className="matches-day__status">{t(`calendar.dayStatus.${status}`)}</span>
+        )
+      }
+      sub={breakdown ?? undefined}
+    >
+      {bucket.rows.map(({ match, stageName }) => (
+        <MatchResultRow key={match.matchId} match={match} stageName={stageName} />
+      ))}
+    </MatchRound>
   )
 }
 
@@ -374,26 +385,35 @@ function NeedsResultPanel({ items }: { items: MatchHubRow[] }) {
       <PanelHead
         id="matches-needs-result"
         title={t('needsResult.heading')}
+        aside={items.length > 0 ? String(items.length) : undefined}
         icon={<MatchesNavIcon size="md" />}
       />
       {items.length === 0 ? (
         <p className="matches-panel__meta">{t('needsResult.clear')}</p>
       ) : (
-        <>
-          <p className="matches-panel__meta">
-            {t('needsResult.count', { count: items.length })}
-          </p>
-          <ul className="matches-need__list">
-            {items.slice(0, 5).map(({ match }) => (
-              <li key={match.matchId} className="matches-need__item">
-                <Link className="matches-link" to={`/matches/${match.matchId}`}>
-                  {sideLabel(match.home)} – {sideLabel(match.away)}
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </>
+        <div className="ds-cockpit-attention">
+          {items.slice(0, 5).map(({ match }) => {
+            const homeName = sideLabel(match.home)
+            const awayName = sideLabel(match.away)
+            return (
+              <AttentionRow
+                key={match.matchId}
+                count={1}
+                icon={<OverviewAttentionIcon size="sm" />}
+                title={`${homeName} — ${awayName}`}
+                detail={t('calendar.needsResult')}
+                action={
+                  <Link
+                    className="ds-btn ds-btn--primary"
+                    to={`/matches/${match.matchId}`}
+                  >
+                    {t('calendar.needsResult')}
+                  </Link>
+                }
+              />
+            )
+          })}
+        </div>
       )}
     </section>
   )
@@ -489,6 +509,23 @@ function groupMatchesBySportingBucket(
 }
 
 type DayStatus = 'upcoming' | 'live' | 'finished' | 'partial' | 'other'
+
+function dayStatusToRoundState(
+  status: DayStatus,
+): 'done' | 'current' | 'upcoming' | 'partial' | null {
+  switch (status) {
+    case 'finished':
+      return 'done'
+    case 'live':
+      return 'current'
+    case 'partial':
+      return 'partial'
+    case 'upcoming':
+      return 'upcoming'
+    default:
+      return null
+  }
+}
 
 function journéeStatus(statuses: MatchStatus[]): DayStatus {
   if (statuses.length === 0) {

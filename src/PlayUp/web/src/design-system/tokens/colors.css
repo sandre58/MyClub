@@ -9,6 +9,7 @@
  * No --color-chrome-active: active rail state uses accent + opacity + mix.
  * No --color-chrome-muted: idle muting uses opacity on on-chrome.
  */
+:root,
 .ds-root {
     --color-canvas: var(--primitive-canvas);
     --color-surface: var(--primitive-surface);

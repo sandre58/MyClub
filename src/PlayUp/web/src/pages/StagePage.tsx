@@ -128,9 +128,9 @@ function StageOverviewView({ data }: { data: StageOverview }) {
 
   return (
     <div className="section-stack">
-      <section className="card" aria-labelledby="stage-heading">
-        <div className="card__head">
-          <h2 className="card__title" id="stage-heading">
+      <section className="ds-panel" aria-labelledby="stage-heading">
+        <div className="ds-panel-head">
+          <h2 className="ds-panel-head__title" id="stage-heading">
             {t('operations.heading')}
           </h2>
           <span className="id-chip">{data.id}</span>
@@ -142,7 +142,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
               {canPrepare && (
                 <button
                   type="button"
-                  className="btn btn--primary"
+                  className="ds-btn ds-btn--primary"
                   disabled={stageActionBusy}
                   onClick={() => prepareMutation.mutate()}
                 >
@@ -156,7 +156,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
               {canStart && (
                 <button
                   type="button"
-                  className="btn btn--primary"
+                  className="ds-btn ds-btn--primary"
                   disabled={stageActionBusy}
                   onClick={() => startMutation.mutate()}
                 >
@@ -169,7 +169,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
               )}
             </span>
           )}
-          <Link className="btn" to={`/stages/${data.id}/matches`}>
+          <Link className="ds-btn ds-btn--secondary" to={`/stages/${data.id}/matches`}>
             {t('operations.viewMatches')}
           </Link>
         </div>
@@ -179,14 +179,14 @@ function StageOverviewView({ data }: { data: StageOverview }) {
 
       <CupConfrontationsPanel data={data} />
 
-      <section className="card" aria-labelledby="rounds-heading">
-        <div className="card__head">
-          <h2 className="card__title" id="rounds-heading">
+      <section className="ds-panel" aria-labelledby="rounds-heading">
+        <div className="ds-panel-head">
+          <h2 className="ds-panel-head__title" id="rounds-heading">
             {t('rounds.heading', { count: data.rounds.length })}
           </h2>
-          <p className="card__subtitle">
+          <span className="ds-eyebrow">
             {t('rounds.subtitle', { count: fixtureCount })}
-          </p>
+          </span>
         </div>
         {data.rounds.length === 0 ? (
           <EmptyState title={t('rounds.emptyTitle')}>
@@ -230,8 +230,8 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         )}
       </section>
 
-      <section className="card" aria-labelledby="slots-heading">
-        <h2 className="card__title" id="slots-heading">
+      <section className="ds-panel" aria-labelledby="slots-heading">
+        <h2 className="ds-panel-head__title" id="slots-heading">
           {t('slots.heading', { count: data.slots.length })}
         </h2>
         {data.slots.length === 0 ? (
@@ -328,8 +328,8 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
   const pairingExhausted = pairable.length < 2 && pairs.length === 0
 
   return (
-    <section className="card" aria-labelledby="confrontations-heading">
-      <h2 className="card__title" id="confrontations-heading">
+    <section className="ds-panel" aria-labelledby="confrontations-heading">
+      <h2 className="ds-panel-head__title" id="confrontations-heading">
         {t('confrontations.heading')}
       </h2>
       <p className="muted">{t('confrontations.intro')}</p>
@@ -343,7 +343,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       )}
 
       {pairingExhausted ? (
-        <p className="notice" role="status">
+        <p className="ds-notice" role="status">
           {t('confrontations.allCovered')}
         </p>
       ) : (
@@ -360,7 +360,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
                   </span>
                   <button
                     type="button"
-                    className="btn btn--sm"
+                    className="ds-btn ds-btn--secondary"
                     onClick={() =>
                       setPairs((current) =>
                         current.filter(
@@ -419,7 +419,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
               </label>
               <button
                 type="button"
-                className="btn"
+                className="ds-btn ds-btn--secondary"
                 disabled={!canAdd}
                 onClick={() => {
                   setPairs((current) => [
@@ -438,7 +438,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
           <div className="button-row">
             <button
               type="button"
-              className="btn btn--primary"
+              className="ds-btn ds-btn--primary"
               disabled={pairs.length === 0 || materializeMutation.isPending}
               onClick={() => materializeMutation.mutate()}
             >
@@ -453,7 +453,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       )}
 
       {materializeMutation.isSuccess && (
-        <p className="notice" role="status">
+        <p className="ds-notice" role="status">
           {materializeMutation.data.alreadyComplete
             ? t('confrontations.successAlreadyComplete')
             : t('confrontations.successCreated', {
@@ -485,8 +485,8 @@ function DrawSection({
 }) {
   const { t } = useTranslation('stage')
   return (
-    <section className="card" aria-labelledby="draws-heading">
-      <h2 id="draws-heading" className="card__title">
+    <section className="ds-panel" aria-labelledby="draws-heading">
+      <h2 id="draws-heading" className="ds-panel-head__title">
         {t('draws.heading', { count: draws.length })}
       </h2>
       {draws.length === 0 ? (
@@ -706,7 +706,7 @@ function DrawActions({
       {canPublish && (
         <button
           type="button"
-          className="btn btn--primary btn--sm"
+          className="ds-btn ds-btn--primary"
           disabled={busy}
           onClick={handlePublish}
         >
@@ -721,7 +721,7 @@ function DrawActions({
       {canApply && draw.kind === 'Slot' && (
         <button
           type="button"
-          className="btn btn--primary btn--sm"
+          className="ds-btn ds-btn--primary"
           disabled={busy}
           onClick={handleApply}
         >
@@ -736,7 +736,7 @@ function DrawActions({
       {canApply && draw.kind === 'Pairing' && pairingFixtureIds !== null && (
         <button
           type="button"
-          className="btn btn--primary btn--sm"
+          className="ds-btn ds-btn--primary"
           disabled={busy}
           onClick={handleApply}
         >
@@ -749,7 +749,7 @@ function DrawActions({
       )}
 
       {pairingMapBlocked && (
-        <p className="notice notice--warning" role="status">
+        <p className="ds-notice ds-notice--warning" role="status">
           {t('pairingMapBlocked')}
         </p>
       )}

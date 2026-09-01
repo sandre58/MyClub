@@ -55,7 +55,7 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
       <p className="matches-panel__meta">{t('sheet.hint')}</p>
 
       {!canMutate && (
-        <p className="notice notice--info">{t('sheet.readOnly')}</p>
+        <p className="ds-notice ds-notice--info">{t('sheet.readOnly')}</p>
       )}
 
       {organisationQuery.isPending && <LoadingState />}
@@ -404,7 +404,7 @@ function SheetSideColumn({
 
                 {canMutate && pendingRemoveId === row.memberId && (
                   <div
-                    className="match-sheet__confirm notice notice--warning"
+                    className="match-sheet__confirm ds-notice ds-notice--warning"
                     role="group"
                     aria-label={t('sheet.removeConsequence', {
                       name: row.displayName ?? row.memberId,

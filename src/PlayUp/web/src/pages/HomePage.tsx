@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { createCompetition, fetchCompetitions } from '../api'
+import { HomeBrand } from '../design-system/components/HomeBrand'
 import '../design-system/fonts'
 import '../design-system/index.css'
 import { queryKeys } from '../queryKeys'
@@ -52,31 +53,26 @@ export function HomePage() {
 
   return (
     <div
-      className="ds-root accueil"
+      className="ds-root ds-home accueil"
       data-font="plex"
       data-palette="slate"
       data-density="standard"
     >
-      <a className="accueil-skip" href="#main">
+      <a className="ds-home-skip accueil-skip" href="#main">
         {tCommon('skipToContent')}
       </a>
 
-      <main id="main" className="accueil__main">
-        <header className="accueil__brand">
-          <h1 className="ds-display accueil__wordmark">{t('title')}</h1>
-          {!isEmpty && <p className="ds-body accueil__lede">{t('lede')}</p>}
-        </header>
+      <main id="main" className="ds-home__main">
+        <HomeBrand lede={!isEmpty ? t('lede') : undefined} />
 
         {query.isPending && <LoadingState />}
 
         {query.isError && <ErrorState error={query.error} />}
 
         {isEmpty && (
-          <div className="accueil__empty">
-            <h2 className="ds-heading accueil__empty-title">
-              {tc('emptyTitle')}
-            </h2>
-            <p className="ds-body accueil__empty-body">{tc('emptyBody')}</p>
+          <div className="ds-empty">
+            <h2 className="ds-empty__title">{tc('emptyTitle')}</h2>
+            <p className="ds-empty__body">{tc('emptyBody')}</p>
             <CreateButton
               buttonRef={createTriggerRef}
               onClick={openCreate}
@@ -145,9 +141,9 @@ function CompetitionSection({
   const { t } = useTranslation('competitions')
 
   return (
-    <section className="accueil__section" aria-labelledby="accueil-competitions-heading">
-      <div className="accueil__section-head">
-        <h2 id="accueil-competitions-heading" className="accueil__section-title">
+    <section className="ds-group" aria-labelledby="accueil-competitions-heading">
+      <div className="ds-home__section-head">
+        <h2 id="accueil-competitions-heading" className="ds-home__section-title">
           {t('listLabel')}
         </h2>
         <CreateButton
@@ -158,21 +154,21 @@ function CompetitionSection({
       </div>
 
       {showList && (
-        <ul className="accueil__list" aria-label={t('listLabel')}>
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link className="accueil__row" to={`/competitions/${item.id}`}>
-                <span className="accueil__row-title">{item.name}</span>
-                <span className="accueil__row-aside">
-                  <CompetitionStatusBadge status={item.status} />
-                  <span className="accueil__chevron" aria-hidden="true">
-                    →
+        <div className="ds-home__panel">
+          <ul className="ds-home__list" aria-label={t('listLabel')}>
+            {items.map((item) => (
+              <li key={item.id}>
+                <Link className="ds-home__row" to={`/competitions/${item.id}`}>
+                  <span className="ds-home__row-name">{item.name}</span>
+                  <span className="ds-home__row-aside">
+                    <CompetitionStatusBadge status={item.status} />
+                    <span aria-hidden="true">→</span>
                   </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   )
@@ -288,7 +284,9 @@ function CreateCompetitionDialog({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          {mutation.isError && <MutationError error={mutation.error} />}
+          {mutation.isError != null && (
+            <MutationError error={mutation.error} />
+          )}
         </form>
       </div>
     </div>

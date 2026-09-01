@@ -34,7 +34,7 @@ export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
         : 'live'
 
   return (
-    <div className="ds-page dlab-page">
+    <div className="ds-page">
       <div className="ds-page__title-row">
         <h2 className="ds-page__title">
           {match.home.name} — {match.away.name}
@@ -158,7 +158,7 @@ function ScheduledBody() {
     <div className="ds-grid-2 ds-grid-2--major">
       <section className="ds-panel">
         <PanelHead title="Feuille de match" aside="À compléter" />
-        <p className="dlab-situation__label">
+        <p className="ds-cockpit-situation__label">
           Les compositions peuvent être saisies dès maintenant : 11 titulaires
           et jusqu'à 3 remplaçants par équipe.
         </p>
@@ -206,7 +206,7 @@ function FactsBody({ finished }: { finished: boolean }) {
 
       <section className="ds-panel">
         <PanelHead title="Feuille de match" aside="Complète" />
-        <p className="dlab-situation__label">
+        <p className="ds-cockpit-situation__label">
           11 titulaires et 3 remplaçants déclarés de chaque côté. Capitaines :
           K. Ferrand (ROC), A. Meunier (VER).
         </p>

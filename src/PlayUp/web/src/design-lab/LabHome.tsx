@@ -1,6 +1,5 @@
 import { labCompetitions } from './labData'
-import { LabWordmark } from './LabWordmark'
-import { PlayUpMark } from '../design-system/PlayUpMark'
+import { HomeBrand } from '../design-system/components/HomeBrand'
 
 /**
  * Accueil hors Shell — hub ops avec l'atmosphère décidée le 2026-09-01 :
@@ -9,26 +8,22 @@ import { PlayUpMark } from '../design-system/PlayUpMark'
  */
 export function LabHome({ empty }: { empty: boolean }) {
   return (
-    <div className="dlab-home">
-      <main className="dlab-home__main">
-        <header className="dlab-home__brand">
-          <div className="dlab-home__mark-row">
-            <PlayUpMark size={44} variant="gradient" />
-            <LabWordmark className="dlab-home__wordmark" />
-          </div>
-          {!empty && (
-            <p className="dlab-home__lede">
-              Choisissez une compétition ou créez-en une nouvelle.
-            </p>
-          )}
-        </header>
+    <div className="ds-home">
+      <main className="ds-home__main">
+        <HomeBrand
+          lede={
+            empty
+              ? undefined
+              : 'Choisissez une compétition ou créez-en une nouvelle.'
+          }
+        />
 
         {empty ? (
-          <div className="dlab-empty">
-            <span className="dlab-empty__title">
+          <div className="ds-empty">
+            <span className="ds-empty__title">
               Votre première compétition commence ici
             </span>
-            <span className="dlab-empty__body">
+            <span className="ds-empty__body">
               Donnez-lui un nom — vous organiserez les équipes, le règlement et
               le calendrier juste après.
             </span>
@@ -38,17 +33,17 @@ export function LabHome({ empty }: { empty: boolean }) {
           </div>
         ) : (
           <section className="ds-group">
-            <div className="dlab-home__section-head">
-              <span className="dlab-eyebrow">Vos compétitions</span>
+            <div className="ds-home__section-head">
+              <span className="ds-eyebrow">Vos compétitions</span>
               <button type="button" className="ds-btn ds-btn--primary">
                 + Créer
               </button>
             </div>
-            <div className="dlab-home__panel">
+            <div className="ds-home__panel">
               {labCompetitions.map((competition) => (
-                <button key={competition.id} type="button" className="dlab-home__row">
-                  <span className="dlab-home__row-name">{competition.name}</span>
-                  <span className="dlab-home__row-aside">
+                <button key={competition.id} type="button" className="ds-home__row">
+                  <span className="ds-home__row-name">{competition.name}</span>
+                  <span className="ds-home__row-aside">
                     {competition.status}
                     <span aria-hidden="true">→</span>
                   </span>

@@ -249,12 +249,12 @@ describe('MatchPage discipline (Lot 1)', () => {
     const panel = heading.closest('section') as HTMLElement
 
     await user.selectOptions(
-      within(panel).getByLabelText(/^Personne$/i),
+      await within(panel).findByLabelText(/^Personne$/i),
       dupontId,
     )
-    await user.selectOptions(within(panel).getByLabelText(/^Type$/i), 'Yellow')
+    await user.selectOptions(await within(panel).findByLabelText(/^Type$/i), 'Yellow')
     await user.click(
-      within(panel).getByRole('button', { name: 'Enregistrer le fait' }),
+      await within(panel).findByRole('button', { name: 'Enregistrer le fait' }),
     )
 
     await waitFor(() => {
@@ -282,7 +282,7 @@ describe('MatchPage discipline (Lot 1)', () => {
     const panel = heading.closest('section') as HTMLElement
 
     expect(
-      within(panel).getByRole('button', { name: 'Enregistrer le fait' }),
+      await within(panel).findByRole('button', { name: 'Enregistrer le fait' }),
     ).toBeInTheDocument()
     expect(
       within(panel).queryByText(/ne sont plus modifiables/i),
@@ -301,7 +301,7 @@ describe('MatchPage discipline (Lot 1)', () => {
     const panel = heading.closest('section') as HTMLElement
 
     expect(
-      within(panel).getByText(/Aucun type disciplinaire autorisé/i),
+      await within(panel).findByText(/Aucun type disciplinaire autorisé/i),
     ).toBeInTheDocument()
     expect(
       within(panel).getByRole('link', { name: /Configurer le règlement/i }),

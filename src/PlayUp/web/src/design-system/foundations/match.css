@@ -202,6 +202,16 @@ a.ds-match-row:hover .ds-match-row__name {
     font-size: var(--text-label);
 }
 
+.ds-match-row__note {
+    flex-basis: 100%;
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    line-height: var(--leading-tight);
+    text-align: end;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .ds-match-row__aside {
     display: inline-flex;
     align-items: center;

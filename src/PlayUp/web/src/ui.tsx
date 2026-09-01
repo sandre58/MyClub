@@ -58,15 +58,15 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <header className="page-header">
+    <header className="ds-admin-page-head">
       {back && (
-        <p className="page-header__top">
+        <p className="ds-admin-page-head__top">
           <BackLink to={back.to}>{back.label}</BackLink>
         </p>
       )}
-      <p className="eyebrow">{eyebrow}</p>
-      <div className="page-header__title-row">
-        <h1 className="page-title">{title}</h1>
+      <p className="ds-eyebrow">{eyebrow}</p>
+      <div className="ds-admin-page-head__title-row">
+        <h1 className="ds-admin-page-head__title">{title}</h1>
         {badges}
         {actions && <div className="row__aside">{actions}</div>}
       </div>
@@ -83,7 +83,7 @@ export function BackLink({
   children: ReactNode
 }) {
   return (
-    <Link className="back-link" to={to}>
+    <Link className="ds-back-link" to={to}>
       <span aria-hidden="true">←</span>
       {children}
     </Link>
@@ -220,8 +220,8 @@ export function LoadingState({ label }: { label?: string }) {
   const text = label ?? t('loading')
 
   return (
-    <p className="loading-state" role="status" aria-live="polite">
-      <span className="spinner" aria-hidden="true" />
+    <p className="ds-loading" role="status" aria-live="polite">
+      <span className="ds-spinner" aria-hidden="true" />
       {text}
     </p>
   )
@@ -232,7 +232,7 @@ export function ErrorState({ error }: { error: unknown }) {
   const notFound = error instanceof ApiError && error.status === 404
 
   return (
-    <p className="notice notice--danger" role="alert">
+    <p className="ds-notice ds-notice--danger" role="alert">
       {notFound ? t('notFound') : formatError(error, t)}
     </p>
   )
@@ -243,7 +243,7 @@ export function MutationError({ error }: { error: unknown }) {
   const { t } = useTranslation('common')
 
   return (
-    <p className="notice notice--danger" role="alert">
+    <p className="ds-notice ds-notice--danger" role="alert">
       {formatError(error, t)}
     </p>
   )
@@ -263,9 +263,9 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="empty-state">
-      {title && <p className="empty-state__title">{title}</p>}
-      <p className="empty-state__body">{children}</p>
+    <div className="ds-empty">
+      {title && <p className="ds-empty__title">{title}</p>}
+      <p className="ds-empty__body">{children}</p>
       {action}
     </div>
   )
@@ -275,7 +275,7 @@ export function EmptyState({
 export function PendingLabel({ children }: { children: ReactNode }) {
   return (
     <>
-      <span className="spinner" aria-hidden="true" />
+      <span className="ds-spinner" aria-hidden="true" />
       {children}
     </>
   )

@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { fetchMatchesByStage, fetchStageOverview } from '../api'
+import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
+import { TeamCrest } from '../design-system/TeamCrest'
 import { queryKeys } from '../queryKeys'
 import {
   EmptyState,
@@ -10,7 +12,7 @@ import {
   MatchStatusBadge,
   PageHeader,
 } from '../ui'
-import { formatScore, sideLabel, type MatchSummary } from '../types'
+import { sideLabel, type MatchSummary } from '../types'
 import {
   matchResultTypeLabel,
   matchScheduledLabel,
@@ -72,43 +74,69 @@ function MatchList({ matches }: { matches: MatchSummary[] }) {
   }
 
   return (
-    <ul className="row-list">
-      {matches.map((match) => {
-        const sporting = matchSportingContext(match, t, 'stageList.matchday')
-        const when = matchScheduledLabel(match)
-        const resultKind = matchResultTypeLabel(match)
+    <div>
+      {matches.map((match) => (
+        <StageMatchRow key={match.matchId} match={match} />
+      ))}
+    </div>
+  )
+}
 
-        return (
-          <li key={match.matchId}>
-            <Link to={`/matches/${match.matchId}`} className="match-row">
-              <span className="row__main">
-                <span className="match-row__sides">
-                  {sideLabel(match.home)} {t('stageList.vs')}{' '}
-                  {sideLabel(match.away)}
-                </span>
-                {(sporting || when || resultKind) && (
-                  <span className="match-row__meta">
-                    {sporting ? <span>{sporting}</span> : null}
-                    {when ? <span>{when}</span> : null}
-                    {resultKind ? <span>{resultKind}</span> : null}
-                  </span>
-                )}
-              </span>
-              <span className="match-row__aside">
-                {match.score ? (
-                  <span className="match-row__score">
-                    {formatScore(match.score)}
-                  </span>
-                ) : null}
-                <MatchStatusBadge status={match.status} />
-                <span className="row__chevron" aria-hidden="true">
-                  →
-                </span>
-              </span>
-            </Link>
-          </li>
-        )
-      })}
-    </ul>
+function StageMatchRow({ match }: { match: MatchSummary }) {
+  const { t } = useTranslation('matches')
+  const homeName = sideLabel(match.home)
+  const awayName = sideLabel(match.away)
+  const sporting = matchSportingContext(match, t, 'stageList.matchday')
+  const when = matchScheduledLabel(match)
+  const resultKind = matchResultTypeLabel(match)
+  const asideLabel = match.score
+    ? `${match.score.homeGoals}–${match.score.awayGoals}`
+    : when ?? t('stageList.vs')
+
+  const score = match.score ? (
+    <MatchRowScore home={match.score.homeGoals} away={match.score.awayGoals} />
+  ) : when ? (
+    <MatchRowScore home={when} away="" muted />
+  ) : (
+    <MatchRowScore home={t('stageList.vs')} away="" muted />
+  )
+
+  const meta = [sporting, resultKind].filter(Boolean).join(' · ')
+
+  return (
+    <MatchRow
+      to={`/matches/${match.matchId}`}
+      ariaLabel={`${homeName} – ${awayName}, ${asideLabel}`}
+      scoreMuted={match.score == null}
+      home={{
+        name: homeName,
+        crest: (
+          <TeamCrest
+            name={homeName}
+            logoMediaId={match.home.logoMediaId}
+            primaryColor={match.home.primaryColor}
+            size="sm"
+          />
+        ),
+      }}
+      away={{
+        name: awayName,
+        crest: (
+          <TeamCrest
+            name={awayName}
+            logoMediaId={match.away.logoMediaId}
+            primaryColor={match.away.primaryColor}
+            size="sm"
+          />
+        ),
+      }}
+      score={score}
+      aside={
+        <>
+          {meta ? <span>{meta}</span> : null}
+          <MatchStatusBadge status={match.status} />
+        </>
+      }
+    />
   )
 }

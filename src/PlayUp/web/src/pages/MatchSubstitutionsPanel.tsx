@@ -126,15 +126,15 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       <p className="matches-panel__meta">{t('subs.hint')}</p>
 
       {!canMutate && (
-        <p className="notice notice--info">{t('subs.readOnly')}</p>
+        <p className="ds-notice ds-notice--info">{t('subs.readOnly')}</p>
       )}
 
       {canMutate && sheet.length === 0 && (
-        <p className="notice notice--info">{t('subs.needSheet')}</p>
+        <p className="ds-notice ds-notice--info">{t('subs.needSheet')}</p>
       )}
 
       {canMutate && sheet.length > 0 && !hasStarters && (
-        <p className="notice notice--info">{t('subs.needStarters')}</p>
+        <p className="ds-notice ds-notice--info">{t('subs.needStarters')}</p>
       )}
 
       {substitutions.length === 0 ? (
@@ -220,7 +220,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
 
                 {canMutate && pendingRemoveId === sub.substitutionId && (
                   <div
-                    className="match-subs__confirm notice notice--warning"
+                    className="match-subs__confirm ds-notice ds-notice--warning"
                     role="group"
                   >
                     <p>

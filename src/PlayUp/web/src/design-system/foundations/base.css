@@ -38,7 +38,7 @@ body:has(.shell),
  */
 .shell-main a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
-    ):not(.classements-result):not(.matches-link):not(.matches__back):not(
+    ):not(.matches-link):not(.matches__back):not(
         .matches-result
     ):not(.organisation-link):not(.organisation__back):not(
         .organisation-stage-link
@@ -52,7 +52,7 @@ body:has(.shell),
 .shell-main
     a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
-    ):not(.classements-result):not(.matches-link):not(.matches__back):not(
+    ):not(.matches-link):not(.matches__back):not(
         .matches-result
     ):not(.organisation-link):not(.organisation__back):not(
         .organisation-stage-link

@@ -362,7 +362,7 @@ function MatchDetailView({
       )}
 
       {data.status === 'Cancelled' && (
-        <p className="notice">
+        <p className="ds-notice">
           {t('detail.noAction', { status: matchStatusLabel(data.status) })}
         </p>
       )}
@@ -585,7 +585,7 @@ function OfficialScoreForm({
       </fieldset>
 
       {localError && (
-        <p className="notice notice--danger" role="alert">
+        <p className="ds-notice ds-notice--danger" role="alert">
           {localError}
         </p>
       )}
@@ -670,7 +670,7 @@ function RunningScoreForm({
       </fieldset>
 
       {localError && (
-        <p className="notice notice--danger" role="alert">
+        <p className="ds-notice ds-notice--danger" role="alert">
           {localError}
         </p>
       )}

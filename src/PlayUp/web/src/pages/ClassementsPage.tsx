@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { fetchConsultation, fetchOrganisationView } from '../api'
+import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
+import { PanelHead } from '../design-system/components/PanelHead'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { RegulationIcon } from '../design-system/icons/overviewIcons'
 import {
@@ -60,7 +61,7 @@ function ClassementsView({ data }: { data: ConsultationView }) {
   })
 
   return (
-    <div className="classements">
+    <div className="ds-page classements">
       <header className="classements__page-head">
         <Link className="classements__back" to={overviewHref}>
           <span aria-hidden="true">←</span>
@@ -73,7 +74,7 @@ function ClassementsView({ data }: { data: ConsultationView }) {
 
       <StandingsSection standings={data.standings} />
 
-      <div className="classements__bottom">
+      <div className="ds-grid-2 ds-grid-2--major classements__bottom">
         <LastMatchdayPanel
           results={data.results}
           matchesHref={`/competitions/${data.competitionId}/matches`}
@@ -129,9 +130,11 @@ function StandingsSection({
 
     return (
       <section className="ds-panel" aria-labelledby="classements-na">
-        <PanelHead id="classements-na" icon={<ClassementsNavIcon size="md" />}>
-          {t('notApplicable.title')}
-        </PanelHead>
+        <PanelHead
+          id="classements-na"
+          title={t('notApplicable.title')}
+          icon={<ClassementsNavIcon size="md" />}
+        />
         <EmptyState>{reason}</EmptyState>
       </section>
     )
@@ -140,9 +143,11 @@ function StandingsSection({
   if (standings.tables.length === 0) {
     return (
       <section className="ds-panel" aria-labelledby="classements-empty">
-        <PanelHead id="classements-empty" icon={<ClassementsNavIcon size="md" />}>
-          {t('table.overall')}
-        </PanelHead>
+        <PanelHead
+          id="classements-empty"
+          title={t('table.overall')}
+          icon={<ClassementsNavIcon size="md" />}
+        />
         <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
       </section>
     )
@@ -174,10 +179,9 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
     <section className="ds-panel" aria-labelledby={`standings-${tableKey(table)}`}>
       <PanelHead
         id={`standings-${tableKey(table)}`}
+        title={heading}
         icon={<ClassementsNavIcon size="md" />}
-      >
-        {heading}
-      </PanelHead>
+      />
       {table.stageName && table.scope === 'Group' ? (
         <p className="classements-panel__muted">{table.stageName}</p>
       ) : null}
@@ -185,36 +189,36 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
       {table.rows.length === 0 ? (
         <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
       ) : (
-        <div className="classements-table-wrap">
-          <table className="classements-table">
+        <div className="ds-standings-wrap">
+          <table className="ds-standings">
             <thead>
               <tr>
-                <th scope="col">{t('columns.position')}</th>
-                <th scope="col">{t('columns.team')}</th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" aria-label={t('columns.position')} />
+                <th scope="col" className="team">
+                  {t('columns.team')}
+                </th>
+                <th scope="col" className="ds-num">
                   {t('columns.played')}
                 </th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" className="ds-num">
                   {t('columns.wins')}
                 </th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" className="ds-num">
                   {t('columns.draws')}
                 </th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" className="ds-num">
                   {t('columns.losses')}
                 </th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" className="ds-num">
                   {t('columns.goalsFor')}
                 </th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" className="ds-num">
                   {t('columns.goalsAgainst')}
                 </th>
-                <th scope="col" className="classements-table__num">
+                <th scope="col" className="ds-num">
                   {t('columns.goalDifference')}
                 </th>
-                <th scope="col" className="classements-table__pts">
-                  {t('columns.points')}
-                </th>
+                <th scope="col">{t('columns.points')}</th>
               </tr>
             </thead>
             <tbody>
@@ -231,24 +235,21 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
 
 function StandingRow({ row }: { row: ConsultationStandingRow }) {
   return (
-    <tr
-      className={
-        row.position === 1 ? 'classements-table__row--leader' : undefined
-      }
-      data-testid={`standing-row-${row.entryId}`}
-    >
-      <td className="classements-table__num">{row.position}</td>
-      <td className="classements-table__team">{row.displayName}</td>
-      <td className="classements-table__num">{row.played}</td>
-      <td className="classements-table__num">{row.wins}</td>
-      <td className="classements-table__num">{row.draws}</td>
-      <td className="classements-table__num">{row.losses}</td>
-      <td className="classements-table__num">{row.goalsFor}</td>
-      <td className="classements-table__num">{row.goalsAgainst}</td>
-      <td className="classements-table__num">
-        {formatSigned(row.goalDifference)}
+    <tr data-rank={row.position} data-testid={`standing-row-${row.entryId}`}>
+      <td className="rank ds-num">{row.position}</td>
+      <td className="team">
+        <span className="ds-standings__team">
+          <span className="ds-standings__team-name">{row.displayName}</span>
+        </span>
       </td>
-      <td className="classements-table__pts">{row.points}</td>
+      <td className="ds-num">{row.played}</td>
+      <td className="ds-num">{row.wins}</td>
+      <td className="ds-num">{row.draws}</td>
+      <td className="ds-num">{row.losses}</td>
+      <td className="ds-num">{row.goalsFor}</td>
+      <td className="ds-num">{row.goalsAgainst}</td>
+      <td className="ds-num">{formatSigned(row.goalDifference)}</td>
+      <td className="pts ds-num ds-num-pts">{row.points}</td>
     </tr>
   )
 }
@@ -274,26 +275,17 @@ function LastMatchdayPanel({
     <section className="ds-panel" aria-labelledby="classements-last-matchday">
       <PanelHead
         id="classements-last-matchday"
+        title={heading}
         icon={<MatchesNavIcon size="md" />}
-      >
-        {heading}
-      </PanelHead>
+      />
 
       {!slice || slice.matches.length === 0 ? (
         <EmptyState>{t('lastMatchday.empty')}</EmptyState>
       ) : (
-        <div className="classements-results">
-          <div className="classements-results__head" aria-hidden="true">
-            <span>{t('lastMatchday.columns.match')}</span>
-            <span>{t('lastMatchday.columns.score')}</span>
-          </div>
-          <ul className="classements-results__list">
-            {slice.matches.map((match) => (
-              <li key={match.matchId}>
-                <MatchResultRow match={match} />
-              </li>
-            ))}
-          </ul>
+        <div>
+          {slice.matches.map((match) => (
+            <ConsultationMatchRow key={match.matchId} match={match} />
+          ))}
         </div>
       )}
 
@@ -307,7 +299,7 @@ function LastMatchdayPanel({
   )
 }
 
-function MatchResultRow({ match }: { match: ConsultationResult }) {
+function ConsultationMatchRow({ match }: { match: ConsultationResult }) {
   const { t } = useTranslation('classements')
   const homeName = match.home.displayName?.trim() || '—'
   const awayName = match.away.displayName?.trim() || '—'
@@ -320,52 +312,43 @@ function MatchResultRow({ match }: { match: ConsultationResult }) {
       ? `${match.score.homeGoals}–${match.score.awayGoals}`
       : t('lastMatchday.pending')
 
+  const score =
+    match.score != null ? (
+      <MatchRowScore home={match.score.homeGoals} away={match.score.awayGoals} />
+    ) : (
+      <MatchRowScore home={t('lastMatchday.pending')} away="" muted />
+    )
+
   return (
-    <Link
-      className="classements-result"
+    <MatchRow
       to={`/matches/${match.matchId}`}
-      aria-label={`${homeName} – ${awayName}, ${scoreLabel}`}
-    >
-      <span className="classements-result__match">
-        <span className="classements-result__team">
+      ariaLabel={`${homeName} – ${awayName}, ${scoreLabel}`}
+      scoreMuted={match.score == null}
+      home={{
+        name: homeName,
+        crest: (
           <TeamCrest
             name={homeName}
             logoMediaId={match.home.logoMediaId}
             primaryColor={match.home.primaryColor}
-            className="classements-crest"
+            size="sm"
           />
-          <span className="classements-result__name">{homeName}</span>
-        </span>
-        <span className="classements-result__vs" aria-hidden="true">
-          –
-        </span>
-        <span className="classements-result__team">
+        ),
+      }}
+      away={{
+        name: awayName,
+        crest: (
           <TeamCrest
             name={awayName}
             logoMediaId={match.away.logoMediaId}
             primaryColor={match.away.primaryColor}
-            className="classements-crest"
+            size="sm"
           />
-          <span className="classements-result__name">{awayName}</span>
-        </span>
-      </span>
-
-      <span className="classements-result__aside">
-        {match.score != null ? (
-          <span className="classements-result__score">
-            {match.score.homeGoals}–{match.score.awayGoals}
-          </span>
-        ) : (
-          <span className="classements-result__score classements-result__score--pending">
-            {t('lastMatchday.pending')}
-          </span>
-        )}
-        {note ? <span className="classements-result__note">{note}</span> : null}
-        <span className="classements-result__chevron" aria-hidden="true">
-          ›
-        </span>
-      </span>
-    </Link>
+        ),
+      }}
+      score={score}
+      aside={note ? <span className="ds-match-row__note">{note}</span> : null}
+    />
   )
 }
 
@@ -384,10 +367,9 @@ function RegulationPanel({
     <section className="ds-panel" aria-labelledby="classements-regulation">
       <PanelHead
         id="classements-regulation"
+        title={t('regulation.title')}
         icon={<RegulationIcon size="md" />}
-      >
-        {t('regulation.title')}
-      </PanelHead>
+      />
 
       <p className="classements-panel__lede">{t('regulation.lede')}</p>
 
@@ -471,25 +453,6 @@ function PointsChip({
       </span>
       <span className="classements-chip__label">{label}</span>
     </li>
-  )
-}
-
-function PanelHead({
-  id,
-  icon,
-  children,
-}: {
-  id: string
-  icon: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <h2 id={id} className="classements-panel__head">
-      <span className="classements-panel__icon" aria-hidden="true">
-        {icon}
-      </span>
-      {children}
-    </h2>
   )
 }
 

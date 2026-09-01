@@ -5,6 +5,7 @@
  *
  * Chrome primitives: Shell rail only — never for content surfaces.
  */
+:root,
 .ds-root,
 .ds-root[data-palette='slate'] {
     --primitive-canvas: #f6f7f9;

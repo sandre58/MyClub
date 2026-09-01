@@ -41,18 +41,26 @@ attention rows (D9), mini-table, podium. Components: `CockpitSituation`,
 Product: `CompetitionCockpitPage` (next action, attention, podium, DS `PanelHead`).
 Design Lab consumes DS cockpit components.
 
-## Lot 5 — Classements / Calendrier
+## Lot 5 — Classements / Calendrier ✅
 
-Numeric grammar at full intensity (zones, trends, matchdays).
+Standings grammar in `foundations/standings.css` — zones, rank column, pts role,
+legend, penalty. Components: `StandingsLegend`, `MatchRound`, `MatchRoundStatus`.
+Product: `ClassementsPage` (ds-standings, MatchRow dernière journée),
+`MatchHubPage` (MatchRound, AttentionRow résultats à saisir). Lab consumes DS.
 
-## Lot 6 — Accueil
+## Lot 6 — Accueil ✅
 
-Brand entry point — after the operational grammar is proven.
+Brand entry in `foundations/home.css` — halos, mark + wordmark, competition panel.
+Component: `HomeBrand`. Product: `HomePage` (DS home grammar, dialog unchanged).
+Design Lab consumes `HomeBrand` + `ds-home-*`.
 
-## Lot 7 — Legacy purge
+## Lot 7 — Legacy purge ✅
 
-Anything that does not match the Design Lab is suspect. Remove `index.css` legacy
-palette, pills, ghost tokens, duplicated components.
+Removed `index.css` legacy palette (Slate bridge on `:root`), status badges,
+cards, buttons, match-row, standings duplicates. Feedback (`ds-notice`,
+`ds-loading`, `ds-spinner`, `ds-empty`) and admin page head in DS.
+Stage / Competition / StageMatches migrated. Design Lab CSS purged to chrome +
+angle compare only.
 
 ## Rule during migration
 
