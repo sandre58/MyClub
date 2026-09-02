@@ -13,3 +13,12 @@
     height: 100%;
     min-height: 0;
 }
+
+.shell[data-shell-vp='phone'] .shell-sidebar {
+    position: absolute;
+    z-index: 5;
+    isolation: auto;
+    inset-block-start: var(--shell-phone-chrome-end);
+    inset-block-end: 0;
+    height: auto;
+}

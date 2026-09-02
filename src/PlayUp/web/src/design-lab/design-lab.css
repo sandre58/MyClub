@@ -77,6 +77,31 @@
   display: flex;
   min-height: 0;
   background: var(--color-chrome);
+  position: relative;
+  --shell-phone-chrome-end: var(--shell-header-min-height-phone);
+}
+
+.dlab-shell[data-shell-vp='tablet'] {
+  width: 768px;
+  max-width: 100%;
+  margin-inline: auto;
+  min-height: 0;
+}
+
+.dlab-shell[data-shell-vp='phone'] {
+  width: 390px;
+  max-width: 100%;
+  margin-inline: auto;
+  min-height: 667px;
+  overflow: hidden;
+}
+
+.dlab-column {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .dlab-rail .ds-shell-rail__brand {
@@ -84,13 +109,6 @@
   border: none;
   cursor: pointer;
   font: inherit;
-}
-
-.dlab-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
 }
 
 .dlab-header__crest {

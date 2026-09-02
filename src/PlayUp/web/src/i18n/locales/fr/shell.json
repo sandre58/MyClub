@@ -18,6 +18,8 @@
     "primary": "Navigation principale",
     "expand": "Développer la barre latérale",
     "collapse": "Réduire la barre latérale",
+    "menuOpen": "Ouvrir le menu de navigation",
+    "menuClose": "Fermer le menu de navigation",
     "home": "Accueil Play’Up",
     "comingSoon": "{{label}} — bientôt disponible"
   },

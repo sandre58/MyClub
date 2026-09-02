@@ -3,14 +3,23 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCompetitionCockpit } from '../api'
 import { TeamCrest } from '../design-system/TeamCrest'
-import { AttentionBellIcon } from '../design-system/icons/shellIcons'
+import {
+  AttentionBellIcon,
+  CloseIcon,
+  SidebarExpandIcon,
+} from '../design-system/icons/shellIcons'
 import { queryKeys } from '../queryKeys'
 import type { CompetitionStatus } from '../types'
 import { CompetitionStatusBadge } from '../ui'
 import { formatCompetitionPeriod } from './competitionPeriod'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
+import type { ShellViewport } from './useShellViewport'
 
 type ShellHeaderProps = {
+  viewport?: ShellViewport
+  phoneNavOpen?: boolean
+  navMenuTriggerRef?: RefObject<HTMLButtonElement | null>
+  onTogglePhoneNav?: () => void
   attentionDrawerId?: string
   attentionDrawerOpen?: boolean
   attentionTriggerRef?: RefObject<HTMLButtonElement | null>
@@ -19,14 +28,20 @@ type ShellHeaderProps = {
 
 /**
  * Shell header (A) — competition context + À traiter on navy chrome.
- * Change-competition lives on the rail lockup (Accueil), not here.
+ * Accueil / change-competition is the rail lockup. On phone it lives at
+ * the top of the overlay (above Pilotage), not in this bar.
  */
 export function ShellHeader({
+  viewport = 'desktop',
+  phoneNavOpen = false,
+  navMenuTriggerRef,
+  onTogglePhoneNav,
   attentionDrawerId,
   attentionDrawerOpen = false,
   attentionTriggerRef,
   onAttentionClick,
 }: ShellHeaderProps) {
+  const { t } = useTranslation('shell')
   const { competitionId, competitionName, logoMediaId, state } =
     useShellCompetitionContext()
 
@@ -45,12 +60,31 @@ export function ShellHeader({
 
   return (
     <header className="shell-header ds-shell-header">
+      {viewport === 'phone' ? (
+        <button
+          ref={navMenuTriggerRef}
+          type="button"
+          className="ds-shell-header__nav-toggle ds-btn ds-btn--ghost ds-icon-button shell-header__icon-control"
+          aria-expanded={phoneNavOpen}
+          aria-controls="shell-sidebar-nav"
+          aria-label={phoneNavOpen ? t('sidebar.menuClose') : t('sidebar.menuOpen')}
+          onClick={onTogglePhoneNav}
+        >
+          {phoneNavOpen ? (
+            <CloseIcon size="sm" aria-hidden="true" />
+          ) : (
+            <SidebarExpandIcon size="sm" aria-hidden="true" />
+          )}
+        </button>
+      ) : null}
+
       <ShellHeaderCompetitionContext
         competitionName={competitionName}
         logoMediaId={logoMediaId}
         competitionStatus={competitionStatus}
         periodLabel={periodLabel}
         state={state}
+        crestSize={viewport === 'phone' ? 'md' : 'lg'}
       />
 
       <span className="ds-shell-header__spacer" aria-hidden="true" />
@@ -74,12 +108,14 @@ function ShellHeaderCompetitionContext({
   competitionStatus,
   periodLabel,
   state,
+  crestSize,
 }: {
   competitionName?: string
   logoMediaId?: string | null
   competitionStatus?: CompetitionStatus
   periodLabel?: string | null
   state: ReturnType<typeof useShellCompetitionContext>['state']
+  crestSize: 'md' | 'lg'
 }) {
   const { t } = useTranslation('shell')
 
@@ -104,7 +140,7 @@ function ShellHeaderCompetitionContext({
           <TeamCrest
             name={competitionName}
             logoMediaId={logoMediaId}
-            size="lg"
+            size={crestSize}
           />
         </span>
 

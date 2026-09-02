@@ -2,8 +2,33 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { AppLayout } from '../AppLayout'
+import { SHELL_PHONE_QUERY, SHELL_TABLET_QUERY } from './useShellViewport'
+
+const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed'
+
+function stubShellViewport(viewport: 'phone' | 'tablet' | 'desktop') {
+  window.matchMedia = (query: string) => ({
+    matches:
+      viewport === 'phone'
+        ? query === SHELL_PHONE_QUERY
+        : viewport === 'tablet'
+          ? query === SHELL_TABLET_QUERY
+          : false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })
+}
+
+function restoreDesktopViewport() {
+  stubShellViewport('desktop')
+}
 
 function renderWithShell(initialEntry: string) {
   const queryClient = new QueryClient({
@@ -75,6 +100,10 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
 }
 
 describe('AppShell', () => {
+  afterEach(() => {
+    restoreDesktopViewport()
+    window.localStorage.removeItem(sidebarCollapsedStorageKey)
+  })
   it('renders the matched page through Outlet', () => {
     renderWithShell('/')
 
@@ -253,5 +282,78 @@ describe('AppShell', () => {
 
     expect(screen.getByText('Match deep link')).toBeInTheDocument()
     expect(document.getElementById('main')).not.toBeInTheDocument()
+  })
+
+  it('forces the icon rail on tablet without writing desktop preference', async () => {
+    const user = userEvent.setup()
+    window.localStorage.setItem(sidebarCollapsedStorageKey, 'false')
+    stubShellViewport('tablet')
+    renderWithShell('/')
+
+    const rail = document.querySelector('.ds-shell-rail')
+    expect(document.querySelector('.shell')).toHaveAttribute('data-shell-vp', 'tablet')
+    expect(rail).toHaveAttribute('data-collapsed', 'true')
+    expect(
+      screen.getByRole('button', { name: 'Développer la barre latérale' }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Développer la barre latérale' }),
+    )
+
+    expect(rail).toHaveAttribute('data-collapsed', 'false')
+    expect(window.localStorage.getItem(sidebarCollapsedStorageKey)).toBe('false')
+  })
+
+  it('keeps Accueil in the phone overlay, not the header', () => {
+    stubShellViewport('phone')
+    renderWithShell('/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+
+    expect(
+      screen.queryByRole('link', { name: 'Accueil Play’Up' }),
+    ).not.toBeInTheDocument()
+    expect(document.querySelector('.ds-shell-header__lockup')).toBeNull()
+  })
+
+  it('moves the rail off-canvas on phone and exposes it from the header menu', async () => {
+    const user = userEvent.setup()
+    stubShellViewport('phone')
+    renderWithShell('/')
+
+    expect(document.querySelector('.shell')).toHaveAttribute('data-shell-vp', 'phone')
+    expect(
+      screen.queryByRole('button', { name: 'Réduire la barre latérale' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Cockpit' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Ouvrir le menu de navigation' }))
+
+    expect(document.querySelector('.shell')).toHaveAttribute('data-nav-open', 'true')
+    const home = screen.getByRole('link', { name: 'Accueil Play’Up' })
+    expect(home).toHaveClass('ds-shell-rail__brand')
+    expect(home).toHaveAttribute('href', '/')
+    expect(home.querySelector('.ds-lockup-mark')).toHaveAttribute(
+      'src',
+      expect.stringContaining('/brand/accueil-mark.png'),
+    )
+    expect(home.querySelector('.ds-lockup-wordmark')).toHaveAttribute(
+      'src',
+      '/brand/accueil-wordmark-on-chrome.png',
+    )
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Structure' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Équipes — bientôt disponible' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Règlement — bientôt disponible' }),
+    ).toBeDisabled()
   })
 })

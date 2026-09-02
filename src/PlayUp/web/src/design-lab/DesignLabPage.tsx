@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import '../design-system/fonts'
 import '../design-system/index.css'
@@ -13,6 +13,7 @@ import {
   RegulationNavIcon,
   SidebarCollapseIcon,
   SidebarExpandIcon,
+  CloseIcon,
   TeamsNavIcon,
   VenuesNavIcon,
 } from '../design-system/icons/shellIcons'
@@ -27,6 +28,8 @@ import { LabMatches } from './LabMatches'
 import { LabMatchSheet } from './LabMatchSheet'
 import { LabStandings } from './LabStandings'
 import type { LabLifecycle } from './labData'
+
+type LabChromeVp = 'desktop' | 'tablet' | 'phone'
 
 type LabView =
   | 'home'
@@ -50,8 +53,63 @@ export function DesignLabPage() {
   const [lifecycle, setLifecycle] = useState<LabLifecycle>('live')
   const [railCollapsed, setRailCollapsed] = useState(false)
   const [workspaceRadius, setWorkspaceRadius] = useState<12 | 16 | 24>(12)
+  const [chromeVp, setChromeVp] = useState<LabChromeVp>('desktop')
+  const [phoneNavOpen, setPhoneNavOpen] = useState(false)
+  const [motionViewport, setMotionViewport] = useState(chromeVp)
+  const [chromeReady, setChromeReady] = useState(chromeVp === 'desktop')
+  const labShellRef = useRef<HTMLDivElement>(null)
 
   const isHome = view === 'home' || view === 'home-empty'
+  const labCollapsed = chromeVp === 'phone' ? false : railCollapsed
+
+  useEffect(() => {
+    if (chromeVp === 'desktop') {
+      setMotionViewport('desktop')
+      setChromeReady(true)
+      return
+    }
+
+    setChromeReady(false)
+    setMotionViewport(chromeVp)
+    let cancelled = false
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) {
+          setChromeReady(true)
+        }
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [chromeVp])
+
+  useLayoutEffect(() => {
+    const root = labShellRef.current
+    if (!root || chromeVp !== 'phone') {
+      root?.style.removeProperty('--shell-phone-chrome-end')
+      return
+    }
+
+    const header = root.querySelector('.ds-shell-header')
+    if (!(header instanceof HTMLElement) || typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    const sync = () => {
+      root.style.setProperty('--shell-phone-chrome-end', `${header.offsetHeight}px`)
+    }
+
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(header)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--shell-phone-chrome-end')
+    }
+  }, [chromeVp])
+
+  const navReady = chromeVp === motionViewport && chromeReady
 
   return (
     <div
@@ -65,29 +123,59 @@ export function DesignLabPage() {
         lifecycle={lifecycle}
         railCollapsed={railCollapsed}
         workspaceRadius={workspaceRadius}
+        chromeVp={chromeVp}
         onView={setView}
         onLifecycle={setLifecycle}
         onRailCollapsed={setRailCollapsed}
         onWorkspaceRadius={setWorkspaceRadius}
+        onChromeVp={(next) => {
+          setChromeVp(next)
+          setPhoneNavOpen(false)
+          if (next === 'tablet') {
+            setRailCollapsed(true)
+          }
+        }}
       />
 
       {isHome ? (
         <LabHome empty={view === 'home-empty'} />
       ) : (
         <div
+          ref={labShellRef}
           className="dlab-shell"
+          data-shell-vp={chromeVp}
+          data-nav-open={phoneNavOpen ? 'true' : 'false'}
+          data-nav-ready={navReady ? 'true' : 'false'}
           style={{
             ['--shell-workspace-radius' as string]: `${workspaceRadius}px`,
           }}
         >
           <LabRail
             view={view}
-            collapsed={railCollapsed}
-            onView={setView}
+            collapsed={labCollapsed}
+            hideCollapse={chromeVp === 'phone'}
+            onView={(next) => {
+              setView(next)
+              setPhoneNavOpen(false)
+            }}
             onToggleCollapse={() => setRailCollapsed((value) => !value)}
           />
           <div className="dlab-column">
-            <LabHeader lifecycle={lifecycle} />
+            <LabHeader
+              lifecycle={lifecycle}
+              chromeVp={chromeVp}
+              phoneNavOpen={phoneNavOpen}
+              onTogglePhoneNav={() => setPhoneNavOpen((value) => !value)}
+            />
+            {chromeVp === 'phone' && phoneNavOpen ? (
+              <button
+                type="button"
+                className="shell-nav-backdrop"
+                tabIndex={-1}
+                aria-hidden="true"
+                onClick={() => setPhoneNavOpen(false)}
+              />
+            ) : null}
             <main className="dlab-main ds-shell-workspace">
               {view === 'cockpit' && <LabCockpit lifecycle={lifecycle} />}
               {view === 'matches' && <LabMatches />}
@@ -130,24 +218,34 @@ const radiusOptions: Array<{ key: 12 | 16 | 24; label: string }> = [
   { key: 24, label: '24' },
 ]
 
+const chromeVpOptions: Array<{ key: LabChromeVp; label: string }> = [
+  { key: 'desktop', label: 'Desktop' },
+  { key: 'tablet', label: 'Tablette 768' },
+  { key: 'phone', label: 'Phone 390' },
+]
+
 function LabBar({
   view,
   lifecycle,
   railCollapsed,
   workspaceRadius,
+  chromeVp,
   onView,
   onLifecycle,
   onRailCollapsed,
   onWorkspaceRadius,
+  onChromeVp,
 }: {
   view: LabView
   lifecycle: LabLifecycle
   railCollapsed: boolean
   workspaceRadius: 12 | 16 | 24
+  chromeVp: LabChromeVp
   onView: (v: LabView) => void
   onLifecycle: (l: LabLifecycle) => void
   onRailCollapsed: (collapsed: boolean) => void
   onWorkspaceRadius: (radius: 12 | 16 | 24) => void
+  onChromeVp: (vp: LabChromeVp) => void
 }) {
   return (
     <div className="dlab-bar">
@@ -175,6 +273,20 @@ function LabBar({
             className="dlab-bar__chip"
             data-active={lifecycle === option.key}
             onClick={() => onLifecycle(option.key)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </span>
+      <span className="dlab-bar__group">
+        <span className="dlab-bar__group-label">Chrome</span>
+        {chromeVpOptions.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            className="dlab-bar__chip"
+            data-active={chromeVp === option.key}
+            onClick={() => onChromeVp(option.key)}
           >
             {option.label}
           </button>
@@ -261,11 +373,13 @@ const labNavGroups: Array<{
 function LabRail({
   view,
   collapsed,
+  hideCollapse = false,
   onView,
   onToggleCollapse,
 }: {
   view: LabView
   collapsed: boolean
+  hideCollapse?: boolean
   onView: (v: LabView) => void
   onToggleCollapse: () => void
 }) {
@@ -325,25 +439,37 @@ function LabRail({
         ))}
       </nav>
 
-      <div className="ds-shell-rail__footer">
-        <button
-          type="button"
-          className="ds-shell-rail__collapse"
-          aria-expanded={!collapsed}
-          onClick={onToggleCollapse}
-        >
-          {collapsed ? (
-            <SidebarExpandIcon size="sm" />
-          ) : (
-            <SidebarCollapseIcon size="sm" />
-          )}
-        </button>
-      </div>
+      {hideCollapse ? null : (
+        <div className="ds-shell-rail__footer">
+          <button
+            type="button"
+            className="ds-shell-rail__collapse"
+            aria-expanded={!collapsed}
+            onClick={onToggleCollapse}
+          >
+            {collapsed ? (
+              <SidebarExpandIcon size="sm" />
+            ) : (
+              <SidebarCollapseIcon size="sm" />
+            )}
+          </button>
+        </div>
+      )}
     </aside>
   )
 }
 
-function LabHeader({ lifecycle }: { lifecycle: LabLifecycle }) {
+function LabHeader({
+  lifecycle,
+  chromeVp,
+  phoneNavOpen,
+  onTogglePhoneNav,
+}: {
+  lifecycle: LabLifecycle
+  chromeVp: LabChromeVp
+  phoneNavOpen: boolean
+  onTogglePhoneNav: () => void
+}) {
   const statusLabel =
     lifecycle === 'preparation'
       ? 'Préparation'
@@ -360,8 +486,26 @@ function LabHeader({ lifecycle }: { lifecycle: LabLifecycle }) {
 
   return (
     <header className="ds-shell-header dlab-header">
+      {chromeVp === 'phone' ? (
+        <button
+          type="button"
+          className="ds-shell-header__nav-toggle ds-btn ds-btn--ghost ds-icon-button"
+          aria-expanded={phoneNavOpen}
+          aria-label={phoneNavOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+          onClick={onTogglePhoneNav}
+        >
+          {phoneNavOpen ? (
+            <CloseIcon size="sm" aria-hidden="true" />
+          ) : (
+            <SidebarExpandIcon size="sm" aria-hidden="true" />
+          )}
+        </button>
+      ) : null}
       <span className="ds-shell-header__crest dlab-header__crest" aria-hidden="true">
-        <TeamCrest name="Championnat des Vétérans — Automne 2026" size="lg" />
+        <TeamCrest
+          name="Championnat des Vétérans — Automne 2026"
+          size={chromeVp === 'phone' ? 'md' : 'lg'}
+        />
       </span>
       <div className="ds-shell-header__identity">
         <span className="ds-shell-header__name">
@@ -371,8 +515,10 @@ function LabHeader({ lifecycle }: { lifecycle: LabLifecycle }) {
           <Status density="compact" tone={statusTone} variant="soft">
             {statusLabel}
           </Status>
-          <span>·</span>
-          <span>12 sept. — 10 oct. 2026</span>
+          <span className="shell-header__meta-separator" aria-hidden="true">
+            ·
+          </span>
+          <span className="shell-header__period">12 sept. — 10 oct. 2026</span>
         </span>
       </div>
       <span className="ds-shell-header__spacer" aria-hidden="true" />

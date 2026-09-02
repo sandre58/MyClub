@@ -24,6 +24,8 @@ import { useShellCompetitionContext } from './useShellCompetitionContext'
 
 type ShellSidebarProps = {
   collapsed: boolean
+  hideCollapse?: boolean
+  inert?: boolean
   onToggleCollapse: () => void
 }
 
@@ -45,6 +47,8 @@ const navIcons: Record<
  */
 export function ShellSidebar({
   collapsed,
+  hideCollapse = false,
+  inert = false,
   onToggleCollapse,
 }: ShellSidebarProps) {
   const { t } = useTranslation('shell')
@@ -59,6 +63,8 @@ export function ShellSidebar({
       className="shell-sidebar ds-shell-rail"
       data-collapsed={collapsed ? 'true' : 'false'}
       aria-label={t('sidebar.label')}
+      aria-hidden={inert || undefined}
+      inert={inert || undefined}
     >
       <Link
         className="ds-shell-rail__brand shell-sidebar__brand"
@@ -75,6 +81,7 @@ export function ShellSidebar({
         id="shell-sidebar-nav"
         className="ds-shell-rail__nav"
         aria-label={t('sidebar.primary')}
+        tabIndex={-1}
       >
         {shellNavGroups.map((group) => (
           <div key={group.id} className="ds-shell-rail__group">
@@ -121,23 +128,25 @@ export function ShellSidebar({
         ))}
       </nav>
 
-      <div className="ds-shell-rail__footer">
-        <button
-          type="button"
-          className="ds-shell-rail__collapse"
-          aria-expanded={!collapsed}
-          aria-controls="shell-sidebar-nav"
-          aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
-          title={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
-          onClick={onToggleCollapse}
-        >
-          {collapsed ? (
-            <SidebarExpandIcon size="sm" />
-          ) : (
-            <SidebarCollapseIcon size="sm" />
-          )}
-        </button>
-      </div>
+      {hideCollapse ? null : (
+        <div className="ds-shell-rail__footer">
+          <button
+            type="button"
+            className="ds-shell-rail__collapse"
+            aria-expanded={!collapsed}
+            aria-controls="shell-sidebar-nav"
+            aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
+            title={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
+            onClick={onToggleCollapse}
+          >
+            {collapsed ? (
+              <SidebarExpandIcon size="sm" />
+            ) : (
+              <SidebarCollapseIcon size="sm" />
+            )}
+          </button>
+        </div>
+      )}
     </aside>
   )
 }

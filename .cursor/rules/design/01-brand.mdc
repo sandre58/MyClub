@@ -16,7 +16,8 @@ alwaysApply: false
   shows through) + `/brand/accueil-wordmark-on-chrome.png` (`Play` recolored
   to `--color-on-chrome`, `'Up` unchanged). Used in the rail via
   `PlayUpLockupMark` + `PlayUpWordmark surface="chrome"`. Collapsed rail =
-  mark only.
+  mark only. Phone: same lockup at the top of the overlay (above Pilotage),
+  visible only when the menu is open.
 - **Chrome / favicon monogram** — `PlayUpMark` SVG for favicon, Lab optical
   sizes, and the typed wordmark proof. Geometry: `brand/monogram-geometry.ts`.
 - **Typed wordmark** — `PlayUpWordmark surface="typed"`: Plex bold, 12° skew,

@@ -23,6 +23,8 @@
     );
     --shell-lockup-mark-height: 2.5rem;
     --shell-lockup-wordmark-height: 1.875rem;
+    --shell-header-min-height-phone: 3.5rem;
+    --shell-phone-chrome-end: var(--shell-header-min-height-phone);
 }
 
 /* --- Rail ---------------------------------------------------------------- */
@@ -44,6 +46,17 @@
 .ds-shell-rail[data-collapsed='true'] {
     width: var(--shell-rail-width-collapsed);
     min-width: var(--shell-rail-width-collapsed);
+}
+
+/* First paint after a viewport change must snap. Width/label tweens stay
+   for in-viewport expand/collapse once data-nav-ready is true. */
+[data-nav-ready='false'] .ds-shell-rail,
+[data-nav-ready='false'] .ds-shell-rail__brand,
+[data-nav-ready='false'] .ds-shell-rail__wordmark,
+[data-nav-ready='false'] .ds-shell-rail__label,
+[data-nav-ready='false'] .ds-shell-rail__link,
+[data-nav-ready='false'] .ds-shell-rail__group-label {
+    transition: none;
 }
 
 .ds-shell-rail a {
@@ -352,4 +365,94 @@
 .ds-shell-workspace {
     background: var(--color-canvas);
     border-start-start-radius: var(--shell-workspace-radius);
+}
+
+/* --- Viewport: tablet is collapsed-in-flow; phone is overlay rail -------- */
+
+[data-shell-vp='phone'] .ds-shell-header {
+    position: relative;
+    z-index: 6;
+    flex-wrap: nowrap;
+    min-height: var(--shell-header-min-height-phone);
+    padding: max(var(--space-8), env(safe-area-inset-top, 0px))
+        max(var(--space-12), env(safe-area-inset-right, 0px))
+        var(--space-8)
+        max(var(--space-12), env(safe-area-inset-left, 0px));
+}
+
+[data-shell-vp='phone'] .ds-shell-header__nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+[data-shell-vp='phone'] .ds-shell-header__period,
+[data-shell-vp='phone'] .shell-header__period,
+[data-shell-vp='phone'] .shell-header__meta-separator {
+    display: none;
+}
+
+[data-shell-vp='phone'] .ds-shell-workspace {
+    /* No encastrement corner: the rail is gone, the workspace is flush under the bar. */
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
+}
+
+[data-shell-vp='phone'] .ds-shell-rail {
+    position: absolute;
+    inset-block-start: var(--shell-phone-chrome-end);
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    z-index: 5;
+    width: var(--shell-rail-width-expanded);
+    min-width: var(--shell-rail-width-expanded);
+    transform: translateX(-100%);
+    pointer-events: none;
+    /* Snap off-screen when entering phone from a collapsed rail. Transform
+       motion is enabled only after data-nav-ready (overlay open/close). */
+    transition: none;
+}
+
+[data-shell-vp='phone'] .ds-shell-rail__brand {
+    min-height: var(--shell-header-min-height-phone);
+}
+
+[data-shell-vp='phone'][data-nav-ready='true'] .ds-shell-rail {
+    transition: transform var(--motion-duration) var(--motion-easing);
+}
+
+[data-shell-vp='phone'] .ds-shell-rail__brand,
+[data-shell-vp='phone'] .ds-shell-rail__wordmark,
+[data-shell-vp='phone'] .ds-shell-rail__label,
+[data-shell-vp='phone'] .ds-shell-rail__link,
+[data-shell-vp='phone'] .ds-shell-rail__group-label {
+    transition: none;
+}
+
+[data-shell-vp='phone'][data-nav-open='true'] .ds-shell-rail {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+[data-shell-vp='phone'] .ds-shell-rail__collapse,
+[data-shell-vp='phone'] .ds-shell-rail__footer {
+    display: none;
+}
+
+.shell-nav-backdrop {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    inset-block-start: var(--shell-phone-chrome-end);
+    z-index: 4;
+    display: block;
+    border: 0;
+    padding: 0;
+    background: color-mix(in srgb, var(--color-ink) 28%, transparent);
+    cursor: default;
+}
+
+.shell-nav-backdrop[hidden] {
+    display: none;
 }

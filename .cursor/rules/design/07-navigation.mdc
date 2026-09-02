@@ -26,7 +26,16 @@ alwaysApply: false
 - **Header** (on chrome, aligned with the workspace column): `TeamCrest` `lg`
   (no white plate — same Accueil crest grammar) + name (`--text-heading`) +
   Accueil status badge (`soft`, `compact`) + dates · À traiter bell + badge. No swap, no
-  wordmark, no profile. Mark → Accueil.
+  profile. Mark → Accueil (rail; phone overlay only).
+- **Responsive chrome** (2026-09-02): `data-shell-vp` from matchMedia.
+  Desktop `64rem+` = user expand/collapse (`localStorage`). Tablet `48–64rem` =
+  icon rail in-flow (session expand allowed, does not overwrite desktop
+  preference).   Phone `<48rem` = same rail as overlay from start, below the header (not
+  under it). Accueil lockup stays at the top of that overlay (above Pilotage),
+  visible only when the menu is open — header is competition context + menu +
+  bell. Menu uses existing expand/close glyphs, crest `md`, dates hidden,
+  no in-rail chevron, no workspace start-start radius. Viewport changes snap
+  (`data-nav-ready`); in-viewport expand still animates. No bottom tab bar.
 - Classes: `ds-shell-rail`, `ds-shell-header`, `ds-shell-workspace` in
   `foundations/shell.css`.
 - Nav icons: `design-system/icons/shellIcons.tsx`.

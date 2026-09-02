@@ -59,12 +59,21 @@
 }
 
 .shell__column {
+    position: relative;
     display: flex;
     flex: 1;
     flex-direction: column;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+}
+
+.shell__workspace {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
 }
 
 /* ---------------------------------------------------------------- main viewport */
@@ -77,6 +86,11 @@
     overflow: auto;
     background: var(--color-canvas);
     border-start-start-radius: var(--shell-workspace-radius);
+}
+
+.shell[data-shell-vp='phone'] .shell-main {
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
 }
 
 .shell-main > main,
