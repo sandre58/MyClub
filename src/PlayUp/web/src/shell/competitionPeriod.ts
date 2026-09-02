@@ -21,7 +21,7 @@ export function formatCompetitionPeriod(
 
 /**
  * Declared schedule (ScheduledStart / ScheduledEnd) for Accueil rows.
- * Distinct from Cockpit operational min/max kickoff.
+ * Distinct from Overview operational min/max kickoff.
  */
 export type DeclaredSchedule =
   | { kind: 'both'; start: string; end: string }

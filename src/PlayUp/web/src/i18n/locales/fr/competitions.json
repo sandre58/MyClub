@@ -1,14 +1,10 @@
 {
-  "eyebrow": "Compétitions",
-  "title": "Liste des compétitions",
   "listLabel": "Compétitions",
   "schedule": {
     "both": "{{start}} → {{end}}",
     "from": "À partir du {{date}}",
     "until": "Jusqu’au {{date}}"
   },
-  "lede_one": "{{count}} compétition sur cet hôte.",
-  "lede_other": "{{count}} compétitions sur cet hôte.",
   "emptyHint": "Un nom suffit. Vous configurerez équipes et format ensuite.",
   "create": {
     "cta": "Créer une compétition",
@@ -18,21 +14,5 @@
     "namePlaceholder": "Ex. Tournoi printemps",
     "submit": "Créer",
     "submitting": "Création…"
-  },
-  "overview": {
-    "eyebrow": "Compétition",
-    "title": "Phases & inscrits",
-    "back": "Retour à l’espace de travail",
-    "stagesHeading": "Phases",
-    "stagesSubtitle_one": "{{count}} phase",
-    "stagesSubtitle_other": "{{count}} phases",
-    "stagesEmptyTitle": "Aucune phase dans cette compétition",
-    "stagesEmptyBody": "Configurez la structure depuis le hub Organisation pour en créer une.",
-    "entriesHeading": "Inscrits",
-    "entriesSubtitle_one": "{{count}} inscrit",
-    "entriesSubtitle_other": "{{count}} inscrits",
-    "entriesEmptyTitle": "Aucune inscription",
-    "entriesEmptyBody": "Ajoutez des participants depuis le hub Organisation.",
-    "caption": "Compétition"
   }
 }

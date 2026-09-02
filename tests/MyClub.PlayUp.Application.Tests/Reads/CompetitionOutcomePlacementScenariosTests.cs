@@ -48,7 +48,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         FinishAllPlacementFixtures(scenario, homeAlwaysWins: true);
         CompleteCompetition(scenario);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             scenario.Competition,
             [scenario.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [scenario.Stage.Id] = scenario.Matches });
@@ -64,7 +64,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             view.CompetitionOutcome.Places[rank - 1].EntryId.Should().Be(scenario.Entries[rank - 1].Value);
         }
 
-        // Same truth via pure resolver (no Cockpit lifecycle gate).
+        // Same truth via pure resolver (no Overview lifecycle gate).
         var resolved = ResolvePlacementAwards.Execute(
             [scenario.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [scenario.Stage.Id] = scenario.Matches });
@@ -99,7 +99,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         FinishAllPlacementFixtures(scenario, homeAlwaysWins: true);
         CompleteCompetition(scenario);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             scenario.Competition,
             [scenario.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [scenario.Stage.Id] = scenario.Matches });
@@ -143,7 +143,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             [scenario.Stage.Id] = scenario.Matches
         };
 
-        var partial = CockpitAssembler.Assemble(scenario.Competition, [scenario.Stage], matchesByStage);
+        var partial = OverviewAssembler.Assemble(scenario.Competition, [scenario.Stage], matchesByStage);
         partial.CompetitionOutcome.Should().NotBeNull();
         partial.CompetitionOutcome!.Places.Select(p => p.Rank).Should().Equal(1, 2);
         partial.CompetitionOutcome.Places.Should().NotContain(p => p.Rank >= 3);
@@ -151,7 +151,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         FinishAttachedMatch(scenario, fixtureIndex: 1, homeWins: true);
         matchesByStage[scenario.Stage.Id] = scenario.Matches;
 
-        var afterBronze = CockpitAssembler.Assemble(scenario.Competition, [scenario.Stage], matchesByStage);
+        var afterBronze = OverviewAssembler.Assemble(scenario.Competition, [scenario.Stage], matchesByStage);
         afterBronze.CompetitionOutcome!.Places.Select(p => p.Rank).Should().Equal(1, 2, 3, 4);
         afterBronze.CompetitionOutcome.Places.Should().NotContain(p => p.Rank >= 5);
 
@@ -159,7 +159,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         FinishAttachedMatch(scenario, fixtureIndex: 3, homeWins: true);
         matchesByStage[scenario.Stage.Id] = scenario.Matches;
 
-        var full = CockpitAssembler.Assemble(scenario.Competition, [scenario.Stage], matchesByStage);
+        var full = OverviewAssembler.Assemble(scenario.Competition, [scenario.Stage], matchesByStage);
         full.CompetitionOutcome!.Places.Select(p => p.Rank).Should().Equal(1, 2, 3, 4, 5, 6, 7, 8);
     }
 

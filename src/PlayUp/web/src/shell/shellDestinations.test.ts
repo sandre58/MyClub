@@ -8,7 +8,7 @@ const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 describe('shellDestinationHrefs', () => {
   it('routes competition-scoped links to the list when context is absent', () => {
     expect(shellDestinationHrefs({})).toEqual({
-      cockpit: '/',
+      overview: '/',
       organisation: '/',
       matches: '/',
       classements: '/',
@@ -17,7 +17,7 @@ describe('shellDestinationHrefs', () => {
 
   it('uses resolved competition routes when context is known', () => {
     expect(shellDestinationHrefs({ competitionId })).toEqual({
-      cockpit: `/competitions/${competitionId}`,
+      overview: `/competitions/${competitionId}`,
       organisation: `/competitions/${competitionId}/organisation`,
       matches: `/competitions/${competitionId}/matches`,
       classements: `/competitions/${competitionId}/classements`,
@@ -26,7 +26,7 @@ describe('shellDestinationHrefs', () => {
 
   it('keeps stage deep-link fallbacks while competition resolves', () => {
     expect(shellDestinationHrefs({ stageId })).toEqual({
-      cockpit: '/',
+      overview: '/',
       organisation: '/',
       matches: `/stages/${stageId}/matches`,
       classements: '/',
@@ -35,7 +35,7 @@ describe('shellDestinationHrefs', () => {
 
   it('keeps match deep-link fallbacks while competition resolves', () => {
     expect(shellDestinationHrefs({ matchId })).toEqual({
-      cockpit: '/',
+      overview: '/',
       organisation: '/',
       matches: `/matches/${matchId}`,
       classements: '/',
@@ -44,11 +44,11 @@ describe('shellDestinationHrefs', () => {
 })
 
 describe('resolveActiveDestination', () => {
-  it('maps workspace and list routes to Cockpit', () => {
-    expect(resolveActiveDestination('/')).toBe('cockpit')
-    expect(resolveActiveDestination('/competitions')).toBe('cockpit')
+  it("maps workspace and list routes to Vue d'ensemble", () => {
+    expect(resolveActiveDestination('/')).toBe('overview')
+    expect(resolveActiveDestination('/competitions')).toBe('overview')
     expect(resolveActiveDestination(`/competitions/${competitionId}`)).toBe(
-      'cockpit',
+      'overview',
     )
   })
 

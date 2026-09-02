@@ -4,7 +4,7 @@ import { CycleLine } from './CycleLine'
 
 const DEFAULT_CYCLE_STEPS = ['Préparation', 'Calendrier', 'En cours', 'Terminée']
 
-export function CockpitSituation({
+export function OverviewReading({
   title,
   reading,
   label,
@@ -18,12 +18,12 @@ export function CockpitSituation({
   id?: string
 }) {
   return (
-    <section className="ds-panel ds-cockpit-situation" aria-labelledby={id}>
+    <section className="ds-panel ds-overview-situation" aria-labelledby={id}>
       <PanelHead id={id} title={title} />
-      <div className="ds-cockpit-situation__reading">{reading}</div>
+      <div className="ds-overview-situation__reading">{reading}</div>
       {label != null ? (
         typeof label === 'string' ? (
-          <p className="ds-cockpit-situation__label">{label}</p>
+          <p className="ds-overview-situation__label">{label}</p>
         ) : (
           label
         )
@@ -39,7 +39,7 @@ export function CockpitSituation({
   )
 }
 
-export function CockpitSituationNum({
+export function OverviewReadingNum({
   children,
   suffix,
 }: {
@@ -47,7 +47,7 @@ export function CockpitSituationNum({
   suffix?: ReactNode
 }) {
   return (
-    <span className="ds-cockpit-situation__num ds-num">
+    <span className="ds-overview-situation__num ds-num">
       {children}
       {suffix != null ? <small>{suffix}</small> : null}
     </span>

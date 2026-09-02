@@ -1,5 +1,5 @@
 ---
-description: Play'Up brand elements — monogram, wordmark, arrow, angle, gradient
+description: Play'Up brand elements — lockup PNG, wordmark, arrow, angle, gradient
 globs: src/PlayUp/web/**
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Elements
 
-- **Accueil lockup** — raster cropped from mockup v3 (`/brand/accueil-mark.png`
+- **Accueil lockup** — rasters cropped from mockup v3 (`/brand/accueil-mark.png`
   + `/brand/accueil-wordmark.png`). SVG cannot match the fused P+arrow+U and
   the U-stem italic wordmark at Accueil size. Tagline stays HTML (i18n):
   « Organiser. Compétiter. Progresser. »
@@ -18,35 +18,31 @@ alwaysApply: false
   `PlayUpLockupMark` + `PlayUpWordmark surface="chrome"`. Collapsed rail =
   mark only. Phone: same lockup at the top of the overlay (above Pilotage),
   visible only when the menu is open.
-- **Chrome / favicon monogram** — `PlayUpMark` SVG for favicon, Lab optical
-  sizes, and the typed wordmark proof. Geometry: `brand/monogram-geometry.ts`.
-- **Typed wordmark** — `PlayUpWordmark surface="typed"`: Plex bold, 12° skew,
-  `'Up` + arrow. Lab angle compare only — not product chrome.
-- **Arrow / "Up"** — lockup U-stem, typed wordmark, trends. **Not** the rail
-  current bar (straight 3px, Shell A).
+- **Favicon** — same mark PNG (`/brand/accueil-mark.png`). No SVG monogram.
+- **Wordmark** — `PlayUpWordmark` surfaces `home` and `chrome` only (PNG).
+- **Arrow / "Up"** — lockup U-stem and `TrendIcon`. **Not** the rail current
+  bar (straight 3px, Shell A).
 
 ## Angle system — **12° (arbitrated 2026-09-01)**
 
-One angle everywhere it belongs: monogram, wordmark, trends.
+12° remains for `TrendIcon` and `--brand-skew` only.
 **Not** the rail current indicator (straight bar, Shell A 2026-09-02).
-Exposed as `--dlab-skew: -12deg` (lab) / `--brand-skew` in design-system.
+**Not** a logo / wordmark skew — lockups are rasters.
 
-Rationale: 12° survives better at small sizes (16–24px rail, trends) and reads
-as a coherent system; 9° was theoretically subtler but barely perceptible in
-small UI occurrences. Proof: Design Lab → **Arbitrage 9°/12°**.
-
-`PlayUpMark` accepts `leanDeg?: 9 | 12` for the arbitration view only; product
-code always uses the default **12**.
+Rationale: 12° survives better at small sizes (trends) and reads as a coherent
+system. The Lab arbitration view (9° vs 12° on a typed wordmark) was retired
+once the PNG lockup became SoT.
 
 ## Gradient
 
-Allowed: Accueil lockup mark, Accueil `'Up` wordmark, Home atmosphere, chrome
-monogram ≥ 24px. Never on buttons, body text, borders, badges, panels, or
-page titles.
+Allowed: Accueil lockup mark, Accueil `'Up` wordmark, Home atmosphere.
+Never on buttons, body text, borders, badges, panels, page titles, or favicon
+treatment beyond the mark raster itself.
 
 ## Forbidden
 
-- Gradient on UI chrome/controls; monogram as watermark; skewing tables/forms/panels.
+- Gradient on UI chrome/controls; mark as watermark; skewing tables/forms/panels.
 - Brand blue as a status color.
 - Italic wordmark as live type in chrome (rail uses the Accueil raster, not
   a skewed Plex span).
+- A second logo pipeline (SVG monogram, typed wordmark, `leanDeg`).

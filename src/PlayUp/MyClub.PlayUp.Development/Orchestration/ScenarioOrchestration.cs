@@ -376,7 +376,7 @@ internal static class ScenarioOrchestration
 
     /// <summary>
     /// Multi-stage Cup demo: QF played + progression fills SF slots; does <strong>not</strong>
-    /// call materialize-from-slots (Cockpit / Stage UI owns that step).
+    /// call materialize-from-slots (Overview / Stage UI owns that step).
     /// </summary>
     public static async Task BuildCupQfSfAsync(
         ScenarioContext context,
@@ -771,7 +771,7 @@ internal static class ScenarioOrchestration
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item><c>prepared</c> — Running, 0 rounds (Cockpit ready for GenerateNextRound).</item>
+    /// <item><c>prepared</c> — Running, 0 rounds (Overview ready for GenerateNextRound).</item>
     /// <item><c>running</c> — round 1 finished + round 2 generated, half played (awaiting results).</item>
     /// <item><c>finished</c> — all planned rounds generated and finished; competition Completed.</item>
     /// </list>

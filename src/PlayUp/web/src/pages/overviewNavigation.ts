@@ -1,10 +1,10 @@
-import type { CockpitNavigationHint, CockpitSituation } from '../types'
+import type { OverviewNavigationHint, OverviewSituation } from '../types'
 
 /**
- * Resolve a Cockpit navigationHint / situation target to an existing SPA route.
+ * Resolve an Overview navigationHint / situation target to an existing SPA route.
  * Uses Host-provided matchId when present — no Fixture → Match join in React.
  */
-export function cockpitTargetHref(target: {
+export function overviewTargetHref(target: {
   targetType: string | null | undefined
   targetId: string | null | undefined
   matchId?: string | null
@@ -50,11 +50,11 @@ export function cockpitTargetHref(target: {
 }
 
 export function situationHref(
-  situation: CockpitSituation,
+  situation: OverviewSituation,
   competitionId: string,
 ): string | null {
   return (
-    cockpitTargetHref({
+    overviewTargetHref({
       targetType: situation.targetType,
       targetId: situation.targetId,
       matchId: situation.matchId,
@@ -66,6 +66,6 @@ export function situationHref(
   )
 }
 
-export function navigationHintHref(hint: CockpitNavigationHint): string | null {
-  return cockpitTargetHref(hint)
+export function navigationHintHref(hint: OverviewNavigationHint): string | null {
+  return overviewTargetHref(hint)
 }

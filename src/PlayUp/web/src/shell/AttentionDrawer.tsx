@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { fetchCompetitionCockpit } from '../api'
+import { fetchCompetitionOverview } from '../api'
 import {
   AttentionMarkIcon,
   ChevronRightIcon,
@@ -10,10 +10,10 @@ import {
 } from '../design-system/icons/shellIcons'
 import { Status } from '../design-system/components/Status'
 import { queryKeys } from '../queryKeys'
-import type { CockpitSituation } from '../types'
+import type { OverviewSituation } from '../types'
 import { situationTitle } from '../i18n/situationCopy'
 import { attentionTargetTypeLabel } from '../i18n/enumLabels'
-import { situationHref } from '../pages/cockpitNavigation'
+import { situationHref } from '../pages/overviewNavigation'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 import { SHELL_MOTION_EXIT_MS } from './shellMotion'
 
@@ -26,7 +26,7 @@ type AttentionDrawerProps = {
 
 /**
  * Temporary triage surface (14.6.4) — not navigation, not a generic drawer primitive.
- * Phase 16.2: consumes Cockpit attentionSummary (same métier source as the Cockpit page).
+ * Phase 16.2: consumes Overview attentionSummary (same métier source as the Overview page).
  */
 export function AttentionDrawer({
   open,
@@ -44,16 +44,16 @@ export function AttentionDrawer({
 
   const { competitionId, state: contextState } = useShellCompetitionContext()
 
-  const cockpitQuery = useQuery({
-    queryKey: queryKeys.competitions.cockpit(competitionId ?? ''),
-    queryFn: () => fetchCompetitionCockpit(competitionId!),
+  const overviewQuery = useQuery({
+    queryKey: queryKeys.competitions.overview(competitionId ?? ''),
+    queryFn: () => fetchCompetitionOverview(competitionId!),
     enabled: (open || mounted) && Boolean(competitionId),
   })
 
-  const items = cockpitQuery.data?.attentionSummary.items ?? []
-  const count = cockpitQuery.data?.attentionSummary.count ?? items.length
+  const items = overviewQuery.data?.attentionSummary.items ?? []
+  const count = overviewQuery.data?.attentionSummary.count ?? items.length
   const titleLabel = t('shell:attention.label')
-  const showCount = !cockpitQuery.isPending && count > 0
+  const showCount = !overviewQuery.isPending && count > 0
 
   useEffect(() => {
     if (open) {
@@ -162,8 +162,8 @@ export function AttentionDrawer({
           <AttentionDrawerContent
             contextState={contextState}
             competitionId={competitionId}
-            pending={Boolean(competitionId) && cockpitQuery.isPending}
-            error={cockpitQuery.error}
+            pending={Boolean(competitionId) && overviewQuery.isPending}
+            error={overviewQuery.error}
             items={items}
             onNavigate={onClose}
           />
@@ -185,7 +185,7 @@ function AttentionDrawerContent({
   competitionId?: string
   pending: boolean
   error: unknown
-  items: CockpitSituation[]
+  items: OverviewSituation[]
   onNavigate: () => void
 }) {
   const { t } = useTranslation('shell')
@@ -262,15 +262,15 @@ function AttentionDrawerItem({
   competitionId,
   onNavigate,
 }: {
-  item: CockpitSituation
+  item: OverviewSituation
   competitionId: string
   onNavigate: () => void
 }) {
-  const { t } = useTranslation(['shell', 'cockpit'])
+  const { t } = useTranslation(['shell', 'overview'])
   const href = situationHref(item, competitionId)
   const isBlocking = item.nature === 'Blocking'
   const natureTone = isBlocking ? 'error' : 'info'
-  const natureLabel = t(`cockpit:nature.${item.nature}`, {
+  const natureLabel = t(`overview:nature.${item.nature}`, {
     defaultValue: item.nature,
   })
   const targetLabel = item.targetType

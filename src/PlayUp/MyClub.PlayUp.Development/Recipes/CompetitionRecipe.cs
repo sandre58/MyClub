@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Development.Recipes;
 
 /// <summary>
-/// Declares competition structure only (not business state, scores, or Cockpit actions).
+/// Declares competition structure only (not business state, scores, or Overview actions).
 /// </summary>
 public sealed record CompetitionRecipe
 {

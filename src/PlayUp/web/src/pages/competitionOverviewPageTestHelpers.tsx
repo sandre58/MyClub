@@ -3,20 +3,20 @@ import { render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { expect, vi } from 'vitest'
 import { fetchOrganisationView } from '../api'
-import { CompetitionCockpitPage } from './CompetitionCockpitPage'
+import { CompetitionOverviewPage } from './CompetitionOverviewPage'
 import {
-  cockpitIds,
-  cockpitSituation,
-  cockpitView,
+  overviewIds,
+  overviewSituation,
+  overviewView,
   referenceStageGameRules,
-} from '../test/cockpitFixtures'
-import type { CockpitView, OrganisationView } from '../types'
+} from '../test/overviewFixtures'
+import type { OverviewView, OrganisationView } from '../types'
 
-export { cockpitIds, cockpitSituation, cockpitView, referenceStageGameRules }
+export { overviewIds, overviewSituation, overviewView, referenceStageGameRules }
 
-export const { competitionId, stageId } = cockpitIds
+export const { competitionId, stageId } = overviewIds
 
-export function renderCockpitPage() {
+export function renderOverviewPage() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -30,7 +30,7 @@ export function renderCockpitPage() {
         <Routes>
           <Route
             path="/competitions/:competitionId"
-            element={<CompetitionCockpitPage />}
+            element={<CompetitionOverviewPage />}
           />
           <Route
             path="/competitions/:competitionId/organisation"
@@ -44,10 +44,6 @@ export function renderCockpitPage() {
             path="/competitions/:competitionId/classements"
             element={<p>Classements route</p>}
           />
-          <Route
-            path="/competitions/:competitionId/overview"
-            element={<p>Overview route</p>}
-          />
           <Route path="/stages/:stageId" element={<p>Stage route</p>} />
           <Route path="/matches/:matchId" element={<p>Match route</p>} />
           <Route path="/competitions" element={<p>List route</p>} />
@@ -57,12 +53,12 @@ export function renderCockpitPage() {
   )
 }
 
-export function inProgressLayoutBase(overrides: Partial<CockpitView> = {}): CockpitView {
-  return cockpitView({
+export function inProgressLayoutBase(overrides: Partial<OverviewView> = {}): OverviewView {
+  return overviewView({
     status: 'Running',
     cycleReading: { code: 'InProgress' },
     constructionDimensions: {
-      ...cockpitView().constructionDimensions,
+      ...overviewView().constructionDimensions,
       teams: {
         prominence: 'Condensed',
         facts: { activeCount: '4', minimumTeams: '2', maximumTeams: '64' },
@@ -78,7 +74,7 @@ export function inProgressLayoutBase(overrides: Partial<CockpitView> = {}): Cock
         },
       },
       regulation: {
-        ...cockpitView().constructionDimensions.regulation,
+        ...overviewView().constructionDimensions.regulation,
         prominence: 'Condensed',
       },
       matches: {
@@ -87,7 +83,7 @@ export function inProgressLayoutBase(overrides: Partial<CockpitView> = {}): Cock
       },
     },
     operationalFocus: {
-      ...cockpitView().operationalFocus,
+      ...overviewView().operationalFocus,
       referenceStageGameRules: referenceStageGameRules(),
     },
     naturalProgression: null,

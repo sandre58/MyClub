@@ -6,7 +6,7 @@ Do **not** big-bang migrate all pages. Apply this list when a product task alrea
 
 ## Checklist
 
-1. **Strings** — every new or touched user-facing string goes through `useTranslation` / `t()` (`common`, `shell`, `enums`, `actions`, `workspace`, `matches`, `draw`, `cockpit`, `organisation`, `stage`, `home`, `competitions`, `errors`). Prefer **wire codes → i18n** (`source`, `nextActionCode`, `blockers`, ProblemDetails `code`). See [i18n.md](./i18n.md).
+1. **Strings** — every new or touched user-facing string goes through `useTranslation` / `t()` (`common`, `shell`, `enums`, `actions`, `matches`, `draw`, `overview`, `organisation`, `stage`, `home`, `competitions`, `errors`). Prefer **wire codes → i18n** (`source`, `nextActionCode`, `blockers`, ProblemDetails `code`). See [i18n.md](./i18n.md).
 2. **Visual** — replace 13.5 classes (`.btn`, `.card`, `.page`, …) with Design System foundations (`.ds-btn`, `.ds-group`, `.ds-heading`, …) under `.ds-root` (already provided by the Shell).
 3. **Layout** — prefer `.shell-page` (narrow) or reuse foundations; co-locate `PageName.css` only for page-specific rules that cannot live in foundations.
 4. **Data** — use `queryKeys` from `src/queryKeys.ts` for all `useQuery` / `invalidateQueries` keys.

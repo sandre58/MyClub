@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   applyDraw,
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchStageOverview,
   materializeCupFromOccupiedSlots,
   prepareStage,
@@ -26,7 +26,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchStageOverview: vi.fn(),
-    fetchCompetitionOverview: vi.fn(),
+    fetchCompetitionDetail: vi.fn(),
     prepareStage: vi.fn(),
     startStage: vi.fn(),
     publishDraw: vi.fn(),
@@ -211,7 +211,7 @@ describe('getDrawUiProjection', () => {
 describe('StagePage prepare', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
       status: 'Draft',
@@ -333,7 +333,7 @@ describe('StagePage prepare', () => {
 describe('StagePage start', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
       status: 'Draft',
@@ -463,7 +463,7 @@ describe('StagePage start', () => {
 describe('StagePage draws', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
       status: 'Draft',

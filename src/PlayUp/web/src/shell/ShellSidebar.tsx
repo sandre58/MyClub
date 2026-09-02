@@ -33,7 +33,7 @@ const navIcons: Record<
   ShellNavItemKey,
   ComponentType<SVGProps<SVGSVGElement>>
 > = {
-  cockpit: OverviewNavIcon,
+  overview: OverviewNavIcon,
   organisation: OrganisationNavIcon,
   matches: MatchesNavIcon,
   classements: ClassementsNavIcon,
@@ -67,7 +67,7 @@ export function ShellSidebar({
       inert={inert || undefined}
     >
       <Link
-        className="ds-shell-rail__brand shell-sidebar__brand"
+        className="ds-shell-rail__brand"
         to="/"
         aria-label={t('sidebar.home')}
       >

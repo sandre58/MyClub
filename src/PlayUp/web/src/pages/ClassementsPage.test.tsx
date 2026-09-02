@@ -182,7 +182,7 @@ function renderClassementsPage() {
           />
           <Route
             path="/competitions/:competitionId"
-            element={<p>Cockpit route</p>}
+            element={<p>Vue d'ensemble route</p>}
           />
           <Route
             path="/competitions/:competitionId/organisation"

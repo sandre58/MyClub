@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cockpitSituation, cockpitView } from '../test/cockpitFixtures'
+import { overviewSituation, overviewView } from '../test/overviewFixtures'
 import {
   actionPresentationSlot,
   actionsForDraw,
@@ -8,10 +8,10 @@ import {
   primaryTeamActions,
   secondaryActions,
   sortConstructionSlots,
-} from './cockpitComposition'
-import { cockpitActionKey } from './cockpitActions'
+} from './overviewComposition'
+import { overviewActionKey } from './overviewActions'
 
-describe('cockpitComposition', () => {
+describe('overviewComposition', () => {
   it('hides Absent prominence', () => {
     expect(isProminenceVisible('Absent')).toBe(false)
     expect(isProminenceVisible('Dominant')).toBe(true)
@@ -19,13 +19,13 @@ describe('cockpitComposition', () => {
 
   it('orders construction slots by prominence without Absent', () => {
     const slots = sortConstructionSlots(
-      cockpitView({
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           teams: { prominence: 'Present', facts: { activeCount: '1' } },
           structure: { prominence: 'Dominant', facts: { formatKind: 'None' } },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           matches: { prominence: 'Absent', facts: { total: '0' } },
@@ -51,13 +51,13 @@ describe('cockpitComposition', () => {
       { code: 'RenameEntry', guaranteed: false },
       { code: 'MaterializeMatches', guaranteed: false },
     ]
-    const rendered = new Set([cockpitActionKey(actions[0])])
+    const rendered = new Set([overviewActionKey(actions[0])])
     expect(secondaryActions(actions, rendered).map((a) => a.code)).toEqual([
       'MaterializeMatches',
     ])
   })
 
-  it('keeps only AddEntry as primary team cockpit action', () => {
+  it('keeps only AddEntry as primary team overview action', () => {
     expect(
       primaryTeamActions([
         { code: 'AddEntry', guaranteed: false },
@@ -84,8 +84,8 @@ describe('cockpitComposition', () => {
   })
 
   it('does not treat attentionSummary as a separate situation source', () => {
-    const situation = cockpitSituation()
-    const view = cockpitView({
+    const situation = overviewSituation()
+    const view = overviewView({
       situations: [situation],
       attentionSummary: { count: 1, items: [situation] },
     })

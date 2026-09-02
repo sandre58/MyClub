@@ -20,9 +20,7 @@ import {
 import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
 import { TeamCrest } from '../design-system/TeamCrest'
-import { LabAngleCompare } from './LabAngleCompare'
-import { LabBrand } from './LabBrand'
-import { LabCockpit } from './LabCockpit'
+import { LabOverview } from './LabOverview'
 import { LabHome } from './LabHome'
 import { LabMatches } from './LabMatches'
 import { LabMatchSheet } from './LabMatchSheet'
@@ -34,12 +32,10 @@ type LabChromeVp = 'desktop' | 'tablet' | 'phone'
 type LabView =
   | 'home'
   | 'home-empty'
-  | 'cockpit'
+  | 'overview'
   | 'matches'
   | 'match'
   | 'standings'
-  | 'angle'
-  | 'brand'
 
 /**
  * /design-lab — prototype de la direction « Grille de compétition, exécutée ».
@@ -49,10 +45,9 @@ type LabView =
  * (surface + état du cycle) ; tout le reste est le produit proposé.
  */
 export function DesignLabPage() {
-  const [view, setView] = useState<LabView>('cockpit')
+  const [view, setView] = useState<LabView>('overview')
   const [lifecycle, setLifecycle] = useState<LabLifecycle>('live')
   const [railCollapsed, setRailCollapsed] = useState(false)
-  const [workspaceRadius, setWorkspaceRadius] = useState<12 | 16 | 24>(12)
   const [chromeVp, setChromeVp] = useState<LabChromeVp>('desktop')
   const [phoneNavOpen, setPhoneNavOpen] = useState(false)
   const [motionViewport, setMotionViewport] = useState(chromeVp)
@@ -122,12 +117,10 @@ export function DesignLabPage() {
         view={view}
         lifecycle={lifecycle}
         railCollapsed={railCollapsed}
-        workspaceRadius={workspaceRadius}
         chromeVp={chromeVp}
         onView={setView}
         onLifecycle={setLifecycle}
         onRailCollapsed={setRailCollapsed}
-        onWorkspaceRadius={setWorkspaceRadius}
         onChromeVp={(next) => {
           setChromeVp(next)
           setPhoneNavOpen(false)
@@ -146,9 +139,6 @@ export function DesignLabPage() {
           data-shell-vp={chromeVp}
           data-nav-open={phoneNavOpen ? 'true' : 'false'}
           data-nav-ready={navReady ? 'true' : 'false'}
-          style={{
-            ['--shell-workspace-radius' as string]: `${workspaceRadius}px`,
-          }}
         >
           <LabRail
             view={view}
@@ -177,12 +167,10 @@ export function DesignLabPage() {
               />
             ) : null}
             <main className="dlab-main ds-shell-workspace">
-              {view === 'cockpit' && <LabCockpit lifecycle={lifecycle} />}
+              {view === 'overview' && <LabOverview lifecycle={lifecycle} />}
               {view === 'matches' && <LabMatches />}
               {view === 'match' && <LabMatchSheet lifecycle={lifecycle} />}
               {view === 'standings' && <LabStandings />}
-              {view === 'angle' && <LabAngleCompare />}
-              {view === 'brand' && <LabBrand />}
             </main>
           </div>
         </div>
@@ -198,24 +186,16 @@ export function DesignLabPage() {
 const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'home', label: 'Accueil' },
   { key: 'home-empty', label: 'Accueil vide' },
-  { key: 'cockpit', label: "Vue d'ensemble" },
+  { key: 'overview', label: "Vue d'ensemble" },
   { key: 'matches', label: 'Matchs' },
   { key: 'match', label: 'Fiche match' },
   { key: 'standings', label: 'Classements' },
-  { key: 'angle', label: 'Arbitrage 9°/12°' },
-  { key: 'brand', label: 'Marque' },
 ]
 
 const lifecycleOptions: Array<{ key: LabLifecycle; label: string }> = [
   { key: 'preparation', label: 'Préparation' },
   { key: 'live', label: 'En cours' },
   { key: 'done', label: 'Terminée' },
-]
-
-const radiusOptions: Array<{ key: 12 | 16 | 24; label: string }> = [
-  { key: 12, label: '12' },
-  { key: 16, label: '16' },
-  { key: 24, label: '24' },
 ]
 
 const chromeVpOptions: Array<{ key: LabChromeVp; label: string }> = [
@@ -228,23 +208,19 @@ function LabBar({
   view,
   lifecycle,
   railCollapsed,
-  workspaceRadius,
   chromeVp,
   onView,
   onLifecycle,
   onRailCollapsed,
-  onWorkspaceRadius,
   onChromeVp,
 }: {
   view: LabView
   lifecycle: LabLifecycle
   railCollapsed: boolean
-  workspaceRadius: 12 | 16 | 24
   chromeVp: LabChromeVp
   onView: (v: LabView) => void
   onLifecycle: (l: LabLifecycle) => void
   onRailCollapsed: (collapsed: boolean) => void
-  onWorkspaceRadius: (radius: 12 | 16 | 24) => void
   onChromeVp: (vp: LabChromeVp) => void
 }) {
   return (
@@ -311,20 +287,6 @@ function LabBar({
           Replié
         </button>
       </span>
-      <span className="dlab-bar__group">
-        <span className="dlab-bar__group-label">Coin workspace</span>
-        {radiusOptions.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            className="dlab-bar__chip"
-            data-active={workspaceRadius === option.key}
-            onClick={() => onWorkspaceRadius(option.key)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </span>
       <span className="dlab-bar__spacer" />
       <Link to="/">← Quitter le lab</Link>
     </div>
@@ -348,13 +310,13 @@ const labNavGroups: Array<{
   {
     id: 'pilotage',
     label: 'Pilotage',
-    items: [{ key: 'cockpit', label: 'Cockpit', icon: OverviewNavIcon, dest: 'cockpit' }],
+    items: [{ key: 'overview', label: "Vue d'ensemble", icon: OverviewNavIcon, dest: 'overview' }],
   },
   {
     id: 'competition',
     label: 'Compétition',
     items: [
-      { key: 'structure', label: 'Structure', icon: OrganisationNavIcon, dest: 'cockpit' },
+      { key: 'structure', label: 'Structure', icon: OrganisationNavIcon, dest: 'overview' },
       { key: 'matches', label: 'Calendrier & matchs', icon: MatchesNavIcon, dest: 'matches' },
       { key: 'standings', label: 'Classements', icon: ClassementsNavIcon, dest: 'standings' },
     ],

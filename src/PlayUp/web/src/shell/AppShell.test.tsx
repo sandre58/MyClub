@@ -79,10 +79,6 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             path="/competitions/:competitionId/classements"
             element={<p>Classements page</p>}
           />
-          <Route
-            path="/competitions/:competitionId/overview"
-            element={<p>Competition overview page</p>}
-          />
           <Route path="/stages/:stageId" element={<p>Stage page</p>} />
           <Route
             path="/stages/:stageId/matches"
@@ -165,7 +161,7 @@ describe('AppShell', () => {
   it('renders the four live sidebar destinations', () => {
     renderWithShell('/')
 
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Structure' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
@@ -174,7 +170,7 @@ describe('AppShell', () => {
   it('keeps sidebar nav links outside content-link scope', () => {
     renderWithShell('/')
 
-    const navLink = screen.getByRole('link', { name: 'Cockpit' })
+    const navLink = screen.getByRole('link', { name: "Vue d'ensemble" })
     expect(navLink).toHaveClass('ds-shell-rail__link')
     expect(navLink).toHaveAttribute('data-active')
     expect(navLink.closest('.shell-sidebar')).not.toBeNull()
@@ -184,7 +180,7 @@ describe('AppShell', () => {
   it('marks Vue d\'ensemble active for workspace routes', () => {
     renderWithShell('/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -265,7 +261,7 @@ describe('AppShell', () => {
     expect(
       screen.getByRole('button', { name: 'Développer la barre latérale' }),
     ).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
   })
 
   it('maps stage matches deep links to Matchs', () => {
@@ -325,7 +321,7 @@ describe('AppShell', () => {
       screen.queryByRole('button', { name: 'Réduire la barre latérale' }),
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: 'Cockpit' }),
+      screen.queryByRole('link', { name: "Vue d'ensemble" }),
     ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Ouvrir le menu de navigation' }))
@@ -342,7 +338,7 @@ describe('AppShell', () => {
       'src',
       '/brand/accueil-wordmark-on-chrome.png',
     )
-    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Structure' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()

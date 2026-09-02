@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Multi-stage Cup capacity demo: QF finished → SF slots occupied (Cockpit from-slots).
+/// Multi-stage Cup capacity demo: QF finished → SF slots occupied (Overview from-slots).
 /// </summary>
 public sealed class CupQfSfScenario : IScenario
 {
@@ -23,7 +23,7 @@ public sealed class CupQfSfScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "8 teams · QF played · winners in SF slots — materialize-from-slots left for Cockpit/Stage UI.";
+        "8 teams · QF played · winners in SF slots — materialize-from-slots left for Overview/Stage UI.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;

@@ -6,7 +6,6 @@ import {
   type StatusVariant,
 } from '../design-system/components/Status'
 import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
-import { PlayUpMark } from '../design-system/PlayUpMark'
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
 import { TrendIcon } from '../design-system/TrendIcon'
 import { LiveStatus } from '../design-system/components/LiveStatus'
@@ -284,29 +283,18 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
-        <section className="ds-section" aria-labelledby="section-brand">
-          <p className="ds-section__kicker">Marque — monogramme chrome</p>
-          <h2 id="section-brand" className="ds-heading">
-            Play’Up · P + flèche ascendante
+        <section className="ds-section" aria-labelledby="section-brand-chrome">
+          <p className="ds-section__kicker">Marque — lockup chrome</p>
+          <h2 id="section-brand-chrome" className="ds-heading">
+            Play’Up · rail navy
           </h2>
           <p className="ds-body">
-            Le dégradé est la seule exception à la règle « pas de gradient », et
-            il ne sort jamais de la marque. Sous 24 px, la version à plat prend
-            le relais : la réserve de la flèche se bouche sinon.
+            Même mark Accueil (flèche = transparence, le navy transparaît) et
+            wordmark on-chrome. Pas de monogramme SVG.
           </p>
-          <div className="ds-row">
-            <PlayUpMark size={76} variant="gradient" />
-            <PlayUpMark size={48} variant="gradient" />
-            <PlayUpMark size={32} variant="gradient" />
-            <PlayUpMark size={24} variant="brand" />
-            <PlayUpMark size={18} variant="brand" />
-            <PlayUpMark size={16} variant="brand" />
-            <PlayUpMark size={32} variant="ink" />
-          </div>
           <div className="ds-brand-chrome ds-row">
-            <PlayUpMark size={48} variant="on-chrome" />
-            <PlayUpMark size={24} variant="on-chrome" />
-            <PlayUpMark size={16} variant="on-chrome" />
+            <PlayUpLockupMark />
+            <PlayUpWordmark surface="chrome" />
           </div>
           <p className="ds-meta">
             Les réserves sont de vraies transparences : la marque doit tenir sur
@@ -649,16 +637,15 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
-        <section className="ds-section" aria-labelledby="section-brand">
+        <section className="ds-section" aria-labelledby="section-lot1-brand">
           <p className="ds-section__kicker">Lot 1 — Brand</p>
-          <h2 id="section-brand" className="ds-heading">
-            Monogramme · wordmark · angle 12°
+          <h2 id="section-lot1-brand" className="ds-heading">
+            Lockup PNG · tendances 12°
           </h2>
           <div className="ds-row ds-row--align-end">
-            <PlayUpMark size={48} variant="gradient" />
-            <PlayUpMark size={24} variant="brand" />
-            <PlayUpMark size={16} variant="brand" />
-            <PlayUpWordmark surface="typed" />
+            <PlayUpLockupMark />
+            <PlayUpWordmark surface="home" />
+            <PlayUpWordmark surface="chrome" />
           </div>
           <p className="ds-label">Tendances (classement)</p>
           <div className="ds-row">

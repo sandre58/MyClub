@@ -2,8 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
 import { LoadingState } from './ui'
-import { CompetitionCockpitPage } from './pages/CompetitionCockpitPage'
-import { CompetitionPage } from './pages/CompetitionPage'
+import { CompetitionOverviewPage } from './pages/CompetitionOverviewPage'
 import { CompetitionsPage } from './pages/CompetitionsPage'
 import { ClassementsPage } from './pages/ClassementsPage'
 import { HomePage } from './pages/HomePage'
@@ -64,7 +63,7 @@ export default function App() {
       <Route element={<AppLayout />}>
         <Route
           path="/competitions/:competitionId"
-          element={<CompetitionCockpitPage />}
+          element={<CompetitionOverviewPage />}
         />
         <Route
           path="/competitions/:competitionId/organisation/entries/:entryId"
@@ -77,10 +76,6 @@ export default function App() {
         <Route
           path="/competitions/:competitionId/classements"
           element={<ClassementsPage />}
-        />
-        <Route
-          path="/competitions/:competitionId/overview"
-          element={<CompetitionPage />}
         />
         <Route
           path="/competitions/:competitionId/matches"

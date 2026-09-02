@@ -61,16 +61,6 @@ export function PreparationIcon({ size, ...props }: OverviewIconProps) {
   )
 }
 
-/** En cours (play). */
-export function InProgressIcon({ size, ...props }: OverviewIconProps) {
-  return (
-    <Icon size={size} {...props}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="m10 8 6 4-6 4z" />
-    </Icon>
-  )
-}
-
 /**
  * Calendrier sportif — glyphe Matches nav.
  * Used by Préparation / GeneratedCalendar overview panel.

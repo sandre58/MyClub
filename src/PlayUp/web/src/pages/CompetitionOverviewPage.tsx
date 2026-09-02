@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { fetchCompetitionCockpit, fetchOrganisationView } from '../api'
+import { fetchCompetitionOverview, fetchOrganisationView } from '../api'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { AttentionGroup } from '../design-system/components/AttentionGroup'
-import { CockpitNextAction } from '../design-system/components/CockpitNextAction'
-import { CockpitPodium } from '../design-system/components/CockpitPodium'
+import { OverviewNextAction } from '../design-system/components/OverviewNextAction'
+import { OverviewPodium } from '../design-system/components/OverviewPodium'
 import { PanelHead } from '../design-system/components/PanelHead'
 import { Status } from '../design-system/components/Status'
 import {
@@ -24,16 +24,16 @@ import {
 import { situationTitle } from '../i18n/situationCopy'
 import { queryKeys } from '../queryKeys'
 import type {
-  CockpitAction,
-  CockpitCalendarSummary,
-  CockpitDimension,
-  CockpitMatchLine,
-  CockpitReferenceStageGameRules,
-  CockpitSituation,
-  CockpitSportUnit,
-  CockpitStandingCompact,
+  OverviewAction,
+  OverviewCalendarSummary,
+  OverviewDimension,
+  OverviewMatchLine,
+  OverviewReferenceStageGameRules,
+  OverviewSituation,
+  OverviewSportUnit,
+  OverviewStandingCompact,
   CompetitionOutcome,
-  CockpitView,
+  OverviewView,
   OrganisationEntry,
   StructureFormatKind,
 } from '../types'
@@ -44,10 +44,10 @@ import {
   PendingLabel,
 } from '../ui'
 import {
-  cockpitActionKey,
-  resolveCockpitActionIntent,
-} from './cockpitActions'
-import { situationHref } from './cockpitNavigation'
+  overviewActionKey,
+  resolveOverviewActionIntent,
+} from './overviewActions'
+import { situationHref } from './overviewNavigation'
 import {
   actionsForDraw,
   actionsForSlot,
@@ -60,7 +60,7 @@ import {
   secondaryActions,
   sortConstructionSlots,
   stageWideOperationalActions,
-} from './cockpitComposition'
+} from './overviewComposition'
 import './overview.css'
 import {
   NextActionIcon,
@@ -71,15 +71,15 @@ import {
 } from '../design-system/icons/overviewIcons'
 
 /**
- * Competition Cockpit — GET /competitions/{id}/cockpit.
+ * Competition Overview — GET /competitions/{id}/overview.
  * Composes Read facts (prominence, situations, actions); does not recompute métier rules.
  */
-export function CompetitionCockpitPage() {
+export function CompetitionOverviewPage() {
   const { competitionId = '' } = useParams()
 
   const query = useQuery({
-    queryKey: queryKeys.competitions.cockpit(competitionId),
-    queryFn: () => fetchCompetitionCockpit(competitionId),
+    queryKey: queryKeys.competitions.overview(competitionId),
+    queryFn: () => fetchCompetitionOverview(competitionId),
     enabled: competitionId.length > 0,
   })
 
@@ -87,14 +87,14 @@ export function CompetitionCockpitPage() {
     <main id="main" className="page page--overview">
       {query.isPending && !query.data && <LoadingState />}
       {query.isError && !query.data && <ErrorState error={query.error} />}
-      {query.data && <CockpitViewBody data={query.data} />}
+      {query.data && <OverviewViewBody data={query.data} />}
     </main>
   )
 }
 
-function CockpitViewBody({ data }: { data: CockpitView }) {
-  const { t } = useTranslation('cockpit')
-  const actionRunner = useCockpitActionRunner(data)
+function OverviewViewBody({ data }: { data: OverviewView }) {
+  const { t } = useTranslation('overview')
+  const actionRunner = useOverviewActionRunner(data)
 
   const orgQuery = useQuery({
     queryKey: queryKeys.competitions.organisation(data.competitionId),
@@ -115,9 +115,9 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
 
   const renderedKeys = useMemo(() => {
     const keys = new Set<string>()
-    const mark = (actions: CockpitAction[]) => {
+    const mark = (actions: OverviewAction[]) => {
       for (const action of actions) {
-        keys.add(cockpitActionKey(action))
+        keys.add(overviewActionKey(action))
       }
     }
     mark(slotActions('teams'))
@@ -134,14 +134,14 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
     }
     for (const action of data.availableActions) {
       if (isTeamAdminAction(action.code)) {
-        keys.add(cockpitActionKey(action))
+        keys.add(overviewActionKey(action))
       }
     }
     const progression = data.naturalProgression?.code
       ? findActionByCode(data.availableActions, data.naturalProgression.code)
       : undefined
     if (progression) {
-      keys.add(cockpitActionKey(progression))
+      keys.add(overviewActionKey(progression))
     }
     return keys
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from data
@@ -430,7 +430,7 @@ function CockpitViewBody({ data }: { data: CockpitView }) {
   )
 }
 
-type ActionRunner = ReturnType<typeof useCockpitActionRunner>
+type ActionRunner = ReturnType<typeof useOverviewActionRunner>
 
 type MaterializeFollowUp = {
   createdCount: number
@@ -444,7 +444,7 @@ type MaterializeResult = {
   alreadyComplete: boolean
 }
 
-function useCockpitActionRunner(data: CockpitView) {
+function useOverviewActionRunner(data: OverviewView) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeKey, setActiveKey] = useState<string | null>(null)
@@ -452,8 +452,8 @@ function useCockpitActionRunner(data: CockpitView) {
     useState<MaterializeFollowUp | null>(null)
 
   const mutation = useMutation({
-    mutationFn: async (action: CockpitAction) => {
-      const intent = resolveCockpitActionIntent(action, data)
+    mutationFn: async (action: OverviewAction) => {
+      const intent = resolveOverviewActionIntent(action, data)
       if (intent.kind !== 'execute') {
         throw new Error(`Action ${action.code} is not executable here`)
       }
@@ -461,7 +461,7 @@ function useCockpitActionRunner(data: CockpitView) {
     },
     onSuccess: async (result, action) => {
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.cockpit(data.competitionId),
+        queryKey: queryKeys.competitions.overview(data.competitionId),
       })
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.attention(data.competitionId),
@@ -501,22 +501,22 @@ function useCockpitActionRunner(data: CockpitView) {
     },
   })
 
-  function onActionClick(action: CockpitAction) {
-    const intent = resolveCockpitActionIntent(action, data)
+  function onActionClick(action: OverviewAction) {
+    const intent = resolveOverviewActionIntent(action, data)
     if (intent.kind === 'navigate') {
       void navigate(intent.to)
       return
     }
     if (intent.kind === 'execute') {
-      setActiveKey(cockpitActionKey(action))
+      setActiveKey(overviewActionKey(action))
       mutation.mutate(action)
     }
   }
 
   return {
     onActionClick,
-    resolveIntent: (action: CockpitAction) =>
-      resolveCockpitActionIntent(action, data),
+    resolveIntent: (action: OverviewAction) =>
+      resolveOverviewActionIntent(action, data),
     mutation,
     activeKey,
     materializeFollowUp,
@@ -533,18 +533,18 @@ function MaterializeFollowUpBanner({
   followUp: MaterializeFollowUp
   onDismiss: () => void
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const matchesHref = `/competitions/${competitionId}/matches`
   const hasMatches = followUp.attachedCount > 0
 
   return (
     <section
       className="ds-panel"
-      aria-labelledby="cockpit-materialize-followup"
+      aria-labelledby="overview-materialize-followup"
       role="status"
     >
       <PanelHead
-        id="cockpit-materialize-followup"
+        id="overview-materialize-followup"
         title={t('materializeFollowUp.heading')}
         icon={<NextActionIcon size="md" />}
       />
@@ -579,7 +579,7 @@ function OutcomePodiumPanel({
   outcome: CompetitionOutcome
   href: string
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const byRank = (rank: number) =>
     outcome.places.find((place) => place.rank === rank)
 
@@ -596,14 +596,14 @@ function OutcomePodiumPanel({
     : t('sport.outcomeWinnerLabel')
 
   return (
-    <section className="ds-panel" aria-labelledby="cockpit-outcome-podium">
+    <section className="ds-panel" aria-labelledby="overview-outcome-podium">
       <PanelHead
-        id="cockpit-outcome-podium"
+        id="overview-outcome-podium"
         title={t('sport.outcomeTitle')}
         icon={<ClassementsNavIcon size="md" />}
       />
       {isPodium ? (
-        <CockpitPodium
+        <OverviewPodium
           testId="overview-outcome-podium"
           presentation={outcome.presentation}
           steps={[
@@ -667,10 +667,10 @@ function StandingCompactPanel({
   standing,
   href,
 }: {
-  standing: CockpitStandingCompact
+  standing: OverviewStandingCompact
   href: string
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const tables = standing.tables
   const isGroups = tables.length > 1 || tables[0]?.scope === 'Group'
   const [tableIndex, setTableIndex] = useState(0)
@@ -686,9 +686,9 @@ function StandingCompactPanel({
       : t('sport.standingTitle')
 
   return (
-    <section className="ds-panel" aria-labelledby="cockpit-standing-compact">
+    <section className="ds-panel" aria-labelledby="overview-standing-compact">
       <PanelHead
-        id="cockpit-standing-compact"
+        id="overview-standing-compact"
         title={title}
         icon={<ClassementsNavIcon size="md" />}
       />
@@ -762,11 +762,11 @@ function CalendarSummaryPanel({
   summary,
   matchesHref,
 }: {
-  summary: CockpitCalendarSummary
+  summary: OverviewCalendarSummary
   matchesHref: string
 }) {
-  const { t } = useTranslation('cockpit')
-  const titleId = 'cockpit-calendar-summary'
+  const { t } = useTranslation('overview')
+  const titleId = 'overview-calendar-summary'
   const next = summary.nextMatch
 
   return (
@@ -831,12 +831,12 @@ function SportUnitPanel({
   matchesHref,
 }: {
   kind: 'recent' | 'next'
-  unit: CockpitSportUnit | null
+  unit: OverviewSportUnit | null
   matchesHref: string
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const titleId =
-    kind === 'recent' ? 'cockpit-recent-unit' : 'cockpit-next-unit'
+    kind === 'recent' ? 'overview-recent-unit' : 'overview-next-unit'
   const title =
     kind === 'recent' ? t('sport.recentTitle') : t('sport.nextTitle')
   const empty =
@@ -869,7 +869,7 @@ function SportUnitPanel({
 }
 
 function sportUnitSubtitle(
-  unit: CockpitSportUnit,
+  unit: OverviewSportUnit,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   const unitLabel =
@@ -880,8 +880,8 @@ function sportUnitSubtitle(
   return `${unitLabel} · ${countLabel}`
 }
 
-function SportMatchLineList({ matches }: { matches: CockpitMatchLine[] }) {
-  const { t } = useTranslation('cockpit')
+function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
+  const { t } = useTranslation('overview')
   const { i18n } = useTranslation()
 
   return (
@@ -954,11 +954,11 @@ function AttentionSignalSection({
   count,
   competitionId,
 }: {
-  items: CockpitSituation[]
+  items: OverviewSituation[]
   count: number
   competitionId: string
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const preview = items.slice(0, 2)
 
   if (count === 0 || preview.length === 0) {
@@ -967,7 +967,7 @@ function AttentionSignalSection({
 
   return (
     <AttentionGroup
-      headingId="cockpit-situations"
+      headingId="overview-situations"
       heading={t('situations.heading')}
       icon={<OverviewAttentionIcon size="md" />}
     >
@@ -994,10 +994,10 @@ function OverviewAttentionItem({
   situation,
   competitionId,
 }: {
-  situation: CockpitSituation
+  situation: OverviewSituation
   competitionId: string
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const href = situationHref(situation, competitionId)
   const isBlocking = situation.nature === 'Blocking'
   const natureTone = isBlocking ? 'error' : 'info'
@@ -1071,14 +1071,14 @@ function RegulationDimensionCard({
   actionRunner,
 }: {
   variant?: 'construction' | 'game'
-  regulation: CockpitView['constructionDimensions']['regulation']
-  gameRules?: CockpitReferenceStageGameRules | null
+  regulation: OverviewView['constructionDimensions']['regulation']
+  gameRules?: OverviewReferenceStageGameRules | null
   href: string
   hrefLabel: string
-  actions: CockpitAction[]
+  actions: OverviewAction[]
   actionRunner: ActionRunner
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
 
   if (variant === 'game') {
     if (!gameRules) {
@@ -1203,7 +1203,7 @@ function PointsChip({
   label: string
   tone: 'win' | 'draw' | 'loss'
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
 
   return (
     <li className={`overview-chip overview-chip--${tone}`}>
@@ -1237,14 +1237,14 @@ function TeamsPanel({
   actionRunner,
 }: {
   variant?: 'construction' | 'identity'
-  dimension: CockpitDimension
+  dimension: OverviewDimension
   entries: OrganisationEntry[]
   href: string
   hrefLabel: string
-  actions: CockpitAction[]
+  actions: OverviewAction[]
   actionRunner: ActionRunner
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const identity = variant === 'identity'
   const activeCount = Number(dimension.facts.activeCount ?? '0')
   const minimumTeams = Number(dimension.facts.minimumTeams ?? '0')
@@ -1264,7 +1264,7 @@ function TeamsPanel({
         icon={<TeamsIcon size="md" />}
       />
       <p className="overview-figure">
-        <span className="ds-cockpit-situation__num ds-num">{activeCount}</span>
+        <span className="ds-overview-situation__num ds-num">{activeCount}</span>
         <span className="overview-figure__label">
           {identity
             ? t('dimensions.teams.figureLabelIdentity')
@@ -1330,15 +1330,15 @@ function StructurePanel({
   actionRunner,
 }: {
   variant?: 'construction' | 'condensed'
-  dimension: CockpitDimension
-  stages: CockpitView['operationalFocus']['stages']
+  dimension: OverviewDimension
+  stages: OverviewView['operationalFocus']['stages']
   matchTotal: number
   href: string
   hrefLabel: string
-  actions: CockpitAction[]
+  actions: OverviewAction[]
   actionRunner: ActionRunner
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const formatKind = dimension.facts.formatKind
   const formatConfigured = Boolean(formatKind) && formatKind !== 'None'
   const groupCount = Number(dimension.facts.groupCount ?? '0')
@@ -1378,7 +1378,7 @@ function StructurePanel({
         />
         <div className="overview-structure-hero">
           <p
-            className="ds-cockpit-situation__num ds-num"
+            className="ds-overview-situation__num ds-num"
             data-testid="overview-structure-format"
           >
             {formatLabel}
@@ -1489,7 +1489,7 @@ function buildStructureCondensedMetrics({
 }: {
   t: (key: string, options?: Record<string, unknown>) => string
   formatKind: string | undefined
-  stages: CockpitView['operationalFocus']['stages']
+  stages: OverviewView['operationalFocus']['stages']
   stageNames: string[]
   groupCount: number
   roundCount: number
@@ -1568,7 +1568,7 @@ function buildStructureCondensedMetrics({
 
 /** Text facts for En cours Règlement (points rendered separately as chips). */
 function buildGameRegulationTextFacts(
-  rules: CockpitReferenceStageGameRules,
+  rules: OverviewReferenceStageGameRules,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string[] {
   const facts: string[] = []
@@ -1644,12 +1644,12 @@ function ActionButtons({
   actionRunner,
   emphasizeFirst = false,
 }: {
-  actions: CockpitAction[]
+  actions: OverviewAction[]
   actionRunner: ActionRunner
   /** Primary only when this region owns the single CTA — Identité §11. */
   emphasizeFirst?: boolean
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   if (actions.length === 0) {
     return null
   }
@@ -1657,7 +1657,7 @@ function ActionButtons({
   return (
     <div className="overview-actions" aria-busy={actionRunner.mutation.isPending}>
       {actions.map((action, index) => {
-        const key = cockpitActionKey(action)
+        const key = overviewActionKey(action)
         const busy =
           actionRunner.mutation.isPending && actionRunner.activeKey === key
         const label = actionLabel(action.code, {
@@ -1702,15 +1702,15 @@ function NaturalProgressionSection({
   actionRunner,
   lifecycleActions,
 }: {
-  data: CockpitView
+  data: OverviewView
   actionRunner: ActionRunner
   /**
    * PrepareCompetition / StartCompetition leftovers — occupy Prochaine action only when
    * naturalProgression is null (never stacked with a structural tip).
    */
-  lifecycleActions: CockpitAction[]
+  lifecycleActions: OverviewAction[]
 }) {
-  const { t } = useTranslation('cockpit')
+  const { t } = useTranslation('overview')
   const code = data.naturalProgression?.code
   const matched = code ? findActionByCode(data.availableActions, code) : undefined
   const lifecycle = lifecycleActions[0]
@@ -1719,8 +1719,8 @@ function NaturalProgressionSection({
   // Structural tip XOR lifecycle — never both (Préparation V1 P5).
   if (hasPrimary) {
     return (
-      <CockpitNextAction
-        headingId="cockpit-progression"
+      <OverviewNextAction
+        headingId="overview-progression"
         heading={t('progression.heading')}
         icon={<NextActionIcon size="md" />}
         title={actionLabel(code!)}
@@ -1745,8 +1745,8 @@ function NaturalProgressionSection({
   }
 
   return (
-    <CockpitNextAction
-      headingId="cockpit-progression"
+    <OverviewNextAction
+      headingId="overview-progression"
       heading={t('progression.heading')}
       icon={<NextActionIcon size="md" />}
       title={actionLabel(lifecycle.code)}

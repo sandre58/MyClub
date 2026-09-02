@@ -363,7 +363,7 @@ async function invalidateMatchGoals(
       queryKey: queryKeys.matches.byStage(match.stageId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.cockpit(match.competitionId),
+      queryKey: queryKeys.competitions.overview(match.competitionId),
     }),
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.consultation(match.competitionId),

@@ -12,7 +12,7 @@ export function CycleLine({
   'aria-label'?: string
 }) {
   return (
-    <div className="ds-cockpit-cycle" aria-label={ariaLabel}>
+    <div className="ds-overview-cycle" aria-label={ariaLabel}>
       {steps.map((step) => {
         const state: CycleStepState =
           step === current ? 'current' : done.includes(step) ? 'done' : 'todo'

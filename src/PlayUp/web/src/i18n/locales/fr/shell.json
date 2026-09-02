@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "cockpit": "Cockpit",
+    "overview": "Vue d'ensemble",
     "organisation": "Structure",
     "matches": "Calendrier & matchs",
     "classements": "Classements",
@@ -24,26 +24,11 @@
     "comingSoon": "{{label}} — bientôt disponible"
   },
   "competition": {
-    "change": "Changer",
-    "changeAria": "Changer de compétition",
     "choose": "Choisir une compétition",
     "none": "Aucune compétition",
     "loading": "Chargement",
     "unavailable": "Contexte indisponible",
-    "list": "Liste",
-    "listAria": "Ouvrir la liste des compétitions",
-    "contextLabel": "Contexte compétition",
-    "crestPlaceholder": "Blason"
-  },
-  "cycleUi": {
-    "Construction": "Préparation",
-    "InProgress": "En cours",
-    "Completed": "Terminée",
-    "Archived": "Terminée"
-  },
-  "actions": {
-    "settings": "Paramètres",
-    "settingsAria": "Paramètres (bientôt disponible)"
+    "contextLabel": "Contexte compétition"
   },
   "attention": {
     "label": "À traiter",

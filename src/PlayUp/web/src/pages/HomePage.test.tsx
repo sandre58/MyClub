@@ -60,15 +60,11 @@ function renderHomePage() {
           <Route path="/" element={<HomePage />} />
           <Route
             path="/competitions/:competitionId"
-            element={<p>Cockpit route</p>}
+            element={<p>Vue d'ensemble route</p>}
           />
           <Route
             path="/competitions/:competitionId/organisation"
             element={<p>Organisation route</p>}
-          />
-          <Route
-            path="/competitions/:competitionId/overview"
-            element={<p>Overview route</p>}
           />
         </Routes>
       </MemoryRouter>
@@ -86,7 +82,7 @@ describe('HomePage', () => {
 
     renderHomePage()
 
-    expect(document.querySelector('.ds-root.accueil')).toBeInTheDocument()
+    expect(document.querySelector('.ds-root.ds-home')).toBeInTheDocument()
     expect(document.querySelector('.shell')).not.toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: /Play’Up|Play'Up/i }),
@@ -124,7 +120,7 @@ describe('HomePage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('renders competition rows with status and navigates to Cockpit', async () => {
+  it("renders competition rows with status and navigates to Vue d'ensemble", async () => {
     const user = userEvent.setup()
     vi.mocked(fetchCompetitions).mockResolvedValue([
       listItem({ status: 'Running' }),
@@ -153,7 +149,7 @@ describe('HomePage', () => {
     expect(screen.getByText('Prêt')).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: /Spring Cup/i }))
-    expect(screen.getByText('Cockpit route')).toBeInTheDocument()
+    expect(screen.getByText("Vue d'ensemble route")).toBeInTheDocument()
   })
 
   it('shows declared schedule when present and omits the line when unset', async () => {

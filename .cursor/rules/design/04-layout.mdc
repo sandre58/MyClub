@@ -11,7 +11,7 @@ alwaysApply: false
 Content is **fluid at 100%** of the main region width, with **constant lateral
 gutters only** (`--space-24` on the main padding). No centered max-width column.
 
-- Operational surfaces (Cockpit, Match, Calendrier, Classements): fill the main
+- Operational surfaces (Overview, Match, Calendrier, Classements): fill the main
   area edge-to-gutter.
 - Forms / focused tasks / dialogs: constrained width (28–40rem), never full width.
 - Text never touches the viewport edge — gutters handle that, not a narrow column.

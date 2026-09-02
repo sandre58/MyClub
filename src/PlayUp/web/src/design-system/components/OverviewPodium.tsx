@@ -1,4 +1,4 @@
-export type CockpitPodiumStep = {
+export type OverviewPodiumStep = {
   rank: 1 | 2 | 3
   name: string
   subtitle?: string
@@ -8,12 +8,12 @@ export type CockpitPodiumStep = {
 /** Visual order: 2 — 1 — 3 (Lab Terminée). */
 const PODIUM_ORDER = [2, 1, 3] as const
 
-export function CockpitPodium({
+export function OverviewPodium({
   steps,
   testId,
   presentation,
 }: {
-  steps: CockpitPodiumStep[]
+  steps: OverviewPodiumStep[]
   testId?: string
   presentation?: string
 }) {
@@ -21,7 +21,7 @@ export function CockpitPodium({
 
   return (
     <div
-      className="ds-cockpit-podium"
+      className="ds-overview-podium"
       data-testid={testId}
       data-presentation={presentation}
     >
@@ -33,14 +33,14 @@ export function CockpitPodium({
         return (
           <div
             key={step.rank}
-            className="ds-cockpit-podium__step"
+            className="ds-overview-podium__step"
             data-rank={step.rank}
             data-testid={step.testId}
           >
-            <div className="ds-cockpit-podium__block ds-num">{step.rank}</div>
-            <span className="ds-cockpit-podium__name">{step.name}</span>
+            <div className="ds-overview-podium__block ds-num">{step.rank}</div>
+            <span className="ds-overview-podium__name">{step.name}</span>
             {step.subtitle ? (
-              <span className="ds-cockpit-podium__subtitle">{step.subtitle}</span>
+              <span className="ds-overview-podium__subtitle">{step.subtitle}</span>
             ) : null}
           </div>
         )

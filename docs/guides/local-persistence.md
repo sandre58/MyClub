@@ -96,7 +96,7 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `registration-open` | no | |
 | `championship` / `groups` / `cup` / `random` | yes | Cup = single principal round |
 | `swiss-8x3` | yes | Lot 2 case 1 — Swiss 8 teams × 3 rounds; Matchdays via `GenerateNextRound` (not `MaterializeMatches`) |
-| `cup-qf-sf` | no | Multi-stage QF→SF: QF played, SF slots occupied, **stops before** `materialize-from-slots` (Cockpit) |
+| `cup-qf-sf` | no | Multi-stage QF→SF: QF played, SF slots occupied, **stops before** `materialize-from-slots` (Overview) |
 
 Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progress` (fixed seed contracts).
 

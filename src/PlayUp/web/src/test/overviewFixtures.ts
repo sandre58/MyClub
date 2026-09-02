@@ -1,6 +1,6 @@
 import type {
-  CockpitReferenceStageGameRules,
-  CockpitView,
+  OverviewReferenceStageGameRules,
+  OverviewView,
 } from '../types'
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
@@ -10,8 +10,8 @@ const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
 /** Sample ReferenceStage game rules for En cours Règlement tests. */
 export function referenceStageGameRules(
-  overrides: Partial<CockpitReferenceStageGameRules> = {},
-): CockpitReferenceStageGameRules {
+  overrides: Partial<OverviewReferenceStageGameRules> = {},
+): OverviewReferenceStageGameRules {
   return {
     stageId,
     stageName: 'Phase 1',
@@ -32,10 +32,10 @@ export function referenceStageGameRules(
   }
 }
 
-/** Minimal valid CockpitView for SPA tests (mirrors Host CockpitViewDto). */
-export function cockpitView(
-  overrides: Partial<CockpitView> = {},
-): CockpitView {
+/** Minimal valid OverviewView for SPA tests (mirrors Host OverviewViewDto). */
+export function overviewView(
+  overrides: Partial<OverviewView> = {},
+): OverviewView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -131,9 +131,9 @@ export function cockpitView(
   }
 }
 
-export function cockpitSituation(
-  overrides: Partial<CockpitView['situations'][number]> = {},
-): CockpitView['situations'][number] {
+export function overviewSituation(
+  overrides: Partial<OverviewView['situations'][number]> = {},
+): OverviewView['situations'][number] {
   return {
     source: 'InsufficientParticipants',
     nature: 'Blocking',
@@ -148,7 +148,7 @@ export function cockpitSituation(
   }
 }
 
-export const cockpitIds = {
+export const overviewIds = {
   competitionId,
   stageId,
   drawId,

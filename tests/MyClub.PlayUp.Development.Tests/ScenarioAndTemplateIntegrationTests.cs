@@ -107,7 +107,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         competition.Entries.Select(e => e.LogoMediaId).Should().OnlyContain(id => id.HasValue);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
-        var overview = await executor.GetCompetitionOverviewAsync(competition.Id);
+        var overview = await executor.GetCompetitionDetailAsync(competition.Id);
         overview.Id.Should().Be(competition.Id.Value);
 
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
@@ -155,7 +155,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
-    public async Task Cup_qf_sf_fills_semi_slots_and_projects_from_slots_cockpit_actionAsync()
+    public async Task Cup_qf_sf_fills_semi_slots_and_projects_from_slots_overview_actionAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse("cup-qf-sf")]);
@@ -185,12 +185,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             matchesByStage[stageId] = list;
         }
 
-        var cockpit = CockpitAssembler.Assemble(
+        var overview = OverviewAssembler.Assemble(
             competition,
             [quarter, semi],
             matchesByStage);
-        cockpit.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+        overview.AvailableActions.Should().Contain(action =>
+            action.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
             && action.StageId == semi.Id.Value);
     }
 
@@ -237,11 +237,11 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         matchesByStage[final.Id].Should().HaveCount(1);
         matchesByStage[final.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
 
-        var cockpit = CockpitAssembler.Assemble(competition, loaded, matchesByStage);
-        cockpit.CompetitionOutcome.Should().NotBeNull();
-        cockpit.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationWinner);
-        cockpit.CompetitionOutcome.Places.Should().HaveCount(2);
-        cockpit.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2]);
+        var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
+        overview.CompetitionOutcome.Should().NotBeNull();
+        overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
+        overview.CompetitionOutcome.Places.Should().HaveCount(2);
+        overview.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2]);
     }
 
     [Fact]
@@ -295,12 +295,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         matchesByStage[final.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
         matchesByStage[bronze.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
 
-        var cockpit = CockpitAssembler.Assemble(competition, loaded, matchesByStage);
-        cockpit.CompetitionOutcome.Should().NotBeNull();
-        cockpit.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationPodium);
-        cockpit.CompetitionOutcome.Places.Should().HaveCount(4);
-        cockpit.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2, 3, 4]);
-        cockpit.CompetitionOutcome.Places.Select(p => p.EntryId).Should().OnlyHaveUniqueItems();
+        var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
+        overview.CompetitionOutcome.Should().NotBeNull();
+        overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
+        overview.CompetitionOutcome.Places.Should().HaveCount(4);
+        overview.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2, 3, 4]);
+        overview.CompetitionOutcome.Places.Select(p => p.EntryId).Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
@@ -318,13 +318,13 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             stage.Matchdays.Should().BeEmpty();
             matches.Should().BeEmpty();
 
-            var cockpit = CockpitAssembler.Assemble(
+            var overview = OverviewAssembler.Assemble(
                 competition,
                 [stage],
                 new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
-            cockpit.AvailableActions.Should().Contain(action =>
-                action.Code == CockpitAssembler.ActionGenerateNextRound);
-            cockpit.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionGenerateNextRound);
+            overview.AvailableActions.Should().Contain(action =>
+                action.Code == OverviewAssembler.ActionGenerateNextRound);
+            overview.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionGenerateNextRound);
         }
 
         await runner.ResetAndRunAsync([SeedSpec.Parse("swiss-8x3:running")]);

@@ -118,7 +118,7 @@ public sealed class CliOptions
             Default progress when omitted: running
 
             Templates are capacity demos (e.g. ligue-1 = Double RR), not full real multi-phase calendars.
-            Scenario cup-qf-sf: QF played → SF slots filled (Cockpit materialize-from-slots demo).
+            Scenario cup-qf-sf: QF played → SF slots filled (Overview materialize-from-slots demo).
             ConnectionStrings:PlayUpDev is required.
             """);
 #pragma warning restore CA1303

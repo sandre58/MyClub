@@ -4,30 +4,30 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchCompetitionCockpit,
+  fetchCompetitionOverview,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
-import { cockpitView } from '../test/cockpitFixtures'
-import type { CockpitSituation } from '../types'
+import { overviewView } from '../test/overviewFixtures'
+import type { OverviewSituation } from '../types'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
     fetchCompetitions: vi.fn(),
-    fetchCompetitionOverview: vi.fn(),
+    fetchCompetitionDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchMatchDetail: vi.fn(),
-    fetchCompetitionCockpit: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
   }
 })
 
-function attentionCockpit(items: Partial<CockpitSituation>[]) {
-  const normalized: CockpitSituation[] = items.map((item) => ({
+function attentionOverview(items: Partial<OverviewSituation>[]) {
+  const normalized: OverviewSituation[] = items.map((item) => ({
     source: item.source ?? 'InsufficientParticipants',
     nature: item.nature ?? 'Blocking',
     targetType: item.targetType ?? null,
@@ -38,7 +38,7 @@ function attentionCockpit(items: Partial<CockpitSituation>[]) {
     impactCode: item.impactCode ?? null,
     params: item.params ?? {},
   }))
-  return cockpitView({
+  return overviewView({
     competitionId,
     name: 'Coupe U18',
     status: 'Running',
@@ -94,7 +94,7 @@ describe('ShellHeader', () => {
     vi.mocked(fetchCompetitions).mockResolvedValue([
       { id: competitionId, name: 'Coupe U18', status: 'Running' },
     ])
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Coupe U18',
       status: 'Running',
@@ -102,7 +102,7 @@ describe('ShellHeader', () => {
       stages: [],
       logoMediaId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
     })
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(attentionOverview([]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -199,8 +199,8 @@ describe('ShellHeader', () => {
   })
 
   it('shows attention state when count is greater than 0', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
         {
           source: 'InsufficientParticipants',
           nature: 'Blocking',
@@ -222,8 +222,8 @@ describe('ShellHeader', () => {
   })
 
   it('uses plural aria-label when count is 2', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
         {
           source: 'InsufficientParticipants',
           nature: 'Blocking',
@@ -254,8 +254,8 @@ describe('ShellHeader', () => {
   })
 
   it('links the attention trigger to the drawer panel', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
         {
           source: 'InsufficientParticipants',
           nature: 'Blocking',

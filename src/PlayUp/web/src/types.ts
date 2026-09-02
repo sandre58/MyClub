@@ -132,42 +132,42 @@ export interface WorkspaceSummary {
   logoMediaId?: string | null
 }
 
-/** Cycle reading codes from CockpitAssembler (string on wire). */
-export type CockpitCycleCode =
+/** Cycle reading codes from OverviewAssembler (string on wire). */
+export type OverviewCycleCode =
   | 'Construction'
   | 'InProgress'
   | 'Completed'
   | 'Archived'
 
-/** Prominence codes from CockpitAssembler (string on wire). */
-export type CockpitProminence =
+/** Prominence codes from OverviewAssembler (string on wire). */
+export type OverviewProminence =
   | 'Present'
   | 'Condensed'
   | 'Dominant'
   | 'Absent'
 
 /** Situation nature — minimal V1 (string on wire). */
-export type CockpitSituationNature = 'Blocking' | 'Informational'
+export type OverviewSituationNature = 'Blocking' | 'Informational'
 
 /**
- * GET /competitions/{id}/cockpit — Phase 16.1 aggregated Cockpit Read.
+ * GET /competitions/{id}/overview — Phase 16.1 aggregated Overview Read.
  * Codes + facts only; organizer copy lives in SPA i18n.
  */
-export interface CockpitView {
+export interface OverviewView {
   competitionId: string
   name: string
   status: CompetitionStatus
   completionMode: CompletionMode | null
   /** Optional competition period — populated when Read exposes boundaries. */
-  period?: CockpitCompetitionPeriod | null
-  cycleReading: CockpitCycleReading
+  period?: OverviewCompetitionPeriod | null
+  cycleReading: OverviewCycleReading
   /**
    * Préparation sub-situation (Host-owned) — not a cycle code.
    * Setup | GeneratedCalendar. SPA must not infer from Ready + match counts.
    */
-  preparationFocus: CockpitPreparationFocus | string
+  preparationFocus: OverviewPreparationFocus | string
   /** Calendar overview synthesis when preparationFocus is GeneratedCalendar; else null. */
-  calendarSummary: CockpitCalendarSummary | null
+  calendarSummary: OverviewCalendarSummary | null
   /**
    * Derived final placements (`places[]`) when Terminée and presentable.
    * Null when not Terminée/Archived, Abandoned, or no Host presentation (Winner|Podium).
@@ -175,14 +175,14 @@ export interface CockpitView {
    * SPA Résultat uses presentation; Classements = full consultation truth.
    */
   competitionOutcome: CompetitionOutcome | null
-  constructionDimensions: CockpitConstructionDimensions
-  operationalFocus: CockpitOperationalFocus
-  situations: CockpitSituation[]
-  attentionSummary: CockpitAttentionSummary
-  availableActions: CockpitAction[]
-  naturalProgression: CockpitNaturalProgression | null
-  closureHint: CockpitClosureHint
-  navigationHints: CockpitNavigationHint[]
+  constructionDimensions: OverviewConstructionDimensions
+  operationalFocus: OverviewOperationalFocus
+  situations: OverviewSituation[]
+  attentionSummary: OverviewAttentionSummary
+  availableActions: OverviewAction[]
+  naturalProgression: OverviewNaturalProgression | null
+  closureHint: OverviewClosureHint
+  navigationHints: OverviewNavigationHint[]
 }
 
 /** Read projection — competition final placements (not Domain). */
@@ -199,21 +199,21 @@ export interface FinalPlacement {
 }
 
 /** Host-owned Préparation focus — wire codes. */
-export type CockpitPreparationFocus = 'Setup' | 'GeneratedCalendar'
+export type OverviewPreparationFocus = 'Setup' | 'GeneratedCalendar'
 
-export interface CockpitCalendarSummary {
+export interface OverviewCalendarSummary {
   matchdayCount: number
   matchCount: number
-  matchdays: CockpitCalendarMatchdayPreview[]
-  nextMatch: CockpitCalendarNextMatch | null
+  matchdays: OverviewCalendarMatchdayPreview[]
+  nextMatch: OverviewCalendarNextMatch | null
 }
 
-export interface CockpitCalendarMatchdayPreview {
+export interface OverviewCalendarMatchdayPreview {
   matchdayNumber: number
   matchCount: number
 }
 
-export interface CockpitCalendarNextMatch {
+export interface OverviewCalendarNextMatch {
   matchId: string
   stageId: string
   matchdayNumber?: number | null
@@ -222,41 +222,41 @@ export interface CockpitCalendarNextMatch {
   awayDisplayName: string
 }
 
-export interface CockpitCycleReading {
-  code: CockpitCycleCode | string
+export interface OverviewCycleReading {
+  code: OverviewCycleCode | string
 }
 
-/** ISO date boundaries when exposed by Cockpit Read (optional). */
-export interface CockpitCompetitionPeriod {
+/** ISO date boundaries when exposed by Overview Read (optional). */
+export interface OverviewCompetitionPeriod {
   start?: string | null
   end?: string | null
 }
 
-export interface CockpitConstructionDimensions {
-  teams: CockpitDimension
-  structure: CockpitDimension
-  regulation: CockpitRegulationDimension
-  matches: CockpitDimension
+export interface OverviewConstructionDimensions {
+  teams: OverviewDimension
+  structure: OverviewDimension
+  regulation: OverviewRegulationDimension
+  matches: OverviewDimension
 }
 
-export interface CockpitDimension {
-  prominence: CockpitProminence | string
+export interface OverviewDimension {
+  prominence: OverviewProminence | string
   facts: Record<string, string>
 }
 
-export interface CockpitRegulationDimension {
-  prominence: CockpitProminence | string
+export interface OverviewRegulationDimension {
+  prominence: OverviewProminence | string
   /** Competition regulation factual summary (Entry / Match / Standing). */
   competition: OrganisationRegulationSummary
   /** Primary stage regulation flags when a primary stage exists. */
-  stage: CockpitStageRegulationSummary | null
+  stage: OverviewStageRegulationSummary | null
   /** Domain: ReplaceRegulation allowed in Draft/Ready. */
   competitionRegulationMutable: boolean
   /** Transition-relative readiness (construction only) — not a global isValid. */
-  transitionReadiness: CockpitTransitionReadiness[]
+  transitionReadiness: OverviewTransitionReadiness[]
 }
 
-export interface CockpitStageRegulationSummary {
+export interface OverviewStageRegulationSummary {
   stageId: string
   stageName: string
   hasDrawRules: boolean
@@ -269,33 +269,33 @@ export interface CockpitStageRegulationSummary {
 }
 
 /** Ready for a named transition — not regulation validity. */
-export interface CockpitTransitionReadiness {
+export interface OverviewTransitionReadiness {
   transition: string
   ready: boolean
   blockerCodes: string[]
 }
 
-export interface CockpitOperationalFocus {
-  stages: CockpitStageFocus[]
-  draws: CockpitDrawFocus[]
-  matchCounts: CockpitMatchCounts
+export interface OverviewOperationalFocus {
+  stages: OverviewStageFocus[]
+  draws: OverviewDrawFocus[]
+  matchCounts: OverviewMatchCounts
   /** Swiss bye pairing events — never fixtures/matches. */
-  swissByes: CockpitSwissBye[]
+  swissByes: OverviewSwissBye[]
   /** Dernières — last engaged unit on ReferenceStage; null → empty state. */
-  recentUnit: CockpitSportUnit | null
+  recentUnit: OverviewSportUnit | null
   /** Prochaines — next unit (or first before kickoff); null → empty state. */
-  nextUnit: CockpitSportUnit | null
+  nextUnit: OverviewSportUnit | null
   /** Compact standing; null when not applicable (Cup / no structure). */
-  standingCompact: CockpitStandingCompact | null
+  standingCompact: OverviewStandingCompact | null
   /**
    * Game-rule facts for En cours Règlement (ReferenceStage).
    * Null when no ReferenceStage — SPA hides the card.
    */
-  referenceStageGameRules: CockpitReferenceStageGameRules | null
+  referenceStageGameRules: OverviewReferenceStageGameRules | null
 }
 
 /** Machine facts for En cours Règlement — SPA picks 2–3 by formatKind. */
-export interface CockpitReferenceStageGameRules {
+export interface OverviewReferenceStageGameRules {
   stageId: string
   stageName: string
   formatKind: string
@@ -314,7 +314,7 @@ export interface CockpitReferenceStageGameRules {
 }
 
 /** Matchday or Round slice for Vue d'ensemble temporal panels. */
-export interface CockpitSportUnit {
+export interface OverviewSportUnit {
   stageId: string
   stageName: string
   unitKind: 'Matchday' | 'Round' | string
@@ -322,10 +322,10 @@ export interface CockpitSportUnit {
   matchdayNumber?: number | null
   roundName?: string | null
   matchCount: number
-  matches: CockpitMatchLine[]
+  matches: OverviewMatchLine[]
 }
 
-export interface CockpitMatchLine {
+export interface OverviewMatchLine {
   matchId: string
   stageId: string
   status: MatchStatus | string
@@ -335,21 +335,21 @@ export interface CockpitMatchLine {
   score?: MatchScore | null
 }
 
-export interface CockpitStandingCompact {
+export interface OverviewStandingCompact {
   stageId: string
   stageName: string
   /** Overall: one table. Group: one table per group (SPA may show one at a time). */
-  tables: CockpitStandingCompactTable[]
+  tables: OverviewStandingCompactTable[]
 }
 
-export interface CockpitStandingCompactTable {
+export interface OverviewStandingCompactTable {
   scope: string
   groupId?: string | null
   groupName?: string | null
-  rows: CockpitStandingCompactRow[]
+  rows: OverviewStandingCompactRow[]
 }
 
-export interface CockpitStandingCompactRow {
+export interface OverviewStandingCompactRow {
   position: number
   entryId: string
   displayName: string
@@ -357,20 +357,20 @@ export interface CockpitStandingCompactRow {
   points: number
 }
 
-export interface CockpitSwissBye {
+export interface OverviewSwissBye {
   stageId: string
   roundIndex: number
   entryId: string
   entryDisplayName: string
 }
 
-export interface CockpitStageFocus {
+export interface OverviewStageFocus {
   stageId: string
   name: string
   status: StageStatus
 }
 
-export interface CockpitDrawFocus {
+export interface OverviewDrawFocus {
   stageId: string
   drawId: string
   kind: DrawResolutionKind
@@ -380,7 +380,7 @@ export interface CockpitDrawFocus {
   isApplied: boolean
 }
 
-export interface CockpitMatchCounts {
+export interface OverviewMatchCounts {
   live: number
   scheduled: number
   finished: number
@@ -389,9 +389,9 @@ export interface CockpitMatchCounts {
   total: number
 }
 
-export interface CockpitSituation {
+export interface OverviewSituation {
   source: string
-  nature: CockpitSituationNature | string
+  nature: OverviewSituationNature | string
   targetType: string | null
   targetId: string | null
   matchId: string | null
@@ -403,12 +403,12 @@ export interface CockpitSituation {
   params: Record<string, string>
 }
 
-export interface CockpitAttentionSummary {
+export interface OverviewAttentionSummary {
   count: number
-  items: CockpitSituation[]
+  items: OverviewSituation[]
 }
 
-export interface CockpitAction {
+export interface OverviewAction {
   code: string
   guaranteed: boolean
   stageId?: string | null
@@ -418,16 +418,16 @@ export interface CockpitAction {
   params?: Record<string, string> | null
 }
 
-export interface CockpitNaturalProgression {
+export interface OverviewNaturalProgression {
   code: string
 }
 
-export interface CockpitClosureHint {
+export interface OverviewClosureHint {
   canCompleteNormally: boolean
   blockerCodes: string[]
 }
 
-export interface CockpitNavigationHint {
+export interface OverviewNavigationHint {
   targetType: string
   targetId: string
   matchId: string | null
@@ -450,7 +450,7 @@ export interface NeedsAttentionItem {
   targetId: string | null
 }
 
-export interface CompetitionOverview {
+export interface CompetitionDetail {
   id: string
   name: string
   status: CompetitionStatus

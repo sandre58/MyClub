@@ -24,9 +24,9 @@
     "notReadyForMaterialization": "La compétition n’est pas encore prête à matérialiser",
     "materializeHint": "Passez à la Vue d’ensemble pour matérialiser.",
     "cupSkeletonHint": "Passez à la Vue d’ensemble pour préparer le squelette, puis le tirage.",
-    "goToCockpit": "Aller à la Vue d’ensemble",
-    "goToCockpitMaterialize": "Aller à la Vue d’ensemble pour matérialiser",
-    "goToCockpitCupSkeleton": "Aller à la Vue d’ensemble pour le squelette",
+    "goToOverview": "Aller à la Vue d’ensemble",
+    "goToOverviewMaterialize": "Aller à la Vue d’ensemble pour matérialiser",
+    "goToOverviewCupSkeleton": "Aller à la Vue d’ensemble pour le squelette",
     "attachedMatches": "Matchs attachés",
     "blockersHeading": "Points à lever"
   },

@@ -24,7 +24,7 @@ All product numbers use **tabular figures** (`.dlab-num` pattern:
 
 | Role | Size | Where |
 |---|---|---|
-| Hero numeric | ~3.25rem bold, tight tracking | Cockpit "Où en est-on ?" reading, Match Hero score / kickoff |
+| Hero numeric | ~3.25rem bold, tight tracking | Overview "Où en est-on ?" reading, Match Hero score / kickoff |
 | Row score | ~1.0625rem bold | MatchRow scores |
 | Standings points | ~1.0625rem bold | Pts column (dominates the row) |
 | Counter | 1.375rem bold + semantic color | À traiter counts |

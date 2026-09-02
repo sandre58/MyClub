@@ -1,6 +1,6 @@
 import { labRounds, labStandings } from './labData'
 import { Crest, MatchRow, PanelHead } from './LabShared'
-import { TrendIcon } from './LabWordmark'
+import { TrendIcon } from '../design-system/TrendIcon'
 import { StandingsLegend } from '../design-system/components/StandingsLegend'
 
 /**
@@ -109,7 +109,7 @@ export function LabStandings() {
 
         <section className="ds-panel">
           <PanelHead title="Règlement du classement" />
-          <p className="ds-cockpit-situation__label">
+          <p className="ds-overview-situation__label">
             Victoire <strong className="ds-num">3 pts</strong> · nul{' '}
             <strong className="ds-num">1 pt</strong> · défaite{' '}
             <strong className="ds-num">0 pt</strong>. Départage : différence

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CompetitionOverviewAssemblerTests.cs" company="Stéphane ANDRE">
+// <copyright file="CompetitionDetailAssemblerTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -14,7 +14,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
-public sealed class CompetitionOverviewAssemblerTests
+public sealed class CompetitionDetailAssemblerTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 22, 0, 0, TimeSpan.Zero));
 
@@ -29,7 +29,7 @@ public sealed class CompetitionOverviewAssemblerTests
         competition.AddStage(qf.Id, _clock);
         competition.AddStage(sf.Id, _clock);
 
-        var overview = CompetitionOverviewAssembler.Assemble(competition, [qf, sf]);
+        var overview = CompetitionDetailAssembler.Assemble(competition, [qf, sf]);
 
         overview.Id.Should().Be(competition.Id.Value);
         overview.Name.Should().Be("Cup");
@@ -54,7 +54,7 @@ public sealed class CompetitionOverviewAssemblerTests
         competition.AddStage(qf.Id, _clock);
         competition.AddStage(StageId.New(), _clock);
 
-        var act = () => CompetitionOverviewAssembler.Assemble(competition, [qf]);
+        var act = () => CompetitionDetailAssembler.Assemble(competition, [qf]);
 
         act.Should().Throw<ApplicationFailureException>().Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
     }

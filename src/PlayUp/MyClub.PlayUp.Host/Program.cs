@@ -146,13 +146,13 @@ app.MapGet(
     });
 
 app.MapGet(
-    "/competitions/{competitionId:guid}/cockpit",
+    "/competitions/{competitionId:guid}/overview",
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
     {
-        var cockpit = await executor
-            .GetCockpitViewAsync(new CompetitionId(competitionId), cancellationToken)
+        var overview = await executor
+            .GetOverviewViewAsync(new CompetitionId(competitionId), cancellationToken)
             .ConfigureAwait(false);
-        return Results.Ok(cockpit);
+        return Results.Ok(overview);
     });
 
 app.MapGet(
@@ -531,7 +531,7 @@ app.MapGet(
     async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
     {
         var overview = await executor
-            .GetCompetitionOverviewAsync(new CompetitionId(competitionId), cancellationToken)
+            .GetCompetitionDetailAsync(new CompetitionId(competitionId), cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(overview);
     });

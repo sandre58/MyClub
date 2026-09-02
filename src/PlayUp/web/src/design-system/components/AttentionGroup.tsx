@@ -27,7 +27,7 @@ export function AttentionGroup({
 
   return (
     <section
-      className="ds-group ds-cockpit-attention"
+      className="ds-group ds-overview-attention"
       aria-label={heading ? undefined : label}
       aria-labelledby={headingId}
     >

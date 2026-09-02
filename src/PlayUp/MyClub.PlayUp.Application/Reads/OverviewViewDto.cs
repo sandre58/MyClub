@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CockpitViewDto.cs" company="Stéphane ANDRE">
+// <copyright file="OverviewViewDto.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Aggregated Cockpit Read projection (Phase 16.1) — Application interpretation, not Domain.
+/// Aggregated Overview Read projection (Phase 16.1) — Application interpretation, not Domain.
 /// </summary>
 /// <remarks>
 /// One projection among several Read Surfaces (R22). Does not replace workspace / organisation / attention endpoints.
@@ -50,24 +50,24 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </param>
 /// <param name="ClosureHint">Completion synthesis (distinct from Attention).</param>
 /// <param name="NavigationHints">Navigable targets including resolved match ids.</param>
-public sealed record CockpitViewDto(
+public sealed record OverviewViewDto(
     Guid CompetitionId,
     string Name,
     CompetitionStatus Status,
     CompletionMode? CompletionMode,
-    CockpitCompetitionPeriodDto? Period,
-    CockpitCycleReadingDto CycleReading,
+    OverviewCompetitionPeriodDto? Period,
+    OverviewCycleReadingDto CycleReading,
     string PreparationFocus,
-    CockpitCalendarSummaryDto? CalendarSummary,
+    OverviewCalendarSummaryDto? CalendarSummary,
     CompetitionOutcomeDto? CompetitionOutcome,
-    CockpitConstructionDimensionsDto ConstructionDimensions,
-    CockpitOperationalFocusDto OperationalFocus,
-    IReadOnlyList<CockpitSituationDto> Situations,
-    CockpitAttentionSummaryDto AttentionSummary,
-    IReadOnlyList<CockpitActionDto> AvailableActions,
-    CockpitNaturalProgressionDto? NaturalProgression,
-    CockpitClosureHintDto ClosureHint,
-    IReadOnlyList<CockpitNavigationHintDto> NavigationHints);
+    OverviewConstructionDimensionsDto ConstructionDimensions,
+    OverviewOperationalFocusDto OperationalFocus,
+    IReadOnlyList<OverviewSituationDto> Situations,
+    OverviewAttentionSummaryDto AttentionSummary,
+    IReadOnlyList<OverviewActionDto> AvailableActions,
+    OverviewNaturalProgressionDto? NaturalProgression,
+    OverviewClosureHintDto ClosureHint,
+    IReadOnlyList<OverviewNavigationHintDto> NavigationHints);
 
 /// <summary>
 /// Read projection of competition final placements — not Domain.
@@ -97,19 +97,19 @@ public sealed record FinalPlacementDto(int Rank, Guid EntryId, string DisplayNam
 /// <param name="MatchCount">Total matches in the competition projection (same as matchCounts.total).</param>
 /// <param name="Matchdays">First matchdays preview (capped by Host).</param>
 /// <param name="NextMatch">Earliest upcoming Scheduled match when identifiable; otherwise null.</param>
-public sealed record CockpitCalendarSummaryDto(
+public sealed record OverviewCalendarSummaryDto(
     int MatchdayCount,
     int MatchCount,
-    IReadOnlyList<CockpitCalendarMatchdayPreviewDto> Matchdays,
-    CockpitCalendarNextMatchDto? NextMatch);
+    IReadOnlyList<OverviewCalendarMatchdayPreviewDto> Matchdays,
+    OverviewCalendarNextMatchDto? NextMatch);
 
 /// <summary>One matchday line in the calendar overview preview.</summary>
 /// <param name="MatchdayNumber">Matchday number.</param>
 /// <param name="MatchCount">Matches attached on that matchday.</param>
-public sealed record CockpitCalendarMatchdayPreviewDto(int MatchdayNumber, int MatchCount);
+public sealed record OverviewCalendarMatchdayPreviewDto(int MatchdayNumber, int MatchCount);
 
 /// <summary>Next rendez-vous hint for calendar overview (Scheduled only).</summary>
-public sealed record CockpitCalendarNextMatchDto(
+public sealed record OverviewCalendarNextMatchDto(
     Guid MatchId,
     Guid StageId,
     int? MatchdayNumber,
@@ -122,23 +122,23 @@ public sealed record CockpitCalendarNextMatchDto(
 /// </summary>
 /// <param name="Start">Earliest match placement start, if any.</param>
 /// <param name="End">Latest match placement start, if any.</param>
-public sealed record CockpitCompetitionPeriodDto(DateTimeOffset? Start, DateTimeOffset? End);
+public sealed record OverviewCompetitionPeriodDto(DateTimeOffset? Start, DateTimeOffset? End);
 
 /// <summary>Minimal cycle reading (machine codes — UX labels in SPA i18n).</summary>
 /// <param name="Code">Construction | InProgress | Completed | Archived.</param>
-public sealed record CockpitCycleReadingDto(string Code);
+public sealed record OverviewCycleReadingDto(string Code);
 
 /// <summary>Four construction dimensions (R2).</summary>
-public sealed record CockpitConstructionDimensionsDto(
-    CockpitDimensionDto Teams,
-    CockpitDimensionDto Structure,
-    CockpitRegulationDimensionDto Regulation,
-    CockpitDimensionDto Matches);
+public sealed record OverviewConstructionDimensionsDto(
+    OverviewDimensionDto Teams,
+    OverviewDimensionDto Structure,
+    OverviewRegulationDimensionDto Regulation,
+    OverviewDimensionDto Matches);
 
 /// <summary>Prominence + machine-readable facts (no organizer prose).</summary>
 /// <param name="Prominence">Present | Condensed | Dominant | Absent.</param>
 /// <param name="Facts">Optional machine-readable facts for SPA templates.</param>
-public sealed record CockpitDimensionDto(
+public sealed record OverviewDimensionDto(
     string Prominence,
     IReadOnlyDictionary<string, string> Facts);
 
@@ -154,12 +154,12 @@ public sealed record CockpitDimensionDto(
 /// <param name="Stage">Primary stage regulation factual flags when a primary stage exists; otherwise null.</param>
 /// <param name="CompetitionRegulationMutable">True when Domain allows ReplaceRegulation (Draft/Ready).</param>
 /// <param name="TransitionReadiness">Readiness relative to identified Host-relevant transitions (construction only).</param>
-public sealed record CockpitRegulationDimensionDto(
+public sealed record OverviewRegulationDimensionDto(
     string Prominence,
     OrganisationRegulationSummaryDto Competition,
-    CockpitStageRegulationSummaryDto? Stage,
+    OverviewStageRegulationSummaryDto? Stage,
     bool CompetitionRegulationMutable,
-    IReadOnlyList<CockpitTransitionReadinessDto> TransitionReadiness);
+    IReadOnlyList<OverviewTransitionReadinessDto> TransitionReadiness);
 
 /// <summary>Primary stage regulation facts (presence flags — null optional family ≠ invalid).</summary>
 /// <param name="StageId">Primary stage identity.</param>
@@ -171,7 +171,7 @@ public sealed record CockpitRegulationDimensionDto(
 /// <param name="HasProgressionRules">Whether ProgressionRules are set.</param>
 /// <param name="ProgressionPathCount">Path count when progression rules exist.</param>
 /// <param name="HasTieFormat">Whether default TieFormat is set.</param>
-public sealed record CockpitStageRegulationSummaryDto(
+public sealed record OverviewStageRegulationSummaryDto(
     Guid StageId,
     string StageName,
     bool HasDrawRules,
@@ -186,7 +186,7 @@ public sealed record CockpitStageRegulationSummaryDto(
 /// <param name="Transition">Stable code (e.g. MaterializeMatches, Draw).</param>
 /// <param name="Ready">True when Organisation readiness says the transition path is identifiable.</param>
 /// <param name="BlockerCodes">Same machine codes as Organisation / Situations when not ready.</param>
-public sealed record CockpitTransitionReadinessDto(
+public sealed record OverviewTransitionReadinessDto(
     string Transition,
     bool Ready,
     IReadOnlyList<string> BlockerCodes);
@@ -207,15 +207,15 @@ public sealed record CockpitTransitionReadinessDto(
 /// Game-rule facts for Vue d'ensemble Règlement (ReferenceStage). Null when no ReferenceStage.
 /// SPA picks 2–3 explanatory facts by formatKind — does not dump all fields.
 /// </param>
-public sealed record CockpitOperationalFocusDto(
-    IReadOnlyList<CockpitStageFocusDto> Stages,
-    IReadOnlyList<CockpitDrawFocusDto> Draws,
-    CockpitMatchCountsDto MatchCounts,
-    IReadOnlyList<CockpitSwissByeDto> SwissByes,
-    CockpitSportUnitDto? RecentUnit,
-    CockpitSportUnitDto? NextUnit,
-    CockpitStandingCompactDto? StandingCompact,
-    CockpitReferenceStageGameRulesDto? ReferenceStageGameRules);
+public sealed record OverviewOperationalFocusDto(
+    IReadOnlyList<OverviewStageFocusDto> Stages,
+    IReadOnlyList<OverviewDrawFocusDto> Draws,
+    OverviewMatchCountsDto MatchCounts,
+    IReadOnlyList<OverviewSwissByeDto> SwissByes,
+    OverviewSportUnitDto? RecentUnit,
+    OverviewSportUnitDto? NextUnit,
+    OverviewStandingCompactDto? StandingCompact,
+    OverviewReferenceStageGameRulesDto? ReferenceStageGameRules);
 
 /// <summary>
 /// Machine facts for En cours Règlement — derived from ReferenceStage Domain regulation.
@@ -236,7 +236,7 @@ public sealed record CockpitOperationalFocusDto(
 /// <param name="HasTieExtraTime">TieFormat ExtraTimeRule present.</param>
 /// <param name="HasTiePenaltyShootout">TieFormat PenaltyShootoutRule present.</param>
 /// <param name="SwissPlannedRounds">SwissSettings.RoundCount when Swiss; otherwise null.</param>
-public sealed record CockpitReferenceStageGameRulesDto(
+public sealed record OverviewReferenceStageGameRulesDto(
     Guid StageId,
     string StageName,
     string FormatKind,
@@ -265,7 +265,7 @@ public sealed record CockpitReferenceStageGameRulesDto(
 /// <param name="RoundName">Domain round name when UnitKind is Round.</param>
 /// <param name="MatchCount">Number of matches in this unit (equals Matches.Count).</param>
 /// <param name="Matches">All matches in the unit (Live / Finished / Scheduled / …).</param>
-public sealed record CockpitSportUnitDto(
+public sealed record OverviewSportUnitDto(
     Guid StageId,
     string StageName,
     string UnitKind,
@@ -273,25 +273,25 @@ public sealed record CockpitSportUnitDto(
     int? MatchdayNumber,
     string? RoundName,
     int MatchCount,
-    IReadOnlyList<CockpitMatchLineDto> Matches);
+    IReadOnlyList<OverviewMatchLineDto> Matches);
 
 /// <summary>Swiss bye projection — pairing event, never a fake match.</summary>
 /// <param name="StageId">Owning Swiss stage.</param>
 /// <param name="RoundIndex">1-based Swiss round / Matchday number.</param>
 /// <param name="EntryId">Entry that received the bye.</param>
 /// <param name="EntryDisplayName">Display name for SPA.</param>
-public sealed record CockpitSwissByeDto(
+public sealed record OverviewSwissByeDto(
     Guid StageId,
     int RoundIndex,
     Guid EntryId,
     string EntryDisplayName);
 
 /// <summary>Stage line for operational focus.</summary>
-public sealed record CockpitStageFocusDto(Guid StageId, string Name, StageStatus Status);
+public sealed record OverviewStageFocusDto(Guid StageId, string Name, StageStatus Status);
 
 /// <summary>Draw pipeline projection including Application-derived Applied.</summary>
 /// <remarks>Applied is not a Domain status — Publish ≠ Apply (Domain). Derived from occupancy/attachments.</remarks>
-public sealed record CockpitDrawFocusDto(
+public sealed record OverviewDrawFocusDto(
     Guid StageId,
     Guid DrawId,
     DrawResolutionKind Kind,
@@ -300,7 +300,7 @@ public sealed record CockpitDrawFocusDto(
     bool IsApplied);
 
 /// <summary>Match status counters across the competition.</summary>
-public sealed record CockpitMatchCountsDto(
+public sealed record OverviewMatchCountsDto(
     int Live,
     int Scheduled,
     int Finished,
@@ -316,7 +316,7 @@ public sealed record CockpitMatchCountsDto(
 /// <param name="HomeDisplayName">Home entry display name.</param>
 /// <param name="AwayDisplayName">Away entry display name.</param>
 /// <param name="Score">Play score when Finished; null otherwise (Domain has no in-progress score).</param>
-public sealed record CockpitMatchLineDto(
+public sealed record OverviewMatchLineDto(
     Guid MatchId,
     Guid StageId,
     MatchStatus Status,
@@ -332,24 +332,24 @@ public sealed record CockpitMatchLineDto(
 /// Overall: one table. Group: one table per group (SPA may show one at a time).
 /// Empty collection is not projected — StandingCompact is null instead.
 /// </param>
-public sealed record CockpitStandingCompactDto(
+public sealed record OverviewStandingCompactDto(
     Guid StageId,
     string StageName,
-    IReadOnlyList<CockpitStandingCompactTableDto> Tables);
+    IReadOnlyList<OverviewStandingCompactTableDto> Tables);
 
 /// <summary>One compact standing table (Overall or a single Group).</summary>
 /// <param name="Scope">Overall | Group (same codes as Consultation).</param>
 /// <param name="GroupId">Group identity when Scope is Group.</param>
 /// <param name="GroupName">Group display name when Scope is Group.</param>
 /// <param name="Rows">All rows ordered by position (full table — no silent truncation).</param>
-public sealed record CockpitStandingCompactTableDto(
+public sealed record OverviewStandingCompactTableDto(
     string Scope,
     Guid? GroupId,
     string? GroupName,
-    IReadOnlyList<CockpitStandingCompactRowDto> Rows);
+    IReadOnlyList<OverviewStandingCompactRowDto> Rows);
 
 /// <summary>One compact standing row — pilotage subset of ConsultationStandingRowDto.</summary>
-public sealed record CockpitStandingCompactRowDto(
+public sealed record OverviewStandingCompactRowDto(
     int Position,
     Guid EntryId,
     string DisplayName,
@@ -371,7 +371,7 @@ public sealed record CockpitStandingCompactRowDto(
 /// <param name="ActionCode">Optional related semantic action code.</param>
 /// <param name="ImpactCode">Optional machine impact code for SPA i18n; omit when not reliably derivable.</param>
 /// <param name="Params">Optional structured params for SPA templates (e.g. slotKey, stageName).</param>
-public sealed record CockpitSituationDto(
+public sealed record OverviewSituationDto(
     string Source,
     string Nature,
     string? TargetType,
@@ -383,7 +383,7 @@ public sealed record CockpitSituationDto(
     IReadOnlyDictionary<string, string> Params);
 
 /// <summary>Attention view derived from situations (not a parallel list).</summary>
-public sealed record CockpitAttentionSummaryDto(int Count, IReadOnlyList<CockpitSituationDto> Items);
+public sealed record OverviewAttentionSummaryDto(int Count, IReadOnlyList<OverviewSituationDto> Items);
 
 /// <summary>Semantic action / transition opportunity (R6, R19) — label via SPA i18n.</summary>
 /// <param name="Code">Stable machine code.</param>
@@ -393,7 +393,7 @@ public sealed record CockpitAttentionSummaryDto(int Count, IReadOnlyList<Cockpit
 /// <param name="MatchId">Optional match context.</param>
 /// <param name="FixtureId">Optional fixture context.</param>
 /// <param name="Params">Optional structured params for SPA templates (e.g. stageName).</param>
-public sealed record CockpitActionDto(
+public sealed record OverviewActionDto(
     string Code,
     bool Guaranteed,
     Guid? StageId = null,
@@ -403,15 +403,15 @@ public sealed record CockpitActionDto(
     IReadOnlyDictionary<string, string>? Params = null);
 
 /// <summary>Natural progression hint (R18) — guide without prescribing; label via SPA i18n.</summary>
-public sealed record CockpitNaturalProgressionDto(string Code);
+public sealed record OverviewNaturalProgressionDto(string Code);
 
 /// <summary>Closure synthesis — distinct from Attention (Completion blockers ≠ À traiter).</summary>
-public sealed record CockpitClosureHintDto(
+public sealed record OverviewClosureHintDto(
     bool CanCompleteNormally,
     IReadOnlyList<string> BlockerCodes);
 
 /// <summary>Navigation hint for shell / drawer deep-links.</summary>
-public sealed record CockpitNavigationHintDto(
+public sealed record OverviewNavigationHintDto(
     string TargetType,
     string TargetId,
     Guid? MatchId,

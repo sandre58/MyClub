@@ -23,7 +23,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// (CreateCompetition, Organisation Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
 /// PublishDraw, ApplyDraw, StartMatch, FinishMatch, PrepareCompetition, StartCompetition,
 /// CompleteCompetition, ArchiveCompetition, ListCompetitions, GetWorkspaceSummary,
-/// GetCompetitionOverview, GetOrganisationView, GetStageOverview, ListMatchesByStage,
+/// GetCompetitionDetail, GetOrganisationView, GetStageOverview, ListMatchesByStage,
 /// GetMatchDetail, GetConsultation).
 /// </summary>
 /// <remarks>
@@ -1350,12 +1350,12 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Assembles the Cockpit Read projection for a competition (Phase 16.1).
+    /// Assembles the Overview Read projection for a competition (Phase 16.1).
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Cockpit view DTO.</returns>
-    public async Task<CockpitViewDto> GetCockpitViewAsync(
+    /// <returns>Overview view DTO.</returns>
+    public async Task<OverviewViewDto> GetOverviewViewAsync(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
@@ -1366,7 +1366,7 @@ public sealed class UseCaseExecutor(
 
         var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
         var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
-        return CockpitAssembler.Assemble(competition, competitionStages, matchesByStage);
+        return OverviewAssembler.Assemble(competition, competitionStages, matchesByStage);
     }
 
     /// <summary>
@@ -1390,13 +1390,13 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Loads a competition and its stages, then assembles <see cref="CompetitionOverviewDto"/>.
+    /// Loads a competition and its stages, then assembles <see cref="CompetitionDetailDto"/>.
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The competition overview.</returns>
     /// <exception cref="ApplicationFailureException">Thrown when the competition or a referenced stage is missing.</exception>
-    public async Task<CompetitionOverviewDto> GetCompetitionOverviewAsync(
+    public async Task<CompetitionDetailDto> GetCompetitionDetailAsync(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
@@ -1415,7 +1415,7 @@ public sealed class UseCaseExecutor(
             loadedStages.Add(stage);
         }
 
-        return CompetitionOverviewAssembler.Assemble(competition, loadedStages);
+        return CompetitionDetailAssembler.Assemble(competition, loadedStages);
     }
 
     /// <summary>

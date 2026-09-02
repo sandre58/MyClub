@@ -3,7 +3,7 @@ import { Icon, type IconSize } from './Icon'
 
 type ShellIconProps = SVGProps<SVGSVGElement> & { size?: IconSize }
 
-/** Cockpit — gauge (Shell A). */
+/** Overview — gauge (Shell A). */
 export function OverviewNavIcon({ size, ...props }: ShellIconProps) {
   return (
     <Icon size={size} {...props}>

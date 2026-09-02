@@ -55,7 +55,7 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'Up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, workspace, organisation, match hub). Cockpit UX/Read design capitalized; detailed Cockpit UI not opened. See Notion Play'Up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
+| **Play'Up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, Accueil, Vue d'ensemble, organisation, match hub). See Notion Play'Up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned (not started) |
 | **Train'in** | Training session design and follow-up. | Future (not started) |
 

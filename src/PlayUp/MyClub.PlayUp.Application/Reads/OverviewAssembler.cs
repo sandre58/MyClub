@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CockpitAssembler.cs" company="Stéphane ANDRE">
+// <copyright file="OverviewAssembler.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -16,7 +16,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembles the Cockpit Read projection from competition state (Phase 16.1).
+/// Assembles the Overview Read projection from competition state (Phase 16.1).
 /// </summary>
 /// <remarks>
 /// Composes existing Application diagnostics — does not re-implement Domain invariants.
@@ -24,7 +24,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// opportunities when Domain preconditions appear satisfied (R19 — not execution guarantees).
 /// They are intentional lifecycle transitions (L7) — not automatically elevated to naturalProgression.
 /// </remarks>
-public static class CockpitAssembler
+public static class OverviewAssembler
 {
     /// <summary>Cycle reading: construction (Draft/Ready).</summary>
     public const string CycleConstruction = "Construction";
@@ -159,13 +159,13 @@ public static class CockpitAssembler
     public const string ActionStartCompetition = "StartCompetition";
 
     /// <summary>
-    /// Builds the Cockpit view.
+    /// Builds the Overview view.
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Stages in competition order.</param>
     /// <param name="matchesByStage">Matches keyed by stage.</param>
-    /// <returns>Cockpit projection DTO.</returns>
-    public static CockpitViewDto Assemble(
+    /// <returns>Overview projection DTO.</returns>
+    public static OverviewViewDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
@@ -220,12 +220,12 @@ public static class CockpitAssembler
             competition,
             actions,
             fromSlotsOpportunities.Length > 0);
-        var closure = new CockpitClosureHintDto(
+        var closure = new OverviewClosureHintDto(
             completion?.CanCompleteNormally ?? false,
             completion?.Reasons.Select(reason => reason.Code).ToArray() ?? []);
         var navigation = BuildNavigationHints(competition, situations, stages, fixtureToMatch);
 
-        return new CockpitViewDto(
+        return new OverviewViewDto(
             competition.Id.Value,
             competition.Name.Value,
             competition.Status,
@@ -265,7 +265,7 @@ public static class CockpitAssembler
     /// Calendar overview synthesis for GeneratedCalendar — primary Championship stage (may still be Draft/Ready).
     /// Does not use ReferenceStage (Running/Completed only).
     /// </summary>
-    internal static CockpitCalendarSummaryDto BuildCalendarSummary(
+    internal static OverviewCalendarSummaryDto BuildCalendarSummary(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
@@ -281,7 +281,7 @@ public static class CockpitAssembler
         stage ??= stages.FirstOrDefault();
         if (stage is null)
         {
-            return new CockpitCalendarSummaryDto(0, matchTotal, [], null);
+            return new OverviewCalendarSummaryDto(0, matchTotal, [], null);
         }
 
         var names = EntryDisplayNames.ToMap(competition);
@@ -293,24 +293,24 @@ public static class CockpitAssembler
 
         var preview = units
             .Take(CalendarPreviewMatchdayLimit)
-            .Select(unit => new CockpitCalendarMatchdayPreviewDto(
+            .Select(unit => new OverviewCalendarMatchdayPreviewDto(
                 unit.MatchdayNumber ?? unit.Order,
                 unit.Matches.Count))
             .ToArray();
 
-        return new CockpitCalendarSummaryDto(
+        return new OverviewCalendarSummaryDto(
             units.Length,
             matchTotal,
             preview,
             ResolveCalendarNextMatch(stage, units, names));
     }
 
-    private static CockpitCalendarNextMatchDto? ResolveCalendarNextMatch(
+    private static OverviewCalendarNextMatchDto? ResolveCalendarNextMatch(
         Stage stage,
         IReadOnlyList<SportUnitSlice> units,
         IReadOnlyDictionary<EntryId, string> names)
     {
-        var candidates = new List<(CockpitCalendarNextMatchDto Dto, DateTimeOffset? Start)>();
+        var candidates = new List<(OverviewCalendarNextMatchDto Dto, DateTimeOffset? Start)>();
         foreach (var unit in units)
         {
             foreach (var match in unit.Matches)
@@ -327,7 +327,7 @@ public static class CockpitAssembler
                 }
 
                 candidates.Add((
-                    new CockpitCalendarNextMatchDto(
+                    new OverviewCalendarNextMatchDto(
                         match.Id.Value,
                         stage.Id.Value,
                         unit.MatchdayNumber,
@@ -350,7 +350,7 @@ public static class CockpitAssembler
     /// Derives operational calendar bounds from match placements (min/max start).
     /// Null when no placement exists — not declared competition season dates.
     /// </summary>
-    private static CockpitCompetitionPeriodDto? BuildPeriod(IReadOnlyList<Stage> stages)
+    private static OverviewCompetitionPeriodDto? BuildPeriod(IReadOnlyList<Stage> stages)
     {
         DateTimeOffset? earliest = null;
         DateTimeOffset? latest = null;
@@ -372,24 +372,24 @@ public static class CockpitAssembler
             }
         }
 
-        return earliest is null && latest is null ? null : new CockpitCompetitionPeriodDto(earliest, latest);
+        return earliest is null && latest is null ? null : new OverviewCompetitionPeriodDto(earliest, latest);
     }
 
-    private static CockpitCycleReadingDto BuildCycleReading(CompetitionStatus status) =>
+    private static OverviewCycleReadingDto BuildCycleReading(CompetitionStatus status) =>
         status switch
         {
-            CompetitionStatus.Draft or CompetitionStatus.Ready => new CockpitCycleReadingDto(CycleConstruction),
-            CompetitionStatus.Running or CompetitionStatus.Suspended => new CockpitCycleReadingDto(CycleInProgress),
-            CompetitionStatus.Completed => new CockpitCycleReadingDto(CycleCompleted),
-            CompetitionStatus.Archived => new CockpitCycleReadingDto(CycleArchived),
-            _ => new CockpitCycleReadingDto(CycleConstruction)
+            CompetitionStatus.Draft or CompetitionStatus.Ready => new OverviewCycleReadingDto(CycleConstruction),
+            CompetitionStatus.Running or CompetitionStatus.Suspended => new OverviewCycleReadingDto(CycleInProgress),
+            CompetitionStatus.Completed => new OverviewCycleReadingDto(CycleCompleted),
+            CompetitionStatus.Archived => new OverviewCycleReadingDto(CycleArchived),
+            _ => new OverviewCycleReadingDto(CycleConstruction)
         };
 
-    private static CockpitConstructionDimensionsDto BuildDimensions(
+    private static OverviewConstructionDimensionsDto BuildDimensions(
         Competition competition,
         OrganisationViewDto organisation,
         IReadOnlyList<Stage> stages,
-        CockpitMatchCountsDto matchCounts,
+        OverviewMatchCountsDto matchCounts,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
     {
         var inConstruction = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
@@ -431,8 +431,8 @@ public static class CockpitAssembler
         };
         if (organisation.Format.Kind != StructureFormatKind.Swiss)
         {
-            return new CockpitConstructionDimensionsDto(
-                new CockpitDimensionDto(
+            return new OverviewConstructionDimensionsDto(
+                new OverviewDimensionDto(
                     teamsProminence,
                     new Dictionary<string, string>
                     {
@@ -444,7 +444,7 @@ public static class CockpitAssembler
                         ["maximumTeams"] =
                             organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                     }),
-                new CockpitDimensionDto(structureProminence, structureFacts),
+                new OverviewDimensionDto(structureProminence, structureFacts),
                 BuildRegulationDimension(
                     competition,
                     organisation,
@@ -452,7 +452,7 @@ public static class CockpitAssembler
                     matchesByStage,
                     regulationProminence,
                     inConstruction),
-                new CockpitDimensionDto(
+                new OverviewDimensionDto(
                     matchesProminence,
                     new Dictionary<string, string>
                     {
@@ -470,8 +470,8 @@ public static class CockpitAssembler
             .Sum(stage => stage.SwissByeHistory.Count)
             .ToString(CultureInfo.InvariantCulture);
 
-        return new CockpitConstructionDimensionsDto(
-            new CockpitDimensionDto(
+        return new OverviewConstructionDimensionsDto(
+            new OverviewDimensionDto(
                 teamsProminence,
                 new Dictionary<string, string>
                 {
@@ -483,7 +483,7 @@ public static class CockpitAssembler
                     ["maximumTeams"] =
                         organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                 }),
-            new CockpitDimensionDto(structureProminence, structureFacts),
+            new OverviewDimensionDto(structureProminence, structureFacts),
             BuildRegulationDimension(
                 competition,
                 organisation,
@@ -491,7 +491,7 @@ public static class CockpitAssembler
                 matchesByStage,
                 regulationProminence,
                 inConstruction),
-            new CockpitDimensionDto(
+            new OverviewDimensionDto(
                 matchesProminence,
                 new Dictionary<string, string>
                 {
@@ -510,7 +510,7 @@ public static class CockpitAssembler
     /// PrepareStage / StartStage are status transitions, not regulation content gates — not projected here.
     /// Competition Prepare/Start are projected in <see cref="BuildActions"/>, not as regulation readiness.
     /// </remarks>
-    private static CockpitRegulationDimensionDto BuildRegulationDimension(
+    private static OverviewRegulationDimensionDto BuildRegulationDimension(
         Competition competition,
         OrganisationViewDto organisation,
         IReadOnlyList<Stage> stages,
@@ -526,7 +526,7 @@ public static class CockpitAssembler
         AppendFromSlotsTransitionReadiness(competition, stages, readiness);
         AppendSwissGenerateNextRoundReadiness(competition, organisation, stages, matchesByStage, readiness);
 
-        return new CockpitRegulationDimensionDto(
+        return new OverviewRegulationDimensionDto(
             prominence,
             organisation.Regulation,
             stageSummary,
@@ -534,7 +534,7 @@ public static class CockpitAssembler
             readiness);
     }
 
-    private static CockpitStageRegulationSummaryDto? BuildStageRegulationSummary(
+    private static OverviewStageRegulationSummaryDto? BuildStageRegulationSummary(
         OrganisationViewDto organisation,
         IReadOnlyList<Stage> stages)
     {
@@ -553,7 +553,7 @@ public static class CockpitAssembler
         var qualificationPaths = regulation.QualificationRules?.Paths.Count ?? 0;
         var progressionPaths = regulation.ProgressionRules?.Paths.Count ?? 0;
 
-        return new CockpitStageRegulationSummaryDto(
+        return new OverviewStageRegulationSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
             HasDrawRules: regulation.DrawRules is not null,
@@ -565,18 +565,18 @@ public static class CockpitAssembler
             HasTieFormat: regulation.TieFormat is not null);
     }
 
-    private static List<CockpitTransitionReadinessDto> BuildRegulationTransitionReadiness(
+    private static List<OverviewTransitionReadinessDto> BuildRegulationTransitionReadiness(
         OrganisationViewDto organisation)
     {
         var blockers = organisation.Readiness.Blockers;
-        var readiness = new List<CockpitTransitionReadinessDto>();
+        var readiness = new List<OverviewTransitionReadinessDto>();
         var kind = organisation.Format.Kind;
 
         // Championship / Swiss never use the draw path — omit Draw readiness.
         if (kind is not StructureFormatKind.Championship and not StructureFormatKind.Swiss)
         {
             readiness.Add(
-                new CockpitTransitionReadinessDto(
+                new OverviewTransitionReadinessDto(
                     TransitionDraw,
                     organisation.Readiness.ReadyForDraw,
                     organisation.Readiness.ReadyForDraw ? [] : blockers));
@@ -586,7 +586,7 @@ public static class CockpitAssembler
         if (kind is not StructureFormatKind.Swiss)
         {
             readiness.Add(
-                new CockpitTransitionReadinessDto(
+                new OverviewTransitionReadinessDto(
                     TransitionMaterializeMatches,
                     organisation.Readiness.ReadyForMaterialization,
                     organisation.Readiness.ReadyForMaterialization ? [] : blockers));
@@ -600,7 +600,7 @@ public static class CockpitAssembler
         OrganisationViewDto organisation,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
-        List<CockpitTransitionReadinessDto> readiness)
+        List<OverviewTransitionReadinessDto> readiness)
     {
         if (organisation.Format.Kind is not StructureFormatKind.Swiss)
         {
@@ -625,7 +625,7 @@ public static class CockpitAssembler
         }
 
         readiness.Add(
-            new CockpitTransitionReadinessDto(
+            new OverviewTransitionReadinessDto(
                 TransitionGenerateNextRound,
                 evaluation.Value.Ready,
                 blockers));
@@ -640,7 +640,7 @@ public static class CockpitAssembler
     private static void AppendFromSlotsTransitionReadiness(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        List<CockpitTransitionReadinessDto> readiness)
+        List<OverviewTransitionReadinessDto> readiness)
     {
         if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready or CompetitionStatus.Running))
         {
@@ -649,7 +649,7 @@ public static class CockpitAssembler
 
         if (!stages.Any(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))) return;
         readiness.Add(
-            new CockpitTransitionReadinessDto(
+            new OverviewTransitionReadinessDto(
                 TransitionMaterializeFromOccupiedSlots,
                 Ready: true,
                 []));
@@ -665,22 +665,22 @@ public static class CockpitAssembler
     /// <summary>Sport unit kind: cup elimination round.</summary>
     public const string UnitKindRound = "Round";
 
-    private static CockpitOperationalFocusDto BuildOperationalFocus(
+    private static OverviewOperationalFocusDto BuildOperationalFocus(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
-        CockpitMatchCountsDto matchCounts,
+        OverviewMatchCountsDto matchCounts,
         StructureFormatKind? formatKind)
     {
         var names = EntryDisplayNames.ToMap(competition);
         var stageFocus = stages
-            .Select(stage => new CockpitStageFocusDto(stage.Id.Value, stage.Name.Value, stage.Status))
+            .Select(stage => new OverviewStageFocusDto(stage.Id.Value, stage.Name.Value, stage.Status))
             .ToArray();
 
         var draws = stages
             .SelectMany(stage => stage.Draws
                 .Where(draw => draw.Status != DrawStatus.Cancelled)
-                .Select(draw => new CockpitDrawFocusDto(
+                .Select(draw => new OverviewDrawFocusDto(
                     stage.Id.Value,
                     draw.Id.Value,
                     draw.Kind,
@@ -691,7 +691,7 @@ public static class CockpitAssembler
 
         var swissByes = stages
             .Where(stage => stage.IsSwiss)
-            .SelectMany(stage => stage.SwissByeHistory.Select(bye => new CockpitSwissByeDto(
+            .SelectMany(stage => stage.SwissByeHistory.Select(bye => new OverviewSwissByeDto(
                 stage.Id.Value,
                 bye.RoundIndex,
                 bye.EntryId.Value,
@@ -702,7 +702,7 @@ public static class CockpitAssembler
 
         var (recentUnit, nextUnit) = BuildTemporalSportUnits(competition, stages, matchesByStage, names);
 
-        return new CockpitOperationalFocusDto(
+        return new OverviewOperationalFocusDto(
             stageFocus,
             draws,
             matchCounts,
@@ -716,7 +716,7 @@ public static class CockpitAssembler
     /// <summary>
     /// Game-rule facts for Vue d'ensemble Règlement — ReferenceStage only.
     /// </summary>
-    internal static CockpitReferenceStageGameRulesDto? BuildReferenceStageGameRules(
+    internal static OverviewReferenceStageGameRulesDto? BuildReferenceStageGameRules(
         Competition competition,
         IReadOnlyList<Stage> stages,
         StructureFormatKind? competitionFormatKind)
@@ -732,7 +732,7 @@ public static class CockpitAssembler
         var tie = TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
         var formatKind = ResolveGameRulesFormatKind(reference, competitionFormatKind);
 
-        return new CockpitReferenceStageGameRulesDto(
+        return new OverviewReferenceStageGameRulesDto(
             reference.Id.Value,
             reference.Name.Value,
             formatKind.ToString(),
@@ -762,7 +762,7 @@ public static class CockpitAssembler
     /// <summary>
     /// Dernières / Prochaines on ReferenceStage only — full Matchday or Round units (no caps).
     /// </summary>
-    internal static (CockpitSportUnitDto? Recent, CockpitSportUnitDto? Next) BuildTemporalSportUnits(
+    internal static (OverviewSportUnitDto? Recent, OverviewSportUnitDto? Next) BuildTemporalSportUnits(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
@@ -848,7 +848,7 @@ public static class CockpitAssembler
         return collected;
     }
 
-    private static CockpitSportUnitDto ProjectSportUnit(
+    private static OverviewSportUnitDto ProjectSportUnit(
         Stage stage,
         SportUnitSlice slice,
         IReadOnlyDictionary<EntryId, string> names)
@@ -870,7 +870,7 @@ public static class CockpitAssembler
                         match.Result.Score.AwayGoals);
                 }
 
-                return new CockpitMatchLineDto(
+                return new OverviewMatchLineDto(
                     match.Id.Value,
                     stage.Id.Value,
                     match.Status,
@@ -884,7 +884,7 @@ public static class CockpitAssembler
             .ThenBy(line => line.MatchId)
             .ToArray();
 
-        return new CockpitSportUnitDto(
+        return new OverviewSportUnitDto(
             stage.Id.Value,
             stage.Name.Value,
             slice.UnitKind,
@@ -1032,7 +1032,7 @@ public static class CockpitAssembler
         ];
     }
 
-    private static CockpitStandingCompactDto? BuildStandingCompact(
+    private static OverviewStandingCompactDto? BuildStandingCompact(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
@@ -1057,16 +1057,16 @@ public static class CockpitAssembler
         var section = ConsultationAssembler.ProjectStandingsForStage(competition, reference, matches);
         return !section.Applicable || section.Tables.Count == 0
             ? null
-            : new CockpitStandingCompactDto(
+            : new OverviewStandingCompactDto(
             reference.Id.Value,
             reference.Name.Value,
             [
-                .. section.Tables.Select(table => new CockpitStandingCompactTableDto(
+                .. section.Tables.Select(table => new OverviewStandingCompactTableDto(
                     table.Scope,
                     table.GroupId,
                     table.GroupName,
                     [
-                        .. table.Rows.Select(row => new CockpitStandingCompactRowDto(
+                        .. table.Rows.Select(row => new OverviewStandingCompactRowDto(
                             row.Position,
                             row.EntryId,
                             row.DisplayName,
@@ -1110,7 +1110,7 @@ public static class CockpitAssembler
         return firstActive ?? lastCompleted;
     }
 
-    private static CockpitMatchCountsDto BuildMatchCounts(
+    private static OverviewMatchCountsDto BuildMatchCounts(
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
     {
         var live = 0;
@@ -1146,7 +1146,7 @@ public static class CockpitAssembler
             }
         }
 
-        return new CockpitMatchCountsDto(
+        return new OverviewMatchCountsDto(
             live,
             scheduled,
             finished,
@@ -1158,11 +1158,11 @@ public static class CockpitAssembler
     /// <summary>
     /// AttentionSummary V1 = Blocking situations only (subset of Situations — not a parallel list).
     /// </summary>
-    private static CockpitAttentionSummaryDto BuildAttentionSummary(
-        IReadOnlyList<CockpitSituationDto> situations)
+    private static OverviewAttentionSummaryDto BuildAttentionSummary(
+        IReadOnlyList<OverviewSituationDto> situations)
     {
         var blocking = situations.Where(situation => situation.Nature == NatureBlocking).ToArray();
-        return new CockpitAttentionSummaryDto(blocking.Length, blocking);
+        return new OverviewAttentionSummaryDto(blocking.Length, blocking);
     }
 
     /// <summary>
@@ -1174,7 +1174,7 @@ public static class CockpitAssembler
     /// Completion blockers stay on ClosureHint — never merged here.
     /// Identity = Source + TargetType + TargetId; duplicates collapsed.
     /// </remarks>
-    private static List<CockpitSituationDto> BuildSituations(
+    private static List<OverviewSituationDto> BuildSituations(
         Competition competition,
         OrganisationViewDto organisation,
         NeedsAttentionDto attention,
@@ -1205,7 +1205,7 @@ public static class CockpitAssembler
         return DeduplicateSituations(items);
     }
 
-    private static CockpitSituationDto CreateSituation(
+    private static OverviewSituationDto CreateSituation(
         string source,
         string nature,
         string? targetType,
@@ -1248,7 +1248,7 @@ public static class CockpitAssembler
             _ => null
         };
 
-    private static List<CockpitSituationDto> DeduplicateSituations(List<CockpitSituationDto> items) =>
+    private static List<OverviewSituationDto> DeduplicateSituations(List<OverviewSituationDto> items) =>
     [
         .. items
             .GroupBy(situation => (
@@ -1282,7 +1282,7 @@ public static class CockpitAssembler
             _ => null
         };
 
-    private static IReadOnlyList<CockpitActionDto> BuildActions(
+    private static IReadOnlyList<OverviewActionDto> BuildActions(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
@@ -1294,7 +1294,7 @@ public static class CockpitAssembler
         var competitionOpen = competition.Status is not (CompetitionStatus.Completed or CompetitionStatus.Archived);
 
         var actions = organisation.Actions
-            .Select(code => new CockpitActionDto(
+            .Select(code => new OverviewActionDto(
                 code,
                 Guaranteed: false,
                 StageId: organisation.Format.PrimaryStageId))
@@ -1304,7 +1304,7 @@ public static class CockpitAssembler
         {
             if (competition.Status == CompetitionStatus.Completed)
             {
-                actions.Add(new CockpitActionDto(ActionArchiveCompetition, Guaranteed: false));
+                actions.Add(new OverviewActionDto(ActionArchiveCompetition, Guaranteed: false));
             }
 
             return DeduplicateActions(actions);
@@ -1313,12 +1313,12 @@ public static class CockpitAssembler
         if (competition is { Status: CompetitionStatus.Draft, StageIds.Count: > 0 }
             && competition.Entries.Any(entry => entry.Status == EntryStatus.Active))
         {
-            actions.Add(new CockpitActionDto(ActionPrepareCompetition, Guaranteed: false));
+            actions.Add(new OverviewActionDto(ActionPrepareCompetition, Guaranteed: false));
         }
 
         if (competition.Status == CompetitionStatus.Ready)
         {
-            actions.Add(new CockpitActionDto(ActionStartCompetition, Guaranteed: false));
+            actions.Add(new OverviewActionDto(ActionStartCompetition, Guaranteed: false));
         }
 
         foreach (var stage in stages)
@@ -1327,14 +1327,14 @@ public static class CockpitAssembler
             switch (stage.Status)
             {
                 case StageStatus.Draft:
-                    actions.Add(new CockpitActionDto(
+                    actions.Add(new OverviewActionDto(
                         ActionPrepareStage,
                         Guaranteed: false,
                         stage.Id.Value,
                         Params: stageParams));
                     break;
                 case StageStatus.Ready:
-                    actions.Add(new CockpitActionDto(
+                    actions.Add(new OverviewActionDto(
                         ActionStartStage,
                         Guaranteed: false,
                         stage.Id.Value,
@@ -1352,7 +1352,7 @@ public static class CockpitAssembler
             {
                 if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved })
                 {
-                    actions.Add(new CockpitActionDto(
+                    actions.Add(new OverviewActionDto(
                         ActionPublishDraw,
                         Guaranteed: false,
                         stage.Id.Value,
@@ -1362,7 +1362,7 @@ public static class CockpitAssembler
                 if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Pairing }
                     && !DrawAppliedState.IsApplied(draw, stage))
                 {
-                    actions.Add(new CockpitActionDto(
+                    actions.Add(new OverviewActionDto(
                         ActionApplyDraw,
                         Guaranteed: false,
                         stage.Id.Value,
@@ -1375,7 +1375,7 @@ public static class CockpitAssembler
             && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
             && organisation.Format.PrimaryStageId is { } materializeStageId)
         {
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionMaterializeMatches,
                 Guaranteed: false,
                 materializeStageId));
@@ -1394,7 +1394,7 @@ public static class CockpitAssembler
             var nextRound = stage.Matchdays.Count == 0
                 ? 1
                 : stage.Matchdays.Max(matchday => matchday.Number) + 1;
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionGenerateNextRound,
                 Guaranteed: false,
                 generateStageId,
@@ -1414,7 +1414,7 @@ public static class CockpitAssembler
                 continue;
             }
 
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionMaterializeFromOccupiedSlots,
                 Guaranteed: false,
                 stage.Id.Value,
@@ -1428,11 +1428,11 @@ public static class CockpitAssembler
         if (organisation.Readiness.ReadyForSchedule
             && organisation.Format.PrimaryStageId is { } scheduleStageId)
         {
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionGenerateSchedule,
                 Guaranteed: false,
                 scheduleStageId));
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionApplySchedule,
                 Guaranteed: false,
                 scheduleStageId));
@@ -1445,7 +1445,7 @@ public static class CockpitAssembler
             .Take(3);
         foreach (var (stageId, match) in liveMatches)
         {
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionFinishMatch,
                 Guaranteed: false,
                 stageId,
@@ -1459,7 +1459,7 @@ public static class CockpitAssembler
             .Take(3);
         foreach (var (stageId, match) in scheduledMatches)
         {
-            actions.Add(new CockpitActionDto(
+            actions.Add(new OverviewActionDto(
                 ActionStartMatch,
                 Guaranteed: false,
                 stageId,
@@ -1479,7 +1479,7 @@ public static class CockpitAssembler
                             ? mid
                             : null;
                         var stageId = ResolveStageIdFromAttention(item, stages);
-                        actions.Add(new CockpitActionDto(
+                        actions.Add(new OverviewActionDto(
                             ActionApplyProgression,
                             Guaranteed: false,
                             stageId,
@@ -1492,7 +1492,7 @@ public static class CockpitAssembler
                     or NeedsAttentionAssembler.SourceQualificationConflict:
                     {
                         var stageId = ResolveStageIdFromAttention(item, stages);
-                        actions.Add(new CockpitActionDto(
+                        actions.Add(new OverviewActionDto(
                             ActionApplyQualification,
                             Guaranteed: false,
                             stageId));
@@ -1503,7 +1503,7 @@ public static class CockpitAssembler
 
         if (completion?.CanCompleteNormally == true)
         {
-            actions.Add(new CockpitActionDto(ActionCompleteCompetition, Guaranteed: false));
+            actions.Add(new OverviewActionDto(ActionCompleteCompetition, Guaranteed: false));
         }
 
         return DeduplicateActions(actions);
@@ -1560,7 +1560,7 @@ public static class CockpitAssembler
         return stages.Count > 0 ? stages[0].Id.Value : null;
     }
 
-    private static IReadOnlyList<CockpitActionDto> DeduplicateActions(List<CockpitActionDto> actions) =>
+    private static IReadOnlyList<OverviewActionDto> DeduplicateActions(List<OverviewActionDto> actions) =>
     [
         .. actions
             .GroupBy(action => (
@@ -1588,7 +1588,7 @@ public static class CockpitAssembler
     ];
 
     /// <summary>
-    /// En cours structural tip priority — first matching <see cref="CockpitActionDto.Code"/> wins.
+    /// En cours structural tip priority — first matching <see cref="OverviewActionDto.Code"/> wins.
     /// Semantic order (not incidental list order). No consultation / match-hub fallback tip.
     /// </summary>
     internal static readonly string[] InProgressStructuralProgressionPriority =
@@ -1611,16 +1611,16 @@ public static class CockpitAssembler
     /// Running/Suspended: <see cref="InProgressStructuralProgressionPriority"/> —
     /// null is a valid calm-competition outcome (not OpenMatches fallback).
     /// </summary>
-    private static CockpitNaturalProgressionDto? ResolveNaturalProgression(
+    private static OverviewNaturalProgressionDto? ResolveNaturalProgression(
         Competition competition,
-        IReadOnlyList<CockpitActionDto> actions,
+        IReadOnlyList<OverviewActionDto> actions,
         bool fromSlotsOpportunity) =>
         competition.Status switch
         {
             // From-slots (later Cup stage) before skeleton MaterializeMatches — avoid concurrent
             // "create matches" vs "configure confrontations" when multi-stage slots are ready.
             CompetitionStatus.Draft or CompetitionStatus.Ready when fromSlotsOpportunity =>
-                new CockpitNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
+                new OverviewNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
             CompetitionStatus.Draft or CompetitionStatus.Ready =>
                 ResolveConstructionStructuralProgression(actions),
             CompetitionStatus.Running or CompetitionStatus.Suspended =>
@@ -1632,17 +1632,17 @@ public static class CockpitAssembler
     /// Picks the highest-priority structural transition during Préparation (Draft/Ready).
     /// Returns null when none — valid calm Construction state (SPA may still show lifecycle alone).
     /// </summary>
-    internal static CockpitNaturalProgressionDto? ResolveConstructionStructuralProgression(
-        IReadOnlyList<CockpitActionDto> actions) =>
-        (from code in ConstructionStructuralProgressionPriority where actions.Any(action => action.Code == code) select new CockpitNaturalProgressionDto(code)).FirstOrDefault();
+    internal static OverviewNaturalProgressionDto? ResolveConstructionStructuralProgression(
+        IReadOnlyList<OverviewActionDto> actions) =>
+        (from code in ConstructionStructuralProgressionPriority where actions.Any(action => action.Code == code) select new OverviewNaturalProgressionDto(code)).FirstOrDefault();
 
     /// <summary>
     /// Picks the highest-priority structural transition among projected actions.
     /// Returns null when none — valid En cours calm state.
     /// </summary>
-    internal static CockpitNaturalProgressionDto? ResolveInProgressStructuralProgression(
-        IReadOnlyList<CockpitActionDto> actions) =>
-        (from code in InProgressStructuralProgressionPriority where actions.Any(action => action.Code == code) select new CockpitNaturalProgressionDto(code)).FirstOrDefault();
+    internal static OverviewNaturalProgressionDto? ResolveInProgressStructuralProgression(
+        IReadOnlyList<OverviewActionDto> actions) =>
+        (from code in InProgressStructuralProgressionPriority where actions.Any(action => action.Code == code) select new OverviewNaturalProgressionDto(code)).FirstOrDefault();
 
     /// <summary>
     /// Evaluates whether Swiss <see cref="ActionGenerateNextRound"/> is an opportunity.
@@ -1787,19 +1787,19 @@ public static class CockpitAssembler
     private static bool IsCupStage(Stage stage) =>
         stage.Rounds.Count > 0 && stage.Groups.Count == 0 && stage.Matchdays.Count == 0;
 
-    private static IReadOnlyList<CockpitNavigationHintDto> BuildNavigationHints(
+    private static IReadOnlyList<OverviewNavigationHintDto> BuildNavigationHints(
         Competition competition,
-        IReadOnlyList<CockpitSituationDto> situations,
+        IReadOnlyList<OverviewSituationDto> situations,
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
-        var hints = new List<CockpitNavigationHintDto>
+        var hints = new List<OverviewNavigationHintDto>
         {
             new("Competition", competition.Id.Value.ToString(), null, null, competition.Id.Value),
             new("Organisation", competition.Id.Value.ToString(), null, null, competition.Id.Value)
         };
         hints.AddRange(stages.Select(stage =>
-            new CockpitNavigationHintDto("Stage", stage.Id.Value.ToString(), null, stage.Id.Value, competition.Id.Value)));
+            new OverviewNavigationHintDto("Stage", stage.Id.Value.ToString(), null, stage.Id.Value, competition.Id.Value)));
 
         foreach (var situation in situations)
         {
@@ -1830,7 +1830,7 @@ public static class CockpitAssembler
                     break;
             }
 
-            hints.Add(new CockpitNavigationHintDto(
+            hints.Add(new OverviewNavigationHintDto(
                 situation.TargetType,
                 situation.TargetId,
                 situation.MatchId,
@@ -1841,7 +1841,7 @@ public static class CockpitAssembler
         // Explicit Fixture → Match navigation when attachments are known (avoids SPA join).
         foreach (var (fixtureId, matchId) in fixtureToMatch)
         {
-            hints.Add(new CockpitNavigationHintDto(
+            hints.Add(new OverviewNavigationHintDto(
                 "Fixture",
                 fixtureId.ToString(),
                 matchId,

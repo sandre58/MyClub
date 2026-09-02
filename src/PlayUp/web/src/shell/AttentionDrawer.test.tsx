@@ -4,26 +4,26 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchCompetitionCockpit,
+  fetchCompetitionOverview,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
 import { HomePage } from '../pages/HomePage'
-import { cockpitView } from '../test/cockpitFixtures'
-import type { CockpitSituation } from '../types'
+import { overviewView } from '../test/overviewFixtures'
+import type { OverviewSituation } from '../types'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
     fetchCompetitions: vi.fn(),
-    fetchCompetitionOverview: vi.fn(),
+    fetchCompetitionDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchMatchDetail: vi.fn(),
-    fetchCompetitionCockpit: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
   }
 })
 
@@ -31,8 +31,8 @@ const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
-function attentionCockpit(items: Partial<CockpitSituation>[]) {
-  const normalized: CockpitSituation[] = items.map((item) => ({
+function attentionOverview(items: Partial<OverviewSituation>[]) {
+  const normalized: OverviewSituation[] = items.map((item) => ({
     source: item.source ?? 'InsufficientParticipants',
     nature: item.nature ?? 'Blocking',
     targetType: item.targetType ?? null,
@@ -43,7 +43,7 @@ function attentionCockpit(items: Partial<CockpitSituation>[]) {
     impactCode: item.impactCode ?? null,
     params: item.params ?? {},
   }))
-  return cockpitView({
+  return overviewView({
     competitionId,
     name: 'Coupe U18',
     status: 'Running',
@@ -94,14 +94,14 @@ describe('AttentionDrawer', () => {
     vi.mocked(fetchCompetitions).mockResolvedValue([
       { id: competitionId, name: 'Coupe U18', status: 'Running' },
     ])
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Coupe U18',
       status: 'Running',
       entries: [],
       stages: [{ stageId, name: 'Group stage', status: 'Running' }],
     })
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([oneItem]))
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(attentionOverview([oneItem]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -131,7 +131,7 @@ describe('AttentionDrawer', () => {
   })
 
   it('disables the header trigger when count is 0', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(attentionCockpit([]))
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(attentionOverview([]))
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
@@ -197,8 +197,8 @@ describe('AttentionDrawer', () => {
   })
 
   it('navigates to an item route and closes the drawer', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
         {
           source: 'StageReady',
           nature: 'Informational',
@@ -263,8 +263,8 @@ describe('AttentionDrawer', () => {
   })
 
   it('works on a stage deep link with resolved competition context', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
         {
           source: 'DrawPending',
           nature: 'Informational',
@@ -331,8 +331,8 @@ describe('AttentionDrawer', () => {
 
   it('uses Host matchId for Fixture items without N+1 match joins', async () => {
     const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      attentionCockpit([
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
         {
           source: 'ProgressionPending',
           nature: 'Blocking',

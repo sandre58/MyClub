@@ -1,5 +1,5 @@
 export type ShellDestinationKey =
-  | 'cockpit'
+  | 'overview'
   | 'organisation'
   | 'matches'
   | 'classements'
@@ -26,7 +26,7 @@ export type ShellNavGroupSpec = {
 
 /** Visual SoT (Shell A). Référentiel items have no product route yet. */
 export const shellNavGroups: readonly ShellNavGroupSpec[] = [
-  { id: 'pilotage', items: [{ key: 'cockpit', hrefKey: 'cockpit' }] },
+  { id: 'pilotage', items: [{ key: 'overview', hrefKey: 'overview' }] },
   {
     id: 'competition',
     items: [
@@ -57,7 +57,7 @@ export function shellDestinationHrefs({
   const competitionListHref = '/'
 
   return {
-    cockpit: competitionId ? `/competitions/${competitionId}` : '/',
+    overview: competitionId ? `/competitions/${competitionId}` : '/',
     organisation: competitionId
       ? `/competitions/${competitionId}/organisation`
       : competitionListHref,
@@ -80,7 +80,7 @@ export function resolveActiveDestination(pathname: string): ShellDestinationKey 
     pathname === '/competitions' ||
     /^\/competitions\/[^/]+$/.test(pathname)
   ) {
-    return 'cockpit'
+    return 'overview'
   }
 
   if (/^\/competitions\/[^/]+\/organisation(?:\/|$)/.test(pathname)) {

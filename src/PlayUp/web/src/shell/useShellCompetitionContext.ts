@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import {
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchCompetitions,
   fetchMatchDetail,
   fetchStageOverview,
@@ -41,7 +41,7 @@ export function useShellCompetitionContext() {
 
   const overviewQuery = useQuery({
     queryKey: queryKeys.competitions.detail(resolvedCompetitionId ?? ''),
-    queryFn: () => fetchCompetitionOverview(resolvedCompetitionId!),
+    queryFn: () => fetchCompetitionDetail(resolvedCompetitionId!),
     enabled: Boolean(resolvedCompetitionId),
   })
 

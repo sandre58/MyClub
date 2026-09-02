@@ -23,7 +23,7 @@ public sealed class UseCaseExecutorReadTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 22, 30, 0, TimeSpan.Zero));
 
     [Fact]
-    public async Task GetCompetitionOverviewAsync_when_missing_throws_and_does_not_saveAsync()
+    public async Task GetCompetitionDetailAsync_when_missing_throws_and_does_not_saveAsync()
     {
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
@@ -34,7 +34,7 @@ public sealed class UseCaseExecutorReadTests
             .ReturnsAsync((Competition?)null);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
-        var act = async () => await executor.GetCompetitionOverviewAsync(CompetitionId.New());
+        var act = async () => await executor.GetCompetitionDetailAsync(CompetitionId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
             .Should().Be(ApplicationErrorCodes.CompetitionNotFound);

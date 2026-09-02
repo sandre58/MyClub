@@ -37,7 +37,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
 
         using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CompetitionOverviewDto>(HostJson.Options);
+        var body = await response.Content.ReadFromJsonAsync<CompetitionDetailDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.Id.Should().Be(seed.CompetitionId.Value);
         body.Name.Should().Be("Read Cup");
@@ -163,20 +163,20 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Get_cockpit_returns_200_projectionAsync()
+    public async Task Get_overview_returns_200_projectionAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedCompetitionWithStageAsync(factory);
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/overview");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        var body = await response.Content.ReadFromJsonAsync<OverviewViewDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.CompetitionId.Should().Be(seed.CompetitionId.Value);
         body.Name.Should().Be("Read Cup");
         body.Status.Should().Be(CompetitionStatus.Draft);
-        body.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
+        body.CycleReading.Code.Should().Be(OverviewAssembler.CycleConstruction);
         body.ConstructionDimensions.Teams.Should().NotBeNull();
         body.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().BeGreaterThan(0);
         body.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
@@ -187,10 +187,10 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.OperationalFocus.Draws.Should().ContainSingle(draw => !draw.IsApplied);
         body.Situations.Should().NotBeNull();
         body.Situations.Should().OnlyContain(item =>
-            item.Nature == CockpitAssembler.NatureBlocking
-            || item.Nature == CockpitAssembler.NatureInformational);
+            item.Nature == OverviewAssembler.NatureBlocking
+            || item.Nature == OverviewAssembler.NatureInformational);
         body.AttentionSummary.Count.Should().Be(body.AttentionSummary.Items.Count);
-        body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == CockpitAssembler.NatureBlocking);
+        body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);
         body.AttentionSummary.Items.Should().OnlyContain(item =>
             body.Situations.Any(situation =>
                 situation.Source == item.Source
@@ -204,29 +204,29 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Get_cockpit_running_projects_in_progress_without_open_matches_tipAsync()
+    public async Task Get_overview_running_projects_in_progress_without_open_matches_tipAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedRunningWithScheduledMatchAsync(factory);
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/overview");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        var body = await response.Content.ReadFromJsonAsync<OverviewViewDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.Status.Should().Be(CompetitionStatus.Running);
-        body.CycleReading.Code.Should().Be(CockpitAssembler.CycleInProgress);
+        body.CycleReading.Code.Should().Be(OverviewAssembler.CycleInProgress);
         body.NaturalProgression.Should().BeNull();
         body.ClosureHint.CanCompleteNormally.Should().BeFalse();
         body.ClosureHint.BlockerCodes.Should().Contain(CompletionAnalyzer.ReasonScheduledMatches);
-        body.ConstructionDimensions.Teams.Prominence.Should().Be(CockpitAssembler.ProminenceCondensed);
-        body.ConstructionDimensions.Structure.Prominence.Should().Be(CockpitAssembler.ProminenceCondensed);
-        body.ConstructionDimensions.Regulation.Prominence.Should().Be(CockpitAssembler.ProminenceCondensed);
+        body.ConstructionDimensions.Teams.Prominence.Should().Be(OverviewAssembler.ProminenceCondensed);
+        body.ConstructionDimensions.Structure.Prominence.Should().Be(OverviewAssembler.ProminenceCondensed);
+        body.ConstructionDimensions.Regulation.Prominence.Should().Be(OverviewAssembler.ProminenceCondensed);
         body.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeFalse();
         body.ConstructionDimensions.Regulation.TransitionReadiness.Should().BeEmpty();
         body.AvailableActions.Should().NotContain(action =>
-            action.Code == CockpitAssembler.ActionPrepareCompetition
-            || action.Code == CockpitAssembler.ActionStartCompetition
+            action.Code == OverviewAssembler.ActionPrepareCompetition
+            || action.Code == OverviewAssembler.ActionStartCompetition
             || action.Code == "OpenMatches");
         body.Situations.Should().NotContain(item =>
             item.Source == "InsufficientParticipants" || item.Source == "MissingStage");
@@ -235,42 +235,42 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Get_cockpit_suspended_projects_in_progress_informational_not_in_attentionAsync()
+    public async Task Get_overview_suspended_projects_in_progress_informational_not_in_attentionAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedSuspendedWithScheduledMatchAsync(factory);
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/overview");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        var body = await response.Content.ReadFromJsonAsync<OverviewViewDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.Status.Should().Be(CompetitionStatus.Suspended);
-        body.CycleReading.Code.Should().Be(CockpitAssembler.CycleInProgress);
+        body.CycleReading.Code.Should().Be(OverviewAssembler.CycleInProgress);
         body.NaturalProgression.Should().BeNull();
         body.Situations.Should().Contain(item =>
-            item.Source == CockpitAssembler.SourceCompetitionSuspended
-            && item.Nature == CockpitAssembler.NatureInformational);
+            item.Source == OverviewAssembler.SourceCompetitionSuspended
+            && item.Nature == OverviewAssembler.NatureInformational);
         body.AttentionSummary.Items.Should().NotContain(item =>
-            item.Source == CockpitAssembler.SourceCompetitionSuspended);
-        body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == CockpitAssembler.NatureBlocking);
+            item.Source == OverviewAssembler.SourceCompetitionSuspended);
+        body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);
         await AssertNoWinnerPropertyAsync(response);
     }
 
     [IntegrationFact]
-    public async Task Get_cockpit_unknown_returns_404Async()
+    public async Task Get_overview_unknown_returns_404Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/cockpit");
+        using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/overview");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionNotFound);
     }
 
     [IntegrationFact]
-    public async Task Get_cockpit_resolves_fixture_to_match_navigationAsync()
+    public async Task Get_overview_resolves_fixture_to_match_navigationAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedCompetitionWithStageAsync(factory);
@@ -290,9 +290,9 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         }
 
         using var client = factory.CreateClient();
-        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/cockpit");
+        using var response = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/overview");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CockpitViewDto>(HostJson.Options);
+        var body = await response.Content.ReadFromJsonAsync<OverviewViewDto>(HostJson.Options);
         body.Should().NotBeNull();
         body.NavigationHints.Should().Contain(hint =>
             hint.TargetType == "Fixture"

@@ -122,33 +122,6 @@
     text-transform: uppercase;
 }
 
-.ds-nav-concept {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-4);
-}
-
-.ds-nav-concept__item {
-    display: flex;
-    align-items: center;
-    min-height: var(--control-height);
-    padding-inline: var(--space-12);
-    border: 0;
-    border-inline-start: 3px solid transparent;
-    background: transparent;
-    color: var(--color-text-secondary);
-    font-family: inherit;
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-regular);
-}
-
-.ds-nav-concept__item--active {
-    color: var(--color-ink);
-    font-weight: var(--font-weight-bold);
-    border-inline-start-color: var(--color-brand);
-}
-
 .ds-score-line {
     display: flex;
     flex-wrap: wrap;

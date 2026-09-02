@@ -23,7 +23,7 @@ alwaysApply: false
 ## Matchdays / journées
 
 - "J3 / 5" pattern: current number huge, total small — the hero numeric of
-  the cockpit.
+  the overview.
 - Round sections: typographic header (label + date + state) inside one panel,
   not one panel per round.
 

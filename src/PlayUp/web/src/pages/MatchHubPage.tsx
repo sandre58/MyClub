@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { fetchCompetitionOverview, fetchMatchesByStage } from '../api'
+import { fetchCompetitionDetail, fetchMatchesByStage } from '../api'
 import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
 import { AttentionRow } from '../design-system/components/AttentionRow'
 import { MatchRound } from '../design-system/components/MatchRound'
@@ -24,7 +24,7 @@ import {
 import {
   formatScore,
   sideLabel,
-  type CompetitionOverview,
+  type CompetitionDetail,
   type CompetitionStageSummary,
   type MatchStatus,
   type MatchSummary,
@@ -45,7 +45,7 @@ export function MatchHubPage() {
 
   const overviewQuery = useQuery({
     queryKey: queryKeys.competitions.detail(competitionId),
-    queryFn: () => fetchCompetitionOverview(competitionId),
+    queryFn: () => fetchCompetitionDetail(competitionId),
     enabled: competitionId.length > 0,
   })
 
@@ -115,7 +115,7 @@ function MatchesView({
   matchesPending,
   matchesError,
 }: {
-  data: CompetitionOverview
+  data: CompetitionDetail
   rows: MatchHubRow[]
   stages: CompetitionStageSummary[]
   matchesPending: boolean
@@ -165,7 +165,7 @@ function ContextBand({
   data,
   matchCount,
 }: {
-  data: CompetitionOverview
+  data: CompetitionDetail
   matchCount: number
 }) {
   const { t } = useTranslation('matches')
@@ -391,7 +391,7 @@ function NeedsResultPanel({ items }: { items: MatchHubRow[] }) {
       {items.length === 0 ? (
         <p className="matches-panel__meta">{t('needsResult.clear')}</p>
       ) : (
-        <div className="ds-cockpit-attention">
+        <div className="ds-overview-attention">
           {items.slice(0, 5).map(({ match }) => {
             const homeName = sideLabel(match.home)
             const awayName = sideLabel(match.away)

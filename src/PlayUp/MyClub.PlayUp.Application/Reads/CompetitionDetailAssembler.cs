@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CompetitionOverviewAssembler.cs" company="Stéphane ANDRE">
+// <copyright file="CompetitionDetailAssembler.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -10,9 +10,9 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembles <see cref="CompetitionOverviewDto"/> from Competition + loaded Stages.
+/// Assembles <see cref="CompetitionDetailDto"/> from Competition + loaded Stages.
 /// </summary>
-public static class CompetitionOverviewAssembler
+public static class CompetitionDetailAssembler
 {
     /// <summary>
     /// Maps competition and stages into a product overview (no Domain mutation).
@@ -20,7 +20,7 @@ public static class CompetitionOverviewAssembler
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Stages referenced by the competition (same order preferred).</param>
     /// <returns>The assembled overview.</returns>
-    public static CompetitionOverviewDto Assemble(Competition competition, IReadOnlyList<Stage> stages)
+    public static CompetitionDetailDto Assemble(Competition competition, IReadOnlyList<Stage> stages)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -50,7 +50,7 @@ public static class CompetitionOverviewAssembler
                 entry.SecondaryColor?.Value))
             .ToArray();
 
-        return new CompetitionOverviewDto(
+        return new CompetitionDetailDto(
             competition.Id.Value,
             competition.Name.Value,
             competition.Status,

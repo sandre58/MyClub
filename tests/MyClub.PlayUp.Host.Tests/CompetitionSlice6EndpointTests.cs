@@ -46,7 +46,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
         completedSummary.NextActionCode.Should().Be("OpenConsultation");
 
         using var overviewCompleted = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}");
-        var overview = await overviewCompleted.Content.ReadFromJsonAsync<CompetitionOverviewDto>(HostJson.Options);
+        var overview = await overviewCompleted.Content.ReadFromJsonAsync<CompetitionDetailDto>(HostJson.Options);
         overview!.CompletionMode.Should().Be(CompletionMode.Normal);
 
         using var archiveResponse = await client.PostAsync(

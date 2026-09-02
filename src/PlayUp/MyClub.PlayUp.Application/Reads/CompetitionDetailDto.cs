@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CompetitionOverviewDto.cs" company="Stéphane ANDRE">
+// <copyright file="CompetitionDetailDto.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Product overview of a competition for the organizer.
+/// Product detail of a competition for the organizer (GET by id — not Vue d'ensemble).
 /// </summary>
 /// <param name="Id">Competition identity.</param>
 /// <param name="Name">Competition display name.</param>
@@ -21,7 +21,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
 /// <param name="ScheduledEnd">Optional declared end.</param>
-public sealed record CompetitionOverviewDto(
+public sealed record CompetitionDetailDto(
     Guid Id,
     string Name,
     CompetitionStatus Status,
@@ -34,7 +34,7 @@ public sealed record CompetitionOverviewDto(
     DateTimeOffset? ScheduledEnd = null);
 
 /// <summary>
-/// Entry line in a competition overview.
+/// Entry line in a competition detail.
 /// </summary>
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Display name.</param>

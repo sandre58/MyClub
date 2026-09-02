@@ -11,23 +11,23 @@ Search these before building anything new. Reference implementations live in
 
 | Component | Role | Reference |
 |---|---|---|
-| `PlayUpMark` | Monogram, all sizes | `design-system/PlayUpMark.tsx` |
-| `PlayUpWordmark` | Accueil / chrome rasters; typed SVG for Lab | `design-system/PlayUpWordmark.tsx` |
+| `PlayUpLockupMark` | Accueil / chrome mark PNG | `design-system/PlayUpLockupMark.tsx` |
+| `PlayUpWordmark` | Accueil / chrome rasters (`home` / `chrome`) | `design-system/PlayUpWordmark.tsx` |
 | `TrendIcon` | Slanted up/down/flat arrows | `design-system/TrendIcon.tsx` |
 | `LiveStatus` | Pulse dot + live label | `design-system/components/LiveStatus.tsx` |
 | `PanelHead` | Panel title + optional neutral icon + right meta | `design-system/components/PanelHead.tsx` |
 | `MatchRow` | One match, state-driven (score / time / pill / live) | `design-system/components/MatchRow.tsx` |
 | Match Hero | Match object header, 3 states (scheduled/live/finished) | `design-system/components/MatchHero.tsx` |
-| `Crest` | Team initials block | `design-lab/LabShared.tsx` |
+| `TeamCrest` | Team initials block | `design-system/TeamCrest.tsx` |
 | Status pill | `ds-status` tones (success/attention/error/info/neutral/live) | design system CSS |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
 | Dialog / Drawer | Overlay level | existing shell components |
 | Shell rail / header | Unified navy chrome + canvas workspace | `foundations/shell.css`, `shell/` |
 | Attention row | Count + icon + label + action (D9 recipe) | `design-system/components/AttentionRow.tsx` |
 | Cycle line | Lifecycle progress (Préparation → … → Terminée) | `design-system/components/CycleLine.tsx` |
-| Cockpit situation | Hero number + label + cycle | `design-system/components/CockpitSituation.tsx` |
-| Cockpit next action | Prochaine action panel | `design-system/components/CockpitNextAction.tsx` |
-| Cockpit podium | Terminée Top-3 blocks | `design-system/components/CockpitPodium.tsx` |
+| Overview reading | Hero number + label + cycle (Lab hero) | `design-system/components/OverviewReading.tsx` |
+| Overview next action | Prochaine action panel | `design-system/components/OverviewNextAction.tsx` |
+| Overview podium | Terminée Top-3 blocks | `design-system/components/OverviewPodium.tsx` |
 | Standings table | Full grid + zones + trends | `foundations/standings.css`, `StandingsLegend.tsx` |
 | Match round | Journée section in calendar | `design-system/components/MatchRound.tsx` |
 | Match round status | Journée state pill / live | `design-system/components/MatchRoundStatus.tsx` |

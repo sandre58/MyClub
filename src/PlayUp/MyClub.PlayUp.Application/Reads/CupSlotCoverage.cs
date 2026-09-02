@@ -13,7 +13,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Shared Read helper: which Cup slot keys are already covered by a complete Fixture (expected legs).
 /// </summary>
 /// <remarks>
-/// Used by Cockpit from-slots opportunity and Stage overview Confrontations UI — same rule, no SPA heuristic.
+/// Used by Overview from-slots opportunity and Stage overview Confrontations UI — same rule, no SPA heuristic.
 /// </remarks>
 public static class CupSlotCoverage
 {

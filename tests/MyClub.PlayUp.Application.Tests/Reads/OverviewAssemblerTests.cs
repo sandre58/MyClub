@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CockpitAssemblerTests.cs" company="Stéphane ANDRE">
+// <copyright file="OverviewAssemblerTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -18,7 +18,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
-public sealed class CockpitAssemblerTests
+public sealed class OverviewAssemblerTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 20, 12, 0, 0, TimeSpan.Zero));
 
@@ -28,13 +28,13 @@ public sealed class CockpitAssemblerTests
         var competition = Competition.Create(new CompetitionName("Draft Cup"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Alpha", _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
-        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.CycleReading.Code.Should().Be(OverviewAssembler.CycleConstruction);
+        view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusSetup);
         view.CalendarSummary.Should().BeNull();
         view.Status.Should().Be(CompetitionStatus.Draft);
         view.ConstructionDimensions.Regulation.Competition.MinimumTeams.Should().BeGreaterThan(0);
@@ -45,8 +45,8 @@ public sealed class CockpitAssemblerTests
         view.AvailableActions.Should().Contain(action => action.Code == OrganisationViewAssembler.ActionAddEntry);
 
         // Entry without stage — PrepareCompetition must not be projected (Domain precondition).
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
         view.ClosureHint.CanCompleteNormally.Should().BeFalse();
         view.Period.Should().BeNull();
     }
@@ -60,17 +60,17 @@ public sealed class CockpitAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         competition.AddStage(stage.Id, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionPrepareCompetition && !action.Guaranteed);
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+            action.Code == OverviewAssembler.ActionPrepareCompetition && !action.Guaranteed);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
 
         // Intentional lifecycle stays in availableActions — not naturalProgression (L7 / Option B).
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionPrepareStage);
+        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class CockpitAssemblerTests
             ],
             [early.Id, late.Id]);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [early, late] });
@@ -116,12 +116,12 @@ public sealed class CockpitAssemblerTests
         var competition = Competition.Create(new CompetitionName("No stage"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Alpha", _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
     }
 
     [Fact]
@@ -131,12 +131,12 @@ public sealed class CockpitAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         competition.AddStage(stage.Id, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
     }
 
     [Fact]
@@ -148,18 +148,18 @@ public sealed class CockpitAssemblerTests
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.Status.Should().Be(CompetitionStatus.Ready);
         view.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionStartCompetition && !action.Guaranteed);
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+            action.Code == OverviewAssembler.ActionStartCompetition && !action.Guaranteed);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
 
         // Ready without materialize/draw — stage still Draft → PrepareStage tip.
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionPrepareStage);
+        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
     }
 
     [Fact]
@@ -172,13 +172,13 @@ public sealed class CockpitAssemblerTests
         competition.Prepare(_clock);
         competition.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
     }
 
     [Fact]
@@ -193,13 +193,13 @@ public sealed class CockpitAssemblerTests
         competition.Start(_clock);
         competition.Suspend(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
-        view.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
+        view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
     }
 
     [Fact]
@@ -213,27 +213,27 @@ public sealed class CockpitAssemblerTests
         competition.Start(_clock);
         competition.Complete(CompletionMode.Administrative, _clock);
 
-        var completed = CockpitAssembler.Assemble(
+        var completed = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
         completed.AvailableActions.Should()
-            .NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
+            .NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
         completed.AvailableActions.Should()
-            .NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+            .NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
         completed.NaturalProgression.Should().BeNull();
-        completed.CycleReading.Code.Should().Be(CockpitAssembler.CycleCompleted);
+        completed.CycleReading.Code.Should().Be(OverviewAssembler.CycleCompleted);
 
         competition.Archive(_clock);
-        var archived = CockpitAssembler.Assemble(
+        var archived = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
         archived.AvailableActions.Should()
-            .NotContain(action => action.Code == CockpitAssembler.ActionPrepareCompetition);
-        archived.AvailableActions.Should().NotContain(action => action.Code == CockpitAssembler.ActionStartCompetition);
+            .NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
+        archived.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
         archived.NaturalProgression.Should().BeNull();
-        archived.CycleReading.Code.Should().Be(CockpitAssembler.CycleArchived);
+        archived.CycleReading.Code.Should().Be(OverviewAssembler.CycleArchived);
     }
 
     [Fact]
@@ -241,19 +241,19 @@ public sealed class CockpitAssemblerTests
     {
         var competition = Competition.Create(new CompetitionName("Thin"), SampleRegulations.Standard(), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.Situations.Should().Contain(item =>
             item.Source == OrganisationViewAssembler.BlockerInsufficientParticipants
-            && item.Nature == CockpitAssembler.NatureBlocking
+            && item.Nature == OverviewAssembler.NatureBlocking
             && item.Actionable
             && item.ActionCode == OrganisationViewAssembler.ActionAddEntry
-            && item.ImpactCode == CockpitAssembler.ImpactBlocksConstruction);
+            && item.ImpactCode == OverviewAssembler.ImpactBlocksConstruction);
         view.AttentionSummary.Count.Should().Be(view.AttentionSummary.Items.Count);
-        view.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == CockpitAssembler.NatureBlocking);
+        view.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);
     }
 
     [Fact]
@@ -266,7 +266,7 @@ public sealed class CockpitAssemblerTests
         competition.Prepare(_clock);
         competition.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -284,17 +284,17 @@ public sealed class CockpitAssemblerTests
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
         stage.MarkDrawNoSolution(draw.Id, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         var noSolution = view.Situations.Should().ContainSingle(item =>
             item.Source == NeedsAttentionAssembler.SourceDrawNoSolution).Subject;
-        noSolution.Nature.Should().Be(CockpitAssembler.NatureBlocking);
+        noSolution.Nature.Should().Be(OverviewAssembler.NatureBlocking);
         noSolution.Actionable.Should().BeFalse();
         noSolution.ActionCode.Should().BeNull();
-        noSolution.ImpactCode.Should().Be(CockpitAssembler.ImpactBlocksDraw);
+        noSolution.ImpactCode.Should().Be(OverviewAssembler.ImpactBlocksDraw);
         noSolution.TargetType.Should().Be("Draw");
         noSolution.TargetId.Should().Be(draw.Id.Value.ToString());
         view.AttentionSummary.Items.Should().Contain(item =>
@@ -324,14 +324,14 @@ public sealed class CockpitAssemblerTests
 
         DrawAppliedState.IsApplied(stage.Draws.Single(), stage).Should().BeTrue();
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.OperationalFocus.Draws.Should().ContainSingle(item => item.IsApplied);
         view.AvailableActions.Should().NotContain(action =>
-            action.Code == CockpitAssembler.ActionApplyDraw && action.DrawId == draw.Id.Value);
+            action.Code == OverviewAssembler.ActionApplyDraw && action.DrawId == draw.Id.Value);
     }
 
     [Fact]
@@ -339,7 +339,7 @@ public sealed class CockpitAssemblerTests
     {
         var ctx = CreateFinishedKnockoutWithProgression();
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             ctx.Competition,
             [ctx.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [ctx.Stage.Id] = [ctx.Match] });
@@ -347,13 +347,13 @@ public sealed class CockpitAssemblerTests
         var progression = view.Situations.Should().ContainSingle(item =>
             item.Source == NeedsAttentionAssembler.SourceProgressionPending).Subject;
         progression.MatchId.Should().Be(ctx.Match.Id.Value);
-        progression.Nature.Should().Be(CockpitAssembler.NatureBlocking);
+        progression.Nature.Should().Be(OverviewAssembler.NatureBlocking);
         progression.Actionable.Should().BeTrue();
-        progression.ActionCode.Should().Be(CockpitAssembler.ActionApplyProgression);
-        progression.ImpactCode.Should().Be(CockpitAssembler.ImpactBlocksProgression);
+        progression.ActionCode.Should().Be(OverviewAssembler.ActionApplyProgression);
+        progression.ImpactCode.Should().Be(OverviewAssembler.ImpactBlocksProgression);
         view.NavigationHints.Should().Contain(hint =>
             hint.TargetType == "Fixture" && hint.MatchId == ctx.Match.Id.Value);
-        view.AvailableActions.Should().Contain(action => action.Code == CockpitAssembler.ActionApplyProgression);
+        view.AvailableActions.Should().Contain(action => action.Code == OverviewAssembler.ActionApplyProgression);
     }
 
     [Fact]
@@ -362,17 +362,17 @@ public sealed class CockpitAssemblerTests
         var ctx = CreateFinishedKnockoutWithProgression();
         ctx.Stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             ctx.Competition,
             [ctx.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [ctx.Stage.Id] = [ctx.Match] });
 
         var conflict = view.Situations.Should().ContainSingle(item =>
             item.Source == NeedsAttentionAssembler.SourceProgressionConflict).Subject;
-        conflict.Nature.Should().Be(CockpitAssembler.NatureBlocking);
+        conflict.Nature.Should().Be(OverviewAssembler.NatureBlocking);
         conflict.Actionable.Should().BeTrue();
-        conflict.ActionCode.Should().Be(CockpitAssembler.ActionApplyProgression);
-        conflict.ImpactCode.Should().Be(CockpitAssembler.ImpactBlocksProgression);
+        conflict.ActionCode.Should().Be(OverviewAssembler.ActionApplyProgression);
+        conflict.ImpactCode.Should().Be(OverviewAssembler.ImpactBlocksProgression);
     }
 
     [Fact]
@@ -387,19 +387,19 @@ public sealed class CockpitAssemblerTests
         competition.Start(_clock);
         competition.Suspend(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         var suspended = view.Situations.Should().ContainSingle(item =>
-            item.Source == CockpitAssembler.SourceCompetitionSuspended).Subject;
-        suspended.Nature.Should().Be(CockpitAssembler.NatureInformational);
+            item.Source == OverviewAssembler.SourceCompetitionSuspended).Subject;
+        suspended.Nature.Should().Be(OverviewAssembler.NatureInformational);
         suspended.Actionable.Should().BeFalse();
         suspended.ActionCode.Should().BeNull();
         suspended.ImpactCode.Should().BeNull();
         view.AttentionSummary.Items.Should().NotContain(item =>
-            item.Source == CockpitAssembler.SourceCompetitionSuspended);
+            item.Source == OverviewAssembler.SourceCompetitionSuspended);
         view.AvailableActions.Should().NotContain(action => action.Code == "ResumeCompetition");
     }
 
@@ -419,7 +419,7 @@ public sealed class CockpitAssemblerTests
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
@@ -433,7 +433,7 @@ public sealed class CockpitAssemblerTests
     {
         var competition = Competition.Create(new CompetitionName("Thin"), SampleRegulations.Standard(), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -462,7 +462,7 @@ public sealed class CockpitAssemblerTests
         finished.Start(_clock);
         finished.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [scheduled, live, finished] });
@@ -475,11 +475,11 @@ public sealed class CockpitAssemblerTests
         // Draft stage → no ReferenceStage → temporal units absent
         view.OperationalFocus.RecentUnit.Should().BeNull();
         view.OperationalFocus.NextUnit.Should().BeNull();
-        view.AvailableActions.Should().Contain(action => action.Code == CockpitAssembler.ActionPrepareStage);
+        view.AvailableActions.Should().Contain(action => action.Code == OverviewAssembler.ActionPrepareStage);
         view.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionStartMatch && action.MatchId == scheduled.Id.Value);
+            action.Code == OverviewAssembler.ActionStartMatch && action.MatchId == scheduled.Id.Value);
         view.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionFinishMatch && action.MatchId == live.Id.Value);
+            action.Code == OverviewAssembler.ActionFinishMatch && action.MatchId == live.Id.Value);
     }
 
     [Fact]
@@ -495,12 +495,12 @@ public sealed class CockpitAssemblerTests
 
         var scheduled = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [scheduled] });
 
-        view.CycleReading.Code.Should().Be(CockpitAssembler.CycleInProgress);
+        view.CycleReading.Code.Should().Be(OverviewAssembler.CycleInProgress);
         view.ClosureHint.CanCompleteNormally.Should().BeFalse();
         view.ClosureHint.BlockerCodes.Should().Contain(CompletionAnalyzer.ReasonScheduledMatches);
         view.AttentionSummary.Items.Should().NotContain(item =>
@@ -512,7 +512,7 @@ public sealed class CockpitAssemblerTests
     {
         var competition = Competition.Create(new CompetitionName("Reg"), SampleRegulations.Standard(), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -528,9 +528,9 @@ public sealed class CockpitAssemblerTests
         regulation.Stage.Should().BeNull();
         regulation.CompetitionRegulationMutable.Should().BeTrue();
         regulation.TransitionReadiness.Should().Contain(item =>
-            item.Transition == CockpitAssembler.TransitionDraw && !item.Ready);
+            item.Transition == OverviewAssembler.TransitionDraw && !item.Ready);
         regulation.TransitionReadiness.Should().Contain(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeMatches && !item.Ready);
+            item.Transition == OverviewAssembler.TransitionMaterializeMatches && !item.Ready);
         regulation.TransitionReadiness.Should().OnlyContain(item =>
             item.BlockerCodes.Contains(OrganisationViewAssembler.BlockerInsufficientParticipants));
     }
@@ -547,7 +547,7 @@ public sealed class CockpitAssemblerTests
             StructureIntent.Championship(2),
             _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -560,9 +560,9 @@ public sealed class CockpitAssemblerTests
         regulation.Stage.HasProgressionRules.Should().BeFalse();
         regulation.Stage.HasTieFormat.Should().BeFalse();
         regulation.TransitionReadiness.Should().NotContain(item =>
-            item.Transition == CockpitAssembler.TransitionDraw);
+            item.Transition == OverviewAssembler.TransitionDraw);
         regulation.TransitionReadiness.Should().ContainSingle(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeMatches
+            item.Transition == OverviewAssembler.TransitionMaterializeMatches
             && item.Ready
             && item.BlockerCodes.Count == 0);
     }
@@ -579,7 +579,7 @@ public sealed class CockpitAssemblerTests
             StructureIntent.Groups(2, 2),
             _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -589,9 +589,9 @@ public sealed class CockpitAssemblerTests
         regulation.Stage!.HasDrawRules.Should().BeTrue();
         regulation.Stage.NumberOfPots.Should().Be(2);
         regulation.TransitionReadiness.Should().Contain(item =>
-            item.Transition == CockpitAssembler.TransitionDraw && item.Ready);
+            item.Transition == OverviewAssembler.TransitionDraw && item.Ready);
         regulation.TransitionReadiness.Should().Contain(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeMatches);
+            item.Transition == OverviewAssembler.TransitionMaterializeMatches);
     }
 
     [Fact]
@@ -605,7 +605,7 @@ public sealed class CockpitAssemblerTests
         competition.Prepare(_clock);
         competition.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -633,7 +633,7 @@ public sealed class CockpitAssemblerTests
                 ]));
         competition.ReplaceRegulation(replaced, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -663,25 +663,25 @@ public sealed class CockpitAssemblerTests
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
         competition.AddStage(sf.Id, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [qf, sf],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         var action = view.AvailableActions.Should().ContainSingle(item =>
-            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
             && item.StageId == sf.Id.Value).Subject;
         action.Params.Should().ContainKey("occupiedSlotCount").WhoseValue.Should().Be("2");
         action.Params.Should().ContainKey("stageName").WhoseValue.Should().Be("Semi-Finals");
 
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
+            item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
 
         // Primary Cup skeleton still incomplete → MaterializeMatches; SF from-slots is the natural next step.
-        view.AvailableActions.Should().Contain(item => item.Code == CockpitAssembler.ActionMaterializeMatches);
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeFromOccupiedSlots);
+        view.AvailableActions.Should().Contain(item => item.Code == OverviewAssembler.ActionMaterializeMatches);
+        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeFromOccupiedSlots);
         view.AvailableActions.Should().NotContain(item =>
-            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
             && item.StageId == qf.Id.Value);
     }
 
@@ -701,14 +701,14 @@ public sealed class CockpitAssemblerTests
         configured.Stage.Prepare(_clock);
         configured.Stage.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots);
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeMatches);
+            item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots);
+        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]
@@ -730,12 +730,12 @@ public sealed class CockpitAssemblerTests
         organisation.Readiness.ReadyForDraw.Should().BeTrue();
         organisation.Readiness.ReadyForMaterialization.Should().BeFalse();
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
         view.AvailableActions.Should().NotContain(item =>
-            item.Code == CockpitAssembler.ActionMaterializeMatches);
+            item.Code == OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]
@@ -762,13 +762,13 @@ public sealed class CockpitAssemblerTests
         sf.Prepare(_clock);
         sf.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [sf],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.AvailableActions.Should().NotContain(item =>
-            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots);
+            item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots);
     }
 
     [Fact]
@@ -787,23 +787,23 @@ public sealed class CockpitAssemblerTests
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [sf],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.AvailableActions.Should().Contain(item =>
-            item.Code == CockpitAssembler.ActionMaterializeFromOccupiedSlots
+            item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
             && item.StageId == sf.Id.Value);
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionMaterializeFromOccupiedSlots);
+            item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
+        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeFromOccupiedSlots);
     }
 
     [Fact]
     public void Assemble_swiss_construction_omits_materialize_and_shows_generate_not_ready()
     {
-        var competition = CreateCompetition.Execute("Swiss-Cockpit", _clock);
+        var competition = CreateCompetition.Execute("Swiss-Overview", _clock);
         AddEntry.Execute(competition, "A", _clock);
         AddEntry.Execute(competition, "B", _clock);
         AddEntry.Execute(competition, "C", _clock);
@@ -814,7 +814,7 @@ public sealed class CockpitAssemblerTests
             StructureIntent.Swiss(3),
             _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
@@ -822,18 +822,18 @@ public sealed class CockpitAssemblerTests
         view.ConstructionDimensions.Structure.Facts["formatKind"].Should().Be("Swiss");
         view.ConstructionDimensions.Structure.Facts["swissRoundCount"].Should().Be("3");
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
-            item.Transition == CockpitAssembler.TransitionMaterializeMatches);
+            item.Transition == OverviewAssembler.TransitionMaterializeMatches);
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
-            item.Transition == CockpitAssembler.TransitionDraw);
+            item.Transition == OverviewAssembler.TransitionDraw);
         var generate = view.ConstructionDimensions.Regulation.TransitionReadiness
-            .Should().ContainSingle(item => item.Transition == CockpitAssembler.TransitionGenerateNextRound)
+            .Should().ContainSingle(item => item.Transition == OverviewAssembler.TransitionGenerateNextRound)
             .Subject;
         generate.Ready.Should().BeFalse();
-        generate.BlockerCodes.Should().Contain(CockpitAssembler.BlockerSwissStageNotRunning);
+        generate.BlockerCodes.Should().Contain(OverviewAssembler.BlockerSwissStageNotRunning);
         view.AvailableActions.Should().NotContain(item =>
-            item.Code == CockpitAssembler.ActionGenerateNextRound);
+            item.Code == OverviewAssembler.ActionGenerateNextRound);
         view.AvailableActions.Should().NotContain(item =>
-            item.Code == CockpitAssembler.ActionMaterializeMatches);
+            item.Code == OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]
@@ -863,26 +863,26 @@ public sealed class CockpitAssemblerTests
             match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         }
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = round1.CreatedMatches });
 
         view.AvailableActions.Should().Contain(item =>
-            item.Code == CockpitAssembler.ActionGenerateNextRound);
-        view.NaturalProgression!.Code.Should().Be(CockpitAssembler.ActionGenerateNextRound);
+            item.Code == OverviewAssembler.ActionGenerateNextRound);
+        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionGenerateNextRound);
         view.OperationalFocus.SwissByes.Should().ContainSingle();
         view.ConstructionDimensions.Structure.Facts["swissByeCount"].Should().Be("1");
 
-        var awaiting = CockpitAssembler.Assemble(
+        var awaiting = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [] });
         var transition = awaiting.ConstructionDimensions.Regulation.TransitionReadiness
-            .Should().ContainSingle(item => item.Transition == CockpitAssembler.TransitionGenerateNextRound)
+            .Should().ContainSingle(item => item.Transition == OverviewAssembler.TransitionGenerateNextRound)
             .Subject;
         transition.Ready.Should().BeFalse();
-        transition.BlockerCodes.Should().Contain(CockpitAssembler.BlockerSwissAwaitingRoundResults);
+        transition.BlockerCodes.Should().Contain(OverviewAssembler.BlockerSwissAwaitingRoundResults);
     }
 
     [Fact]
@@ -901,34 +901,34 @@ public sealed class CockpitAssemblerTests
 
         var match = Match.Create(competition.Id, stage.Id, e1.Id, e2.Id, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
         view.Status.Should().Be(CompetitionStatus.Running);
-        view.AvailableActions.Should().Contain(item => item.Code == CockpitAssembler.ActionStartMatch);
+        view.AvailableActions.Should().Contain(item => item.Code == OverviewAssembler.ActionStartMatch);
         view.NaturalProgression.Should().BeNull(
             "En cours calm: OpenMatches is not a tip; null is a valid business state");
     }
 
     [Theory]
     [InlineData(
-        CockpitAssembler.ActionStartStage,
-        CockpitAssembler.ActionMaterializeMatches,
-        CockpitAssembler.ActionStartStage)]
+        OverviewAssembler.ActionStartStage,
+        OverviewAssembler.ActionMaterializeMatches,
+        OverviewAssembler.ActionStartStage)]
     [InlineData(
-        CockpitAssembler.ActionMaterializeMatches,
-        CockpitAssembler.ActionPublishDraw,
-        CockpitAssembler.ActionMaterializeMatches)]
+        OverviewAssembler.ActionMaterializeMatches,
+        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionMaterializeMatches)]
     [InlineData(
-        CockpitAssembler.ActionPrepareStage,
-        CockpitAssembler.ActionStartStage,
-        CockpitAssembler.ActionPrepareStage)]
+        OverviewAssembler.ActionPrepareStage,
+        OverviewAssembler.ActionStartStage,
+        OverviewAssembler.ActionPrepareStage)]
     [InlineData(
-        CockpitAssembler.ActionPublishDraw,
-        CockpitAssembler.ActionApplyDraw,
-        CockpitAssembler.ActionPublishDraw)]
+        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionApplyDraw,
+        OverviewAssembler.ActionPublishDraw)]
     public void ResolveConstructionStructuralProgression_priority_is_semantic_not_list_order(
         string lowerListedFirst,
         string higherOrEqualSecond,
@@ -937,39 +937,39 @@ public sealed class CockpitAssemblerTests
         var stageId = Guid.NewGuid();
         var actions = new[]
         {
-            new CockpitActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
-            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId)
+            new OverviewActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
+            new OverviewActionDto(lowerListedFirst, Guaranteed: false, stageId)
         };
 
-        CockpitAssembler.ResolveConstructionStructuralProgression(actions)!
+        OverviewAssembler.ResolveConstructionStructuralProgression(actions)!
             .Code.Should().Be(expectedWinner);
     }
 
     [Fact]
     public void ResolveConstructionStructuralProgression_empty_actions_is_null() =>
-        CockpitAssembler.ResolveConstructionStructuralProgression([]).Should().BeNull();
+        OverviewAssembler.ResolveConstructionStructuralProgression([]).Should().BeNull();
 
     [Theory]
     [InlineData(
-        CockpitAssembler.ActionMaterializeFromOccupiedSlots,
-        CockpitAssembler.ActionGenerateNextRound,
-        CockpitAssembler.ActionMaterializeFromOccupiedSlots)]
+        OverviewAssembler.ActionMaterializeFromOccupiedSlots,
+        OverviewAssembler.ActionGenerateNextRound,
+        OverviewAssembler.ActionMaterializeFromOccupiedSlots)]
     [InlineData(
-        CockpitAssembler.ActionGenerateNextRound,
-        CockpitAssembler.ActionPublishDraw,
-        CockpitAssembler.ActionGenerateNextRound)]
+        OverviewAssembler.ActionGenerateNextRound,
+        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionGenerateNextRound)]
     [InlineData(
-        CockpitAssembler.ActionPublishDraw,
-        CockpitAssembler.ActionApplyDraw,
-        CockpitAssembler.ActionPublishDraw)]
+        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionApplyDraw,
+        OverviewAssembler.ActionPublishDraw)]
     [InlineData(
-        CockpitAssembler.ActionApplyProgression,
-        CockpitAssembler.ActionCompleteCompetition,
-        CockpitAssembler.ActionApplyProgression)]
+        OverviewAssembler.ActionApplyProgression,
+        OverviewAssembler.ActionCompleteCompetition,
+        OverviewAssembler.ActionApplyProgression)]
     [InlineData(
-        CockpitAssembler.ActionPrepareStage,
-        CockpitAssembler.ActionCompleteCompetition,
-        CockpitAssembler.ActionPrepareStage)]
+        OverviewAssembler.ActionPrepareStage,
+        OverviewAssembler.ActionCompleteCompetition,
+        OverviewAssembler.ActionPrepareStage)]
     public void ResolveInProgressStructuralProgression_priority_is_semantic_not_list_order(
         string lowerListedFirst,
         string higherOrEqualSecond,
@@ -980,11 +980,11 @@ public sealed class CockpitAssemblerTests
         var stageId = Guid.NewGuid();
         var actions = new[]
         {
-            new CockpitActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
-            new CockpitActionDto(lowerListedFirst, Guaranteed: false, stageId)
+            new OverviewActionDto(higherOrEqualSecond, Guaranteed: false, stageId),
+            new OverviewActionDto(lowerListedFirst, Guaranteed: false, stageId)
         };
 
-        var tip = CockpitAssembler.ResolveInProgressStructuralProgression(actions);
+        var tip = OverviewAssembler.ResolveInProgressStructuralProgression(actions);
 
         tip.Should().NotBeNull();
         tip.Code.Should().Be(expectedWinner);
@@ -992,7 +992,7 @@ public sealed class CockpitAssemblerTests
 
     [Fact]
     public void ResolveInProgressStructuralProgression_empty_actions_is_null() =>
-        CockpitAssembler.ResolveInProgressStructuralProgression([]).Should().BeNull();
+        OverviewAssembler.ResolveInProgressStructuralProgression([]).Should().BeNull();
 
     [Fact]
     public void Assemble_championship_projects_standing_compact_top_rows()
@@ -1025,7 +1025,7 @@ public sealed class CockpitAssemblerTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
@@ -1085,14 +1085,14 @@ public sealed class CockpitAssemblerTests
         stage.Complete(_clock);
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
 
-        view.CycleReading.Code.Should().Be(CockpitAssembler.CycleCompleted);
+        view.CycleReading.Code.Should().Be(OverviewAssembler.CycleCompleted);
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationPodium);
+        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
         view.CompetitionOutcome.Places.Should().HaveCount(3);
         view.CompetitionOutcome.Places[0].Rank.Should().Be(1);
         view.CompetitionOutcome.Places[0].DisplayName.Should().Be("Alpha");
@@ -1132,13 +1132,13 @@ public sealed class CockpitAssemblerTests
         stage.Complete(_clock);
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationWinner);
+        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         view.CompetitionOutcome.Places.Should().HaveCount(2);
         view.CompetitionOutcome.Places[0].Should().Be(new FinalPlacementDto(1, alpha.Id.Value, "Alpha"));
         view.CompetitionOutcome.Places[1].Should().Be(new FinalPlacementDto(2, bravo.Id.Value, "Bravo"));
@@ -1177,13 +1177,13 @@ public sealed class CockpitAssemblerTests
         stage.Complete(_clock);
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationWinner);
+        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2);
         view.CompetitionOutcome.Places.Should().NotContain(p => p.Rank == 3 || p.Rank == 4);
     }
@@ -1229,13 +1229,13 @@ public sealed class CockpitAssemblerTests
         stage.Complete(_clock);
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch, bronzeMatch] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(CockpitAssembler.OutcomePresentationPodium);
+        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
         view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2, 3, 4);
     }
 
@@ -1262,7 +1262,7 @@ public sealed class CockpitAssemblerTests
         stage.Complete(_clock);
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
@@ -1292,7 +1292,7 @@ public sealed class CockpitAssemblerTests
         stage.Start(_clock);
         competition.Complete(CompletionMode.Abandoned, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
@@ -1326,7 +1326,7 @@ public sealed class CockpitAssemblerTests
         stage.Complete(_clock);
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [m1] });
@@ -1364,7 +1364,7 @@ public sealed class CockpitAssemblerTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [m1] });
@@ -1395,7 +1395,7 @@ public sealed class CockpitAssemblerTests
         running.Prepare(_clock);
         running.Start(_clock);
 
-        var reference = CockpitAssembler.ResolveReferenceStage(competition, [completed, running]);
+        var reference = OverviewAssembler.ResolveReferenceStage(competition, [completed, running]);
 
         reference.Should().NotBeNull();
         reference.Id.Should().Be(running.Id);
@@ -1422,7 +1422,7 @@ public sealed class CockpitAssemblerTests
         suspended.Start(_clock);
         suspended.Suspend(_clock);
 
-        var reference = CockpitAssembler.ResolveReferenceStage(competition, [completed, suspended]);
+        var reference = OverviewAssembler.ResolveReferenceStage(competition, [completed, suspended]);
 
         reference.Should().NotBeNull();
         reference.Id.Should().Be(suspended.Id);
@@ -1450,7 +1450,7 @@ public sealed class CockpitAssemblerTests
         second.Start(_clock);
         second.Complete(_clock);
 
-        var reference = CockpitAssembler.ResolveReferenceStage(competition, [first, second]);
+        var reference = OverviewAssembler.ResolveReferenceStage(competition, [first, second]);
 
         reference.Should().NotBeNull();
         reference.Id.Should().Be(second.Id);
@@ -1465,14 +1465,14 @@ public sealed class CockpitAssemblerTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
         view.OperationalFocus.StandingCompact.Should().BeNull();
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
-        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(CockpitAssembler.UnitKindRound);
+        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(OverviewAssembler.UnitKindRound);
         view.OperationalFocus.RecentUnit.RoundName.Should().Be("R1");
         view.OperationalFocus.RecentUnit.Matches.Should().ContainSingle(line =>
             line.MatchId == match.Id.Value &&
@@ -1527,7 +1527,7 @@ public sealed class CockpitAssemblerTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
@@ -1562,7 +1562,7 @@ public sealed class CockpitAssemblerTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [scheduled] });
@@ -1601,13 +1601,13 @@ public sealed class CockpitAssemblerTests
             match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         }
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = round1.CreatedMatches });
 
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
-        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(CockpitAssembler.UnitKindMatchday);
+        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(OverviewAssembler.UnitKindMatchday);
         view.OperationalFocus.RecentUnit.MatchdayNumber.Should().Be(1);
         view.OperationalFocus.NextUnit.Should().BeNull();
     }
@@ -1628,7 +1628,7 @@ public sealed class CockpitAssemblerTests
         var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         competition.Prepare(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>
@@ -1636,19 +1636,19 @@ public sealed class CockpitAssemblerTests
                 [configured.Stage.Id] = materialize.CreatedMatches
             });
 
-        view.CycleReading.Code.Should().Be(CockpitAssembler.CycleConstruction);
+        view.CycleReading.Code.Should().Be(OverviewAssembler.CycleConstruction);
         view.Status.Should().Be(CompetitionStatus.Ready);
-        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusGeneratedCalendar);
+        view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusGeneratedCalendar);
         view.CalendarSummary.Should().NotBeNull();
         view.CalendarSummary!.MatchCount.Should().Be(6);
         view.CalendarSummary.MatchdayCount.Should().BeGreaterThan(0);
         view.CalendarSummary.Matchdays.Should().NotBeEmpty();
         view.CalendarSummary.Matchdays.Count.Should().BeLessThanOrEqualTo(
-            CockpitAssembler.CalendarPreviewMatchdayLimit);
+            OverviewAssembler.CalendarPreviewMatchdayLimit);
         view.CalendarSummary.NextMatch.Should().NotBeNull();
         view.CalendarSummary.NextMatch!.HomeDisplayName.Should().NotBeNullOrWhiteSpace();
         view.AvailableActions.Should().Contain(action =>
-            action.Code == CockpitAssembler.ActionStartCompetition);
+            action.Code == OverviewAssembler.ActionStartCompetition);
     }
 
     [Fact]
@@ -1666,7 +1666,7 @@ public sealed class CockpitAssemblerTests
             _clock);
         var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>
@@ -1675,7 +1675,7 @@ public sealed class CockpitAssemblerTests
             });
 
         view.Status.Should().Be(CompetitionStatus.Draft);
-        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusSetup);
         view.CalendarSummary.Should().BeNull();
     }
 
@@ -1692,13 +1692,13 @@ public sealed class CockpitAssemblerTests
             _clock);
         competition.Prepare(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.Status.Should().Be(CompetitionStatus.Ready);
-        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusSetup);
         view.CalendarSummary.Should().BeNull();
     }
 
@@ -1718,7 +1718,7 @@ public sealed class CockpitAssemblerTests
         var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         competition.Prepare(_clock);
 
-        var view = CockpitAssembler.Assemble(
+        var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
             new Dictionary<StageId, IReadOnlyList<Match>>
@@ -1727,40 +1727,40 @@ public sealed class CockpitAssemblerTests
             });
 
         view.Status.Should().Be(CompetitionStatus.Ready);
-        view.PreparationFocus.Should().Be(CockpitAssembler.PreparationFocusSetup);
+        view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusSetup);
         view.CalendarSummary.Should().BeNull();
     }
 
     [Fact]
     public void ResolvePreparationFocus_requires_all_championship_ready_predicates()
     {
-        CockpitAssembler.ResolvePreparationFocus(
-                CockpitAssembler.CycleConstruction,
+        OverviewAssembler.ResolvePreparationFocus(
+                OverviewAssembler.CycleConstruction,
                 CompetitionStatus.Ready,
                 StructureFormatKind.Championship,
                 matchTotal: 1)
-            .Should().Be(CockpitAssembler.PreparationFocusGeneratedCalendar);
+            .Should().Be(OverviewAssembler.PreparationFocusGeneratedCalendar);
 
-        CockpitAssembler.ResolvePreparationFocus(
-                CockpitAssembler.CycleConstruction,
+        OverviewAssembler.ResolvePreparationFocus(
+                OverviewAssembler.CycleConstruction,
                 CompetitionStatus.Draft,
                 StructureFormatKind.Championship,
                 matchTotal: 1)
-            .Should().Be(CockpitAssembler.PreparationFocusSetup);
+            .Should().Be(OverviewAssembler.PreparationFocusSetup);
 
-        CockpitAssembler.ResolvePreparationFocus(
-                CockpitAssembler.CycleInProgress,
+        OverviewAssembler.ResolvePreparationFocus(
+                OverviewAssembler.CycleInProgress,
                 CompetitionStatus.Running,
                 StructureFormatKind.Championship,
                 matchTotal: 1)
-            .Should().Be(CockpitAssembler.PreparationFocusSetup);
+            .Should().Be(OverviewAssembler.PreparationFocusSetup);
 
-        CockpitAssembler.ResolvePreparationFocus(
-                CockpitAssembler.CycleConstruction,
+        OverviewAssembler.ResolvePreparationFocus(
+                OverviewAssembler.CycleConstruction,
                 CompetitionStatus.Ready,
                 StructureFormatKind.Swiss,
                 matchTotal: 1)
-            .Should().Be(CockpitAssembler.PreparationFocusSetup);
+            .Should().Be(OverviewAssembler.PreparationFocusSetup);
     }
 
     private Match AttachFinished(

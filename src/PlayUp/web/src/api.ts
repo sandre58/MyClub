@@ -3,9 +3,9 @@ import type {
   AddDeclaredParticipationRequest,
   AddEntryRequest,
   ApplyDrawRequest,
-  CockpitView,
+  OverviewView,
   CompetitionListItem,
-  CompetitionOverview,
+  CompetitionDetail,
   CompositionStatus,
   ConfigureStructureRequest,
   ConsultationView,
@@ -148,24 +148,17 @@ export function createCompetition(
   return sendJson('POST', '/competitions', request)
 }
 
-/** Relative URL → Vite proxy → Host GET /competitions/{id}/workspace */
-export function fetchCompetitionWorkspace(
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/overview */
+export function fetchCompetitionOverview(
   competitionId: string,
-): Promise<WorkspaceSummary> {
-  return getJson(`/competitions/${competitionId}/workspace`)
-}
-
-/** Relative URL → Vite proxy → Host GET /competitions/{id}/cockpit */
-export function fetchCompetitionCockpit(
-  competitionId: string,
-): Promise<CockpitView> {
-  return getJson(`/competitions/${competitionId}/cockpit`)
+): Promise<OverviewView> {
+  return getJson(`/competitions/${competitionId}/overview`)
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id} */
-export function fetchCompetitionOverview(
+export function fetchCompetitionDetail(
   competitionId: string,
-): Promise<CompetitionOverview> {
+): Promise<CompetitionDetail> {
   return getJson(`/competitions/${competitionId}`)
 }
 

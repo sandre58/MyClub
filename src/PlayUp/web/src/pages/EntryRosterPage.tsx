@@ -77,7 +77,7 @@ async function invalidateAfterRosterMutation(
       queryKey: queryKeys.competitions.workspace(competitionId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.cockpit(competitionId),
+      queryKey: queryKeys.competitions.overview(competitionId),
     }),
   ])
 }

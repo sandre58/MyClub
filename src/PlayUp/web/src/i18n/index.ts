@@ -7,7 +7,7 @@ import {
 } from './config'
 import actionsFr from './locales/fr/actions.json'
 import classementsFr from './locales/fr/classements.json'
-import cockpitFr from './locales/fr/cockpit.json'
+import overviewFr from './locales/fr/overview.json'
 import commonFr from './locales/fr/common.json'
 import competitionsFr from './locales/fr/competitions.json'
 import drawFr from './locales/fr/draw.json'
@@ -18,7 +18,6 @@ import matchesFr from './locales/fr/matches.json'
 import organisationFr from './locales/fr/organisation.json'
 import shellFr from './locales/fr/shell.json'
 import stageFr from './locales/fr/stage.json'
-import workspaceFr from './locales/fr/workspace.json'
 
 function syncDocumentLang(locale: string) {
   if (typeof document !== 'undefined') {
@@ -38,8 +37,7 @@ void i18n.use(initReactI18next).init({
       enums: enumsFr,
       errors: errorsFr,
       actions: actionsFr,
-      cockpit: cockpitFr,
-      workspace: workspaceFr,
+      overview: overviewFr,
       matches: matchesFr,
       draw: drawFr,
       organisation: organisationFr,

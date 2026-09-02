@@ -1,5 +1,5 @@
 ---
-description: Play'Up recurring UI patterns — cockpit, next action, match hero, empty/loading/error
+description: Play'Up recurring UI patterns — overview, next action, match hero, empty/loading/error
 globs: src/PlayUp/web/**
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 Reference implementations: `src/PlayUp/web/src/design-lab/` (visual arbiter).
 
-## Cockpit (Vue d'ensemble)
+## Overview (Vue d'ensemble)
 
 Composition emerges from lifecycle state, top to bottom:
 1. Hero band (≈1.6/1): "Où en est-on ?" (hero numeric + one-sentence reading

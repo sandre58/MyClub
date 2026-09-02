@@ -57,12 +57,12 @@ export function HomePage() {
 
   return (
     <div
-      className="ds-root ds-home accueil"
+      className="ds-root ds-home"
       data-font="plex"
       data-palette="slate"
       data-density="standard"
     >
-      <a className="ds-home-skip accueil-skip" href="#main">
+      <a className="ds-home-skip" href="#main">
         {tCommon('skipToContent')}
       </a>
 

@@ -16,7 +16,7 @@ alwaysApply: false
   width (no `visually-hidden` snap — that caused a horizontal scrollbar flash
   and a lockup jump). `overflow-x: hidden` on the rail. Nav `overflow-y: auto`.
   Nav labels: `--font-weight-regular` (groups stay semibold uppercase meta).
-- **Groups**: Pilotage (Cockpit) · Compétition (Structure, Calendrier & matchs,
+- **Groups**: Pilotage (**Vue d'ensemble**) · Compétition (Structure, Calendrier & matchs,
   Classements) · Référentiel (Équipes, Stades, Règlement — visible, no routes yet).
 - **Current item**: inset chip (`--shell-rail-item-radius` / `--radius-panel`),
   wash `--shell-rail-wash-current`, **straight** 3px `--color-chrome-accent` bar

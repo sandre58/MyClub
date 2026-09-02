@@ -75,7 +75,7 @@ public static class ConsultationAssembler
 
     /// <summary>
     /// Projects standings tables using the same CalculateStanding path as Consultation.
-    /// Reused by Cockpit compact standing — does not invent a second ranking algorithm.
+    /// Reused by Overview compact standing — does not invent a second ranking algorithm.
     /// </summary>
     public static ConsultationStandingsSectionDto ProjectStandings(
         Competition competition,
@@ -94,7 +94,7 @@ public static class ConsultationAssembler
 
     /// <summary>
     /// Projects standing tables for a single stage (Championship / Groups / Swiss).
-    /// Cup or unstructured stages return not-applicable — used by Cockpit ReferenceStage standing.
+    /// Cup or unstructured stages return not-applicable — used by Overview ReferenceStage standing.
     /// </summary>
     public static ConsultationStandingsSectionDto ProjectStandingsForStage(
         Competition competition,

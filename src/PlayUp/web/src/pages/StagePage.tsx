@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
   applyDraw,
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchStageOverview,
   materializeCupFromOccupiedSlots,
   prepareStage,
@@ -45,11 +45,11 @@ export function StagePage() {
     enabled: stageId.length > 0,
   })
 
-  // Same query key as CompetitionPage → cache reuse when navigating Competition → Stage.
+  // Same query key as GET /competitions/{id} (MatchHub / shell context).
   const competitionId = stageQuery.data?.competitionId
   const competitionQuery = useQuery({
     queryKey: queryKeys.competitions.detail(competitionId ?? ''),
-    queryFn: () => fetchCompetitionOverview(competitionId!),
+    queryFn: () => fetchCompetitionDetail(competitionId!),
     enabled: Boolean(competitionId),
   })
 
@@ -100,7 +100,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(data.id),
       })
-      // CompetitionOverview.stages[].status would stay Draft for staleTime (30s)
+      // CompetitionDetail.stages[].status would stay Draft for staleTime (30s)
       // after Back → Competition; Prepare changes that field, so invalidate it.
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.detail(data.competitionId),
@@ -269,7 +269,7 @@ type CupSlotPairDraft = { slotAKey: string; slotBKey: string }
 /**
  * Explicit SlotA↔SlotB pairing for materialize-from-slots (D2 / Slice 4).
  * No naming heuristic — organizer chooses pairs among occupied slots not yet
- * covered by a complete Fixture (same rule as Cockpit readiness).
+ * covered by a complete Fixture (same rule as Overview readiness).
  */
 function CupConfrontationsPanel({ data }: { data: StageOverview }) {
   const { t } = useTranslation('stage')
@@ -306,7 +306,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
         queryKey: queryKeys.stages.detail(data.id),
       })
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.cockpit(data.competitionId),
+        queryKey: queryKeys.competitions.overview(data.competitionId),
       })
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.detail(data.competitionId),

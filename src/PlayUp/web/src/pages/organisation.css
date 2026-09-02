@@ -358,43 +358,6 @@
     height: 2.25rem;
 }
 
-.organisation-crest__shield {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
-
-.organisation-crest__initial {
-    position: relative;
-    z-index: 1;
-    color: var(--color-surface);
-    font-size: 0.7rem;
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
-}
-
-.organisation-crest--a {
-    color: color-mix(in srgb, var(--color-brand) 82%, var(--color-ink));
-}
-
-.organisation-crest--b {
-    color: color-mix(in srgb, var(--color-info) 78%, var(--color-ink));
-}
-
-.organisation-crest--c {
-    color: color-mix(in srgb, var(--color-attention) 75%, var(--color-ink));
-}
-
-.organisation-crest--d {
-    color: color-mix(in srgb, #7c5cbf 80%, var(--color-ink));
-}
-
-.organisation-crest--e {
-    color: color-mix(in srgb, var(--color-ink) 55%, var(--color-text-secondary));
-}
-
 .organisation-crest--more {
     width: auto;
     height: auto;

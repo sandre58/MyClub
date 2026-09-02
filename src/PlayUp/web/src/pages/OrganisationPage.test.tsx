@@ -606,7 +606,7 @@ describe('OrganisationPage', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('shows materialize readiness and Cockpit CTA for a ready Championship', async () => {
+  it("shows materialize readiness and Vue d'ensemble CTA for a ready Championship", async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         format: {
@@ -708,7 +708,7 @@ describe('OrganisationPage', () => {
     expect(await screen.findByText(/Prêt pour le tirage/i)).toBeInTheDocument()
   })
 
-  it('invalidates cockpit query after adding an entry', async () => {
+  it('invalidates overview query after adding an entry', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
     const { queryClient } = renderOrganisationPage()
@@ -724,7 +724,7 @@ describe('OrganisationPage', () => {
     await waitFor(() => {
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
-          queryKey: ['competitions', competitionId, 'cockpit'],
+          queryKey: ['competitions', competitionId, 'overview'],
         }),
       )
     })

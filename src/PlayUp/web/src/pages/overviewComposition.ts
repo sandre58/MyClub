@@ -1,13 +1,13 @@
 import type {
-  CockpitAction,
-  CockpitProminence,
-  CockpitSituation,
-  CockpitView,
+  OverviewAction,
+  OverviewProminence,
+  OverviewSituation,
+  OverviewView,
 } from '../types'
-import { cockpitActionKey } from './cockpitActions'
+import { overviewActionKey } from './overviewActions'
 
 /**
- * Presentation helpers for Cockpit composition.
+ * Presentation helpers for Overview composition.
  * Uses Read signals only — does not invent blockers, readiness, or transitions.
  */
 
@@ -77,31 +77,31 @@ export function actionPresentationSlot(code: string): ConstructionSlot | 'operat
 }
 
 export function actionsForSlot(
-  actions: CockpitAction[],
+  actions: OverviewAction[],
   slot: ReturnType<typeof actionPresentationSlot>,
-): CockpitAction[] {
+): OverviewAction[] {
   return actions.filter((action) => actionPresentationSlot(action.code) === slot)
 }
 
 export function findActionByCode(
-  actions: CockpitAction[],
+  actions: OverviewAction[],
   code: string,
-): CockpitAction | undefined {
+): OverviewAction | undefined {
   return actions.find((action) => action.code === code)
 }
 
 /** Actions already rendered on a contextual surface — excluded from the secondary strip. */
 export function secondaryActions(
-  all: CockpitAction[],
+  all: OverviewAction[],
   renderedKeys: ReadonlySet<string>,
-): CockpitAction[] {
+): OverviewAction[] {
   return all.filter(
     (action) =>
-      !renderedKeys.has(cockpitActionKey(action)) && !isTeamAdminAction(action.code),
+      !renderedKeys.has(overviewActionKey(action)) && !isTeamAdminAction(action.code),
   )
 }
 
-export function sortConstructionSlots(view: CockpitView): ConstructionSlot[] {
+export function sortConstructionSlots(view: OverviewView): ConstructionSlot[] {
   const dims = view.constructionDimensions
   const entries: { slot: ConstructionSlot; prominence: string }[] = [
     { slot: 'teams', prominence: dims.teams.prominence },
@@ -116,20 +116,20 @@ export function sortConstructionSlots(view: CockpitView): ConstructionSlot[] {
     .map((entry) => entry.slot)
 }
 
-/** Primary cockpit actions for teams — admin mutations stay in Organisation. */
-export function primaryTeamActions(actions: CockpitAction[]): CockpitAction[] {
+/** Primary overview actions for teams — admin mutations stay in Organisation. */
+export function primaryTeamActions(actions: OverviewAction[]): OverviewAction[] {
   return actions.filter((action) => action.code === 'AddEntry')
 }
 
-/** Team admin codes: available in Read but not shown as Cockpit command buttons. */
+/** Team admin codes: available in Read but not shown as Overview command buttons. */
 export function isTeamAdminAction(code: string): boolean {
   return code === 'RenameEntry' || code === 'WithdrawEntry' || code === 'ExcludeEntry'
 }
 
 export function actionsForStage(
-  actions: CockpitAction[],
+  actions: OverviewAction[],
   stageId: string,
-): CockpitAction[] {
+): OverviewAction[] {
   return actions.filter(
     (action) =>
       (action.code === 'PrepareStage' || action.code === 'StartStage') &&
@@ -138,10 +138,10 @@ export function actionsForStage(
 }
 
 export function actionsForDraw(
-  actions: CockpitAction[],
+  actions: OverviewAction[],
   stageId: string,
   drawId: string,
-): CockpitAction[] {
+): OverviewAction[] {
   return actions.filter(
     (action) =>
       (action.code === 'PublishDraw' || action.code === 'ApplyDraw') &&
@@ -151,7 +151,7 @@ export function actionsForDraw(
 }
 
 /** Stage-scoped ops not tied to a single draw row (materialize / schedule). */
-export function stageWideOperationalActions(actions: CockpitAction[]): CockpitAction[] {
+export function stageWideOperationalActions(actions: OverviewAction[]): OverviewAction[] {
   return actions.filter((action) =>
     action.code === 'MaterializeMatches' ||
     action.code === 'MaterializeFromOccupiedSlots' ||
@@ -165,8 +165,8 @@ export function stageWideOperationalActions(actions: CockpitAction[]): CockpitAc
 
 /** Prefer Blocking situations first for pilotage order (stable within nature). */
 export function orderSituationsForDisplay(
-  situations: CockpitSituation[],
-): CockpitSituation[] {
+  situations: OverviewSituation[],
+): OverviewSituation[] {
   return [...situations].sort((a, b) => {
     const rank = (nature: string) => (nature === 'Blocking' ? 0 : 1)
     return rank(a.nature) - rank(b.nature)
@@ -183,4 +183,4 @@ export function panelProminenceClass(prominence: string): string {
   return 'ds-panel'
 }
 
-export type { CockpitProminence }
+export type { OverviewProminence }

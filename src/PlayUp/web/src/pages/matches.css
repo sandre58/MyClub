@@ -295,53 +295,6 @@
     line-height: 1;
 }
 
-.matches-crest {
-    position: relative;
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.75rem;
-}
-
-.matches-crest__shield {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
-
-.matches-crest__initial {
-    position: relative;
-    z-index: 1;
-    color: var(--color-surface);
-    font-size: 0.625rem;
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
-}
-
-.matches-crest--a {
-    color: color-mix(in srgb, var(--color-brand) 82%, var(--color-ink));
-}
-
-.matches-crest--b {
-    color: color-mix(in srgb, var(--color-info) 78%, var(--color-ink));
-}
-
-.matches-crest--c {
-    color: color-mix(in srgb, var(--color-attention) 75%, var(--color-ink));
-}
-
-.matches-crest--d {
-    color: color-mix(in srgb, #7c5cbf 80%, var(--color-ink));
-}
-
-.matches-crest--e {
-    color: color-mix(in srgb, var(--color-ink) 55%, var(--color-text-secondary));
-}
-
 .matches-result__name {
     min-width: 0;
     overflow: hidden;

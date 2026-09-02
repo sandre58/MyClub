@@ -88,10 +88,6 @@
     color: var(--color-on-chrome);
 }
 
-.ds-shell-rail__brand .ds-wordmark__up {
-    color: var(--color-chrome-accent);
-}
-
 .ds-shell-rail__nav {
     display: flex;
     flex-direction: column;

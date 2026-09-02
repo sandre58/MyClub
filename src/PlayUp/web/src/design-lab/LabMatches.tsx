@@ -72,7 +72,7 @@ export function LabMatches() {
 
         <section className="ds-panel">
           <PanelHead title="Classement actuel" />
-          <p className="ds-cockpit-situation__label">
+          <p className="ds-overview-situation__label">
             <strong>{leader.team.name}</strong> en tête ·{' '}
             <span className="ds-num">{leader.points} pts</span> — avant J3,
             provisoire.

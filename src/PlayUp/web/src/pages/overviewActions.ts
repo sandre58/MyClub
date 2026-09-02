@@ -13,15 +13,15 @@ import {
   startMatch,
   startStage,
 } from '../api'
-import type { CockpitAction, CockpitDrawFocus, CockpitView } from '../types'
+import type { OverviewAction, OverviewDrawFocus, OverviewView } from '../types'
 
 /**
- * Outcome of a Cockpit action click.
- * - execute: call an existing Host command, then invalidate cockpit
+ * Outcome of a Overview action click.
+ * - execute: call an existing Host command, then invalidate overview
  * - navigate: open a specialized space (params insufficient for a safe POST)
  * - unsupported: show as label only (should not happen for projected actions)
  */
-export type CockpitActionIntent =
+export type OverviewActionIntent =
   | { kind: 'execute'; run: () => Promise<unknown> }
   | { kind: 'navigate'; to: string }
   | { kind: 'unsupported' }
@@ -30,10 +30,10 @@ export type CockpitActionIntent =
  * Map a backend-projected action to execute vs navigate.
  * Availability is decided by the Read; this only chooses how to carry it out.
  */
-export function resolveCockpitActionIntent(
-  action: CockpitAction,
-  view: CockpitView,
-): CockpitActionIntent {
+export function resolveOverviewActionIntent(
+  action: OverviewAction,
+  view: OverviewView,
+): OverviewActionIntent {
   const competitionId = view.competitionId
   const stageId = action.stageId ?? undefined
   const drawId = action.drawId ?? undefined
@@ -177,17 +177,17 @@ export function resolveCockpitActionIntent(
 }
 
 function findDraw(
-  view: CockpitView,
+  view: OverviewView,
   stageId: string,
   drawId: string,
-): CockpitDrawFocus | undefined {
+): OverviewDrawFocus | undefined {
   return view.operationalFocus.draws.find(
     (draw) => draw.stageId === stageId && draw.drawId === drawId,
   )
 }
 
 /** Stable React key for an action row (code + optional ids). */
-export function cockpitActionKey(action: CockpitAction): string {
+export function overviewActionKey(action: OverviewAction): string {
   return [
     action.code,
     action.stageId ?? '',

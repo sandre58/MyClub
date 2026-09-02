@@ -5,24 +5,24 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchCompetitionCockpit,
+  fetchCompetitionOverview,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
-import { cockpitView } from '../test/cockpitFixtures'
+import { overviewView } from '../test/overviewFixtures'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
     fetchCompetitions: vi.fn(),
-    fetchCompetitionOverview: vi.fn(),
+    fetchCompetitionDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchMatchDetail: vi.fn(),
-    fetchCompetitionCockpit: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
   }
 })
 
@@ -70,15 +70,15 @@ describe('Shell chrome context states', () => {
     vi.mocked(fetchCompetitions).mockResolvedValue([
       { id: competitionId, name: 'Coupe U18', status: 'Running' },
     ])
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue({
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Coupe U18',
       status: 'Running',
       entries: [],
       stages: [],
     })
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         competitionId,
         name: 'Coupe U18',
         status: 'Running',
@@ -108,7 +108,7 @@ describe('Shell chrome context states', () => {
   })
 
   it('shows a stable loading state while competition context resolves', () => {
-    vi.mocked(fetchCompetitionOverview).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchCompetitionDetail).mockReturnValue(new Promise(() => {}))
     renderWithShell(`/competitions/${competitionId}`)
 
     expect(screen.getByText('Chargement')).toBeInTheDocument()
@@ -118,7 +118,7 @@ describe('Shell chrome context states', () => {
   })
 
   it('shows unavailable context without inventing a competition name', async () => {
-    vi.mocked(fetchCompetitionOverview).mockRejectedValue(
+    vi.mocked(fetchCompetitionDetail).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
     )
     renderWithShell(`/competitions/${competitionId}`)

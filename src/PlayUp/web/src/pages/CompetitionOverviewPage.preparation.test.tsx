@@ -5,31 +5,31 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
-  fetchCompetitionCockpit,
+  fetchCompetitionOverview,
   fetchOrganisationView,
   materializeMatches,
   prepareCompetition,
   prepareStage,
   startCompetition,
 } from '../api'
-import { CompetitionCockpitPage } from './CompetitionCockpitPage'
+import { CompetitionOverviewPage } from './CompetitionOverviewPage'
 import {
-  cockpitIds,
-  cockpitSituation,
-  cockpitView,
+  overviewIds,
+  overviewSituation,
+  overviewView,
   competitionId,
   expectOverviewRegionOrder,
   expectOverviewRegionsAbsent,
-  renderCockpitPage,
+  renderOverviewPage,
   setupDefaultOrganisationMock,
   stageId,
-} from './competitionCockpitPageTestHelpers'
+} from './competitionOverviewPageTestHelpers'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
-    fetchCompetitionCockpit: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
     fetchOrganisationView: vi.fn(),
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
@@ -38,25 +38,25 @@ vi.mock('../api', async (importOriginal) => {
   }
 })
 
-describe('CompetitionCockpitPage — Construction / Préparation', () => {
+describe('CompetitionOverviewPage — Construction / Préparation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setupDefaultOrganisationMock()
   })
 
-  it('shows loading while the cockpit is pending', () => {
-    vi.mocked(fetchCompetitionCockpit).mockReturnValue(new Promise(() => {}))
+  it('shows loading while the overview is pending', () => {
+    vi.mocked(fetchCompetitionOverview).mockReturnValue(new Promise(() => {}))
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
   })
 
   it('renders Préparation overview without cycle panel or console blocks', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         situations: [
-          cockpitSituation({
+          overviewSituation({
             source: 'InsufficientParticipants',
             actionCode: 'AddEntry',
             actionable: true,
@@ -67,7 +67,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         attentionSummary: {
           count: 1,
           items: [
-            cockpitSituation({
+            overviewSituation({
               source: 'InsufficientParticipants',
               actionCode: 'AddEntry',
               actionable: true,
@@ -93,7 +93,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
@@ -143,8 +143,8 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
 
   describe('Préparation layout DOM order', () => {
     it('orders Prochaine action then config then Structure when tip only', async () => {
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-        cockpitView({
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+        overviewView({
           naturalProgression: { code: 'PrepareStage' },
           availableActions: [
             {
@@ -159,7 +159,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       await screen.findByTestId('overview-region-progression')
       expectOverviewRegionOrder(
@@ -171,9 +171,9 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
     })
 
     it('orders À traiter then config then Structure when attention only', async () => {
-      const situation = cockpitSituation()
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-        cockpitView({
+      const situation = overviewSituation()
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+        overviewView({
           naturalProgression: null,
           availableActions: [{ code: 'AddEntry', guaranteed: false }],
           situations: [situation],
@@ -181,7 +181,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       await screen.findByTestId('overview-region-attention')
       expectOverviewRegionOrder(
@@ -193,11 +193,11 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
     })
 
     it('keeps InsufficientParticipants on À traiter and minimum on Équipes without tip AddEntry', async () => {
-      const situation = cockpitSituation({
+      const situation = overviewSituation({
         params: { minimumTeams: '2', activeCount: '1' },
       })
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-        cockpitView({
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+        overviewView({
           naturalProgression: { code: 'PrepareStage' },
           availableActions: [
             { code: 'AddEntry', guaranteed: false },
@@ -213,7 +213,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       expect(
         await screen.findByRole('heading', { name: 'À traiter' }),
@@ -234,10 +234,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Équipes — minimum insuffisant : signal requis, pas de badge complet ni max', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           teams: {
             prominence: 'Dominant',
             facts: { activeCount: '1', minimumTeams: '4', maximumTeams: '8' },
@@ -247,7 +247,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(screen.getByText('Minimum requis : 4')).toBeInTheDocument()
@@ -302,10 +302,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         blockers: [],
       },
     })
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           teams: {
             prominence: 'Present',
             facts: { activeCount: '4', minimumTeams: '4', maximumTeams: '8' },
@@ -315,7 +315,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
@@ -326,17 +326,17 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('does not invent actions absent from availableActions', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           stages: [{ stageId, name: 'Phase 1', status: 'Ready' }],
         },
         availableActions: [],
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await screen.findByRole('heading', { name: 'Équipes' })
     expect(
@@ -351,15 +351,15 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('renders PrepareCompetition only when projected by availableActions', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         availableActions: [
           { code: 'PrepareCompetition', guaranteed: false },
         ],
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('button', { name: /Préparer la compétition/i }),
@@ -370,14 +370,14 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Prochaine action — calme : carte absente (null + pas de lifecycle)', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         naturalProgression: null,
         availableActions: [{ code: 'AddEntry', guaranteed: false }],
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(
@@ -390,14 +390,14 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Prochaine action — lifecycle seul quand naturalProgression est null', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         naturalProgression: null,
         availableActions: [{ code: 'StartCompetition', guaranteed: false }],
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
@@ -408,8 +408,8 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Prochaine action — tip structurante sans empiler PrepareCompetition', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         naturalProgression: { code: 'PrepareStage' },
         availableActions: [
           {
@@ -423,7 +423,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
@@ -436,13 +436,13 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('executes PrepareCompetition then StartCompetition via Host and invalidates cockpit', async () => {
+  it('executes PrepareCompetition then StartCompetition via Host and invalidates overview', async () => {
     const user = userEvent.setup()
     vi.mocked(prepareCompetition).mockResolvedValue(undefined)
     vi.mocked(startCompetition).mockResolvedValue(undefined)
-    vi.mocked(fetchCompetitionCockpit)
+    vi.mocked(fetchCompetitionOverview)
       .mockResolvedValueOnce(
-        cockpitView({
+        overviewView({
           status: 'Draft',
           availableActions: [
             { code: 'PrepareCompetition', guaranteed: false },
@@ -450,7 +450,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
       .mockResolvedValueOnce(
-        cockpitView({
+        overviewView({
           status: 'Ready',
           availableActions: [
             { code: 'StartCompetition', guaranteed: false },
@@ -458,7 +458,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
       .mockResolvedValueOnce(
-        cockpitView({
+        overviewView({
           status: 'Running',
           cycleReading: { code: 'InProgress' },
           naturalProgression: null,
@@ -466,7 +466,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await user.click(
       await screen.findByRole('button', { name: /Préparer la compétition/i }),
@@ -498,14 +498,14 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('uses Host readiness copy without inventing draw chrome on overview', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           draws: [
             {
               stageId,
-              drawId: cockpitIds.drawId,
+              drawId: overviewIds.drawId,
               kind: 'Slot',
               status: 'Published',
               resolutionState: 'Resolved',
@@ -516,7 +516,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await screen.findByRole('heading', { name: 'Équipes' })
     expect(screen.queryByText(/Appliqué/)).not.toBeInTheDocument()
@@ -526,15 +526,15 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   it('navigates Fixture targets via Host matchId without client join', async () => {
     const user = userEvent.setup()
     const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         situations: [
-          cockpitSituation({
+          overviewSituation({
             source: 'ProgressionPending',
             nature: 'Blocking',
             targetType: 'Fixture',
             targetId: fixtureId,
-            matchId: cockpitIds.matchId,
+            matchId: overviewIds.matchId,
             actionable: true,
             actionCode: 'ApplyProgression',
             impactCode: 'BlocksProgression',
@@ -544,12 +544,12 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         attentionSummary: {
           count: 1,
           items: [
-            cockpitSituation({
+            overviewSituation({
               source: 'ProgressionPending',
               nature: 'Blocking',
               targetType: 'Fixture',
               targetId: fixtureId,
-              matchId: cockpitIds.matchId,
+              matchId: overviewIds.matchId,
               actionable: true,
               actionCode: 'ApplyProgression',
               impactCode: 'BlocksProgression',
@@ -560,7 +560,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await user.click(
       await screen.findByRole('link', { name: /Progression en attente/i }),
@@ -568,12 +568,12 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
     expect(screen.getByText('Match route')).toBeInTheDocument()
   })
 
-  it('executes a projected action and invalidates the cockpit query', async () => {
+  it('executes a projected action and invalidates the overview query', async () => {
     const user = userEvent.setup()
     vi.mocked(prepareStage).mockResolvedValue(undefined)
-    vi.mocked(fetchCompetitionCockpit)
+    vi.mocked(fetchCompetitionOverview)
       .mockResolvedValueOnce(
-        cockpitView({
+        overviewView({
           availableActions: [
             {
               code: 'PrepareStage',
@@ -586,7 +586,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
         }),
       )
       .mockResolvedValueOnce(
-        cockpitView({
+        overviewView({
           availableActions: [
             {
               code: 'StartStage',
@@ -597,13 +597,13 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
           ],
           naturalProgression: { code: 'StartStage' },
           operationalFocus: {
-            ...cockpitView().operationalFocus,
+            ...overviewView().operationalFocus,
             stages: [{ stageId, name: 'Phase 1', status: 'Ready' }],
           },
         }),
       )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await user.click(
       await screen.findByRole('button', { name: /Préparer la phase/i }),
@@ -619,10 +619,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Règlement — faits only (points, durée, action locale)', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           regulation: {
             prominence: 'Present',
             competition: {
@@ -649,7 +649,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     const regulation = await screen.findByTestId('overview-regulation-construction')
     expect(regulation).toBeInTheDocument()
@@ -664,10 +664,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Structure — faits only (format, rows, ConfigureStructure, pas de pilotage phase)', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Present',
             facts: {
@@ -680,7 +680,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           stages: [{ stageId, name: 'Phase 1', status: 'Draft' }],
           matchCounts: {
             live: 0,
@@ -704,7 +704,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     const structure = await screen.findByTestId('overview-structure-construction')
     expect(within(structure).getByText('Championnat')).toBeInTheDocument()
@@ -724,10 +724,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('Préparation Structure — format non configuré sans checkmark', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Present',
             facts: { formatKind: 'None' },
@@ -736,7 +736,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     const structure = await screen.findByTestId('overview-structure-construction')
     expect(within(structure).getByText('Format non configuré')).toBeInTheDocument()
@@ -744,10 +744,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('renders regulation factual summary without transition readiness UI', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           regulation: {
             prominence: 'Present',
             competition: {
@@ -773,7 +773,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(await screen.findByText(/2×45 min/)).toBeInTheDocument()
     expect(screen.queryByText(/Règlement prêt pour la suite/)).not.toBeInTheDocument()
@@ -781,9 +781,9 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('previews attention with the same item recipe as the drawer', async () => {
-    const situation = cockpitSituation()
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    const situation = overviewSituation()
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         situations: [situation, situation],
         attentionSummary: {
           count: 3,
@@ -792,7 +792,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       (await screen.findAllByRole('heading', { name: 'À traiter' })).length,
@@ -805,15 +805,15 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('does not show quantity hint when attention count is 1', async () => {
-    const situation = cockpitSituation()
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    const situation = overviewSituation()
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         situations: [situation],
         attentionSummary: { count: 1, items: [situation] },
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'À traiter' }),
@@ -825,10 +825,10 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('hides Absent match dimension and console operational chrome', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           matches: { prominence: 'Absent', facts: { total: '0' } },
         },
         operationalFocus: {
@@ -851,7 +851,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await screen.findByRole('heading', { name: 'Équipes' })
     expect(
@@ -862,9 +862,9 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
 
   it('navigates to organisation from a dimension panel', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(cockpitView())
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overviewView())
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     await user.click(
       await screen.findByRole('link', { name: /Voir les équipes/i }),
@@ -873,12 +873,12 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
     expect(screen.getByText('Organisation route')).toBeInTheDocument()
   })
 
-  it('shows an error when the cockpit read fails', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockRejectedValue(
+  it('shows an error when the overview read fails', async () => {
+    vi.mocked(fetchCompetitionOverview).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "Introuvable. Vérifiez l'identifiant dans l'URL.",
@@ -888,8 +888,8 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   it('materializes matches then offers Voir les matchs and invalidates match lists', async () => {
     const user = userEvent.setup()
     const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         availableActions: [
           {
             code: 'MaterializeMatches',
@@ -923,7 +923,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
           <Routes>
             <Route
               path="/competitions/:competitionId"
-              element={<CompetitionCockpitPage />}
+              element={<CompetitionOverviewPage />}
             />
             <Route
               path="/competitions/:competitionId/matches"
@@ -957,8 +957,8 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
   })
 
   it('composes GeneratedCalendar from preparationFocus without Structure', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Ready',
         preparationFocus: 'GeneratedCalendar',
         calendarSummary: {
@@ -970,7 +970,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
             { matchdayNumber: 3, matchCount: 2 },
           ],
           nextMatch: {
-            matchId: cockpitIds.matchId,
+            matchId: overviewIds.matchId,
             stageId,
             matchdayNumber: 1,
             scheduledAt: null,
@@ -979,7 +979,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
           },
         },
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Present',
             facts: {
@@ -993,7 +993,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           matchCounts: {
             live: 0,
             scheduled: 6,
@@ -1010,7 +1010,7 @@ describe('CompetitionCockpitPage — Construction / Préparation', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: /Calendrier sportif/i }),

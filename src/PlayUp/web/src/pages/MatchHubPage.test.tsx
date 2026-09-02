@@ -5,17 +5,17 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
-  fetchCompetitionOverview,
+  fetchCompetitionDetail,
   fetchMatchesByStage,
 } from '../api'
-import type { CompetitionOverview, MatchSummary } from '../types'
+import type { CompetitionDetail, MatchSummary } from '../types'
 import { MatchHubPage } from './MatchHubPage'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
-    fetchCompetitionOverview: vi.fn(),
+    fetchCompetitionDetail: vi.fn(),
     fetchMatchesByStage: vi.fn(),
   }
 })
@@ -24,9 +24,9 @@ const competitionId = '33333333-3333-3333-3333-333333333333'
 const stageId = '22222222-2222-2222-2222-222222222222'
 const matchId = '11111111-1111-1111-1111-111111111111'
 
-function overview(
-  overrides: Partial<CompetitionOverview> = {},
-): CompetitionOverview {
+function detail(
+  overrides: Partial<CompetitionDetail> = {},
+): CompetitionDetail {
   return {
     id: competitionId,
     name: 'Spring Cup',
@@ -93,7 +93,7 @@ describe('MatchHubPage', () => {
   })
 
   it('shows loading while hub reads are pending', () => {
-    vi.mocked(fetchCompetitionOverview).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchCompetitionDetail).mockReturnValue(new Promise(() => {}))
 
     renderMatchHub()
 
@@ -101,7 +101,7 @@ describe('MatchHubPage', () => {
   })
 
   it('renders empty when stages exist but no matches', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([])
 
     renderMatchHub()
@@ -111,7 +111,7 @@ describe('MatchHubPage', () => {
   })
 
   it('renders competition matches grouped in the calendar', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([
       matchSummary({ status: 'Live' }),
     ])
@@ -126,7 +126,7 @@ describe('MatchHubPage', () => {
   })
 
   it('shows Read context, scheduled time, score and result type without inventing values', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([
       matchSummary({
         status: 'Finished',
@@ -146,7 +146,7 @@ describe('MatchHubPage', () => {
   })
 
   it('prefers roundName from the Read over matchday formatting', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([
       matchSummary({
         status: 'Finished',
@@ -165,7 +165,7 @@ describe('MatchHubPage', () => {
   })
 
   it('does not render a page-level attention card', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([])
 
     renderMatchHub()
@@ -177,7 +177,7 @@ describe('MatchHubPage', () => {
   })
 
   it('shows an error when overview read fails', async () => {
-    vi.mocked(fetchCompetitionOverview).mockRejectedValue(
+    vi.mocked(fetchCompetitionDetail).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
     )
 
@@ -190,7 +190,7 @@ describe('MatchHubPage', () => {
 
   it('navigates to match detail from a hub row', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([matchSummary()])
 
     renderMatchHub()
@@ -204,7 +204,7 @@ describe('MatchHubPage', () => {
 
   it('navigates back to vue d’ensemble', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([])
 
     renderMatchHub()
@@ -219,7 +219,7 @@ describe('MatchHubPage', () => {
   })
 
   it('links to classements when finished matches exist', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overview())
+    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
     vi.mocked(fetchMatchesByStage).mockResolvedValue([
       matchSummary({
         status: 'Finished',

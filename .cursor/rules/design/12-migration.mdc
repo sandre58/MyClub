@@ -33,13 +33,13 @@ Match Hero, MatchRow, timeline, panel grammar in `foundations/match.css` +
 `foundations/panels.css`. Product: `MatchPage` (hero + grid 1.45/1), `MatchHubPage`
 (rows), goals timeline. Design Lab consumes DS match components.
 
-## Lot 4 — Cockpit ✅
+## Lot 4 — Overview ✅
 
-Cockpit grammar in `foundations/cockpit.css` — situation num, cycle, next action,
-attention rows (D9), mini-table, podium. Components: `CockpitSituation`,
-`CockpitNextAction`, `AttentionGroup`/`AttentionRow`, `CycleLine`, `CockpitPodium`.
-Product: `CompetitionCockpitPage` (next action, attention, podium, DS `PanelHead`).
-Design Lab consumes DS cockpit components.
+Overview grammar in `foundations/overview.css` — situation num, cycle, next action,
+attention rows (D9), mini-table, podium. Components: `OverviewReading`,
+`OverviewNextAction`, `AttentionGroup`/`AttentionRow`, `CycleLine`, `OverviewPodium`.
+Product: `CompetitionOverviewPage` (next action, attention, podium, DS `PanelHead`).
+Design Lab consumes DS overview components.
 
 ## Lot 5 — Classements / Calendrier ✅
 
@@ -59,8 +59,8 @@ Design Lab consumes `HomeBrand` + `ds-home-*`.
 Removed `index.css` legacy palette (Slate bridge on `:root`), status badges,
 cards, buttons, match-row, standings duplicates. Feedback (`ds-notice`,
 `ds-loading`, `ds-spinner`, `ds-empty`) and admin page head in DS.
-Stage / Competition / StageMatches migrated. Design Lab CSS purged to chrome +
-angle compare only.
+Stage / Competition / StageMatches migrated. Design Lab CSS is chrome + remaining
+surfaces (Accueil, Vue d'ensemble, Matchs, Fiche match, Classements).
 
 ## Rule during migration
 

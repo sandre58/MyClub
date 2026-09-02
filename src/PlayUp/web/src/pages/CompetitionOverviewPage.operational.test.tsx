@@ -1,24 +1,24 @@
 import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchCompetitionCockpit } from '../api'
+import { fetchCompetitionOverview } from '../api'
 import {
-  cockpitSituation,
-  cockpitView,
+  overviewSituation,
+  overviewView,
   competitionId,
   expectOverviewRegionOrder,
   expectOverviewRegionsAbsent,
   inProgressLayoutBase,
   referenceStageGameRules,
-  renderCockpitPage,
+  renderOverviewPage,
   setupDefaultOrganisationMock,
   stageId,
-} from './competitionCockpitPageTestHelpers'
+} from './competitionOverviewPageTestHelpers'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
-    fetchCompetitionCockpit: vi.fn(),
+    fetchCompetitionOverview: vi.fn(),
     fetchOrganisationView: vi.fn(),
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('../api', async (importOriginal) => {
   }
 })
 
-describe('CompetitionCockpitPage — En cours / Terminée', () => {
+describe('CompetitionOverviewPage — En cours / Terminée', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setupDefaultOrganisationMock()
@@ -40,12 +40,12 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     const finishedMatchId = '22222222-2222-2222-2222-222222222222'
     const nextMatchId = '33333333-3333-3333-3333-333333333333'
 
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           teams: {
             prominence: 'Condensed',
             facts: {
@@ -65,7 +65,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
             },
           },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           matches: {
@@ -74,7 +74,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           matchCounts: {
             live: 1,
             scheduled: 2,
@@ -166,7 +166,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Classement' }),
@@ -232,13 +232,13 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('shows empty states for Dernières and Prochaines when units are null', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
         naturalProgression: null,
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           recentUnit: null,
           nextUnit: null,
           standingCompact: null,
@@ -246,7 +246,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Dernières rencontres' }),
@@ -272,8 +272,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('shows Prochaine action when En cours has a structural tip', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
         naturalProgression: { code: 'GenerateNextRound' },
@@ -288,7 +288,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
@@ -300,9 +300,9 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
 
   describe('En cours layout DOM order', () => {
     it('orders Config then Sport when calm', async () => {
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(inProgressLayoutBase())
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(inProgressLayoutBase())
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       await screen.findByTestId('overview-region-config')
       expectOverviewRegionOrder('overview-region-config', 'overview-region-sport')
@@ -313,7 +313,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     })
 
     it('orders Config then Prochaine action then Sport when tip only', async () => {
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         inProgressLayoutBase({
           naturalProgression: { code: 'GenerateNextRound' },
           availableActions: [
@@ -327,7 +327,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
         }),
       )
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       await screen.findByTestId('overview-region-progression')
       expectOverviewRegionOrder(
@@ -339,15 +339,15 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     })
 
     it('orders À traiter before Config when attention only', async () => {
-      const situation = cockpitSituation()
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      const situation = overviewSituation()
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         inProgressLayoutBase({
           situations: [situation],
           attentionSummary: { count: 1, items: [situation] },
         }),
       )
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       await screen.findByTestId('overview-region-attention')
       expectOverviewRegionOrder(
@@ -359,8 +359,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     })
 
     it('orders À traiter before Config before Prochaine action when both signals exist', async () => {
-      const situation = cockpitSituation()
-      vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
+      const situation = overviewSituation()
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         inProgressLayoutBase({
           situations: [situation],
           attentionSummary: { count: 1, items: [situation] },
@@ -376,7 +376,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
         }),
       )
 
-      renderCockpitPage()
+      renderOverviewPage()
 
       await screen.findByTestId('overview-region-attention')
       expectOverviewRegionOrder(
@@ -393,8 +393,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     const entryC = '11111111-1111-1111-1111-111111111111'
     const entryD = '22222222-2222-2222-2222-222222222222'
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
         completionMode: 'Normal',
@@ -409,7 +409,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           ],
         },
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           teams: {
             prominence: 'Condensed',
             facts: { activeCount: '4', minimumTeams: '2', maximumTeams: '64' },
@@ -425,12 +425,12 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
             },
           },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           recentUnit: {
             stageId,
             stageName: 'Phase 1',
@@ -467,7 +467,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Résultat' }),
@@ -526,8 +526,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   it('shows Cup Winner hero — finalist not staged as podium', async () => {
     const winner = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1'
     const runnerUp = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2'
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
         completionMode: 'Normal',
@@ -540,7 +540,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           ],
         },
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Condensed',
             facts: {
@@ -552,7 +552,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
             },
           },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           teams: {
@@ -561,7 +561,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           standingCompact: null,
           recentUnit: null,
           nextUnit: null,
@@ -572,7 +572,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Résultat' }),
@@ -599,8 +599,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
     const b = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2'
     const c = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3'
     const d = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4'
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
         completionMode: 'Normal',
@@ -614,13 +614,13 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           ],
         },
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Condensed',
             facts: { formatKind: 'Cup', roundCount: '2' },
           },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           teams: {
@@ -629,7 +629,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           standingCompact: null,
           referenceStageGameRules: referenceStageGameRules({
             formatKind: 'Cup',
@@ -638,7 +638,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByTestId('overview-outcome-podium'),
@@ -650,21 +650,21 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('shows Groups-only Terminée Classement without Résultat', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
         completionMode: 'Normal',
         competitionOutcome: null,
         naturalProgression: null,
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Condensed',
             facts: { formatKind: 'Groups', groupCount: '2' },
           },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           teams: {
@@ -673,7 +673,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           recentUnit: null,
           nextUnit: null,
           standingCompact: {
@@ -717,7 +717,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Groupe A' }),
@@ -728,21 +728,21 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('hides Résultat when Terminée has no CompetitionOutcome (Abandoned / Groups-only)', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
         completionMode: 'Abandoned',
         competitionOutcome: null,
         naturalProgression: null,
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           structure: {
             prominence: 'Condensed',
             facts: { formatKind: 'Championship' },
           },
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           teams: {
@@ -751,7 +751,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           standingCompact: null,
           recentUnit: null,
           nextUnit: null,
@@ -760,7 +760,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByTestId('overview-region-config'),
@@ -777,13 +777,13 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('shows Prochaines on Terminée only when nextUnit is projected', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Completed',
         cycleReading: { code: 'Completed' },
         naturalProgression: null,
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           recentUnit: null,
           nextUnit: {
             stageId,
@@ -801,7 +801,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaines rencontres' }),
@@ -812,8 +812,8 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('hides À traiter when attention count is 0', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
         naturalProgression: null,
@@ -822,7 +822,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Dernières rencontres' }),
@@ -834,15 +834,15 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('hides En cours Règlement when referenceStageGameRules is null', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
         naturalProgression: null,
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           structure: {
@@ -855,13 +855,13 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           referenceStageGameRules: null,
         },
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByTestId('overview-structure-condensed'),
@@ -876,15 +876,15 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
   })
 
   it('shows Cup game-rule facts without standing points', async () => {
-    vi.mocked(fetchCompetitionCockpit).mockResolvedValue(
-      cockpitView({
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
         status: 'Running',
         cycleReading: { code: 'InProgress' },
         naturalProgression: null,
         constructionDimensions: {
-          ...cockpitView().constructionDimensions,
+          ...overviewView().constructionDimensions,
           regulation: {
-            ...cockpitView().constructionDimensions.regulation,
+            ...overviewView().constructionDimensions.regulation,
             prominence: 'Condensed',
           },
           structure: {
@@ -894,7 +894,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
           teams: { prominence: 'Absent', facts: {} },
         },
         operationalFocus: {
-          ...cockpitView().operationalFocus,
+          ...overviewView().operationalFocus,
           referenceStageGameRules: referenceStageGameRules({
             formatKind: 'Cup',
             numberOfLegs: 2,
@@ -906,7 +906,7 @@ describe('CompetitionCockpitPage — En cours / Terminée', () => {
       }),
     )
 
-    renderCockpitPage()
+    renderOverviewPage()
 
     expect(
       await screen.findByTestId('overview-regulation-game'),

@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Development.Templates;
 /// </summary>
 /// <remarks>
 /// Seed plays Groups→R16→QF→SF→Final+Bronze with PlacementAwards (ranks 1–4) and Completes the
-/// competition so Cockpit Terminée can show <c>CompetitionOutcome</c>. Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
+/// competition so Overview Terminée can show <c>CompetitionOutcome</c>. Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
 /// <c>:progress</c> is ignored — fixed seed.
 /// </remarks>
 public sealed class WorldCupTemplate : ICompetitionTemplate

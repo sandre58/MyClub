@@ -27,7 +27,7 @@ When Domain / C# conventions change, update **all** of:
 - **HTTP inbound bodies** (Host Minimal API / controllers) use the suffix **`Request`**  
   (e.g. `FinishMatchRequest`, `ApplyDrawRequest`). Live under `Host/Contracts/`.
 - **Product / HTTP wire shapes** assembled for API responses (or shared as Application read contracts returned by Host) use the suffix **`Dto`**  
-  (e.g. `CompetitionOverviewDto`, `MatchDetailDto`). Nested wire types also use `Dto`.
+  (e.g. `CompetitionDetailDto`, `MatchDetailDto`). Nested wire types also use `Dto`.
 - **Do not** put `Dto` / `Request` on Domain types (entities, VOs, events).
 - **Do not** require `Dto` on Application-internal results that are not HTTP wire contracts  
   (e.g. `ApplyDrawResult`, Domain snapshots used only inside use cases).

@@ -18,7 +18,7 @@ dotnet run --project ../MyClub.PlayUp.DevRunner -- --reset --templates ligue-1:r
 dotnet run --project ../MyClub.PlayUp.DevRunner -- --scenarios groups:running,cup:finished
 ```
 
-Seeded competitions appear in the Accueil list (`GET /competitions`). Open a row to enter its Cockpit.
+Seeded competitions appear in the Accueil list (`GET /competitions`). Open a row to enter its Overview.
 
 Progress: `prepared` | `running` (default) | `finished` via `id:progress`.
 

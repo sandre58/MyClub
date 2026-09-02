@@ -62,8 +62,8 @@ import './organisation.css'
 type OrganisationEditor = null | 'teams' | 'regulation' | 'structure'
 
 /**
- * After Organisation writes that change readiness, refresh Organisation + Cockpit.
- * Cockpit projects MaterializeMatches from ReadyForMaterialization
+ * After Organisation writes that change readiness, refresh Organisation + Overview.
+ * Overview projects MaterializeMatches from ReadyForMaterialization
  * (Cup: primary skeleton incomplete — not from-slots). Must not stay stale after structure edits.
  */
 async function invalidateAfterOrganisationMutation(
@@ -81,7 +81,7 @@ async function invalidateAfterOrganisationMutation(
       queryKey: queryKeys.competitions.workspace(competitionId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.cockpit(competitionId),
+      queryKey: queryKeys.competitions.overview(competitionId),
     }),
   ])
 }
@@ -462,8 +462,8 @@ function PreparationStrip({
             to={`/competitions/${data.competitionId}`}
           >
             {isCup
-              ? t('readiness.goToCockpitCupSkeleton')
-              : t('readiness.goToCockpitMaterialize')}
+              ? t('readiness.goToOverviewCupSkeleton')
+              : t('readiness.goToOverviewMaterialize')}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

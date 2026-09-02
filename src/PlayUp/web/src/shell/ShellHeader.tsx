@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { fetchCompetitionCockpit } from '../api'
+import { fetchCompetitionOverview } from '../api'
 import { TeamCrest } from '../design-system/TeamCrest'
 import {
   AttentionBellIcon,
@@ -45,17 +45,17 @@ export function ShellHeader({
   const { competitionId, competitionName, logoMediaId, state } =
     useShellCompetitionContext()
 
-  const cockpitQuery = useQuery({
-    queryKey: queryKeys.competitions.cockpit(competitionId ?? ''),
-    queryFn: () => fetchCompetitionCockpit(competitionId!),
+  const overviewQuery = useQuery({
+    queryKey: queryKeys.competitions.overview(competitionId ?? ''),
+    queryFn: () => fetchCompetitionOverview(competitionId!),
     enabled: Boolean(competitionId),
   })
 
-  const attentionCount = cockpitQuery.data?.attentionSummary.count ?? 0
-  const competitionStatus = cockpitQuery.data?.status
+  const attentionCount = overviewQuery.data?.attentionSummary.count ?? 0
+  const competitionStatus = overviewQuery.data?.status
   const periodLabel = formatCompetitionPeriod(
-    cockpitQuery.data?.period?.start,
-    cockpitQuery.data?.period?.end,
+    overviewQuery.data?.period?.start,
+    overviewQuery.data?.period?.end,
   )
 
   return (
