@@ -9,8 +9,7 @@
   },
   "lede_one": "{{count}} compétition sur cet hôte.",
   "lede_other": "{{count}} compétitions sur cet hôte.",
-  "emptyTitle": "Votre première compétition",
-  "emptyBody": "Créez votre compétition pour commencer à la préparer.",
+  "emptyHint": "Un nom suffit. Vous configurerez équipes et format ensuite.",
   "create": {
     "cta": "Créer une compétition",
     "heading": "Nouvelle compétition",

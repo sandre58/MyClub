@@ -95,9 +95,7 @@ describe('HomePage', () => {
       screen.queryByRole('heading', { name: 'Bienvenue' }),
     ).not.toBeInTheDocument()
     expect(
-      await screen.findByRole('heading', {
-        name: /Votre première compétition/i,
-      }),
+      await screen.findByRole('button', { name: /Créer une compétition/i }),
     ).toBeInTheDocument()
   })
 
@@ -115,13 +113,14 @@ describe('HomePage', () => {
     renderHomePage()
 
     expect(
-      await screen.findByText(
-        /Créez votre compétition pour commencer à la préparer/i,
-      ),
+      await screen.findByText(/Un nom suffit/i),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Créer une compétition/i }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Votre première compétition/i),
+    ).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 

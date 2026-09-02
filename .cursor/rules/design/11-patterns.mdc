@@ -44,7 +44,10 @@ Legend before table; zones as left bars; Pts dominant; trends slanted.
 Hub ops hors Shell: lockup + one panel of interactive rows (crest, name,
 declared dates, status, chevron). Hover A: `--color-surface-secondary`
 full-bleed wash; chevron → ink. Pressed = hover. No brand bar, shadow, lift,
-or underline. Whole row is one hit target.
+or underline. Whole row is one hit target. Lockup proportions (mark vs
+wordmark + tagline) are the same at desktop / tablet / phone: the block
+scales as a unit when the 42rem column is narrower. Phone: padding and
+safe-area tighten; Créer stacks under the section title.
 
 ## Empty / loading / error
 

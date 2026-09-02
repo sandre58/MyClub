@@ -67,7 +67,7 @@ export function HomePage() {
       </a>
 
       <main id="main" className="ds-home__main">
-        <HomeBrand lede={!isEmpty ? t('lede') : undefined} />
+        <HomeBrand lede={isEmpty ? tc('emptyHint') : t('lede')} />
 
         {query.isPending && <LoadingState />}
 
@@ -75,8 +75,6 @@ export function HomePage() {
 
         {isEmpty && (
           <div className="ds-empty">
-            <h2 className="ds-empty__title">{tc('emptyTitle')}</h2>
-            <p className="ds-empty__body">{tc('emptyBody')}</p>
             <CreateButton
               buttonRef={createTriggerRef}
               onClick={openCreate}

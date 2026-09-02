@@ -18,20 +18,13 @@ export function LabHome({ empty }: { empty: boolean }) {
         <HomeBrand
           lede={
             empty
-              ? undefined
+              ? 'Un nom suffit. Vous configurerez équipes et format ensuite.'
               : 'Choisissez une compétition ou créez-en une nouvelle.'
           }
         />
 
         {empty ? (
           <div className="ds-empty">
-            <span className="ds-empty__title">
-              Votre première compétition commence ici
-            </span>
-            <span className="ds-empty__body">
-              Donnez-lui un nom — vous organiserez les équipes, le règlement et
-              le calendrier juste après.
-            </span>
             <button type="button" className="ds-btn ds-btn--primary">
               <PlusIcon size="sm" />
               Créer une compétition

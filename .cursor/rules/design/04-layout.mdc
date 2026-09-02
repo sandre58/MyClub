@@ -33,3 +33,6 @@ gutters only** (`--space-24` on the main padding). No centered max-width column.
 
 - Two-column groups collapse to one column below 56rem, dominant block first.
 - The Match Hero stacks: status → teams+score → meta.
+- Accueil (hors Shell): same chrome breakpoints as the shell (phone
+  `<48rem`, tablet `<64rem`). Lockup is one composition (mark + wordmark +
+  tagline) and **scales as a unit** in the 42rem column — no reflow, no wrap.
