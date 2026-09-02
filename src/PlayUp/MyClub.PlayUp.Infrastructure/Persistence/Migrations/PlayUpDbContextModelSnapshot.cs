@@ -564,7 +564,7 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                             b1.Property<Guid>("match_id")
                                 .HasColumnType("uuid");
 
-                            b1.HasKey("Id");
+                            b1.HasKey("match_id", "Id");
 
                             b1.HasIndex("match_id", "SortOrder")
                                 .IsUnique();

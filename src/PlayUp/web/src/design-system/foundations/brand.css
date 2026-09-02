@@ -44,6 +44,22 @@
     fill: none;
 }
 
+/* Accueil lockup — raster from mockup v3 (`public/brand/accueil-*.png`). */
+.ds-lockup-mark,
+.ds-lockup-wordmark {
+    display: block;
+    width: auto;
+    max-width: 100%;
+}
+
+.ds-lockup-mark {
+    height: 3.5rem;
+}
+
+.ds-lockup-wordmark {
+    height: 2.625rem;
+}
+
 /* Trend — même vocabulaire que la marque. */
 .ds-trend {
     display: inline-block;

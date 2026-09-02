@@ -201,6 +201,36 @@ public sealed class MatchPersistenceTests
     }
 
     [Fact]
+    public async Task Same_member_can_be_declared_on_two_matches_in_one_saveAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var member = MemberId.New();
+        var first = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        var second = Match.Create(CompetitionId.New(), StageId.New(), EntryId.New(), EntryId.New(), _clock);
+        first.AddDeclaredParticipation(member, Side.Home, CompositionStatus.Starter, _clock, 10);
+        second.AddDeclaredParticipation(member, Side.Away, CompositionStatus.Bench, _clock, 10);
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new MatchRepository(context);
+            repository.Add(first);
+            repository.Add(second);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var repository = new MatchRepository(context);
+            var loadedFirst = await repository.GetByIdAsync(first.Id);
+            var loadedSecond = await repository.GetByIdAsync(second.Id);
+            loadedFirst.Should().NotBeNull();
+            loadedSecond.Should().NotBeNull();
+            loadedFirst.DeclaredParticipations.Should().ContainSingle(p => p.Id.Equals(member));
+            loadedSecond.DeclaredParticipations.Should().ContainSingle(p => p.Id.Equals(member));
+        }
+    }
+
+    [Fact]
     public async Task Recorded_goals_round_trip_with_order_assister_own_goal_and_correctionAsync()
     {
         var databaseName = Guid.NewGuid().ToString();

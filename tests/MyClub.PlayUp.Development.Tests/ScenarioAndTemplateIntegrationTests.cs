@@ -14,6 +14,7 @@ using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -117,6 +118,40 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.DoubleRoundRobin);
         stage.Matchdays.Should().HaveCount(34);
         matches.Should().HaveCount(18 * 17); // N×(N−1) directed fixtures for Double RR
+        competition.Entries.Should().OnlyContain(entry =>
+            entry.DeclaredMembers.Count(member => member.Role == DeclaredMemberRole.Player) >= 11);
+        competition.Regulation.DisciplinaryRules.AllowedTypes.Should().Contain(DisciplinaryType.Yellow);
+        competition.Regulation.DisciplinaryRules.AllowedTypes.Should().Contain(DisciplinaryType.Red);
+    }
+
+    [Fact]
+    public async Task ChampionsLeague_running_seeds_match_factsAsync()
+    {
+        var templates = fixture.Services.GetRequiredService<TemplateRunner>();
+        await templates.ResetAndRunAsync([SeedSpec.Parse("champions-league:running")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdAsync(summary.Id);
+        competition.Should().NotBeNull();
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+            .GetByIdAsync(competition.StageIds[0]);
+        var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+            .ListByStageAsync(stage!.Id);
+
+        var finished = matches.Where(match => match.Status == MatchStatus.Finished).ToList();
+        finished.Should().NotBeEmpty();
+        finished.Should().OnlyContain(match => match.DeclaredParticipations.Count >= 22);
+        foreach (var match in finished)
+        {
+            match.Result.Should().NotBeNull();
+            match.RecordedGoals.Should().HaveCount(
+                match.Result!.Score.HomeGoals + match.Result.Score.AwayGoals);
+        }
+
+        finished.SelectMany(match => match.RecordedDisciplinaryEvents).Should().NotBeEmpty();
+        stage.MatchPlacements.Should().NotBeEmpty();
     }
 
     [Fact]

@@ -36,7 +36,7 @@ internal static class ScenarioOrchestration
     {
         var competition = Competition.Create(
             new CompetitionName(name),
-            regulation ?? BootstrapRegulation.Standard(),
+            MatchEnrichment.WithDiscipline(regulation ?? BootstrapRegulation.Standard()),
             context.Ids.Competition(),
             context.Clock);
         var logoMediaId = await context.Logos.GetOrImportAsync(logoAsset, cancellationToken).ConfigureAwait(false);
@@ -45,10 +45,7 @@ internal static class ScenarioOrchestration
             competition.UpdatePresentation(ShortName.Create(shortName), logoMediaId, context.Clock);
         }
 
-        if (scheduledStart is not null || scheduledEnd is not null)
-        {
-            competition.SetSchedule(scheduledStart, scheduledEnd, context.Clock);
-        }
+        MatchEnrichment.ApplyRandomCompetitionSchedule(context, competition, scheduledStart, scheduledEnd);
 
         context.Competitions.Add(competition);
         return competition;
@@ -111,6 +108,7 @@ internal static class ScenarioOrchestration
             entries.Add(entry);
         }
 
+        MatchEnrichment.SeedRosters(context, competition);
         return entries;
     }
 
@@ -195,6 +193,7 @@ internal static class ScenarioOrchestration
             }
         }
 
+        MatchEnrichment.ApplyKickoffs(context, competition, stage, created);
         return created;
     }
 
@@ -232,6 +231,7 @@ internal static class ScenarioOrchestration
             }
         }
 
+        MatchEnrichment.ApplyKickoffs(context, competition, stage, created);
         return created;
     }
 
@@ -284,48 +284,25 @@ internal static class ScenarioOrchestration
             context.Matches.Add(match);
         }
 
+        MatchEnrichment.ApplyKickoffs(context, competition, stage, applyResult.CreatedMatches);
         return applyResult.CreatedMatches;
     }
 
     public static void PlayMatches(
         ScenarioContext context,
+        Competition competition,
         IReadOnlyList<Match> matches,
-        int count)
-    {
-        var ordered = matches.OrderBy(m => m.Id.Value).ToList();
-        var toPlay = Math.Min(count, ordered.Count);
-        for (var i = 0; i < toPlay; i++)
-        {
-            context.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(i));
-            var (home, away) = ScoreGenerator.Create(context.Entropy);
-            var match = ordered[i];
-            match.Start(context.Clock);
-            match.Finish(ResultGenerator.Played(home, away), context.Clock);
-        }
-    }
+        int count) =>
+        MatchEnrichment.PlayMatches(context, competition, matches, count, decisive: false);
 
     /// <summary>
     /// Plays all matches with a decisive (non-draw) score — required for single-leg KO progression.
     /// </summary>
     public static void PlayDecisiveMatches(
         ScenarioContext context,
-        IReadOnlyList<Match> matches)
-    {
-        var ordered = matches.OrderBy(m => m.Id.Value).ToList();
-        for (var i = 0; i < ordered.Count; i++)
-        {
-            context.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(i));
-            var (home, away) = ScoreGenerator.Create(context.Entropy);
-            if (home == away)
-            {
-                home++;
-            }
-
-            var match = ordered[i];
-            match.Start(context.Clock);
-            match.Finish(ResultGenerator.Played(home, away), context.Clock);
-        }
-    }
+        Competition competition,
+        IReadOnlyList<Match> matches) =>
+        MatchEnrichment.PlayMatches(context, competition, matches, matches.Count, decisive: true);
 
     public static void PrepareAndStart(ScenarioContext context, Competition competition, Stage stage)
     {
@@ -473,7 +450,7 @@ internal static class ScenarioOrchestration
         quarter.Start(context.Clock);
         competition.Start(context.Clock);
 
-        PlayDecisiveMatches(context, qfMatches);
+        PlayDecisiveMatches(context, competition, qfMatches);
 
         var competitionStages = new[] { quarter, semi };
         foreach (var fixture in qfFixtures)
@@ -559,7 +536,7 @@ internal static class ScenarioOrchestration
         roundOf32.Start(context.Clock);
         competition.Start(context.Clock);
 
-        PlayDecisiveMatches(context, r32Matches);
+        PlayDecisiveMatches(context, competition, r32Matches);
         ApplyAllProgressions(context, roundOf32, r32Fixtures, r32Matches, allStages);
 
         PlayKnockoutRound(
@@ -594,7 +571,7 @@ internal static class ScenarioOrchestration
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         WireFinalPlacementAwards(final, finalFixture, context.Clock);
         PrepareAndStartStage(context, final);
-        PlayDecisiveMatches(context, finalMatches);
+        PlayDecisiveMatches(context, competition, finalMatches);
 
         CompleteAllRunning(context, competition, allStages);
 
@@ -653,7 +630,7 @@ internal static class ScenarioOrchestration
 
         var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
         PrepareAndStart(context, competition, groups);
-        PlayMatches(context, groupMatches, count: groupMatches.Count);
+        PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
         foreach (var group in groups.Groups)
@@ -695,7 +672,7 @@ internal static class ScenarioOrchestration
         var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
         WireSemiToFinalAndBronze(semi, final, bronze, sfFixtures, context.Clock);
         PrepareAndStartStage(context, semi);
-        PlayDecisiveMatches(context, sfMatches);
+        PlayDecisiveMatches(context, competition, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
         var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
@@ -705,8 +682,8 @@ internal static class ScenarioOrchestration
         WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
         PrepareAndStartStage(context, final);
         PrepareAndStartStage(context, bronze);
-        PlayDecisiveMatches(context, finalMatches);
-        PlayDecisiveMatches(context, bronzeMatches);
+        PlayDecisiveMatches(context, competition, finalMatches);
+        PlayDecisiveMatches(context, competition, bronzeMatches);
 
         CompleteAllRunning(context, competition, allStages);
 
@@ -730,7 +707,7 @@ internal static class ScenarioOrchestration
         var fixtures = OrderedFixtures(stage, expectedFixtures);
         WireWinnerProgression(stage, nextStage, fixtures, nextSlotKeys, context.Clock);
         PrepareAndStartStage(context, stage);
-        PlayDecisiveMatches(context, matches);
+        PlayDecisiveMatches(context, competition, matches);
         ApplyAllProgressions(context, stage, fixtures, matches, allStages);
     }
 
@@ -775,12 +752,13 @@ internal static class ScenarioOrchestration
         switch (progress)
         {
             case SeedProgress.Prepared:
+                PlayMatches(context, competition, matches, count: 0);
                 return;
             case SeedProgress.Running:
-                PlayMatches(context, matches, count: matches.Count / 2);
+                PlayMatches(context, competition, matches, count: matches.Count / 2);
                 return;
             case SeedProgress.Finished:
-                PlayMatches(context, matches, count: matches.Count);
+                PlayMatches(context, competition, matches, count: matches.Count);
                 CompleteRunning(context, competition, stage);
                 return;
             default:
@@ -823,9 +801,9 @@ internal static class ScenarioOrchestration
                 {
                     // Round 1 complete → round 2 open with ~50% results (awaiting next GenerateNextRound).
                     var round1 = GenerateSwissRound(context, competition, stage, allMatches);
-                    PlayMatches(context, round1, count: round1.Count);
+                    PlayMatches(context, competition, round1, count: round1.Count);
                     var round2 = GenerateSwissRound(context, competition, stage, allMatches);
-                    PlayMatches(context, round2, count: Math.Max(1, round2.Count / 2));
+                    PlayMatches(context, competition, round2, count: Math.Max(1, round2.Count / 2));
                     return;
                 }
 
@@ -834,7 +812,7 @@ internal static class ScenarioOrchestration
                     for (var round = 1; round <= planned; round++)
                     {
                         var created = GenerateSwissRound(context, competition, stage, allMatches);
-                        PlayMatches(context, created, count: created.Count);
+                        PlayMatches(context, competition, created, count: created.Count);
                     }
 
                     CompleteRunning(context, competition, stage);
@@ -859,6 +837,7 @@ internal static class ScenarioOrchestration
             accumulated.Add(match);
         }
 
+        MatchEnrichment.ApplyKickoffs(context, competition, stage, result.CreatedMatches);
         return result.CreatedMatches;
     }
 
@@ -1062,6 +1041,7 @@ internal static class ScenarioOrchestration
             context.Matches.Add(match);
         }
 
+        MatchEnrichment.ApplyKickoffs(context, competition, stage, result.CreatedMatches);
         return result.CreatedMatches;
     }
 

@@ -182,7 +182,26 @@ export const labMatchEvents: LabEvent[] = [
 ]
 
 export const labCompetitions = [
-  { id: 'c1', name: 'Championnat des Vétérans — Automne 2026', status: 'En cours' },
-  { id: 'c2', name: 'Coupe du District U15', status: 'Préparation' },
-  { id: 'c3', name: 'Tournoi de Pentecôte 2026', status: 'Terminée' },
+  {
+    id: 'c1',
+    name: 'Championnat des Vétérans — Automne 2026',
+    status: 'En cours',
+    statusTone: 'live' as const,
+    scheduledStart: '2026-09-12',
+    scheduledEnd: '2027-03-28',
+  },
+  {
+    id: 'c2',
+    name: 'Coupe du District U15',
+    status: 'Préparation',
+    statusTone: 'info' as const,
+    scheduledStart: '2026-10-04',
+  },
+  {
+    id: 'c3',
+    name: 'Tournoi de Pentecôte 2026',
+    status: 'Terminée',
+    statusTone: 'done' as const,
+    scheduledEnd: '2027-03-28',
+  },
 ]

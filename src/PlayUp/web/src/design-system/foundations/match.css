@@ -160,9 +160,6 @@ button.ds-match-row {
     width: 100%;
 }
 
-a.ds-match-row:hover .ds-match-row__name {
-    color: var(--color-ink);
-}
 
 .ds-match-row__team {
     display: flex;

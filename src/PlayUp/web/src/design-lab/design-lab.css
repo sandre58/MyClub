@@ -207,3 +207,119 @@
 .dlab-angle-nav-demo[data-skew='12'] .dlab-angle-nav-demo__bar {
   transform: skewX(-12deg);
 }
+
+/* ------------------------------------------------------------------ */
+/* Brand Lab (Lot A monogram proof)                                    */
+/* ------------------------------------------------------------------ */
+
+.dlab-brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 56rem;
+}
+
+.dlab-brand-intro__lead {
+  margin: var(--space-8) 0 0;
+  color: var(--color-text-secondary);
+  max-width: 42rem;
+}
+
+.dlab-brand-note {
+  margin: 0 0 var(--space-16);
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+}
+
+.dlab-brand-hero__grid,
+.dlab-brand-variant-grid,
+.dlab-brand-cartouche-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-24);
+}
+
+.dlab-brand-size-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-24);
+}
+
+.dlab-brand-size-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-brand-size-cell__label {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.dlab-brand-optical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.dlab-brand-optical__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+}
+
+.dlab-brand-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  margin: 0;
+}
+
+.dlab-brand-cell--compact {
+  gap: var(--space-8);
+}
+
+.dlab-brand-cell__caption {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.dlab-brand-bg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-16);
+}
+
+.dlab-brand-bg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-24);
+  border-radius: var(--radius-panel);
+}
+
+.dlab-brand-bg__label {
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.dlab-brand-bg--light {
+  background: var(--color-canvas);
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.dlab-brand-bg--dark {
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+}
+
+.dlab-brand-bg--brand {
+  background: linear-gradient(135deg, #154a8f, #2f86e0);
+  color: #fff;
+}

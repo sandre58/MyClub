@@ -25,3 +25,5 @@ Four levels only — each one must be earned:
 - Dark chrome surface is exclusive to the navigation rail.
 - Exception: the Home atmosphere (brand halos on canvas) is the only
   decorative canvas treatment in the product.
+- Interactive row hover uses `--color-surface-secondary` as a wash inside the
+  panel — not a fifth surface level.

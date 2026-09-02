@@ -5,6 +5,7 @@ import {
   type StatusTone,
   type StatusVariant,
 } from '../design-system/components/Status'
+import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
 import { PlayUpMark } from '../design-system/PlayUpMark'
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
 import { TrendIcon } from '../design-system/TrendIcon'
@@ -15,6 +16,7 @@ import '../design-system/index.css'
 import {
   AttentionBellIcon,
   AttentionIcon,
+  ChevronRightIcon,
   ClassementsNavIcon,
   CloseIcon,
   MatchesNavIcon,
@@ -30,6 +32,7 @@ import {
   CreateMatchesIcon,
   NextActionIcon,
   PendingCircleIcon,
+  PlusIcon,
   PreparationIcon,
   RegulationIcon,
   StructureIcon,
@@ -265,8 +268,23 @@ export function FoundationsPlayground() {
           </p>
         </header>
 
+        <section className="ds-section" aria-labelledby="section-brand-lockup">
+          <p className="ds-section__kicker">Marque — Accueil lockup</p>
+          <h2 id="section-brand-lockup" className="ds-heading">
+            Play’Up · lockup Accueil
+          </h2>
+          <p className="ds-body">
+            Planche 2026-09-02 : signe P+flèche+U, wordmark italique, dégradé
+            Slate sur Up, flèche sur la hampe droite du U. Chrome rail inchangé.
+          </p>
+          <div className="ds-row">
+            <PlayUpLockupMark />
+            <PlayUpWordmark surface="home" />
+          </div>
+        </section>
+
         <section className="ds-section" aria-labelledby="section-brand">
-          <p className="ds-section__kicker">Marque — monogramme</p>
+          <p className="ds-section__kicker">Marque — monogramme chrome</p>
           <h2 id="section-brand" className="ds-heading">
             Play’Up · P + flèche ascendante
           </h2>
@@ -559,6 +577,44 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
+        <section className="ds-section" aria-labelledby="section-interactive-row">
+          <p className="ds-section__kicker">E2 — Ligne interactive</p>
+          <h2 id="section-interactive-row" className="ds-heading">
+            Hover A — wash surface-secondary
+          </h2>
+          <p className="ds-body">
+            Contrat canonique : wash full-bleed au hover / pressed ; chevron →
+            encre ; focus-visible = anneau existant ; pas de barre brand, ombre,
+            lift ni soulignement. Tab pour le focus.
+          </p>
+          <div className="ds-panel ds-interactive-row-demo">
+            <a className="ds-interactive-row" href="#row-rest">
+              <span className="ds-interactive-row-demo__label">
+                Repos / hover / pressed
+              </span>
+              <span className="ds-interactive-row__chevron" aria-hidden="true">
+                <ChevronRightIcon size="sm" />
+              </span>
+            </a>
+            <a className="ds-interactive-row" href="#row-second">
+              <span className="ds-interactive-row-demo__label">
+                Deuxième ligne — Tab pour le focus
+              </span>
+              <span className="ds-interactive-row__chevron" aria-hidden="true">
+                <ChevronRightIcon size="sm" />
+              </span>
+            </a>
+            <button type="button" className="ds-interactive-row" disabled>
+              <span className="ds-interactive-row-demo__label">
+                Désactivée — hors Accueil V1
+              </span>
+              <span className="ds-interactive-row__chevron" aria-hidden="true">
+                <ChevronRightIcon size="sm" />
+              </span>
+            </button>
+          </div>
+        </section>
+
         <section className="ds-section" aria-labelledby="section-brand">
           <p className="ds-section__kicker">Lot 1 — Brand</p>
           <h2 id="section-brand" className="ds-heading">
@@ -653,6 +709,7 @@ export function FoundationsPlayground() {
           <div className="ds-icon-grid">
             <NextActionIcon />
             <CreateMatchesIcon />
+            <PlusIcon />
             <PreparationIcon />
             <RegulationIcon />
             <StructureIcon />

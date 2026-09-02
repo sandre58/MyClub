@@ -31,6 +31,22 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 
 ## Named response contracts (Phase 12.8)
 
+### `GET /competitions` → `CompetitionListItemDto[]`
+
+Organizer list, name then id order. `scheduledStart` / `scheduledEnd` are the **declared** competition dates (`DateTimeOffset?`), not Cockpit operational min/max kickoff. Null when unset.
+
+```json
+{
+  "id": "<guid>",
+  "name": "…",
+  "status": "Draft",
+  "shortName": null,
+  "logoMediaId": null,
+  "scheduledStart": null,
+  "scheduledEnd": null
+}
+```
+
 ### `GET /competitions/{competitionId}/cockpit` → `CockpitViewDto` (Phase 16.1)
 
 Aggregated Cockpit Read projection (Application interpretation). Does **not** replace workspace / organisation / attention endpoints.

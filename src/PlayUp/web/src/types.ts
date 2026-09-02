@@ -79,6 +79,8 @@ export interface CompetitionListItem {
   status: CompetitionStatus
   shortName?: string | null
   logoMediaId?: string | null
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
 }
 
 /** POST /competitions — create Draft competition (name only). */

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { ChevronRightIcon } from '../icons/shellIcons'
 
 /**
  * Match row — state-driven score cell + aside (Design Lab grammar).
@@ -23,7 +24,9 @@ export function MatchRow({
   ariaLabel?: string
   scoreMuted?: boolean
 }) {
-  const classes = ['ds-match-row', className].filter(Boolean).join(' ')
+  const classes = ['ds-match-row', to && 'ds-interactive-row', className]
+    .filter(Boolean)
+    .join(' ')
   const body = (
     <>
       <span className="ds-match-row__team ds-match-row__team--home">
@@ -50,8 +53,11 @@ export function MatchRow({
       {aside ? (
         <span className="ds-match-row__aside">{aside}</span>
       ) : (
-        <span className="ds-match-row__aside" aria-hidden="true">
-          ›
+        <span
+          className="ds-match-row__aside ds-interactive-row__chevron"
+          aria-hidden="true"
+        >
+          <ChevronRightIcon size="sm" />
         </span>
       )}
     </>

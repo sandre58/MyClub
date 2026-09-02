@@ -157,6 +157,25 @@ describe('HomePage', () => {
     expect(screen.getByText('Cockpit route')).toBeInTheDocument()
   })
 
+  it('shows declared schedule when present and omits the line when unset', async () => {
+    vi.mocked(fetchCompetitions).mockResolvedValue([
+      listItem({
+        scheduledStart: '2026-10-04T00:00:00.000Z',
+      }),
+      listItem({
+        id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        name: 'No Dates Cup',
+        status: 'Draft',
+      }),
+    ])
+
+    renderHomePage()
+
+    expect(await screen.findByText(/À partir du/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /No Dates Cup/i })).toBeInTheDocument()
+    expect(screen.queryByText(/Jusqu’au|Jusqu'au/)).not.toBeInTheDocument()
+  })
+
   it('keeps create CTA available when the list read fails (I4)', async () => {
     vi.mocked(fetchCompetitions).mockRejectedValue(
       new ApiError(500, 'Host unavailable'),

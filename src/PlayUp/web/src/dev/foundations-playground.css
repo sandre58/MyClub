@@ -316,3 +316,24 @@
     grid-column: 2;
 }
 
+.ds-interactive-row-demo .ds-interactive-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-16);
+    min-height: var(--control-height);
+    padding-block: var(--space-12);
+    width: 100%;
+    font: inherit;
+    text-align: start;
+    border: none;
+}
+
+.ds-interactive-row-demo .ds-interactive-row + .ds-interactive-row {
+    border-top: var(--border-width) solid var(--color-border);
+}
+
+.ds-interactive-row-demo__label {
+    font-weight: var(--font-weight-semibold);
+}
+

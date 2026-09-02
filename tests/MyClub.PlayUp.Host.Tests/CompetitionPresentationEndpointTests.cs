@@ -54,6 +54,14 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
         org!.ScheduledStart.Should().Be(start);
         org.ScheduledEnd.Should().Be(end);
 
+        using var listResponse = await client.GetAsync("/competitions");
+        listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var list = await listResponse.Content.ReadFromJsonAsync<List<CompetitionListItemDto>>(HostJson.Options);
+        var row = list.Should().Contain(item => item.Id == id).Which;
+        row.ScheduledStart.Should().Be(start);
+        row.ScheduledEnd.Should().Be(end);
+        row.LogoMediaId.Should().Be(competitionLogoId);
+
         using var add = await client.PostAsJsonAsync(
             $"/competitions/{id}/entries",
             new AddEntryRequest(

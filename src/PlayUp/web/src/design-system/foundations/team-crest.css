@@ -40,7 +40,7 @@
 .team-crest--logo {
   overflow: hidden;
   border-radius: 0.2rem;
-  background: var(--color-surface);
+  background: transparent;
 }
 
 .team-crest__img {

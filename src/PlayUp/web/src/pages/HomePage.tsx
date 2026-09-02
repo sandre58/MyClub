@@ -11,6 +11,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { createCompetition, fetchCompetitions } from '../api'
 import { HomeBrand } from '../design-system/components/HomeBrand'
+import { TeamCrest } from '../design-system/TeamCrest'
+import { ChevronRightIcon } from '../design-system/icons/shellIcons'
+import { PlusIcon } from '../design-system/icons/overviewIcons'
 import '../design-system/fonts'
 import '../design-system/index.css'
 import { queryKeys } from '../queryKeys'
@@ -21,6 +24,7 @@ import {
   MutationError,
   PendingLabel,
 } from '../ui'
+import { declaredSchedule } from '../shell/competitionPeriod'
 import {
   COMPETITION_NAME_MAX_LENGTH,
   type CompetitionListItem,
@@ -121,7 +125,7 @@ function CreateButton({
       className="ds-btn ds-btn--primary"
       onClick={onClick}
     >
-      <span aria-hidden="true">+</span>
+      <PlusIcon size="sm" />
       {label}
     </button>
   )
@@ -158,19 +162,54 @@ function CompetitionSection({
           <ul className="ds-home__list" aria-label={t('listLabel')}>
             {items.map((item) => (
               <li key={item.id}>
-                <Link className="ds-home__row" to={`/competitions/${item.id}`}>
-                  <span className="ds-home__row-name">{item.name}</span>
-                  <span className="ds-home__row-aside">
-                    <CompetitionStatusBadge status={item.status} />
-                    <span aria-hidden="true">→</span>
-                  </span>
-                </Link>
+                <CompetitionRow item={item} />
               </li>
             ))}
           </ul>
         </div>
       )}
     </section>
+  )
+}
+
+function CompetitionRow({ item }: { item: CompetitionListItem }) {
+  const { t, i18n } = useTranslation('competitions')
+  const locale = i18n.language === 'fr' ? 'fr-FR' : i18n.language
+  const schedule = declaredSchedule(
+    item.scheduledStart,
+    item.scheduledEnd,
+    locale,
+  )
+  const scheduleLabel =
+    schedule?.kind === 'both'
+      ? t('schedule.both', { start: schedule.start, end: schedule.end })
+      : schedule?.kind === 'start'
+        ? t('schedule.from', { date: schedule.date })
+        : schedule?.kind === 'end'
+          ? t('schedule.until', { date: schedule.date })
+          : null
+
+  return (
+    <Link
+      className="ds-interactive-row ds-home__row"
+      to={`/competitions/${item.id}`}
+    >
+      <span className="ds-home__row-main">
+        <TeamCrest name={item.name} logoMediaId={item.logoMediaId} size="md" />
+        <span className="ds-home__row-copy">
+          <span className="ds-home__row-name">{item.name}</span>
+          {scheduleLabel ? (
+            <span className="ds-home__row-meta">{scheduleLabel}</span>
+          ) : null}
+        </span>
+      </span>
+      <span className="ds-home__row-aside">
+        <CompetitionStatusBadge status={item.status} />
+        <span className="ds-interactive-row__chevron" aria-hidden="true">
+          <ChevronRightIcon size="sm" />
+        </span>
+      </span>
+    </Link>
   )
 }
 

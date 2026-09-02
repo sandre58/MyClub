@@ -31,7 +31,8 @@ Search these before building anything new. Reference implementations live in
 | Standings table | Full grid + zones + trends | `foundations/standings.css`, `StandingsLegend.tsx` |
 | Match round | Journée section in calendar | `design-system/components/MatchRound.tsx` |
 | Match round status | Journée state pill / live | `design-system/components/MatchRoundStatus.tsx` |
-| Home brand | Accueil mark + wordmark | `design-system/components/HomeBrand.tsx` |
+| Home brand | Accueil lockup + tagline | `design-system/components/HomeBrand.tsx` |
+| Interactive row | Clickable list row, hover A wash | `foundations/interactive-row.css` |
 
 ## Rules
 

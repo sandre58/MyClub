@@ -76,6 +76,16 @@ public sealed class DeterministicIdFactory
     /// <returns>Typed identity.</returns>
     public DrawId Draw(string localKey = "draw") => new(Create("draw", localKey));
 
+    /// <summary>Creates a deterministic <see cref="MemberId"/>.</summary>
+    /// <param name="localKey">Local key.</param>
+    /// <returns>Typed identity.</returns>
+    public MemberId Member(string localKey) => new(Create("member", localKey));
+
+    /// <summary>Creates a deterministic <see cref="ResourceId"/>.</summary>
+    /// <param name="localKey">Local key (default <c>resource</c>).</param>
+    /// <returns>Typed identity.</returns>
+    public ResourceId Resource(string localKey = "resource") => new(Create("resource", localKey));
+
     /// <summary>
     /// RFC 4122 UUID version 5 (SHA-1 name-based).
     /// </summary>

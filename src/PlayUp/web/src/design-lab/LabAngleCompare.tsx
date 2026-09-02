@@ -63,7 +63,6 @@ export function LabAngleCompare() {
                 key={angle}
                 size={size}
                 variant={size >= 24 ? 'gradient' : 'brand'}
-                leanDeg={angle}
               />
             ))}
           </AngleRow>

@@ -24,6 +24,16 @@ export function NextActionIcon({ size, ...props }: OverviewIconProps) {
   )
 }
 
+/** Ajout — plus (CTA Créer). */
+export function PlusIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+    </Icon>
+  )
+}
+
 /** Créer les matchs — calendrier + ajout. */
 export function CreateMatchesIcon({ size, ...props }: OverviewIconProps) {
   return (

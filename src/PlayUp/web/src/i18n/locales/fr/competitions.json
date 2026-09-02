@@ -2,6 +2,11 @@
   "eyebrow": "Compétitions",
   "title": "Liste des compétitions",
   "listLabel": "Compétitions",
+  "schedule": {
+    "both": "{{start}} → {{end}}",
+    "from": "À partir du {{date}}",
+    "until": "Jusqu’au {{date}}"
+  },
   "lede_one": "{{count}} compétition sur cet hôte.",
   "lede_other": "{{count}} compétitions sur cet hôte.",
   "emptyTitle": "Votre première compétition",

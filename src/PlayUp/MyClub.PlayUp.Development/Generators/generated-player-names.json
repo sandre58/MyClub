@@ -1,0 +1,17 @@
+{
+  "firstNames": [
+    "Lucas", "Hugo", "Enzo", "Nathan", "Théo", "Maxime", "Antoine", "Jules",
+    "Louis", "Mathis", "Noah", "Léo", "Gabriel", "Raphaël", "Adam", "Arthur",
+    "Paul", "Tom", "Nolan", "Ethan", "Sacha", "Maël", "Timéo", "Axel",
+    "Clément", "Julien", "Nicolas", "Alexandre", "Romain", "Florian", "Kevin", "Dylan",
+    "Mehdi", "Yanis", "Ilyes", "Amine", "Karim", "Sofiane", "Bilal", "Rayan"
+  ],
+  "lastNames": [
+    "Martin", "Bernard", "Dubois", "Thomas", "Robert", "Richard", "Petit", "Durand",
+    "Leroy", "Moreau", "Simon", "Laurent", "Lefebvre", "Michel", "Garcia", "David",
+    "Bertrand", "Roux", "Vincent", "Fournier", "Morel", "Girard", "André", "Lefevre",
+    "Mercier", "Dupont", "Lambert", "Bonnet", "François", "Martinez", "Legrand", "Garnier",
+    "Faure", "Rousseau", "Blanc", "Guerin", "Muller", "Henry", "Roussel", "Nicolas",
+    "Perrin", "Morin", "Mathieu", "Clement", "Gauthier", "Dumont", "Lopez", "Fontaine"
+  ]
+}

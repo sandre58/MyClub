@@ -35,6 +35,7 @@
 @import './foundations/match.css';
 @import './foundations/cockpit.css';
 @import './foundations/standings.css';
+@import './foundations/interactive-row.css';
 @import './foundations/home.css';
 @import './foundations/feedback.css';
 @import './foundations/visually-hidden.css';

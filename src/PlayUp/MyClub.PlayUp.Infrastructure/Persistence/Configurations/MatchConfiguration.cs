@@ -112,7 +112,9 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
     {
         participations.ToTable("match_declared_participations");
         participations.WithOwner().HasForeignKey("match_id");
-        participations.HasKey(participation => participation.Id);
+
+        // MemberId is local to a match sheet; the same player appears on many matches.
+        participations.HasKey("match_id", nameof(DeclaredParticipation.Id));
 
         participations.Property(participation => participation.Id)
             .HasColumnName("id")

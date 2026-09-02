@@ -39,6 +39,13 @@ MatchRow per match; live rows outrank everything.
 
 Legend before table; zones as left bars; Pts dominant; trends slanted.
 
+## Accueil
+
+Hub ops hors Shell: lockup + one panel of interactive rows (crest, name,
+declared dates, status, chevron). Hover A: `--color-surface-secondary`
+full-bleed wash; chevron → ink. Pressed = hover. No brand bar, shadow, lift,
+or underline. Whole row is one hit target.
+
 ## Empty / loading / error
 
 - Empty states explain **what will appear and why** ("Les matchs apparaîtront

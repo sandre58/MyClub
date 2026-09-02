@@ -7,6 +7,7 @@
 using FluentAssertions;
 using MyClub.PlayUp.Development.Generators;
 using MyClub.PlayUp.Development.Runtime;
+using MyClub.PlayUp.Domain.Common;
 using Xunit;
 
 namespace MyClub.PlayUp.Development.Tests;
@@ -34,6 +35,17 @@ public sealed class GeneratorDeterminismTests
         var scoresA = Enumerable.Range(0, 20).Select(_ => ScoreGenerator.Create(a)).ToArray();
         var scoresB = Enumerable.Range(0, 20).Select(_ => ScoreGenerator.Create(b)).ToArray();
         scoresA.Should().NotEqual(scoresB);
+    }
+
+    [Fact]
+    public void Generated_squads_are_stable_for_the_same_team_index()
+    {
+        var first = SquadGenerator.ForTeam(3, "FC Inventé");
+        var second = SquadGenerator.ForTeam(3, "FC Inventé");
+        first.Should().Equal(second);
+        first.Count(member => member.Role == DeclaredMemberRole.Player)
+            .Should().Be(SquadGenerator.GeneratedPlayerCount);
+        first.Should().ContainSingle(member => member.Role == DeclaredMemberRole.Staff);
     }
 
     [Fact]

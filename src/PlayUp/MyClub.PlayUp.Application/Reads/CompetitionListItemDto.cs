@@ -16,9 +16,13 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Status">Lifecycle status.</param>
 /// <param name="ShortName">Optional abbreviated display name.</param>
 /// <param name="LogoMediaId">Optional Media identity for the competition logo.</param>
+/// <param name="ScheduledStart">Optional declared start (not Cockpit operational dates).</param>
+/// <param name="ScheduledEnd">Optional declared end (not Cockpit operational dates).</param>
 public sealed record CompetitionListItemDto(
     Guid Id,
     string Name,
     CompetitionStatus Status,
     string? ShortName = null,
-    Guid? LogoMediaId = null);
+    Guid? LogoMediaId = null,
+    DateTimeOffset? ScheduledStart = null,
+    DateTimeOffset? ScheduledEnd = null);

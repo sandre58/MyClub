@@ -48,14 +48,18 @@
     color: var(--color-info);
 }
 
-.ds-status--soft.ds-status--tone-success,
-.ds-status--soft.ds-status--tone-done {
+.ds-status--soft.ds-status--tone-success {
     background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
     color: var(--color-success);
 }
 
+.ds-status--soft.ds-status--tone-done {
+    background: var(--color-surface-secondary);
+    color: var(--color-text-secondary);
+}
+
 .ds-status--soft.ds-status--tone-live {
-    background: color-mix(in srgb, var(--color-live) 14%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-live) 22%, var(--color-surface));
     color: var(--color-live);
 }
 
@@ -83,11 +87,16 @@
     color: var(--color-info);
 }
 
-.ds-status--outline.ds-status--tone-success,
-.ds-status--outline.ds-status--tone-done {
+.ds-status--outline.ds-status--tone-success {
     border: var(--border-width) solid color-mix(in srgb, var(--color-success) 28%, var(--color-border));
     background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
     color: var(--color-success);
+}
+
+.ds-status--outline.ds-status--tone-done {
+    border: var(--border-width) solid var(--color-border-strong);
+    background: var(--color-surface-secondary);
+    color: var(--color-text-secondary);
 }
 
 .ds-status--outline.ds-status--tone-live {

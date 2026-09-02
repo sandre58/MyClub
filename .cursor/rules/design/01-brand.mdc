@@ -8,11 +8,17 @@ alwaysApply: false
 
 ## Elements
 
-- **Monogram** — `PlayUpMark` (`design-system/PlayUpMark.tsx`): P + ascending arrow.
-  Gradient ≥ 24px, flat below. Never redraw.
-- **Wordmark** — "Play'Up" IBM Plex Sans bold, system angle, arrow from stem
-  (`design-lab/LabWordmark.tsx` → port to design-system in Lot 1).
-- **Arrow / "Up"** — wordmark arrow, trend indicators, active-nav slanted bar only.
+- **Accueil lockup** — raster cropped from mockup v3 (`/brand/accueil-mark.png`
+  + `/brand/accueil-wordmark.png`). SVG cannot match the fused P+arrow+U and
+  the U-stem italic wordmark at Accueil size. Tagline stays HTML (i18n):
+  « Organiser. Compétiter. Progresser. »
+- **Chrome monogram** — `PlayUpMark` SVG on the rail / favicon. Geometry:
+  `brand/monogram-geometry.ts`. Do not replace chrome with the Accueil rasters.
+- **Chrome monogram** — `PlayUpMark` still used on the rail / favicon until the
+  lockup is ported to small sizes. Geometry: `brand/monogram-geometry.ts`.
+- **Chrome wordmark** — `PlayUpWordmark` default: Plex bold, 12° skew, arrow
+  after Up (not the Accueil lockup).
+- **Arrow / "Up"** — lockup U-stem, chrome wordmark, trends, active-nav bar.
 
 ## Angle system — **12° (arbitrated 2026-09-01)**
 
@@ -28,9 +34,12 @@ code always uses the default **12**.
 
 ## Gradient
 
-Only in monogram ≥ 24px and Home atmosphere. Never on buttons, text, borders, badges, panels.
+Allowed: Accueil lockup mark, Accueil `'Up` wordmark, Home atmosphere, chrome
+monogram ≥ 24px. Never on buttons, body text, borders, badges, panels, or
+page titles.
 
 ## Forbidden
 
-- Gradient text/buttons; monogram as watermark; skewing tables/forms/panels.
+- Gradient on UI chrome/controls; monogram as watermark; skewing tables/forms/panels.
 - Brand blue as a status color.
+- Italic wordmark outside the Accueil lockup (rail stays 12° skew, not italic).

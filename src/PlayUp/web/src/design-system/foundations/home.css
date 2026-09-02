@@ -6,24 +6,34 @@
 .ds-home {
     min-height: 100vh;
     position: relative;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     color: var(--color-text-primary);
+    background: var(--color-canvas);
+}
+
+/* Soft mesh: blobs sit inside the canvas (overflow clips negative inset). */
+.ds-home::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 22rem;
+    pointer-events: none;
+    z-index: 0;
     background:
         radial-gradient(
-            48rem 30rem at 10% -8rem,
-            color-mix(in srgb, var(--color-brand) 16%, transparent),
+            28rem 18rem at 18% 0%,
+            color-mix(in srgb, var(--color-brand) 55%, transparent),
             transparent 72%
         ),
         radial-gradient(
-            40rem 26rem at 92% -6rem,
-            color-mix(in srgb, var(--color-info) 12%, transparent),
-            transparent 72%
-        ),
-        linear-gradient(
-            to bottom,
-            color-mix(in srgb, var(--color-brand) 4%, var(--color-canvas)),
-            var(--color-canvas) 55%
+            32rem 20rem at 88% 8%,
+            color-mix(in srgb, var(--color-info) 48%, transparent),
+            transparent 74%
         );
+    filter: blur(64px);
 }
 
 .ds-home-skip {
@@ -44,6 +54,8 @@
 }
 
 .ds-home__main {
+    position: relative;
+    z-index: 1;
     box-sizing: border-box;
     width: min(100%, 42rem);
     margin: 0 auto;
@@ -60,19 +72,65 @@
 }
 
 .ds-home__mark-row {
+    display: grid;
+    grid-template-columns: auto max-content;
+    column-gap: var(--space-16);
+    align-items: stretch;
+    width: max-content;
+    max-width: 100%;
+}
+
+.ds-home__mark-slot {
+    position: relative;
+    align-self: stretch;
+    aspect-ratio: 157 / 186;
+    min-height: 0;
+}
+
+.ds-home__mark-slot .ds-lockup-mark {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.ds-home__lockup-copy {
     display: flex;
-    align-items: center;
-    gap: var(--space-16);
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-8);
+    width: max-content;
+    max-width: 100%;
 }
 
 .ds-home__wordmark-heading {
     margin: 0;
     font: inherit;
     font-weight: inherit;
+    line-height: 0;
+    width: 0;
+    min-width: 100%;
 }
 
-.ds-home__wordmark {
-    font-size: 2.375rem;
+.ds-home__wordmark,
+.ds-home__lockup-copy .ds-lockup-wordmark {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: none;
+}
+
+.ds-home__tagline {
+    margin: 0;
+    white-space: nowrap;
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-brand-bright);
 }
 
 .ds-home__lede {
@@ -105,7 +163,7 @@
     background: var(--color-surface);
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-panel);
-    padding: var(--space-8) var(--space-16);
+    padding: 0;
 }
 
 .ds-home__list {
@@ -119,7 +177,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-16);
-    padding: var(--space-12) 0;
+    padding: var(--space-16);
     min-height: var(--control-height);
     color: inherit;
     text-decoration: none;
@@ -136,19 +194,19 @@
     border-top: var(--border-width) solid var(--color-border);
 }
 
-.ds-root a.ds-home__row,
-.ds-root a.ds-home__row:hover {
-    color: inherit;
-    text-decoration: none;
+.ds-home__row-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+    flex: 1;
 }
 
-.ds-home__row:hover .ds-home__row-name {
-    color: var(--color-ink);
-}
-
-.ds-home__row:focus-visible {
-    outline: var(--focus-ring-width) solid var(--color-focus);
-    outline-offset: var(--focus-ring-offset);
+.ds-home__row-copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
 }
 
 .ds-home__row-name {
@@ -158,19 +216,18 @@
     color: var(--color-text-primary);
 }
 
+.ds-home__row-meta {
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-tight);
+}
+
 .ds-home__row-aside {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-12);
+    gap: var(--space-8);
     flex-shrink: 0;
     color: var(--color-text-secondary);
     font-size: var(--text-label);
-}
-
-.ds-home__row-aside [aria-hidden='true']:last-child {
-    color: var(--color-text-secondary);
-}
-
-.ds-home__row:hover .ds-home__row-aside [aria-hidden='true']:last-child {
-    color: var(--color-ink);
 }

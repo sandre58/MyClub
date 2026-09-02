@@ -13,6 +13,7 @@ import {
 } from '../design-system/icons/shellIcons'
 import { PlayUpMark } from '../design-system/PlayUpMark'
 import { LabAngleCompare } from './LabAngleCompare'
+import { LabBrand } from './LabBrand'
 import { LabCockpit } from './LabCockpit'
 import { LabHome } from './LabHome'
 import { LabMatches } from './LabMatches'
@@ -29,6 +30,7 @@ type LabView =
   | 'match'
   | 'standings'
   | 'angle'
+  | 'brand'
 
 /**
  * /design-lab — prototype de la direction « Grille de compétition, exécutée ».
@@ -70,6 +72,7 @@ export function DesignLabPage() {
               {view === 'match' && <LabMatchSheet lifecycle={lifecycle} />}
               {view === 'standings' && <LabStandings />}
               {view === 'angle' && <LabAngleCompare />}
+              {view === 'brand' && <LabBrand />}
             </main>
           </div>
         </div>
@@ -90,6 +93,7 @@ const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'match', label: 'Fiche match' },
   { key: 'standings', label: 'Classements' },
   { key: 'angle', label: 'Arbitrage 9°/12°' },
+  { key: 'brand', label: 'Marque' },
 ]
 
 const lifecycleOptions: Array<{ key: LabLifecycle; label: string }> = [

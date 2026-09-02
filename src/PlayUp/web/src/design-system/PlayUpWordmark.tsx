@@ -1,15 +1,43 @@
 /**
- * Play'Up wordmark — IBM Plex Sans bold, system angle (12°), arrow fromStem.
- * SoT: Identité · Design Lab · PlayUpMark (monogram companion).
+ * Play'Up wordmark — IBM Plex Sans bold.
+ * Chrome: 12° skew, arrow after Up.
+ * Accueil (`surface="home"`): raster from mockup v3 (italic, gradient Up, U-stem arrow).
  */
 export function PlayUpWordmark({
   className,
   skewDeg = 12,
+  surface = 'chrome',
 }: {
   className?: string
-  /** Product code always uses 12. 9 is for the Design Lab arbitration view only. */
+  /** Product chrome always uses 12. 9 is for the Design Lab arbitration view only. */
   skewDeg?: 9 | 12
+  surface?: 'chrome' | 'home'
 }) {
+  const arrow = (
+    <svg
+      className="ds-wordmark__arrow"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M2 14 L13 3" />
+      <path d="M6.5 3 H13 V9.5" />
+    </svg>
+  )
+
+  if (surface === 'home') {
+    return (
+      <img
+        className={['ds-lockup-wordmark', className].filter(Boolean).join(' ')}
+        src="/brand/accueil-wordmark.png"
+        alt="Play’Up"
+        width={406}
+        height={112}
+        draggable={false}
+      />
+    )
+  }
+
   return (
     <span
       className={['ds-wordmark', className].filter(Boolean).join(' ')}
@@ -18,14 +46,7 @@ export function PlayUpWordmark({
       Play&apos;
       <span className="ds-wordmark__up">
         Up
-        <svg
-          className="ds-wordmark__arrow"
-          viewBox="0 0 12 12"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M1.5 10.5 L9 3 M4.5 2.5 H9.5 V7.5" />
-        </svg>
+        {arrow}
       </span>
     </span>
   )

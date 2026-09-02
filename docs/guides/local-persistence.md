@@ -78,7 +78,12 @@ Templates are **capacity demos**, not full real multi-phase calendars:
 | `world-cup` | Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze played · PlacementAwards ranks 1–4 · **Completed** + `CompetitionOutcome`. `:progress` ignored. |
 | `coupe-de-france` | Cup multi-stage R32→R16→QF→SF→Final played · PlacementAwards ranks 1–2 · **Completed** + `CompetitionOutcome`. `:progress` ignored. Mid-bracket from-slots demo = `cup-qf-sf`. |
 
-Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, `logoAsset`).
+Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, `logoAsset`). Inspired templates also seed:
+
+- **Rosters** — real-inspired squads from `Generators/squads.json` (players + staff) on every dataset club
+- **Competition dates** — `scheduledStart` / `scheduledEnd` are applied **randomly** (sometimes both, sometimes start only, sometimes neither), using the dataset window when present
+- **Match kickoffs** — a subset of matches get a `MatchPlacement` (date + dummy resource); others stay undated
+- **Match sheets, goals, assists, cards, substitutions** — filled on played matches (`:running` / `:finished` / fixed completed templates). Yellow + red are authorized on seeded competitions.
 
 **Seed logos (internal only):** crest/flag PNGs under `MyClub.PlayUp.Development/Assets/seed-logos/`. Datasets reference relative paths (e.g. `ligue-1/psg.png`); DevRunner imports them into Media on seed (`logo_media_id`). Not for redistribution or product DS.
 
