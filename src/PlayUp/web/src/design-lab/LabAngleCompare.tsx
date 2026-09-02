@@ -42,7 +42,7 @@ export function LabAngleCompare() {
 
         <AngleRow label="Wordmark">
           {ANGLES.map((angle) => (
-            <LabWordmark key={angle} skewDeg={angle} />
+            <LabWordmark key={angle} surface="typed" skewDeg={angle} />
           ))}
         </AngleRow>
 

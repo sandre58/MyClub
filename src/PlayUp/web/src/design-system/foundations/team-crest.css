@@ -11,6 +11,11 @@
   height: 2.25rem;
 }
 
+.team-crest--lg {
+  width: 2.75rem;
+  height: 3.125rem;
+}
+
 .team-crest--sm {
   width: 1.5rem;
   height: 1.7rem;
@@ -35,6 +40,10 @@
 
 .team-crest--sm .team-crest__initial {
   font-size: 0.55rem;
+}
+
+.team-crest--lg .team-crest__initial {
+  font-size: 0.9rem;
 }
 
 .team-crest--logo {

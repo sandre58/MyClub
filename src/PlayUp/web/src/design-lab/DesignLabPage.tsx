@@ -3,15 +3,22 @@ import { Link } from 'react-router-dom'
 import '../design-system/fonts'
 import '../design-system/index.css'
 import './design-lab.css'
+import { Status } from '../design-system/components/Status'
 import {
   AttentionBellIcon,
   ClassementsNavIcon,
   MatchesNavIcon,
   OrganisationNavIcon,
   OverviewNavIcon,
-  SettingsNavIcon,
+  RegulationNavIcon,
+  SidebarCollapseIcon,
+  SidebarExpandIcon,
+  TeamsNavIcon,
+  VenuesNavIcon,
 } from '../design-system/icons/shellIcons'
-import { PlayUpMark } from '../design-system/PlayUpMark'
+import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
+import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
+import { TeamCrest } from '../design-system/TeamCrest'
 import { LabAngleCompare } from './LabAngleCompare'
 import { LabBrand } from './LabBrand'
 import { LabCockpit } from './LabCockpit'
@@ -19,7 +26,6 @@ import { LabHome } from './LabHome'
 import { LabMatches } from './LabMatches'
 import { LabMatchSheet } from './LabMatchSheet'
 import { LabStandings } from './LabStandings'
-import { LabWordmark } from './LabWordmark'
 import type { LabLifecycle } from './labData'
 
 type LabView =
@@ -42,6 +48,8 @@ type LabView =
 export function DesignLabPage() {
   const [view, setView] = useState<LabView>('cockpit')
   const [lifecycle, setLifecycle] = useState<LabLifecycle>('live')
+  const [railCollapsed, setRailCollapsed] = useState(false)
+  const [workspaceRadius, setWorkspaceRadius] = useState<12 | 16 | 24>(12)
 
   const isHome = view === 'home' || view === 'home-empty'
 
@@ -55,18 +63,32 @@ export function DesignLabPage() {
       <LabBar
         view={view}
         lifecycle={lifecycle}
+        railCollapsed={railCollapsed}
+        workspaceRadius={workspaceRadius}
         onView={setView}
         onLifecycle={setLifecycle}
+        onRailCollapsed={setRailCollapsed}
+        onWorkspaceRadius={setWorkspaceRadius}
       />
 
       {isHome ? (
         <LabHome empty={view === 'home-empty'} />
       ) : (
-        <div className="dlab-shell">
-          <LabRail view={view} onView={setView} />
+        <div
+          className="dlab-shell"
+          style={{
+            ['--shell-workspace-radius' as string]: `${workspaceRadius}px`,
+          }}
+        >
+          <LabRail
+            view={view}
+            collapsed={railCollapsed}
+            onView={setView}
+            onToggleCollapse={() => setRailCollapsed((value) => !value)}
+          />
           <div className="dlab-column">
             <LabHeader lifecycle={lifecycle} />
-            <main className="dlab-main">
+            <main className="dlab-main ds-shell-workspace">
               {view === 'cockpit' && <LabCockpit lifecycle={lifecycle} />}
               {view === 'matches' && <LabMatches />}
               {view === 'match' && <LabMatchSheet lifecycle={lifecycle} />}
@@ -102,16 +124,30 @@ const lifecycleOptions: Array<{ key: LabLifecycle; label: string }> = [
   { key: 'done', label: 'Terminée' },
 ]
 
+const radiusOptions: Array<{ key: 12 | 16 | 24; label: string }> = [
+  { key: 12, label: '12' },
+  { key: 16, label: '16' },
+  { key: 24, label: '24' },
+]
+
 function LabBar({
   view,
   lifecycle,
+  railCollapsed,
+  workspaceRadius,
   onView,
   onLifecycle,
+  onRailCollapsed,
+  onWorkspaceRadius,
 }: {
   view: LabView
   lifecycle: LabLifecycle
+  railCollapsed: boolean
+  workspaceRadius: 12 | 16 | 24
   onView: (v: LabView) => void
   onLifecycle: (l: LabLifecycle) => void
+  onRailCollapsed: (collapsed: boolean) => void
+  onWorkspaceRadius: (radius: 12 | 16 | 24) => void
 }) {
   return (
     <div className="dlab-bar">
@@ -144,6 +180,39 @@ function LabBar({
           </button>
         ))}
       </span>
+      <span className="dlab-bar__group">
+        <span className="dlab-bar__group-label">Rail</span>
+        <button
+          type="button"
+          className="dlab-bar__chip"
+          data-active={!railCollapsed}
+          onClick={() => onRailCollapsed(false)}
+        >
+          Déplié
+        </button>
+        <button
+          type="button"
+          className="dlab-bar__chip"
+          data-active={railCollapsed}
+          onClick={() => onRailCollapsed(true)}
+        >
+          Replié
+        </button>
+      </span>
+      <span className="dlab-bar__group">
+        <span className="dlab-bar__group-label">Coin workspace</span>
+        {radiusOptions.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            className="dlab-bar__chip"
+            data-active={workspaceRadius === option.key}
+            onClick={() => onWorkspaceRadius(option.key)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </span>
       <span className="dlab-bar__spacer" />
       <Link to="/">← Quitter le lab</Link>
     </div>
@@ -154,58 +223,120 @@ function LabBar({
 /* Shell proposé                                                       */
 /* ------------------------------------------------------------------ */
 
-const railDestinations: Array<{
-  key: LabView
+const labNavGroups: Array<{
+  id: string
   label: string
-  icon: typeof OverviewNavIcon
+  items: Array<{
+    key: LabView | 'structure' | 'teams' | 'venues' | 'regulation'
+    label: string
+    icon: typeof OverviewNavIcon
+    dest?: LabView
+  }>
 }> = [
-  { key: 'cockpit', label: "Vue d'ensemble", icon: OverviewNavIcon },
-  { key: 'matches', label: 'Matchs', icon: OrganisationNavIcon },
-  { key: 'match', label: 'Fiche match', icon: MatchesNavIcon },
-  { key: 'standings', label: 'Classements', icon: ClassementsNavIcon },
+  {
+    id: 'pilotage',
+    label: 'Pilotage',
+    items: [{ key: 'cockpit', label: 'Cockpit', icon: OverviewNavIcon, dest: 'cockpit' }],
+  },
+  {
+    id: 'competition',
+    label: 'Compétition',
+    items: [
+      { key: 'structure', label: 'Structure', icon: OrganisationNavIcon, dest: 'cockpit' },
+      { key: 'matches', label: 'Calendrier & matchs', icon: MatchesNavIcon, dest: 'matches' },
+      { key: 'standings', label: 'Classements', icon: ClassementsNavIcon, dest: 'standings' },
+    ],
+  },
+  {
+    id: 'referentiel',
+    label: 'Référentiel',
+    items: [
+      { key: 'teams', label: 'Équipes', icon: TeamsNavIcon },
+      { key: 'venues', label: 'Stades', icon: VenuesNavIcon },
+      { key: 'regulation', label: 'Règlement', icon: RegulationNavIcon },
+    ],
+  },
 ]
 
 function LabRail({
   view,
+  collapsed,
   onView,
+  onToggleCollapse,
 }: {
   view: LabView
+  collapsed: boolean
   onView: (v: LabView) => void
+  onToggleCollapse: () => void
 }) {
   return (
-    <aside className="ds-shell-rail dlab-rail" aria-label="Navigation">
+    <aside
+      className="ds-shell-rail dlab-rail"
+      data-collapsed={collapsed ? 'true' : 'false'}
+      aria-label="Navigation"
+    >
       <button
         type="button"
         className="ds-shell-rail__brand"
-        onClick={() => onView('cockpit')}
-        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        onClick={() => onView('home')}
       >
-        <PlayUpMark size={22} variant="on-chrome" />
-        <LabWordmark />
+        <PlayUpLockupMark />
+        <span className="ds-shell-rail__wordmark">
+          <PlayUpWordmark surface="chrome" />
+        </span>
       </button>
 
       <nav className="ds-shell-rail__nav">
-        {railDestinations.map((destination) => {
-          const Icon = destination.icon
-          return (
-            <button
-              key={destination.key}
-              type="button"
-              className="ds-shell-rail__link"
-              data-active={view === destination.key}
-              onClick={() => onView(destination.key)}
-            >
-              <Icon className="ds-shell-rail__icon" />
-              {destination.label}
-            </button>
-          )
-        })}
+        {labNavGroups.map((group) => (
+          <div key={group.id} className="ds-shell-rail__group">
+            <p className="ds-shell-rail__group-label">{group.label}</p>
+            {group.items.map((item) => {
+              const Icon = item.icon
+              const isActive =
+                item.dest !== undefined && item.dest === view && item.key === item.dest
+              if (!item.dest) {
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="ds-shell-rail__link"
+                    disabled
+                    title={`${item.label} — bientôt disponible`}
+                  >
+                    <Icon className="ds-shell-rail__icon" />
+                    <span className="ds-shell-rail__label">{item.label}</span>
+                  </button>
+                )
+              }
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  className="ds-shell-rail__link"
+                  data-active={isActive}
+                  onClick={() => onView(item.dest!)}
+                >
+                  <Icon className="ds-shell-rail__icon" />
+                  <span className="ds-shell-rail__label">{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="ds-shell-rail__footer">
-        <button type="button" className="ds-shell-rail__link" disabled>
-          <SettingsNavIcon className="ds-shell-rail__icon" />
-          Paramètres
+        <button
+          type="button"
+          className="ds-shell-rail__collapse"
+          aria-expanded={!collapsed}
+          onClick={onToggleCollapse}
+        >
+          {collapsed ? (
+            <SidebarExpandIcon size="sm" />
+          ) : (
+            <SidebarCollapseIcon size="sm" />
+          )}
         </button>
       </div>
     </aside>
@@ -222,27 +353,25 @@ function LabHeader({ lifecycle }: { lifecycle: LabLifecycle }) {
 
   const statusTone =
     lifecycle === 'preparation'
-      ? 'ds-status--tone-info'
+      ? 'info'
       : lifecycle === 'done'
-        ? 'ds-status--tone-neutral'
-        : 'ds-status--tone-success'
+        ? 'neutral'
+        : 'live'
 
   return (
     <header className="ds-shell-header dlab-header">
       <span className="ds-shell-header__crest dlab-header__crest" aria-hidden="true">
-        CV
+        <TeamCrest name="Championnat des Vétérans — Automne 2026" size="lg" />
       </span>
       <div className="ds-shell-header__identity">
         <span className="ds-shell-header__name">
           Championnat des Vétérans — Automne 2026
         </span>
         <span className="ds-shell-header__meta">
-          <span
-            className={`ds-status ds-status--dense ds-status--rounded ds-status--soft ${statusTone}`}
-            style={{ padding: '1px 8px' }}
-          >
+          <Status density="compact" tone={statusTone} variant="soft">
             {statusLabel}
-          </span>
+          </Status>
+          <span>·</span>
           <span>12 sept. — 10 oct. 2026</span>
         </span>
       </div>

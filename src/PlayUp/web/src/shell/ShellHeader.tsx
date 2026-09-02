@@ -1,14 +1,12 @@
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCompetitionCockpit } from '../api'
-import { Status, type StatusTone } from '../design-system/components/Status'
 import { TeamCrest } from '../design-system/TeamCrest'
-import { AttentionBellIcon, SwapIcon } from '../design-system/icons/shellIcons'
-import { competitionStatusLabel } from '../i18n/enumLabels'
+import { AttentionBellIcon } from '../design-system/icons/shellIcons'
 import { queryKeys } from '../queryKeys'
 import type { CompetitionStatus } from '../types'
+import { CompetitionStatusBadge } from '../ui'
 import { formatCompetitionPeriod } from './competitionPeriod'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
@@ -20,8 +18,8 @@ type ShellHeaderProps = {
 }
 
 /**
- * Shell header (20.2) — competition context, status, attention trigger.
- * No wordmark; settings live in sidebar footer.
+ * Shell header (A) — competition context + À traiter on navy chrome.
+ * Change-competition lives on the rail lockup (Accueil), not here.
  */
 export function ShellHeader({
   attentionDrawerId,
@@ -100,34 +98,28 @@ function ShellHeaderCompetitionContext({
   }
 
   if (state === 'selected' && competitionName) {
-    const statusLabel =
-      competitionStatus && competitionStatusLabel(competitionStatus)
-    const statusTone =
-      competitionStatus && headerCompetitionStatusTone[competitionStatus]
-    const changeLabel = t('competition.changeAria')
-
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="ds-shell-header__crest shell-header__crest" aria-hidden="true">
           <TeamCrest
             name={competitionName}
             logoMediaId={logoMediaId}
-            className="shell-header__crest-mark"
-            size="md"
+            size="lg"
           />
         </span>
 
         <div className="ds-shell-header__identity">
           <span className="ds-shell-header__name">{competitionName}</span>
 
-          {(statusLabel || periodLabel) && (
+          {(competitionStatus || periodLabel) && (
             <div className="ds-shell-header__meta">
-              {statusLabel && statusTone && (
-                <Status density="context" tone={statusTone} variant="soft" shape="rounded">
-                  {statusLabel}
-                </Status>
+              {competitionStatus && (
+                <CompetitionStatusBadge
+                  status={competitionStatus}
+                  density="compact"
+                />
               )}
-              {statusLabel && periodLabel && (
+              {competitionStatus && periodLabel && (
                 <span className="shell-header__meta-separator" aria-hidden="true">
                   ·
                 </span>
@@ -138,58 +130,36 @@ function ShellHeaderCompetitionContext({
             </div>
           )}
         </div>
-
-        <CompetitionSwapLink label={changeLabel} />
       </div>
     )
   }
 
   if (state === 'unavailable') {
-    const changeLabel = t('competition.changeAria')
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__context-message">
           {t('competition.unavailable')}
         </span>
-        <CompetitionSwapLink label={changeLabel} />
       </div>
     )
   }
 
   if (state === 'empty') {
-    const listLabel = t('competition.listAria')
     return (
       <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
         <span className="shell-header__context-message">
           {t('competition.none')}
         </span>
-        <CompetitionSwapLink label={listLabel} />
       </div>
     )
   }
 
-  const chooseLabel = t('competition.changeAria')
   return (
     <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
       <span className="shell-header__context-message">
         {t('competition.choose')}
       </span>
-      <CompetitionSwapLink label={chooseLabel} />
     </div>
-  )
-}
-
-/** Icon-only competition switch — aria-label + native title tooltip. */
-function CompetitionSwapLink({ label }: { label: string }) {
-  return (
-    <Link
-      className="ds-btn ds-btn--ghost ds-icon-button shell-header__change shell-header__icon-control"
-      to="/"
-      aria-label={label}
-      title={label}
-    >
-      <SwapIcon size="lg" aria-hidden="true" />
-    </Link>
   )
 }
 
@@ -238,12 +208,3 @@ function AttentionTrigger({
   )
 }
 
-/** Official lifecycle tone — Draft/Ready = info (not neutral gray). */
-const headerCompetitionStatusTone: Record<CompetitionStatus, StatusTone> = {
-  Draft: 'info',
-  Ready: 'info',
-  Running: 'live',
-  Suspended: 'attention',
-  Completed: 'done',
-  Archived: 'neutral',
-}

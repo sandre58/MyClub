@@ -3,7 +3,8 @@ import { Icon, type IconSize } from './Icon'
 import {
   AttentionIcon,
   MatchesNavIcon,
-  OrganisationNavIcon,
+  RegulationNavIcon,
+  TeamsNavIcon,
 } from './shellIcons'
 
 type OverviewIconProps = SVGProps<SVGSVGElement> & { size?: IconSize }
@@ -78,21 +79,14 @@ export function CalendarIcon({ size, ...props }: OverviewIconProps) {
   return <MatchesNavIcon size={size} {...props} />
 }
 
-/** Équipes — participants (même glyphe que la nav Organisation). */
+/** Équipes — participants (même glyphe que la nav Équipes). */
 export function TeamsIcon({ size, ...props }: OverviewIconProps) {
-  return <OrganisationNavIcon size={size} {...props} />
+  return <TeamsNavIcon size={size} {...props} />
 }
 
 /** Règlement — document. */
 export function RegulationIcon({ size, ...props }: OverviewIconProps) {
-  return (
-    <Icon size={size} {...props}>
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
-      <path d="M14 2v5h6" />
-      <path d="M9 13h6" />
-      <path d="M9 17h4" />
-    </Icon>
-  )
+  return <RegulationNavIcon size={size} {...props} />
 }
 
 /** Structure — arborescence de phases / groupes. */

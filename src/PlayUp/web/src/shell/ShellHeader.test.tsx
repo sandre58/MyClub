@@ -143,7 +143,7 @@ describe('ShellHeader', () => {
     expect(await screen.findByText('Coupe U18')).toBeInTheDocument()
     expect(await screen.findByText('En cours')).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Changer de compétition' }),
+      screen.getByRole('link', { name: 'Accueil Play’Up' }),
     ).toHaveAttribute('href', '/')
     const crest = document.querySelector('.shell-header__crest img')
     expect(crest).toHaveAttribute(
@@ -157,7 +157,7 @@ describe('ShellHeader', () => {
 
     expect(await screen.findByText('Choisir une compétition')).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Changer de compétition' }),
+      screen.getByRole('link', { name: 'Accueil Play’Up' }),
     ).toHaveAttribute('href', '/')
   })
 
@@ -169,7 +169,7 @@ describe('ShellHeader', () => {
       await screen.findByText('Aucune compétition'),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Ouvrir la liste des compétitions' }),
+      screen.getByRole('link', { name: 'Accueil Play’Up' }),
     ).toHaveAttribute('href', '/')
   })
 

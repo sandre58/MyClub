@@ -3,26 +3,57 @@ import { Icon, type IconSize } from './Icon'
 
 type ShellIconProps = SVGProps<SVGSVGElement> & { size?: IconSize }
 
-/** Vue d'ensemble — layout dashboard grid. */
+/** Cockpit — gauge (Shell A). */
 export function OverviewNavIcon({ size, ...props }: ShellIconProps) {
   return (
     <Icon size={size} {...props}>
-      <rect x="3" y="3" width="7" height="9" rx="1" />
-      <rect x="14" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="12" width="7" height="9" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
+      <path d="m12 14 4-4" />
+      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
     </Icon>
   )
 }
 
-/** Organisation — participants. */
+/** Structure — org tree. */
 export function OrganisationNavIcon({ size, ...props }: ShellIconProps) {
   return (
     <Icon size={size} {...props}>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <rect x="9" y="2" width="6" height="6" rx="1" />
+      <rect x="2" y="16" width="6" height="6" rx="1" />
+      <rect x="16" y="16" width="6" height="6" rx="1" />
+      <path d="M12 8v4" />
+      <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
+    </Icon>
+  )
+}
+
+/** Équipes — shield. */
+export function TeamsNavIcon({ size, ...props }: ShellIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3Z" />
+    </Icon>
+  )
+}
+
+/** Stades — venue / stand. */
+export function VenuesNavIcon({ size, ...props }: ShellIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M4 20V10l8-6 8 6v10" />
+      <path d="M9 20v-6h6v6" />
+    </Icon>
+  )
+}
+
+/** Règlement — document. */
+export function RegulationNavIcon({ size, ...props }: ShellIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 13H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
     </Icon>
   )
 }

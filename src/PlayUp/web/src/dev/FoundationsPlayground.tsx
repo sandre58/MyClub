@@ -275,7 +275,8 @@ export function FoundationsPlayground() {
           </h2>
           <p className="ds-body">
             Planche 2026-09-02 : signe P+flèche+U, wordmark italique, dégradé
-            Slate sur Up, flèche sur la hampe droite du U. Chrome rail inchangé.
+            Slate sur Up, flèche sur la hampe droite du U. Le rail chrome
+            réutilise le même mark ; le wordmark a une colorway on-chrome.
           </p>
           <div className="ds-row">
             <PlayUpLockupMark />
@@ -362,16 +363,16 @@ export function FoundationsPlayground() {
             Rail chrome (ds-shell-rail)
           </h2>
           <p className="ds-body">
-            Grammar canonique Lot 2 — monogramme 22px + wordmark, barre active
-            inclinée 12°. Le Shell produit ajoute collapse et edge toggle.
+            Grammar canonique Shell A — lockup Accueil (mark + wordmark
+            on-chrome) sur le rail navy. Barre active droite 3 px.
           </p>
           <aside
             className="ds-shell-rail ds-playground-rail"
             aria-label="Exemple de rail shell"
           >
             <a className="ds-shell-rail__brand" href="#ds-preview">
-              <PlayUpMark size={22} variant="on-chrome" />
-              <PlayUpWordmark />
+              <PlayUpLockupMark />
+              <PlayUpWordmark surface="chrome" />
             </a>
             <nav className="ds-shell-rail__nav" aria-label="Exemple nav shell">
               <a className="ds-shell-rail__link" href="#ds-preview" data-active="true">
@@ -514,6 +515,39 @@ export function FoundationsPlayground() {
               </Status>
             ))}
           </div>
+          <p className="ds-label">Context · soft · chrome</p>
+          <div className="ds-row ds-icon-grid--chrome">
+            {statusTones.map((tone) => (
+              <Status
+                key={`chrome-${tone}`}
+                density="context"
+                tone={tone}
+                variant="soft"
+              >
+                {tone}
+              </Status>
+            ))}
+          </div>
+          <p className="ds-label">Compact · soft (header)</p>
+          <div className="ds-row">
+            {statusTones.map((tone) => (
+              <Status key={`compact-${tone}`} density="compact" tone={tone} variant="soft">
+                {tone}
+              </Status>
+            ))}
+          </div>
+          <div className="ds-row ds-icon-grid--chrome">
+            {statusTones.map((tone) => (
+              <Status
+                key={`compact-chrome-${tone}`}
+                density="compact"
+                tone={tone}
+                variant="soft"
+              >
+                {tone}
+              </Status>
+            ))}
+          </div>
           <p className="ds-label">Context · outline · pill</p>
           <div className="ds-row">
             {statusTones.map((tone) => (
@@ -624,7 +658,7 @@ export function FoundationsPlayground() {
             <PlayUpMark size={48} variant="gradient" />
             <PlayUpMark size={24} variant="brand" />
             <PlayUpMark size={16} variant="brand" />
-            <PlayUpWordmark />
+            <PlayUpWordmark surface="typed" />
           </div>
           <p className="ds-label">Tendances (classement)</p>
           <div className="ds-row">
@@ -675,6 +709,11 @@ export function FoundationsPlayground() {
           <h2 id="section-crests" className="ds-heading">
             Écussons
           </h2>
+          <div className="ds-row">
+            {(['RCSA', 'EFM', 'FCSM', 'ASNL', 'OM'] as const).map((name) => (
+              <TeamCrest key={`lg-${name}`} name={name} size="lg" />
+            ))}
+          </div>
           <div className="ds-row">
             {(['RCSA', 'EFM', 'FCSM', 'ASNL', 'OM'] as const).map((name) => (
               <TeamCrest key={name} name={name} size="md" />

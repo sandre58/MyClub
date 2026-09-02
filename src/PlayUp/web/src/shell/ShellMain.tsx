@@ -5,5 +5,5 @@ import type { ReactNode } from 'react'
  * Shell provides scroll + canvas background; pages fill available width (padding via `.page`).
  */
 export function ShellMain({ children }: { children: ReactNode }) {
-  return <div className="shell-main">{children}</div>
+  return <div className="shell-main ds-shell-workspace">{children}</div>
 }

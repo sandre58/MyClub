@@ -4,7 +4,42 @@ export type ShellDestinationKey =
   | 'matches'
   | 'classements'
 
+export type ShellNavItemKey =
+  | ShellDestinationKey
+  | 'teams'
+  | 'venues'
+  | 'regulation'
+
+export type ShellNavGroupId = 'pilotage' | 'competition' | 'referentiel'
+
 export type ShellDestinationHrefs = Record<ShellDestinationKey, string>
+
+export type ShellNavItemSpec = {
+  key: ShellNavItemKey
+  hrefKey?: ShellDestinationKey
+}
+
+export type ShellNavGroupSpec = {
+  id: ShellNavGroupId
+  items: readonly ShellNavItemSpec[]
+}
+
+/** Visual SoT (Shell A). Référentiel items have no product route yet. */
+export const shellNavGroups: readonly ShellNavGroupSpec[] = [
+  { id: 'pilotage', items: [{ key: 'cockpit', hrefKey: 'cockpit' }] },
+  {
+    id: 'competition',
+    items: [
+      { key: 'organisation', hrefKey: 'organisation' },
+      { key: 'matches', hrefKey: 'matches' },
+      { key: 'classements', hrefKey: 'classements' },
+    ],
+  },
+  {
+    id: 'referentiel',
+    items: [{ key: 'teams' }, { key: 'venues' }, { key: 'regulation' }],
+  },
+]
 
 /**
  * Structural sidebar hrefs. Uses resolved competition context when available.

@@ -76,10 +76,14 @@
   flex: 1;
   display: flex;
   min-height: 0;
+  background: var(--color-chrome);
 }
 
-.dlab-rail {
-  width: 15rem;
+.dlab-rail .ds-shell-rail__brand {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
 }
 
 .dlab-column {
@@ -90,12 +94,8 @@
 }
 
 .dlab-header__crest {
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
-  color: var(--color-brand);
-  font-size: var(--text-label);
-  font-weight: var(--font-weight-bold);
+  display: inline-flex;
+  align-items: center;
 }
 
 .dlab-main {

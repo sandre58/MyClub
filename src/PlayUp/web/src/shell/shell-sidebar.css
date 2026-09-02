@@ -1,107 +1,15 @@
 /*
- * Shell sidebar (Lot 2) — product rail on ds-shell-rail foundations.
+ * Shell sidebar (A) — product rail on ds-shell-rail foundations.
  *
- * Adds collapse, edge toggle, and collapsed layout. Visual grammar (nav links,
- * active bar, brand row) lives in design-system/foundations/shell.css.
+ * Width, overflow clip, and collapse interior motion live in
+ * foundations/shell.css. This file is product layout only (height, stacking).
  */
 
 .shell-sidebar {
-    --shell-sidebar-width-expanded: 15rem;
-    --shell-sidebar-width-collapsed: 3.5rem;
-
     position: relative;
     z-index: 3;
     isolation: isolate;
     align-self: stretch;
     height: 100%;
     min-height: 0;
-    width: var(--shell-sidebar-width-expanded);
-    min-width: var(--shell-sidebar-width-expanded);
-    transition: width var(--motion-duration) var(--motion-easing);
-}
-
-.shell-sidebar[data-collapsed='true'] {
-    width: var(--shell-sidebar-width-collapsed);
-    min-width: var(--shell-sidebar-width-collapsed);
-}
-
-.shell-sidebar__brand-row {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-8);
-    border-bottom: var(--border-width) solid var(--color-chrome-border);
-}
-
-.shell-sidebar .ds-shell-rail__brand {
-    flex: 1;
-    min-width: 0;
-}
-
-.shell-sidebar__edge-toggle {
-    position: absolute;
-    z-index: 10;
-    inset-block-start: 50%;
-    inset-inline-end: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    padding: 0;
-    border: var(--border-width) solid var(--color-border-strong);
-    border-radius: 999px;
-    background: var(--color-surface);
-    color: var(--color-text-primary);
-    box-shadow:
-        0 1px 2px color-mix(in srgb, var(--color-ink) 10%, transparent),
-        0 0 0 1px color-mix(in srgb, var(--color-ink) 4%, transparent);
-    cursor: pointer;
-    transform: translate(50%, -50%);
-    transition:
-        background-color var(--motion-duration) var(--motion-easing),
-        color var(--motion-duration) var(--motion-easing),
-        border-color var(--motion-duration) var(--motion-easing);
-}
-
-.shell-sidebar__edge-toggle:hover {
-    background: var(--color-surface-secondary);
-    border-color: var(--color-border-strong);
-    color: var(--color-text-primary);
-}
-
-.shell-sidebar__label {
-    min-width: 0;
-}
-
-.shell-sidebar[data-collapsed='true'] .shell-sidebar__brand-row {
-    justify-content: center;
-    padding-inline: var(--space-8);
-}
-
-.shell-sidebar[data-collapsed='true'] .ds-shell-rail__brand {
-    justify-content: center;
-    flex: none;
-    width: 100%;
-    padding-inline: var(--space-8);
-}
-
-.shell-sidebar[data-collapsed='true'] .ds-shell-rail__nav {
-    align-items: center;
-    padding-inline: var(--space-8);
-}
-
-.shell-sidebar[data-collapsed='true'] .ds-shell-rail__link {
-    justify-content: center;
-    width: 100%;
-    padding-inline: var(--space-8);
-}
-
-.shell-sidebar[data-collapsed='true'] .ds-shell-rail__footer {
-    align-items: stretch;
-}
-
-.shell-sidebar[data-collapsed='true'] .ds-shell-rail__footer .ds-shell-rail__link {
-    justify-content: center;
 }

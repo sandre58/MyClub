@@ -1,7 +1,8 @@
 /**
- * Play'Up wordmark — IBM Plex Sans bold.
- * Chrome: 12° skew, arrow after Up.
- * Accueil (`surface="home"`): raster from mockup v3 (italic, gradient Up, U-stem arrow).
+ * Play'Up wordmark.
+ * Accueil (`surface="home"`): raster from mockup v3 (italic, dark Play, gradient Up).
+ * Chrome (`surface="chrome"`): same raster with Play recolored to `--color-on-chrome`.
+ * Typed (`surface="typed"`): Plex bold + 12° skew — Lab angle proof only.
  */
 export function PlayUpWordmark({
   className,
@@ -9,9 +10,9 @@ export function PlayUpWordmark({
   surface = 'chrome',
 }: {
   className?: string
-  /** Product chrome always uses 12. 9 is for the Design Lab arbitration view only. */
+  /** Product always uses 12. 9 is for the Design Lab arbitration view only. */
   skewDeg?: 9 | 12
-  surface?: 'chrome' | 'home'
+  surface?: 'chrome' | 'home' | 'typed'
 }) {
   const arrow = (
     <svg
@@ -31,6 +32,19 @@ export function PlayUpWordmark({
         className={['ds-lockup-wordmark', className].filter(Boolean).join(' ')}
         src="/brand/accueil-wordmark.png"
         alt="Play’Up"
+        width={406}
+        height={112}
+        draggable={false}
+      />
+    )
+  }
+
+  if (surface === 'chrome') {
+    return (
+      <img
+        className={['ds-lockup-wordmark', className].filter(Boolean).join(' ')}
+        src="/brand/accueil-wordmark-on-chrome.png"
+        alt=""
         width={406}
         height={112}
         draggable={false}

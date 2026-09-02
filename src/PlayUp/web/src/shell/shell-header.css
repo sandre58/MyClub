@@ -1,7 +1,6 @@
 /*
- * Shell header (Lot 2) — product header on ds-shell-header foundations.
- *
- * Adds competition context states, swap control, TeamCrest sizing, attention trigger.
+ * Shell header (A) — competition context on navy chrome.
+ * Lockup / Accueil lives in the rail. À traiter is header-only.
  */
 
 .shell-header {
@@ -17,55 +16,31 @@
     min-width: 0;
 }
 
-.shell-header__crest .team-crest {
-    width: 2.25rem;
-    height: 2.25rem;
-}
-
-.shell-header__crest .team-crest--logo {
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-control);
-    background: var(--color-surface-secondary);
-}
-
-.shell-header__crest .team-crest__initial {
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-bold);
-}
-
 .shell-header__meta-separator {
-    color: var(--color-text-secondary);
+    color: inherit;
     font-size: var(--text-meta);
     line-height: 1;
 }
 
 .shell-header__period {
     margin: 0;
+    color: inherit;
 }
 
 .shell-header__context-message,
 .shell-header__context-loading {
     min-width: 8rem;
-    color: var(--color-text-secondary);
+    color: color-mix(in srgb, var(--color-on-chrome) 72%, transparent);
     font-size: var(--text-label);
     font-weight: var(--font-weight-regular);
     line-height: var(--leading-tight);
-}
-
-.shell-header__change {
-    flex: none;
-    align-self: center;
-    color: var(--color-text-secondary);
-}
-
-.shell-header__change:hover {
-    color: var(--color-text-primary);
 }
 
 .shell-header__icon-control {
     width: var(--shell-icon-hit);
     min-width: var(--shell-icon-hit);
     height: var(--shell-icon-hit);
+    color: var(--color-on-chrome);
 }
 
 .shell-header__icon-control svg {
@@ -73,8 +48,8 @@
     height: var(--shell-icon-glyph);
 }
 
-.shell-header__attention:disabled {
-    cursor: default;
+.shell-header .ds-btn--ghost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
 }
 
 .shell-header__actions {

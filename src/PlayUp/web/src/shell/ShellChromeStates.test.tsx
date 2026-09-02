@@ -112,7 +112,9 @@ describe('Shell chrome context states', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     expect(screen.getByText('Chargement')).toBeInTheDocument()
-    expect(screen.queryByText('Compétition')).not.toBeInTheDocument()
+    expect(
+      document.querySelector('.shell-header')?.textContent,
+    ).not.toContain('Compétition')
   })
 
   it('shows unavailable context without inventing a competition name', async () => {
@@ -122,18 +124,20 @@ describe('Shell chrome context states', () => {
     renderWithShell(`/competitions/${competitionId}`)
 
     expect(await screen.findByText('Contexte indisponible')).toBeInTheDocument()
-    expect(screen.queryByText('Compétition')).not.toBeInTheDocument()
+    expect(
+      document.querySelector('.shell-header')?.textContent,
+    ).not.toContain('Compétition')
   })
 
   it('routes sidebar competition links to the list without context', async () => {
     renderWithShell('/')
 
     await screen.findByText('Choisir une compétition')
-    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'href',
       '/',
     )
-    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toHaveAttribute(
       'href',
       '/',
     )
@@ -143,7 +147,7 @@ describe('Shell chrome context states', () => {
     renderWithShell(`/stages/${stageId}`)
 
     await screen.findByText('Coupe U18')
-    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'href',
       `/competitions/${competitionId}/organisation`,
     )
@@ -153,7 +157,7 @@ describe('Shell chrome context states', () => {
     renderWithShell(`/matches/${matchId}`)
 
     await screen.findByText('Coupe U18')
-    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'href',
       `/competitions/${competitionId}/organisation`,
     )

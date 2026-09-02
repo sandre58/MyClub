@@ -1,6 +1,8 @@
 /**
- * Accueil lockup mark — raster cropped from mockup v3 (fused P + arrow + U).
- * Chrome / favicon keep the SVG `PlayUpMark`. Tagline stays HTML (i18n).
+ * Play’Up lockup mark — raster cropped from mockup v3 (fused P + arrow + U).
+ * Same asset on Accueil and chrome: the arrow is a real transparency, so the
+ * surface (canvas or navy) shows through. Favicon stays the SVG `PlayUpMark`.
+ * Tagline stays HTML (i18n).
  */
 export function PlayUpLockupMark({
   className,

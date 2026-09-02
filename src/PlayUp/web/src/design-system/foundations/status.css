@@ -1,11 +1,16 @@
 /*
- * Status / badge primitive (20.1+) — context (header, bands) vs dense (inline rows).
+ * Status / badge primitive — context (rows, bands), compact (chrome meta),
+ * dense (inline text, no fill).
  *
- * Standard (20.2):
- *   variant soft   — texte teinté + fond overlay (défaut header / chrome)
- *   variant outline — bordure teintée + texte teinté + fond overlay
- *   shape rounded  — radius-control (défaut, aligné géométrie DS)
- *   shape pill     — réservé si besoin explicite (legacy pages)
+ * Wash is the tone at opacity over whatever sits behind (canvas or chrome),
+ * not a mix with --color-surface. Text follows color-scheme: full tone on
+ * light, slightly lifted on dark chrome (`color-scheme: dark` on the header).
+ *
+ *   variant soft    — texte teinté + wash transparent (défaut)
+ *   variant outline — bordure teintée + wash plus léger
+ *   variant plain   — texte teinté seul
+ *   shape rounded   — radius-control (défaut)
+ *   shape pill      — réservé si besoin explicite
  */
 
 .ds-status {
@@ -22,6 +27,11 @@
     font-size: var(--text-label);
 }
 
+.ds-status--compact {
+    padding: 1px var(--space-8);
+    font-size: var(--text-meta);
+}
+
 .ds-status--dense {
     padding: 0;
     font-size: var(--text-label);
@@ -36,83 +46,62 @@
     border-radius: 999px;
 }
 
-/* --- soft (default when tone + variant-soft) */
-
-.ds-status--soft.ds-status--tone-neutral {
-    background: color-mix(in srgb, var(--color-text-secondary) 14%, var(--color-surface));
-    color: var(--color-text-secondary);
+.ds-status--tone-neutral,
+.ds-status--tone-done {
+    --status-ink: var(--color-text-secondary);
 }
 
-.ds-status--soft.ds-status--tone-info {
-    background: color-mix(in srgb, var(--color-info) 14%, var(--color-surface));
-    color: var(--color-info);
+.ds-status--tone-info {
+    --status-ink: var(--color-info);
 }
 
-.ds-status--soft.ds-status--tone-success {
-    background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
-    color: var(--color-success);
+.ds-status--tone-success {
+    --status-ink: var(--color-success);
 }
 
-.ds-status--soft.ds-status--tone-done {
-    background: var(--color-surface-secondary);
-    color: var(--color-text-secondary);
+.ds-status--tone-live {
+    --status-ink: var(--color-live);
+}
+
+.ds-status--tone-attention {
+    --status-ink: var(--color-attention);
+}
+
+.ds-status--tone-error {
+    --status-ink: var(--color-error);
+}
+
+.ds-status--soft,
+.ds-status--outline,
+.ds-status--plain {
+    color: light-dark(
+        var(--status-ink),
+        color-mix(in srgb, var(--status-ink) 58%, white)
+    );
+}
+
+.ds-status--soft {
+    --status-wash: 18%;
+    background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
 }
 
 .ds-status--soft.ds-status--tone-live {
-    background: color-mix(in srgb, var(--color-live) 22%, var(--color-surface));
-    color: var(--color-live);
+    --status-wash: 22%;
 }
 
-.ds-status--soft.ds-status--tone-attention {
-    background: color-mix(in srgb, var(--color-attention) 14%, var(--color-surface));
-    color: var(--color-attention);
+.ds-status--outline {
+    --status-wash: 10%;
+    border: var(--border-width) solid color-mix(in srgb, var(--status-ink) 32%, transparent);
+    background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
 }
 
-.ds-status--soft.ds-status--tone-error {
-    background: color-mix(in srgb, var(--color-error) 14%, var(--color-surface));
-    color: var(--color-error);
-}
-
-/* --- outline */
-
-.ds-status--outline.ds-status--tone-neutral {
-    border: var(--border-width) solid var(--color-border);
-    background: color-mix(in srgb, var(--color-text-secondary) 8%, var(--color-surface));
-    color: var(--color-text-secondary);
-}
-
-.ds-status--outline.ds-status--tone-info {
-    border: var(--border-width) solid color-mix(in srgb, var(--color-info) 28%, var(--color-border));
-    background: color-mix(in srgb, var(--color-info) 8%, var(--color-surface));
-    color: var(--color-info);
-}
-
-.ds-status--outline.ds-status--tone-success {
-    border: var(--border-width) solid color-mix(in srgb, var(--color-success) 28%, var(--color-border));
-    background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
-    color: var(--color-success);
-}
-
+.ds-status--outline.ds-status--tone-neutral,
 .ds-status--outline.ds-status--tone-done {
-    border: var(--border-width) solid var(--color-border-strong);
-    background: var(--color-surface-secondary);
-    color: var(--color-text-secondary);
+    border-color: var(--color-border-strong);
 }
 
-.ds-status--outline.ds-status--tone-live {
-    border: var(--border-width) solid color-mix(in srgb, var(--color-live) 28%, var(--color-border));
-    background: color-mix(in srgb, var(--color-live) 8%, var(--color-surface));
-    color: var(--color-live);
-}
-
-.ds-status--outline.ds-status--tone-attention {
-    border: var(--border-width) solid color-mix(in srgb, var(--color-attention) 28%, var(--color-border));
-    background: color-mix(in srgb, var(--color-attention) 8%, var(--color-surface));
-    color: var(--color-attention);
-}
-
-.ds-status--outline.ds-status--tone-error {
-    border: var(--border-width) solid color-mix(in srgb, var(--color-error) 28%, var(--color-border));
-    background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
-    color: var(--color-error);
+.ds-status--plain {
+    padding: 0;
+    background: none;
+    border: none;
 }

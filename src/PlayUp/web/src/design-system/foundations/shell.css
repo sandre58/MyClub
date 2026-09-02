@@ -1,10 +1,29 @@
 /*
- * Shell — rail + competition header (Design Lab SoT, Lot 2).
+ * Shell — unified navy chrome (direction A, 2026-09-02).
  *
- * Canonical chrome grammar: dark rail (brand + nav + settings footer),
- * light header (crest + identity + À traiter). Product shell/ adds collapse,
- * edge toggle, competition swap, and data wiring.
+ * One L: rail + header share --color-chrome. No rail border. Workspace is
+ * canvas, inset by a start-start radius. Rail current = inset chip + straight
+ * 3px accent bar (not 12°). 12° stays on mark / wordmark / trends only.
  */
+
+.ds-root {
+    --shell-rail-width-expanded: 15rem;
+    --shell-rail-width-collapsed: 3.5rem;
+    --shell-header-min-height: 5rem;
+    --shell-workspace-radius: var(--space-12);
+    --shell-rail-inset: var(--space-8);
+    --shell-rail-item-radius: var(--radius-panel);
+    --shell-rail-bar-width: 3px;
+    --shell-rail-wash-hover: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
+    --shell-rail-wash-current: color-mix(in srgb, var(--color-on-chrome) 12%, transparent);
+    --shell-rail-wash-current-hover: color-mix(
+        in srgb,
+        var(--color-on-chrome) 16%,
+        transparent
+    );
+    --shell-lockup-mark-height: 2.5rem;
+    --shell-lockup-wordmark-height: 1.875rem;
+}
 
 /* --- Rail ---------------------------------------------------------------- */
 
@@ -12,9 +31,19 @@
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    width: var(--shell-rail-width-expanded);
+    min-width: var(--shell-rail-width-expanded);
+    overflow: hidden;
     background: var(--color-chrome);
     color: var(--color-on-chrome);
-    border-inline-end: var(--border-width) solid var(--color-chrome-border);
+    transition:
+        width var(--motion-duration) var(--motion-easing),
+        min-width var(--motion-duration) var(--motion-easing);
+}
+
+.ds-shell-rail[data-collapsed='true'] {
+    width: var(--shell-rail-width-collapsed);
+    min-width: var(--shell-rail-width-collapsed);
 }
 
 .ds-shell-rail a {
@@ -23,7 +52,6 @@
 }
 
 .ds-shell-rail a:hover {
-    color: inherit;
     text-decoration: none;
 }
 
@@ -31,18 +59,99 @@
     display: flex;
     align-items: center;
     gap: var(--space-12);
+    min-height: var(--shell-header-min-height);
     padding: var(--space-16);
     color: var(--color-on-chrome);
     text-decoration: none;
     font-size: 1.05rem;
+    transition: gap var(--motion-duration) var(--motion-easing);
+}
+
+.ds-shell-rail[data-collapsed='true'] .ds-shell-rail__brand {
+    gap: 0;
+}
+
+.ds-shell-rail__brand:hover {
+    color: var(--color-on-chrome);
+}
+
+.ds-shell-rail__brand .ds-wordmark__up {
+    color: var(--color-chrome-accent);
 }
 
 .ds-shell-rail__nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: var(--space-8);
+    gap: var(--space-16);
+    padding: var(--space-8) var(--shell-rail-inset) var(--space-16);
     flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.ds-shell-rail__group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ds-shell-rail__group-label {
+    overflow: hidden;
+    max-height: 2rem;
+    padding: var(--space-4) var(--space-12);
+    color: color-mix(in srgb, var(--color-on-chrome) 48%, transparent);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.08em;
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 1;
+    transition:
+        max-height var(--motion-duration) var(--motion-easing),
+        opacity var(--motion-duration) var(--motion-easing),
+        padding var(--motion-duration) var(--motion-easing);
+}
+
+.ds-shell-rail[data-collapsed='true'] .ds-shell-rail__group-label {
+    max-height: 0;
+    padding-block: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ds-shell-rail__brand .ds-lockup-mark {
+    /* Override .ds-lockup-mark max-width: 100% — that squashes the PNG when
+       the collapsed rail content box is narrower than the mark's natural width. */
+    height: var(--shell-lockup-mark-height);
+    width: auto;
+    max-width: none;
+    flex-shrink: 0;
+    aspect-ratio: 157 / 186;
+    object-fit: contain;
+}
+
+.ds-shell-rail__wordmark {
+    display: block;
+    overflow: hidden;
+    min-width: 0;
+    max-width: 8rem;
+    opacity: 1;
+    transition:
+        max-width var(--motion-duration) var(--motion-easing),
+        opacity var(--motion-duration) var(--motion-easing);
+}
+
+.ds-shell-rail[data-collapsed='true'] .ds-shell-rail__wordmark {
+    max-width: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ds-shell-rail__brand .ds-lockup-wordmark {
+    height: var(--shell-lockup-wordmark-height);
+    max-width: none;
 }
 
 .ds-shell-rail__link {
@@ -51,47 +160,58 @@
     align-items: center;
     gap: var(--space-12);
     min-height: var(--control-height);
-    padding: 0 var(--space-12) 0 var(--space-16);
+    padding: 0 var(--space-12);
+    overflow: hidden;
     border: none;
-    border-radius: var(--radius-control);
+    border-radius: var(--shell-rail-item-radius);
     background: transparent;
     color: var(--color-on-chrome);
-    opacity: 0.66;
     font: inherit;
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-regular);
     text-align: start;
     text-decoration: none;
     cursor: pointer;
     transition:
-        opacity var(--motion-duration) var(--motion-easing),
-        background-color var(--motion-duration) var(--motion-easing);
+        background-color var(--motion-duration) var(--motion-easing),
+        color var(--motion-duration) var(--motion-easing),
+        gap var(--motion-duration) var(--motion-easing);
+}
+
+.ds-shell-rail[data-collapsed='true'] .ds-shell-rail__link {
+    gap: 0;
 }
 
 .ds-shell-rail__link:hover:not(:disabled) {
-    opacity: 0.94;
-    background: color-mix(in srgb, #ffffff 8%, transparent);
+    background: var(--shell-rail-wash-hover);
+    color: var(--color-on-chrome);
 }
 
 .ds-shell-rail__link[data-active='true'] {
-    opacity: 1;
-    background: color-mix(in srgb, #ffffff 12%, transparent);
+    background: var(--shell-rail-wash-current);
+    color: var(--color-chrome-accent);
 }
 
-/* Active indicator — slanted accent bar at system angle (12°). */
+.ds-shell-rail__link[data-active='true']:hover:not(:disabled) {
+    background: var(--shell-rail-wash-current-hover);
+    color: var(--color-chrome-accent);
+}
+
 .ds-shell-rail__link[data-active='true']::before {
     content: '';
     position: absolute;
-    inset-inline-start: 3px;
-    inset-block: 7px;
-    width: 3px;
+    inset-inline-start: 0;
+    inset-block: 0;
+    width: var(--shell-rail-bar-width);
     background: var(--color-chrome-accent);
-    border-radius: 2px;
-    transform: skewY(var(--brand-skew));
 }
 
 .ds-shell-rail__link:disabled {
     cursor: default;
     opacity: 0.48;
+}
+
+.ds-shell-rail__link:focus-visible {
+    border-radius: var(--shell-rail-item-radius);
 }
 
 .ds-shell-rail__icon {
@@ -100,12 +220,48 @@
     flex-shrink: 0;
 }
 
-.ds-shell-rail__footer {
-    padding: var(--space-8);
-    border-top: var(--border-width) solid var(--color-chrome-border);
+.ds-shell-rail__label {
+    overflow: hidden;
+    min-width: 0;
+    max-width: 12rem;
+    white-space: nowrap;
+    opacity: 1;
+    transition:
+        max-width var(--motion-duration) var(--motion-easing),
+        opacity var(--motion-duration) var(--motion-easing);
 }
 
-/* --- Header -------------------------------------------------------------- */
+.ds-shell-rail[data-collapsed='true'] .ds-shell-rail__label {
+    max-width: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ds-shell-rail__footer {
+    display: flex;
+    align-items: center;
+    padding: var(--space-8) var(--shell-rail-inset) var(--space-16);
+}
+
+.ds-shell-rail__collapse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    border: none;
+    border-radius: var(--shell-rail-item-radius);
+    background: transparent;
+    color: var(--color-on-chrome);
+    cursor: pointer;
+}
+
+.ds-shell-rail__collapse:hover {
+    background: var(--shell-rail-wash-hover);
+}
+
+/* --- Header (on chrome) -------------------------------------------------- */
 
 .ds-shell-header {
     display: flex;
@@ -113,11 +269,11 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-12) var(--space-16);
-    min-height: 3.5rem;
+    min-height: var(--shell-header-min-height);
     padding: var(--space-8) var(--space-24);
-    background: var(--color-surface);
-    border-bottom: var(--border-width) solid var(--color-border);
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent);
+    background: var(--color-chrome);
+    color: var(--color-on-chrome);
+    color-scheme: dark;
 }
 
 .ds-shell-header__crest {
@@ -125,21 +281,19 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: var(--radius-control);
 }
 
 .ds-shell-header__identity {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     min-width: 0;
 }
 
 .ds-shell-header__name {
     min-width: 0;
-    color: var(--color-text-primary);
+    color: var(--color-on-chrome);
+    font-size: var(--text-heading);
     font-weight: var(--font-weight-bold);
     line-height: var(--leading-tight);
     white-space: nowrap;
@@ -154,7 +308,7 @@
     gap: var(--space-8);
     min-width: 0;
     font-size: var(--text-meta);
-    color: var(--color-text-secondary);
+    color: color-mix(in srgb, var(--color-on-chrome) 62%, transparent);
 }
 
 .ds-shell-header__spacer {
@@ -165,6 +319,15 @@
 .ds-shell-header__bell {
     position: relative;
     flex: none;
+    color: var(--color-on-chrome);
+}
+
+.ds-shell-header .ds-btn--ghost {
+    color: var(--color-on-chrome);
+}
+
+.ds-shell-header .ds-btn--ghost:hover:not(:disabled) {
+    background: var(--shell-rail-wash-hover);
 }
 
 .ds-shell-header__badge {
@@ -182,4 +345,11 @@
     font-size: 0.66rem;
     font-weight: var(--font-weight-bold);
     line-height: 1;
+}
+
+/* --- Workspace ----------------------------------------------------------- */
+
+.ds-shell-workspace {
+    background: var(--color-canvas);
+    border-start-start-radius: var(--shell-workspace-radius);
 }

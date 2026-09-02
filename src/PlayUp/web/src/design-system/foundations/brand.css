@@ -44,7 +44,7 @@
     fill: none;
 }
 
-/* Accueil lockup — raster from mockup v3 (`public/brand/accueil-*.png`). */
+/* Lockup rasters — Accueil (`accueil-*.png`) and chrome wordmark (`*-on-chrome.png`). */
 .ds-lockup-mark,
 .ds-lockup-wordmark {
     display: block;
@@ -92,7 +92,10 @@
     transform: rotate(-5deg);
 }
 
-/* Barre d'accent nav active (rail chrome). */
+/*
+ * Historical 12° accent bar — Lab angle compare only.
+ * Product rail current uses a straight bar in foundations/shell.css.
+ */
 .ds-chrome-accent-bar {
     display: inline-block;
     width: 3px;

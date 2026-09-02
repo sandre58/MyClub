@@ -15,7 +15,7 @@ alwaysApply: true
 - Describe current truth + active constraints. No phase numbers in titles.
 - Reference pages = current product truth; phase capitalization lives in Tasks / Decisions (not on reference pages).
 - Extra nesting only for large autonomous topics (e.g. Cockpit, Domaine).
-- Play’Up UX surfaces / chrome (PE Spec, Shell, i18n, Cockpit) nest under hub **Expérience produit**; Identité stays top-level under Play’Up (transversal DS).
+- Play’Up UX surfaces / chrome (PE Spec, Accueil, Shell, i18n, Cockpit) nest under hub **Expérience produit**; Identité stays top-level under Play’Up (transversal DS).
 - Do not create a page if SoT already exists; enrich instead.
 
 ## When to update docs

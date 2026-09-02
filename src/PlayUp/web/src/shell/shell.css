@@ -29,6 +29,7 @@
     max-height: 100dvh;
     min-height: 100dvh;
     overflow: hidden;
+    background: var(--color-chrome);
 }
 
 .shell-skip {
@@ -75,6 +76,7 @@
     min-height: 0;
     overflow: auto;
     background: var(--color-canvas);
+    border-start-start-radius: var(--shell-workspace-radius);
 }
 
 .shell-main > main,

@@ -6,16 +6,19 @@ import {
   MatchesNavIcon,
   OrganisationNavIcon,
   OverviewNavIcon,
-  SettingsNavIcon,
+  RegulationNavIcon,
   SidebarCollapseIcon,
   SidebarExpandIcon,
+  TeamsNavIcon,
+  VenuesNavIcon,
 } from '../design-system/icons/shellIcons'
-import { PlayUpMark } from '../design-system/PlayUpMark'
+import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
 import {
   resolveActiveDestination,
   shellDestinationHrefs,
-  type ShellDestinationKey,
+  shellNavGroups,
+  type ShellNavItemKey,
 } from './shellDestinations'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 
@@ -24,24 +27,21 @@ type ShellSidebarProps = {
   onToggleCollapse: () => void
 }
 
-type NavDestination = {
-  key: ShellDestinationKey
-  label: string
-  to: string
-  icon: ComponentType<SVGProps<SVGSVGElement>>
+const navIcons: Record<
+  ShellNavItemKey,
+  ComponentType<SVGProps<SVGSVGElement>>
+> = {
+  cockpit: OverviewNavIcon,
+  organisation: OrganisationNavIcon,
+  matches: MatchesNavIcon,
+  classements: ClassementsNavIcon,
+  teams: TeamsNavIcon,
+  venues: VenuesNavIcon,
+  regulation: RegulationNavIcon,
 }
 
-const destinationDefinitions: Array<
-  Omit<NavDestination, 'to' | 'label'> & { key: ShellDestinationKey }
-> = [
-  { key: 'cockpit', icon: OverviewNavIcon },
-  { key: 'organisation', icon: OrganisationNavIcon },
-  { key: 'matches', icon: MatchesNavIcon },
-  { key: 'classements', icon: ClassementsNavIcon },
-]
-
 /**
- * Structural sidebar (14.6.2+). Resolves competition context for safe hrefs.
+ * Structural sidebar (Shell A). Lockup → Accueil. Collapse lives in the rail.
  */
 export function ShellSidebar({
   collapsed,
@@ -53,12 +53,6 @@ export function ShellSidebar({
   const location = useLocation()
   const activeKey = resolveActiveDestination(location.pathname)
   const hrefs = shellDestinationHrefs({ competitionId, stageId, matchId })
-  const destinations = destinationDefinitions.map((item) => ({
-    ...item,
-    label: t(`navigation.${item.key}`),
-    to: hrefs[item.key],
-  }))
-  const cockpitHref = hrefs.cockpit
 
   return (
     <aside
@@ -66,21 +60,71 @@ export function ShellSidebar({
       data-collapsed={collapsed ? 'true' : 'false'}
       aria-label={t('sidebar.label')}
     >
-      <div className="shell-sidebar__brand-row">
-        <Link
-          className="ds-shell-rail__brand shell-sidebar__brand"
-          to={cockpitHref}
-          aria-label={t('sidebar.home')}
-        >
-          <PlayUpMark size={22} variant="on-chrome" />
-          <span className={collapsed ? 'ds-visually-hidden' : undefined}>
-            <PlayUpWordmark />
-          </span>
-        </Link>
+      <Link
+        className="ds-shell-rail__brand shell-sidebar__brand"
+        to="/"
+        aria-label={t('sidebar.home')}
+      >
+        <PlayUpLockupMark />
+        <span className="ds-shell-rail__wordmark">
+          <PlayUpWordmark surface="chrome" />
+        </span>
+      </Link>
 
+      <nav
+        id="shell-sidebar-nav"
+        className="ds-shell-rail__nav"
+        aria-label={t('sidebar.primary')}
+      >
+        {shellNavGroups.map((group) => (
+          <div key={group.id} className="ds-shell-rail__group">
+            <p className="ds-shell-rail__group-label">
+              {t(`groups.${group.id}`)}
+            </p>
+            {group.items.map((item) => {
+              const Icon = navIcons[item.key]
+              const label = t(`navigation.${item.key}`)
+              const isActive =
+                item.hrefKey !== undefined && item.hrefKey === activeKey
+
+              if (item.hrefKey) {
+                return (
+                  <Link
+                    key={item.key}
+                    to={hrefs[item.hrefKey]}
+                    className="ds-shell-rail__link"
+                    data-active={isActive ? 'true' : 'false'}
+                    aria-current={isActive ? 'page' : undefined}
+                    title={collapsed ? label : undefined}
+                  >
+                    <Icon className="ds-shell-rail__icon" />
+                    <span className="ds-shell-rail__label">{label}</span>
+                  </Link>
+                )
+              }
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  className="ds-shell-rail__link"
+                  disabled
+                  aria-label={t('sidebar.comingSoon', { label })}
+                  title={t('sidebar.comingSoon', { label })}
+                >
+                  <Icon className="ds-shell-rail__icon" />
+                  <span className="ds-shell-rail__label">{label}</span>
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="ds-shell-rail__footer">
         <button
           type="button"
-          className="shell-sidebar__edge-toggle"
+          className="ds-shell-rail__collapse"
           aria-expanded={!collapsed}
           aria-controls="shell-sidebar-nav"
           aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
@@ -92,52 +136,6 @@ export function ShellSidebar({
           ) : (
             <SidebarCollapseIcon size="sm" />
           )}
-        </button>
-      </div>
-
-      <nav
-        id="shell-sidebar-nav"
-        className="ds-shell-rail__nav"
-        aria-label={t('sidebar.primary')}
-      >
-        {destinations.map((item) => {
-          const isActive = item.key === activeKey
-          const Icon = item.icon
-
-          return (
-            <Link
-              key={item.key}
-              to={item.to}
-              className="ds-shell-rail__link"
-              data-active={isActive ? 'true' : 'false'}
-              aria-current={isActive ? 'page' : undefined}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="ds-shell-rail__icon" />
-              <span
-                className={`shell-sidebar__label${collapsed ? ' ds-visually-hidden' : ''}`}
-              >
-                {item.label}
-              </span>
-            </Link>
-          )
-        })}
-      </nav>
-
-      <div className="ds-shell-rail__footer">
-        <button
-          type="button"
-          className="ds-shell-rail__link"
-          aria-label={t('actions.settingsAria')}
-          title={t('actions.settings')}
-          disabled
-        >
-          <SettingsNavIcon className="ds-shell-rail__icon" />
-          <span
-            className={`shell-sidebar__label${collapsed ? ' ds-visually-hidden' : ''}`}
-          >
-            {t('actions.settings')}
-          </span>
         </button>
       </div>
     </aside>

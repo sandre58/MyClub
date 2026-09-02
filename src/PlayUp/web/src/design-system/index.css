@@ -6,6 +6,7 @@
  *
  * Semantic token budget: 54 / ceiling 70
  *   color 24 (content 20 + chrome 4) · spacing 6 · geometry 7 · typography 16 · brand 1 · density 4 · motion 2
+ * Shell geometry (--shell-*) lives on .ds-root in foundations/shell.css.
  * Icon size tokens live in foundations/icons.css (not counted in the color budget).
  */
 

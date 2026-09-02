@@ -1,16 +1,25 @@
 {
   "navigation": {
-    "cockpit": "Vue d'ensemble",
-    "organisation": "Organisation",
-    "matches": "Matchs",
-    "classements": "Classements"
+    "cockpit": "Cockpit",
+    "organisation": "Structure",
+    "matches": "Calendrier & matchs",
+    "classements": "Classements",
+    "teams": "Équipes",
+    "venues": "Stades",
+    "regulation": "Règlement"
+  },
+  "groups": {
+    "pilotage": "Pilotage",
+    "competition": "Compétition",
+    "referentiel": "Référentiel"
   },
   "sidebar": {
     "label": "Barre latérale principale",
     "primary": "Navigation principale",
     "expand": "Développer la barre latérale",
     "collapse": "Réduire la barre latérale",
-    "home": "Accueil Play’Up"
+    "home": "Accueil Play’Up",
+    "comingSoon": "{{label}} — bientôt disponible"
   },
   "competition": {
     "change": "Changer",

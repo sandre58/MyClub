@@ -98,19 +98,54 @@ describe('AppShell', () => {
     ).toHaveAttribute('href', '#main')
   })
 
-  it('renders the four sidebar destinations', () => {
+  it('renders grouped nav and upcoming référentiel items', () => {
     renderWithShell('/')
 
-    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Organisation' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Matchs' })).toBeInTheDocument()
+    expect(screen.getByText('Pilotage')).toBeInTheDocument()
+    expect(screen.getByText('Compétition')).toBeInTheDocument()
+    expect(screen.getByText('Référentiel')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Équipes — bientôt disponible' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Règlement — bientôt disponible' }),
+    ).toBeDisabled()
+  })
+
+  it('sends the Play’Up lockup to Accueil', () => {
+    renderWithShell('/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+
+    expect(screen.getByRole('link', { name: 'Accueil Play’Up' })).toHaveAttribute(
+      'href',
+      '/',
+    )
+    const lockup = screen.getByRole('link', { name: 'Accueil Play’Up' })
+    expect(lockup.querySelector('.ds-lockup-mark')).toHaveAttribute(
+      'src',
+      expect.stringContaining('/brand/accueil-mark.png'),
+    )
+    expect(lockup.querySelector('.ds-lockup-wordmark')).toHaveAttribute(
+      'src',
+      '/brand/accueil-wordmark-on-chrome.png',
+    )
+  })
+
+  it('renders the four live sidebar destinations', () => {
+    renderWithShell('/')
+
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Structure' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
   })
 
   it('keeps sidebar nav links outside content-link scope', () => {
     renderWithShell('/')
 
-    const navLink = screen.getByRole('link', { name: "Vue d'ensemble" })
+    const navLink = screen.getByRole('link', { name: 'Cockpit' })
     expect(navLink).toHaveClass('ds-shell-rail__link')
     expect(navLink).toHaveAttribute('data-active')
     expect(navLink.closest('.shell-sidebar')).not.toBeNull()
@@ -120,11 +155,11 @@ describe('AppShell', () => {
   it('marks Vue d\'ensemble active for workspace routes', () => {
     renderWithShell('/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 
-    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toHaveAttribute(
       'aria-current',
       'page',
     )
-    expect(screen.getByRole('link', { name: 'Organisation' })).not.toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Structure' })).not.toHaveAttribute(
       'aria-current',
     )
   })
@@ -134,7 +169,7 @@ describe('AppShell', () => {
       '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/organisation',
     )
 
-    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -145,7 +180,7 @@ describe('AppShell', () => {
       '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/organisation/entries/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     )
 
-    expect(screen.getByRole('link', { name: 'Organisation' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -155,7 +190,7 @@ describe('AppShell', () => {
   it('maps stage deep links to Matchs', () => {
     renderWithShell('/stages/stage-id')
 
-    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -164,7 +199,7 @@ describe('AppShell', () => {
   it('maps match deep links to Matchs', () => {
     renderWithShell('/matches/match-id')
 
-    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toHaveAttribute(
       'aria-current',
       'page',
     )
@@ -201,13 +236,13 @@ describe('AppShell', () => {
     expect(
       screen.getByRole('button', { name: 'Développer la barre latérale' }),
     ).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Cockpit' })).toBeInTheDocument()
   })
 
   it('maps stage matches deep links to Matchs', () => {
     renderWithShell('/stages/stage-id/matches')
 
-    expect(screen.getByRole('link', { name: 'Matchs' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toHaveAttribute(
       'aria-current',
       'page',
     )

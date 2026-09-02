@@ -95,15 +95,17 @@ export function StatusBadge({
   children,
   variant = 'soft',
   shape = 'rounded',
+  density = 'context',
 }: {
   tone: StatusTone
   children: ReactNode
   variant?: 'soft' | 'outline'
   shape?: 'rounded' | 'pill'
+  density?: 'context' | 'compact'
 }) {
   return (
     <Status
-      density="context"
+      density={density}
       tone={statusToneFromLegacy(tone)}
       variant={variant}
       shape={shape}
@@ -115,11 +117,13 @@ export function StatusBadge({
 
 export function CompetitionStatusBadge({
   status,
+  density = 'context',
 }: {
   status: CompetitionStatus
+  density?: 'context' | 'compact'
 }) {
   return (
-    <StatusBadge tone={competitionStatusTone[status]}>
+    <StatusBadge density={density} tone={competitionStatusTone[status]}>
       {competitionStatusLabel(status)}
     </StatusBadge>
   )
