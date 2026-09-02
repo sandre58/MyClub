@@ -216,6 +216,16 @@
     align-self: center;
 }
 
+.ds-toolbar__spacer {
+    flex: 1;
+}
+
+.ds-toolbar__link {
+    align-self: center;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+}
+
 .ds-token-table-wrap {
     overflow-x: auto;
 }

@@ -288,6 +288,7 @@ function LabBar({
         </button>
       </span>
       <span className="dlab-bar__spacer" />
+      <Link to="/dev/foundations">Foundations</Link>
       <Link to="/">← Quitter le lab</Link>
     </div>
   )

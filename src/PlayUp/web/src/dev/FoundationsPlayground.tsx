@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Status,
   type StatusShape,
@@ -252,6 +253,10 @@ export function FoundationsPlayground() {
             </label>
           ))}
         </fieldset>
+        <span className="ds-toolbar__spacer" />
+        <Link className="ds-toolbar__link" to="/design-lab">
+          Design Lab
+        </Link>
       </form>
 
       <main
