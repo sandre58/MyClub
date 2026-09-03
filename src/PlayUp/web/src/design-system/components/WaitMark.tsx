@@ -1,17 +1,21 @@
 import type { ReactNode } from 'react'
 import { PlayUpLockupMark } from '../PlayUpLockupMark'
 
+export type WaitSize = 'home' | 'page' | 'region'
+
 /**
  * Page / region wait — mark Accueil + orbiting ring, label centered under the animation.
  * Arbitrated 2026-09-03 (Lab C). Not a watermark: the mark is the wait signature.
  * Buttons keep `PendingLabel` (spinner): the PNG does not scale into a control.
+ *
+ * Sizes: `home` (Accueil, largest) · `page` (workspace) · `region` (panel).
  */
 export function WaitMark({
   children,
   size = 'page',
 }: {
   children: ReactNode
-  size?: 'page' | 'region'
+  size?: WaitSize
 }) {
   return (
     <p

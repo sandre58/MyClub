@@ -53,8 +53,9 @@ safe-area tighten; Créer stacks under the section title.
 
 - Empty states explain **what will appear and why** ("Les matchs apparaîtront
   ici dès que…"), optional single secondary action. Never an illustration dump.
-- Loading (page / region): `WaitMark` — Accueil mark, orbiting ring, label
-  **centered under the animation**. No dashed box, no shimmer. Copy stays
-  « Chargement… » (reads). Buttons: `PendingLabel` spinner + « Traitement… »
-  (writes); the mark is not a control glyph.
+- Loading: `WaitMark` — Accueil mark, orbiting ring, label **centered under
+  the animation**. Sizes: `home` (Accueil), `page` (workspace), `region`
+  (panel). No dashed box, no shimmer. Copy stays « Chargement… » (reads).
+  Buttons: `PendingLabel` spinner + « Traitement… » (writes); the mark is
+  not a control glyph.
 - Error: `error` tone, reserved for real failures — never for pending work.

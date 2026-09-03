@@ -128,7 +128,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
         <p className="ds-notice ds-notice--info">{t('discipline.readOnly')}</p>
       )}
 
-      {organisationQuery.isPending && <LoadingState />}
+      {organisationQuery.isPending && <LoadingState size="region" />}
       {organisationQuery.isError && (
         <ErrorState error={organisationQuery.error} />
       )}

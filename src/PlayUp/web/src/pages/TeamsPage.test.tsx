@@ -150,15 +150,110 @@ describe('TeamsPage', () => {
     vi.mocked(changeDeclaredMemberRole).mockResolvedValue(organisationView())
   })
 
-  it('renders the title without a min/max counter', async () => {
+  it('shows a tabular plateau reading in Draft and Ready', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderTeamsPage()
 
     expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(screen.getByText('Alpha')).toBeInTheDocument()
-    expect(screen.queryByText(/2–64/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/minimum/i)).not.toBeInTheDocument()
+    const plateau = document.querySelector('.teams__plateau')
+    expect(plateau).not.toBeNull()
+    expect(plateau).toHaveTextContent('1')
+    expect(plateau).toHaveTextContent('/64')
+    expect(plateau).toHaveTextContent('inscrites')
+    expect(plateau).toHaveTextContent('Il manque 1 équipe')
+  })
+
+  it('hides the plateau reading outside Draft and Ready', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        status: 'Running',
+        actions: ['WithdrawEntry', 'RenameEntry'],
+      }),
+    )
+
+    renderTeamsPage()
+
+    expect(await screen.findByText('Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('inscrites')).not.toBeInTheDocument()
+  })
+
+  it('shows Qualifié and Éliminé badges on season tiles', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView(
+        {
+          status: 'Running',
+          actions: ['WithdrawEntry', 'RenameEntry'],
+          participants: {
+            activeCount: 0,
+            occupyingCount: 2,
+            entries: [
+              {
+                entryId,
+                displayName: 'Alpha',
+                status: 'Qualified',
+                declaredMembers: [],
+              },
+              {
+                entryId: secondEntryId,
+                displayName: 'Beta',
+                status: 'Eliminated',
+                declaredMembers: [],
+              },
+            ],
+          },
+        },
+      ),
+    )
+
+    renderTeamsPage()
+
+    expect(await screen.findByText('Qualifié')).toBeInTheDocument()
+    expect(screen.getByText('Éliminé')).toBeInTheDocument()
+  })
+
+  it('shows player counts on the tile and in the fiche headings', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView(
+        {},
+        {
+          declaredMembers: [
+            player(),
+            {
+              memberId: staffId,
+              displayName: 'Coach',
+              role: 'Staff',
+            },
+          ],
+        },
+      ),
+    )
+
+    renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`)
+
+    expect(await screen.findByLabelText('1 joueur')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Joueurs· 1' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Staff· 1' })).toBeInTheDocument()
+  })
+
+  it('disables member remove when already on a match sheet', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView(
+        {},
+        {
+          declaredMembers: [
+            player({ referencedOnMatchSheet: true }),
+          ],
+        },
+      ),
+    )
+
+    renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`)
+
+    const remove = await screen.findByRole('button', { name: 'Supprimer Dupont' })
+    expect(remove).toBeDisabled()
+    expect(remove).toHaveAttribute('title', 'Déjà sur une feuille de match')
   })
 
   it('shows a Forfait badge on a withdrawn team', async () => {
@@ -238,7 +333,7 @@ describe('TeamsPage', () => {
     expect((await screen.findAllByText('Beta')).length).toBeGreaterThan(0)
   })
 
-  it('greys the add button and shows the max helper at capacity', async () => {
+  it('greys the add button and shows plateau full in the reading at capacity', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         participants: {
@@ -263,11 +358,9 @@ describe('TeamsPage', () => {
 
     renderTeamsPage()
 
-    expect(
-      await screen.findByText(
-        'Plateau complet : 2 équipes inscrites. Aucune place disponible.',
-      ),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/Plateau complet/i)).toBeInTheDocument()
+    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('/2')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Ajouter une équipe/i }),
     ).toBeDisabled()
@@ -296,8 +389,8 @@ describe('TeamsPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Alpha' }))
 
     expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Joueurs' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Staff' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Joueurs· 0' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Staff· 0' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(
       screen.queryByText('Aucune équipe sélectionnée'),

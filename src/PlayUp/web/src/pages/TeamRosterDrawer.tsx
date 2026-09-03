@@ -3,7 +3,14 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query'
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   addDeclaredMember,
@@ -304,7 +311,16 @@ export function TeamRosterDrawer({
       <div className="teams-drawer__body">
         <RosterGroup
           headingId="teams-roster-players"
-          heading={t('roster.playersHeading')}
+          heading={
+            <>
+              <span className="teams-roster-heading__label">
+                {t('roster.playersHeading')}
+              </span>
+              <span className="teams-roster-heading__count">
+                {' · '}{players.length}
+              </span>
+            </>
+          }
           emptyLabel={t('roster.emptyPlayers')}
           members={players}
           avatarStyle={avatarStyle}
@@ -328,6 +344,9 @@ export function TeamRosterDrawer({
             setRoleDraft(member.role)
           }}
           onStartRemove={(member) => {
+            if (member.referencedOnMatchSheet) {
+              return
+            }
             addMutation.reset()
             renameMutation.reset()
             removeMutation.reset()
@@ -367,7 +386,16 @@ export function TeamRosterDrawer({
 
         <RosterGroup
           headingId="teams-roster-staff"
-          heading={t('roster.staffHeading')}
+          heading={
+            <>
+              <span className="teams-roster-heading__label">
+                {t('roster.staffHeading')}
+              </span>
+              <span className="teams-roster-heading__count">
+                {' · '}{staff.length}
+              </span>
+            </>
+          }
           emptyLabel={t('roster.emptyStaff')}
           members={staff}
           avatarStyle={avatarStyle}
@@ -391,6 +419,9 @@ export function TeamRosterDrawer({
             setRoleDraft(member.role)
           }}
           onStartRemove={(member) => {
+            if (member.referencedOnMatchSheet) {
+              return
+            }
             addMutation.reset()
             renameMutation.reset()
             removeMutation.reset()
@@ -521,7 +552,7 @@ function RosterGroup({
   onCancelRow,
 }: {
   headingId: string
-  heading: string
+  heading: ReactNode
   emptyLabel: string
   members: DeclaredMember[]
   avatarStyle?: CSSProperties
@@ -562,6 +593,13 @@ function RosterGroup({
           {members.map((member) => {
             const editing = pendingRenameId === member.memberId
             const removing = pendingRemoveId === member.memberId
+            const onMatchSheet = member.referencedOnMatchSheet === true
+            const removeBlocked = !canMutate || onMatchSheet
+            const removeHint = onMatchSheet
+              ? t('roster.onMatchSheetHint')
+              : canMutate
+                ? t('roster.removeMemberTooltip')
+                : t('roster.readOnly')
             return (
               <li key={member.memberId}>
                 <div className="teams-member">
@@ -663,12 +701,8 @@ function RosterGroup({
                       <button
                         type="button"
                         className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                        disabled={!canMutate || rowBusy}
-                        title={
-                          canMutate
-                            ? t('roster.removeMemberTooltip')
-                            : t('roster.readOnly')
-                        }
+                        disabled={removeBlocked || rowBusy}
+                        title={removeHint}
                         aria-label={t('roster.removeMember', {
                           name: member.displayName,
                         })}

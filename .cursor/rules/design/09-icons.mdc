@@ -17,21 +17,27 @@ alwaysApply: false
 > Play'Up uses an icon when it **encodes a state or a repeated object family
 > that speeds up scanning** (navigation destinations, row statuses, D9
 > attention rows, icon-only chrome actions, meta facts like date/time/venue),
-> but **not** when it would decorate a unique label already carried by
-> typography (text buttons, one-off titles, prose).
+> or when it **accompanies a text button label** (icon + wording, the text
+> remains the primary carrier). It does **not** decorate a unique label already
+> carried by typography alone (one-off titles, prose), and it does **not**
+> replace a unique label with an icon only.
 
 ## Where icons belong
 
 - Rail destinations (always icon + label).
+- Text buttons with a clear action verb — optional accompanying icon
+  (e.g. « Ajouter une équipe » + Plus). The label stays required.
 - Panel heads: optional small neutral icon **only** for recurring content
   families (Équipes, Règlement, Calendrier, Classement).
 - À traiter rows (part of the D9 recipe).
 - Match Hero meta band (calendar / clock / pin).
 - Trend and live indicators.
+- Icon-only compact chrome (toolbars on tiles / selection bar) when the
+  action is repeated and the `title` / `aria-label` carries the wording.
 
 ## Where icons are forbidden
 
 - Inside standings/table cells (except trend column).
-- On text buttons ("Saisir le résultat" needs no pencil).
+- Icon-only controls that replace a unique one-off label with no accessible name.
 - Repeated per-row decorations (no ball icon on every match row).
 - Emojis, filled icon sets, multicolor icons: never.

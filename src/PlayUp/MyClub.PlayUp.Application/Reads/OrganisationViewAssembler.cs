@@ -7,6 +7,7 @@
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -45,8 +46,16 @@ public static class OrganisationViewAssembler
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Stages loaded for <see cref="Competition.StageIds"/> (same order).</param>
+    /// <param name="competitionMatches">
+    /// Optional matches for the competition. When provided, declared members get
+    /// <see cref="DeclaredMemberDto.ReferencedOnMatchSheet"/> from composition sheets.
+    /// Overview / cockpit may omit this (flags stay false).
+    /// </param>
     /// <returns>Organisation view DTO.</returns>
-    public static OrganisationViewDto Assemble(Competition competition, IReadOnlyList<Stage> stages)
+    public static OrganisationViewDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<Match>? competitionMatches = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -54,7 +63,7 @@ public static class OrganisationViewAssembler
         var primary = ResolvePrimaryStage(competition, stages);
         var format = BuildFormatSummary(primary);
         var structure = BuildStructureSummary(primary);
-        var participants = BuildParticipants(competition);
+        var participants = BuildParticipants(competition, competitionMatches ?? []);
         var regulation = BuildRegulation(competition);
         var attachedMatchCount = CountAttachedMatches(primary);
         var readiness = BuildReadiness(competition, primary, format.Kind, structure, attachedMatchCount);
@@ -94,8 +103,11 @@ public static class OrganisationViewAssembler
         return stages.FirstOrDefault(stage => stage.Id.Equals(primaryId));
     }
 
-    private static OrganisationParticipantsSummaryDto BuildParticipants(Competition competition)
+    private static OrganisationParticipantsSummaryDto BuildParticipants(
+        Competition competition,
+        IReadOnlyList<Match> competitionMatches)
     {
+        var sheetReferenced = BuildSheetReferencedMemberIds(competitionMatches);
         var entries = competition.Entries
             .Select(entry => new OrganisationEntryDto(
                 entry.Id.Value,
@@ -109,12 +121,35 @@ public static class OrganisationViewAssembler
                     .. entry.DeclaredMembers.Select(member => new DeclaredMemberDto(
                         member.Id.Value,
                         member.DisplayName,
-                        member.Role))
+                        member.Role,
+                        sheetReferenced.Contains((entry.Id, member.Id))))
                 ]))
             .ToList();
         var active = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
         var occupying = competition.Entries.Count(entry => entry.IsOccupying);
         return new OrganisationParticipantsSummaryDto(active, occupying, entries);
+    }
+
+    /// <summary>
+    /// Members still listed on a match composition sheet for their entry side
+    /// (same gate as <c>RemoveDeclaredMember</c> for that entry + member).
+    /// </summary>
+    private static HashSet<(EntryId EntryId, MemberId MemberId)> BuildSheetReferencedMemberIds(
+        IReadOnlyList<Match> competitionMatches)
+    {
+        var referenced = new HashSet<(EntryId, MemberId)>();
+        foreach (var match in competitionMatches)
+        {
+            foreach (var participation in match.DeclaredParticipations)
+            {
+                var entryId = participation.Side == Side.Home
+                    ? match.HomeEntryId
+                    : match.AwayEntryId;
+                referenced.Add((entryId, participation.Id));
+            }
+        }
+
+        return referenced;
     }
 
     private static OrganisationRegulationSummaryDto BuildRegulation(Competition competition)

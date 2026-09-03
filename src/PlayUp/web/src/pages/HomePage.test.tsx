@@ -100,7 +100,9 @@ describe('HomePage', () => {
 
     renderHomePage()
 
-    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
+    const status = screen.getByRole('status')
+    expect(status).toHaveTextContent('Chargement…')
+    expect(status).toHaveClass('ds-wait--home')
   })
 
   it('shows first-run empty state with create CTA', async () => {

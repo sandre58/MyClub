@@ -12,9 +12,9 @@ alwaysApply: false
 - **Expressive animations** (exactly two):
   1. **Live pulse** — green dot next to a live minute/match. Slow (~2s),
      subtle opacity/scale pulse.
-  2. **Wait ring** — orbit around the Accueil mark on page/region loading
-     (`WaitMark`). ~0.65s linear rotation. Label centered under the orbit.
-     Buttons use a `currentColor` spinner, not the mark.
+  2. **Wait ring** — orbit around the Accueil mark (`WaitMark`, sizes
+     `home` / `page` / `region`). ~0.65s linear rotation. Label centered
+     under the orbit. Buttons use a `currentColor` spinner, not the mark.
 - **`prefers-reduced-motion`**: pulse and wait ring become static,
   transitions drop to none. Always honored.
 - Forbidden: animated gradients, bouncing icons, confetti/celebration

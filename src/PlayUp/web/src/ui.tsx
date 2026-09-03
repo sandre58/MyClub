@@ -4,7 +4,10 @@ import type { ReactNode } from 'react'
 import { ApiError } from './api'
 import { apiErrorLabel } from './i18n/apiErrorLabel'
 import { Status, statusToneFromLegacy } from './design-system/components/Status'
-import { WaitMark } from './design-system/components/WaitMark'
+import {
+  WaitMark,
+  type WaitSize,
+} from './design-system/components/WaitMark'
 import type {
   CompetitionStatus,
   DrawResolutionState,
@@ -221,7 +224,7 @@ export function LoadingState({
   size = 'page',
 }: {
   label?: string
-  size?: 'page' | 'region'
+  size?: WaitSize
 }) {
   const { t } = useTranslation('common')
   const text = label ?? t('loading')

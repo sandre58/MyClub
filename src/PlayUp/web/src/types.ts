@@ -101,6 +101,8 @@ export interface DeclaredMember {
   memberId: string
   displayName: string
   role: DeclaredMemberRole
+  /** True when still listed on a match composition sheet — remove is blocked. */
+  referencedOnMatchSheet?: boolean
 }
 
 /** POST .../declared-members — SPA always sends Player. */

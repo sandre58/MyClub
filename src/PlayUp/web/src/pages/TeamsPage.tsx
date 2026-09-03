@@ -29,6 +29,7 @@ import { CloseIcon } from '../design-system/icons/shellIcons'
 import {
   EmptySelectionIcon,
   LayersIcon,
+  PersonIcon,
   PencilIcon,
   PlusIcon,
   TrashIcon,
@@ -42,7 +43,12 @@ import {
   PendingLabel,
   StatusBadge,
 } from '../ui'
-import type { OrganisationEntry, OrganisationView } from '../types'
+import { entryStatusLabel } from '../i18n/enumLabels'
+import type {
+  EntryStatus,
+  OrganisationEntry,
+  OrganisationView,
+} from '../types'
 import { TeamRosterDrawer } from './TeamRosterDrawer'
 import './teams.css'
 
@@ -106,10 +112,13 @@ function TeamsView({
   const canWithdraw = can('WithdrawEntry')
   const atCap = data.participants.occupyingCount >= data.regulation.maximumTeams
   const canAdd = canAddAction && !atCap
-  const showMaxHelper = canAddAction && atCap
-  const emptyCount = canAdd
-    ? Math.max(0, data.regulation.minimumTeams - data.participants.activeCount)
-    : 0
+  const showPlateauReading =
+    data.status === 'Draft' || data.status === 'Ready'
+  const missingMinimum = Math.max(
+    0,
+    data.regulation.minimumTeams - data.participants.activeCount,
+  )
+  const emptyCount = canAdd ? missingMinimum : 0
   const entries = data.participants.entries
   const teamsHref = `/competitions/${data.competitionId}/teams`
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
@@ -275,9 +284,55 @@ function TeamsView({
       <div className="teams__layout">
         <div className="teams__main">
           <header className="teams__head">
-            <h1 className="teams__title">{t('title')}</h1>
+            <div className="teams__title-cluster">
+              <h1 className="teams__title">{t('title')}</h1>
+              {showPlateauReading && (
+                <div className="teams__plateau" role="status">
+                  <div className="teams__plateau-cards">
+                    <div className="teams__plateau-card">
+                      <p className="teams__plateau-cardLabel">
+                        {t('plateauLabel')}
+                      </p>
+                      <p className="teams__plateau-cardValue">
+                        <span className="ds-num ds-num-counter">
+                          {data.participants.occupyingCount}
+                        </span>
+                        <span className="teams__plateau-cardMax" aria-hidden="true">
+                          /{data.regulation.maximumTeams}
+                        </span>
+                      </p>
+                    </div>
+
+                    {missingMinimum > 0 ? (
+                      <p
+                        className={
+                          missingMinimum === 1
+                            ? 'ds-notice ds-notice--danger teams__plateau-notice'
+                            : 'ds-notice ds-notice--warning teams__plateau-notice'
+                        }
+                      >
+                        {t('plateauMissing', { count: missingMinimum })}
+                      </p>
+                    ) : atCap ? (
+                      <p className="ds-notice ds-notice--info teams__plateau-notice">
+                        {t('maxHelper', {
+                          count: data.participants.occupyingCount,
+                        })}
+                      </p>
+                    ) : (
+                      <p className="teams__plateau-subtle">
+                        {t('plateauMinimumOk', {
+                          count: data.participants.activeCount,
+                          min: data.regulation.minimumTeams,
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             {selectedCount >= 1 ? (
-              <div className="ds-panel teams-bar" role="status">
+              <div className="teams-bar" role="status">
                 <p className="teams-bar__count">
                   {t('selectionCount', { count: selectedCount })}
                 </p>
@@ -322,20 +377,15 @@ function TeamsView({
             </button>
           </header>
 
-          {showMaxHelper && (
-            <p className="ds-notice ds-notice--info" role="status">
-              {t('maxHelper', {
-                count: data.participants.occupyingCount,
-              })}
-            </p>
-          )}
-
           {mutationError && <MutationError error={mutationError} />}
 
           <ul className="teams__grid">
             {entries.map((entry) => {
               const selected = selectedIds.includes(entry.entryId)
               const withdrawn = entry.status === 'Withdrawn'
+              const playerCount = (entry.declaredMembers ?? []).filter(
+                (member) => member.role === 'Player',
+              ).length
               const tileCanRemove =
                 removeEnabled && !(removing === 'withdraw' && withdrawn)
               const tileRemoveHint = withdrawn && removing === 'withdraw'
@@ -347,6 +397,7 @@ function TeamsView({
                 removing === 'delete'
                   ? t('deleteEntryNamed', { name: entry.displayName })
                   : t('withdrawEntryNamed', { name: entry.displayName })
+              const statusBadge = tileStatusBadge(entry.status, t)
               return (
                 <li key={entry.entryId}>
                   <article
@@ -411,7 +462,13 @@ function TeamsView({
                         <p className="teams-tile__name">{entry.displayName}</p>
                       </span>
                       <span className="teams-tile__meta">
-                        <span className="teams-tile__meta-slot" />
+                        <span
+                          className="teams-tile__meta-slot teams-tile__players"
+                          aria-label={t('playerCount', { count: playerCount })}
+                        >
+                          <PersonIcon size="sm" />
+                          <span className="ds-num">{playerCount}</span>
+                        </span>
                         <span className="teams-tile__swatches" aria-hidden="true">
                           <span
                             className="teams-tile__swatch"
@@ -427,11 +484,7 @@ function TeamsView({
                           />
                         </span>
                         <span className="teams-tile__meta-slot">
-                          {withdrawn && (
-                            <StatusBadge tone="warn" density="compact">
-                              {t('withdrawnBadge')}
-                            </StatusBadge>
-                          )}
+                          {statusBadge}
                         </span>
                       </span>
                     </button>
@@ -732,6 +785,34 @@ function IdentityFields({
       </div>
     </>
   )
+}
+
+function tileStatusBadge(
+  status: EntryStatus,
+  t: (key: string) => string,
+): ReactNode {
+  if (status === 'Withdrawn') {
+    return (
+      <StatusBadge tone="warn" density="compact">
+        {t('withdrawnBadge')}
+      </StatusBadge>
+    )
+  }
+  if (status === 'Qualified') {
+    return (
+      <StatusBadge tone="info" density="compact">
+        {entryStatusLabel(status)}
+      </StatusBadge>
+    )
+  }
+  if (status === 'Eliminated') {
+    return (
+      <StatusBadge tone="done" density="compact">
+        {entryStatusLabel(status)}
+      </StatusBadge>
+    )
+  }
+  return null
 }
 
 function TeamsDialog({

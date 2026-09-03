@@ -69,7 +69,7 @@ export function HomePage() {
       <main id="main" className="ds-home__main">
         <HomeBrand lede={isEmpty ? tc('emptyHint') : t('lede')} />
 
-        {query.isPending && <LoadingState />}
+        {query.isPending && <LoadingState size="home" />}
 
         {query.isError && <ErrorState error={query.error} />}
 

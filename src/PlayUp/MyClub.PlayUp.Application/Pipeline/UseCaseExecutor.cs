@@ -1329,7 +1329,11 @@ public sealed class UseCaseExecutor(
             loadedStages.Add(stage);
         }
 
-        return OrganisationViewAssembler.Assemble(competition, loadedStages);
+        var matchesByStage = await LoadMatchesByStageAsync(loadedStages, cancellationToken)
+            .ConfigureAwait(false);
+        IReadOnlyList<Match> competitionMatches =
+            [.. matchesByStage.Values.SelectMany(stageMatches => stageMatches)];
+        return OrganisationViewAssembler.Assemble(competition, loadedStages, competitionMatches);
     }
 
     /// <summary>

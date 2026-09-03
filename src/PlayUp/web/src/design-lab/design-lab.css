@@ -211,6 +211,7 @@
   font-size: var(--text-label);
 }
 
+.dlab-wait--home,
 .dlab-wait--page {
   padding: var(--space-24) 0;
 }

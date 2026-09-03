@@ -9,7 +9,7 @@ alwaysApply: false
 ## Width strategy
 
 Content is **fluid at 100%** of the main region width, with **constant lateral
-gutters only** (`--space-24` on the main padding). No centered max-width column.
+gutters only** (`--space-16` on the main padding). No centered max-width column.
 
 - Operational surfaces (Overview, Match, Calendrier, Classements): fill the main
   area edge-to-gutter.

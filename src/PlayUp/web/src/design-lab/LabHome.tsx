@@ -31,7 +31,7 @@ export function LabHome({
         />
 
         {waiting ? (
-          <LabWaitAtom kind={waiting} scale="page" />
+          <LabWaitAtom kind={waiting} scale="home" />
         ) : empty ? (
           <div className="ds-empty">
             <button type="button" className="ds-btn ds-btn--primary">

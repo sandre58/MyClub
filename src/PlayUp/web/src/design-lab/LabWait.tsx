@@ -1,8 +1,11 @@
-import { WaitMark } from '../design-system/components/WaitMark'
+import {
+  WaitMark,
+  type WaitSize,
+} from '../design-system/components/WaitMark'
 import { PanelHead } from '../design-system/components/PanelHead'
 
 export type LabWaitKind = 'b' | 'c'
-export type LabWaitScale = 'page' | 'region' | 'button'
+export type LabWaitScale = WaitSize | 'button'
 
 /**
  * Atome d'attente Lab — B spinner + barre (rejeté) · C WaitMark (retenu 2026-09-03).
@@ -19,9 +22,7 @@ export function LabWaitAtom({
   const text = label ?? (scale === 'button' ? 'Traitement…' : 'Chargement…')
 
   if (kind === 'c' && scale !== 'button') {
-    return (
-      <WaitMark size={scale === 'region' ? 'region' : 'page'}>{text}</WaitMark>
-    )
+    return <WaitMark size={scale}>{text}</WaitMark>
   }
 
   const showBar = kind === 'b' && scale !== 'button'
@@ -88,9 +89,9 @@ export function LabWait() {
         <h1 className="ds-heading">États d’attente</h1>
         <p className="ds-body">
           Retenu : C — mark Accueil statique, anneau qui tourne, label centré
-          sous l’animation. Produit : <code>WaitMark</code> /{' '}
-          <code>LoadingState</code>. Boutons : spinner (le PNG n’est pas un
-          glyphe de contrôle).
+          sous l’animation. Tailles : Accueil (home) · page · région. Produit :{' '}
+          <code>WaitMark</code> / <code>LoadingState</code>. Boutons : spinner
+          (le PNG n’est pas un glyphe de contrôle).
         </p>
       </header>
 
@@ -102,7 +103,15 @@ export function LabWait() {
         </div>
         <div className="dlab-wait-board__col-head">
           <p className="ds-label">C — marque + anneau (retenu)</p>
-          <p className="ds-meta">WaitMark · label centré sous l’orbite</p>
+          <p className="ds-meta">WaitMark · 3 tailles · label centré</p>
+        </div>
+
+        <p className="dlab-wait-board__row-label ds-eyebrow">Accueil</p>
+        <div className="dlab-wait-board__cell">
+          <LabWaitAtom kind="b" scale="home" />
+        </div>
+        <div className="dlab-wait-board__cell">
+          <LabWaitAtom kind="c" scale="home" />
         </div>
 
         <p className="dlab-wait-board__row-label ds-eyebrow">Page</p>

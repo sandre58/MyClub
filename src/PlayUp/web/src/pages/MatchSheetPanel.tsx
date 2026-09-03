@@ -58,7 +58,7 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
         <p className="ds-notice ds-notice--info">{t('sheet.readOnly')}</p>
       )}
 
-      {organisationQuery.isPending && <LoadingState />}
+      {organisationQuery.isPending && <LoadingState size="region" />}
       {organisationQuery.isError && (
         <ErrorState error={organisationQuery.error} />
       )}

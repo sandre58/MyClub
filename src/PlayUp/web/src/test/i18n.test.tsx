@@ -27,10 +27,18 @@ describe('i18n foundation', () => {
     renderWithI18n(<LoadingState />)
     const status = screen.getByRole('status')
     expect(status).toHaveTextContent('Chargement…')
+    expect(status).toHaveClass('ds-wait--page')
     expect(status.querySelector('.ds-wait__orbit')).not.toBeNull()
     expect(status.querySelector('.ds-wait__label')).toHaveTextContent(
       'Chargement…',
     )
+  })
+
+  it('renders LoadingState size home and region', () => {
+    const { rerender } = renderWithI18n(<LoadingState size="home" />)
+    expect(screen.getByRole('status')).toHaveClass('ds-wait--home')
+    rerender(<LoadingState size="region" />)
+    expect(screen.getByRole('status')).toHaveClass('ds-wait--region')
   })
 })
 
