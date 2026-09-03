@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import {
+  SHELL_PHONE_QUERY,
+  SHELL_TABLET_QUERY,
+} from '../layout/viewportBreakpoints'
 
 export type ShellViewport = 'phone' | 'tablet' | 'desktop'
 
-/** Chrome breakpoints — independent of page grids (40 / 52 / 56 rem). */
-export const SHELL_PHONE_QUERY = '(max-width: 47.999rem)'
-export const SHELL_TABLET_QUERY =
-  '(min-width: 48rem) and (max-width: 63.999rem)'
+export { SHELL_PHONE_QUERY, SHELL_TABLET_QUERY }
 
 export function readShellViewport(
   matchMedia: (query: string) => { matches: boolean } = window.matchMedia,

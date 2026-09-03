@@ -56,29 +56,30 @@ public static class CompetitionDetailAssembler
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stageSummaries);
 
-        if (stageSummaries.Count != competition.StageIds.Count
-            || stageSummaries.Select(row => row.Id).SequenceEqual(competition.StageIds) == false)
+        if (stageSummaries.Count == competition.StageIds.Count
+            && stageSummaries.Select(row => row.Id).SequenceEqual(competition.StageIds))
         {
-            var byId = stageSummaries.ToDictionary(row => row.Id);
-            var ordered = new List<CompetitionStageSummaryDto>(competition.StageIds.Count);
-            foreach (var stageId in competition.StageIds)
-            {
-                if (!byId.TryGetValue(stageId, out var row))
-                {
-                    throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
-                }
-
-                ordered.Add(new CompetitionStageSummaryDto(row.Id.Value, row.Name, row.Status));
-            }
-
-            return AssembleCore(competition, ordered);
+            return AssembleCore(
+                competition,
+                [.. stageSummaries.Select(row => new CompetitionStageSummaryDto(row.Id.Value, row.Name, row.Status))]);
         }
 
-        return AssembleCore(
-            competition,
-            [.. stageSummaries.Select(row => new CompetitionStageSummaryDto(row.Id.Value, row.Name, row.Status))]);
+        var byId = stageSummaries.ToDictionary(row => row.Id);
+        var ordered = new List<CompetitionStageSummaryDto>(competition.StageIds.Count);
+        foreach (var stageId in competition.StageIds)
+        {
+            if (!byId.TryGetValue(stageId, out var row))
+            {
+                throw new ApplicationFailureException(
+                    $"Stage '{stageId}' was not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            }
+
+            ordered.Add(new CompetitionStageSummaryDto(row.Id.Value, row.Name, row.Status));
+        }
+
+        return AssembleCore(competition, ordered);
+
     }
 
     private static CompetitionDetailDto AssembleCore(

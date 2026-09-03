@@ -66,7 +66,7 @@ public sealed class StageOverviewAssemblerTests
         stage.AssignEntryToSlot("SF1-A", home.Id, _clock);
 
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home.Id, away.Id]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home.Id, away.Id]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([new PairingDrawResult(home.Id, away.Id)]),
@@ -93,7 +93,7 @@ public sealed class StageOverviewAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("A", _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry.Id]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry.Id]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry.Id, "A")]),

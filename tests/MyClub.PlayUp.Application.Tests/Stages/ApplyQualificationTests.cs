@@ -155,7 +155,7 @@ public sealed class ApplyQualificationTests
         var groupA = groups.AddGroup("A", _clock);
         foreach (var entry in entries)
         {
-            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupA.Id, entry);
         }
 
         var matches = BuildRoundRobin(groups, entries);
@@ -190,7 +190,7 @@ public sealed class ApplyQualificationTests
         var groupA = groups.AddGroup("A", _clock);
         foreach (var entry in entries)
         {
-            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupA.Id, entry);
         }
 
         var matches = BuildRoundRobin(groups, entries);
@@ -226,12 +226,12 @@ public sealed class ApplyQualificationTests
         var groupB = groups.AddGroup("B", _clock);
         foreach (var entry in aEntries)
         {
-            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupA.Id, entry);
         }
 
         foreach (var entry in bEntries)
         {
-            groups.AssignEntryToGroup(groupB.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupB.Id, entry);
         }
 
         var matchesA = BuildRoundRobin(groups, aEntries);
@@ -287,17 +287,17 @@ public sealed class ApplyQualificationTests
         var groupC = groups.AddGroup("C", _clock);
         foreach (var entry in aEntries)
         {
-            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupA.Id, entry);
         }
 
         foreach (var entry in bEntries)
         {
-            groups.AssignEntryToGroup(groupB.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupB.Id, entry);
         }
 
         foreach (var entry in cEntries)
         {
-            groups.AssignEntryToGroup(groupC.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupC.Id, entry);
         }
 
         var standingA = CalculateStanding.Execute(
@@ -356,7 +356,7 @@ public sealed class ApplyQualificationTests
         var groupA = groups.AddGroup("A", _clock);
         foreach (var entry in entries)
         {
-            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupA.Id, entry);
         }
 
         var standingA = CalculateStanding.Execute(
@@ -395,7 +395,7 @@ public sealed class ApplyQualificationTests
         var groupA = groups.AddGroup("A", _clock);
         foreach (var entry in entries)
         {
-            groups.AssignEntryToGroup(groupA.Id, entry, _clock);
+            groups.AssignEntryToGroup(groupA.Id, entry);
         }
 
         groups.ReplaceQualificationRules(
@@ -766,12 +766,12 @@ public sealed class ApplyQualificationTests
         var b2 = EntryId.New();
         foreach (var e in new[] { a1, a2 })
         {
-            groups.AssignEntryToGroup(groupA.Id, e, _clock);
+            groups.AssignEntryToGroup(groupA.Id, e);
         }
 
         foreach (var e in new[] { b1, b2 })
         {
-            groups.AssignEntryToGroup(groupB.Id, e, _clock);
+            groups.AssignEntryToGroup(groupB.Id, e);
         }
 
         // Identical group results: each winner 1-0, same points/GD/GF.
@@ -967,7 +967,7 @@ public sealed class ApplyQualificationTests
         var third = EntryId.New();
         foreach (var e in new[] { first, second, third })
         {
-            groups.AssignEntryToGroup(groupA.Id, e, _clock);
+            groups.AssignEntryToGroup(groupA.Id, e);
         }
 
         var standingA = ManualStanding([(first, 1, 50), (second, 2, 45), (third, 3, 42)]);
@@ -1228,7 +1228,7 @@ public sealed class ApplyQualificationTests
             var entries = CreateEntries(teamsPerGroup);
             foreach (var entry in entries)
             {
-                groupsStage.AssignEntryToGroup(group.Id, entry, _clock);
+                groupsStage.AssignEntryToGroup(group.Id, entry);
             }
 
             matches.AddRange(BuildRoundRobin(groupsStage, entries, goalOffset: strengthSpread ? g : 0));

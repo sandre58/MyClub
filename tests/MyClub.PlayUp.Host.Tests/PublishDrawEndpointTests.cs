@@ -109,7 +109,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         stage.AddSlot("A", _clock);
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         if (resolved)
         {
             stage.RecordDrawResolution(

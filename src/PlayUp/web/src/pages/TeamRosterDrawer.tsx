@@ -19,7 +19,10 @@ import {
   renameDeclaredMember,
 } from '../api'
 import { TeamCrest } from '../design-system/TeamCrest'
-import { ChevronDownIcon } from '../design-system/icons/shellIcons'
+import {
+  ChevronDownIcon,
+  SidebarCollapseIcon,
+} from '../design-system/icons/shellIcons'
 import {
   PencilIcon,
   PersonIcon,
@@ -154,9 +157,11 @@ function kitAvatarStyle(
 export function TeamRosterDrawer({
   data,
   entryId,
+  onBack,
 }: {
   data: OrganisationView
   entryId: string
+  onBack?: () => void
 }) {
   const { t } = useTranslation('teams')
   const queryClient = useQueryClient()
@@ -292,6 +297,16 @@ export function TeamRosterDrawer({
 
   return (
     <>
+      {onBack && (
+        <button
+          type="button"
+          className="teams-drawer__back"
+          onClick={onBack}
+        >
+          <SidebarCollapseIcon size="sm" aria-hidden="true" />
+          {t('title')}
+        </button>
+      )}
       <header className="teams-drawer__head">
         <div className="teams-drawer__identity">
           <TeamCrest

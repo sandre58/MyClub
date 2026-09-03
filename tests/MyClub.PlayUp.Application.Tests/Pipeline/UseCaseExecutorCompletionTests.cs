@@ -166,7 +166,7 @@ public sealed class UseCaseExecutorCompletionTests
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<MatchAttentionSlice>>
                 {
-                    [stage.Id] = [.. matches.Select(MatchAttentionSlice.FromMatch)],
+                    [stage.Id] = [.. matches.Select(MatchAttentionSlice.FromMatch)]
                 });
             matchRepo
                 .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
@@ -174,7 +174,7 @@ public sealed class UseCaseExecutorCompletionTests
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>
                 {
-                    [stage.Id] = matches,
+                    [stage.Id] = matches
                 });
         }
         else

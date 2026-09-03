@@ -56,7 +56,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
             stage.AddSlot("SF1", _clock);
             stage.AddSlot("SF2", _clock);
             var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-            stage.ConfigureDrawInputs(draw.Id, inputs, _clock);
+            stage.ConfigureDrawInputs(draw.Id, inputs);
             stage.RecordDrawResolution(draw.Id, resolution, _clock);
             stage.PublishDraw(draw.Id, _clock);
             stageId = stage.Id;
@@ -97,7 +97,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
             var stage = Stage.Create(competition.Id, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
             var entry = EntryId.New();
             var noSolution = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-            stage.ConfigureDrawInputs(noSolution.Id, DrawInputs.ForSlot([entry]), _clock);
+            stage.ConfigureDrawInputs(noSolution.Id, DrawInputs.ForSlot([entry]));
             stage.MarkDrawNoSolution(noSolution.Id, _clock);
 
             var cancelled = stage.CreateDraw(DrawResolutionKind.Group, _clock);

@@ -26,6 +26,6 @@ public sealed record StageReadCapabilities(
             StageLoadProfile.Full => new StageReadCapabilities(StageLoadProfile.Full),
             StageLoadProfile.Structure => new StageReadCapabilities(StageLoadProfile.Structure),
             StageLoadProfile.Summary => new StageReadCapabilities(StageLoadProfile.Summary),
-            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null)
         };
 }

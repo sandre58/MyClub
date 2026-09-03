@@ -36,6 +36,6 @@ public static class ConfigureDrawInputs
         }
 
         inputs.EnsureCompatibleWith(draw.Kind);
-        stage.ConfigureDrawInputs(drawId, inputs, clock);
+        stage.ConfigureDrawInputs(drawId, inputs);
     }
 }

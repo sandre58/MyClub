@@ -28,7 +28,7 @@ public sealed class StageGroupsTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.AssignEntryToGroup(group.Id, entryId, _clock);
+        stage.AssignEntryToGroup(group.Id, entryId);
 
         // Assert
         group.EntryIds.Should().ContainSingle().Which.Should().Be(entryId);
@@ -42,13 +42,13 @@ public sealed class StageGroupsTests
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
-        stage.AssignEntryToGroup(group.Id, entryId, _clock);
+        stage.AssignEntryToGroup(group.Id, entryId);
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
         // Act
-        stage.AssignEntryToGroup(group.Id, entryId, _clock);
+        stage.AssignEntryToGroup(group.Id, entryId);
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);
@@ -64,10 +64,10 @@ public sealed class StageGroupsTests
         var groupA = stage.AddGroup("A", _clock);
         var groupB = stage.AddGroup("B", _clock);
         var entryId = EntryId.New();
-        stage.AssignEntryToGroup(groupA.Id, entryId, _clock);
+        stage.AssignEntryToGroup(groupA.Id, entryId);
 
         // Act
-        var act = () => stage.AssignEntryToGroup(groupB.Id, entryId, _clock);
+        var act = () => stage.AssignEntryToGroup(groupB.Id, entryId);
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DuplicateEntry);
@@ -82,7 +82,7 @@ public sealed class StageGroupsTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
 
         // Assert
         stage.Status.Should().Be(StageStatus.Draft);
@@ -96,8 +96,8 @@ public sealed class StageGroupsTests
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
-        stage.AssignEntryToGroup(group.Id, entryId, _clock);
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, entryId);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
@@ -131,7 +131,7 @@ public sealed class StageGroupsTests
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
         var b = stage.AddGroup("B", _clock);
-        stage.AssignEntryToGroup(a.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(a.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
@@ -194,7 +194,7 @@ public sealed class StageGroupsTests
         // Arrange & Act
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
 
@@ -237,7 +237,7 @@ public sealed class StageGroupsTests
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         return stage;

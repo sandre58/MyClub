@@ -50,6 +50,7 @@ import type {
   OrganisationView,
 } from '../types'
 import { TeamRosterDrawer } from './TeamRosterDrawer'
+import { isTeamsNarrowViewport } from '../layout/viewportBreakpoints'
 import './teams.css'
 
 async function invalidateAfterTeamsMutation(
@@ -134,9 +135,18 @@ function TeamsView({
       ? undefined
       : entries.find((entry) => entry.entryId === identityEntryId)
 
-  function goToSelection(nextIds: string[]) {
+  function goToSelection(nextIds: string[], options?: { openRoster?: boolean }) {
     setSelectedIds(nextIds)
-    if (nextIds.length === 1) {
+    if (nextIds.length === 0) {
+      navigate(teamsHref, { replace: true })
+      return
+    }
+    if (nextIds.length >= 2) {
+      navigate(teamsHref, { replace: true })
+      return
+    }
+    const openRoster = options?.openRoster === true
+    if (openRoster || !isTeamsNarrowViewport()) {
       navigate(`${teamsHref}/${nextIds[0]}`, { replace: true })
       return
     }
@@ -236,7 +246,7 @@ function TeamsView({
 
   function onTileBody(entryId: string) {
     if (selectedCount < 2) {
-      goToSelection([entryId])
+      goToSelection([entryId], { openRoster: true })
       return
     }
     if (selectedIds.includes(entryId)) {
@@ -278,8 +288,15 @@ function TeamsView({
   const compactIcon =
     'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact'
 
+  const rosterOpen =
+    selectedCount === 1 &&
+    routeEntryId != null &&
+    routeEntryId === selectedIds[0]
+  const teamsView =
+    selectedCount >= 2 ? 'multi' : rosterOpen ? 'detail' : 'list'
+
   return (
-    <div className="teams">
+    <div className="teams" data-teams-view={teamsView}>
       <div className="teams__layout">
         <div className="teams__main">
           <header className="teams__head">
@@ -295,59 +312,62 @@ function TeamsView({
                   </>
                 )}
               </h1>
-              {selectedCount >= 1 ? (
-                <div className="teams-bar" role="status">
-                  <p className="teams-bar__count">
-                    {t('selectionCount', { count: selectedCount })}
-                  </p>
-                  <div className="ds-icon-toolbar">
-                    <button
-                      type="button"
-                      className={compactIcon}
-                      disabled={!barRemoveEnabled || removePending}
-                      title={barRemoveHint}
-                      aria-label={removeLabel}
-                      onClick={() => confirmAndRemove(selectedIds)}
-                    >
-                      {removing === 'delete' ? (
-                        <TrashIcon size="sm" />
-                      ) : (
-                        <WithdrawIcon size="sm" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={compactIcon}
-                      title={t('clearSelection')}
-                      aria-label={t('clearSelection')}
-                      onClick={() => goToSelection([])}
-                    >
-                      <CloseIcon size="sm" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <span className="teams__head-fill" aria-hidden="true" />
-              )}
-              <button
-                type="button"
-                className="ds-btn ds-btn--primary teams__add"
-                disabled={!canAdd}
-                title={canAdd ? t('addAction') : t('addDisabledHint')}
-                onClick={() => setAddOpen(true)}
-              >
-                <PlusIcon size="sm" />
-                {t('addAction')}
-              </button>
             </div>
-            {showPlateauReading && (
-              <TeamsPlateauReading
-                activeCount={data.participants.activeCount}
-                occupyingCount={data.participants.occupyingCount}
-                minimumTeams={data.regulation.minimumTeams}
-                maximumTeams={data.regulation.maximumTeams}
-              />
-            )}
+            <div className="teams__ops-row">
+              {showPlateauReading && (
+                <TeamsPlateauReading
+                  activeCount={data.participants.activeCount}
+                  occupyingCount={data.participants.occupyingCount}
+                  minimumTeams={data.regulation.minimumTeams}
+                  maximumTeams={data.regulation.maximumTeams}
+                />
+              )}
+              <div className="teams__ops-tail">
+                {selectedCount >= 1 && (
+                  <div className="teams-bar" role="status">
+                    <p className="teams-bar__count">
+                      {t('selectionCount', { count: selectedCount })}
+                    </p>
+                    <div className="ds-icon-toolbar">
+                      <button
+                        type="button"
+                        className={compactIcon}
+                        disabled={!barRemoveEnabled || removePending}
+                        title={barRemoveHint}
+                        aria-label={removeLabel}
+                        onClick={() => confirmAndRemove(selectedIds)}
+                      >
+                        {removing === 'delete' ? (
+                          <TrashIcon size="sm" />
+                        ) : (
+                          <WithdrawIcon size="sm" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={compactIcon}
+                        title={t('clearSelection')}
+                        aria-label={t('clearSelection')}
+                        onClick={() => goToSelection([])}
+                      >
+                        <CloseIcon size="sm" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--primary teams__add"
+                  disabled={!canAdd}
+                  title={canAdd ? t('addAction') : t('addDisabledHint')}
+                  aria-label={t('addAction')}
+                  onClick={() => setAddOpen(true)}
+                >
+                  <PlusIcon size="sm" />
+                  <span className="teams__add-label">{t('addAction')}</span>
+                </button>
+              </div>
+            </div>
           </header>
 
           {mutationError && <MutationError error={mutationError} />}
@@ -508,7 +528,11 @@ function TeamsView({
             </div>
           )}
           {drawerEntryId && (
-            <TeamRosterDrawer data={data} entryId={drawerEntryId} />
+            <TeamRosterDrawer
+              data={data}
+              entryId={drawerEntryId}
+              onBack={() => goToSelection([])}
+            />
           )}
         </aside>
       </div>

@@ -58,7 +58,7 @@ public sealed class PipelineCompositionTests
         pool.Should().BeEquivalentTo([a, d]);
 
         var draw = sf.CreateDraw(DrawResolutionKind.Slot, _clock);
-        sf.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool), _clock);
+        sf.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool));
         sf.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots(
@@ -88,7 +88,7 @@ public sealed class PipelineCompositionTests
         var away = EntryId.New();
 
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([new PairingDrawResult(home, away)]),
@@ -194,7 +194,7 @@ public sealed class PipelineCompositionTests
         var c = EntryId.New();
         var d = EntryId.New();
         var draw = groups.CreateDraw(DrawResolutionKind.Group, _clock);
-        groups.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([a, b, c, d]), _clock);
+        groups.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([a, b, c, d]));
         groups.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedGroups(
@@ -281,7 +281,7 @@ public sealed class PipelineCompositionTests
         pool.Should().BeEquivalentTo([a, d]);
 
         var drawSf = sf.CreateDraw(DrawResolutionKind.Slot, _clock);
-        sf.ConfigureDrawInputs(drawSf.Id, DrawInputs.ForSlot(pool), _clock);
+        sf.ConfigureDrawInputs(drawSf.Id, DrawInputs.ForSlot(pool));
         sf.RecordDrawResolution(
             drawSf.Id,
             DrawResolution.ResolvedSlots(
@@ -305,7 +305,7 @@ public sealed class PipelineCompositionTests
     private Draw PublishPairing(Stage stage, EntryId[] pool, PairingDrawResult pairing)
     {
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(pool), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(pool));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([pairing]),

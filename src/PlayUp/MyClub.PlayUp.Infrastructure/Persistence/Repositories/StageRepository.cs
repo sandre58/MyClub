@@ -203,7 +203,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .Include(candidate => candidate.Penalties)
                 .Include(candidate => candidate.MatchPlacements)
                 .Include(candidate => candidate.SwissByeHistory),
-            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null)
         };
 
     private async Task HydrateOrderedCollectionsAsync(Stage stage, CancellationToken cancellationToken)

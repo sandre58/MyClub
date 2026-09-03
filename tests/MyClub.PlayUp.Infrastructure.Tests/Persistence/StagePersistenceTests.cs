@@ -215,8 +215,8 @@ public sealed class StagePersistenceTests
         {
             var stage = Stage.Create(CompetitionId.New(), new StageName("Poules"), SampleRegulations.Standard(), _clock);
             var group = stage.AddGroup("Group A", _clock);
-            stage.AssignEntryToGroup(group.Id, entryA, _clock);
-            stage.AssignEntryToGroup(group.Id, entryB, _clock);
+            stage.AssignEntryToGroup(group.Id, entryA);
+            stage.AssignEntryToGroup(group.Id, entryB);
             stage.AddGroup("Group B", _clock);
             stage.ArrangeGroups([stage.Groups[1].Id, stage.Groups[0].Id], _clock);
 
@@ -322,9 +322,9 @@ public sealed class StagePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var stage = Stage.Create(CompetitionId.New(), new StageName("Swiss"), SampleRegulations.Standard(), _clock);
-            stage.SetSwissSettings(new SwissSettings(3), _clock);
+            stage.SetSwissSettings(new SwissSettings(3));
             stage.AddMatchday(1, _clock);
-            stage.RecordSwissBye(1, byeEntry, _clock);
+            stage.RecordSwissBye(1, byeEntry);
             stageId = stage.Id;
             new StageRepository(context).Add(stage);
             await ((IUnitOfWork)context).SaveChangesAsync();

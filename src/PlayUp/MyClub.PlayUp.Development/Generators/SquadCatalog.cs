@@ -95,13 +95,7 @@ public sealed class SquadCatalog
                     $"Squad '{displayName}' must declare at least 11 players (found {members.Count}).");
             }
 
-            foreach (var staffName in squad.Staff)
-            {
-                if (!string.IsNullOrWhiteSpace(staffName))
-                {
-                    members.Add(new GeneratedSquadMember(staffName.Trim(), DeclaredMemberRole.Staff, null));
-                }
-            }
+            members.AddRange(from staffName in squad.Staff where !string.IsNullOrWhiteSpace(staffName) select new GeneratedSquadMember(staffName.Trim(), DeclaredMemberRole.Staff, null));
 
             byName[displayName] = new ReadOnlyCollection<GeneratedSquadMember>(members);
         }

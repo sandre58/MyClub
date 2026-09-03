@@ -153,10 +153,10 @@ public sealed class MaterializeMatchesTests
             StructureIntent.Groups(2, 2, matchGenerationFormat: MatchGenerationFormat.DoubleRoundRobin),
             _clock);
         var stage = configured.Stage;
-        stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id, _clock);
-        stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id, _clock);
-        stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id, _clock);
-        stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
 
         var result = MaterializeMatches.Execute(competition, stage, [], _clock);
 
@@ -179,10 +179,10 @@ public sealed class MaterializeMatchesTests
             StructureIntent.Groups(2, 2),
             _clock);
         var stage = configured.Stage;
-        stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id, _clock);
-        stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id, _clock);
-        stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id, _clock);
-        stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
 
         var result = MaterializeMatches.Execute(competition, stage, [], _clock);
         result.CreatedMatches.Should().HaveCount(2); // 1 pair per group of 2

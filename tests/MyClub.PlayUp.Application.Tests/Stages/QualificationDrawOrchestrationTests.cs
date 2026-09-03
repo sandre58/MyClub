@@ -59,7 +59,7 @@ public sealed class QualificationDrawOrchestrationTests
         });
 
         var draw = knockout.CreateDraw(DrawResolutionKind.Slot, _clock);
-        knockout.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool, seedMap), _clock);
+        knockout.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool, seedMap));
         knockout.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots(

@@ -151,7 +151,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         stage.AddSlot("SF1-A", _clock);
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "SF1-A")]),
@@ -177,7 +177,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         stage.AssignEntryToSlot("SF1-A", directEntry, _clock);
         var drawEntry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([drawEntry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([drawEntry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(drawEntry, "SF1-A")]),

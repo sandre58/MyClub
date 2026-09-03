@@ -30,7 +30,7 @@ public sealed class StageSwissTests
     {
         var stage = CreateDraft();
 
-        stage.SetSwissSettings(new SwissSettings(3), _clock);
+        stage.SetSwissSettings(new SwissSettings(3));
 
         stage.IsSwiss.Should().BeTrue();
         stage.SwissSettings!.RoundCount.Should().Be(3);
@@ -44,7 +44,7 @@ public sealed class StageSwissTests
         var stage = CreateDraft();
         stage.AddGroup("A", _clock);
 
-        var act = () => stage.SetSwissSettings(new SwissSettings(3), _clock);
+        var act = () => stage.SetSwissSettings(new SwissSettings(3));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidComposition);
     }
@@ -55,7 +55,7 @@ public sealed class StageSwissTests
         var stage = CreateDraft();
         stage.AddRound("QF", _clock);
 
-        var act = () => stage.SetSwissSettings(new SwissSettings(3), _clock);
+        var act = () => stage.SetSwissSettings(new SwissSettings(3));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidComposition);
     }
@@ -66,7 +66,7 @@ public sealed class StageSwissTests
         var stage = CreateDraft();
         stage.AddSlot("SF1-A", _clock);
 
-        var act = () => stage.SetSwissSettings(new SwissSettings(3), _clock);
+        var act = () => stage.SetSwissSettings(new SwissSettings(3));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidComposition);
     }
@@ -106,7 +106,7 @@ public sealed class StageSwissTests
     {
         var stage = CreateSwiss(3);
 
-        stage.SetSwissSettings(null, _clock);
+        stage.SetSwissSettings(null);
 
         stage.IsSwiss.Should().BeFalse();
         stage.SwissSettings.Should().BeNull();
@@ -116,9 +116,9 @@ public sealed class StageSwissTests
     public void ClearSwissSettings_rejects_when_bye_history_present()
     {
         var stage = CreateSwiss(3);
-        stage.RecordSwissBye(1, EntryId.New(), _clock);
+        stage.RecordSwissBye(1, EntryId.New());
 
-        var act = () => stage.SetSwissSettings(null, _clock);
+        var act = () => stage.SetSwissSettings(null);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SwissSettingsInvalid);
     }
@@ -129,7 +129,7 @@ public sealed class StageSwissTests
         var stage = CreateSwiss(3);
         var entry = EntryId.New();
 
-        stage.RecordSwissBye(1, entry, _clock);
+        stage.RecordSwissBye(1, entry);
 
         stage.SwissByeHistory.Should().ContainSingle()
             .Which.Should().Be(new SwissBye(1, entry));
@@ -141,9 +141,9 @@ public sealed class StageSwissTests
     public void RecordSwissBye_rejects_duplicate_round()
     {
         var stage = CreateSwiss(3);
-        stage.RecordSwissBye(1, EntryId.New(), _clock);
+        stage.RecordSwissBye(1, EntryId.New());
 
-        var act = () => stage.RecordSwissBye(1, EntryId.New(), _clock);
+        var act = () => stage.RecordSwissBye(1, EntryId.New());
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SwissByeInvalid);
     }
@@ -153,7 +153,7 @@ public sealed class StageSwissTests
     {
         var stage = CreateSwiss(2);
 
-        var act = () => stage.RecordSwissBye(3, EntryId.New(), _clock);
+        var act = () => stage.RecordSwissBye(3, EntryId.New());
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SwissByeInvalid);
     }
@@ -163,7 +163,7 @@ public sealed class StageSwissTests
     {
         var stage = CreateDraft();
 
-        var act = () => stage.RecordSwissBye(1, EntryId.New(), _clock);
+        var act = () => stage.RecordSwissBye(1, EntryId.New());
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SwissByeInvalid);
     }
@@ -176,7 +176,7 @@ public sealed class StageSwissTests
         stage.Start(_clock);
 
         var entry = EntryId.New();
-        stage.RecordSwissBye(1, entry, _clock);
+        stage.RecordSwissBye(1, entry);
 
         stage.SwissByeHistory.Should().ContainSingle().Which.EntryId.Should().Be(entry);
         stage.Status.Should().Be(StageStatus.Running);
@@ -213,7 +213,7 @@ public sealed class StageSwissTests
     private Stage CreateSwiss(int rounds)
     {
         var stage = CreateDraft();
-        stage.SetSwissSettings(new SwissSettings(rounds), _clock);
+        stage.SetSwissSettings(new SwissSettings(rounds));
         return stage;
     }
 }

@@ -21,6 +21,7 @@ internal static class MatchEnrichment
 {
     private const int StarterCount = 11;
     private const int MaxBenchCount = 7;
+
     private static readonly TimeSpan[] KickoffTimes =
     [
         new(15, 0, 0),
@@ -74,18 +75,17 @@ internal static class MatchEnrichment
 
         // 0–1 none, 2 start only, 3–9 both — generic scenarios only (no dataset dates).
         var mode = context.Entropy.Next(10);
-        if (mode <= 1)
+        switch (mode)
         {
-            return;
+            case <= 1:
+                return;
+            case 2:
+                competition.SetSchedule(start, null, context.Clock);
+                return;
+            default:
+                competition.SetSchedule(start, end, context.Clock);
+                break;
         }
-
-        if (mode == 2)
-        {
-            competition.SetSchedule(start, null, context.Clock);
-            return;
-        }
-
-        competition.SetSchedule(start, end, context.Clock);
     }
 
     public static void SeedRosters(ScenarioContext context, Competition competition)
@@ -137,7 +137,7 @@ internal static class MatchEnrichment
         }
 
         var horizonStart = competition.ScheduledStart
-            ?? new DateTimeOffset(2025, 8, 16, 0, 0, 0, TimeSpan.Zero);
+                           ?? new DateTimeOffset(2025, 8, 16, 0, 0, 0, TimeSpan.Zero);
         var horizonEnd = competition.ScheduledEnd ?? horizonStart.AddMonths(9);
         if (horizonEnd <= horizonStart)
         {
@@ -317,21 +317,22 @@ internal static class MatchEnrichment
             match.RecordDisciplinaryEvent(member, DisciplinaryType.Yellow, context.Clock);
         }
 
-        if (context.Entropy.Chance(12))
-        {
-            var member = pool[context.Entropy.Next(pool.Count)];
-            match.RecordDisciplinaryEvent(member, DisciplinaryType.Red, context.Clock);
-        }
+        if (!context.Entropy.Chance(12)) return;
+
+        var member1 = pool[context.Entropy.Next(pool.Count)];
+        match.RecordDisciplinaryEvent(member1, DisciplinaryType.Red, context.Clock);
     }
 
     private static void RecordSubstitutions(ScenarioContext context, Match match, Side side)
     {
         var starters = match.DeclaredParticipations
-            .Where(participation => participation.Side == side && participation.CompositionStatus == CompositionStatus.Starter)
+            .Where(participation =>
+                participation.Side == side && participation.CompositionStatus == CompositionStatus.Starter)
             .Select(participation => participation.Id)
             .ToList();
         var bench = match.DeclaredParticipations
-            .Where(participation => participation.Side == side && participation.CompositionStatus == CompositionStatus.Bench)
+            .Where(participation =>
+                participation.Side == side && participation.CompositionStatus == CompositionStatus.Bench)
             .Select(participation => participation.Id)
             .ToList();
         if (starters.Count == 0 || bench.Count == 0)
@@ -349,7 +350,9 @@ internal static class MatchEnrichment
     }
 
     private static IReadOnlyList<MemberId> OnSheet(Match match, Side side) =>
-        [.. match.DeclaredParticipations
+    [
+        .. match.DeclaredParticipations
             .Where(participation => participation.Side == side)
-            .Select(participation => participation.Id)];
+            .Select(participation => participation.Id)
+    ];
 }

@@ -160,7 +160,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         var entryA = EntryId.New();
         var entryB = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]),

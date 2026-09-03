@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Abstractions;
 

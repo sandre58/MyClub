@@ -22,21 +22,17 @@ public static class TeamNameGenerator
     /// <summary>
     /// Resolves display name and presentation for a team index.
     /// </summary>
-    /// <param name="entropy">Deterministic entropy (reserved for future generators).</param>
     /// <param name="index">Zero-based team index.</param>
     /// <param name="source">Name source.</param>
     /// <param name="datasetKey">Dataset key when <paramref name="source"/> is Dataset.</param>
     /// <param name="datasets">Dataset catalog when using Dataset source.</param>
     /// <param name="logoMediaId">Resolved Media id for dataset logos (imported by the caller).</param>
-    public static (string DisplayName, EntryPresentation Presentation) CreatePresentation(
-        DeterministicEntropy entropy,
-        int index,
+    public static (string DisplayName, EntryPresentation Presentation) CreatePresentation(int index,
         TeamNameSource source = TeamNameSource.Generated,
         string? datasetKey = null,
         DatasetCatalog? datasets = null,
         LogoMediaId? logoMediaId = null)
     {
-        ArgumentNullException.ThrowIfNull(entropy);
         ArgumentOutOfRangeException.ThrowIfNegative(index);
 
         if (source == TeamNameSource.Dataset)
@@ -72,7 +68,7 @@ public static class TeamNameGenerator
         TeamNameSource source = TeamNameSource.Generated,
         string? datasetKey = null,
         DatasetCatalog? datasets = null) =>
-        CreatePresentation(entropy, index, source, datasetKey, datasets).DisplayName;
+        CreatePresentation(index, source, datasetKey, datasets).DisplayName;
 
     /// <summary>
     /// Returns the dataset logo asset path for a team index, or null.

@@ -12,7 +12,6 @@ using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,9 +40,8 @@ public sealed class ReadPerformanceBaselineTests(
         var detailSql = await MeasureAsync(executor => executor.GetCompetitionDetailAsync(competitionId));
         var matchHubSql = await MeasureAsync(executor => executor.GetMatchHubViewAsync(competitionId));
 
-        var matchHubLegacyDetailSql = detailSql;
         var matchHubStageSql = new List<(Guid StageId, int Sql)>(stageIds.Count);
-        var matchHubLegacyTotalSql = matchHubLegacyDetailSql;
+        var matchHubLegacyTotalSql = detailSql;
         foreach (var stageId in stageIds)
         {
             var stageSql = await MeasureAsync(executor => executor.ListMatchesByStageAsync(stageId));
@@ -68,14 +66,14 @@ public sealed class ReadPerformanceBaselineTests(
                 ["GET /attention (GetNeedsAttentionAsync)"] = attentionSql,
                 ["GET /competitions/{id} (GetCompetitionDetailAsync)"] = detailSql,
                 ["GET /matches-hub (GetMatchHubViewAsync)"] = matchHubSql,
-                ["Match Hub legacy — GET /competitions/{id}"] = matchHubLegacyDetailSql,
+                ["Match Hub legacy — GET /competitions/{id}"] = detailSql,
                 ["Match Hub legacy — sum GET /stages/{id}/matches"] = matchHubStageSql.Sum(row => row.Sql),
                 ["Match Hub legacy — total (1 + N HTTP requests)"] = matchHubLegacyTotalSql,
                 ["Overview page (overview + organisation)"] = overviewPageSql,
                 ["Classements page (consultation + organisation)"] = classementsPageSql,
-                ["Shell chrome (attention + detail)"] = shellChromeSql,
+                ["Shell chrome (attention + detail)"] = shellChromeSql
             },
-            matchHubStageSql.Select(row => $"  stage {row.StageId}: {row.Sql} SQL").ToArray());
+            [.. matchHubStageSql.Select(row => $"  stage {row.StageId}: {row.Sql} SQL")]);
 
         overviewSql.Should().BeGreaterThan(8, "baseline sanity — overview still issues multiple SQL commands");
         detailSql.Should().BeLessThan(10, "GetCompetitionDetail should use projection, not full stage graphs");
@@ -109,7 +107,7 @@ public sealed class ReadPerformanceBaselineTests(
                 ["GET /competitions/{id}"] = detailSql,
                 ["GET /stages/{id}/matches"] = matchesSql,
                 ["GET /matches-hub"] = matchHubSql,
-                ["Match Hub legacy (detail + 1 stage matches)"] = detailSql + matchesSql,
+                ["Match Hub legacy (detail + 1 stage matches)"] = detailSql + matchesSql
             });
 
         matchesSql.Should().BeGreaterThan(3, "list endpoint loads stage + competition + matches");
@@ -137,7 +135,7 @@ public sealed class ReadPerformanceBaselineTests(
             new Dictionary<string, int>
             {
                 ["GET /overview"] = overviewSql,
-                ["GET /stages/{id}/matches"] = matchesSql,
+                ["GET /stages/{id}/matches"] = matchesSql
             });
 
         matchesSql.Should().BeGreaterThan(10, "heavy match list should issue many SQL commands today");
@@ -159,7 +157,7 @@ public sealed class ReadPerformanceBaselineTests(
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var competition = await competitions.GetByIdReadOnlyAsync(competitionId);
         competition.Should().NotBeNull();
-        return competition!.StageIds;
+        return competition.StageIds;
     }
 
     private async Task<int> MeasureAsync(Func<UseCaseExecutor, Task> action)

@@ -338,7 +338,7 @@ public sealed class UseCaseExecutorTests
     {
         var scenario = CreateDraftChampionshipOnCompetition();
         var draw = scenario.Stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        scenario.Stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]), _clock);
+        scenario.Stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
@@ -646,7 +646,7 @@ public sealed class UseCaseExecutorTests
         var round = stage.AddRound("R1", _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([EntryId.New(), EntryId.New()]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([EntryId.New(), EntryId.New()]));
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
@@ -740,7 +740,7 @@ public sealed class UseCaseExecutorTests
         scenario.Stage.AddSlot("A", _clock);
         var entry = EntryId.New();
         var draw = scenario.Stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        scenario.Stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        scenario.Stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         scenario.Stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "A")]),
@@ -757,7 +757,7 @@ public sealed class UseCaseExecutorTests
         var entryA = EntryId.New();
         var entryB = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]),

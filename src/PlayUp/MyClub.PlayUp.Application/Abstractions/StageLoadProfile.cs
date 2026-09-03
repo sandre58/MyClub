@@ -18,5 +18,5 @@ public enum StageLoadProfile
     Structure = 1,
 
     /// <summary>Full aggregate graph (commands and competition-scoped reads).</summary>
-    Full = 2,
+    Full = 2
 }

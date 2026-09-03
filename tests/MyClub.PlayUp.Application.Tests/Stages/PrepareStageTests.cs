@@ -224,7 +224,7 @@ public sealed class PrepareStageTests
         var groups = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var semi = Stage.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
         var group = groups.AddGroup("A", _clock);
-        groups.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        groups.AssignEntryToGroup(group.Id, EntryId.New());
         groups.AddMatchday(1, _clock);
         semi.AddRound("SF", _clock);
         semi.AddSlot("SF1-A", _clock);
@@ -287,7 +287,7 @@ public sealed class PrepareStageTests
         var semi = Stage.Create(competitionId, new StageName("Semi"), SampleRegulations.Standard(), _clock);
         var ghostId = StageId.New();
         var group = groups.AddGroup("A", _clock);
-        groups.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        groups.AssignEntryToGroup(group.Id, EntryId.New());
         groups.AddMatchday(1, _clock);
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -342,7 +342,7 @@ public sealed class PrepareStageTests
         var groups = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var semi = Stage.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
         var group = groups.AddGroup("A", _clock);
-        groups.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        groups.AssignEntryToGroup(group.Id, EntryId.New());
         groups.AddMatchday(1, _clock);
         semi.AddRound("SF", _clock);
         semi.AddSlot("SF1-A", _clock);

@@ -80,7 +80,7 @@ public static class ConfigureStructure
             stage = primaryStage;
             if (!string.Equals(stage.Name.Value, intent.StageName, StringComparison.Ordinal))
             {
-                stage.Rename(new StageName(intent.StageName), clock);
+                stage.Rename(new StageName(intent.StageName));
             }
 
             ClearStructure(stage, clock);
@@ -108,7 +108,7 @@ public static class ConfigureStructure
 
         if (intent.Format is not StructureFormatKind.Swiss)
         {
-            stage.SetMatchGenerationFormat(intent.MatchGenerationFormat, clock);
+            stage.SetMatchGenerationFormat(intent.MatchGenerationFormat);
         }
 
         return new ConfigureStructureResult(stage, stageCreated);
@@ -151,7 +151,7 @@ public static class ConfigureStructure
     private static void BuildSwiss(Stage stage, int roundCount, IClock clock)
     {
         stage.ReplaceDrawRules(null, clock);
-        stage.SetSwissSettings(new SwissSettings(roundCount), clock);
+        stage.SetSwissSettings(new SwissSettings(roundCount));
     }
 
     private static void ClearStructure(Stage stage, IClock clock)

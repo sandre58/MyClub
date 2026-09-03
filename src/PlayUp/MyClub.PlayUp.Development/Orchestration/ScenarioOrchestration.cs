@@ -92,9 +92,7 @@ internal static class ScenarioOrchestration
                 context.Datasets,
                 i);
             var logoMediaId = await context.Logos.GetOrImportAsync(logoAsset, cancellationToken).ConfigureAwait(false);
-            var (displayName, presentation) = TeamNameGenerator.CreatePresentation(
-                context.Entropy,
-                i,
+            var (displayName, presentation) = TeamNameGenerator.CreatePresentation(i,
                 recipe.TeamNames,
                 recipe.DatasetCompetitionKey,
                 context.Datasets,
@@ -144,7 +142,7 @@ internal static class ScenarioOrchestration
         for (var i = 0; i < ordered.Count; i++)
         {
             var group = stage.Groups[i % stage.Groups.Count];
-            stage.AssignEntryToGroup(group.Id, ordered[i].Id, context.Clock);
+            stage.AssignEntryToGroup(group.Id, ordered[i].Id);
         }
     }
 
@@ -252,7 +250,7 @@ internal static class ScenarioOrchestration
         }
 
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, context.Ids.Draw(), context.Clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries), context.Clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries));
 
         var pairings = new List<PairingDrawResult>();
         for (var i = 0; i < entries.Count; i += 2)

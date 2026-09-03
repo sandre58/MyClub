@@ -91,7 +91,7 @@ public sealed class GenerateNextRoundTests
         AddEntry.Execute(competition, "A", _clock);
         AddEntry.Execute(competition, "B", _clock);
         var stage = Stage.Create(competition.Id, new StageName("S"), SampleRegulations.Standard(), _clock);
-        stage.SetSwissSettings(new SwissSettings(2), _clock);
+        stage.SetSwissSettings(new SwissSettings(2));
         competition.AddStage(stage.Id, _clock);
         stage.Prepare(_clock);
 
@@ -157,7 +157,7 @@ public sealed class GenerateNextRoundTests
         }
 
         var stage = Stage.Create(competition.Id, new StageName("Swiss"), SampleRegulations.Standard(), _clock);
-        stage.SetSwissSettings(new SwissSettings(roundCount), _clock);
+        stage.SetSwissSettings(new SwissSettings(roundCount));
         competition.AddStage(stage.Id, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);

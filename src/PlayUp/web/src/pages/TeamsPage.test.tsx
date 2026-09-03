@@ -178,7 +178,7 @@ describe('TeamsPage', () => {
     expect(gauge).toHaveAttribute('data-tone', 'blocking')
   })
 
-  it('hides the plateau reading outside Draft and Ready', async () => {
+  it('shows the plateau gauge in all competition statuses', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         status: 'Running',
@@ -188,9 +188,10 @@ describe('TeamsPage', () => {
 
     renderTeamsPage()
 
-    expect(await screen.findByText('Alpha')).toBeInTheDocument()
-    expect(document.querySelector('.teams__title-count')).toBeNull()
-    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /Équipes.*1/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
   it('shows Qualifié and Éliminé badges on season tiles', async () => {
@@ -399,21 +400,114 @@ describe('TeamsPage', () => {
     expect(screen.getByRole('heading', { name: /Équipes.*1/ })).toBeInTheDocument()
   })
 
+  it('keeps list view when selecting one team via checkbox on a narrow viewport', async () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
+      matches: query === '(max-width: 51.999rem)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderTeamsPage()
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    )
+
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'list',
+    )
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Alpha' })).toBeChecked()
+  })
+
   it('opens the roster drawer from a tile and keeps the grid', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderTeamsPage()
 
+    await screen.findByText('Alpha')
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'list',
+    )
+
     await user.click(await screen.findByRole('button', { name: 'Alpha' }))
 
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'detail',
+    )
+    expect(
+      screen.getByRole('button', { name: 'Équipes' }),
+    ).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Joueurs· 0' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Staff· 0' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Équipes.*1/ })).toBeInTheDocument()
     expect(
       screen.queryByText('Aucune équipe sélectionnée'),
     ).not.toBeInTheDocument()
+  })
+
+  it('shows selection chrome and switches to multi view', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        participants: {
+          activeCount: 2,
+          occupyingCount: 2,
+          entries: [
+            { entryId, displayName: 'Alpha', status: 'Active' },
+            { entryId: secondEntryId, displayName: 'Beta', status: 'Active' },
+          ],
+        },
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderTeamsPage()
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    )
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+    )
+
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'multi',
+    )
+    expect(document.querySelector('.teams__ops-row')).toBeInTheDocument()
+    expect(document.querySelector('.teams-bar__count')).toHaveTextContent(
+      '2 équipes sélectionnées',
+    )
+    expect(document.querySelector('.teams__multi-band')).toBeNull()
+  })
+
+  it('returns to the list from the roster back control', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderTeamsPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Alpha' }))
+    await user.click(screen.getByRole('button', { name: 'Équipes' }))
+
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'list',
+    )
+    expect(
+      screen.getByText('Aucune équipe sélectionnée'),
+    ).toBeInTheDocument()
   })
 
   it('lists players and staff in the drawer', async () => {

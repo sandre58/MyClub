@@ -307,12 +307,9 @@ public static class MatchReadAssembler
         MemberId memberId)
     {
         var participation = match.DeclaredParticipations.FirstOrDefault(p => p.Id.Equals(memberId));
-        if (participation is null)
-        {
-            return null;
-        }
-
-        return EntryDisplayNames.ResolveMemberDisplayName(
+        return participation is null
+            ? null
+            : EntryDisplayNames.ResolveMemberDisplayName(
             entries,
             EntryIdForSide(match, participation.Side),
             memberId);

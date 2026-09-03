@@ -38,7 +38,7 @@ public sealed class ApplyDrawTests
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         var entry = EntryId.New();
         stage.AddSlot("A", _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "A")]),
@@ -77,7 +77,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         stage.AddSlot("A", _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
@@ -95,7 +95,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         stage.AddSlot("A", _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
         stage.MarkDrawNoSolution(draw.Id, _clock);
         stage.ClearDomainEvents();
 
@@ -239,7 +239,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "Missing")]),
@@ -283,7 +283,7 @@ public sealed class ApplyDrawTests
         var e1 = EntryId.New();
         var e2 = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([e1, e2]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([e1, e2]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots(
@@ -344,7 +344,7 @@ public sealed class ApplyDrawTests
         var groupB = stage.AddGroup("B", _clock);
         var entry = EntryId.New();
         var draw = PublishGroupDraw(stage, entry, groupA.Id);
-        stage.AssignEntryToGroup(groupB.Id, entry, _clock);
+        stage.AssignEntryToGroup(groupB.Id, entry);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
@@ -364,7 +364,7 @@ public sealed class ApplyDrawTests
         var entry = EntryId.New();
         var missingGroupId = GroupId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, missingGroupId)]),
@@ -386,7 +386,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         var group = stage.AddGroup("A", _clock);
         var prepareEntry = EntryId.New();
-        stage.AssignEntryToGroup(group.Id, prepareEntry, _clock);
+        stage.AssignEntryToGroup(group.Id, prepareEntry);
         stage.AddMatchday(1, _clock);
 
         var entry = EntryId.New();
@@ -411,7 +411,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         var group = stage.AddGroup("A", _clock);
         var prepareEntry = EntryId.New();
-        stage.AssignEntryToGroup(group.Id, prepareEntry, _clock);
+        stage.AssignEntryToGroup(group.Id, prepareEntry);
         stage.AddMatchday(1, _clock);
 
         var entry = EntryId.New();
@@ -748,7 +748,7 @@ public sealed class ApplyDrawTests
         var b = EntryId.New();
         var c = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([a, b, c]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([a, b, c]));
 
         var act = () => stage.RecordDrawResolution(
             draw.Id,
@@ -803,7 +803,7 @@ public sealed class ApplyDrawTests
         stage.AddSlot(slotKey, _clock);
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, slotKey)]),
@@ -815,7 +815,7 @@ public sealed class ApplyDrawTests
     private Draw PublishGroupDraw(Stage stage, EntryId entry, GroupId groupId)
     {
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, groupId)]),
@@ -831,7 +831,7 @@ public sealed class ApplyDrawTests
     {
         var entries = pool ?? [..pairings.SelectMany(p => new[] { p.EntryA, p.EntryB }).Distinct()];
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries));
         stage.RecordDrawResolution(draw.Id, DrawResolution.ResolvedPairings(pairings), _clock);
         stage.PublishDraw(draw.Id, _clock);
         return draw;

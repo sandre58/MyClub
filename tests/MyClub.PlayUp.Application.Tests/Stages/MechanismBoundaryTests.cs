@@ -87,7 +87,7 @@ public sealed class MechanismBoundaryTests
         var seedMap = new SeedMap(new Dictionary<EntryId, int> { [a] = 1, [b] = 2 });
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([a, b], seedMap), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([a, b], seedMap));
 
         stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         stage.FindSlot("SF1-B")!.EntryId.Should().BeNull();
@@ -130,7 +130,7 @@ public sealed class MechanismBoundaryTests
         ];
 
         var draw = knockout.CreateDraw(DrawResolutionKind.Slot, _clock);
-        knockout.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool), _clock);
+        knockout.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool));
         knockout.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots(

@@ -228,8 +228,8 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             var stage = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
             var groupA = stage.AddGroup("A", _clock);
             stage.AddGroup("B", _clock);
-            stage.AssignEntryToGroup(groupA.Id, entryA, _clock);
-            stage.AssignEntryToGroup(groupA.Id, entryB, _clock);
+            stage.AssignEntryToGroup(groupA.Id, entryA);
+            stage.AssignEntryToGroup(groupA.Id, entryB);
             stage.ArrangeGroups([stage.Groups[1].Id, stage.Groups[0].Id], _clock);
 
             var matchday1 = stage.AddMatchday(1, _clock);
@@ -478,7 +478,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
             var stage = StageSeed.CreateDraft(competition.Id, _clock);
             var group = stage.AddGroup("A", _clock);
-            stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+            stage.AssignEntryToGroup(group.Id, EntryId.New());
             stage.AddMatchday(1, _clock);
             stage.AddFixture(stage.Matchdays[0].Id, _clock);
             stage.AddSlot("S1", _clock);

@@ -331,7 +331,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         var home = homeEntry.Id;
         var away = awayEntry.Id;
         var draw = quarter.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]), _clock);
+        quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]));
         quarter.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([new PairingDrawResult(home, away)]),

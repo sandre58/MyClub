@@ -122,7 +122,7 @@ public static class GenerateNextRound
 
         if (pairing.ByeEntryId is { } bye)
         {
-            stage.RecordSwissBye(matchday.Number, bye, clock);
+            stage.RecordSwissBye(matchday.Number, bye);
         }
 
         return new GenerateNextRoundResult(matchday.Number, created, pairing.ByeEntryId, AlreadyComplete: false);

@@ -4,8 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Domain.Common;
-
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>

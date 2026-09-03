@@ -42,7 +42,7 @@ public sealed class StageRuntimePersistenceTests
             stage.AddSlot("W1", _clock);
             stage.AddSlot("W2", _clock);
             var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-            stage.ConfigureDrawInputs(draw.Id, inputs, _clock);
+            stage.ConfigureDrawInputs(draw.Id, inputs);
             stage.RecordDrawResolution(draw.Id, resolution, _clock);
             stage.PublishDraw(draw.Id, _clock);
             stageId = stage.Id;
@@ -81,7 +81,7 @@ public sealed class StageRuntimePersistenceTests
             var stage = Stage.Create(CompetitionId.New(), new StageName("Cup"), SampleRegulations.Standard(), _clock);
             var entry = EntryId.New();
             var noSolution = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-            stage.ConfigureDrawInputs(noSolution.Id, DrawInputs.ForSlot([entry]), _clock);
+            stage.ConfigureDrawInputs(noSolution.Id, DrawInputs.ForSlot([entry]));
             stage.MarkDrawNoSolution(noSolution.Id, _clock);
 
             var cancelled = stage.CreateDraw(DrawResolutionKind.Group, _clock);
@@ -168,7 +168,7 @@ public sealed class StageRuntimePersistenceTests
         {
             var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
-            loaded.ConfigureDrawInputs(drawId, inputs, _clock);
+            loaded.ConfigureDrawInputs(drawId, inputs);
             loaded.RecordDrawResolution(drawId, resolution, _clock);
             loaded.PublishDraw(drawId, _clock);
 

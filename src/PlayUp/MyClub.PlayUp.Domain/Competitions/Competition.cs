@@ -591,14 +591,11 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     private CompetitionEntry GetEntryForDeclaredRosterMutation(EntryId entryId)
     {
         var entry = GetEntry(entryId);
-        if (entry.Status != EntryStatus.Active)
-        {
-            throw new DomainException(
+        return entry.Status != EntryStatus.Active
+            ? throw new DomainException(
                 $"Declared roster cannot be mutated when entry status is '{entry.Status}'.",
-                CompetitionErrorCodes.InvalidTransition);
-        }
-
-        return entry;
+                CompetitionErrorCodes.InvalidTransition)
+            : entry;
     }
 
     private void EnsureCanWithdraw()

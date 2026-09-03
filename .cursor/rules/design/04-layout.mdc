@@ -31,8 +31,16 @@ gutters only** (`--space-16` on the main padding). No centered max-width column.
 
 ## Responsive
 
-- Two-column groups collapse to one column below 56rem, dominant block first.
-- The Match Hero stacks: status → teams+score → meta.
-- Accueil (hors Shell): same chrome breakpoints as the shell (phone
-  `<48rem`, tablet `<64rem`). Lockup is one composition (mark + wordmark +
-  tagline) and **scales as a unit** in the 42rem column — no reflow, no wrap.
+Three **independent** breakpoint tiers — do not unify into a single value.
+
+| Tier | Threshold | Role | SoT in Git |
+|---|---|---|---|
+| **Shell chrome** | phone `<48rem` · tablet `48–64rem` · desktop `≥64rem` | Rail overlay / icon-rail / expanded nav | `layout/viewportBreakpoints.ts`, `shell/useShellViewport.ts` |
+| **Page grids** | `52rem` (`max-width: 51.999rem` narrow) | Two-column operational surfaces (Overview, Organisation, Matchs, Classements, Équipes split) | same + page CSS |
+| **DS composition** | `56rem` | Asymmetric panel pairs collapse | `design-system/foundations/panels.css` |
+
+Accueil (hors Shell): compact chrome at **48rem** (same as shell phone).
+
+Équipes below **52rem**: master-detail — checkbox = bulk selection (list stays visible); tile body = open roster (detail full width). Header ops row: plateau left, selection bar + Add right (`teams__ops-row`). See Notion page **Équipes** § Responsive.
+
+Legacy rule: two-column groups collapse below **56rem**, dominant block first.

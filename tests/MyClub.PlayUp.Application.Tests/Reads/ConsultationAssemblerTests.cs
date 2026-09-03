@@ -96,11 +96,11 @@ public sealed class ConsultationAssemblerTests
         var d = competition.AddEntry(TeamId.New(), "D", _clock);
         var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var g1 = stage.AddGroup("G1", _clock);
-        stage.AssignEntryToGroup(g1.Id, a.Id, _clock);
-        stage.AssignEntryToGroup(g1.Id, b.Id, _clock);
+        stage.AssignEntryToGroup(g1.Id, a.Id);
+        stage.AssignEntryToGroup(g1.Id, b.Id);
         var g2 = stage.AddGroup("G2", _clock);
-        stage.AssignEntryToGroup(g2.Id, c.Id, _clock);
-        stage.AssignEntryToGroup(g2.Id, d.Id, _clock);
+        stage.AssignEntryToGroup(g2.Id, c.Id);
+        stage.AssignEntryToGroup(g2.Id, d.Id);
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);

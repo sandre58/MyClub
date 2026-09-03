@@ -104,7 +104,7 @@ public sealed class StageLifecycleTests
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidConfiguration);
 
         // Arrange — assign entry
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
         stage.ClearDomainEvents();
 
         // Act
@@ -120,7 +120,7 @@ public sealed class StageLifecycleTests
         // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
 
         // Act
         var act = () => stage.Prepare(_clock);
@@ -243,7 +243,7 @@ public sealed class StageLifecycleTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.Rename(new StageName("Groups"), _clock);
+        stage.Rename(new StageName("Groups"));
 
         // Assert
         stage.DomainEvents.Should().BeEmpty();
@@ -258,7 +258,7 @@ public sealed class StageLifecycleTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.Rename(new StageName("Renamed"), _clock);
+        stage.Rename(new StageName("Renamed"));
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);
@@ -299,7 +299,7 @@ public sealed class StageLifecycleTests
         var stage = CreateRunning();
 
         // Act
-        var act = () => stage.Rename(new StageName("Later"), _clock);
+        var act = () => stage.Rename(new StageName("Later"));
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidTransition);

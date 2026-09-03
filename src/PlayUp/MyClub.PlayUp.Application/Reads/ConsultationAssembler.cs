@@ -315,7 +315,6 @@ public static class ConsultationAssembler
             case StructureFormatKind.Cup:
                 return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
             case StructureFormatKind.Swiss:
-                break;
             case StructureFormatKind.Championship:
             case StructureFormatKind.Groups:
                 break;
@@ -384,7 +383,6 @@ public static class ConsultationAssembler
             case StructureFormatKind.Cup:
                 return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
             case StructureFormatKind.Swiss:
-                break;
             case StructureFormatKind.Championship:
             case StructureFormatKind.Groups:
                 break;

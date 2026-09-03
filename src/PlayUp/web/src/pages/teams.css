@@ -1,3 +1,4 @@
+/* Breakpoints: layout/viewportBreakpoints.ts — split ≥52rem; list/detail <52rem; compact header <48rem */
 .page.page--teams {
   width: 100%;
   max-width: none;
@@ -6,20 +7,20 @@
   gap: 0;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .teams {
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
-  height: 100%;
+  height: auto;
   min-height: 0;
 }
 
 .teams__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) min(22rem, 34%);
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: var(--space-16);
   flex: 1 1 auto;
@@ -40,6 +41,9 @@
   gap: var(--space-12);
   flex: none;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .teams__head-row {
@@ -48,6 +52,47 @@
   align-items: center;
   gap: var(--space-8) var(--space-12);
   width: 100%;
+}
+
+.teams__ops-row {
+  --teams-bar-min-width: 12rem;
+  --teams-add-min-width: var(--control-height);
+  --teams-ops-gap: var(--space-8);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: var(--space-12);
+  row-gap: var(--space-12);
+  width: 100%;
+}
+
+.teams__plateau {
+  flex: 0 0 auto;
+  width: min(28rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.teams__ops-tail {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--teams-ops-gap);
+  flex: 1 1 auto;
+  min-width: min(100%, var(--teams-add-min-width));
+  max-width: 100%;
+  min-height: var(--control-height);
+}
+
+.teams__ops-tail:has(.teams-bar) {
+  min-width: min(
+    100%,
+    calc(
+      var(--teams-bar-min-width) + var(--teams-add-min-width) +
+        var(--teams-ops-gap)
+    )
+  );
 }
 
 .teams__title {
@@ -72,14 +117,6 @@
   font-weight: var(--font-weight-bold);
   line-height: 1;
   letter-spacing: -0.02em;
-}
-
-.teams__plateau {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  width: min(28rem, 100%);
-  margin-bottom: var(--space-8);
 }
 
 .teams__plateau-status {
@@ -171,33 +208,50 @@
   text-align: right;
 }
 
-.teams__head-fill,
 .teams-bar {
-  flex: 1 1 12rem;
-  min-width: 8rem;
-}
-
-.teams__add {
-  flex: none;
-}
-
-.teams-bar {
+  flex: 1 1 auto;
+  min-width: var(--teams-bar-min-width);
+  flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
-  min-height: var(--control-height);
-  padding: var(--space-4) var(--space-12);
+  height: var(--control-height);
+  box-sizing: border-box;
+  padding: 0 var(--space-12);
   border-radius: var(--radius-control);
   border: var(--border-width) solid var(--color-border);
   background: var(--color-surface-muted);
+}
+
+.teams__add {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  height: var(--control-height);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+}
+
+.teams__add-label {
+  white-space: nowrap;
 }
 
 .teams-bar__count {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--text-label);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teams-bar .ds-icon-toolbar {
+  flex: none;
 }
 
 .teams__grid {
@@ -208,9 +262,8 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
+  flex: none;
+  overflow: visible;
 }
 
 .teams__grid > li {
@@ -394,9 +447,30 @@
   flex-direction: column;
   gap: var(--space-16);
   width: 100%;
-  height: 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+.teams-drawer__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-info);
+  font: inherit;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  flex: none;
+}
+
+.teams-drawer__back:hover {
+  color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
 }
 
 .teams-drawer__idle {
@@ -757,28 +831,97 @@
   font-weight: var(--font-weight-bold);
 }
 
-@media (max-width: 52rem) {
+/* Narrow: list / detail / multi (below desktop split) */
+@media (max-width: 51.999rem) {
+  .teams[data-teams-view='list'] .teams-drawer,
+  .teams[data-teams-view='multi'] .teams-drawer {
+    display: none;
+  }
+
+  .teams[data-teams-view='detail'] .teams__main {
+    display: none;
+  }
+
+  .teams[data-teams-view='detail'] .teams__layout {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .teams[data-teams-view='detail'] .teams-drawer {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+/* Narrow page grid: compact add (tablet + phone below desktop split) */
+@media (max-width: 51.999rem) {
+  .teams__add-label {
+    display: none;
+  }
+
+  .teams__add {
+    padding-inline: var(--space-8);
+  }
+}
+
+@media (min-width: 52rem) {
+  .teams__ops-row {
+    --teams-add-min-width: 13.5rem;
+  }
+
+  .teams__main {
+    container-type: inline-size;
+    container-name: teams-main;
+  }
+
+  /* Split pane: colonne principale étroite — icône seule pour éviter le débordement */
+  @container teams-main (max-width: 42rem) {
+    .teams__ops-row {
+      --teams-add-min-width: var(--control-height);
+    }
+
+    .teams__add-label {
+      display: none;
+    }
+
+    .teams__add {
+      padding-inline: var(--space-8);
+    }
+  }
+}
+
+/* Phone: compact title */
+@media (max-width: 47.999rem) {
+  .teams__title-count {
+    font-size: var(--text-display);
+  }
+}
+
+/* Desktop: split pane */
+@media (min-width: 52rem) {
   .page.page--teams {
-    overflow: auto;
-    height: auto;
+    overflow: hidden;
   }
 
-  .teams,
-  .teams__layout {
-    height: auto;
+  .teams {
+    height: 100%;
   }
 
   .teams__layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) min(22rem, 34%);
   }
 
   .teams__grid {
-    overflow: visible;
-    flex: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
   }
 
   .teams-drawer {
-    min-height: 20rem;
-    height: 70vh;
+    height: 100%;
+  }
+
+  .teams-drawer__back {
+    display: none;
   }
 }

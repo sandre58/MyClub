@@ -186,7 +186,7 @@ public static class ApplyDraw
 
         foreach (var placement in placements)
         {
-            stage.AssignEntryToGroup(placement.GroupId, placement.EntryId, clock);
+            stage.AssignEntryToGroup(placement.GroupId, placement.EntryId);
         }
 
         return [];

@@ -55,7 +55,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var addFixture = stage.AddFixture(round.Id, _clock);
             fixtureId = addFixture.Id;
             var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-            stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]), _clock);
+            stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]));
             stage.RecordDrawResolution(
                 draw.Id,
                 DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]),

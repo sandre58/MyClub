@@ -245,7 +245,7 @@ public sealed class CrossGroupStandingAssemblerTests
     {
         foreach (var entry in entries)
         {
-            stage.AssignEntryToGroup(groupId, entry, _clock);
+            stage.AssignEntryToGroup(groupId, entry);
         }
     }
 

@@ -71,7 +71,7 @@ public sealed class StageDrawTests
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         var entries = new[] { EntryId.New(), EntryId.New() };
 
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(entries), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(entries));
 
         draw.Inputs!.Entries.Should().Equal(entries);
     }
@@ -82,7 +82,7 @@ public sealed class StageDrawTests
         var stage = CreateStage();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         var entry = EntryId.New();
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         var groupResolution = DrawResolution.ResolvedGroups(
             [new GroupDrawPlacement(entry, GroupId.New())]);
 
@@ -96,7 +96,7 @@ public sealed class StageDrawTests
     {
         var stage = CreateStage();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
         stage.MarkDrawNoSolution(draw.Id, _clock);
 
         draw.Resolution.State.Should().Be(DrawResolutionState.NoSolution);
@@ -113,8 +113,7 @@ public sealed class StageDrawTests
 
         var actConfigure = () => stage.ConfigureDrawInputs(
             draw.Id,
-            DrawInputs.ForSlot([EntryId.New()]),
-            _clock);
+            DrawInputs.ForSlot([EntryId.New()]));
         var actRecord = () => stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(EntryId.New(), "A")]),
@@ -149,8 +148,7 @@ public sealed class StageDrawTests
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(
             draw.Id,
-            DrawInputs.ForSlot([entry], fixedPlacements: [new SlotDrawPlacement(entry, "A")]),
-            _clock);
+            DrawInputs.ForSlot([entry], fixedPlacements: [new SlotDrawPlacement(entry, "A")]));
 
         stage.DirectAssignments.Should().BeEmpty();
         draw.Inputs!.FixedSlots.Should().ContainSingle();
@@ -189,7 +187,7 @@ public sealed class StageDrawTests
         var inPool = EntryId.New();
         var outside = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([inPool]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([inPool]));
 
         var act = () => stage.RecordDrawResolution(
             draw.Id,
@@ -210,8 +208,7 @@ public sealed class StageDrawTests
             draw.Id,
             DrawInputs.ForSlot(
                 [fixedEntry, other],
-                fixedPlacements: [new SlotDrawPlacement(fixedEntry, "A")]),
-            _clock);
+                fixedPlacements: [new SlotDrawPlacement(fixedEntry, "A")]));
 
         var act = () => stage.RecordDrawResolution(
             draw.Id,
@@ -236,8 +233,7 @@ public sealed class StageDrawTests
             draw.Id,
             DrawInputs.ForSlot(
                 [fixedEntry, other],
-                fixedPlacements: [new SlotDrawPlacement(fixedEntry, "A")]),
-            _clock);
+                fixedPlacements: [new SlotDrawPlacement(fixedEntry, "A")]));
 
         stage.RecordDrawResolution(
             draw.Id,
@@ -259,7 +255,7 @@ public sealed class StageDrawTests
         var group = stage.AddGroup("A", _clock);
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, group.Id)]),
@@ -277,7 +273,7 @@ public sealed class StageDrawTests
         var a = EntryId.New();
         var b = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([a, b]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([a, b]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedPairings([new PairingDrawResult(a, b)]),
@@ -344,7 +340,7 @@ public sealed class StageDrawTests
         stage.AddSlot("Only", _clock);
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "Only")]),
@@ -365,8 +361,7 @@ public sealed class StageDrawTests
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
         stage.ConfigureDrawInputs(
             draw.Id,
-            DrawInputs.ForPairing([a, b], fixedPlacements: [new PairingDrawResult(a, b)]),
-            _clock);
+            DrawInputs.ForPairing([a, b], fixedPlacements: [new PairingDrawResult(a, b)]));
 
         stage.RecordDrawResolution(
             draw.Id,
@@ -388,7 +383,7 @@ public sealed class StageDrawTests
 
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]), _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, slotKey)]),

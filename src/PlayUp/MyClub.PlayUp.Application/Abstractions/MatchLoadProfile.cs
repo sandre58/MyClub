@@ -24,5 +24,5 @@ public enum MatchLoadProfile
     SummaryRow = 3,
 
     /// <summary>Full match aggregates (sheet collections hydrated).</summary>
-    Full = 4,
+    Full = 4
 }

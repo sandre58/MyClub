@@ -57,7 +57,7 @@ public sealed class StageStructureTests
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
         var b = stage.AddGroup("B", _clock);
-        stage.AssignEntryToGroup(a.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(a.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
@@ -288,7 +288,7 @@ public sealed class StageStructureTests
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
-        stage.AssignEntryToGroup(group.Id, EntryId.New(), _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         return stage;

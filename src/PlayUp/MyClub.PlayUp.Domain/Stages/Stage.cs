@@ -321,10 +321,9 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Configures draw inputs (Draft draw only). Sole entry point for Entries / SeedMap / Pot / fixed placements.
     /// </summary>
-    public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs, IClock clock)
+    public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs)
     {
         ArgumentNullException.ThrowIfNull(inputs);
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
         DemoteToDraftIfReady();
         GetDraw(drawId).ConfigureInputs(inputs);
@@ -584,11 +583,9 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Renames the stage. No-op when the normalized name is unchanged.
     /// </summary>
     /// <param name="name">The new name.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void Rename(StageName name, IClock clock)
+    public void Rename(StageName name)
     {
         ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
 
         if (Name.Equals(name))
@@ -603,10 +600,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Sets how Championship / Groups matches are generated. No-op when unchanged.
     /// </summary>
     /// <param name="format">The match generation format.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void SetMatchGenerationFormat(MatchGenerationFormat format, IClock clock)
+    public void SetMatchGenerationFormat(MatchGenerationFormat format)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
 
         if (MatchGenerationFormat == format)
@@ -628,10 +623,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Enables or updates Swiss Kind settings. Pass <see langword="null"/> to clear when history is empty.
     /// </summary>
     /// <param name="settings">Swiss settings, or <see langword="null"/> to clear.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void SetSwissSettings(SwissSettings? settings, IClock clock)
+    public void SetSwissSettings(SwissSettings? settings)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
 
         if (Equals(SwissSettings, settings))
@@ -671,10 +664,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="roundIndex">1-based Swiss round index.</param>
     /// <param name="entryId">Entry receiving the bye.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void RecordSwissBye(int roundIndex, EntryId entryId, IClock clock)
+    public void RecordSwissBye(int roundIndex, EntryId entryId)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureSwissByeMutable();
 
         var settings = SwissSettings
@@ -849,10 +840,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void AssignEntryToGroup(GroupId groupId, EntryId entryId, IClock clock)
+    public void AssignEntryToGroup(GroupId groupId, EntryId entryId)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
 
         var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));

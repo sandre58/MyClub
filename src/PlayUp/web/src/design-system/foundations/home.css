@@ -257,7 +257,7 @@
     font-size: var(--text-label);
 }
 
-/* Same chrome breakpoints as useShellViewport (phone < 48rem, tablet < 64rem). */
+/* Same chrome breakpoints as layout/viewportBreakpoints.ts (phone < 48rem, tablet < 64rem). */
 @media (max-width: 47.999rem) {
     .ds-home::before {
         height: 14rem;
