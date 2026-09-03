@@ -38,6 +38,6 @@
     --icon-size-sm: 1rem;
     --icon-size-md: 1.25rem;
     --icon-size-lg: 1.5rem;
-    /* Aligns with Icon.tsx strokeWidth={2} and Identité §13. */
-    --icon-stroke-width: 2;
+    /* Shared by custom SVG icons and Lucide icons. */
+    --icon-stroke-width: 1.8;
 }
