@@ -78,6 +78,9 @@ export function useShellCompetitionContext() {
     competitionId: resolvedCompetitionId,
     competitionName: overviewQuery.data?.name,
     logoMediaId: overviewQuery.data?.logoMediaId ?? null,
+    status: overviewQuery.data?.status,
+    scheduledStart: overviewQuery.data?.scheduledStart ?? null,
+    scheduledEnd: overviewQuery.data?.scheduledEnd ?? null,
     state,
   }
 }

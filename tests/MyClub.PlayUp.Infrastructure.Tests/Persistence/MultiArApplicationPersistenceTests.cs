@@ -73,7 +73,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var stage = await stages.GetByIdAsync(stageId);
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
 
             var result = ApplyDraw.Execute(
@@ -98,12 +98,12 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
 
-            var stage = await stages.GetByIdAsync(stageId);
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
             var fixture1 = stage.GetFixture(fixtureId);
             fixture1.MatchIds.Should().ContainSingle().Which.Should().Be(createdMatchId);
 
-            var match = await matches.GetByIdAsync(createdMatchId);
+            var match = await matches.GetByIdForUpdateAsync(createdMatchId);
             match.Should().NotBeNull();
             match.HomeEntryId.Should().Be(entryA);
             match.AwayEntryId.Should().Be(entryB);
@@ -160,8 +160,8 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var league = await stages.GetByIdAsync(leagueId);
-            var terminal = await stages.GetByIdAsync(terminalId);
+            var league = await stages.GetByIdForUpdateAsync(leagueId);
+            var terminal = await stages.GetByIdForUpdateAsync(terminalId);
             league.Should().NotBeNull();
             terminal.Should().NotBeNull();
 
@@ -177,7 +177,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var terminal = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(terminalId);
+            var terminal = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(terminalId);
             terminal.Should().NotBeNull();
             terminal.FindSlot("Champ")!.EntryId.Should().Be(champ);
             terminal.FindSlot("Europe1")!.EntryId.Should().Be(europe);
@@ -246,9 +246,9 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var source = await stages.GetByIdAsync(sourceId);
-            var destination = await stages.GetByIdAsync(destinationId);
-            var match = await matches.GetByIdAsync(matchId);
+            var source = await stages.GetByIdForUpdateAsync(sourceId);
+            var destination = await stages.GetByIdForUpdateAsync(destinationId);
+            var match = await matches.GetByIdForUpdateAsync(matchId);
             source.Should().NotBeNull();
             destination.Should().NotBeNull();
             match.Should().NotBeNull();
@@ -259,7 +259,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var destination = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(destinationId);
+            var destination = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(destinationId);
             destination.Should().NotBeNull();
             destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
             destination.FindSlot("SF1-B")!.EntryId.Should().BeNull();
@@ -293,7 +293,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var stage = await stages.GetByIdAsync(stageId);
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
             stage.Penalties.Should().BeEmpty();
             stage.AddPenalty(entryId, 3, _clock, "Should roll back");
@@ -313,10 +313,10 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-            var stage = await stages.GetByIdAsync(stageId);
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
             stage.Penalties.Should().BeEmpty();
-            (await matches.GetByIdAsync(orphanId)).Should().BeNull();
+            (await matches.GetByIdForUpdateAsync(orphanId)).Should().BeNull();
         }
     }
 }

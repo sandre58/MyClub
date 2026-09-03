@@ -99,7 +99,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         competition.Entries.Should().HaveCount(18);
         competition.Status.Should().Be(CompetitionStatus.Running);
@@ -111,9 +111,9 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         overview.Id.Should().Be(competition.Id.Value);
 
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageForUpdateAsync(stage!.Id);
         matches.Should().OnlyContain(m => m.Status == MatchStatus.Scheduled);
         stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.DoubleRoundRobin);
         stage.Matchdays.Should().HaveCount(34);
@@ -133,12 +133,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageForUpdateAsync(stage!.Id);
 
         var finished = matches.Where(match => match.Status == MatchStatus.Finished).ToList();
         finished.Should().NotBeEmpty();
@@ -163,14 +163,14 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         competition.Status.Should().Be(CompetitionStatus.Running);
         competition.StageIds.Should().HaveCount(2);
 
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var quarter = await stages.GetByIdAsync(competition.StageIds[0]);
-        var semi = await stages.GetByIdAsync(competition.StageIds[1]);
+        var quarter = await stages.GetByIdForUpdateAsync(competition.StageIds[0]);
+        var semi = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
         quarter.Should().NotBeNull();
         semi.Should().NotBeNull();
         semi.Status.Should().Be(StageStatus.Draft);
@@ -181,7 +181,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         foreach (var stageId in competition.StageIds)
         {
             var list = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-                .ListByStageAsync(stageId);
+                .ListByStageForUpdateAsync(stageId);
             matchesByStage[stageId] = list;
         }
 
@@ -203,7 +203,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         competition.Status.Should().Be(CompetitionStatus.Completed);
         competition.StageIds.Should().HaveCount(5);
@@ -212,7 +212,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var loaded = new List<Stage>(5);
         foreach (var stageId in competition.StageIds)
         {
-            var stage = await stages.GetByIdAsync(stageId);
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
             loaded.Add(stage);
         }
@@ -227,7 +227,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         {
             matchesByStage[stage.Id] = await scope.ServiceProvider
                 .GetRequiredService<IMatchRepository>()
-                .ListByStageAsync(stage.Id);
+                .ListByStageForUpdateAsync(stage.Id);
         }
 
         matchesByStage[loaded[0].Id].Should().HaveCount(16);
@@ -253,7 +253,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         competition.Status.Should().Be(CompetitionStatus.Completed);
         competition.StageIds.Should().HaveCount(6);
@@ -262,7 +262,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var loaded = new List<Stage>(6);
         foreach (var stageId in competition.StageIds)
         {
-            var stage = await stages.GetByIdAsync(stageId);
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
             loaded.Add(stage);
         }
@@ -284,7 +284,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         {
             matchesByStage[stage.Id] = await scope.ServiceProvider
                 .GetRequiredService<IMatchRepository>()
-                .ListByStageAsync(stage.Id);
+                .ListByStageForUpdateAsync(stage.Id);
         }
 
         matchesByStage[roundOf16.Id].Should().HaveCount(8);
@@ -354,13 +354,13 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     {
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         stage.Should().NotBeNull();
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage.Id);
+            .ListByStageForUpdateAsync(stage.Id);
         return (competition, stage, matches);
     }
 
@@ -380,12 +380,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Single();
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageForUpdateAsync(stage!.Id);
         matches.Count(m => m.Status == MatchStatus.Finished).Should().Be(matches.Count / 2);
     }
 
@@ -394,13 +394,13 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Single();
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         competition.Status.Should().Be(CompetitionStatus.Completed);
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageForUpdateAsync(stage!.Id);
         matches.Should().OnlyContain(m => m.Status == MatchStatus.Finished);
     }
 
@@ -409,12 +409,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Single();
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageForUpdateAsync(stage!.Id);
         matches.Count(m => m.Status == MatchStatus.Finished).Should().Be(finished);
         if (requireScheduled)
         {
@@ -427,12 +427,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var summary = (await competitions.ListAsync()).Single();
-        var competition = await competitions.GetByIdAsync(summary.Id);
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(competition.StageIds[0]);
+            .GetByIdForUpdateAsync(competition.StageIds[0]);
         var matches = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
-            .ListByStageAsync(stage!.Id);
+            .ListByStageForUpdateAsync(stage!.Id);
         return new
         {
             CompetitionId = competition.Id.Value,

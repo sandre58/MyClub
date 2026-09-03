@@ -49,7 +49,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var loaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.DomainEvents.Should().BeEmpty();
         }
@@ -71,7 +71,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var loaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Regulation.Should().Be(regulation);
             loaded.Regulation.MatchRules.ExtraTimePolicy.Should().NotBeNull();
@@ -86,7 +86,7 @@ public sealed class CompetitionPersistenceTests
         var id = await SeedLifecycleAsync(databaseName);
 
         await using var context = PlayUpInMemory.CreateContext(databaseName);
-        var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
+        var loaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
 
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(CompetitionStatus.Completed);
@@ -114,7 +114,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var loaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Entries.Select(entry => entry.Id).Should().Equal(first.Id, second.Id, third.Id);
         }
@@ -140,7 +140,7 @@ public sealed class CompetitionPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.RemoveStage(stageB, _clock);
             await ((IUnitOfWork)context).SaveChangesAsync();
@@ -148,7 +148,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.StageIds.Should().Equal(stageA);
         }
@@ -176,7 +176,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.StageIds.Should().Equal(stageA, stageC);
         }
@@ -200,7 +200,7 @@ public sealed class CompetitionPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.ReplaceRegulation(replacement, _clock);
 
@@ -210,7 +210,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Regulation.Should().Be(replacement);
             reloaded.Regulation.Should().NotBe(initial);
@@ -237,7 +237,7 @@ public sealed class CompetitionPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             var second = loaded.AddEntry(teamId, "Team A return", _clock);
             secondId = second.Id;
@@ -246,7 +246,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Entries.Should().HaveCount(2);
             reloaded.Entries.Select(entry => entry.Id).Should().BeEquivalentTo([first.Id, secondId]);
@@ -285,7 +285,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.StageIds.Should().Equal(stageA);
         }
@@ -313,7 +313,7 @@ public sealed class CompetitionPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             var loadedEntry = loaded.Entries.Should().ContainSingle(e => e.Id == entryId).Subject;
             loadedEntry.DeclaredMembers.Select(m => m.Id).Should().Equal(player.Id, staff.Id);
@@ -329,7 +329,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             var members = reloaded.Entries.Single(e => e.Id == entryId).DeclaredMembers;
             members.Should().HaveCount(2);
@@ -359,7 +359,7 @@ public sealed class CompetitionPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             var second = loaded.AddEntry(teamId, "Team A return", _clock);
             secondId = second.Id;
@@ -369,7 +369,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Entries.Single(e => e.Id == first.Id).DeclaredMembers.Should().ContainSingle()
                 .Which.DisplayName.Should().Be("Dupont");
@@ -407,7 +407,7 @@ public sealed class CompetitionPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new CompetitionRepository(context).GetByIdAsync(id);
+            var loaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.ShortName!.Value.Should().Be("L1");
             loaded.LogoMediaId.Should().Be(competitionLogo);

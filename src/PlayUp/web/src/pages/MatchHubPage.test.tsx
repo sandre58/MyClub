@@ -3,20 +3,15 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  ApiError,
-  fetchCompetitionDetail,
-  fetchMatchesByStage,
-} from '../api'
-import type { CompetitionDetail, MatchSummary } from '../types'
+import { ApiError, fetchMatchHub } from '../api'
+import type { CompetitionDetail, MatchHubView, MatchSummary } from '../types'
 import { MatchHubPage } from './MatchHubPage'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
   return {
     ...actual,
-    fetchCompetitionDetail: vi.fn(),
-    fetchMatchesByStage: vi.fn(),
+    fetchMatchHub: vi.fn(),
   }
 })
 
@@ -48,6 +43,22 @@ function matchSummary(overrides: Partial<MatchSummary> = {}): MatchSummary {
     fixtureId: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
     roundId: null,
     ...overrides,
+  }
+}
+
+function matchHubView(
+  detailOverrides: Partial<CompetitionDetail> = {},
+  matches: MatchSummary[] = [],
+): MatchHubView {
+  const competitionDetail = detail(detailOverrides)
+  return {
+    detail: competitionDetail,
+    stages: competitionDetail.stages.map((stage) => ({
+      stageId: stage.stageId,
+      name: stage.name,
+      status: stage.status,
+      matches: matches.filter((match) => match.stageId === stage.stageId),
+    })),
   }
 }
 
@@ -93,7 +104,7 @@ describe('MatchHubPage', () => {
   })
 
   it('shows loading while hub reads are pending', () => {
-    vi.mocked(fetchCompetitionDetail).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchMatchHub).mockReturnValue(new Promise(() => {}))
 
     renderMatchHub()
 
@@ -101,8 +112,7 @@ describe('MatchHubPage', () => {
   })
 
   it('renders empty when stages exist but no matches', async () => {
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([])
+    vi.mocked(fetchMatchHub).mockResolvedValue(matchHubView())
 
     renderMatchHub()
 
@@ -111,10 +121,9 @@ describe('MatchHubPage', () => {
   })
 
   it('renders competition matches grouped in the calendar', async () => {
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([
-      matchSummary({ status: 'Live' }),
-    ])
+    vi.mocked(fetchMatchHub).mockResolvedValue(
+      matchHubView({}, [matchSummary({ status: 'Live' })]),
+    )
 
     renderMatchHub()
 
@@ -126,16 +135,17 @@ describe('MatchHubPage', () => {
   })
 
   it('shows Read context, scheduled time, score and result type without inventing values', async () => {
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([
-      matchSummary({
-        status: 'Finished',
-        score: { homeGoals: 2, awayGoals: 1 },
-        matchdayNumber: 3,
-        resultType: 'Played',
-        scheduledAt: '2026-09-01T15:00:00.000Z',
-      }),
-    ])
+    vi.mocked(fetchMatchHub).mockResolvedValue(
+      matchHubView({}, [
+        matchSummary({
+          status: 'Finished',
+          score: { homeGoals: 2, awayGoals: 1 },
+          matchdayNumber: 3,
+          resultType: 'Played',
+          scheduledAt: '2026-09-01T15:00:00.000Z',
+        }),
+      ]),
+    )
 
     renderMatchHub()
 
@@ -146,16 +156,17 @@ describe('MatchHubPage', () => {
   })
 
   it('prefers roundName from the Read over matchday formatting', async () => {
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([
-      matchSummary({
-        status: 'Finished',
-        score: { homeGoals: 1, awayGoals: 0 },
-        roundName: 'Demi-finale',
-        matchdayNumber: 99,
-        resultType: 'Forfeit',
-      }),
-    ])
+    vi.mocked(fetchMatchHub).mockResolvedValue(
+      matchHubView({}, [
+        matchSummary({
+          status: 'Finished',
+          score: { homeGoals: 1, awayGoals: 0 },
+          roundName: 'Demi-finale',
+          matchdayNumber: 99,
+          resultType: 'Forfeit',
+        }),
+      ]),
+    )
 
     renderMatchHub()
 
@@ -165,8 +176,7 @@ describe('MatchHubPage', () => {
   })
 
   it('does not render a page-level attention card', async () => {
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([])
+    vi.mocked(fetchMatchHub).mockResolvedValue(matchHubView())
 
     renderMatchHub()
 
@@ -177,7 +187,7 @@ describe('MatchHubPage', () => {
   })
 
   it('shows an error when overview read fails', async () => {
-    vi.mocked(fetchCompetitionDetail).mockRejectedValue(
+    vi.mocked(fetchMatchHub).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
     )
 
@@ -190,8 +200,9 @@ describe('MatchHubPage', () => {
 
   it('navigates to match detail from a hub row', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([matchSummary()])
+    vi.mocked(fetchMatchHub).mockResolvedValue(
+      matchHubView({}, [matchSummary()]),
+    )
 
     renderMatchHub()
 
@@ -204,8 +215,7 @@ describe('MatchHubPage', () => {
 
   it('navigates back to vue d’ensemble', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([])
+    vi.mocked(fetchMatchHub).mockResolvedValue(matchHubView())
 
     renderMatchHub()
 
@@ -219,14 +229,15 @@ describe('MatchHubPage', () => {
   })
 
   it('links to classements when finished matches exist', async () => {
-    vi.mocked(fetchCompetitionDetail).mockResolvedValue(detail())
-    vi.mocked(fetchMatchesByStage).mockResolvedValue([
-      matchSummary({
-        status: 'Finished',
-        score: { homeGoals: 1, awayGoals: 0 },
-        matchdayNumber: 1,
-      }),
-    ])
+    vi.mocked(fetchMatchHub).mockResolvedValue(
+      matchHubView({}, [
+        matchSummary({
+          status: 'Finished',
+          score: { homeGoals: 1, awayGoals: 0 },
+          matchdayNumber: 1,
+        }),
+      ]),
+    )
 
     renderMatchHub()
 

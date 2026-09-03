@@ -27,17 +27,29 @@ public sealed class UseCaseExecutorOrganisationTests
         Stage? addedStage = null;
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         competitions
-            .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         stages
             .Setup(repository => repository.Add(It.IsAny<Stage>()))
             .Callback<Stage>(stage => addedStage = stage);
         stages
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<StageId>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(It.IsAny<StageId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((StageId id, CancellationToken _) =>
                 addedStage?.Id.Equals(id) == true ? addedStage : null);
+        stages
+            .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                It.IsAny<IReadOnlyList<StageId>>(),
+                StageLoadProfile.Full,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<StageId> ids, StageLoadProfile _, CancellationToken _) =>
+                addedStage is not null && ids.Contains(addedStage.Id) ? [addedStage] : []);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        matches
+            .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
+                It.IsAny<IReadOnlyList<StageId>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<Domain.Matches.Match>>());
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -61,7 +73,7 @@ public sealed class UseCaseExecutorOrganisationTests
         var competition = CreateCompetition.Execute("Entries", _clock);
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         competitions
-            .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);

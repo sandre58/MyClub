@@ -73,7 +73,7 @@ public sealed class UseCaseExecutorCompetitionBootstrapTests
     {
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         competitions
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<CompetitionId>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdReadOnlyAsync(It.IsAny<CompetitionId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Competition?)null);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);

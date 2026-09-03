@@ -115,7 +115,7 @@ public sealed class MatchSheetEndpointTests(HostPostgresFixture fixture)
         detail.RecordedDisciplinaryEvents[0].MemberDisplayName.Should().Be("Rival");
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(seed.MatchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(seed.MatchId);
         loaded!.DeclaredParticipations.Should().HaveCount(3);
         loaded.RecordedGoals.Should().ContainSingle();
         loaded.RecordedSubstitutions.Should().ContainSingle();
@@ -186,7 +186,7 @@ public sealed class MatchSheetEndpointTests(HostPostgresFixture fixture)
         GoalId goalId;
         using (var scope = factory.Services.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(seed.MatchId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(seed.MatchId);
             goalId = loaded!.RecordedGoals.Single().Id;
         }
 

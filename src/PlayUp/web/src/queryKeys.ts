@@ -17,6 +17,8 @@ export const queryKeys = {
       ['competitions', competitionId, 'attention'] as const,
     consultation: (competitionId: string) =>
       ['competitions', competitionId, 'consultation'] as const,
+    matchHub: (competitionId: string) =>
+      ['competitions', competitionId, 'matches-hub'] as const,
   },
   stages: {
     detail: (stageId: string) => ['stages', stageId] as const,

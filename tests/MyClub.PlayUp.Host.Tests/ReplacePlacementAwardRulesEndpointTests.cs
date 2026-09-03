@@ -46,7 +46,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
         stage.Regulation.PlacementAwardRules.Should().NotBeNull();
         stage.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
@@ -76,7 +76,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
         clear.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage!.Regulation.PlacementAwardRules.Should().BeNull();
     }
 

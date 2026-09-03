@@ -30,7 +30,7 @@ public sealed class UseCaseExecutorReadTests
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         competitions
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<CompetitionId>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdReadOnlyAsync(It.IsAny<CompetitionId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Competition?)null);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
@@ -49,7 +49,10 @@ public sealed class UseCaseExecutorReadTests
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         stages
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<StageId>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdReadOnlyAsync(
+                It.IsAny<StageId>(),
+                StageLoadProfile.Full,
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync((Stage?)null);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
@@ -68,7 +71,7 @@ public sealed class UseCaseExecutorReadTests
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         matches
-            .Setup(repository => repository.GetByIdAsync(It.IsAny<MatchId>(), It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdReadOnlyAsync(It.IsAny<MatchId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DomainMatch?)null);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
@@ -89,19 +92,23 @@ public sealed class UseCaseExecutorReadTests
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         competition.AddStage(stage.Id, _clock);
         var match = DomainMatch.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        var row = new MatchSummaryRow(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
 
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        stages.Setup(repository => repository.GetByIdAsync(stage.Id, It.IsAny<CancellationToken>())).ReturnsAsync(stage);
+        stages.Setup(repository => repository.GetByIdReadOnlyAsync(
+            stage.Id,
+            StageLoadProfile.Structure,
+            It.IsAny<CancellationToken>())).ReturnsAsync(stage);
         competitions
-            .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdReadOnlyAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
         matches
-            .Setup(repository => repository.ListByStageAsync(stage.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([match]);
+            .Setup(repository => repository.ListSummaryRowsByStageReadOnlyAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([row]);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
         var summaries = await executor.ListMatchesByStageAsync(stage.Id);

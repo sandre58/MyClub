@@ -43,7 +43,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
 
         using var scope = factory.Services.CreateScope();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var terminal = await stages.GetByIdAsync(terminalId);
+        var terminal = await stages.GetByIdForUpdateAsync(terminalId);
         terminal!.FindSlot("Champ")!.EntryId.Should().NotBeNull();
     }
 
@@ -63,7 +63,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         GetCode(problem!).Should().Be(ApplicationErrorCodes.SlotOccupancyConflict);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage!.FindSlot("SF1-A")!.EntryId.Should().Be(seed.ForeignEntryId);
     }
 

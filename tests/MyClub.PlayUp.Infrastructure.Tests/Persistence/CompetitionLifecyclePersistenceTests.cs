@@ -52,7 +52,7 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
         using (var scope = fixture.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
 
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(CompetitionStatus.Completed);
@@ -84,7 +84,7 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
         using (var scope = fixture.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Regulation.Should().Be(initial);
             loaded.ReplaceRegulation(replacement, _clock);
@@ -93,7 +93,7 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
 
         using (var scope = fixture.CreateScope())
         {
-            var reloaded = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().GetByIdAsync(id);
+            var reloaded = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Regulation.Should().Be(replacement);
             reloaded.Regulation.MatchRules.ExtraTimePolicy.Should().NotBeNull();

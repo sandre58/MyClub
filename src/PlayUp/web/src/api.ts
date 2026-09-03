@@ -14,6 +14,7 @@ import type {
   CreateCompetitionRequest,
   FinishMatchRequest,
   MatchDetail,
+  MatchHubView,
   MatchScore,
   MatchSummary,
   NeedsAttention,
@@ -366,6 +367,11 @@ export function configureOrganisationStructure(
 /** Relative URL → Vite proxy → Host GET /stages/{id} */
 export function fetchStageOverview(stageId: string): Promise<StageOverview> {
   return getJson(`/stages/${stageId}`)
+}
+
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/matches-hub */
+export function fetchMatchHub(competitionId: string): Promise<MatchHubView> {
+  return getJson(`/competitions/${competitionId}/matches-hub`)
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id}/matches */

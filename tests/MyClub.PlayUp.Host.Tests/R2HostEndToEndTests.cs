@@ -48,7 +48,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using (var scope = factory.Services.CreateScope())
         {
             var quarter = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-                .GetByIdAsync(seed.QuarterStageId);
+                .GetByIdForUpdateAsync(seed.QuarterStageId);
             quarter!.Status.Should().Be(StageStatus.Ready);
             quarter.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Draft);
             quarter.GetDraw(seed.DrawId).Resolution.State.Should().Be(DrawResolutionState.Resolved);
@@ -63,7 +63,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using (var scope = factory.Services.CreateScope())
         {
             var draw = (await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-                .GetByIdAsync(seed.QuarterStageId))!.GetDraw(seed.DrawId);
+                .GetByIdForUpdateAsync(seed.QuarterStageId))!.GetDraw(seed.DrawId);
             draw.Status.Should().Be(DrawStatus.Published);
             draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
         }
@@ -81,10 +81,10 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-            var quarter = await stages.GetByIdAsync(seed.QuarterStageId);
+            var quarter = await stages.GetByIdForUpdateAsync(seed.QuarterStageId);
             matchId = quarter!.GetFixture(seed.FixtureId).MatchIds.Should().ContainSingle().Subject;
 
-            var match = await matches.GetByIdAsync(matchId);
+            var match = await matches.GetByIdForUpdateAsync(matchId);
             match.Should().NotBeNull();
             match.Status.Should().Be(MatchStatus.Scheduled);
             match.HomeEntryId.Should().Be(seed.Home);
@@ -112,7 +112,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             match!.Status.Should().Be(MatchStatus.Live);
             match.Result.Should().BeNull();
         }
@@ -126,7 +126,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             match!.Status.Should().Be(MatchStatus.Finished);
             match.Result.Should().NotBeNull();
             match.Result!.Type.Should().Be(ResultType.Played);
@@ -145,7 +145,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using (var scope = factory.Services.CreateScope())
         {
             var semi = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-                .GetByIdAsync(seed.SemiStageId);
+                .GetByIdForUpdateAsync(seed.SemiStageId);
             semi.Should().NotBeNull();
             semi.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
             semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
@@ -216,7 +216,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         using var scope = factory.Services.CreateScope();
         var semi = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-            .GetByIdAsync(seed.SemiStageId);
+            .GetByIdForUpdateAsync(seed.SemiStageId);
         semi!.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
     }

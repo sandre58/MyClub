@@ -7,13 +7,12 @@ import {
   fetchCompetitionDetail,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchCompetitionOverview,
+  fetchNeedsAttention,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
 import { HomePage } from '../pages/HomePage'
-import { overviewView } from '../test/overviewFixtures'
-import type { OverviewSituation } from '../types'
+import type { NeedsAttentionItem } from '../types'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -23,7 +22,7 @@ vi.mock('../api', async (importOriginal) => {
     fetchCompetitionDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchMatchDetail: vi.fn(),
-    fetchCompetitionOverview: vi.fn(),
+    fetchNeedsAttention: vi.fn(),
   }
 })
 
@@ -31,35 +30,25 @@ const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
-function attentionOverview(items: Partial<OverviewSituation>[]) {
-  const normalized: OverviewSituation[] = items.map((item) => ({
-    source: item.source ?? 'InsufficientParticipants',
-    nature: item.nature ?? 'Blocking',
-    targetType: item.targetType ?? null,
-    targetId: item.targetId ?? null,
-    matchId: item.matchId ?? null,
-    actionable: item.actionable ?? Boolean(item.actionCode),
-    actionCode: item.actionCode ?? null,
-    impactCode: item.impactCode ?? null,
-    params: item.params ?? {},
+function needsAttention(items: Partial<NeedsAttentionItem>[] = []) {
+  const normalized: NeedsAttentionItem[] = items.map((item) => ({
+    source: item.source ?? 'ProgressionPending',
+    severity: item.severity ?? 'Blocking',
+    targetType: item.targetType ?? 'Stage',
+    targetId: item.targetId ?? stageId,
   }))
-  return overviewView({
+  return {
     competitionId,
-    name: 'Coupe U18',
-    status: 'Running',
-    attentionSummary: { count: normalized.length, items: normalized },
-    situations: normalized,
-  })
+    items: normalized,
+    count: normalized.length,
+  }
 }
 
-const oneItem = {
-  source: 'ProgressionPending' as const,
-  nature: 'Blocking' as const,
-  targetType: 'Stage' as const,
+const oneItem: Partial<NeedsAttentionItem> = {
+  source: 'ProgressionPending',
+  severity: 'Blocking',
+  targetType: 'Stage',
   targetId: stageId,
-  matchId: null,
-  actionCode: 'ApplyProgression' as const,
-  params: {},
 }
 
 function renderWithShell(initialEntry: string) {
@@ -101,7 +90,7 @@ describe('AttentionDrawer', () => {
       entries: [],
       stages: [{ stageId, name: 'Group stage', status: 'Running' }],
     })
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(attentionOverview([oneItem]))
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(needsAttention([oneItem]))
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -131,7 +120,7 @@ describe('AttentionDrawer', () => {
   })
 
   it('disables the header trigger when count is 0', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(attentionOverview([]))
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(needsAttention())
     renderWithShell(`/competitions/${competitionId}`)
 
     const trigger = await screen.findByRole('button', {
@@ -171,17 +160,14 @@ describe('AttentionDrawer', () => {
     ).toBeInTheDocument()
   })
 
-  it('groups blocking items before attention items', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
+  it('lists multiple blocking attention items together', async () => {
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
         {
-          source: 'DrawPending',
-          nature: 'Informational',
+          source: 'QualificationPending',
+          severity: 'Blocking',
           targetType: 'Stage',
           targetId: stageId,
-          matchId: null,
-          actionCode: null,
-          params: {},
         },
         oneItem,
       ]),
@@ -195,12 +181,9 @@ describe('AttentionDrawer', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Bloquant' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'À traiter', level: 3 })).toBeInTheDocument()
-    const groups = document.querySelectorAll('.shell-attention-drawer__group')
-    expect(groups[0]).toHaveTextContent('Bloquant')
-    expect(groups[0]).toHaveTextContent('Progression en attente')
-    expect(groups[1]).toHaveTextContent('À traiter')
-    expect(groups[1]).toHaveTextContent('Tirage en attente')
+    expect(screen.getByText('Progression en attente')).toBeInTheDocument()
+    expect(screen.getByText(/Qualification en attente/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'À traiter', level: 3 })).not.toBeInTheDocument()
   })
 
   it('closes via the close button', async () => {
@@ -232,27 +215,13 @@ describe('AttentionDrawer', () => {
   })
 
   it('navigates to an item route and closes the drawer', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
-        {
-          source: 'StageReady',
-          nature: 'Informational',
-          targetType: 'Stage',
-          targetId: stageId,
-          matchId: null,
-          actionCode: null,
-          params: {},
-        },
-      ]),
-    )
-
     const user = userEvent.setup()
     renderWithShell(`/competitions/${competitionId}`)
 
     await user.click(
       await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
-    await user.click(await screen.findByRole('link', { name: /Phase prête/i }))
+    await user.click(await screen.findByRole('link', { name: /Progression en attente/i }))
 
     expect(await screen.findByText('Stage page')).toBeInTheDocument()
     await waitFor(() => {
@@ -298,16 +267,13 @@ describe('AttentionDrawer', () => {
   })
 
   it('works on a stage deep link with resolved competition context', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
         {
-          source: 'DrawPending',
-          nature: 'Informational',
+          source: 'QualificationPending',
+          severity: 'Blocking',
           targetType: 'Stage',
           targetId: stageId,
-          matchId: null,
-          actionCode: null,
-          params: {},
         },
       ]),
     )
@@ -319,7 +285,7 @@ describe('AttentionDrawer', () => {
       await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
 
-    expect(await screen.findByText('Tirage en attente')).toBeInTheDocument()
+    expect(await screen.findByText(/Qualification en attente/i)).toBeInTheDocument()
     expect(
       document.querySelector('.shell-attention-drawer__count'),
     ).toHaveTextContent('1')
@@ -369,18 +335,15 @@ describe('AttentionDrawer', () => {
     expect(screen.getByRole('dialog', { name: /À traiter/ })).toBeInTheDocument()
   })
 
-  it('uses Host matchId for Fixture items without N+1 match joins', async () => {
+  it('routes Fixture attention items to the matches hub without matchId', async () => {
     const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
         {
           source: 'ProgressionPending',
-          nature: 'Blocking',
+          severity: 'Blocking',
           targetType: 'Fixture',
           targetId: fixtureId,
-          matchId,
-          actionCode: 'ApplyProgression',
-          params: {},
         },
       ]),
     )
@@ -391,10 +354,10 @@ describe('AttentionDrawer', () => {
     await user.click(
       await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     )
-    await user.click(
-      await screen.findByRole('link', { name: /Progression en attente/i }),
+    const link = await screen.findByRole('link', { name: /Progression en attente/i })
+    expect(link).toHaveAttribute(
+      'href',
+      `/competitions/${competitionId}/matches`,
     )
-
-    expect(await screen.findByText('Match page')).toBeInTheDocument()
   })
 })

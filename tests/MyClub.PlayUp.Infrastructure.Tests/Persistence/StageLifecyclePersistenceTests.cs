@@ -53,7 +53,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(StageStatus.Completed);
             loaded.Regulation.Should().Be(regulation);
@@ -89,7 +89,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var loaded = await stages.GetByIdAsync(stageId);
+            var loaded = await stages.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.ReplaceRegulation(replacement, _clock);
             await unitOfWork.SaveChangesAsync();
@@ -97,7 +97,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Regulation.Should().Be(replacement);
         }
@@ -158,7 +158,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Regulation.Should().Be(regulation);
             loaded.Regulation.DrawRules!.Constraints.Should().Contain(c =>
@@ -200,7 +200,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Rounds.Single(round => round.Id == nullTieFormatRoundId).TieFormat.Should().BeNull();
             loaded.Rounds.Single(round => round.Id == richTieFormatRoundId).TieFormat.Should().Be(richTieFormat);
@@ -254,7 +254,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var tracked = await stages.GetByIdAsync(stageId);
+            var tracked = await stages.GetByIdForUpdateAsync(stageId);
             tracked.Should().NotBeNull();
             var fixtureId = tracked.Matchdays.SelectMany(matchday => matchday.Fixtures).Single().Id;
             tracked.AttachMatch(fixtureId, matchId, 1, _clock);
@@ -263,7 +263,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Groups.Select(group => group.Name).Should().Equal("B", "A");
             loaded.Groups[1].EntryIds.Should().Equal(entryA, entryB);
@@ -319,13 +319,13 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
 
-            var knockout = await stages.GetByIdAsync(knockoutId);
+            var knockout = await stages.GetByIdForUpdateAsync(knockoutId);
             knockout.Should().NotBeNull();
             knockout.Rounds[0].Fixtures.Should().ContainSingle().Which.Id.Should().Be(roundFixtureId);
             context.Entry(knockout.Rounds[0].Fixtures[0]).Property<RoundId?>("round_id").CurrentValue.Should().Be(roundId);
             context.Entry(knockout.Rounds[0].Fixtures[0]).Property<MatchdayId?>("matchday_id").CurrentValue.Should().BeNull();
 
-            var league = await stages.GetByIdAsync(leagueId);
+            var league = await stages.GetByIdForUpdateAsync(leagueId);
             league.Should().NotBeNull();
             league.Matchdays[0].Fixtures.Should().ContainSingle().Which.Id.Should().Be(matchdayFixtureId);
             context.Entry(league.Matchdays[0].Fixtures[0]).Property<MatchdayId?>("matchday_id").CurrentValue.Should().Be(matchdayId);
@@ -405,7 +405,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             stages.Add(stage);
             await unitOfWork.SaveChangesAsync();
 
-            var tracked = await competitions.GetByIdAsync(competitionId);
+            var tracked = await competitions.GetByIdForUpdateAsync(competitionId);
             tracked.Should().NotBeNull();
             tracked.AddStage(stageId, _clock);
             await unitOfWork.SaveChangesAsync();
@@ -425,7 +425,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-            var loaded = await competitions.GetByIdAsync(competitionId);
+            var loaded = await competitions.GetByIdForUpdateAsync(competitionId);
             loaded.Should().NotBeNull();
             loaded.StageIds.Should().Equal(stageId);
         }
@@ -600,7 +600,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var loaded = await stages.GetByIdAsync(stageId);
+            var loaded = await stages.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Groups.Select(group => group.Id).Should().Equal(first, second, third);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
@@ -613,7 +613,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Groups.Select(group => group.Id).Should().Equal(third, first, second);
         }
@@ -651,7 +651,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var loaded = await stages.GetByIdAsync(stageId);
+            var loaded = await stages.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
@@ -663,7 +663,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Matchdays.Select(matchday => matchday.Id).Should().Equal(third, first, second);
             reloaded.Matchdays.Select(matchday => matchday.Number).Should().Equal(3, 1, 2);
@@ -702,7 +702,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var loaded = await stages.GetByIdAsync(stageId);
+            var loaded = await stages.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
@@ -714,7 +714,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Rounds.Select(round => round.Id).Should().Equal(third, first, second);
         }
@@ -747,7 +747,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             matches.Add(match);
             await unitOfWork.SaveChangesAsync();
 
-            var tracked = await stages.GetByIdAsync(stageId);
+            var tracked = await stages.GetByIdForUpdateAsync(stageId);
             tracked.Should().NotBeNull();
             tracked.AttachMatch(addFixture.Id, matchId, legIndex: 1, _clock);
             await unitOfWork.SaveChangesAsync();

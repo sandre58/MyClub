@@ -800,10 +800,11 @@ function TeamsPlateauReading({
       : t('plateauMinimumReached')
 
   const gaugeAria = t('plateauGaugeAria', {
+    count: activeCount,
     active: activeCount,
     min: minimumTeams,
     max: maximumTeams,
-    available: availableSlots,
+    available: t('plateauPlacesAvailable', { count: availableSlots }),
   })
 
   return (

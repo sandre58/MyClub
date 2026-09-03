@@ -11,6 +11,7 @@ using MyClub.Media.Infrastructure.DependencyInjection;
 using MyClub.Media.Infrastructure.Persistence;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Development.Runtime;
+using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
@@ -63,7 +64,9 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         Directory.CreateDirectory(_mediaStorageRoot);
 
         var services = new ServiceCollection();
-        services.AddPlayUpInfrastructure(connectionString);
+        var sqlCommandCounter = new SqlCommandCounterInterceptor();
+        services.AddSingleton(sqlCommandCounter);
+        services.AddPlayUpInfrastructure(connectionString, options => options.AddInterceptors(sqlCommandCounter));
         services.AddMediaInfrastructure(connectionString, _mediaStorageRoot);
         services.AddScoped<IMediaReferenceChecker, AlwaysExistingMediaReferences>();
         services.AddSingleton<IWorkspaceStore>(sp => new FixturePostgresWorkspaceStore(

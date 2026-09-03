@@ -57,12 +57,12 @@ public sealed class UseCaseExecutor(
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
     public async Task PrepareStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{stage.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -72,7 +72,7 @@ public sealed class UseCaseExecutor(
         var competitionStages = new List<Stage>(competition.StageIds.Count);
         foreach (var competitionStageId in competition.StageIds)
         {
-            var loaded = await stages.GetByIdAsync(competitionStageId, cancellationToken).ConfigureAwait(false)
+            var loaded = await stages.GetByIdForUpdateAsync(competitionStageId, cancellationToken).ConfigureAwait(false)
                 ?? throw new ApplicationFailureException(
                     $"Stage '{competitionStageId}' was not found.",
                     ApplicationErrorCodes.StageNotFound);
@@ -101,12 +101,12 @@ public sealed class UseCaseExecutor(
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
     public async Task StartStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{stage.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -129,12 +129,12 @@ public sealed class UseCaseExecutor(
         FixtureId fixtureId,
         CancellationToken cancellationToken = default)
     {
-        var source = await stages.GetByIdAsync(sourceStageId, cancellationToken).ConfigureAwait(false)
+        var source = await stages.GetByIdForUpdateAsync(sourceStageId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{sourceStageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdAsync(source.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(source.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{source.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -144,7 +144,7 @@ public sealed class UseCaseExecutor(
         var competitionStages = new List<Stage>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
         {
-            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
                 ?? throw new ApplicationFailureException(
                     $"Stage '{stageId}' was not found.",
                     ApplicationErrorCodes.StageNotFound);
@@ -163,7 +163,7 @@ public sealed class UseCaseExecutor(
         var loadedMatches = new List<Match>(fixture.Attachments.Count);
         foreach (var attachment in fixture.Attachments)
         {
-            var match = await matches.GetByIdAsync(attachment.MatchId, cancellationToken).ConfigureAwait(false)
+            var match = await matches.GetByIdForUpdateAsync(attachment.MatchId, cancellationToken).ConfigureAwait(false)
                 ?? throw new ApplicationFailureException(
                     $"Match '{attachment.MatchId}' was not found.",
                     ApplicationErrorCodes.MatchNotFound);
@@ -184,19 +184,19 @@ public sealed class UseCaseExecutor(
         StageId sourceStageId,
         CancellationToken cancellationToken = default)
     {
-        var source = await stages.GetByIdAsync(sourceStageId, cancellationToken).ConfigureAwait(false)
+        var source = await stages.GetByIdForUpdateAsync(sourceStageId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{sourceStageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdAsync(source.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(source.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{source.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
         EnsureCompetitionAllowsConsequenceOperation(competition);
 
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
+        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
         if (!competitionStages.Exists(candidate => candidate.Id.Equals(sourceStageId)))
         {
             throw new ApplicationFailureException(
@@ -205,7 +205,7 @@ public sealed class UseCaseExecutor(
         }
 
         var canonicalSource = competitionStages.First(candidate => candidate.Id.Equals(sourceStageId));
-        var stageMatches = await matches.ListByStageAsync(sourceStageId, cancellationToken).ConfigureAwait(false);
+        var stageMatches = await matches.ListByStageForUpdateAsync(sourceStageId, cancellationToken).ConfigureAwait(false);
         var (overall, groupStandings) = QualificationStandingFactory.Build(
             competition,
             canonicalSource,
@@ -235,7 +235,7 @@ public sealed class UseCaseExecutor(
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
@@ -264,7 +264,7 @@ public sealed class UseCaseExecutor(
         IReadOnlyList<FixtureId>? fixtureIds = null,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
@@ -330,7 +330,7 @@ public sealed class UseCaseExecutor(
     /// <exception cref="ApplicationFailureException">Thrown when the match does not exist or the competition is closed.</exception>
     public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
     {
-        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+        var match = await matches.GetByIdForUpdateAsync(matchId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
@@ -357,7 +357,7 @@ public sealed class UseCaseExecutor(
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+        var match = await matches.GetByIdForUpdateAsync(matchId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
@@ -618,8 +618,8 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false);
         var analysis = CompletionAnalyzer.Analyze(competition, competitionStages, matchesByStage);
         CompleteCompetition.Execute(competition, mode, analysis, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -935,7 +935,7 @@ public sealed class UseCaseExecutor(
         Stage? primary = null;
         if (competition.StageIds.Count > 0)
         {
-            primary = await stages.GetByIdAsync(competition.StageIds[0], cancellationToken).ConfigureAwait(false)
+            primary = await stages.GetByIdForUpdateAsync(competition.StageIds[0], cancellationToken).ConfigureAwait(false)
                 ?? throw new ApplicationFailureException(
                     $"Stage '{competition.StageIds[0]}' was not found.",
                     ApplicationErrorCodes.StageNotFound);
@@ -1030,7 +1030,10 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
@@ -1112,7 +1115,7 @@ public sealed class UseCaseExecutor(
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
         var result = MaterializeMatches.Execute(competition, stage, existing, clock);
         foreach (var created in result.CreatedMatches)
         {
@@ -1133,7 +1136,7 @@ public sealed class UseCaseExecutor(
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
         var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, slotPairs, existing, clock);
         foreach (var created in result.CreatedMatches)
         {
@@ -1153,7 +1156,7 @@ public sealed class UseCaseExecutor(
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
         var result = GenerateNextRound.Execute(competition, stage, existing, clock);
         foreach (var created in result.CreatedMatches)
         {
@@ -1187,7 +1190,7 @@ public sealed class UseCaseExecutor(
         }
 
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var loadedMatches = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var loadedMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
         var targets = ResolveScheduleTargets(stage, loadedMatches, targetMatchIds);
         var duration = new SchedulingDuration(matchDurationMinutes);
         var horizon = new Horizon(horizonStart, horizonEnd);
@@ -1287,7 +1290,7 @@ public sealed class UseCaseExecutor(
     }
 
     private async Task<Stage> RequireStageAsync(StageId stageId, CancellationToken cancellationToken) =>
-        await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
         ?? throw new ApplicationFailureException(
             $"Stage '{stageId}' was not found.",
             ApplicationErrorCodes.StageNotFound);
@@ -1295,7 +1298,7 @@ public sealed class UseCaseExecutor(
     private async Task<Competition> RequireCompetitionAsync(
         CompetitionId competitionId,
         CancellationToken cancellationToken) =>
-        await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+        await competitions.GetByIdForUpdateAsync(competitionId, cancellationToken).ConfigureAwait(false)
         ?? throw new ApplicationFailureException(
             $"Competition '{competitionId}' was not found.",
             ApplicationErrorCodes.CompetitionNotFound);
@@ -1319,21 +1322,8 @@ public sealed class UseCaseExecutor(
         Competition competition,
         CancellationToken cancellationToken)
     {
-        var loadedStages = new List<Stage>(competition.StageIds.Count);
-        foreach (var stageId in competition.StageIds)
-        {
-            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
-                ?? throw new ApplicationFailureException(
-                    $"Stage '{stageId}' was not found.",
-                    ApplicationErrorCodes.StageNotFound);
-            loadedStages.Add(stage);
-        }
-
-        var matchesByStage = await LoadMatchesByStageAsync(loadedStages, cancellationToken)
-            .ConfigureAwait(false);
-        IReadOnlyList<Match> competitionMatches =
-            [.. matchesByStage.Values.SelectMany(stageMatches => stageMatches)];
-        return OrganisationViewAssembler.Assemble(competition, loadedStages, competitionMatches);
+        var bundle = await LoadCompetitionReadBundleAsync(competition, cancellationToken).ConfigureAwait(false);
+        return OrganisationViewAssembler.Assemble(bundle.Competition, bundle.Stages, bundle.AllMatches);
     }
 
     /// <summary>
@@ -1359,19 +1349,16 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
-            ?? throw new ApplicationFailureException(
-                $"Competition '{competitionId}' was not found.",
-                ApplicationErrorCodes.CompetitionNotFound);
-
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
-        var attention = NeedsAttentionAssembler.Assemble(competition, competitionStages, matchesByStage);
-        var analysis = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended
-            ? CompletionAnalyzer.Analyze(competition, competitionStages, matchesByStage)
+        var bundle = await LoadCompetitionReadBundleAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var attention = NeedsAttentionAssembler.Assemble(
+            bundle.Competition,
+            bundle.Stages,
+            bundle.MatchesByStage);
+        var analysis = bundle.Competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended
+            ? CompletionAnalyzer.Analyze(bundle.Competition, bundle.Stages, bundle.MatchesByStage)
             : null;
 
-        return WorkspaceSummaryAssembler.Assemble(competition, attention.Count, analysis);
+        return WorkspaceSummaryAssembler.Assemble(bundle.Competition, attention.Count, analysis);
     }
 
     /// <summary>
@@ -1384,19 +1371,8 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
-            ?? throw new ApplicationFailureException(
-                $"Competition '{competitionId}' was not found.",
-                ApplicationErrorCodes.CompetitionNotFound);
-
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
-        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
-        foreach (var stage in competitionStages)
-        {
-            matchesByStage[stage.Id] = await matches.ListByStageAsync(stage.Id, cancellationToken).ConfigureAwait(false);
-        }
-
-        return NeedsAttentionAssembler.Assemble(competition, competitionStages, matchesByStage);
+        var bundle = await LoadCompetitionReadBundleAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        return NeedsAttentionAssembler.Assemble(bundle.Competition, bundle.Stages, bundle.MatchesByStage);
     }
 
     /// <summary>
@@ -1409,14 +1385,8 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
-            ?? throw new ApplicationFailureException(
-                $"Competition '{competitionId}' was not found.",
-                ApplicationErrorCodes.CompetitionNotFound);
-
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
-        return OverviewAssembler.Assemble(competition, competitionStages, matchesByStage);
+        var bundle = await LoadCompetitionReadBundleAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        return OverviewAssembler.Assemble(bundle.Competition, bundle.Stages, bundle.MatchesByStage);
     }
 
     /// <summary>
@@ -1429,14 +1399,61 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+        var bundle = await LoadCompetitionReadBundleAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        return ConsultationAssembler.Assemble(bundle.Competition, bundle.Stages, bundle.MatchesByStage);
+    }
+
+    /// <summary>
+    /// Match Hub read surface — competition detail and all stage match lists in one load.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Match Hub view.</returns>
+    public async Task<MatchHubViewDto> GetMatchHubViewAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
-        return ConsultationAssembler.Assemble(competition, competitionStages, matchesByStage);
+        if (competition.StageIds.Count == 0)
+        {
+            var emptyDetail = CompetitionDetailAssembler.Assemble(competition, Array.Empty<StageSummaryRow>());
+            return new MatchHubViewDto(emptyDetail, []);
+        }
+
+        var stageSummaries = await stages.ListSummariesReadOnlyAsync(competition.StageIds, cancellationToken)
+            .ConfigureAwait(false);
+        if (stageSummaries.Count != competition.StageIds.Count)
+        {
+            throw new ApplicationFailureException(
+                "One or more competition stages were not found.",
+                ApplicationErrorCodes.StageNotFound);
+        }
+
+        var detail = CompetitionDetailAssembler.Assemble(competition, stageSummaries);
+        var structureStages = await stages
+            .GetByIdsReadOnlyAsync(competition.StageIds, StageLoadProfile.Structure, cancellationToken)
+            .ConfigureAwait(false);
+        var rowsByStage = await matches
+            .ListSummaryRowsByStageIdsReadOnlyAsync(competition.StageIds, cancellationToken)
+            .ConfigureAwait(false);
+
+        var hubStages = new List<MatchHubStageMatchesDto>(structureStages.Count);
+        foreach (var stage in structureStages)
+        {
+            var rows = rowsByStage.TryGetValue(stage.Id, out var list) ? list : [];
+            var summaries = MatchReadAssembler.AssembleSummaries(stage, competition, rows);
+            hubStages.Add(new MatchHubStageMatchesDto(
+                stage.Id.Value,
+                stage.Name.Value,
+                stage.Status,
+                summaries));
+        }
+
+        return new MatchHubViewDto(detail, hubStages);
     }
 
     /// <summary>
@@ -1450,22 +1467,21 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
-        var loadedStages = new List<Stage>(competition.StageIds.Count);
-        foreach (var stageId in competition.StageIds)
+        var stageSummaries = await stages.ListSummariesReadOnlyAsync(competition.StageIds, cancellationToken)
+            .ConfigureAwait(false);
+        if (stageSummaries.Count != competition.StageIds.Count)
         {
-            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
-                ?? throw new ApplicationFailureException(
-                    $"Stage '{stageId}' was not found.",
-                    ApplicationErrorCodes.StageNotFound);
-            loadedStages.Add(stage);
+            throw new ApplicationFailureException(
+                "One or more competition stages were not found.",
+                ApplicationErrorCodes.StageNotFound);
         }
 
-        return CompetitionDetailAssembler.Assemble(competition, loadedStages);
+        return CompetitionDetailAssembler.Assemble(competition, stageSummaries);
     }
 
     /// <summary>
@@ -1479,12 +1495,12 @@ public sealed class UseCaseExecutor(
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        var stage = await stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Full, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdReadOnlyAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{stage.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -1503,18 +1519,18 @@ public sealed class UseCaseExecutor(
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+        var stage = await stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Structure, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Stage '{stageId}' was not found.",
                 ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdReadOnlyAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{stage.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
-        var matchList = await matches.ListByStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        return MatchReadAssembler.AssembleSummaries(stage, competition, matchList);
+        var matchRows = await matches.ListSummaryRowsByStageReadOnlyAsync(stageId, cancellationToken).ConfigureAwait(false);
+        return MatchReadAssembler.AssembleSummaries(stage, competition, matchRows);
     }
 
     /// <summary>
@@ -1528,17 +1544,17 @@ public sealed class UseCaseExecutor(
         MatchId matchId,
         CancellationToken cancellationToken = default)
     {
-        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+        var match = await matches.GetByIdReadOnlyAsync(matchId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
 
-        var competition = await competitions.GetByIdAsync(match.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdReadOnlyAsync(match.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{match.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
 
-        var stage = await stages.GetByIdAsync(match.StageId, cancellationToken).ConfigureAwait(false);
+        var stage = await stages.GetByIdReadOnlyAsync(match.StageId, StageLoadProfile.Structure, cancellationToken).ConfigureAwait(false);
         return MatchReadAssembler.AssembleDetail(match, competition, stage);
     }
 
@@ -1578,7 +1594,7 @@ public sealed class UseCaseExecutor(
 
             foreach (var attachment in fixture.Attachments)
             {
-                var match = await matches.GetByIdAsync(attachment.MatchId, cancellationToken).ConfigureAwait(false)
+                var match = await matches.GetByIdForUpdateAsync(attachment.MatchId, cancellationToken).ConfigureAwait(false)
                     ?? throw new ApplicationFailureException(
                         $"Match '{attachment.MatchId}' was not found.",
                         ApplicationErrorCodes.MatchNotFound);
@@ -1593,7 +1609,7 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(competitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -1610,7 +1626,7 @@ public sealed class UseCaseExecutor(
         MatchId matchId,
         CancellationToken cancellationToken)
     {
-        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+        var match = await matches.GetByIdForUpdateAsync(matchId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
@@ -1624,12 +1640,12 @@ public sealed class UseCaseExecutor(
         MatchId matchId,
         CancellationToken cancellationToken)
     {
-        var match = await matches.GetByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
+        var match = await matches.GetByIdForUpdateAsync(matchId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Match '{matchId}' was not found.",
                 ApplicationErrorCodes.MatchNotFound);
 
-        var competition = await competitions.GetByIdAsync(match.CompetitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(match.CompetitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{match.CompetitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -1648,7 +1664,7 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken)
     {
-        var competition = await competitions.GetByIdAsync(competitionId, cancellationToken).ConfigureAwait(false)
+        var competition = await competitions.GetByIdForUpdateAsync(competitionId, cancellationToken).ConfigureAwait(false)
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
@@ -1656,14 +1672,23 @@ public sealed class UseCaseExecutor(
         EnsureCompetitionAllowsLifecycleMutation(competition);
     }
 
-    private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageAsync(
+    private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageReadOnlyAsync(
         IReadOnlyList<Stage> competitionStages,
         CancellationToken cancellationToken)
     {
-        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        if (competitionStages.Count == 0)
+        {
+            return [];
+        }
+
+        var stageIds = competitionStages.Select(stage => stage.Id).ToArray();
+        var loaded = await matches.ListByStageIdsReadOnlyAsync(stageIds, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>(competitionStages.Count);
         foreach (var stage in competitionStages)
         {
-            matchesByStage[stage.Id] = await matches.ListByStageAsync(stage.Id, cancellationToken).ConfigureAwait(false);
+            matchesByStage[stage.Id] = loaded.TryGetValue(stage.Id, out var list)
+                ? list
+                : [];
         }
 
         return matchesByStage;
@@ -1678,19 +1703,43 @@ public sealed class UseCaseExecutor(
             return [];
         }
 
-        var competitionStages = await LoadCompetitionStagesAsync(competition, cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadMatchesByStageAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false);
         return [.. matchesByStage.Values.SelectMany(stageMatches => stageMatches)];
     }
 
-    private async Task<List<Stage>> LoadCompetitionStagesAsync(
+    private async Task<CompetitionReadBundle> LoadCompetitionReadBundleAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken)
+    {
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        return await LoadCompetitionReadBundleAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<CompetitionReadBundle> LoadCompetitionReadBundleAsync(
+        Competition competition,
+        CancellationToken cancellationToken)
+    {
+        var stages = await LoadCompetitionStagesReadOnlyAsync(
+            competition,
+            StageLoadProfile.Full,
+            cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadMatchesByStageReadOnlyAsync(stages, cancellationToken).ConfigureAwait(false);
+        return new CompetitionReadBundle(competition, stages, matchesByStage);
+    }
+
+    private async Task<List<Stage>> LoadCompetitionStagesForUpdateAsync(
         Competition competition,
         CancellationToken cancellationToken)
     {
         var competitionStages = new List<Stage>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
         {
-            var stage = await stages.GetByIdAsync(stageId, cancellationToken).ConfigureAwait(false)
+            var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
                 ?? throw new ApplicationFailureException(
                     $"Stage '{stageId}' was not found.",
                     ApplicationErrorCodes.StageNotFound);
@@ -1698,5 +1747,27 @@ public sealed class UseCaseExecutor(
         }
 
         return competitionStages;
+    }
+
+    private async Task<List<Stage>> LoadCompetitionStagesReadOnlyAsync(
+        Competition competition,
+        StageLoadProfile profile,
+        CancellationToken cancellationToken)
+    {
+        if (competition.StageIds.Count == 0)
+        {
+            return [];
+        }
+
+        var loaded = await stages.GetByIdsReadOnlyAsync(competition.StageIds, profile, cancellationToken)
+            .ConfigureAwait(false);
+        if (loaded.Count != competition.StageIds.Count)
+        {
+            throw new ApplicationFailureException(
+                "One or more competition stages were not found.",
+                ApplicationErrorCodes.StageNotFound);
+        }
+
+        return [.. loaded];
     }
 }

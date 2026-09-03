@@ -15,12 +15,20 @@ namespace MyClub.PlayUp.Application.Abstractions;
 public interface ICompetitionRepository
 {
     /// <summary>
-    /// Loads a competition by identity, or <see langword="null"/> if it does not exist.
+    /// Loads a tracked competition for command paths that mutate the aggregate.
     /// </summary>
     /// <param name="id">The competition identity.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The tracked competition, or <see langword="null"/>.</returns>
-    Task<Competition?> GetByIdAsync(CompetitionId id, CancellationToken cancellationToken = default);
+    Task<Competition?> GetByIdForUpdateAsync(CompetitionId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads a competition without change tracking for read-only queries.
+    /// </summary>
+    /// <param name="id">The competition identity.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The competition snapshot, or <see langword="null"/>.</returns>
+    Task<Competition?> GetByIdReadOnlyAsync(CompetitionId id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists competitions for the organizer Competition List (no stage hydration).

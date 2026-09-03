@@ -43,7 +43,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(id);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(StageStatus.Completed);
             loaded.Status.Should().NotBe(StageStatus.Draft);
@@ -71,7 +71,7 @@ public sealed class StagePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new StageRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.ReplaceRegulation(replacement, _clock);
 
@@ -81,7 +81,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new StageRepository(context).GetByIdAsync(id);
+            var reloaded = await new StageRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Regulation.Should().Be(replacement);
             reloaded.Regulation.Should().NotBe(initial);
@@ -109,7 +109,7 @@ public sealed class StagePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new StageRepository(context);
-            var loaded = await repository.GetByIdAsync(stageId);
+            var loaded = await repository.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.ReplaceRoundTieFormat(roundId, replacement, _clock);
 
@@ -121,7 +121,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var reloaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Rounds.Single(round => round.Id == roundId).TieFormat.Should().Be(replacement);
         }
@@ -150,7 +150,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Rounds.Should().ContainSingle();
             loaded.Matchdays.Should().BeEmpty();
@@ -187,7 +187,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Matchdays.Should().ContainSingle();
             loaded.Rounds.Should().BeEmpty();
@@ -239,7 +239,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Groups.Select(group => group.Name).Should().Equal("Group B", "Group A");
             loaded.Groups.Single(group => group.Id == groupId).EntryIds.Should().Equal(entryA, entryB);
@@ -279,7 +279,7 @@ public sealed class StagePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new StageRepository(context);
-            var loaded = await repository.GetByIdAsync(stageId);
+            var loaded = await repository.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.ArrangeGroups([second, first], _clock);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
@@ -288,7 +288,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var reloaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Groups.Select(group => group.Id).Should().Equal(second, first);
         }
@@ -332,7 +332,7 @@ public sealed class StagePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.IsSwiss.Should().BeTrue();
             loaded.SwissSettings.Should().Be(new SwissSettings(3));

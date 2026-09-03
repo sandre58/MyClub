@@ -51,7 +51,7 @@ public sealed class MatchListByStagePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            var listed = await repository.ListByStageAsync(stageA);
+            var listed = await repository.ListByStageForUpdateAsync(stageA);
 
             listed.Should().HaveCount(2);
             listed.Select(match => match.Id).Should().Equal(
@@ -59,7 +59,7 @@ public sealed class MatchListByStagePersistenceTests
             listed.Should().OnlyContain(match => match.StageId.Equals(stageA));
             listed.Should().NotContain(match => match.Id.Equals(otherStageId));
 
-            (await repository.ListByStageAsync(StageId.New())).Should().BeEmpty();
+            (await repository.ListByStageForUpdateAsync(StageId.New())).Should().BeEmpty();
         }
     }
 }

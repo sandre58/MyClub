@@ -17,37 +17,84 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 internal sealed class StageRepository(PlayUpDbContext context) : IStageRepository
 {
     /// <inheritdoc />
-    public async Task<Stage?> GetByIdAsync(StageId id, CancellationToken cancellationToken = default)
-    {
-        var alreadyTracked = context.Set<Stage>().Local.Any(candidate => candidate.Id.Equals(id));
+    public Task<Stage?> GetByIdForUpdateAsync(StageId id, CancellationToken cancellationToken = default) =>
+        LoadByIdAsync(id, StageLoadProfile.Full, trackChanges: true, cancellationToken);
 
-        var stage = await context.Set<Stage>()
-            .AsSplitQuery()
-            .Include(candidate => candidate.Groups)
-            .Include(candidate => candidate.Rounds)
-            .ThenInclude(round => round.Fixtures)
-            .Include(candidate => candidate.Matchdays)
-            .ThenInclude(matchday => matchday.Fixtures)
-            .Include(candidate => candidate.Slots)
-            .Include(candidate => candidate.DirectAssignments)
-            .Include(candidate => candidate.Draws)
-            .Include(candidate => candidate.Penalties)
-            .Include(candidate => candidate.MatchPlacements)
-            .Include(candidate => candidate.SwissByeHistory)
-            .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
+    /// <inheritdoc />
+    public Task<Stage?> GetByIdReadOnlyAsync(
+        StageId id,
+        StageLoadProfile profile,
+        CancellationToken cancellationToken = default) =>
+        LoadByIdAsync(id, profile, trackChanges: false, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
+        IReadOnlyList<StageId> ids,
+        StageLoadProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var query = ApplyProfile(context.Set<Stage>().AsNoTracking().AsSplitQuery(), profile)
+            .Where(candidate => ids.Contains(candidate.Id));
+
+        var loaded = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (profile >= StageLoadProfile.Structure)
+        {
+            foreach (var stage in loaded)
+            {
+                await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        var byId = loaded.ToDictionary(stage => stage.Id);
+        var ordered = new List<Stage>(ids.Count);
+        foreach (var id in ids)
+        {
+            if (!byId.TryGetValue(id, out var stage))
+            {
+                continue;
+            }
+
+            ordered.Add(stage);
+        }
+
+        return ordered;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<StageSummaryRow>> ListSummariesReadOnlyAsync(
+        IReadOnlyList<StageId> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await context.Set<Stage>()
+            .AsNoTracking()
+            .Where(stage => ids.Contains(stage.Id))
+            .Select(stage => new StageSummaryRow(stage.Id, stage.Name.Value, stage.Status))
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        if (stage is null)
+        var byId = rows.ToDictionary(row => row.Id);
+        var ordered = new List<StageSummaryRow>(ids.Count);
+        foreach (var id in ids)
         {
-            return null;
+            if (!byId.TryGetValue(id, out var row))
+            {
+                continue;
+            }
+
+            ordered.Add(row);
         }
 
-        if (!alreadyTracked)
-        {
-            await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
-        }
-
-        return stage;
+        return ordered;
     }
 
     /// <inheritdoc />
@@ -56,6 +103,71 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         ArgumentNullException.ThrowIfNull(stage);
         context.Set<Stage>().Add(stage);
     }
+
+    private async Task<Stage?> LoadByIdAsync(
+        StageId id,
+        StageLoadProfile profile,
+        bool trackChanges,
+        CancellationToken cancellationToken)
+    {
+        if (trackChanges)
+        {
+            var tracked = context.Set<Stage>().Local.FirstOrDefault(candidate => candidate.Id.Equals(id));
+            if (tracked is not null)
+            {
+                return tracked;
+            }
+        }
+
+        var root = context.Set<Stage>().AsQueryable();
+        if (!trackChanges)
+        {
+            root = root.AsNoTracking();
+        }
+
+        var query = ApplyProfile(root.AsSplitQuery(), profile);
+        var stage = await query
+            .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (stage is null)
+        {
+            return null;
+        }
+
+        if (profile >= StageLoadProfile.Structure)
+        {
+            await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
+        }
+
+        return stage;
+    }
+
+    private static IQueryable<Stage> ApplyProfile(IQueryable<Stage> query, StageLoadProfile profile) =>
+        profile switch
+        {
+            StageLoadProfile.Summary => query,
+            StageLoadProfile.Structure => query
+                .Include(candidate => candidate.Groups)
+                .Include(candidate => candidate.Rounds)
+                .ThenInclude(round => round.Fixtures)
+                .Include(candidate => candidate.Matchdays)
+                .ThenInclude(matchday => matchday.Fixtures)
+                .Include(candidate => candidate.MatchPlacements),
+            StageLoadProfile.Full => query
+                .Include(candidate => candidate.Groups)
+                .Include(candidate => candidate.Rounds)
+                .ThenInclude(round => round.Fixtures)
+                .Include(candidate => candidate.Matchdays)
+                .ThenInclude(matchday => matchday.Fixtures)
+                .Include(candidate => candidate.Slots)
+                .Include(candidate => candidate.DirectAssignments)
+                .Include(candidate => candidate.Draws)
+                .Include(candidate => candidate.Penalties)
+                .Include(candidate => candidate.MatchPlacements)
+                .Include(candidate => candidate.SwissByeHistory),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+        };
 
     private async Task HydrateOrderedCollectionsAsync(Stage stage, CancellationToken cancellationToken)
     {
@@ -68,6 +180,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         var entryRows = groupIds.Length == 0
             ? []
             : await context.Set<GroupEntryRef>()
+                .AsNoTracking()
                 .Where(row => groupIds.AsEnumerable().Contains(row.GroupId))
                 .OrderBy(row => row.SortOrder)
                 .ToListAsync(cancellationToken)
@@ -110,15 +223,21 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             await HydrateAttachmentsAsync(fixtures, cancellationToken).ConfigureAwait(false);
         }
 
-        var draws = StageOrderedCollectionsAccessor.GetDraws(stage)
-            .OrderBy(draw => context.Entry(draw).Property<int>("SortOrder").CurrentValue)
-            .ToList();
-        StageOrderedCollectionsAccessor.ReorderDraws(stage, draws);
+        if (StageOrderedCollectionsAccessor.GetDraws(stage).Count > 0)
+        {
+            var draws = StageOrderedCollectionsAccessor.GetDraws(stage)
+                .OrderBy(draw => context.Entry(draw).Property<int>("SortOrder").CurrentValue)
+                .ToList();
+            StageOrderedCollectionsAccessor.ReorderDraws(stage, draws);
+        }
 
-        var penalties = StageOrderedCollectionsAccessor.GetPenalties(stage)
-            .OrderBy(penalty => context.Entry(penalty).Property<int>("SortOrder").CurrentValue)
-            .ToList();
-        StageOrderedCollectionsAccessor.ReorderPenalties(stage, penalties);
+        if (StageOrderedCollectionsAccessor.GetPenalties(stage).Count > 0)
+        {
+            var penalties = StageOrderedCollectionsAccessor.GetPenalties(stage)
+                .OrderBy(penalty => context.Entry(penalty).Property<int>("SortOrder").CurrentValue)
+                .ToList();
+            StageOrderedCollectionsAccessor.ReorderPenalties(stage, penalties);
+        }
     }
 
     private async Task HydrateAttachmentsAsync(List<Fixture> fixtures, CancellationToken cancellationToken)
@@ -130,6 +249,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
 
         var fixtureIds = fixtures.Select(fixture => fixture.Id).ToArray();
         var rows = await context.Set<FixtureAttachmentRef>()
+            .AsNoTracking()
             .Where(row => fixtureIds.AsEnumerable().Contains(row.FixtureId))
             .OrderBy(row => row.LegIndex)
             .ToListAsync(cancellationToken)

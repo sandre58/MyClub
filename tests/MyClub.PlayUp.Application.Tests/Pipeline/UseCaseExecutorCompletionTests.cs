@@ -119,23 +119,57 @@ public sealed class UseCaseExecutorCompletionTests
     {
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         competitions
-            .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition);
+        competitions
+            .Setup(repository => repository.GetByIdReadOnlyAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         if (stage is not null)
         {
             stages
-                .Setup(repository => repository.GetByIdAsync(stage.Id, It.IsAny<CancellationToken>()))
+                .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(stage);
+            stages
+                .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                    It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
+                    StageLoadProfile.Full,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([stage]);
+        }
+        else
+        {
+            stages
+                .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                    It.IsAny<IReadOnlyList<StageId>>(),
+                    StageLoadProfile.Full,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
         }
 
         var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
         if (stage is not null)
         {
             matchRepo
-                .Setup(repository => repository.ListByStageAsync(stage.Id, It.IsAny<CancellationToken>()))
+                .Setup(repository => repository.ListByStageForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(matches);
+            matchRepo
+                .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
+                    It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>
+                {
+                    [stage.Id] = matches,
+                });
+        }
+        else
+        {
+            matchRepo
+                .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
+                    It.IsAny<IReadOnlyList<StageId>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>());
         }
 
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);

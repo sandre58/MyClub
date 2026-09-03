@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -39,6 +40,51 @@ public static class CompetitionDetailAssembler
             stageSummaries.Add(new CompetitionStageSummaryDto(stage.Id.Value, stage.Name.Value, stage.Status));
         }
 
+        return AssembleCore(competition, stageSummaries);
+    }
+
+    /// <summary>
+    /// Maps competition and projected stage summaries into a product overview.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stageSummaries">Stage summaries in competition order.</param>
+    /// <returns>The assembled overview.</returns>
+    public static CompetitionDetailDto Assemble(
+        Competition competition,
+        IReadOnlyList<StageSummaryRow> stageSummaries)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stageSummaries);
+
+        if (stageSummaries.Count != competition.StageIds.Count
+            || stageSummaries.Select(row => row.Id).SequenceEqual(competition.StageIds) == false)
+        {
+            var byId = stageSummaries.ToDictionary(row => row.Id);
+            var ordered = new List<CompetitionStageSummaryDto>(competition.StageIds.Count);
+            foreach (var stageId in competition.StageIds)
+            {
+                if (!byId.TryGetValue(stageId, out var row))
+                {
+                    throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+                }
+
+                ordered.Add(new CompetitionStageSummaryDto(row.Id.Value, row.Name, row.Status));
+            }
+
+            return AssembleCore(competition, ordered);
+        }
+
+        return AssembleCore(
+            competition,
+            [.. stageSummaries.Select(row => new CompetitionStageSummaryDto(row.Id.Value, row.Name, row.Status))]);
+    }
+
+    private static CompetitionDetailDto AssembleCore(
+        Competition competition,
+        IReadOnlyList<CompetitionStageSummaryDto> stageSummaries)
+    {
         var entries = competition.Entries
             .Select(entry => new CompetitionEntrySummaryDto(
                 entry.Id.Value,

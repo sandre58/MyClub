@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { fetchCompetitionOverview } from '../api'
+import { fetchNeedsAttention } from '../api'
 import { TeamCrest } from '../design-system/TeamCrest'
 import {
   AttentionBellIcon,
@@ -42,21 +42,19 @@ export function ShellHeader({
   onAttentionClick,
 }: ShellHeaderProps) {
   const { t } = useTranslation('shell')
-  const { competitionId, competitionName, logoMediaId, state } =
+  const { competitionId, competitionName, logoMediaId, status, scheduledStart, scheduledEnd, state } =
     useShellCompetitionContext()
 
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.competitions.overview(competitionId ?? ''),
-    queryFn: () => fetchCompetitionOverview(competitionId!),
+  const attentionQuery = useQuery({
+    queryKey: queryKeys.competitions.attention(competitionId ?? ''),
+    queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: Boolean(competitionId),
   })
 
-  const attentionCount = overviewQuery.data?.attentionSummary.count ?? 0
-  const competitionStatus = overviewQuery.data?.status
-  const periodLabel = formatCompetitionPeriod(
-    overviewQuery.data?.period?.start,
-    overviewQuery.data?.period?.end,
-  )
+  const attentionCount =
+    attentionQuery.data?.count ?? attentionQuery.data?.items.length ?? 0
+  const competitionStatus = status
+  const periodLabel = formatCompetitionPeriod(scheduledStart, scheduledEnd)
 
   return (
     <header className="shell-header ds-shell-header">

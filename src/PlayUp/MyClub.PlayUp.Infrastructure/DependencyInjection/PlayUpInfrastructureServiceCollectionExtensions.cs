@@ -25,8 +25,12 @@ public static class PlayUpInfrastructureServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The PostgreSQL connection string.</param>
+    /// <param name="configureDbContextOptions">Optional hook for tests or diagnostics (e.g. SQL command counter).</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddPlayUpInfrastructure(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddPlayUpInfrastructure(
+        this IServiceCollection services,
+        string connectionString,
+        Action<DbContextOptionsBuilder>? configureDbContextOptions = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
@@ -37,6 +41,7 @@ public static class PlayUpInfrastructureServiceCollectionExtensions
         services.AddDbContext<PlayUpDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(connectionString);
+            configureDbContextOptions?.Invoke(options);
             options.AddInterceptors(
                 serviceProvider.GetRequiredService<CompetitionOrderedCollectionsInterceptor>(),
                 serviceProvider.GetRequiredService<StageOrderedCollectionsInterceptor>(),

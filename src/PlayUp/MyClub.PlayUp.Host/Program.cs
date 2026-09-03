@@ -590,6 +590,16 @@ app.MapGet(
     });
 
 app.MapGet(
+    "/competitions/{competitionId:guid}/matches-hub",
+    async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+    {
+        var hub = await executor
+            .GetMatchHubViewAsync(new CompetitionId(competitionId), cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(hub);
+    });
+
+app.MapGet(
     "/stages/{stageId:guid}",
     async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
     {

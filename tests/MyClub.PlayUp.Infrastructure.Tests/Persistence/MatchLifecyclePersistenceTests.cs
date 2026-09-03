@@ -54,7 +54,7 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             loaded.Should().NotBeNull();
             loaded.CompetitionId.Should().Be(competitionId);
             loaded.StageId.Should().Be(stageId);
@@ -98,7 +98,7 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(MatchStatus.Finished);
             loaded.Result.Should().Be(result);
@@ -140,8 +140,8 @@ public sealed class MatchLifecyclePersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-            (await repository.GetByIdAsync(postponedId))!.Status.Should().Be(MatchStatus.Postponed);
-            (await repository.GetByIdAsync(cancelledId))!.Status.Should().Be(MatchStatus.Cancelled);
+            (await repository.GetByIdForUpdateAsync(postponedId))!.Status.Should().Be(MatchStatus.Postponed);
+            (await repository.GetByIdForUpdateAsync(cancelledId))!.Status.Should().Be(MatchStatus.Cancelled);
         }
     }
 }

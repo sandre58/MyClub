@@ -17,9 +17,117 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepository
 {
     /// <inheritdoc />
-    public async Task<Match?> GetByIdAsync(MatchId id, CancellationToken cancellationToken = default)
+    public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>
+        LoadByIdAsync(id, trackChanges: true, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Match?> GetByIdReadOnlyAsync(MatchId id, CancellationToken cancellationToken = default) =>
+        LoadByIdAsync(id, trackChanges: false, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<Match>> ListByStageForUpdateAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default) =>
+        ListByStageAsync(stageId, trackChanges: true, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<StageId, IReadOnlyList<Match>>> ListByStageIdsReadOnlyAsync(
+        IReadOnlyList<StageId> stageIds,
+        CancellationToken cancellationToken = default)
     {
-        var match = await context.Set<Match>()
+        if (stageIds.Count == 0)
+        {
+            return new Dictionary<StageId, IReadOnlyList<Match>>();
+        }
+
+        var matches = await context.Set<Match>()
+            .AsNoTracking()
+            .Where(candidate => stageIds.Contains(candidate.StageId))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var match in matches)
+        {
+            HydrateOrderedCollections(match);
+        }
+
+        return matches
+            .GroupBy(candidate => candidate.StageId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<Match>)[.. group.OrderBy(candidate => candidate.Id.Value)]);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<MatchSummaryRow>> ListSummaryRowsByStageReadOnlyAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await context.Set<Match>()
+            .AsNoTracking()
+            .Where(candidate => candidate.StageId == stageId)
+            .Select(candidate => new MatchSummaryRow(
+                candidate.Id,
+                candidate.StageId,
+                candidate.Status,
+                candidate.HomeEntryId,
+                candidate.AwayEntryId,
+                candidate.Result))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return [.. rows.OrderBy(candidate => candidate.Id.Value)];
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>> ListSummaryRowsByStageIdsReadOnlyAsync(
+        IReadOnlyList<StageId> stageIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (stageIds.Count == 0)
+        {
+            return new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
+        }
+
+        var rows = await context.Set<Match>()
+            .AsNoTracking()
+            .Where(candidate => stageIds.Contains(candidate.StageId))
+            .Select(candidate => new MatchSummaryRow(
+                candidate.Id,
+                candidate.StageId,
+                candidate.Status,
+                candidate.HomeEntryId,
+                candidate.AwayEntryId,
+                candidate.Result))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows
+            .GroupBy(candidate => candidate.StageId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<MatchSummaryRow>)[.. group.OrderBy(candidate => candidate.Id.Value)]);
+    }
+
+    /// <inheritdoc />
+    public void Add(Match match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        context.Set<Match>().Add(match);
+    }
+
+    private async Task<Match?> LoadByIdAsync(
+        MatchId id,
+        bool trackChanges,
+        CancellationToken cancellationToken)
+    {
+        var query = context.Set<Match>().AsQueryable();
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        var match = await query
             .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
             .ConfigureAwait(false);
 
@@ -32,13 +140,18 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         return match;
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Match>> ListByStageAsync(
+    private async Task<IReadOnlyList<Match>> ListByStageAsync(
         StageId stageId,
-        CancellationToken cancellationToken = default)
+        bool trackChanges,
+        CancellationToken cancellationToken)
     {
-        // Filter in SQL; order by MatchId.Value in memory (typed Id is not IComparable for providers).
-        var matches = await context.Set<Match>()
+        var query = context.Set<Match>().AsQueryable();
+        if (!trackChanges)
+        {
+            query = query.AsNoTracking();
+        }
+
+        var matches = await query
             .Where(candidate => candidate.StageId == stageId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -49,13 +162,6 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         }
 
         return [.. matches.OrderBy(candidate => candidate.Id.Value)];
-    }
-
-    /// <inheritdoc />
-    public void Add(Match match)
-    {
-        ArgumentNullException.ThrowIfNull(match);
-        context.Set<Match>().Add(match);
     }
 
     private void HydrateOrderedCollections(Match match)

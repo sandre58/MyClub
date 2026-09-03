@@ -101,7 +101,7 @@ public sealed class CompetitionSlice7EndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(seed.CompetitionId);
+            .GetByIdForUpdateAsync(seed.CompetitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Running);
         loaded.CompletionMode.Should().BeNull();
     }

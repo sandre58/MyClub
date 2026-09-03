@@ -53,7 +53,7 @@ public sealed class StageRuntimePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             var draw = loaded.Draws.Should().ContainSingle(candidate => candidate.Id == drawId).Subject;
             draw.Status.Should().Be(DrawStatus.Published);
@@ -96,7 +96,7 @@ public sealed class StageRuntimePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Draws.Single(draw => draw.Id == noSolutionId).Resolution.State.Should().Be(DrawResolutionState.NoSolution);
             loaded.Draws.Single(draw => draw.Id == cancelledId).Status.Should().Be(DrawStatus.Cancelled);
@@ -125,7 +125,7 @@ public sealed class StageRuntimePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             var penalty = loaded.Penalties.Should().ContainSingle().Subject;
             penalty.Id.Should().Be(keptId);
@@ -166,7 +166,7 @@ public sealed class StageRuntimePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.ConfigureDrawInputs(drawId, inputs, _clock);
             loaded.RecordDrawResolution(drawId, resolution, _clock);
@@ -182,7 +182,7 @@ public sealed class StageRuntimePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var reloaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             var draw = reloaded.Draws.Single(candidate => candidate.Id == drawId);
             draw.Status.Should().Be(DrawStatus.Published);
@@ -218,7 +218,7 @@ public sealed class StageRuntimePersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new StageRepository(context).GetByIdAsync(stageId);
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.MatchPlacements.Should().ContainSingle()
                 .Which.Should().Be(new MatchPlacement(matchId, start, resourceId));

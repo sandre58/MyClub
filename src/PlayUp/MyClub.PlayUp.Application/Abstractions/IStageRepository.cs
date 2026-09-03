@@ -15,12 +15,46 @@ namespace MyClub.PlayUp.Application.Abstractions;
 public interface IStageRepository
 {
     /// <summary>
-    /// Loads a stage by identity, or <see langword="null"/> if it does not exist.
+    /// Loads a tracked stage with the full graph for command paths.
     /// </summary>
     /// <param name="id">The stage identity.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The tracked stage, or <see langword="null"/>.</returns>
-    Task<Stage?> GetByIdAsync(StageId id, CancellationToken cancellationToken = default);
+    Task<Stage?> GetByIdForUpdateAsync(StageId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads a stage without change tracking using the requested graph profile.
+    /// </summary>
+    /// <param name="id">The stage identity.</param>
+    /// <param name="profile">Graph depth to include.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The stage snapshot, or <see langword="null"/>.</returns>
+    Task<Stage?> GetByIdReadOnlyAsync(
+        StageId id,
+        StageLoadProfile profile,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads multiple stages in one query without change tracking.
+    /// </summary>
+    /// <param name="ids">Stage identities in competition order.</param>
+    /// <param name="profile">Graph depth to include.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Stages in the same order as <paramref name="ids"/>.</returns>
+    Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
+        IReadOnlyList<StageId> ids,
+        StageLoadProfile profile,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Projects stage summary fields for competition detail reads.
+    /// </summary>
+    /// <param name="ids">Stage identities in competition order.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Summaries in the same order as <paramref name="ids"/>.</returns>
+    Task<IReadOnlyList<StageSummaryRow>> ListSummariesReadOnlyAsync(
+        IReadOnlyList<StageId> ids,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a new stage to the current unit of work.

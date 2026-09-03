@@ -1,7 +1,7 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { fetchCompetitionDetail, fetchMatchesByStage } from '../api'
+import { fetchMatchHub } from '../api'
 import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
 import { AttentionRow } from '../design-system/components/AttentionRow'
 import { MatchRound } from '../design-system/components/MatchRound'
@@ -43,43 +43,35 @@ import './matches.css'
 export function MatchHubPage() {
   const { competitionId = '' } = useParams()
 
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.competitions.detail(competitionId),
-    queryFn: () => fetchCompetitionDetail(competitionId),
+  const hubQuery = useQuery({
+    queryKey: queryKeys.competitions.matchHub(competitionId),
+    queryFn: () => fetchMatchHub(competitionId),
     enabled: competitionId.length > 0,
   })
 
-  const stages = overviewQuery.data?.stages ?? []
+  const detail = hubQuery.data?.detail
+  const stages: CompetitionStageSummary[] =
+    detail?.stages ??
+    hubQuery.data?.stages.map((stage) => ({
+      stageId: stage.stageId,
+      name: stage.name,
+      status: stage.status,
+    })) ??
+    []
 
-  const matchQueries = useQueries({
-    queries: stages.map((stage) => ({
-      queryKey: queryKeys.matches.byStage(stage.stageId),
-      queryFn: () => fetchMatchesByStage(stage.stageId),
-      enabled: overviewQuery.isSuccess && stages.length > 0,
-    })),
-  })
-
-  const matchesPending =
-    overviewQuery.isSuccess &&
-    stages.length > 0 &&
-    matchQueries.some((query) => query.isPending)
-  const matchesError = matchQueries.find((query) => query.error)?.error
-  const pending = overviewQuery.isPending
-  const error = overviewQuery.error
-
-  const rows = buildMatchRows(stages, matchQueries.map((query) => query.data))
+  const rows = buildMatchRows(stages, hubQuery.data?.stages.map((stage) => stage.matches))
 
   return (
     <main id="main" className="page page--matches">
-      {pending && !overviewQuery.data && <LoadingState />}
-      {error && !overviewQuery.data && <ErrorState error={error} />}
-      {overviewQuery.data && (
+      {hubQuery.isPending && !detail && <LoadingState />}
+      {hubQuery.error && !detail && <ErrorState error={hubQuery.error} />}
+      {detail && (
         <MatchesView
-          data={overviewQuery.data}
+          data={detail}
           rows={rows}
           stages={stages}
-          matchesPending={matchesPending}
-          matchesError={matchesError}
+          matchesPending={false}
+          matchesError={undefined}
         />
       )}
     </main>
@@ -93,8 +85,12 @@ interface MatchHubRow {
 
 function buildMatchRows(
   stages: CompetitionStageSummary[],
-  matchLists: (MatchSummary[] | undefined)[],
+  matchLists: (MatchSummary[] | undefined)[] | undefined,
 ): MatchHubRow[] {
+  if (!matchLists) {
+    return []
+  }
+
   const rows: MatchHubRow[] = []
   stages.forEach((stage, index) => {
     const matches = matchLists[index]

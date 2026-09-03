@@ -131,13 +131,13 @@ public sealed class UseCaseExecutorPrepareStartCompetitionTests
         if (competition is not null)
         {
             competitions
-                .Setup(repository => repository.GetByIdAsync(competition.Id, It.IsAny<CancellationToken>()))
+                .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(competition);
         }
         else
         {
             competitions
-                .Setup(repository => repository.GetByIdAsync(missingId!.Value, It.IsAny<CancellationToken>()))
+                .Setup(repository => repository.GetByIdForUpdateAsync(missingId!.Value, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Competition?)null);
         }
 

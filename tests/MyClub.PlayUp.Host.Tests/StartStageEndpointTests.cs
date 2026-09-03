@@ -38,7 +38,7 @@ public sealed class StartStageEndpointTests(HostPostgresFixture fixture)
 
         using var scope = factory.Services.CreateScope();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var loaded = await stages.GetByIdAsync(stageId);
+        var loaded = await stages.GetByIdForUpdateAsync(stageId);
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(StageStatus.Running);
     }

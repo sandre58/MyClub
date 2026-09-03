@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -59,6 +60,53 @@ public static class MatchReadAssembler
                         info.MatchdayNumber,
                         info.RoundName,
                         match.Result?.Type);
+                })
+        ];
+    }
+
+    /// <summary>
+    /// Assembles match summaries from projected rows (list endpoint).
+    /// </summary>
+    /// <param name="stage">Stage that owns the fixtures.</param>
+    /// <param name="competition">Competition for display names.</param>
+    /// <param name="rows">Projected match rows.</param>
+    /// <returns>Ordered match summaries.</returns>
+    public static IReadOnlyList<MatchSummaryDto> AssembleSummaries(
+        Stage stage,
+        Competition competition,
+        IReadOnlyList<MatchSummaryRow> rows)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(rows);
+
+        var entries = EntryDisplayNames.ToEntries(competition);
+        var placement = BuildFixturePlacementIndex(stage);
+
+        return
+        [
+            .. rows
+                .OrderBy(row => placement.TryGetValue(row.Id, out var info) ? info.Sequence : int.MaxValue)
+                .ThenBy(row => row.Id.Value)
+                .Select(row =>
+                {
+                    ResolveCalendarPlacement(stage, row.Id, out var scheduledAt, out var resourceId);
+                    placement.TryGetValue(row.Id, out var info);
+
+                    return new MatchSummaryDto(
+                        row.Id.Value,
+                        row.StageId.Value,
+                        row.Status,
+                        EntryDisplayNames.ToSide(entries, row.HomeEntryId),
+                        EntryDisplayNames.ToSide(entries, row.AwayEntryId),
+                        MapScore(row.Result),
+                        info.FixtureId?.Value,
+                        info.RoundId?.Value,
+                        scheduledAt,
+                        resourceId,
+                        info.MatchdayNumber,
+                        info.RoundName,
+                        row.Result?.Type);
                 })
         ];
     }

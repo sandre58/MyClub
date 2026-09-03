@@ -474,6 +474,19 @@ export interface CompetitionDetail {
   scheduledEnd?: string | null
 }
 
+/** GET /competitions/{id}/matches-hub — Match Hub single load. */
+export interface MatchHubView {
+  detail: CompetitionDetail
+  stages: MatchHubStageMatches[]
+}
+
+export interface MatchHubStageMatches {
+  stageId: string
+  name: string
+  status: StageStatus
+  matches: MatchSummary[]
+}
+
 /** GET /competitions/{id}/organisation — Slice 2 Organisation hub. */
 export interface OrganisationView {
   competitionId: string

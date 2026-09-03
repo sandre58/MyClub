@@ -105,7 +105,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var stage = await stages.GetByIdAsync(seed.StageId);
+            var stage = await stages.GetByIdForUpdateAsync(seed.StageId);
             var match = Match.Create(seed.CompetitionId, seed.StageId, seed.HomeEntryId, seed.AwayEntryId, _clock);
             matchId = match.Id;
             matches.Add(match);
@@ -134,7 +134,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var stage = await stages.GetByIdAsync(seed.StageId);
+            var stage = await stages.GetByIdForUpdateAsync(seed.StageId);
             var match = Match.Create(seed.CompetitionId, seed.StageId, seed.HomeEntryId, seed.AwayEntryId, _clock);
             match.Start(_clock);
             match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
@@ -281,7 +281,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var stage = await stages.GetByIdAsync(seed.StageId);
+            var stage = await stages.GetByIdForUpdateAsync(seed.StageId);
             var match = Match.Create(seed.CompetitionId, seed.StageId, seed.HomeEntryId, seed.AwayEntryId, _clock);
             matchId = match.Id;
             matches.Add(match);

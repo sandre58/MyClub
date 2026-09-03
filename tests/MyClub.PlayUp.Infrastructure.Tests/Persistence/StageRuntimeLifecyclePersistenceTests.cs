@@ -67,7 +67,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             var draw = loaded.Draws.Single(candidate => candidate.Id == drawId);
             draw.Status.Should().Be(DrawStatus.Published);
@@ -112,7 +112,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Draws.Single(draw => draw.Id == noSolutionId).Resolution.State.Should()
                 .Be(DrawResolutionState.NoSolution);
@@ -144,7 +144,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
         using (var scope = fixture.CreateScope())
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-            var loaded = await stages.GetByIdAsync(stageId);
+            var loaded = await stages.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Penalties.Should().ContainSingle();
             loaded.RemovePenalty(loaded.Penalties[0].Id, _clock);
@@ -153,7 +153,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
 
         using (var scope = fixture.CreateScope())
         {
-            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var reloaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             reloaded.Should().NotBeNull();
             reloaded.Penalties.Should().BeEmpty();
         }
@@ -191,7 +191,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
 
         using (var scope = fixture.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(stageId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.MatchPlacements.Should().ContainSingle()
                 .Which.Should().Be(new MatchPlacement(matchId, start, resourceId));

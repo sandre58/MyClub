@@ -40,7 +40,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(MatchStatus.Live);
         loaded.Result.Should().BeNull();
@@ -75,7 +75,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(MatchErrorCodes.InvalidTransition);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded!.Status.Should().Be(MatchStatus.Live);
     }
 
@@ -92,7 +92,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(MatchStatus.Finished);
         loaded.Result.Should().NotBeNull();
@@ -134,7 +134,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(MatchErrorCodes.InvalidTransition);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded!.Status.Should().Be(MatchStatus.Cancelled);
         loaded.Result.Should().BeNull();
     }
@@ -161,7 +161,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(MatchErrorCodes.InvalidResult);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded!.Status.Should().Be(MatchStatus.Live);
         loaded.Result.Should().BeNull();
     }
@@ -188,7 +188,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var mid = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var mid = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             mid!.Status.Should().Be(MatchStatus.Live);
         }
 
@@ -199,7 +199,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             loaded!.Status.Should().Be(MatchStatus.Finished);
             loaded.Result.Should().NotBeNull();
             loaded.Result!.Score.Should().Be(new Score(1, 1));
@@ -223,7 +223,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded!.Status.Should().Be(MatchStatus.Scheduled);
     }
 
@@ -244,7 +244,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(ApplicationErrorCodes.MatchOperationNotAllowed);
 
         using var scope = factory.Services.CreateScope();
-        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
         loaded!.Status.Should().Be(MatchStatus.Live);
         loaded.Result.Should().BeNull();
     }

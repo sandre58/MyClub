@@ -127,7 +127,7 @@ public sealed class MatchReadAssemblerTests
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
 
-        MatchReadAssembler.AssembleSummaries(stage, competition, []).Should().BeEmpty();
+        MatchReadAssembler.AssembleSummaries(stage, competition, Array.Empty<Match>()).Should().BeEmpty();
     }
 
     [Fact]

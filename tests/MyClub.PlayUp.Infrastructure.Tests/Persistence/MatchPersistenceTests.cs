@@ -38,7 +38,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.CompetitionId.Should().Be(competitionId);
             loaded.StageId.Should().Be(stageId);
@@ -61,7 +61,7 @@ public sealed class MatchPersistenceTests
         var id = await SeedFinishedAsync(databaseName, result);
 
         await using var context = PlayUpInMemory.CreateContext(databaseName);
-        var loaded = await new MatchRepository(context).GetByIdAsync(id);
+        var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
 
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(MatchStatus.Finished);
@@ -96,8 +96,8 @@ public sealed class MatchPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            (await repository.GetByIdAsync(postponedId))!.Status.Should().Be(MatchStatus.Postponed);
-            (await repository.GetByIdAsync(cancelledId))!.Status.Should().Be(MatchStatus.Cancelled);
+            (await repository.GetByIdForUpdateAsync(postponedId))!.Status.Should().Be(MatchStatus.Postponed);
+            (await repository.GetByIdForUpdateAsync(cancelledId))!.Status.Should().Be(MatchStatus.Cancelled);
         }
     }
 
@@ -145,7 +145,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.DomainEvents.Should().BeEmpty();
         }
@@ -174,7 +174,7 @@ public sealed class MatchPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.DeclaredParticipations.Select(p => p.Id).Should().Equal(starter.Id, bench.Id);
             loaded.DeclaredParticipations[0].Side.Should().Be(Side.Home);
@@ -191,7 +191,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            var reloaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.DeclaredParticipations.Should().HaveCount(2);
             reloaded.DeclaredParticipations.Single(p => p.Id == starter.Id).CompositionStatus
@@ -221,8 +221,8 @@ public sealed class MatchPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            var loadedFirst = await repository.GetByIdAsync(first.Id);
-            var loadedSecond = await repository.GetByIdAsync(second.Id);
+            var loadedFirst = await repository.GetByIdForUpdateAsync(first.Id);
+            var loadedSecond = await repository.GetByIdForUpdateAsync(second.Id);
             loadedFirst.Should().NotBeNull();
             loadedSecond.Should().NotBeNull();
             loadedFirst.DeclaredParticipations.Should().ContainSingle(p => p.Id.Equals(member));
@@ -258,7 +258,7 @@ public sealed class MatchPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.RecordedGoals.Select(g => g.Id).Should().Equal(withAssister.Id, ownGoal.Id);
             loaded.RecordedGoals[0].ScorerMemberId.Should().Be(dupont);
@@ -275,7 +275,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            var reloaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.RecordedGoals.Should().HaveCount(2);
             var corrected = reloaded.RecordedGoals.Single(g => g.Id == withAssister.Id);
@@ -308,7 +308,7 @@ public sealed class MatchPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(MatchStatus.Finished);
             loaded.RecordedGoals.Should().ContainSingle().Which.Id.Should().Be(goal.Id);
@@ -321,7 +321,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            var reloaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.RecordedGoals.Single().ScorerMemberId.Should().Be(martin);
             reloaded.Result!.Score.Should().Be(new Score(2, 0));
@@ -347,7 +347,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(MatchStatus.Finished);
             loaded.DeclaredParticipations.Should().ContainSingle()
@@ -373,7 +373,7 @@ public sealed class MatchPersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new MatchRepository(context);
-            var loaded = await repository.GetByIdAsync(id);
+            var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(MatchStatus.Live);
             loaded.RunningScore.Should().Be(new RunningScore(2, 1));
@@ -385,7 +385,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            var reloaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Status.Should().Be(MatchStatus.Finished);
             reloaded.RunningScore.Should().Be(new RunningScore(2, 2));
@@ -408,7 +408,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.RunningScore.Should().BeNull();
         }
@@ -439,7 +439,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.RecordedSubstitutions.Select(s => s.Id).Should().Equal(first.Id, second.Id);
             loaded.RecordedSubstitutions[0].OutMemberId.Should().Be(dupont);
@@ -456,7 +456,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            var reloaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.RecordedSubstitutions.Should().ContainSingle();
             reloaded.RecordedSubstitutions[0].Id.Should().Be(first.Id);
@@ -487,7 +487,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.HasObservedLive.Should().BeFalse();
             loaded.RunningScore.Should().BeNull();
@@ -519,7 +519,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.RecordedDisciplinaryEvents.Select(e => e.Id).Should().Equal(yellow.Id, white.Id);
             loaded.RecordedDisciplinaryEvents[0].Type.Should().Be(DisciplinaryType.Yellow);
@@ -535,7 +535,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var reloaded = await new MatchRepository(context).GetByIdAsync(id);
+            var reloaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.RecordedDisciplinaryEvents.Should().ContainSingle();
             reloaded.RecordedDisciplinaryEvents[0].Id.Should().Be(yellow.Id);
@@ -563,7 +563,7 @@ public sealed class MatchPersistenceTests
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
-            var loaded = await new MatchRepository(context).GetByIdAsync(id);
+            var loaded = await new MatchRepository(context).GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
             loaded.HasObservedLive.Should().BeFalse();
             loaded.RunningScore.Should().BeNull();

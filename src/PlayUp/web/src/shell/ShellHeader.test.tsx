@@ -7,12 +7,11 @@ import {
   fetchCompetitionDetail,
   fetchCompetitions,
   fetchMatchDetail,
-  fetchCompetitionOverview,
+  fetchNeedsAttention,
   fetchStageOverview,
 } from '../api'
 import { AppLayout } from '../AppLayout'
-import { overviewView } from '../test/overviewFixtures'
-import type { OverviewSituation } from '../types'
+import type { NeedsAttentionItem } from '../types'
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>()
@@ -22,34 +21,27 @@ vi.mock('../api', async (importOriginal) => {
     fetchCompetitionDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchMatchDetail: vi.fn(),
-    fetchCompetitionOverview: vi.fn(),
+    fetchNeedsAttention: vi.fn(),
   }
 })
-
-function attentionOverview(items: Partial<OverviewSituation>[]) {
-  const normalized: OverviewSituation[] = items.map((item) => ({
-    source: item.source ?? 'InsufficientParticipants',
-    nature: item.nature ?? 'Blocking',
-    targetType: item.targetType ?? null,
-    targetId: item.targetId ?? null,
-    matchId: item.matchId ?? null,
-    actionable: item.actionable ?? Boolean(item.actionCode),
-    actionCode: item.actionCode ?? null,
-    impactCode: item.impactCode ?? null,
-    params: item.params ?? {},
-  }))
-  return overviewView({
-    competitionId,
-    name: 'Coupe U18',
-    status: 'Running',
-    attentionSummary: { count: normalized.length, items: normalized },
-    situations: normalized,
-  })
-}
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+
+function needsAttention(items: Partial<NeedsAttentionItem>[] = []) {
+  const normalized: NeedsAttentionItem[] = items.map((item) => ({
+    source: item.source ?? 'ProgressionPending',
+    severity: item.severity ?? 'Blocking',
+    targetType: item.targetType ?? 'Stage',
+    targetId: item.targetId ?? stageId,
+  }))
+  return {
+    competitionId,
+    items: normalized,
+    count: normalized.length,
+  }
+}
 
 function renderWithShell(initialEntry: string) {
   const queryClient = new QueryClient({
@@ -102,7 +94,7 @@ describe('ShellHeader', () => {
       stages: [],
       logoMediaId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
     })
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(attentionOverview([]))
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(needsAttention())
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -199,16 +191,13 @@ describe('ShellHeader', () => {
   })
 
   it('shows attention state when count is greater than 0', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
         {
-          source: 'InsufficientParticipants',
-          nature: 'Blocking',
-          targetType: 'Organisation',
-          targetId: competitionId,
-          matchId: null,
-          actionCode: 'AddEntry',
-          params: {},
+          source: 'ProgressionPending',
+          severity: 'Blocking',
+          targetType: 'Stage',
+          targetId: stageId,
         },
       ]),
     )
@@ -222,25 +211,19 @@ describe('ShellHeader', () => {
   })
 
   it('uses plural aria-label when count is 2', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
         {
-          source: 'InsufficientParticipants',
-          nature: 'Blocking',
-          targetType: 'Organisation',
-          targetId: competitionId,
-          matchId: null,
-          actionCode: 'AddEntry',
-          params: {},
+          source: 'ProgressionPending',
+          severity: 'Blocking',
+          targetType: 'Stage',
+          targetId: stageId,
         },
         {
-          source: 'MissingStructure',
-          nature: 'Blocking',
-          targetType: 'Organisation',
-          targetId: competitionId,
-          matchId: null,
-          actionCode: 'ConfigureStructure',
-          params: {},
+          source: 'QualificationPending',
+          severity: 'Blocking',
+          targetType: 'Stage',
+          targetId: stageId,
         },
       ]),
     )
@@ -254,16 +237,13 @@ describe('ShellHeader', () => {
   })
 
   it('links the attention trigger to the drawer panel', async () => {
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
-      attentionOverview([
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
         {
-          source: 'InsufficientParticipants',
-          nature: 'Blocking',
-          targetType: 'Organisation',
-          targetId: competitionId,
-          matchId: null,
-          actionCode: 'AddEntry',
-          params: {},
+          source: 'ProgressionPending',
+          severity: 'Blocking',
+          targetType: 'Stage',
+          targetId: stageId,
         },
       ]),
     )

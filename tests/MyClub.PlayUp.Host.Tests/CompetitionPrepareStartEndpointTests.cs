@@ -39,7 +39,7 @@ public sealed class CompetitionPrepareStartEndpointTests(HostPostgresFixture fix
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(competitionId);
+            .GetByIdForUpdateAsync(competitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Ready);
     }
 
@@ -114,7 +114,7 @@ public sealed class CompetitionPrepareStartEndpointTests(HostPostgresFixture fix
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(competitionId);
+            .GetByIdForUpdateAsync(competitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Running);
     }
 
@@ -175,7 +175,7 @@ public sealed class CompetitionPrepareStartEndpointTests(HostPostgresFixture fix
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(competitionId);
+            .GetByIdForUpdateAsync(competitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Running);
     }
 

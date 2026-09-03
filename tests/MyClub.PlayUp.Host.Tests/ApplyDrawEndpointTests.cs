@@ -43,11 +43,11 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
 
-        var stage = await stages.GetByIdAsync(seed.StageId);
+        var stage = await stages.GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
         var matchId = stage.GetFixture(seed.FixtureId).MatchIds.Should().ContainSingle().Subject;
 
-        var match = await matches.GetByIdAsync(matchId);
+        var match = await matches.GetByIdForUpdateAsync(matchId);
         match.Should().NotBeNull();
         match.Status.Should().Be(MatchStatus.Scheduled);
         match.HomeEntryId.Should().Be(seed.EntryA);
@@ -88,7 +88,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(ApplicationErrorCodes.DrawApplyFailure);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage!.GetFixture(seed.FixtureId).MatchIds.Should().BeEmpty();
     }
 
@@ -109,7 +109,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         MatchId matchId;
         using (var scope = factory.Services.CreateScope())
         {
-            var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+            var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
             matchId = stage!.GetFixture(seed.FixtureId).MatchIds.Should().ContainSingle().Subject;
         }
 
@@ -120,7 +120,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
 
         using (var scope = factory.Services.CreateScope())
         {
-            var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdAsync(matchId);
+            var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>().GetByIdForUpdateAsync(matchId);
             match!.Status.Should().Be(MatchStatus.Live);
         }
     }

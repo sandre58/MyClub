@@ -62,7 +62,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(seed.CompetitionId);
+            .GetByIdForUpdateAsync(seed.CompetitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Archived);
         loaded.CompletionMode.Should().Be(CompletionMode.Normal);
     }
@@ -86,7 +86,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(seed.CompetitionId);
+            .GetByIdForUpdateAsync(seed.CompetitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Running);
     }
 
@@ -111,7 +111,7 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider
             .GetRequiredService<ICompetitionRepository>()
-            .GetByIdAsync(seed.CompetitionId);
+            .GetByIdForUpdateAsync(seed.CompetitionId);
         loaded!.Status.Should().Be(CompetitionStatus.Completed);
         loaded.CompletionMode.Should().Be(Enum.Parse<CompletionMode>(mode));
     }

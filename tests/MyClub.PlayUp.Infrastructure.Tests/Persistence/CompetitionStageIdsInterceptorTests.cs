@@ -48,7 +48,7 @@ public sealed class CompetitionStageIdsInterceptorTests
             var repository = new CompetitionRepository(context);
             IUnitOfWork unitOfWork = context;
 
-            var competition = await repository.GetByIdAsync(id);
+            var competition = await repository.GetByIdForUpdateAsync(id);
             competition.Should().NotBeNull();
             competition.StageIds.Should().Equal(stageA, stageB, stageC);
 
@@ -61,7 +61,7 @@ public sealed class CompetitionStageIdsInterceptorTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
-            var reloaded = await repository.GetByIdAsync(id);
+            var reloaded = await repository.GetByIdForUpdateAsync(id);
 
             reloaded.Should().NotBeNull();
             reloaded.StageIds.Should().Equal(stageC, stageA, stageB);

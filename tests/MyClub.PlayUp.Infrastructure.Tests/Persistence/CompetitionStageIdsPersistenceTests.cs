@@ -52,7 +52,7 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
             stages.Add(stageCEntity);
             await unitOfWork.SaveChangesAsync();
 
-            var tracked = await repository.GetByIdAsync(id);
+            var tracked = await repository.GetByIdForUpdateAsync(id);
             tracked.Should().NotBeNull();
             tracked.AddStage(stageA, _clock);
             tracked.AddStage(stageB, _clock);
@@ -66,7 +66,7 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            var competition = await repository.GetByIdAsync(id);
+            var competition = await repository.GetByIdForUpdateAsync(id);
             competition.Should().NotBeNull();
             competition.StageIds.Should().Equal(stageA, stageB, stageC);
 
@@ -79,7 +79,7 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-            var reloaded = await repository.GetByIdAsync(id);
+            var reloaded = await repository.GetByIdForUpdateAsync(id);
 
             reloaded.Should().NotBeNull();
             reloaded.StageIds.Should().Equal(stageC, stageA, stageB);

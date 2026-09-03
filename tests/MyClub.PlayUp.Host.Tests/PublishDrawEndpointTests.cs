@@ -37,7 +37,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
         stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
         stage.GetDraw(seed.DrawId).Resolution.State.Should().Be(DrawResolutionState.Resolved);
@@ -72,7 +72,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         GetCode(problem).Should().Be(StageErrorCodes.DrawInvalidTransition);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Draft);
     }
 

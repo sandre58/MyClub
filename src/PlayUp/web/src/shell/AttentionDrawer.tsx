@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { fetchCompetitionOverview } from '../api'
+import { fetchNeedsAttention } from '../api'
 import { CloseIcon } from '../design-system/icons/shellIcons'
 import { queryKeys } from '../queryKeys'
 import type { OverviewSituation } from '../types'
@@ -9,6 +9,7 @@ import {
   AttentionSituationRow,
   partitionAttentionItems,
 } from './AttentionSituationRow'
+import { needsAttentionItemsToSituations } from './needsAttentionToSituation'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 import { SHELL_MOTION_EXIT_MS } from './shellMotion'
 
@@ -21,7 +22,7 @@ type AttentionDrawerProps = {
 
 /**
  * Temporary triage surface (14.6.4) — not navigation, not a generic drawer primitive.
- * Phase 16.2: consumes Overview attentionSummary (same métier source as the Overview page).
+ * Shell drawer — consumes GET /attention (lighter than full Overview).
  */
 export function AttentionDrawer({
   open,
@@ -39,16 +40,16 @@ export function AttentionDrawer({
 
   const { competitionId, state: contextState } = useShellCompetitionContext()
 
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.competitions.overview(competitionId ?? ''),
-    queryFn: () => fetchCompetitionOverview(competitionId!),
+  const attentionQuery = useQuery({
+    queryKey: queryKeys.competitions.attention(competitionId ?? ''),
+    queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: (open || mounted) && Boolean(competitionId),
   })
 
-  const items = overviewQuery.data?.attentionSummary.items ?? []
-  const count = overviewQuery.data?.attentionSummary.count ?? items.length
+  const items = needsAttentionItemsToSituations(attentionQuery.data?.items ?? [])
+  const count = attentionQuery.data?.count ?? items.length
   const titleLabel = t('shell:attention.label')
-  const showCount = !overviewQuery.isPending && count > 0
+  const showCount = !attentionQuery.isPending && count > 0
 
   useEffect(() => {
     if (open) {
@@ -162,8 +163,8 @@ export function AttentionDrawer({
           <AttentionDrawerContent
             contextState={contextState}
             competitionId={competitionId}
-            pending={Boolean(competitionId) && overviewQuery.isPending}
-            error={overviewQuery.error}
+            pending={Boolean(competitionId) && attentionQuery.isPending}
+            error={attentionQuery.error}
             items={items}
             onNavigate={onClose}
           />
