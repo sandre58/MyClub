@@ -4,10 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -46,16 +46,15 @@ public static class OrganisationViewAssembler
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Stages loaded for <see cref="Competition.StageIds"/> (same order).</param>
-    /// <param name="competitionMatches">
-    /// Optional matches for the competition. When provided, declared members get
-    /// <see cref="DeclaredMemberDto.ReferencedOnMatchSheet"/> from composition sheets.
-    /// Overview / cockpit may omit this (flags stay false).
+    /// <param name="sheetMemberRefs">
+    /// Optional sheet member references. When provided, declared members get
+    /// <see cref="DeclaredMemberDto.ReferencedOnMatchSheet"/> without loading full matches.
     /// </param>
     /// <returns>Organisation view DTO.</returns>
     public static OrganisationViewDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyList<Match>? competitionMatches = null)
+        IReadOnlyList<MatchSheetMemberRef>? sheetMemberRefs = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -63,7 +62,7 @@ public static class OrganisationViewAssembler
         var primary = ResolvePrimaryStage(competition, stages);
         var format = BuildFormatSummary(primary);
         var structure = BuildStructureSummary(primary);
-        var participants = BuildParticipants(competition, competitionMatches ?? []);
+        var participants = BuildParticipants(competition, sheetMemberRefs ?? []);
         var regulation = BuildRegulation(competition);
         var attachedMatchCount = CountAttachedMatches(primary);
         var readiness = BuildReadiness(competition, primary, format.Kind, structure, attachedMatchCount);
@@ -105,9 +104,9 @@ public static class OrganisationViewAssembler
 
     private static OrganisationParticipantsSummaryDto BuildParticipants(
         Competition competition,
-        IReadOnlyList<Match> competitionMatches)
+        IReadOnlyList<MatchSheetMemberRef> sheetMemberRefs)
     {
-        var sheetReferenced = BuildSheetReferencedMemberIds(competitionMatches);
+        var sheetReferenced = BuildSheetReferencedMemberIds(sheetMemberRefs);
         var entries = competition.Entries
             .Select(entry => new OrganisationEntryDto(
                 entry.Id.Value,
@@ -135,18 +134,12 @@ public static class OrganisationViewAssembler
     /// (same gate as <c>RemoveDeclaredMember</c> for that entry + member).
     /// </summary>
     private static HashSet<(EntryId EntryId, MemberId MemberId)> BuildSheetReferencedMemberIds(
-        IReadOnlyList<Match> competitionMatches)
+        IReadOnlyList<MatchSheetMemberRef> sheetMemberRefs)
     {
-        var referenced = new HashSet<(EntryId, MemberId)>();
-        foreach (var match in competitionMatches)
+        var referenced = new HashSet<(EntryId, MemberId)>(sheetMemberRefs.Count);
+        foreach (var sheetRef in sheetMemberRefs)
         {
-            foreach (var participation in match.DeclaredParticipations)
-            {
-                var entryId = participation.Side == Side.Home
-                    ? match.HomeEntryId
-                    : match.AwayEntryId;
-                referenced.Add((entryId, participation.Id));
-            }
+            referenced.Add((sheetRef.EntryId, sheetRef.MemberId));
         }
 
         return referenced;

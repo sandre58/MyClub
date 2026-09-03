@@ -81,6 +81,16 @@ public interface IMatchRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Projects declared composition sheet members for a competition (no match owned collections).
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Entry/member pairs referenced on a match sheet.</returns>
+    Task<IReadOnlyList<MatchSheetMemberRef>> ListSheetMemberRefsByCompetitionReadOnlyAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new match to the current unit of work.
     /// </summary>
     /// <param name="match">The match to add.</param>

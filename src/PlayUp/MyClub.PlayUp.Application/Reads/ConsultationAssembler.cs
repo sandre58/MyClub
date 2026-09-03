@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
@@ -46,6 +47,44 @@ public static class ConsultationAssembler
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+        ArgumentNullException.ThrowIfNull(matchesByStage);
+
+        var primary = ResolvePrimaryStage(competition, stages);
+        var formatKind = primary is null ? null : InferFormat(primary);
+        var formatLabel = FormatLabel(formatKind, primary);
+        var names = EntryDisplayNames.ToMap(competition);
+        var entries = EntryDisplayNames.ToEntries(competition);
+
+        var results = AssembleResults(competition, stages, matchesByStage);
+        var standings = AssembleStandings(competition, stages, matchesByStage, names, formatKind);
+        var structure = AssembleStructure(stages, entries, formatKind);
+
+        return new ConsultationViewDto(
+            competition.Id.Value,
+            competition.Name.Value,
+            competition.Status,
+            competition.CompletionMode,
+            formatKind,
+            formatLabel,
+            results,
+            standings,
+            structure);
+    }
+
+    /// <summary>
+    /// Builds Consultation from loaded competition graph with projected match rows.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages (canonical order preferred).</param>
+    /// <param name="matchesByStage">Summary rows keyed by stage.</param>
+    /// <returns>Consultation view DTO.</returns>
+    public static ConsultationViewDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -227,6 +266,112 @@ public static class ConsultationAssembler
         return results;
     }
 
+    private static List<ConsultationResultDto> AssembleResults(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
+    {
+        var results = new List<ConsultationResultDto>();
+        foreach (var stage in stages)
+        {
+            var rows = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
+            var summaries = MatchReadAssembler.AssembleSummaries(stage, competition, rows);
+
+            foreach (var summary in summaries)
+            {
+                if (summary.Status is not (MatchStatus.Finished or MatchStatus.Cancelled))
+                {
+                    continue;
+                }
+
+                results.Add(new ConsultationResultDto(
+                    summary.MatchId,
+                    summary.StageId,
+                    summary.FixtureId,
+                    summary.RoundId,
+                    summary.MatchdayNumber,
+                    MatchReadAssembler.ConsultationContextLabel(summary),
+                    summary.Status,
+                    summary.Home,
+                    summary.Away,
+                    summary.Score,
+                    summary.ResultType,
+                    summary.ScheduledAt));
+            }
+        }
+
+        return results;
+    }
+
+    private static ConsultationStandingsSectionDto AssembleStandings(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
+        IReadOnlyDictionary<EntryId, string> names,
+        StructureFormatKind? primaryFormat)
+    {
+        switch (primaryFormat)
+        {
+            case StructureFormatKind.Cup:
+                return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
+            case StructureFormatKind.Swiss:
+                break;
+            case StructureFormatKind.Championship:
+            case StructureFormatKind.Groups:
+                break;
+            case null when stages.All(stage => InferFormat(stage) is null or StructureFormatKind.Cup):
+                {
+                    var onlyCup = stages.Count > 0 &&
+                                  stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
+                    return new ConsultationStandingsSectionDto(
+                        false,
+                        onlyCup ? NotApplicableCupFormat : NotApplicableNoStructure,
+                        []);
+                }
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(primaryFormat), primaryFormat, null);
+        }
+
+        var tables = new List<ConsultationStandingTableDto>();
+        foreach (var stage in stages)
+        {
+            var format = InferFormat(stage);
+            if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
+            {
+                continue;
+            }
+
+            var rows = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
+            var penalties = CalculateStanding.ToStandingPenalties(stage.Penalties);
+            var rules = stage.Regulation.StandingRules;
+
+            if (format is StructureFormatKind.Championship or StructureFormatKind.Swiss)
+            {
+                var participants = ResolveOverallParticipants(competition, rows);
+                var standing = CalculateStanding.Execute(participants, rows, rules, MatchFilter.All, penalties);
+                tables.Add(new ConsultationStandingTableDto(
+                    ScopeOverall,
+                    stage.Id.Value,
+                    stage.Name.Value,
+                    GroupId: null,
+                    GroupName: null,
+                    MapRows(standing, names)));
+            }
+            else
+            {
+                tables.AddRange(from @group in stage.Groups
+                    where @group.EntryIds.Count > 0
+                    let standing = CalculateStanding.Execute(@group.EntryIds, rows, rules, MatchFilter.All, penalties)
+                    select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
+            }
+        }
+
+        return tables.Count == 0
+            ? new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, [])
+            : new ConsultationStandingsSectionDto(true, null, tables);
+    }
+
     private static ConsultationStandingsSectionDto AssembleStandings(
         Competition competition,
         IReadOnlyList<Stage> stages,
@@ -239,7 +384,6 @@ public static class ConsultationAssembler
             case StructureFormatKind.Cup:
                 return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
             case StructureFormatKind.Swiss:
-                // Ranking uses StandingRules on Matchdays; tables are assembled like Championship.
                 break;
             case StructureFormatKind.Championship:
             case StructureFormatKind.Groups:
@@ -295,6 +439,25 @@ public static class ConsultationAssembler
         return tables.Count == 0
             ? new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, [])
             : new ConsultationStandingsSectionDto(true, null, tables);
+    }
+
+    private static EntryId[] ResolveOverallParticipants(
+        Competition competition,
+        IReadOnlyList<MatchSummaryRow> matches)
+    {
+        var active = competition.Entries
+            .Where(entry => entry.Status == EntryStatus.Active)
+            .Select(entry => entry.Id)
+            .ToArray();
+        return active.Length > 0
+            ? active
+            :
+            [
+                .. matches
+                    .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
+                    .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
+                    .Distinct()
+            ];
     }
 
     private static EntryId[] ResolveOverallParticipants(

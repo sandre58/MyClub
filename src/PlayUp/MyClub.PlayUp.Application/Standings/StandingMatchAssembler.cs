@@ -67,4 +67,29 @@ public static class StandingMatchAssembler
 
         return result;
     }
+
+    /// <summary>
+    /// Converts finished summary rows to standing snapshots; skips non-finished rows.
+    /// </summary>
+    public static IReadOnlyList<StandingMatch> Assemble(IEnumerable<MatchSummaryRow> matches)
+    {
+        ArgumentNullException.ThrowIfNull(matches);
+
+        var result = new List<StandingMatch>();
+        foreach (var match in matches)
+        {
+            if (match.Status != MatchStatus.Finished || match.Result is null)
+            {
+                continue;
+            }
+
+            result.Add(new StandingMatch(
+                match.HomeEntryId,
+                match.AwayEntryId,
+                match.Result.Score.HomeGoals,
+                match.Result.Score.AwayGoals));
+        }
+
+        return result;
+    }
 }

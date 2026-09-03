@@ -65,6 +65,24 @@ public static class CalculateStanding
     }
 
     /// <summary>
+    /// Calculates a standing from projected summary rows (finished rows only).
+    /// </summary>
+    public static Standing Execute(
+        IReadOnlyList<EntryId> participants,
+        IEnumerable<MatchSummaryRow> matches,
+        StandingRules rules,
+        MatchFilter filter = MatchFilter.All,
+        IReadOnlyList<StandingPenalty>? penalties = null)
+    {
+        ArgumentNullException.ThrowIfNull(participants);
+        ArgumentNullException.ThrowIfNull(matches);
+        ArgumentNullException.ThrowIfNull(rules);
+
+        var snapshots = StandingMatchAssembler.Assemble(matches);
+        return StandingCalculator.Calculate(participants, snapshots, rules, filter, penalties);
+    }
+
+    /// <summary>
     /// Maps stage penalty entities to calculation snapshots (pure mapping; no deduction).
     /// </summary>
     public static IReadOnlyList<StandingPenalty> ToStandingPenalties(IEnumerable<PenaltyEntity> penalties)

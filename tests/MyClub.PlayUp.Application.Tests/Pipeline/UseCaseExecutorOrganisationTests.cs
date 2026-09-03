@@ -40,16 +40,16 @@ public sealed class UseCaseExecutorOrganisationTests
         stages
             .Setup(repository => repository.GetByIdsReadOnlyAsync(
                 It.IsAny<IReadOnlyList<StageId>>(),
-                StageLoadProfile.Full,
+                It.IsAny<StageReadCapabilities>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyList<StageId> ids, StageLoadProfile _, CancellationToken _) =>
+            .ReturnsAsync((IReadOnlyList<StageId> ids, StageReadCapabilities _, CancellationToken _) =>
                 addedStage is not null && ids.Contains(addedStage.Id) ? [addedStage] : []);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         matches
-            .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
-                It.IsAny<IReadOnlyList<StageId>>(),
+            .Setup(repository => repository.ListSheetMemberRefsByCompetitionReadOnlyAsync(
+                competition.Id,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<Domain.Matches.Match>>());
+            .ReturnsAsync([]);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -77,6 +77,11 @@ public sealed class UseCaseExecutorOrganisationTests
             .ReturnsAsync(competition);
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        matches
+            .Setup(repository => repository.ListSheetMemberRefsByCompetitionReadOnlyAsync(
+                competition.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))

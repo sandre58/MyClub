@@ -82,6 +82,8 @@ public sealed class ReadPerformanceBaselineTests(
         matchHubSql.Should().BeLessThan(matchHubLegacyTotalSql, "unified Match Hub should beat legacy 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
         attentionSql.Should().BeLessThan(18, "attention path should stay below legacy shell overview cost");
+        consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
+        organisationSql.Should().BeLessThan(overviewSql, "organisation bundle should beat full overview load");
     }
 
     [Fact]

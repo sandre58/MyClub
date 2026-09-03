@@ -140,6 +140,25 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<MatchSheetMemberRef>> ListSheetMemberRefsByCompetitionReadOnlyAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var refs = await context.Set<Match>()
+            .AsNoTracking()
+            .Where(candidate => candidate.CompetitionId == competitionId)
+            .SelectMany(
+                candidate => candidate.DeclaredParticipations,
+                (candidate, participation) => new MatchSheetMemberRef(
+                    participation.Side == Side.Home ? candidate.HomeEntryId : candidate.AwayEntryId,
+                    participation.Id))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return refs;
+    }
+
+    /// <inheritdoc />
     public void Add(Match match)
     {
         ArgumentNullException.ThrowIfNull(match);

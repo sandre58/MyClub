@@ -1322,11 +1322,11 @@ public sealed class UseCaseExecutor(
         Competition competition,
         CancellationToken cancellationToken)
     {
-        var bundle = await LoadCompetitionReadBundleAsync(
-            competition,
-            CompetitionReadBundleSpec.Overview,
-            cancellationToken).ConfigureAwait(false);
-        return OrganisationViewAssembler.Assemble(bundle.Competition, bundle.Stages, bundle.AllMatches);
+        var bundle = await LoadOrganisationReadBundleAsync(competition, cancellationToken).ConfigureAwait(false);
+        return OrganisationViewAssembler.Assemble(
+            bundle.Competition,
+            bundle.Stages,
+            bundle.SheetMemberRefs);
     }
 
     /// <summary>
@@ -1405,10 +1405,7 @@ public sealed class UseCaseExecutor(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var bundle = await LoadCompetitionReadBundleAsync(
-            competitionId,
-            CompetitionReadBundleSpec.Overview,
-            cancellationToken).ConfigureAwait(false);
+        var bundle = await LoadConsultationReadBundleAsync(competitionId, cancellationToken).ConfigureAwait(false);
         return ConsultationAssembler.Assemble(bundle.Competition, bundle.Stages, bundle.MatchesByStage);
     }
 
@@ -1702,6 +1699,30 @@ public sealed class UseCaseExecutor(
         return await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task<Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>> LoadSummaryRowsByStageReadOnlyAsync(
+        IReadOnlyList<Stage> competitionStages,
+        CancellationToken cancellationToken)
+    {
+        if (competitionStages.Count == 0)
+        {
+            return [];
+        }
+
+        var stageIds = competitionStages.Select(stage => stage.Id).ToArray();
+        var loaded = await matches
+            .ListSummaryRowsByStageIdsReadOnlyAsync(stageIds, cancellationToken)
+            .ConfigureAwait(false);
+        var rowsByStage = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>(competitionStages.Count);
+        foreach (var stage in competitionStages)
+        {
+            rowsByStage[stage.Id] = loaded.TryGetValue(stage.Id, out var list)
+                ? list
+                : [];
+        }
+
+        return rowsByStage;
+    }
+
     private async Task<Dictionary<StageId, IReadOnlyList<MatchAttentionSlice>>> LoadAttentionSlicesByStageReadOnlyAsync(
         IReadOnlyList<Stage> competitionStages,
         CancellationToken cancellationToken)
@@ -1787,6 +1808,49 @@ public sealed class UseCaseExecutor(
             stages,
             cancellationToken).ConfigureAwait(false);
         return new AttentionReadBundle(competition, stages, matchesByStage);
+    }
+
+    private async Task<ConsultationReadBundle> LoadConsultationReadBundleAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken)
+    {
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        return await LoadConsultationReadBundleAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<ConsultationReadBundle> LoadConsultationReadBundleAsync(
+        Competition competition,
+        CancellationToken cancellationToken)
+    {
+        var spec = CompetitionReadBundleSpec.Consultation;
+        var stages = await LoadCompetitionStagesReadOnlyAsync(
+            competition,
+            spec.StageCapabilities,
+            cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await LoadSummaryRowsByStageReadOnlyAsync(stages, cancellationToken)
+            .ConfigureAwait(false);
+        return new ConsultationReadBundle(competition, stages, matchesByStage);
+    }
+
+    private async Task<OrganisationReadBundle> LoadOrganisationReadBundleAsync(
+        Competition competition,
+        CancellationToken cancellationToken)
+    {
+        var spec = CompetitionReadBundleSpec.Organisation;
+        var stages = await LoadCompetitionStagesReadOnlyAsync(
+            competition,
+            spec.StageCapabilities,
+            cancellationToken).ConfigureAwait(false);
+        var sheetMemberRefs = spec.MatchProfile == MatchLoadProfile.None
+            ? await matches
+                .ListSheetMemberRefsByCompetitionReadOnlyAsync(competition.Id, cancellationToken)
+                .ConfigureAwait(false)
+            : throw new InvalidOperationException("Organisation bundle expects no match aggregate load.");
+        return new OrganisationReadBundle(competition, stages, sheetMemberRefs);
     }
 
     private async Task<CompetitionReadBundle> LoadCompetitionReadBundleAsync(

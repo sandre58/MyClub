@@ -26,8 +26,18 @@ public sealed record CompetitionReadBundleSpec(
             IncludePenalties: true),
         MatchLoadProfile.AttentionSlice);
 
-    /// <summary>Overview, consultation, organisation (unchanged heavy reads).</summary>
+    /// <summary>Overview (unchanged heavy read).</summary>
     public static CompetitionReadBundleSpec Overview { get; } = new(
         StageReadCapabilities.FromProfile(StageLoadProfile.Full),
         MatchLoadProfile.Full);
+
+    /// <summary>Consultation — full stage graph, projected match rows.</summary>
+    public static CompetitionReadBundleSpec Consultation { get; } = new(
+        StageReadCapabilities.FromProfile(StageLoadProfile.Full),
+        MatchLoadProfile.SummaryRow);
+
+    /// <summary>Organisation — structure + slots, no match aggregates.</summary>
+    public static CompetitionReadBundleSpec Organisation { get; } = new(
+        new StageReadCapabilities(StageLoadProfile.Structure, IncludeSlots: true),
+        MatchLoadProfile.None);
 }
