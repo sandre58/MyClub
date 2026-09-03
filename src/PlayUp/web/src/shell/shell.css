@@ -9,6 +9,8 @@
 
 .shell {
     --shell-attention-drawer-width: 22rem;
+    --shell-chrome-end: var(--shell-header-min-height);
+    --shell-rail-end: var(--shell-rail-width-expanded);
     --shell-pad-condensed: var(--space-12);
     --shell-pad-normal: var(--space-16);
     --shell-icon-hit: 2.5rem;
@@ -28,7 +30,7 @@
     height: 100dvh;
     max-height: 100dvh;
     min-height: 100dvh;
-    overflow: hidden;
+    overflow: clip;
     background: var(--color-chrome);
 }
 

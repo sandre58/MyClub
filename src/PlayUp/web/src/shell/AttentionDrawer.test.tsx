@@ -164,8 +164,43 @@ describe('AttentionDrawer', () => {
     )
 
     expect(await screen.findByText('Progression en attente')).toBeInTheDocument()
-    expect(screen.getByText('Bloquant')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Bloquant' })).toBeInTheDocument()
     expect(screen.getByText(/Phase/i)).toBeInTheDocument()
+    expect(
+      screen.getByText('Situations qui demandent une action.'),
+    ).toBeInTheDocument()
+  })
+
+  it('groups blocking items before attention items', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      attentionOverview([
+        {
+          source: 'DrawPending',
+          nature: 'Informational',
+          targetType: 'Stage',
+          targetId: stageId,
+          matchId: null,
+          actionCode: null,
+          params: {},
+        },
+        oneItem,
+      ]),
+    )
+
+    const user = userEvent.setup()
+    renderWithShell(`/competitions/${competitionId}`)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'À traiter, 2 éléments' }),
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Bloquant' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'À traiter', level: 3 })).toBeInTheDocument()
+    const groups = document.querySelectorAll('.shell-attention-drawer__group')
+    expect(groups[0]).toHaveTextContent('Bloquant')
+    expect(groups[0]).toHaveTextContent('Progression en attente')
+    expect(groups[1]).toHaveTextContent('À traiter')
+    expect(groups[1]).toHaveTextContent('Tirage en attente')
   })
 
   it('closes via the close button', async () => {
@@ -288,6 +323,9 @@ describe('AttentionDrawer', () => {
     expect(
       document.querySelector('.shell-attention-drawer__count'),
     ).toHaveTextContent('1')
+    expect(
+      document.querySelector('.ds-interactive-row.shell-attention-drawer__row'),
+    ).toBeTruthy()
   })
 
   it('closes via the backdrop', async () => {
@@ -315,6 +353,8 @@ describe('AttentionDrawer', () => {
     )
 
     expect(document.querySelector('.shell__frame')).toHaveAttribute('inert')
+    expect(document.body.style.overflow).toBe('')
+    expect(document.querySelector('.shell')?.scrollLeft).toBe(0)
   })
 
   it('does not introduce a new /attention route', async () => {

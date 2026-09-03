@@ -798,7 +798,6 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
       (await screen.findAllByRole('heading', { name: 'À traiter' })).length,
     ).toBe(1)
     expect(screen.getAllByText('Participants insuffisants')).toHaveLength(2)
-    expect(screen.getAllByText('Bloquant').length).toBeGreaterThan(0)
     expect(
       screen.getByText(/3 situation\(s\) — détail dans le panneau À traiter/),
     ).toBeInTheDocument()

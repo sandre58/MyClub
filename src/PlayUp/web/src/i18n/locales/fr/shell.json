@@ -42,6 +42,9 @@
     "emptyAria": "Aucun élément à traiter",
     "emptyTitle": "Rien à traiter pour l'instant",
     "emptyHint": "Les éléments apparaissent ici lorsque le Host signale une étape bloquée ou en attente.",
+    "lede": "Situations qui demandent une action.",
+    "groupBlocking": "Bloquant",
+    "groupAttention": "À traiter",
     "open": "Ouvrir →"
   }
 }

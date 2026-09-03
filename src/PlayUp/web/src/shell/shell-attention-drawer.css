@@ -1,15 +1,20 @@
 /*
- * Attention drawer (20.2) — temporary triage surface from header.
- * Enter/exit driven by [data-open]; keep mounted until exit transition ends.
+ * Attention drawer — workspace overlay under chrome L.
+ * Lignes A: no rest fill; hover via .ds-interactive-row.
  */
 
 .shell-attention-drawer {
     --shell-attention-drawer-duration: var(--motion-duration);
-    --shell-attention-drawer-pad: var(--shell-pad-condensed);
+    --shell-attention-drawer-pad: var(--shell-pad-normal);
+    --shell-attention-bar-width: 4px;
+    --shell-attention-row-gap: var(--space-12);
+    --shell-attention-row-sep: var(--space-8);
 
     position: fixed;
     inset: 0;
     z-index: 6;
+    overflow: hidden;
+    contain: paint;
     pointer-events: none;
 }
 
@@ -19,7 +24,10 @@
 
 .shell-attention-drawer__backdrop {
     position: absolute;
-    inset: 0;
+    inset-block-start: var(--shell-chrome-end, var(--shell-header-min-height));
+    inset-block-end: 0;
+    inset-inline-start: var(--shell-rail-end, 0px);
+    inset-inline-end: 0;
     border: 0;
     background: color-mix(in srgb, var(--color-ink) 28%, transparent);
     cursor: default;
@@ -33,14 +41,15 @@
 
 .shell-attention-drawer__panel {
     position: absolute;
-    inset-block: 0;
+    inset-block-start: var(--shell-chrome-end, var(--shell-header-min-height));
+    inset-block-end: 0;
     inset-inline-end: 0;
     display: flex;
     flex-direction: column;
-    width: min(100vw, var(--shell-attention-drawer-width));
+    width: min(100%, var(--shell-attention-drawer-width));
     max-width: 100%;
     margin: 0;
-    padding: 0;
+    padding: var(--shell-attention-drawer-pad);
     border-radius: 0;
     border-inline-start: var(--border-width) solid var(--color-border);
     border-block: 0;
@@ -55,44 +64,59 @@
     transform: translateX(0);
 }
 
+.shell[data-shell-vp='phone'] .shell-attention-drawer__panel {
+    width: 100%;
+}
+
 .shell-attention-drawer__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-12);
-    padding: var(--shell-attention-drawer-pad);
-    background: var(--color-surface);
+    padding: 0 0 var(--shell-attention-drawer-pad);
+    background: var(--color-canvas);
     border-bottom: var(--border-width) solid var(--color-border);
 }
 
-.shell-attention-drawer__title-row {
+.shell-attention-drawer__lockup {
     display: flex;
     align-items: center;
     gap: var(--space-12);
     min-width: 0;
+    margin: 0;
+}
+
+.shell-attention-drawer__copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
 }
 
 .shell-attention-drawer__title {
-    margin: 0;
     color: var(--color-text-primary);
     font-size: var(--text-heading);
     font-weight: var(--font-weight-semibold);
     line-height: var(--leading-tight);
 }
 
+.shell-attention-drawer__lede {
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-tight);
+}
+
 .shell-attention-drawer__count {
-    display: inline-flex;
     flex: none;
-    align-items: center;
-    justify-content: center;
-    min-width: 2.25rem;
-    height: 2.25rem;
-    padding-inline: var(--space-8);
-    border-radius: var(--shell-attention-count-radius);
-    background: var(--shell-attention-count-bg-soft);
-    color: var(--shell-attention-count-fg);
-    font-size: var(--text-heading);
+    color: var(--color-attention);
+    /* Slightly taller than the 2-line lockup — D9 weight without filling a badge. */
+    font-size: calc(
+        (var(--text-heading) * var(--leading-tight)) + var(--space-4) +
+            (var(--text-meta) * var(--leading-tight)) + var(--space-8)
+    );
     font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
     line-height: 1;
 }
 
@@ -105,7 +129,7 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: var(--shell-attention-drawer-pad);
+    padding: var(--shell-attention-drawer-pad) 0 0;
 }
 
 .shell-attention-drawer__message {
@@ -119,9 +143,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
-    padding: var(--space-16);
-    border-radius: var(--radius-panel);
-    background: var(--color-surface);
 }
 
 .shell-attention-drawer__empty-title {
@@ -136,119 +157,102 @@
     margin: 0;
 }
 
+.shell-attention-drawer__groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+}
+
+.shell-attention-drawer__group-label {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.08em;
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+}
+
 .shell-attention-drawer__list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-12);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.shell-attention-drawer__item-link,
-.shell-attention-drawer__item-static {
+.shell-attention-drawer__body .shell-attention-drawer__list {
+    /* Padding, not margin: avoids collapse under BLOQUANT / after the last row. */
+    padding-block: var(--space-12);
+}
+
+.shell-attention-drawer__row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--space-12);
-    width: 100%;
-    padding: var(--space-8);
-    border: var(--border-width) solid transparent;
-    border-radius: var(--radius-panel);
-    background: var(--color-surface);
+    width: auto;
+    min-height: var(--control-height-compact);
+    margin: 0;
+    padding-block: var(--space-4);
+    padding-inline: calc(
+        var(--shell-attention-bar-width) + var(--shell-attention-row-gap)
+    ) 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: inherit;
     text-align: start;
     text-decoration: none;
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 4%, transparent);
-    transition:
-        background-color var(--motion-duration) var(--motion-easing),
-        border-color var(--motion-duration) var(--motion-easing),
-        box-shadow var(--motion-duration) var(--motion-easing);
 }
 
-.shell-attention-drawer__item-link--blocking,
-.shell-attention-drawer__item-static--blocking {
-    border-color: color-mix(in srgb, var(--color-error) 22%, var(--color-border));
-    background: color-mix(in srgb, var(--color-error) 6%, var(--color-surface));
+.shell-attention-drawer__row::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--shell-attention-bar-width);
+    background: var(--color-attention);
 }
 
-.shell-attention-drawer__item-link--info,
-.shell-attention-drawer__item-static--info {
-    border-color: color-mix(in srgb, var(--color-info) 22%, var(--color-border));
-    background: color-mix(in srgb, var(--color-info) 6%, var(--color-surface));
+.shell-attention-drawer__row--blocking::before {
+    background: var(--color-error);
 }
 
-.shell-attention-drawer__item-link:hover {
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--color-ink) 8%, transparent);
+/*
+ * Separator lives on the <li>, not the row: otherwise the 3 px bar and hover
+ * wash meet the hairline and the gap disappears.
+ * Rhythm: ligne → marge → filet → marge → ligne.
+ */
+.shell-attention-drawer__body
+    .shell-attention-drawer__item
+    + .shell-attention-drawer__item {
+    margin-block-start: var(--shell-attention-row-sep);
+    padding-block-start: var(--shell-attention-row-sep);
+    border-block-start: var(--border-width) solid var(--color-border);
 }
 
-.shell-attention-drawer__item-link--blocking:hover {
-    background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
+.shell[data-shell-vp='phone'] .shell-attention-drawer__row {
+    min-height: var(--control-height-comfortable);
 }
 
-.shell-attention-drawer__item-link--info:hover {
-    background: color-mix(in srgb, var(--color-info) 10%, var(--color-surface));
-}
-
-.shell-attention-drawer__item-mark {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    /* Matches title + gap + meta row height. */
-    width: calc(
-        (var(--text-body) * var(--leading-tight)) + var(--space-4) +
-            (var(--text-label) * var(--leading-tight) + var(--space-4))
-    );
-    height: calc(
-        (var(--text-body) * var(--leading-tight)) + var(--space-8) +
-            (var(--text-label) * var(--leading-tight) + var(--space-8))
-    );
-    border-radius: var(--radius-control);
-    color: var(--color-info);
-}
-
-.shell-attention-drawer__item-mark svg {
-    width: var(--shell-icon-glyph);
-    height: var(--shell-icon-glyph);
-}
-
-.shell-attention-drawer__item-mark--blocking {
-    color: var(--color-error);
-}
-
-.shell-attention-drawer__item-main {
+.shell-attention-drawer__row-main {
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: var(--space-8);
+    gap: var(--space-4);
     min-width: 0;
 }
 
-.shell-attention-drawer__item-title {
-    margin: 0;
+.shell-attention-drawer__row-title {
     color: var(--color-text-primary);
     font-size: var(--text-body);
     font-weight: var(--font-weight-semibold);
     line-height: var(--leading-tight);
 }
 
-.shell-attention-drawer__item-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-8);
-}
-
-.shell-attention-drawer__item-target {
-    margin: 0;
+.shell-attention-drawer__row-meta {
     color: var(--color-text-secondary);
-}
-
-.shell-attention-drawer__item-chevron {
-    flex: none;
-    align-self: center;
-    color: var(--color-text-secondary);
-    opacity: 0.72;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -74,31 +74,6 @@ export function AppShell() {
     }
   }, [viewport])
 
-  useLayoutEffect(() => {
-    const root = shellRef.current
-    if (!root || viewport !== 'phone') {
-      root?.style.removeProperty('--shell-phone-chrome-end')
-      return
-    }
-
-    const header = root.querySelector('.ds-shell-header')
-    if (!(header instanceof HTMLElement) || typeof ResizeObserver === 'undefined') {
-      return
-    }
-
-    const sync = () => {
-      root.style.setProperty('--shell-phone-chrome-end', `${header.offsetHeight}px`)
-    }
-
-    sync()
-    const observer = new ResizeObserver(sync)
-    observer.observe(header)
-    return () => {
-      observer.disconnect()
-      root.style.removeProperty('--shell-phone-chrome-end')
-    }
-  }, [viewport])
-
   useEffect(() => {
     setPhoneNavOpen(false)
   }, [location.pathname])
@@ -133,6 +108,46 @@ export function AppShell() {
       : viewport === 'tablet'
         ? !tabletExpanded
         : desktopCollapsed
+
+  useLayoutEffect(() => {
+    const root = shellRef.current
+    if (!root) {
+      return
+    }
+
+    const header = root.querySelector('.ds-shell-header')
+    const rail = root.querySelector('.ds-shell-rail')
+    if (!(header instanceof HTMLElement) || typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    const sync = () => {
+      const headerHeight = `${header.offsetHeight}px`
+      root.style.setProperty('--shell-chrome-end', headerHeight)
+      if (viewport === 'phone') {
+        root.style.setProperty('--shell-phone-chrome-end', headerHeight)
+        root.style.setProperty('--shell-rail-end', '0px')
+        return
+      }
+
+      root.style.removeProperty('--shell-phone-chrome-end')
+      const railWidth = rail instanceof HTMLElement ? rail.offsetWidth : 0
+      root.style.setProperty('--shell-rail-end', `${railWidth}px`)
+    }
+
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(header)
+    if (rail instanceof HTMLElement) {
+      observer.observe(rail)
+    }
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--shell-chrome-end')
+      root.style.removeProperty('--shell-rail-end')
+      root.style.removeProperty('--shell-phone-chrome-end')
+    }
+  }, [viewport, collapsed])
 
   const onToggleCollapse = () => {
     if (viewport === 'tablet') {

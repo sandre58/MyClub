@@ -10,18 +10,14 @@ import { OverviewPodium } from '../design-system/components/OverviewPodium'
 import { PanelHead } from '../design-system/components/PanelHead'
 import { Status } from '../design-system/components/Status'
 import {
-  AttentionMarkIcon,
   ChevronRightIcon,
   ClassementsNavIcon,
   MatchesNavIcon,
 } from '../design-system/icons/shellIcons'
+import { AttentionSituationRow } from '../shell/AttentionSituationRow'
 import { CalendarIcon } from '../design-system/icons/overviewIcons'
 import { actionLabel } from '../i18n/actionLabels'
-import {
-  attentionTargetTypeLabel,
-  structureFormatKindLabel,
-} from '../i18n/enumLabels'
-import { situationTitle } from '../i18n/situationCopy'
+import { structureFormatKindLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import type {
   OverviewAction,
@@ -47,7 +43,6 @@ import {
   overviewActionKey,
   resolveOverviewActionIntent,
 } from './overviewActions'
-import { situationHref } from './overviewNavigation'
 import {
   actionsForDraw,
   actionsForSlot,
@@ -973,9 +968,9 @@ function AttentionSignalSection({
     >
       <ul className="shell-attention-drawer__list">
         {preview.map((situation) => (
-          <OverviewAttentionItem
+          <AttentionSituationRow
             key={`${situation.source}:${situation.targetType}:${situation.targetId}`}
-            situation={situation}
+            item={situation}
             competitionId={competitionId}
           />
         ))}
@@ -986,78 +981,6 @@ function AttentionSignalSection({
         </p>
       )}
     </AttentionGroup>
-  )
-}
-
-/** Same visual recipe as AttentionDrawerItem — shared CSS classes, light preview. */
-function OverviewAttentionItem({
-  situation,
-  competitionId,
-}: {
-  situation: OverviewSituation
-  competitionId: string
-}) {
-  const { t } = useTranslation('overview')
-  const href = situationHref(situation, competitionId)
-  const isBlocking = situation.nature === 'Blocking'
-  const natureTone = isBlocking ? 'error' : 'info'
-  const toneClass = isBlocking
-    ? 'shell-attention-drawer__item-link--blocking'
-    : 'shell-attention-drawer__item-link--info'
-  const staticToneClass = isBlocking
-    ? 'shell-attention-drawer__item-static--blocking'
-    : 'shell-attention-drawer__item-static--info'
-  const targetLabel = situation.targetType
-    ? attentionTargetTypeLabel(situation.targetType)
-    : null
-
-  const content = (
-    <>
-      <span
-        className={`shell-attention-drawer__item-mark${
-          isBlocking ? ' shell-attention-drawer__item-mark--blocking' : ''
-        }`}
-        aria-hidden="true"
-      >
-        <AttentionMarkIcon size="lg" />
-      </span>
-      <div className="shell-attention-drawer__item-main">
-        <p className="shell-attention-drawer__item-title">
-          {situationTitle(situation.source, situation.params)}
-        </p>
-        <div className="shell-attention-drawer__item-meta">
-          <Status density="context" tone={natureTone} variant="soft" shape="rounded">
-            {t(`nature.${situation.nature}`, { defaultValue: situation.nature })}
-          </Status>
-          {targetLabel && (
-            <span className="shell-attention-drawer__item-target ds-meta">
-              {targetLabel}
-            </span>
-          )}
-        </div>
-      </div>
-      {href && (
-        <ChevronRightIcon
-          size="md"
-          className="shell-attention-drawer__item-chevron"
-          aria-hidden="true"
-        />
-      )}
-    </>
-  )
-
-  return (
-    <li className="shell-attention-drawer__item">
-      {href ? (
-        <Link className={`shell-attention-drawer__item-link ${toneClass}`} to={href}>
-          {content}
-        </Link>
-      ) : (
-        <div className={`shell-attention-drawer__item-static ${staticToneClass}`}>
-          {content}
-        </div>
-      )}
-    </li>
   )
 }
 

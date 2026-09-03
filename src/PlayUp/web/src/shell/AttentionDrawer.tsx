@@ -1,19 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { fetchCompetitionOverview } from '../api'
-import {
-  AttentionMarkIcon,
-  ChevronRightIcon,
-  CloseIcon,
-} from '../design-system/icons/shellIcons'
-import { Status } from '../design-system/components/Status'
+import { CloseIcon } from '../design-system/icons/shellIcons'
 import { queryKeys } from '../queryKeys'
 import type { OverviewSituation } from '../types'
-import { situationTitle } from '../i18n/situationCopy'
-import { attentionTargetTypeLabel } from '../i18n/enumLabels'
-import { situationHref } from '../pages/overviewNavigation'
+import {
+  AttentionSituationRow,
+  partitionAttentionItems,
+} from './AttentionSituationRow'
 import { useShellCompetitionContext } from './useShellCompetitionContext'
 import { SHELL_MOTION_EXIT_MS } from './shellMotion'
 
@@ -74,13 +69,13 @@ export function AttentionDrawer({
       return
     }
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    closeButtonRef.current?.focus()
-
-    return () => {
-      document.body.style.overflow = previousOverflow
+    const shell = panelRef.current?.closest('.shell')
+    if (shell instanceof HTMLElement) {
+      shell.scrollLeft = 0
+      shell.scrollTop = 0
     }
+
+    closeButtonRef.current?.focus({ preventScroll: true })
   }, [open, visible])
 
   useEffect(() => {
@@ -92,7 +87,7 @@ export function AttentionDrawer({
   useEffect(() => {
     if (hadOpenedRef.current && !mounted) {
       hadOpenedRef.current = false
-      returnFocusRef.current?.focus()
+      returnFocusRef.current?.focus({ preventScroll: true })
     }
   }, [mounted, returnFocusRef])
 
@@ -140,11 +135,16 @@ export function AttentionDrawer({
         aria-labelledby={titleId}
       >
         <header className="shell-attention-drawer__head">
-          <h2 id={titleId} className="shell-attention-drawer__title-row">
-            <span className="shell-attention-drawer__title">{titleLabel}</span>
-            {showCount && (
+          <h2 id={titleId} className="shell-attention-drawer__lockup">
+            {showCount ? (
               <span className="shell-attention-drawer__count">{count}</span>
-            )}
+            ) : null}
+            <span className="shell-attention-drawer__copy">
+              <span className="shell-attention-drawer__title">{titleLabel}</span>
+              <span className="shell-attention-drawer__lede">
+                {t('shell:attention.lede')}
+              </span>
+            </span>
           </h2>
           <button
             ref={closeButtonRef}
@@ -243,97 +243,55 @@ function AttentionDrawerContent({
     )
   }
 
+  const { blocking, attention } = partitionAttentionItems(items)
+
   return (
-    <ul className="shell-attention-drawer__list">
-      {items.map((item) => (
-        <AttentionDrawerItem
-          key={`${item.source}:${item.targetType}:${item.targetId}:${item.matchId}`}
-          item={item}
+    <div className="shell-attention-drawer__groups">
+      {blocking.length > 0 ? (
+        <AttentionDrawerGroup
+          label={t('attention.groupBlocking')}
+          items={blocking}
           competitionId={competitionId}
           onNavigate={onNavigate}
         />
-      ))}
-    </ul>
+      ) : null}
+      {attention.length > 0 ? (
+        <AttentionDrawerGroup
+          label={t('attention.groupAttention')}
+          items={attention}
+          competitionId={competitionId}
+          onNavigate={onNavigate}
+        />
+      ) : null}
+    </div>
   )
 }
 
-function AttentionDrawerItem({
-  item,
+function AttentionDrawerGroup({
+  label,
+  items,
   competitionId,
   onNavigate,
 }: {
-  item: OverviewSituation
+  label: string
+  items: OverviewSituation[]
   competitionId: string
   onNavigate: () => void
 }) {
-  const { t } = useTranslation(['shell', 'overview'])
-  const href = situationHref(item, competitionId)
-  const isBlocking = item.nature === 'Blocking'
-  const natureTone = isBlocking ? 'error' : 'info'
-  const natureLabel = t(`overview:nature.${item.nature}`, {
-    defaultValue: item.nature,
-  })
-  const targetLabel = item.targetType
-    ? attentionTargetTypeLabel(item.targetType)
-    : null
-  const toneClass = isBlocking
-    ? 'shell-attention-drawer__item-link--blocking'
-    : 'shell-attention-drawer__item-link--info'
-  const staticToneClass = isBlocking
-    ? 'shell-attention-drawer__item-static--blocking'
-    : 'shell-attention-drawer__item-static--info'
-
-  const content = (
-    <>
-      <span
-        className={`shell-attention-drawer__item-mark${
-          isBlocking ? ' shell-attention-drawer__item-mark--blocking' : ''
-        }`}
-        aria-hidden="true"
-      >
-        <AttentionMarkIcon size="lg" />
-      </span>
-      <div className="shell-attention-drawer__item-main">
-        <p className="shell-attention-drawer__item-title">
-          {situationTitle(item.source, item.params)}
-        </p>
-        <div className="shell-attention-drawer__item-meta">
-          <Status density="context" tone={natureTone} variant="soft" shape="rounded">
-            {natureLabel}
-          </Status>
-          {targetLabel && (
-            <span className="shell-attention-drawer__item-target ds-meta">
-              {targetLabel}
-            </span>
-          )}
-        </div>
-      </div>
-      {href && (
-        <ChevronRightIcon
-          size="md"
-          className="shell-attention-drawer__item-chevron"
-          aria-hidden="true"
-        />
-      )}
-    </>
-  )
-
   return (
-    <li className="shell-attention-drawer__item">
-      {href ? (
-        <Link
-          className={`shell-attention-drawer__item-link ${toneClass}`}
-          to={href}
-          onClick={onNavigate}
-        >
-          {content}
-        </Link>
-      ) : (
-        <div className={`shell-attention-drawer__item-static ${staticToneClass}`}>
-          {content}
-        </div>
-      )}
-    </li>
+    <section className="shell-attention-drawer__group">
+      <h3 className="shell-attention-drawer__group-label">{label}</h3>
+      <ul className="shell-attention-drawer__list">
+        {items.map((item) => (
+          <AttentionSituationRow
+            key={`${item.source}:${item.targetType}:${item.targetId}:${item.matchId}`}
+            item={item}
+            competitionId={competitionId}
+            onNavigate={onNavigate}
+          />
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -372,10 +330,10 @@ function useFocusTrap(
 
       if (event.shiftKey && activeElement === first) {
         event.preventDefault()
-        last.focus()
+        last.focus({ preventScroll: true })
       } else if (!event.shiftKey && activeElement === last) {
         event.preventDefault()
-        first.focus()
+        first.focus({ preventScroll: true })
       }
     }
 
