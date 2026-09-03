@@ -150,19 +150,32 @@ describe('TeamsPage', () => {
     vi.mocked(changeDeclaredMemberRole).mockResolvedValue(organisationView())
   })
 
-  it('shows a tabular plateau reading in Draft and Ready', async () => {
+  it('shows the plateau gauge in Draft and Ready', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderTeamsPage()
 
-    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /Équipes.*1/ }),
+    ).toBeInTheDocument()
     expect(screen.getByText('Alpha')).toBeInTheDocument()
+
+    const titleCount = document.querySelector('.teams__title-count')
+    expect(titleCount).not.toBeNull()
+    expect(titleCount).toHaveTextContent('1')
+
     const plateau = document.querySelector('.teams__plateau')
     expect(plateau).not.toBeNull()
-    expect(plateau).toHaveTextContent('1')
-    expect(plateau).toHaveTextContent('/64')
-    expect(plateau).toHaveTextContent('inscrites')
-    expect(plateau).toHaveTextContent('Il manque 1 équipe')
+    expect(plateau).toHaveTextContent('Encore 1 équipe nécessaire')
+    expect(plateau).toHaveTextContent('min. 2')
+    expect(plateau).toHaveTextContent('63 places disponibles')
+    expect(plateau).not.toHaveTextContent('ÉQUIPES ACTIVES')
+    expect(plateau).not.toHaveTextContent('SEUIL DE DÉMARRAGE')
+
+    const gauge = screen.getByRole('progressbar')
+    expect(gauge).toHaveAttribute('aria-valuenow', '1')
+    expect(gauge).toHaveAttribute('aria-valuemax', '64')
+    expect(gauge).toHaveAttribute('data-tone', 'blocking')
   })
 
   it('hides the plateau reading outside Draft and Ready', async () => {
@@ -176,7 +189,8 @@ describe('TeamsPage', () => {
     renderTeamsPage()
 
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
-    expect(screen.queryByText('inscrites')).not.toBeInTheDocument()
+    expect(document.querySelector('.teams__title-count')).toBeNull()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 
   it('shows Qualifié and Éliminé badges on season tiles', async () => {
@@ -333,7 +347,7 @@ describe('TeamsPage', () => {
     expect((await screen.findAllByText('Beta')).length).toBeGreaterThan(0)
   })
 
-  it('greys the add button and shows plateau full in the reading at capacity', async () => {
+  it('greys the add button and shows cap reached in the plateau reading at capacity', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         participants: {
@@ -358,15 +372,20 @@ describe('TeamsPage', () => {
 
     renderTeamsPage()
 
-    expect(await screen.findByText(/Plateau complet/i)).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('/2')).toBeInTheDocument()
+    expect(await screen.findByText('Capacité maximale atteinte')).toBeInTheDocument()
+    expect(screen.queryByText('✓ Minimum atteint')).not.toBeInTheDocument()
+    expect(screen.queryByText(/places disponibles/i)).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /Ajouter une équipe/i }),
     ).toBeDisabled()
     expect(
       screen.queryByRole('button', { name: 'Inscrire une équipe' }),
     ).not.toBeInTheDocument()
+
+    const gauge = screen.getByRole('progressbar')
+    expect(gauge).toHaveAttribute('aria-valuenow', '2')
+    expect(gauge).toHaveAttribute('aria-valuemax', '2')
+    expect(gauge).toHaveAttribute('data-tone', 'cap')
   })
 
   it('keeps the roster panel visible with an idle state', async () => {
@@ -377,7 +396,7 @@ describe('TeamsPage', () => {
     expect(
       await screen.findByText('Aucune équipe sélectionnée'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Équipes.*1/ })).toBeInTheDocument()
   })
 
   it('opens the roster drawer from a tile and keeps the grid', async () => {
@@ -391,7 +410,7 @@ describe('TeamsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Joueurs· 0' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Staff· 0' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Équipes.*1/ })).toBeInTheDocument()
     expect(
       screen.queryByText('Aucune équipe sélectionnée'),
     ).not.toBeInTheDocument()

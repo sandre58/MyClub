@@ -112,8 +112,7 @@ function TeamsView({
   const canWithdraw = can('WithdrawEntry')
   const atCap = data.participants.occupyingCount >= data.regulation.maximumTeams
   const canAdd = canAddAction && !atCap
-  const showPlateauReading =
-    data.status === 'Draft' || data.status === 'Ready'
+  const showPlateauReading = true
   const missingMinimum = Math.max(
     0,
     data.regulation.minimumTeams - data.participants.activeCount,
@@ -284,97 +283,71 @@ function TeamsView({
       <div className="teams__layout">
         <div className="teams__main">
           <header className="teams__head">
-            <div className="teams__title-cluster">
-              <h1 className="teams__title">{t('title')}</h1>
-              {showPlateauReading && (
-                <div className="teams__plateau" role="status">
-                  <div className="teams__plateau-cards">
-                    <div className="teams__plateau-card">
-                      <p className="teams__plateau-cardLabel">
-                        {t('plateauLabel')}
-                      </p>
-                      <p className="teams__plateau-cardValue">
-                        <span className="ds-num ds-num-counter">
-                          {data.participants.occupyingCount}
-                        </span>
-                        <span className="teams__plateau-cardMax" aria-hidden="true">
-                          /{data.regulation.maximumTeams}
-                        </span>
-                      </p>
-                    </div>
-
-                    {missingMinimum > 0 ? (
-                      <p
-                        className={
-                          missingMinimum === 1
-                            ? 'ds-notice ds-notice--danger teams__plateau-notice'
-                            : 'ds-notice ds-notice--warning teams__plateau-notice'
-                        }
-                      >
-                        {t('plateauMissing', { count: missingMinimum })}
-                      </p>
-                    ) : atCap ? (
-                      <p className="ds-notice ds-notice--info teams__plateau-notice">
-                        {t('maxHelper', {
-                          count: data.participants.occupyingCount,
-                        })}
-                      </p>
-                    ) : (
-                      <p className="teams__plateau-subtle">
-                        {t('plateauMinimumOk', {
-                          count: data.participants.activeCount,
-                          min: data.regulation.minimumTeams,
-                        })}
-                      </p>
-                    )}
+            <div className="teams__head-row">
+              <h1 className="teams__title">
+                {t('title')}
+                {showPlateauReading && (
+                  <>
+                    <span className="teams__title-sep"> · </span>
+                    <span className="teams__title-count ds-num">
+                      {data.participants.activeCount}
+                    </span>
+                  </>
+                )}
+              </h1>
+              {selectedCount >= 1 ? (
+                <div className="teams-bar" role="status">
+                  <p className="teams-bar__count">
+                    {t('selectionCount', { count: selectedCount })}
+                  </p>
+                  <div className="ds-icon-toolbar">
+                    <button
+                      type="button"
+                      className={compactIcon}
+                      disabled={!barRemoveEnabled || removePending}
+                      title={barRemoveHint}
+                      aria-label={removeLabel}
+                      onClick={() => confirmAndRemove(selectedIds)}
+                    >
+                      {removing === 'delete' ? (
+                        <TrashIcon size="sm" />
+                      ) : (
+                        <WithdrawIcon size="sm" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className={compactIcon}
+                      title={t('clearSelection')}
+                      aria-label={t('clearSelection')}
+                      onClick={() => goToSelection([])}
+                    >
+                      <CloseIcon size="sm" />
+                    </button>
                   </div>
                 </div>
+              ) : (
+                <span className="teams__head-fill" aria-hidden="true" />
               )}
+              <button
+                type="button"
+                className="ds-btn ds-btn--primary teams__add"
+                disabled={!canAdd}
+                title={canAdd ? t('addAction') : t('addDisabledHint')}
+                onClick={() => setAddOpen(true)}
+              >
+                <PlusIcon size="sm" />
+                {t('addAction')}
+              </button>
             </div>
-            {selectedCount >= 1 ? (
-              <div className="teams-bar" role="status">
-                <p className="teams-bar__count">
-                  {t('selectionCount', { count: selectedCount })}
-                </p>
-                <div className="ds-icon-toolbar">
-                  <button
-                    type="button"
-                    className={compactIcon}
-                    disabled={!barRemoveEnabled || removePending}
-                    title={barRemoveHint}
-                    aria-label={removeLabel}
-                    onClick={() => confirmAndRemove(selectedIds)}
-                  >
-                    {removing === 'delete' ? (
-                      <TrashIcon size="sm" />
-                    ) : (
-                      <WithdrawIcon size="sm" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    className={compactIcon}
-                    title={t('clearSelection')}
-                    aria-label={t('clearSelection')}
-                    onClick={() => goToSelection([])}
-                  >
-                    <CloseIcon size="sm" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <span className="teams__head-fill" aria-hidden="true" />
+            {showPlateauReading && (
+              <TeamsPlateauReading
+                activeCount={data.participants.activeCount}
+                occupyingCount={data.participants.occupyingCount}
+                minimumTeams={data.regulation.minimumTeams}
+                maximumTeams={data.regulation.maximumTeams}
+              />
             )}
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary teams__add"
-              disabled={!canAdd}
-              title={canAdd ? t('addAction') : t('addDisabledHint')}
-              onClick={() => setAddOpen(true)}
-            >
-              <PlusIcon size="sm" />
-              {t('addAction')}
-            </button>
           </header>
 
           {mutationError && <MutationError error={mutationError} />}
@@ -405,6 +378,12 @@ function TeamsView({
                     data-selected={selected ? 'true' : 'false'}
                     data-withdrawn={withdrawn ? 'true' : 'false'}
                   >
+                    <button
+                      type="button"
+                      className="teams-tile__hit"
+                      aria-label={entry.displayName}
+                      onClick={() => onTileBody(entry.entryId)}
+                    />
                     <div className="teams-tile__chrome">
                       <label className="teams-tile__check">
                         <input
@@ -446,12 +425,7 @@ function TeamsView({
                         </div>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      className="teams-tile__body"
-                      aria-label={entry.displayName}
-                      onClick={() => onTileBody(entry.entryId)}
-                    >
+                    <div className="teams-tile__body">
                       <span className="teams-tile__figure" aria-hidden="true">
                         <TeamCrest
                           name={entry.displayName}
@@ -487,7 +461,7 @@ function TeamsView({
                           {statusBadge}
                         </span>
                       </span>
-                    </button>
+                    </div>
                   </article>
                 </li>
               )
@@ -495,16 +469,17 @@ function TeamsView({
             {Array.from({ length: emptyCount }, (_, index) => (
               <li key={`empty-${index}`}>
                 <article className="teams-tile teams-tile--empty">
-                  <div className="teams-tile__chrome" aria-hidden="true" />
                   <button
                     type="button"
-                    className="teams-tile__body"
+                    className="teams-tile__hit"
                     aria-label={t('emptyTileAria')}
                     onClick={() => setAddOpen(true)}
-                  >
+                  />
+                  <div className="teams-tile__chrome" aria-hidden="true" />
+                  <div className="teams-tile__body">
                     <PlusIcon size="lg" />
                     <span>{t('emptyTile')}</span>
-                  </button>
+                  </div>
                 </article>
               </li>
             ))}
@@ -784,6 +759,99 @@ function IdentityFields({
         </label>
       </div>
     </>
+  )
+}
+
+function TeamsPlateauReading({
+  activeCount,
+  occupyingCount,
+  minimumTeams,
+  maximumTeams,
+}: {
+  activeCount: number
+  occupyingCount: number
+  minimumTeams: number
+  maximumTeams: number
+}) {
+  const { t } = useTranslation('teams')
+  const availableSlots = Math.max(0, maximumTeams - occupyingCount)
+  const belowMinimum = activeCount < minimumTeams
+  const atCap = occupyingCount >= maximumTeams
+  const missingMinimum = Math.max(0, minimumTeams - activeCount)
+  const fillRatio =
+    maximumTeams > 0 ? Math.min(1, activeCount / maximumTeams) : 0
+  const markerRatio =
+    maximumTeams > 0 ? Math.min(1, minimumTeams / maximumTeams) : 0
+  const showMarker =
+    minimumTeams > 0 && maximumTeams > 0 && minimumTeams < maximumTeams
+
+  const statusTone = atCap
+    ? 'cap'
+    : belowMinimum
+      ? missingMinimum === 1
+        ? 'blocking'
+        : 'warning'
+      : 'ok'
+
+  const statusLabel = atCap
+    ? t('plateauCapReached')
+    : belowMinimum
+      ? t('plateauStillNeeded', { count: missingMinimum })
+      : t('plateauMinimumReached')
+
+  const gaugeAria = t('plateauGaugeAria', {
+    active: activeCount,
+    min: minimumTeams,
+    max: maximumTeams,
+    available: availableSlots,
+  })
+
+  return (
+    <div className="teams__plateau" role="status">
+      <p
+        className={`teams__plateau-status teams__plateau-status--${statusTone}`}
+      >
+        {statusLabel}
+      </p>
+
+      {maximumTeams > 0 && (
+        <div className="teams__plateau-gaugeBlock">
+          <div
+            className="teams__plateau-gauge"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={maximumTeams}
+            aria-valuenow={activeCount}
+            aria-valuetext={gaugeAria}
+            data-tone={statusTone}
+          >
+            <div className="teams__plateau-gaugeTrack">
+              <div
+                className="teams__plateau-gaugeFill"
+                style={{ width: `${fillRatio * 100}%` }}
+              />
+              {showMarker && (
+                <span
+                  className="teams__plateau-gaugeMarker"
+                  style={{ left: `${markerRatio * 100}%` }}
+                  aria-hidden="true"
+                >
+                  <span className="teams__plateau-gaugeMarkerLabel">
+                    {t('plateauMinMarker', { min: minimumTeams })}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {!atCap && (
+            <p className="teams__plateau-capacity">
+              {t('plateauPlacesAvailable', { count: availableSlots })}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
