@@ -189,6 +189,31 @@ public static class ApplicationErrorCodes
     public const string DeclaredMemberReferencedByMatchSheet = "Application.DeclaredMemberReferencedByMatchSheet";
 
     /// <summary>
+    /// Gets the code when a declared member identity is not on the entry roster.
+    /// </summary>
+    public const string DeclaredMemberNotFound = "Application.DeclaredMemberNotFound";
+
+    /// <summary>
+    /// Gets the code when hard-delete is refused because a match references the entry.
+    /// </summary>
+    public const string EntryHasSportingHistory = "Application.EntryHasSportingHistory";
+
+    /// <summary>
+    /// Gets the code when a named entry lot is empty.
+    /// </summary>
+    public const string EmptyEntryLot = "Application.EmptyEntryLot";
+
+    /// <summary>
+    /// Gets the code when a named entry lot contains duplicate identities.
+    /// </summary>
+    public const string DuplicateEntryLotId = "Application.DuplicateEntryLotId";
+
+    /// <summary>
+    /// Gets the code when a lot withdraw is refused because an entry is not Active.
+    /// </summary>
+    public const string EntryNotWithdrawable = "Application.EntryNotWithdrawable";
+
+    /// <summary>
     /// Gets the code when an inbound match side is not a defined enum value.
     /// </summary>
     public const string InvalidSide = "Application.InvalidSide";

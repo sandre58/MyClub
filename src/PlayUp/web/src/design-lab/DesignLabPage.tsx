@@ -25,6 +25,7 @@ import { LabHome } from './LabHome'
 import { LabMatches } from './LabMatches'
 import { LabMatchSheet } from './LabMatchSheet'
 import { LabStandings } from './LabStandings'
+import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait'
 import type { LabLifecycle } from './labData'
 
 type LabChromeVp = 'desktop' | 'tablet' | 'phone'
@@ -32,7 +33,10 @@ type LabChromeVp = 'desktop' | 'tablet' | 'phone'
 type LabView =
   | 'home'
   | 'home-empty'
+  | 'home-loading'
+  | 'wait'
   | 'overview'
+  | 'overview-loading'
   | 'matches'
   | 'match'
   | 'standings'
@@ -52,9 +56,12 @@ export function DesignLabPage() {
   const [phoneNavOpen, setPhoneNavOpen] = useState(false)
   const [motionViewport, setMotionViewport] = useState(chromeVp)
   const [chromeReady, setChromeReady] = useState(chromeVp === 'desktop')
+  const [waitKind, setWaitKind] = useState<LabWaitKind>('c')
   const labShellRef = useRef<HTMLDivElement>(null)
 
-  const isHome = view === 'home' || view === 'home-empty'
+  const isHome =
+    view === 'home' || view === 'home-empty' || view === 'home-loading'
+  const isWaitBoard = view === 'wait'
   const labCollapsed = chromeVp === 'phone' ? false : railCollapsed
 
   useEffect(() => {
@@ -116,10 +123,12 @@ export function DesignLabPage() {
       <LabBar
         view={view}
         lifecycle={lifecycle}
+        waitKind={waitKind}
         railCollapsed={railCollapsed}
         chromeVp={chromeVp}
         onView={setView}
         onLifecycle={setLifecycle}
+        onWaitKind={setWaitKind}
         onRailCollapsed={setRailCollapsed}
         onChromeVp={(next) => {
           setChromeVp(next)
@@ -130,8 +139,13 @@ export function DesignLabPage() {
         }}
       />
 
-      {isHome ? (
-        <LabHome empty={view === 'home-empty'} />
+      {isWaitBoard ? (
+        <LabWait />
+      ) : isHome ? (
+        <LabHome
+          empty={view === 'home-empty'}
+          waiting={view === 'home-loading' ? waitKind : undefined}
+        />
       ) : (
         <div
           ref={labShellRef}
@@ -168,6 +182,9 @@ export function DesignLabPage() {
             ) : null}
             <main className="dlab-main ds-shell-workspace">
               {view === 'overview' && <LabOverview lifecycle={lifecycle} />}
+              {view === 'overview-loading' && (
+                <LabWaitAtom kind={waitKind} scale="page" />
+              )}
               {view === 'matches' && <LabMatches />}
               {view === 'match' && <LabMatchSheet lifecycle={lifecycle} />}
               {view === 'standings' && <LabStandings />}
@@ -186,10 +203,18 @@ export function DesignLabPage() {
 const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'home', label: 'Accueil' },
   { key: 'home-empty', label: 'Accueil vide' },
+  { key: 'home-loading', label: 'Accueil chargement' },
+  { key: 'wait', label: 'Attente' },
   { key: 'overview', label: "Vue d'ensemble" },
+  { key: 'overview-loading', label: "Vue d'ensemble chargement" },
   { key: 'matches', label: 'Matchs' },
   { key: 'match', label: 'Fiche match' },
   { key: 'standings', label: 'Classements' },
+]
+
+const waitKindOptions: Array<{ key: LabWaitKind; label: string }> = [
+  { key: 'b', label: 'B — spinner' },
+  { key: 'c', label: 'C — marque' },
 ]
 
 const lifecycleOptions: Array<{ key: LabLifecycle; label: string }> = [
@@ -207,22 +232,28 @@ const chromeVpOptions: Array<{ key: LabChromeVp; label: string }> = [
 function LabBar({
   view,
   lifecycle,
+  waitKind,
   railCollapsed,
   chromeVp,
   onView,
   onLifecycle,
+  onWaitKind,
   onRailCollapsed,
   onChromeVp,
 }: {
   view: LabView
   lifecycle: LabLifecycle
+  waitKind: LabWaitKind
   railCollapsed: boolean
   chromeVp: LabChromeVp
   onView: (v: LabView) => void
   onLifecycle: (l: LabLifecycle) => void
+  onWaitKind: (kind: LabWaitKind) => void
   onRailCollapsed: (collapsed: boolean) => void
   onChromeVp: (vp: LabChromeVp) => void
 }) {
+  const showWaitKind = view === 'home-loading' || view === 'overview-loading'
+
   return (
     <div className="dlab-bar">
       <span className="dlab-bar__title">Design Lab</span>
@@ -240,6 +271,22 @@ function LabBar({
           </button>
         ))}
       </span>
+      {showWaitKind ? (
+        <span className="dlab-bar__group">
+          <span className="dlab-bar__group-label">Atome</span>
+          {waitKindOptions.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              className="dlab-bar__chip"
+              data-active={waitKind === option.key}
+              onClick={() => onWaitKind(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </span>
+      ) : null}
       <span className="dlab-bar__group">
         <span className="dlab-bar__group-label">Cycle</span>
         {lifecycleOptions.map((option) => (
@@ -369,8 +416,11 @@ function LabRail({
             <p className="ds-shell-rail__group-label">{group.label}</p>
             {group.items.map((item) => {
               const Icon = item.icon
+              const railView = view === 'overview-loading' ? 'overview' : view
               const isActive =
-                item.dest !== undefined && item.dest === view && item.key === item.dest
+                item.dest !== undefined &&
+                item.dest === railView &&
+                item.key === item.dest
               if (!item.dest) {
                 return (
                   <button

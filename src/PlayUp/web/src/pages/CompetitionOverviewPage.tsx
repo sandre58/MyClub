@@ -163,6 +163,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
   const gameRegulationVisible =
     operationalOverview && regulationVisible && gameRules != null
   const orgHref = `/competitions/${data.competitionId}/organisation`
+  const teamsHref = `/competitions/${data.competitionId}/teams`
   const matchesHref = `/competitions/${data.competitionId}/matches`
   const classementsHref = `/competitions/${data.competitionId}/classements`
   const showProgression =
@@ -213,7 +214,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
             variant="identity"
             dimension={data.constructionDimensions.teams}
             entries={orgQuery.data?.participants.entries ?? []}
-            href={orgHref}
+            href={teamsHref}
             hrefLabel={t('dimensions.openTeams')}
             actions={[]}
             actionRunner={actionRunner}
@@ -371,7 +372,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
                   variant={generatedCalendar ? 'identity' : 'construction'}
                   dimension={data.constructionDimensions.teams}
                   entries={orgQuery.data?.participants.entries ?? []}
-                  href={orgHref}
+                  href={teamsHref}
                   hrefLabel={t('dimensions.openTeams')}
                   actions={generatedCalendar ? [] : slotActions('teams')}
                   actionRunner={actionRunner}

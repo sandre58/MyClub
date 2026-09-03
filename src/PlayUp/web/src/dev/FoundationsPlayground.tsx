@@ -32,10 +32,12 @@ import {
   CreateMatchesIcon,
   NextActionIcon,
   PendingCircleIcon,
+  PencilIcon,
   PlusIcon,
   PreparationIcon,
   RegulationIcon,
   StructureIcon,
+  TrashIcon,
 } from '../design-system/icons/overviewIcons'
 import './foundations-playground.css'
 
@@ -588,6 +590,25 @@ export function FoundationsPlayground() {
                 aria-label="Fermer"
               >
                 <CloseIcon />
+              </button>
+            </div>
+            <p className="ds-label">Toolbar icônes compacte (tuiles, lignes)</p>
+            <div className="ds-icon-toolbar">
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                aria-label="Modifier"
+                title="Modifier"
+              >
+                <PencilIcon size="sm" />
+              </button>
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                aria-label="Supprimer"
+                title="Supprimer"
+              >
+                <TrashIcon size="sm" />
               </button>
             </div>
           </div>

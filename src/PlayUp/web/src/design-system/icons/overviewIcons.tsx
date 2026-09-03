@@ -35,6 +35,59 @@ export function PlusIcon({ size, ...props }: OverviewIconProps) {
   )
 }
 
+/** Identité — crayon. */
+export function PencilIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+      <path d="m15 5 4 4" />
+    </Icon>
+  )
+}
+
+/** Suppression — corbeille (préparation). */
+export function TrashIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </Icon>
+  )
+}
+
+/** Retrait d’une équipe en saison — bouclier moins (pas une personne). */
+export function WithdrawIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M20 13c0 5-3.5 7.5-8 10-4.5-2.5-8-5-8-10V6l8-4 8 4Z" />
+      <path d="M9 12h6" />
+    </Icon>
+  )
+}
+
+/** Empty state — cadre en pointillés (rien de sélectionné). */
+export function EmptySelectionIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} strokeDasharray="3 3" {...props}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+    </Icon>
+  )
+}
+
+/** Sélection multiple — deux calques. */
+export function LayersIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.91a1 1 0 0 0 0-1.83Z" />
+      <path d="m22 12.67-9.17 4.16a2 2 0 0 1-1.66 0L2 12.67" />
+      <path d="m22 17.67-9.17 4.16a2 2 0 0 1-1.66 0L2 17.67" />
+    </Icon>
+  )
+}
+
 /** Créer les matchs — calendrier + ajout. */
 export function CreateMatchesIcon({ size, ...props }: OverviewIconProps) {
   return (
@@ -111,6 +164,16 @@ export function PendingCircleIcon({ size, ...props }: OverviewIconProps) {
   return (
     <Icon size={size} strokeDasharray="3 3" {...props}>
       <circle cx="12" cy="12" r="9" />
+    </Icon>
+  )
+}
+
+/** Personne — tête / épaules (placeholder effectif). */
+export function PersonIcon({ size, ...props }: OverviewIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </Icon>
   )
 }

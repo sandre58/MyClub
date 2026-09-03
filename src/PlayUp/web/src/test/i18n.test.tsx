@@ -25,7 +25,12 @@ describe('i18n foundation', () => {
 
   it('renders LoadingState with common.loading by default', () => {
     renderWithI18n(<LoadingState />)
-    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
+    const status = screen.getByRole('status')
+    expect(status).toHaveTextContent('Chargement…')
+    expect(status.querySelector('.ds-wait__orbit')).not.toBeNull()
+    expect(status.querySelector('.ds-wait__label')).toHaveTextContent(
+      'Chargement…',
+    )
   })
 })
 

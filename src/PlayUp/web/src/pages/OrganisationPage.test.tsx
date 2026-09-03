@@ -4,13 +4,9 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  addCompetitionEntry,
   configureOrganisationStructure,
-  excludeCompetitionEntry,
   fetchOrganisationView,
-  renameCompetitionEntry,
   replaceCompetitionRegulation,
-  withdrawCompetitionEntry,
   ApiError,
 } from '../api'
 import type { OrganisationView } from '../types'
@@ -21,10 +17,6 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchOrganisationView: vi.fn(),
-    addCompetitionEntry: vi.fn(),
-    renameCompetitionEntry: vi.fn(),
-    withdrawCompetitionEntry: vi.fn(),
-    excludeCompetitionEntry: vi.fn(),
     replaceCompetitionRegulation: vi.fn(),
     configureOrganisationStructure: vi.fn(),
   }
@@ -81,7 +73,7 @@ function organisationView(
       'ReplaceRegulation',
       'RenameEntry',
       'WithdrawEntry',
-      'ExcludeEntry',
+      'DeleteEntry',
     ],
     readiness: {
       readyForNextSlice: false,
@@ -112,8 +104,8 @@ function renderOrganisationPage() {
       >
         <Routes>
           <Route
-            path="/competitions/:competitionId/organisation/entries/:entryId"
-            element={<p>Roster route</p>}
+            path="/competitions/:competitionId/teams"
+            element={<p>Teams route</p>}
           />
           <Route
             path="/competitions/:competitionId/organisation"
@@ -131,31 +123,9 @@ function renderOrganisationPage() {
   return { queryClient }
 }
 
-async function openTeamsAddDialog(
-  user: ReturnType<typeof userEvent.setup>,
-) {
-  await user.click(
-    await screen.findByRole('button', { name: /Ajouter une équipe/i }),
-  )
-  return screen.findByRole('dialog')
-}
-
-async function openTeamsManageDialog(
-  user: ReturnType<typeof userEvent.setup>,
-) {
-  await user.click(
-    await screen.findByRole('button', { name: /Gérer les équipes/i }),
-  )
-  return screen.findByRole('dialog')
-}
-
 describe('OrganisationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(addCompetitionEntry).mockResolvedValue(organisationView())
-    vi.mocked(renameCompetitionEntry).mockResolvedValue(organisationView())
-    vi.mocked(withdrawCompetitionEntry).mockResolvedValue(organisationView())
-    vi.mocked(excludeCompetitionEntry).mockResolvedValue(organisationView())
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(
       organisationView(),
     )
@@ -187,17 +157,13 @@ describe('OrganisationPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
-    expect(await screen.findByText('Alpha')).toBeInTheDocument()
+    expect(screen.getByText(/1 équipe · minimum 2/)).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /Alpha/ }),
-    ).toHaveAttribute(
-      'href',
-      `/competitions/${competitionId}/organisation/entries/${entryId}`,
-    )
+      screen.getByRole('link', { name: /Ouvrir Équipes/i }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`)
     expect(
-      screen.getByLabelText('Inscription complète'),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
+      screen.getByRole('link', { name: /Participants insuffisants/i }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`)
     expect(screen.getByText(/2–64/)).toBeInTheDocument()
     expect(
       screen.getByText('Aucun type disciplinaire autorisé'),
@@ -230,23 +196,17 @@ describe('OrganisationPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('enters the roster job from the whole entry row without opening Gérer', async () => {
+  it('opens Équipes from the teams fact panel', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderOrganisationPage()
 
-    expect(
-      await screen.findByRole('button', { name: /Gérer les équipes/i }),
-    ).toBeInTheDocument()
+    await user.click(
+      await screen.findByRole('link', { name: /Ouvrir Équipes/i }),
+    )
 
-    await user.click(screen.getByRole('link', { name: /Alpha/ }))
-
-    expect(screen.getByText('Roster route')).toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /Gérer les équipes/i }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByText('Teams route')).toBeInTheDocument()
   })
 
   it('does not render redundant competition section navigation', async () => {
@@ -261,7 +221,7 @@ describe('OrganisationPage', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('shows empty participants state', async () => {
+  it('shows empty participants fact', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         participants: {
@@ -274,7 +234,10 @@ describe('OrganisationPage', () => {
 
     renderOrganisationPage()
 
-    expect(await screen.findByText(/Aucune inscription/i)).toBeInTheDocument()
+    expect(await screen.findByText(/0 équipe · minimum 2/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: /Ouvrir Équipes/i }),
+    ).toBeInTheDocument()
   })
 
   it('shows an error when organisation read fails', async () => {
@@ -302,153 +265,6 @@ describe('OrganisationPage', () => {
     )
 
     expect(screen.getByText('Workspace route')).toBeInTheDocument()
-  })
-
-  it('adds an entry with the Host payload and refreshes', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockImplementation(async () => {
-      if (vi.mocked(addCompetitionEntry).mock.calls.length > 0) {
-        return organisationView({
-          participants: {
-            activeCount: 2,
-            occupyingCount: 2,
-            entries: [
-              { entryId, displayName: 'Alpha', status: 'Active' },
-              {
-                entryId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-                displayName: 'Beta',
-                status: 'Active',
-              },
-            ],
-          },
-        })
-      }
-
-      return organisationView()
-    })
-
-    renderOrganisationPage()
-
-    const dialog = await openTeamsAddDialog(user)
-    await user.type(
-      await within(dialog).findByLabelText(/Nom de la nouvelle inscription/i),
-      'Beta',
-    )
-    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
-
-    await waitFor(() => {
-      expect(addCompetitionEntry).toHaveBeenCalledWith(
-        competitionId,
-        expect.objectContaining({
-          displayName: 'Beta',
-        }),
-      )
-    })
-    expect((await screen.findAllByText('Beta')).length).toBeGreaterThan(0)
-  })
-
-  it('shows pending state while adding an entry', async () => {
-    const user = userEvent.setup()
-    let resolveAdd!: (value: OrganisationView) => void
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-    vi.mocked(addCompetitionEntry).mockReturnValue(
-      new Promise((resolve) => {
-        resolveAdd = resolve
-      }),
-    )
-
-    renderOrganisationPage()
-
-    const dialog = await openTeamsAddDialog(user)
-    await user.type(
-      await within(dialog).findByLabelText(/Nom de la nouvelle inscription/i),
-      'Beta',
-    )
-    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
-
-    expect(
-      await within(dialog).findByRole('button', { name: 'Ajout…' }),
-    ).toBeDisabled()
-
-    resolveAdd(organisationView())
-  })
-
-  it('shows add entry error from the Host', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-    vi.mocked(addCompetitionEntry).mockRejectedValue(
-      new ApiError(400, 'Entry capacity exceeded'),
-    )
-
-    renderOrganisationPage()
-
-    const dialog = await openTeamsAddDialog(user)
-    await user.type(
-      await within(dialog).findByLabelText(/Nom de la nouvelle inscription/i),
-      'Overflow',
-    )
-    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
-
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
-      'Entry capacity exceeded (400)',
-    )
-  })
-
-  it('renames an entry with the Host payload', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-
-    renderOrganisationPage()
-
-    const dialog = await openTeamsManageDialog(user)
-    const renameInput = await within(dialog).findByLabelText(/Renommer/i)
-    await user.clear(renameInput)
-    await user.type(renameInput, 'Alpha FC')
-    await user.click(within(dialog).getByRole('button', { name: 'Renommer' }))
-
-    await waitFor(() => {
-      expect(renameCompetitionEntry).toHaveBeenCalledWith(
-        competitionId,
-        entryId,
-        { displayName: 'Alpha FC' },
-      )
-    })
-  })
-
-  it('withdraws an entry after confirmation', async () => {
-    const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-
-    renderOrganisationPage()
-
-    const dialog = await openTeamsManageDialog(user)
-    await user.click(within(dialog).getByRole('button', { name: 'Retirer' }))
-
-    await waitFor(() => {
-      expect(withdrawCompetitionEntry).toHaveBeenCalledWith(
-        competitionId,
-        entryId,
-      )
-    })
-  })
-
-  it('excludes an entry after confirmation', async () => {
-    const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-
-    renderOrganisationPage()
-
-    const dialog = await openTeamsManageDialog(user)
-    await user.click(within(dialog).getByRole('button', { name: 'Exclure' }))
-
-    await waitFor(() => {
-      expect(excludeCompetitionEntry).toHaveBeenCalledWith(
-        competitionId,
-        entryId,
-      )
-    })
   })
 
   it('replaces regulation with the Host payload', async () => {
@@ -593,12 +409,6 @@ describe('OrganisationPage', () => {
       await screen.findByRole('heading', { name: 'Organisation' }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: /Ajouter une équipe/i }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /Gérer les équipes/i }),
-    ).not.toBeInTheDocument()
-    expect(
       screen.queryByRole('button', { name: /Modifier le règlement/i }),
     ).not.toBeInTheDocument()
     expect(
@@ -706,27 +516,5 @@ describe('OrganisationPage', () => {
     renderOrganisationPage()
 
     expect(await screen.findByText(/Prêt pour le tirage/i)).toBeInTheDocument()
-  })
-
-  it('invalidates overview query after adding an entry', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-    const { queryClient } = renderOrganisationPage()
-    const spy = vi.spyOn(queryClient, 'invalidateQueries')
-
-    const dialog = await openTeamsAddDialog(user)
-    await user.type(
-      await within(dialog).findByPlaceholderText(/Alpha FC/i),
-      'Beta',
-    )
-    await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
-
-    await waitFor(() => {
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          queryKey: ['competitions', competitionId, 'overview'],
-        }),
-      )
-    })
   })
 })

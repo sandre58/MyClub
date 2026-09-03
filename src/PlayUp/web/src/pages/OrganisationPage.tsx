@@ -14,19 +14,13 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
-  addCompetitionEntry,
   configureOrganisationStructure,
-  excludeCompetitionEntry,
   fetchOrganisationView,
-  renameCompetitionEntry,
   replaceCompetitionRegulation,
   setCompetitionSchedule,
   updateCompetitionPresentation,
-  updateEntryPresentation,
-  withdrawCompetitionEntry,
 } from '../api'
 import { LogoMediaField } from '../design-system/LogoMediaField'
-import { TeamCrest } from '../design-system/TeamCrest'
 import {
   CheckIcon,
   RegulationIcon,
@@ -42,7 +36,6 @@ import {
 import { queryKeys } from '../queryKeys'
 import {
   EmptyState,
-  EntryStatusBadge,
   ErrorState,
   LoadingState,
   MutationError,
@@ -52,14 +45,13 @@ import {
 import {
   type DisciplinaryType,
   type MatchGenerationFormat,
-  type OrganisationEntry,
   type OrganisationView,
   type ReplaceRegulationRequest,
   type StructureFormatKind,
 } from '../types'
 import './organisation.css'
 
-type OrganisationEditor = null | 'teams' | 'regulation' | 'structure'
+type OrganisationEditor = null | 'regulation' | 'structure'
 
 /**
  * After Organisation writes that change readiness, refresh Organisation + Overview.
@@ -115,11 +107,6 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
   const overviewHref = `/competitions/${data.competitionId}`
   const [editor, setEditor] = useState<OrganisationEditor>(null)
 
-  const canAdd = can('AddEntry')
-  const canRename = can('RenameEntry')
-  const canWithdraw = can('WithdrawEntry')
-  const canExclude = can('ExcludeEntry')
-  const canManageEntries = canRename || canWithdraw || canExclude
   const canReplace = can('ReplaceRegulation')
   const canConfigure = can('ConfigureStructure')
 
@@ -143,13 +130,7 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
       />
 
       <div className="organisation__mid">
-        <ParticipantsSection
-          data={data}
-          canAdd={canAdd}
-          canManage={canManageEntries}
-          onAdd={() => setEditor('teams')}
-          onManage={() => setEditor('teams')}
-        />
+        <TeamsFactSection data={data} />
         <RegulationSection
           data={data}
           canReplace={canReplace}
@@ -163,16 +144,6 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
         onConfigure={() => setEditor('structure')}
       />
 
-      {editor === 'teams' && (
-        <TeamsEditorDialog
-          data={data}
-          canAdd={canAdd}
-          canRename={canRename}
-          canWithdraw={canWithdraw}
-          canExclude={canExclude}
-          onClose={closeEditor}
-        />
-      )}
       {editor === 'regulation' && (
         <RegulationEditorDialog data={data} onClose={closeEditor} />
       )}
@@ -505,9 +476,19 @@ function PreparationStrip({
         {blockers.map((code) => {
           const editor = editorForBlocker(code)
           const label = attentionSourceLabel(code)
+          const teamsHref =
+            code === 'InsufficientParticipants'
+              ? `/competitions/${data.competitionId}/teams`
+              : null
           return (
             <li key={code}>
-              {editor ? (
+              {teamsHref ? (
+                <Link className="organisation-strip__action" to={teamsHref}>
+                  <span aria-hidden="true">•</span>
+                  {label}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : editor ? (
                 <button
                   type="button"
                   className="organisation-strip__action"
@@ -534,30 +515,15 @@ function PreparationStrip({
 function editorForBlocker(
   code: string,
 ): Exclude<OrganisationEditor, null> | null {
-  if (code === 'InsufficientParticipants') {
-    return 'teams'
-  }
   if (code === 'MissingStage') {
     return 'structure'
   }
   return null
 }
 
-function ParticipantsSection({
-  data,
-  canAdd,
-  canManage,
-  onAdd,
-  onManage,
-}: {
-  data: OrganisationView
-  canAdd: boolean
-  canManage: boolean
-  onAdd: () => void
-  onManage: () => void
-}) {
+function TeamsFactSection({ data }: { data: OrganisationView }) {
   const { t } = useTranslation('organisation')
-  const entries = data.participants.entries
+  const teamsHref = `/competitions/${data.competitionId}/teams`
   const activeCount = data.participants.activeCount
   const belowMinimum = activeCount < data.regulation.minimumTeams
   const summaryHint = belowMinimum
@@ -572,480 +538,18 @@ function ParticipantsSection({
       <PanelHead id="participants-heading" icon={<TeamsIcon size="md" />}>
         {t('participants.heading')}
       </PanelHead>
-
-      {entries.length === 0 ? (
-        <EmptyState title={t('participants.emptyTitle')}>
-          {t('participants.emptyBody')}
-        </EmptyState>
-      ) : (
-        <>
-          <ul
-            className="organisation-crests"
-            aria-label={t('participants.crestsLabel')}
-          >
-            {entries.slice(0, 8).map((entry) => (
-              <li key={entry.entryId} title={entry.displayName}>
-                <TeamCrest
-                  name={entry.displayName}
-                  logoMediaId={entry.logoMediaId}
-                  primaryColor={entry.primaryColor}
-                  className="organisation-crest"
-                />
-              </li>
-            ))}
-            {entries.length > 8 && (
-              <li className="organisation-crest organisation-crest--more">
-                +{entries.length - 8}
-              </li>
-            )}
-          </ul>
-
-          <ul className="organisation-entries">
-            {entries.map((entry) => (
-              <li key={entry.entryId}>
-                <Link
-                  className="organisation-entry organisation-entry--read"
-                  to={`/competitions/${data.competitionId}/organisation/entries/${entry.entryId}`}
-                >
-                  <TeamCrest
-                    name={entry.displayName}
-                    logoMediaId={entry.logoMediaId}
-                    primaryColor={entry.primaryColor}
-                    className="organisation-crest"
-                  />
-                  <p className="organisation-entry__identity">
-                    <span className="organisation-entry__name">
-                      {entry.displayName}
-                    </span>
-                    {entry.status === 'Active' ? (
-                      <span
-                        className="organisation-entry__ok"
-                        aria-label={t('participants.statusOk')}
-                      >
-                        <CheckIcon size="sm" aria-hidden="true" />
-                      </span>
-                    ) : (
-                      <EntryStatusBadge status={entry.status} />
-                    )}
-                  </p>
-                  <span className="organisation-entry__chevron" aria-hidden="true">
-                    ›
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <p
-            className={`organisation-panel__summary${belowMinimum ? ' organisation-panel__summary--warn' : ''}`}
-          >
-            {summaryHint}
-          </p>
-        </>
-      )}
-
-      {(canAdd || canManage) && (
-        <div className="organisation-panel__footer organisation-panel__footer--spread">
-          {canAdd && (
-            <button
-              type="button"
-              className="organisation-action"
-              onClick={onAdd}
-            >
-              {t('participants.addAction')}
-            </button>
-          )}
-          {canManage && (
-            <button
-              type="button"
-              className="organisation-action"
-              onClick={onManage}
-            >
-              {t('participants.manageAction')}
-              <span aria-hidden="true">→</span>
-            </button>
-          )}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function TeamsEditorDialog({
-  data,
-  canAdd,
-  canRename,
-  canWithdraw,
-  canExclude,
-  onClose,
-}: {
-  data: OrganisationView
-  canAdd: boolean
-  canRename: boolean
-  canWithdraw: boolean
-  canExclude: boolean
-  onClose: () => void
-}) {
-  const { t } = useTranslation('organisation')
-  const queryClient = useQueryClient()
-  const [displayName, setDisplayName] = useState('')
-  const [shortName, setShortName] = useState('')
-  const [logoMediaId, setLogoMediaId] = useState<string | null>(null)
-  const [primaryColor, setPrimaryColor] = useState('')
-  const [secondaryColor, setSecondaryColor] = useState('')
-  const competitionId = data.competitionId
-
-  const invalidateOrganisation = () =>
-    invalidateAfterOrganisationMutation(queryClient, competitionId)
-
-  const addMutation = useMutation({
-    mutationFn: () =>
-      addCompetitionEntry(competitionId, {
-        displayName: displayName.trim(),
-        shortName: shortName.trim() || null,
-        logoMediaId,
-        primaryColor: primaryColor.trim() || null,
-        secondaryColor: secondaryColor.trim() || null,
-      }),
-    onSuccess: async () => {
-      setDisplayName('')
-      setShortName('')
-      setLogoMediaId(null)
-      setPrimaryColor('')
-      setSecondaryColor('')
-      await invalidateOrganisation()
-    },
-  })
-
-  return (
-    <OrganisationDialog title={t('participants.heading')} onClose={onClose}>
-      {data.participants.entries.length === 0 ? (
-        <EmptyState title={t('participants.emptyTitle')}>
-          {t('participants.emptyBody')}
-        </EmptyState>
-      ) : (
-        <ul className="organisation-entries">
-          {data.participants.entries.map((entry) => (
-            <li key={entry.entryId}>
-              <EntryEditorRow
-                competitionId={competitionId}
-                entry={entry}
-                canRename={canRename}
-                canWithdraw={canWithdraw}
-                canExclude={canExclude}
-                onChanged={invalidateOrganisation}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {canAdd && (
-        <form
-          className="form"
-          onSubmit={(event: FormEvent) => {
-            event.preventDefault()
-            if (displayName.trim().length === 0 || addMutation.isPending) {
-              return
-            }
-            addMutation.mutate()
-          }}
-        >
-          <label className="field">
-            {t('participants.newEntryName')}
-            <input
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              disabled={addMutation.isPending}
-              placeholder={t('participants.newEntryPlaceholder')}
-              required
-            />
-          </label>
-          <label className="field">
-            {t('participants.shortName')}
-            <input
-              value={shortName}
-              onChange={(event) => setShortName(event.target.value)}
-              disabled={addMutation.isPending}
-              maxLength={20}
-            />
-          </label>
-          <LogoMediaField
-            name={displayName.trim() || t('participants.newEntryPlaceholder')}
-            value={logoMediaId}
-            onChange={setLogoMediaId}
-            disabled={addMutation.isPending}
-            label={t('participants.logo')}
-          />
-          <div className="form form--inline">
-            <label className="field">
-              {t('participants.primaryColor')}
-              <input
-                value={primaryColor}
-                onChange={(event) => setPrimaryColor(event.target.value)}
-                disabled={addMutation.isPending}
-                placeholder="#RRGGBB"
-              />
-            </label>
-            <label className="field">
-              {t('participants.secondaryColor')}
-              <input
-                value={secondaryColor}
-                onChange={(event) => setSecondaryColor(event.target.value)}
-                disabled={addMutation.isPending}
-                placeholder="#RRGGBB"
-              />
-            </label>
-          </div>
-          <button
-            type="submit"
-            className="ds-btn ds-btn--primary"
-            disabled={addMutation.isPending || displayName.trim().length === 0}
-          >
-            {addMutation.isPending ? (
-              <PendingLabel>{t('participants.adding')}</PendingLabel>
-            ) : (
-              t('participants.add')
-            )}
-          </button>
-          {addMutation.isError && <MutationError error={addMutation.error} />}
-        </form>
-      )}
-    </OrganisationDialog>
-  )
-}
-
-function EntryEditorRow({
-  competitionId,
-  entry,
-  canRename,
-  canWithdraw,
-  canExclude,
-  onChanged,
-}: {
-  competitionId: string
-  entry: OrganisationEntry
-  canRename: boolean
-  canWithdraw: boolean
-  canExclude: boolean
-  onChanged: () => Promise<void>
-}) {
-  const { t } = useTranslation('organisation')
-  const [name, setName] = useState(entry.displayName)
-  const [shortName, setShortName] = useState(entry.shortName ?? '')
-  const [logoMediaId, setLogoMediaId] = useState<string | null>(entry.logoMediaId ?? null)
-  const [primaryColor, setPrimaryColor] = useState(entry.primaryColor ?? '')
-  const [secondaryColor, setSecondaryColor] = useState(
-    entry.secondaryColor ?? '',
-  )
-  const busyLabel = t('working')
-
-  const renameMutation = useMutation({
-    mutationFn: () =>
-      renameCompetitionEntry(competitionId, entry.entryId, {
-        displayName: name.trim(),
-      }),
-    onSuccess: onChanged,
-  })
-
-  const presentationMutation = useMutation({
-    mutationFn: () =>
-      updateEntryPresentation(competitionId, entry.entryId, {
-        shortName: shortName.trim() || null,
-        logoMediaId,
-        primaryColor: primaryColor.trim() || null,
-        secondaryColor: secondaryColor.trim() || null,
-      }),
-    onSuccess: onChanged,
-  })
-
-  const withdrawMutation = useMutation({
-    mutationFn: () => withdrawCompetitionEntry(competitionId, entry.entryId),
-    onSuccess: onChanged,
-  })
-
-  const excludeMutation = useMutation({
-    mutationFn: () => excludeCompetitionEntry(competitionId, entry.entryId),
-    onSuccess: onChanged,
-  })
-
-  const pending =
-    renameMutation.isPending ||
-    presentationMutation.isPending ||
-    withdrawMutation.isPending ||
-    excludeMutation.isPending
-
-  const mutationError =
-    renameMutation.error ??
-    presentationMutation.error ??
-    withdrawMutation.error ??
-    excludeMutation.error
-
-  return (
-    <div className="organisation-entry">
-      <p className="organisation-entry__identity">
-        <TeamCrest
-          name={entry.displayName}
-          logoMediaId={entry.logoMediaId}
-          primaryColor={entry.primaryColor}
-          className="organisation-crest"
-        />
-        <span className="organisation-entry__name">{entry.displayName}</span>
-        <EntryStatusBadge status={entry.status} />
+      <p
+        className={`organisation-panel__summary${belowMinimum ? ' organisation-panel__summary--warn' : ''}`}
+      >
+        {summaryHint}
       </p>
-      {(canRename || canWithdraw || canExclude) && (
-        <div className="organisation-entry__actions">
-          {canRename && (
-            <>
-            <form
-              className="form form--inline"
-              onSubmit={(event: FormEvent) => {
-                event.preventDefault()
-                if (name.trim().length === 0 || pending) {
-                  return
-                }
-                renameMutation.mutate()
-              }}
-            >
-              <label className="field">
-                {t('participants.rename')}
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  disabled={pending}
-                  required
-                />
-              </label>
-              <button
-                type="submit"
-                className="ds-btn ds-btn--ghost"
-                disabled={pending || name.trim().length === 0}
-              >
-                {renameMutation.isPending ? (
-                  <PendingLabel>{busyLabel}</PendingLabel>
-                ) : (
-                  t('participants.rename')
-                )}
-              </button>
-            </form>
-            <form
-              className="form"
-              onSubmit={(event: FormEvent) => {
-                event.preventDefault()
-                if (pending) {
-                  return
-                }
-                presentationMutation.mutate()
-              }}
-            >
-              <label className="field">
-                {t('participants.shortName')}
-                <input
-                  value={shortName}
-                  onChange={(event) => setShortName(event.target.value)}
-                  disabled={pending}
-                  maxLength={20}
-                />
-              </label>
-              <LogoMediaField
-                name={entry.displayName}
-                value={logoMediaId}
-                onChange={setLogoMediaId}
-                disabled={pending}
-                label={t('participants.logo')}
-              />
-              <div className="form form--inline">
-                <label className="field">
-                  {t('participants.primaryColor')}
-                  <input
-                    value={primaryColor}
-                    onChange={(event) => setPrimaryColor(event.target.value)}
-                    disabled={pending}
-                    placeholder="#RRGGBB"
-                  />
-                </label>
-                <label className="field">
-                  {t('participants.secondaryColor')}
-                  <input
-                    value={secondaryColor}
-                    onChange={(event) => setSecondaryColor(event.target.value)}
-                    disabled={pending}
-                    placeholder="#RRGGBB"
-                  />
-                </label>
-              </div>
-              <button
-                type="submit"
-                className="ds-btn ds-btn--ghost"
-                disabled={pending}
-              >
-                {presentationMutation.isPending ? (
-                  <PendingLabel>{busyLabel}</PendingLabel>
-                ) : (
-                  t('participants.savePresentation')
-                )}
-              </button>
-            </form>
-            </>
-          )}
-          {canWithdraw && (
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost"
-              disabled={pending}
-              onClick={() => {
-                if (
-                  !window.confirm(
-                    t('participants.confirmWithdraw', {
-                      name: entry.displayName,
-                    }),
-                  )
-                ) {
-                  return
-                }
-                withdrawMutation.mutate()
-              }}
-            >
-              {withdrawMutation.isPending ? (
-                <PendingLabel>{busyLabel}</PendingLabel>
-              ) : (
-                t('participants.withdraw')
-              )}
-            </button>
-          )}
-          {canExclude && (
-            <button
-              type="button"
-              className="ds-btn ds-btn--destructive"
-              disabled={pending}
-              onClick={() => {
-                if (
-                  !window.confirm(
-                    t('participants.confirmExclude', {
-                      name: entry.displayName,
-                    }),
-                  )
-                ) {
-                  return
-                }
-                excludeMutation.mutate()
-              }}
-            >
-              {excludeMutation.isPending ? (
-                <PendingLabel>{busyLabel}</PendingLabel>
-              ) : (
-                t('participants.exclude')
-              )}
-            </button>
-          )}
-        </div>
-      )}
-      {mutationError && (
-        <div className="organisation-entry__error">
-          <MutationError error={mutationError} />
-        </div>
-      )}
-    </div>
+      <p className="organisation-panel__footer">
+        <Link className="organisation-link" to={teamsHref}>
+          {t('participants.openTeams')}
+          <span aria-hidden="true">→</span>
+        </Link>
+      </p>
+    </section>
   )
 }
 

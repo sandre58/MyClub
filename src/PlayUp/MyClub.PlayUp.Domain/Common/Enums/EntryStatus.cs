@@ -29,10 +29,5 @@ public enum EntryStatus
     /// <summary>
     /// Entry has withdrawn from the competition.
     /// </summary>
-    Withdrawn = 3,
-
-    /// <summary>
-    /// Entry has been excluded by the organizer.
-    /// </summary>
-    Excluded = 4
+    Withdrawn = 3
 }

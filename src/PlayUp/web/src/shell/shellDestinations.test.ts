@@ -12,6 +12,7 @@ describe('shellDestinationHrefs', () => {
       organisation: '/',
       matches: '/',
       classements: '/',
+      teams: '/',
     })
   })
 
@@ -21,6 +22,7 @@ describe('shellDestinationHrefs', () => {
       organisation: `/competitions/${competitionId}/organisation`,
       matches: `/competitions/${competitionId}/matches`,
       classements: `/competitions/${competitionId}/classements`,
+      teams: `/competitions/${competitionId}/teams`,
     })
   })
 
@@ -30,6 +32,7 @@ describe('shellDestinationHrefs', () => {
       organisation: '/',
       matches: `/stages/${stageId}/matches`,
       classements: '/',
+      teams: '/',
     })
   })
 
@@ -39,6 +42,7 @@ describe('shellDestinationHrefs', () => {
       organisation: '/',
       matches: `/matches/${matchId}`,
       classements: '/',
+      teams: '/',
     })
   })
 })
@@ -58,11 +62,17 @@ describe('resolveActiveDestination', () => {
         `/competitions/${competitionId}/organisation`,
       ),
     ).toBe('organisation')
+  })
+
+  it('maps teams routes to Équipes', () => {
+    expect(
+      resolveActiveDestination(`/competitions/${competitionId}/teams`),
+    ).toBe('teams')
     expect(
       resolveActiveDestination(
-        `/competitions/${competitionId}/organisation/entries/${competitionId}`,
+        `/competitions/${competitionId}/teams/${competitionId}`,
       ),
-    ).toBe('organisation')
+    ).toBe('teams')
   })
 
   it('maps match hub and stage routes to Matchs', () => {

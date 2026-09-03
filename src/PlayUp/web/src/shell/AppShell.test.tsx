@@ -64,6 +64,14 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             element={<p>Workspace page</p>}
           />
           <Route
+            path="/competitions/:competitionId/teams/:entryId"
+            element={<p>Teams drawer page</p>}
+          />
+          <Route
+            path="/competitions/:competitionId/teams"
+            element={<p>Teams page</p>}
+          />
+          <Route
             path="/competitions/:competitionId/organisation/entries/:entryId"
             element={<p>Roster page</p>}
           />
@@ -129,9 +137,7 @@ describe('AppShell', () => {
     expect(screen.getByText('Pilotage')).toBeInTheDocument()
     expect(screen.getByText('Compétition')).toBeInTheDocument()
     expect(screen.getByText('Référentiel')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Équipes — bientôt disponible' }),
-    ).toBeDisabled()
+    expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
     ).toBeDisabled()
@@ -158,13 +164,14 @@ describe('AppShell', () => {
     )
   })
 
-  it('renders the four live sidebar destinations', () => {
+  it('renders the live sidebar destinations', () => {
     renderWithShell('/')
 
     expect(screen.getByRole('link', { name: "Vue d'ensemble" })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Structure' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument()
   })
 
   it('keeps sidebar nav links outside content-link scope', () => {
@@ -200,16 +207,16 @@ describe('AppShell', () => {
     )
   })
 
-  it('marks Organisation active for nested roster routes', () => {
+  it('marks Équipes active for nested roster routes', () => {
     renderWithShell(
-      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/organisation/entries/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/teams/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     )
 
-    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Équipes' })).toHaveAttribute(
       'aria-current',
       'page',
     )
-    expect(screen.getByText('Roster page')).toBeInTheDocument()
+    expect(screen.getByText('Teams drawer page')).toBeInTheDocument()
   })
 
   it('maps stage deep links to Matchs', () => {
@@ -342,9 +349,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Structure' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Équipes — bientôt disponible' }),
-    ).toBeDisabled()
+    expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
     ).toBeDisabled()

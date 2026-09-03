@@ -279,11 +279,11 @@ public static class OrganisationViewAssembler
         competition.Status switch
         {
             CompetitionStatus.Completed or CompetitionStatus.Archived => [],
-            CompetitionStatus.Running or CompetitionStatus.Suspended => ["WithdrawEntry"],
+            CompetitionStatus.Running or CompetitionStatus.Suspended => ["WithdrawEntry", "RenameEntry"],
             _ =>
             [
-                ActionAddEntry, ActionConfigureStructure, ActionReplaceRegulation, "RenameEntry", "WithdrawEntry",
-                "ExcludeEntry"
+                ActionAddEntry, ActionConfigureStructure, ActionReplaceRegulation, "RenameEntry",
+                "DeleteEntry"
             ]
         };
 

@@ -859,7 +859,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
   })
 
-  it('navigates to organisation from a dimension panel', async () => {
+  it('navigates to Équipes from the teams dimension panel', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(overviewView())
 
@@ -869,7 +869,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
       await screen.findByRole('link', { name: /Voir les équipes/i }),
     )
 
-    expect(screen.getByText('Organisation route')).toBeInTheDocument()
+    expect(screen.getByText('Teams route')).toBeInTheDocument()
   })
 
   it('shows an error when the overview read fails', async () => {

@@ -43,7 +43,7 @@ export function actionPresentationSlot(code: string): ConstructionSlot | 'operat
     case 'AddEntry':
     case 'RenameEntry':
     case 'WithdrawEntry':
-    case 'ExcludeEntry':
+    case 'DeleteEntry':
       return 'teams'
     case 'ConfigureStructure':
       return 'structure'
@@ -116,14 +116,14 @@ export function sortConstructionSlots(view: OverviewView): ConstructionSlot[] {
     .map((entry) => entry.slot)
 }
 
-/** Primary overview actions for teams — admin mutations stay in Organisation. */
+/** Primary overview actions for teams — admin mutations stay on Équipes. */
 export function primaryTeamActions(actions: OverviewAction[]): OverviewAction[] {
   return actions.filter((action) => action.code === 'AddEntry')
 }
 
 /** Team admin codes: available in Read but not shown as Overview command buttons. */
 export function isTeamAdminAction(code: string): boolean {
-  return code === 'RenameEntry' || code === 'WithdrawEntry' || code === 'ExcludeEntry'
+  return code === 'RenameEntry' || code === 'WithdrawEntry' || code === 'DeleteEntry'
 }
 
 export function actionsForStage(

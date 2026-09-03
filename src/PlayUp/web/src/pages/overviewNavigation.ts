@@ -53,6 +53,10 @@ export function situationHref(
   situation: OverviewSituation,
   competitionId: string,
 ): string | null {
+  if (situation.source === 'InsufficientParticipants') {
+    return `/competitions/${competitionId}/teams`
+  }
+
   return (
     overviewTargetHref({
       targetType: situation.targetType,

@@ -775,15 +775,61 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Excludes an entry and returns the updated organisation view.
+    /// Hard-deletes an entry and returns the updated organisation view.
     /// </summary>
-    public async Task<OrganisationViewDto> ExcludeEntryAsync(
+    public async Task<OrganisationViewDto> DeleteEntryAsync(
         CompetitionId competitionId,
         EntryId entryId,
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        ExcludeEntry.Execute(competition, entryId, clock);
+        var competitionMatches = await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
+        DeleteEntry.Execute(competition, entryId, competitionMatches, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Hard-deletes several entries atomically and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> DeleteEntriesAsync(
+        CompetitionId competitionId,
+        IReadOnlyList<EntryId> entryIds,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var competitionMatches = await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
+        DeleteEntries.Execute(competition, entryIds, competitionMatches, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Withdraws several entries atomically and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> WithdrawEntriesAsync(
+        CompetitionId competitionId,
+        IReadOnlyList<EntryId> entryIds,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        WithdrawEntries.Execute(competition, entryIds, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Removes several declared members atomically and returns the updated organisation view.
+    /// </summary>
+    public async Task<OrganisationViewDto> RemoveDeclaredMembersAsync(
+        CompetitionId competitionId,
+        EntryId entryId,
+        IReadOnlyList<MemberId> memberIds,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var competitionMatches = await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
+        RemoveDeclaredMembers.Execute(competition, entryId, memberIds, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }

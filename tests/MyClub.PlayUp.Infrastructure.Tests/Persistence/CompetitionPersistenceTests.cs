@@ -80,7 +80,7 @@ public sealed class CompetitionPersistenceTests
     }
 
     [Fact]
-    public async Task Exclude_start_withdraw_complete_preserves_statuses_after_reloadAsync()
+    public async Task Delete_start_withdraw_complete_preserves_statuses_after_reloadAsync()
     {
         var databaseName = Guid.NewGuid().ToString();
         var id = await SeedLifecycleAsync(databaseName);
@@ -91,10 +91,9 @@ public sealed class CompetitionPersistenceTests
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(CompetitionStatus.Completed);
         loaded.CompletionMode.Should().Be(CompletionMode.Administrative);
-        loaded.Entries.Should().HaveCount(3);
+        loaded.Entries.Should().HaveCount(2);
         loaded.Entries[0].Status.Should().Be(EntryStatus.Active);
         loaded.Entries[1].Status.Should().Be(EntryStatus.Withdrawn);
-        loaded.Entries[2].Status.Should().Be(EntryStatus.Excluded);
     }
 
     [Fact]
@@ -427,10 +426,10 @@ public sealed class CompetitionPersistenceTests
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.AddEntry(TeamId.New(), "Team B", _clock);
-        var excluded = competition.AddEntry(TeamId.New(), "Team C", _clock);
+        var removed = competition.AddEntry(TeamId.New(), "Team C", _clock);
         competition.AddStage(StageId.New(), _clock);
         competition.Prepare(_clock);
-        competition.ExcludeEntry(excluded.Id, _clock);
+        competition.DeleteEntry(removed.Id, _clock);
         competition.Start(_clock);
         competition.WithdrawEntry(competition.Entries[1].Id, _clock);
         competition.Complete(CompletionMode.Administrative, _clock);

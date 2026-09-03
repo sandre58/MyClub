@@ -117,33 +117,36 @@ public sealed class CompetitionEntriesTests
     }
 
     [Fact]
-    public void ExcludeEntry_is_rejected_while_Running()
+    public void DeleteEntry_is_rejected_while_Running()
     {
         // Arrange
         var competition = CreateRunning();
         var entry = competition.Entries[0];
 
         // Act
-        var act = () => competition.ExcludeEntry(entry.Id, _clock);
+        var act = () => competition.DeleteEntry(entry.Id, _clock);
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
     }
 
     [Fact]
-    public void ExcludeEntry_on_Draft_sets_Excluded()
+    public void DeleteEntry_on_Draft_removes_the_entry()
     {
         // Arrange
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
+        var entryId = entry.Id;
+        var teamId = entry.TeamId;
         competition.ClearDomainEvents();
 
         // Act
-        competition.ExcludeEntry(entry.Id, _clock);
+        competition.DeleteEntry(entryId, _clock);
 
         // Assert
-        entry.Status.Should().Be(EntryStatus.Excluded);
-        competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionEntryExcluded>();
+        competition.Entries.Should().BeEmpty();
+        competition.ContainsTeam(teamId).Should().BeFalse();
+        competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionEntryDeleted>();
     }
 
     [Fact]
@@ -160,30 +163,31 @@ public sealed class CompetitionEntriesTests
     }
 
     [Fact]
-    public void ExcludeEntry_on_Ready_keeps_Ready()
+    public void DeleteEntry_on_Ready_keeps_Ready()
     {
         // Arrange
         var competition = CreateReady();
         var entry = competition.Entries[0];
+        var entryId = entry.Id;
         competition.ClearDomainEvents();
 
         // Act
-        competition.ExcludeEntry(entry.Id, _clock);
+        competition.DeleteEntry(entryId, _clock);
 
         // Assert
         competition.Status.Should().Be(CompetitionStatus.Ready);
-        entry.Status.Should().Be(EntryStatus.Excluded);
-        competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionEntryExcluded>();
+        competition.Entries.Should().BeEmpty();
+        competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionEntryDeleted>();
     }
 
     [Fact]
-    public void AddEntry_allows_reentry_after_Exclude()
+    public void AddEntry_allows_reentry_after_Delete()
     {
         // Arrange
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var teamId = TeamId.New();
         var first = competition.AddEntry(teamId, "Team A", _clock);
-        competition.ExcludeEntry(first.Id, _clock);
+        competition.DeleteEntry(first.Id, _clock);
 
         // Act
         var second = competition.AddEntry(teamId, "Team A return", _clock);
@@ -222,17 +226,26 @@ public sealed class CompetitionEntriesTests
     }
 
     [Fact]
-    public void RenameEntry_after_Start_is_rejected()
+    public void RenameEntry_is_allowed_while_Running()
     {
-        // Arrange
         var competition = CreateRunning();
         var entry = competition.Entries[0];
 
-        // Act
-        var act = () => competition.RenameEntry(entry.Id, "X", _clock);
+        competition.RenameEntry(entry.Id, "X", _clock);
 
-        // Assert
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
+        entry.DisplayName.Should().Be("X");
+    }
+
+    [Fact]
+    public void RenameEntry_is_allowed_when_Completed()
+    {
+        var competition = CreateRunning();
+        var entry = competition.Entries[0];
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        competition.RenameEntry(entry.Id, "X", _clock);
+
+        entry.DisplayName.Should().Be("X");
     }
 
     [Fact]

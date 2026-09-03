@@ -41,7 +41,7 @@ public static class RemoveDeclaredMember
         competition.RemoveDeclaredMember(entryId, memberId, clock);
     }
 
-    private static void EnsureNotReferencedOnMatchSheets(
+    internal static void EnsureNotReferencedOnMatchSheets(
         EntryId entryId,
         MemberId memberId,
         IReadOnlyList<Match> competitionMatches)

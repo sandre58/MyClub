@@ -3,10 +3,8 @@ import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { ApiError } from './api'
 import { apiErrorLabel } from './i18n/apiErrorLabel'
-import {
-  Status,
-  statusToneFromLegacy,
-} from './design-system/components/Status'
+import { Status, statusToneFromLegacy } from './design-system/components/Status'
+import { WaitMark } from './design-system/components/WaitMark'
 import type {
   CompetitionStatus,
   DrawResolutionState,
@@ -204,7 +202,6 @@ const entryStatusTone: Record<EntryStatus, StatusTone> = {
   Qualified: 'info',
   Eliminated: 'done',
   Withdrawn: 'warn',
-  Excluded: 'danger',
 }
 
 const drawStatusTone: Record<DrawStatus, StatusTone> = {
@@ -219,16 +216,17 @@ const drawResolutionTone: Record<DrawResolutionState, StatusTone> = {
   NoSolution: 'danger',
 }
 
-export function LoadingState({ label }: { label?: string }) {
+export function LoadingState({
+  label,
+  size = 'page',
+}: {
+  label?: string
+  size?: 'page' | 'region'
+}) {
   const { t } = useTranslation('common')
   const text = label ?? t('loading')
 
-  return (
-    <p className="ds-loading" role="status" aria-live="polite">
-      <span className="ds-spinner" aria-hidden="true" />
-      {text}
-    </p>
-  )
+  return <WaitMark size={size}>{text}</WaitMark>
 }
 
 export function ErrorState({ error }: { error: unknown }) {

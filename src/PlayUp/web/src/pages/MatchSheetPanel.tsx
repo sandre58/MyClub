@@ -156,8 +156,8 @@ function SheetSideColumn({
   const { t } = useTranslation('matches')
   const { t: tc } = useTranslation('common')
   const rosterHref = entry
-    ? `/competitions/${match.competitionId}/organisation/entries/${entry.entryId}`
-    : `/competitions/${match.competitionId}/organisation`
+    ? `/competitions/${match.competitionId}/teams/${entry.entryId}`
+    : `/competitions/${match.competitionId}/teams`
 
   const onSheetIds = new Set(allParticipations.map((row) => row.memberId))
   const eligible = playersOf(entry).filter(

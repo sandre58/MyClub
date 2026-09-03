@@ -141,7 +141,9 @@ function MatchesView({
 
       <ContextBand data={data} matchCount={rows.length} />
 
-      {matchesPending ? <LoadingState label={t('loading')} /> : null}
+      {matchesPending ? (
+        <LoadingState label={t('loading')} size="region" />
+      ) : null}
       {matchesError ? <ErrorState error={matchesError} /> : null}
       {!matchesPending && !matchesError ? (
         <CalendarPanel

@@ -149,10 +149,10 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         var otherId = (await addOther.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options))!
             .Participants.Entries.Single(entry => entry.DisplayName == "Other").EntryId;
 
-        using var excludeResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/entries/{otherId}/exclude",
+        using var deleteResponse = await client.PostAsJsonAsync(
+            $"/competitions/{competitionId}/entries/{otherId}/delete",
             new { });
-        excludeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var withdrawResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/entries/{entryId}/withdraw",

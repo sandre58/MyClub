@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CompetitionEntryExcluded.cs" company="Stéphane ANDRE">
+// <copyright file="CompetitionEntryDeleted.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -9,18 +9,18 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Competitions.Events;
 
 /// <summary>
-/// Raised when an entry is excluded by the organizer.
+/// Raised when an entry is hard-deleted during construction.
 /// </summary>
-public sealed record CompetitionEntryExcluded : DomainEvent
+public sealed record CompetitionEntryDeleted : DomainEvent
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="CompetitionEntryExcluded"/> class.
+    /// Initializes a new instance of the <see cref="CompetitionEntryDeleted"/> class.
     /// </summary>
     /// <param name="competitionId">The competition identity.</param>
     /// <param name="entryId">The entry identity.</param>
     /// <param name="teamId">The team identity.</param>
     /// <param name="clock">The clock providing the occurrence timestamp.</param>
-    public CompetitionEntryExcluded(CompetitionId competitionId, EntryId entryId, TeamId teamId, IClock clock)
+    public CompetitionEntryDeleted(CompetitionId competitionId, EntryId entryId, TeamId teamId, IClock clock)
         : base(clock)
     {
         CompetitionId = competitionId;

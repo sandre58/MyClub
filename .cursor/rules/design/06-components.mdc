@@ -11,6 +11,7 @@ Search these before building anything new. Reference implementations live in
 
 | Component | Role | Reference |
 |---|---|---|
+| `WaitMark` | Page/region wait: mark + orbit + centered label | `design-system/components/WaitMark.tsx` |
 | `PlayUpLockupMark` | Accueil / chrome mark PNG | `design-system/PlayUpLockupMark.tsx` |
 | `PlayUpWordmark` | Accueil / chrome rasters (`home` / `chrome`) | `design-system/PlayUpWordmark.tsx` |
 | `TrendIcon` | Slanted up/down/flat arrows | `design-system/TrendIcon.tsx` |

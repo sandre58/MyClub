@@ -2,6 +2,8 @@ import type {
   AddDeclaredMemberRequest,
   AddDeclaredParticipationRequest,
   AddEntryRequest,
+  ChangeDeclaredMemberRoleRequest,
+  EntryIdsRequest,
   ApplyDrawRequest,
   OverviewView,
   CompetitionListItem,
@@ -292,14 +294,52 @@ export function renameDeclaredMember(
   )
 }
 
-/** POST .../entries/{entryId}/exclude → OrganisationView */
-export function excludeCompetitionEntry(
+/** POST .../entries/{entryId}/delete → OrganisationView */
+export function deleteCompetitionEntry(
   competitionId: string,
   entryId: string,
 ): Promise<OrganisationView> {
   return sendJson(
     'POST',
-    `/competitions/${competitionId}/entries/${entryId}/exclude`,
+    `/competitions/${competitionId}/entries/${entryId}/delete`,
+  )
+}
+
+/** POST .../entry-lots/delete → OrganisationView */
+export function deleteCompetitionEntries(
+  competitionId: string,
+  request: EntryIdsRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entry-lots/delete`,
+    request,
+  )
+}
+
+/** POST .../entry-lots/withdraw → OrganisationView */
+export function withdrawCompetitionEntries(
+  competitionId: string,
+  request: EntryIdsRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entry-lots/withdraw`,
+    request,
+  )
+}
+
+/** PUT .../declared-members/{memberId}/role → OrganisationView */
+export function changeDeclaredMemberRole(
+  competitionId: string,
+  entryId: string,
+  memberId: string,
+  request: ChangeDeclaredMemberRoleRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'PUT',
+    `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}/role`,
+    request,
   )
 }
 

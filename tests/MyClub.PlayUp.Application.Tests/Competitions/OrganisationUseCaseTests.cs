@@ -19,7 +19,7 @@ public sealed class OrganisationUseCaseTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 10, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void AddEntry_then_rename_withdraw_exclude_work()
+    public void AddEntry_then_rename_withdraw_delete_work()
     {
         var competition = CreateCompetition.Execute("Org Cup", _clock);
         var entry = AddEntry.Execute(competition, "Alpha", _clock);
@@ -29,8 +29,8 @@ public sealed class OrganisationUseCaseTests
         competition.GetEntry(entry.Id).DisplayName.Should().Be("Alpha FC");
 
         var other = AddEntry.Execute(competition, "Beta", _clock);
-        ExcludeEntry.Execute(competition, other.Id, _clock);
-        competition.GetEntry(other.Id).Status.Should().Be(EntryStatus.Excluded);
+        DeleteEntry.Execute(competition, other.Id, [], _clock);
+        competition.Entries.Should().ContainSingle(e => e.Id.Equals(entry.Id));
 
         WithdrawEntry.Execute(competition, entry.Id, _clock);
         competition.GetEntry(entry.Id).Status.Should().Be(EntryStatus.Withdrawn);

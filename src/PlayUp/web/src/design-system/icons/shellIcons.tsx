@@ -169,6 +169,15 @@ export function ChevronRightIcon({ size, ...props }: ShellIconProps) {
   )
 }
 
+/** Split / menu — chevron down. */
+export function ChevronDownIcon({ size, ...props }: ShellIconProps) {
+  return (
+    <Icon size={size} {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </Icon>
+  )
+}
+
 /** Situation mark — alert triangle (attention drawer rows). */
 export function AttentionMarkIcon({ size, ...props }: ShellIconProps) {
   return AttentionIcon({ size, ...props })

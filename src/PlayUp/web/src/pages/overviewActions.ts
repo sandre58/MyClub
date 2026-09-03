@@ -142,11 +142,16 @@ export function resolveOverviewActionIntent(
       }
 
     case 'AddEntry':
-    case 'ConfigureStructure':
-    case 'ReplaceRegulation':
     case 'RenameEntry':
     case 'WithdrawEntry':
-    case 'ExcludeEntry':
+    case 'DeleteEntry':
+      return {
+        kind: 'navigate',
+        to: `/competitions/${competitionId}/teams`,
+      }
+
+    case 'ConfigureStructure':
+    case 'ReplaceRegulation':
     case 'ContinueOrganisation':
       return {
         kind: 'navigate',

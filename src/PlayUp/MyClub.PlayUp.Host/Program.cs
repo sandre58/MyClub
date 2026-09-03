@@ -282,7 +282,7 @@ app.MapPost(
     });
 
 app.MapPost(
-    "/competitions/{competitionId:guid}/entries/{entryId:guid}/exclude",
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/delete",
     async (
         Guid competitionId,
         Guid entryId,
@@ -290,9 +290,43 @@ app.MapPost(
         CancellationToken cancellationToken) =>
     {
         var view = await executor
-            .ExcludeEntryAsync(
+            .DeleteEntryAsync(
                 new CompetitionId(competitionId),
                 new EntryId(entryId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entry-lots/delete",
+    async (
+        Guid competitionId,
+        EntryIdsRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .DeleteEntriesAsync(
+                new CompetitionId(competitionId),
+                [.. request.EntryIds.Select(id => new EntryId(id))],
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entry-lots/withdraw",
+    async (
+        Guid competitionId,
+        EntryIdsRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .WithdrawEntriesAsync(
+                new CompetitionId(competitionId),
+                [.. request.EntryIds.Select(id => new EntryId(id))],
                 cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(view);
@@ -332,6 +366,25 @@ app.MapDelete(
                 new CompetitionId(competitionId),
                 new EntryId(entryId),
                 new MemberId(memberId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(view);
+    });
+
+app.MapPost(
+    "/competitions/{competitionId:guid}/entries/{entryId:guid}/declared-member-lots/remove",
+    async (
+        Guid competitionId,
+        Guid entryId,
+        MemberIdsRequest request,
+        UseCaseExecutor executor,
+        CancellationToken cancellationToken) =>
+    {
+        var view = await executor
+            .RemoveDeclaredMembersAsync(
+                new CompetitionId(competitionId),
+                new EntryId(entryId),
+                [.. request.MemberIds.Select(id => new MemberId(id))],
                 cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(view);

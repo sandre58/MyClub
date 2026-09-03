@@ -272,7 +272,6 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     public void RenameEntry(EntryId entryId, string displayName, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
 
         var entry = GetEntry(entryId);
         entry.Rename(displayName);
@@ -289,7 +288,6 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     {
         ArgumentNullException.ThrowIfNull(presentation);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
 
         var entry = GetEntry(entryId);
         entry.UpdatePresentation(presentation);
@@ -304,7 +302,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     public void WithdrawEntry(EntryId entryId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureCanWithdrawOrExclude(allowAfterStart: true);
+        EnsureCanWithdraw();
 
         var entry = GetEntry(entryId);
         entry.Withdraw();
@@ -312,18 +310,19 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     }
 
     /// <summary>
-    /// Excludes an entry (organizer decision). Allowed only before the competition starts.
+    /// Hard-deletes an entry from the competition. Construction only (Draft or Ready).
+    /// Does not rebuild structure; leftover slot/group refs are holes.
     /// </summary>
     /// <param name="entryId">The entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ExcludeEntry(EntryId entryId, IClock clock)
+    public void DeleteEntry(EntryId entryId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureCanWithdrawOrExclude(allowAfterStart: false);
+        EnsureDraftOrReady();
 
         var entry = GetEntry(entryId);
-        entry.Exclude();
-        Raise(new CompetitionEntryExcluded(Id, entry.Id, entry.TeamId, clock));
+        _entries.Remove(entry);
+        Raise(new CompetitionEntryDeleted(Id, entry.Id, entry.TeamId, clock));
     }
 
     /// <summary>
@@ -584,38 +583,13 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         }
     }
 
-    private void EnsureCanWithdrawOrExclude(bool allowAfterStart)
-    {
-        if (Status is CompetitionStatus.Draft or CompetitionStatus.Ready)
-        {
-            return;
-        }
-
-        if (allowAfterStart && Status is CompetitionStatus.Running or CompetitionStatus.Suspended)
-        {
-            return;
-        }
-
-        throw new DomainException(
-            $"Operation is not allowed when status is '{Status}'.",
-            CompetitionErrorCodes.InvalidTransition);
-    }
-
     /// <summary>
-    /// Declared-roster mutations: Competition Draft|Ready|Running|Suspended and EntryStatus Active
-    /// (not <see cref="CompetitionEntry.IsOccupying"/>).
+    /// Declared-roster mutations: entry must be Active. Allowed for every competition status,
+    /// including Completed and Archived. Removal of a member still referenced on a match sheet
+    /// is refused in Application (sporting history).
     /// </summary>
     private CompetitionEntry GetEntryForDeclaredRosterMutation(EntryId entryId)
     {
-        if (Status is not (
-            CompetitionStatus.Draft or CompetitionStatus.Ready
-            or CompetitionStatus.Running or CompetitionStatus.Suspended))
-        {
-            throw new DomainException(
-                $"Declared roster cannot be mutated when competition status is '{Status}'.",
-                CompetitionErrorCodes.InvalidTransition);
-        }
-
         var entry = GetEntry(entryId);
         if (entry.Status != EntryStatus.Active)
         {
@@ -625,6 +599,19 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         }
 
         return entry;
+    }
+
+    private void EnsureCanWithdraw()
+    {
+        if (Status is CompetitionStatus.Draft or CompetitionStatus.Ready
+            or CompetitionStatus.Running or CompetitionStatus.Suspended)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Operation is not allowed when status is '{Status}'.",
+            CompetitionErrorCodes.InvalidTransition);
     }
 
     private void EnsureStatus(CompetitionStatus expected, string message)

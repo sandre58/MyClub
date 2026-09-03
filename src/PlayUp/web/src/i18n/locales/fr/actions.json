@@ -4,7 +4,7 @@
   "ReplaceRegulation": "Modifier le règlement",
   "RenameEntry": "Renommer une équipe",
   "WithdrawEntry": "Retirer une équipe",
-  "ExcludeEntry": "Exclure une équipe",
+  "DeleteEntry": "Supprimer une équipe",
   "PrepareStage": "Préparer la phase « {{name}} »",
   "StartStage": "Démarrer la phase « {{name}} »",
   "PublishDraw": "Publier le tirage",

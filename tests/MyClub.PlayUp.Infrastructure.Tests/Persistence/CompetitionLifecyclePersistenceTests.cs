@@ -21,7 +21,7 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 11, 0, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task Exclude_start_withdraw_complete_preserves_statuses_after_reloadAsync()
+    public async Task Delete_start_withdraw_complete_preserves_statuses_after_reloadAsync()
     {
         CompetitionId id;
 
@@ -33,13 +33,13 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
             var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
             competition.AddEntry(TeamId.New(), "Team A", _clock);
             competition.AddEntry(TeamId.New(), "Team B", _clock);
-            var excluded = competition.AddEntry(TeamId.New(), "Team C", _clock);
+            var removed = competition.AddEntry(TeamId.New(), "Team C", _clock);
 
             var stage = StageSeed.CreateDraft(competition.Id, _clock, "Main");
             scope.ServiceProvider.GetRequiredService<IStageRepository>().Add(stage);
             competition.AddStage(stage.Id, _clock);
             competition.Prepare(_clock);
-            competition.ExcludeEntry(excluded.Id, _clock);
+            competition.DeleteEntry(removed.Id, _clock);
             competition.Start(_clock);
             competition.WithdrawEntry(competition.Entries[1].Id, _clock);
             competition.Complete(CompletionMode.Administrative, _clock);
@@ -57,10 +57,9 @@ public sealed class CompetitionLifecyclePersistenceTests(PostgresFixture fixture
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(CompetitionStatus.Completed);
             loaded.CompletionMode.Should().Be(CompletionMode.Administrative);
-            loaded.Entries.Should().HaveCount(3);
+            loaded.Entries.Should().HaveCount(2);
             loaded.Entries[0].Status.Should().Be(EntryStatus.Active);
             loaded.Entries[1].Status.Should().Be(EntryStatus.Withdrawn);
-            loaded.Entries[2].Status.Should().Be(EntryStatus.Excluded);
         }
     }
 

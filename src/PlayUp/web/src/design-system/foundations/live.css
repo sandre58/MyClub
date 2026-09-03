@@ -1,6 +1,6 @@
 /*
  * Live state — distinct from success (activity ≠ achievement).
- * Pulse is the single expressive animation allowed outside utility transitions.
+ * Pulse is one of two expressive animations (the other is WaitMark's ring).
  */
 
 .ds-live-dot {

@@ -134,3 +134,237 @@
   color: #fff;
   background: var(--crest, var(--color-text-secondary));
 }
+
+/* ------------------------------------------------------------------ */
+/* Wait states — Lab exploration only (not DS foundations)             */
+/* ------------------------------------------------------------------ */
+
+.dlab-wait-board {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+.dlab-wait-board__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 42rem;
+}
+
+.dlab-wait-board__intro h1 {
+  margin: 0;
+}
+
+.dlab-wait-board__intro p {
+  margin: 0;
+}
+
+.dlab-wait-board__grid {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) 1fr 1fr;
+  gap: var(--space-16) var(--space-24);
+  align-items: start;
+}
+
+.dlab-wait-board__col-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dlab-wait-board__col-head p {
+  margin: 0;
+}
+
+.dlab-wait-board__row-label {
+  margin: 0;
+  padding-top: var(--space-8);
+}
+
+.dlab-wait-board__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.dlab-wait-board__ghost {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+}
+
+.dlab-wait-region {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+}
+
+.dlab-wait {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin: 0;
+  color: var(--color-brand);
+  font-size: var(--text-label);
+}
+
+.dlab-wait--page {
+  padding: var(--space-24) 0;
+}
+
+.dlab-wait--region {
+  padding: var(--space-8) 0;
+}
+
+.dlab-wait__row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-wait__label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.dlab-wait--c:not(.dlab-wait--button) .dlab-wait__row {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ds-btn.dlab-wait--button {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-on-brand);
+}
+
+.ds-btn.dlab-wait--button:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+.ds-btn.dlab-wait--button .dlab-wait__label,
+.ds-btn.dlab-wait--button {
+  color: var(--color-on-brand);
+}
+
+.dlab-wait-spin {
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 3px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: dlab-wait-spin 0.65s linear infinite;
+  flex: none;
+}
+
+.dlab-wait--page .dlab-wait-spin:not(.dlab-wait-spin--ring) {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.dlab-wait--button .dlab-wait-spin {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-width: 2px;
+}
+
+.dlab-wait-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.75rem;
+  height: 3.75rem;
+}
+
+.dlab-wait--region .dlab-wait-orbit {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.dlab-wait-spin--ring {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-width: 2px;
+}
+
+.dlab-wait--region .dlab-wait-spin--ring {
+  inset: 0;
+}
+
+.dlab-wait-bar {
+  display: block;
+  width: 8rem;
+  height: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 28%, transparent);
+  transform: skewX(-12deg);
+  transform-origin: left center;
+}
+
+.dlab-wait--region .dlab-wait-bar {
+  width: 6rem;
+}
+
+.dlab-wait-bar__run {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: currentColor;
+  animation: dlab-wait-slide 0.85s ease-in-out infinite;
+}
+
+.dlab-wait__mark {
+  height: 2.5rem;
+}
+
+.dlab-wait--region .dlab-wait__mark {
+  height: 1.75rem;
+}
+
+@keyframes dlab-wait-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dlab-wait-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+@media (max-width: 48rem) {
+  .dlab-wait-board__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dlab-wait-board__grid > .dlab-wait-board__col-head:first-child {
+    display: none;
+  }
+
+  .dlab-wait-board__row-label {
+    padding-top: var(--space-16);
+  }
+
+  .dlab-wait-region {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlab-wait-spin,
+  .dlab-wait-bar__run {
+    animation: none;
+  }
+}

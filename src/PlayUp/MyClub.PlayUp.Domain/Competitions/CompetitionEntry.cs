@@ -89,12 +89,6 @@ public sealed class CompetitionEntry : Entity<EntryId>
         Status = EntryStatus.Withdrawn;
     }
 
-    internal void Exclude()
-    {
-        EnsureActive();
-        Status = EntryStatus.Excluded;
-    }
-
     internal DeclaredMember AddDeclaredMember(MemberId memberId, string displayName, DeclaredMemberRole role)
     {
         if (_declaredMembers.Exists(member => member.Id.Equals(memberId)))

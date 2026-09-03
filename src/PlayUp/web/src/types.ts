@@ -26,7 +26,6 @@ export type EntryStatus =
   | 'Qualified'
   | 'Eliminated'
   | 'Withdrawn'
-  | 'Excluded'
 
 export type StageStatus =
   | 'Draft'
@@ -113,6 +112,16 @@ export interface AddDeclaredMemberRequest {
 /** POST .../declared-members/{memberId}/rename */
 export interface RenameDeclaredMemberRequest {
   displayName: string
+}
+
+/** PUT .../declared-members/{memberId}/role */
+export interface ChangeDeclaredMemberRoleRequest {
+  role: DeclaredMemberRole
+}
+
+/** POST .../entry-lots/delete | withdraw */
+export interface EntryIdsRequest {
+  entryIds: string[]
 }
 
 /**

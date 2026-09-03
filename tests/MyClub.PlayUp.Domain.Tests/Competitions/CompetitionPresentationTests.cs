@@ -113,6 +113,41 @@ public sealed class CompetitionPresentationTests
     }
 
     [Fact]
+    public void UpdateEntryPresentation_is_allowed_while_Running()
+    {
+        var competition = CreateDraft();
+        var entry = competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        competition.UpdateEntryPresentation(
+            entry.Id,
+            new EntryPresentation(ShortName.Create("ALP")),
+            _clock);
+
+        entry.ShortName!.Value.Should().Be("ALP");
+    }
+
+    [Fact]
+    public void UpdateEntryPresentation_is_allowed_when_Completed()
+    {
+        var competition = CreateDraft();
+        var entry = competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Complete(CompletionMode.Normal, _clock);
+
+        competition.UpdateEntryPresentation(
+            entry.Id,
+            new EntryPresentation(ShortName.Create("ALP")),
+            _clock);
+
+        entry.ShortName!.Value.Should().Be("ALP");
+    }
+
+    [Fact]
     public void TeamColor_normalizes_uppercase() => TeamColor.Create("#aAbBcC")!.Value.Should().Be("#AABBCC");
 
     private Competition CreateDraft() =>

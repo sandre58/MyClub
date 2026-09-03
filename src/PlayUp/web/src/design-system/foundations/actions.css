@@ -32,6 +32,11 @@
     opacity: 0.48;
 }
 
+.ds-btn:disabled:has(.ds-spinner) {
+    opacity: 1;
+    cursor: wait;
+}
+
 .ds-btn--primary {
     background: var(--color-brand);
     border-color: var(--color-brand);
@@ -107,4 +112,26 @@
 .ds-icon-button svg {
     width: 1.125rem;
     height: 1.125rem;
+}
+
+/*
+ * Compact icon toolbar — chrome on tiles / dense rows.
+ * Hit target 1.75rem, glyph sm. Not a React widget: compose ds-btn.
+ */
+.ds-icon-toolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+}
+
+.ds-btn.ds-icon-button--compact {
+    width: 1.75rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    min-height: 1.75rem;
+}
+
+.ds-btn.ds-icon-button--compact svg {
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
 }

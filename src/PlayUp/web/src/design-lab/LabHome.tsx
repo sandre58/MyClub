@@ -5,13 +5,20 @@ import { ChevronRightIcon } from '../design-system/icons/shellIcons'
 import { PlusIcon } from '../design-system/icons/overviewIcons'
 import { declaredSchedule } from '../shell/competitionPeriod'
 import { labCompetitions } from './labData'
+import { LabWaitAtom, type LabWaitKind } from './LabWait'
 
 /**
  * Accueil hors Shell — hub ops avec l'atmosphère décidée le 2026-09-01 :
  * halos brand/info désaturés en haut, retour au canvas en bas.
  * Lockup Accueil (planche 2026-09-02) + lignes interactives hover A.
  */
-export function LabHome({ empty }: { empty: boolean }) {
+export function LabHome({
+  empty,
+  waiting,
+}: {
+  empty: boolean
+  waiting?: LabWaitKind
+}) {
   return (
     <div className="ds-home">
       <main className="ds-home__main">
@@ -23,7 +30,9 @@ export function LabHome({ empty }: { empty: boolean }) {
           }
         />
 
-        {empty ? (
+        {waiting ? (
+          <LabWaitAtom kind={waiting} scale="page" />
+        ) : empty ? (
           <div className="ds-empty">
             <button type="button" className="ds-btn ds-btn--primary">
               <PlusIcon size="sm" />

@@ -49,7 +49,7 @@ describe('resolveOverviewActionIntent', () => {
     )
     expect(intent).toEqual({
       kind: 'navigate',
-      to: `/competitions/${competitionId}/organisation`,
+      to: `/competitions/${competitionId}/teams`,
     })
   })
 
@@ -133,5 +133,24 @@ describe('situationHref', () => {
         competitionId,
       ),
     ).toBe(`/matches/${matchId}`)
+  })
+
+  it('maps InsufficientParticipants to Équipes', () => {
+    expect(
+      situationHref(
+        {
+          source: 'InsufficientParticipants',
+          nature: 'Blocking',
+          targetType: 'Organisation',
+          targetId: competitionId,
+          matchId: null,
+          actionable: true,
+          actionCode: 'AddEntry',
+          impactCode: 'BlocksConstruction',
+          params: {},
+        },
+        competitionId,
+      ),
+    ).toBe(`/competitions/${competitionId}/teams`)
   })
 })

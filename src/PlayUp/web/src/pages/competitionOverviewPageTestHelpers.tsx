@@ -33,6 +33,10 @@ export function renderOverviewPage() {
             element={<CompetitionOverviewPage />}
           />
           <Route
+            path="/competitions/:competitionId/teams"
+            element={<p>Teams route</p>}
+          />
+          <Route
             path="/competitions/:competitionId/organisation"
             element={<p>Organisation route</p>}
           />

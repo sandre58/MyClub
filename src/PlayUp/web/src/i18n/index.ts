@@ -17,6 +17,7 @@ import homeFr from './locales/fr/home.json'
 import matchesFr from './locales/fr/matches.json'
 import organisationFr from './locales/fr/organisation.json'
 import shellFr from './locales/fr/shell.json'
+import teamsFr from './locales/fr/teams.json'
 import stageFr from './locales/fr/stage.json'
 
 function syncDocumentLang(locale: string) {
@@ -41,6 +42,7 @@ void i18n.use(initReactI18next).init({
       matches: matchesFr,
       draw: drawFr,
       organisation: organisationFr,
+      teams: teamsFr,
       stage: stageFr,
       home: homeFr,
       competitions: competitionsFr,

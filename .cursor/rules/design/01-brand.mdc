@@ -41,7 +41,9 @@ treatment beyond the mark raster itself.
 
 ## Forbidden
 
-- Gradient on UI chrome/controls; mark as watermark; skewing tables/forms/panels.
+- Gradient on UI chrome/controls; mark as **decorative** watermark; skewing
+  tables/forms/panels. The wait atom (`WaitMark`) uses the mark as the loading
+  signature — that is not a watermark.
 - Brand blue as a status color.
 - Italic wordmark as live type in chrome (rail uses the Accueil raster, not
   a skewed Plex span).

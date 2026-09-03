@@ -90,25 +90,26 @@ public sealed class CompetitionDeclaredMembersTests
     }
 
     [Fact]
-    public void Case4_mutations_rejected_when_completed_or_archived()
+    public void Case4_mutations_allowed_when_completed_or_archived()
     {
         var competition = CreateRunning();
         var entry = competition.Entries[0];
         competition.Complete(CompletionMode.Normal, _clock);
 
-        var act = () => competition.AddDeclaredMember(entry.Id, "Late", DeclaredMemberRole.Player, _clock);
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
+        var member = competition.AddDeclaredMember(entry.Id, "Late", DeclaredMemberRole.Player, _clock);
+        member.DisplayName.Should().Be("Late");
 
         competition.Archive(_clock);
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
+        competition.RenameDeclaredMember(entry.Id, member.Id, "Jean Late", _clock);
+        member.DisplayName.Should().Be("Jean Late");
     }
 
     [Fact]
-    public void Case4_mutations_rejected_when_entry_excluded()
+    public void Case4_mutations_rejected_when_entry_withdrawn()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
-        competition.ExcludeEntry(entry.Id, _clock);
+        competition.WithdrawEntry(entry.Id, _clock);
 
         var act = () => competition.AddDeclaredMember(entry.Id, "Late", DeclaredMemberRole.Player, _clock);
         act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
