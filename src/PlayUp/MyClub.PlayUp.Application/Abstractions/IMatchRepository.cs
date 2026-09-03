@@ -71,6 +71,16 @@ public interface IMatchRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Projects attention slices for multiple stages in one query (no sheet collections).
+    /// </summary>
+    /// <param name="stageIds">Stage identities.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Slices grouped by stage (empty stages omitted).</returns>
+    Task<IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>>> ListAttentionSlicesByStageIdsReadOnlyAsync(
+        IReadOnlyList<StageId> stageIds,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new match to the current unit of work.
     /// </summary>
     /// <param name="match">The match to add.</param>

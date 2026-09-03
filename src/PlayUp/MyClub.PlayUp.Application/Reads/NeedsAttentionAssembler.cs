@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
@@ -52,12 +53,25 @@ public static class NeedsAttentionAssembler
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Competition stages (canonical).</param>
-    /// <param name="matchesByStage">Matches keyed by stage id.</param>
+    /// <param name="matchesByStage">Full matches keyed by stage (Overview path).</param>
     /// <returns>Needs Attention DTO.</returns>
     public static NeedsAttentionDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage) =>
+        Assemble(competition, stages, MatchAttentionSlice.FromMatchesByStage(matchesByStage));
+
+    /// <summary>
+    /// Builds Needs Attention from projected match slices.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages (canonical).</param>
+    /// <param name="matchesByStage">Attention slices keyed by stage id.</param>
+    /// <returns>Needs Attention DTO.</returns>
+    public static NeedsAttentionDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -89,7 +103,7 @@ public static class NeedsAttentionAssembler
     private static void CollectQualificationAttentions(
         Stage source,
         IReadOnlyList<Stage> stages,
-        IReadOnlyList<Match> matches,
+        IReadOnlyList<MatchAttentionSlice> matches,
         List<NeedsAttentionItemDto> items)
     {
         var paths = source.Regulation.QualificationRules?.Paths;
@@ -171,7 +185,7 @@ public static class NeedsAttentionAssembler
     private static void CollectProgressionAttentions(
         Stage source,
         IReadOnlyList<Stage> stages,
-        IReadOnlyList<Match> matches,
+        IReadOnlyList<MatchAttentionSlice> matches,
         List<NeedsAttentionItemDto> items)
     {
         var paths = source.Regulation.ProgressionRules?.Paths;
@@ -262,7 +276,7 @@ public static class NeedsAttentionAssembler
         }
     }
 
-    private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<Match> matches)
+    private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<MatchAttentionSlice> matches)
     {
         if (fixture.Attachments.Count == 0)
         {
@@ -283,7 +297,7 @@ public static class NeedsAttentionAssembler
         return true;
     }
 
-    private static Standing BuildOverall(Stage source, IReadOnlyList<Match> matches)
+    private static Standing BuildOverall(Stage source, IReadOnlyList<MatchAttentionSlice> matches)
     {
         var participants = matches
             .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
@@ -298,7 +312,7 @@ public static class NeedsAttentionAssembler
             CalculateStanding.ToStandingPenalties(source.Penalties));
     }
 
-    private static Dictionary<GroupId, Standing> BuildGroups(Stage source, IReadOnlyList<Match> matches)
+    private static Dictionary<GroupId, Standing> BuildGroups(Stage source, IReadOnlyList<MatchAttentionSlice> matches)
     {
         var result = new Dictionary<GroupId, Standing>();
         foreach (var group in source.Groups)
@@ -319,13 +333,13 @@ public static class NeedsAttentionAssembler
         QualificationPath path,
         Standing? overallStanding,
         Dictionary<GroupId, Standing> groupStandings,
-        IReadOnlyList<Match> matches)
+        IReadOnlyList<MatchAttentionSlice> matches)
     {
         if (path.Source.Scope == RankingScope.AcrossGroups)
         {
             var position = path.Source.AcrossGroupsPosition
                 ?? throw new InvalidOperationException("AcrossGroups position missing.");
-            return CrossGroupStandingAssembler.Build(
+            return CrossGroupStandingAssembler.BuildFromAttentionSlices(
                 sourceStage.Groups,
                 groupStandings,
                 position,

@@ -28,9 +28,16 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         LoadByIdAsync(id, profile, trackChanges: false, cancellationToken);
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
+    public Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
         IReadOnlyList<StageId> ids,
         StageLoadProfile profile,
+        CancellationToken cancellationToken = default) =>
+        GetByIdsReadOnlyAsync(ids, StageReadCapabilities.FromProfile(profile), cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
+        IReadOnlyList<StageId> ids,
+        StageReadCapabilities capabilities,
         CancellationToken cancellationToken = default)
     {
         if (ids.Count == 0)
@@ -38,11 +45,11 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             return [];
         }
 
-        var query = ApplyProfile(context.Set<Stage>().AsNoTracking().AsSplitQuery(), profile)
+        var query = ApplyReadShape(context.Set<Stage>().AsNoTracking().AsSplitQuery(), capabilities)
             .Where(candidate => ids.Contains(candidate.Id));
 
         var loaded = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (profile >= StageLoadProfile.Structure)
+        if (RequiresStructureHydration(capabilities))
         {
             foreach (var stage in loaded)
             {
@@ -125,7 +132,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             root = root.AsNoTracking();
         }
 
-        var query = ApplyProfile(root.AsSplitQuery(), profile);
+        var query = ApplyReadShape(root.AsSplitQuery(), StageReadCapabilities.FromProfile(profile));
         var stage = await query
             .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
             .ConfigureAwait(false);
@@ -135,12 +142,42 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             return null;
         }
 
-        if (profile >= StageLoadProfile.Structure)
+        if (RequiresStructureHydration(StageReadCapabilities.FromProfile(profile)))
         {
             await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
         }
 
         return stage;
+    }
+
+    private static bool RequiresStructureHydration(StageReadCapabilities capabilities) =>
+        capabilities.Profile >= StageLoadProfile.Structure;
+
+    private static IQueryable<Stage> ApplyReadShape(IQueryable<Stage> query, StageReadCapabilities capabilities)
+    {
+        if (capabilities.Profile == StageLoadProfile.Full)
+        {
+            return ApplyProfile(query, StageLoadProfile.Full);
+        }
+
+        query = ApplyProfile(query, capabilities.Profile);
+
+        if (capabilities.IncludeDraws)
+        {
+            query = query.Include(candidate => candidate.Draws);
+        }
+
+        if (capabilities.IncludeSlots)
+        {
+            query = query.Include(candidate => candidate.Slots);
+        }
+
+        if (capabilities.IncludePenalties)
+        {
+            query = query.Include(candidate => candidate.Penalties);
+        }
+
+        return query;
     }
 
     private static IQueryable<Stage> ApplyProfile(IQueryable<Stage> query, StageLoadProfile profile) =>

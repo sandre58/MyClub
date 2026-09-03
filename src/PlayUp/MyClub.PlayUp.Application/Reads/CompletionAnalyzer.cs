@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -35,12 +36,25 @@ public static class CompletionAnalyzer
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Competition stages.</param>
-    /// <param name="matchesByStage">Matches keyed by stage.</param>
+    /// <param name="matchesByStage">Full matches keyed by stage (command / Overview paths).</param>
     /// <returns>Derived completion analysis.</returns>
     public static CompletionAnalysis Analyze(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage) =>
+        Analyze(competition, stages, MatchAttentionSlice.FromMatchesByStage(matchesByStage));
+
+    /// <summary>
+    /// Analyzes sporting completeness from projected match slices (status-only for unresolved matches).
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages.</param>
+    /// <param name="matchesByStage">Attention slices keyed by stage.</param>
+    /// <returns>Derived completion analysis.</returns>
+    public static CompletionAnalysis Analyze(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -73,7 +87,7 @@ public static class CompletionAnalyzer
     }
 
     private static void CollectUnresolvedMatchReasons(
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage,
         List<CompletionReasonDto> reasons)
     {
         var scheduled = 0;

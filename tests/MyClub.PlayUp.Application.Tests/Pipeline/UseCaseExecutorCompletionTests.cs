@@ -134,6 +134,12 @@ public sealed class UseCaseExecutorCompletionTests
             stages
                 .Setup(repository => repository.GetByIdsReadOnlyAsync(
                     It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
+                    It.IsAny<StageReadCapabilities>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([stage]);
+            stages
+                .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                    It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
                     StageLoadProfile.Full,
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync([stage]);
@@ -154,6 +160,14 @@ public sealed class UseCaseExecutorCompletionTests
             matchRepo
                 .Setup(repository => repository.ListByStageForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(matches);
+            matchRepo
+                .Setup(repository => repository.ListAttentionSlicesByStageIdsReadOnlyAsync(
+                    It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<MatchAttentionSlice>>
+                {
+                    [stage.Id] = [.. matches.Select(MatchAttentionSlice.FromMatch)],
+                });
             matchRepo
                 .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
                     It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),

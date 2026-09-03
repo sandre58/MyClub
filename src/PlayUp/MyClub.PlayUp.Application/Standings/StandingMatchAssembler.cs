@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Standings;
@@ -21,6 +22,31 @@ public static class StandingMatchAssembler
     /// <param name="matches">Already-loaded matches.</param>
     /// <returns>Standing match snapshots.</returns>
     public static IReadOnlyList<StandingMatch> Assemble(IEnumerable<Match> matches)
+    {
+        ArgumentNullException.ThrowIfNull(matches);
+
+        var result = new List<StandingMatch>();
+        foreach (var match in matches)
+        {
+            if (match.Status != MatchStatus.Finished || match.Result is null)
+            {
+                continue;
+            }
+
+            result.Add(new StandingMatch(
+                match.HomeEntryId,
+                match.AwayEntryId,
+                match.Result.Score.HomeGoals,
+                match.Result.Score.AwayGoals));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Converts finished attention slices to standing snapshots; skips non-finished slices.
+    /// </summary>
+    public static IReadOnlyList<StandingMatch> Assemble(IEnumerable<MatchAttentionSlice> matches)
     {
         ArgumentNullException.ThrowIfNull(matches);
 

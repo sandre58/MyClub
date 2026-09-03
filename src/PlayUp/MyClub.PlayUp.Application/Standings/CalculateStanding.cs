@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
@@ -33,6 +34,24 @@ public static class CalculateStanding
     public static Standing Execute(
         IReadOnlyList<EntryId> participants,
         IEnumerable<Match> matches,
+        StandingRules rules,
+        MatchFilter filter = MatchFilter.All,
+        IReadOnlyList<StandingPenalty>? penalties = null)
+    {
+        ArgumentNullException.ThrowIfNull(participants);
+        ArgumentNullException.ThrowIfNull(matches);
+        ArgumentNullException.ThrowIfNull(rules);
+
+        var snapshots = StandingMatchAssembler.Assemble(matches);
+        return StandingCalculator.Calculate(participants, snapshots, rules, filter, penalties);
+    }
+
+    /// <summary>
+    /// Calculates a standing from attention slices (finished matches only).
+    /// </summary>
+    public static Standing Execute(
+        IReadOnlyList<EntryId> participants,
+        IEnumerable<MatchAttentionSlice> matches,
         StandingRules rules,
         MatchFilter filter = MatchFilter.All,
         IReadOnlyList<StandingPenalty>? penalties = null)

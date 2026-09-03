@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
@@ -43,6 +44,63 @@ public static class CrossGroupStandingAssembler
         IReadOnlyDictionary<GroupId, Standing> groupStandings,
         int position,
         IReadOnlyList<Match> matches,
+        StandingRules standingRules,
+        IReadOnlyList<StandingPenalty>? penalties = null)
+    {
+        ArgumentNullException.ThrowIfNull(groups);
+        ArgumentNullException.ThrowIfNull(groupStandings);
+        ArgumentNullException.ThrowIfNull(matches);
+        ArgumentNullException.ThrowIfNull(standingRules);
+
+        if (position < 1)
+        {
+            throw new ApplicationFailureException(
+                "Across-groups position must be at least 1.",
+                ApplicationErrorCodes.QualificationCandidatesEmpty);
+        }
+
+        var candidates = new List<EntryId>(groups.Count);
+        var seen = new HashSet<EntryId>();
+
+        foreach (var group in groups)
+        {
+            if (!groupStandings.TryGetValue(group.Id, out var standing))
+            {
+                throw new ApplicationFailureException(
+                    $"No standing was provided for qualification group '{group.Id}'.",
+                    ApplicationErrorCodes.QualificationStandingMissing);
+            }
+
+            if (standing.EntryAt(position) is not { } candidate)
+            {
+                continue;
+            }
+
+            if (!seen.Add(candidate))
+            {
+                throw new ApplicationFailureException(
+                    $"Across-groups candidate '{candidate}' appears more than once.",
+                    ApplicationErrorCodes.QualificationCandidateDuplicate);
+            }
+
+            candidates.Add(candidate);
+        }
+
+        return candidates.Count == 0
+            ? throw new ApplicationFailureException(
+                "Across-groups qualification has no candidates.",
+                ApplicationErrorCodes.QualificationCandidatesEmpty)
+            : CalculateStanding.Execute(candidates, matches, standingRules, penalties: penalties);
+    }
+
+    /// <summary>
+    /// Extracts position <paramref name="position"/> using attention match slices.
+    /// </summary>
+    public static Standing BuildFromAttentionSlices(
+        IReadOnlyList<Group> groups,
+        IReadOnlyDictionary<GroupId, Standing> groupStandings,
+        int position,
+        IReadOnlyList<MatchAttentionSlice> matches,
         StandingRules standingRules,
         IReadOnlyList<StandingPenalty>? penalties = null)
     {

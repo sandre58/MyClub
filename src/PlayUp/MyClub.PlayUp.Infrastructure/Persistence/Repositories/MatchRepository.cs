@@ -80,6 +80,36 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>>> ListAttentionSlicesByStageIdsReadOnlyAsync(
+        IReadOnlyList<StageId> stageIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (stageIds.Count == 0)
+        {
+            return new Dictionary<StageId, IReadOnlyList<MatchAttentionSlice>>();
+        }
+
+        var rows = await context.Set<Match>()
+            .AsNoTracking()
+            .Where(candidate => stageIds.Contains(candidate.StageId))
+            .Select(candidate => new MatchAttentionSlice(
+                candidate.Id,
+                candidate.StageId,
+                candidate.Status,
+                candidate.HomeEntryId,
+                candidate.AwayEntryId,
+                candidate.Result))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return rows
+            .GroupBy(candidate => candidate.StageId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<MatchAttentionSlice>)[.. group.OrderBy(candidate => candidate.Id.Value)]);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>> ListSummaryRowsByStageIdsReadOnlyAsync(
         IReadOnlyList<StageId> stageIds,
         CancellationToken cancellationToken = default)

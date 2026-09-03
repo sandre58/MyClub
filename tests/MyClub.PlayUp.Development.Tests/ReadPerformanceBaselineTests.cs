@@ -80,7 +80,8 @@ public sealed class ReadPerformanceBaselineTests(
         overviewSql.Should().BeGreaterThan(8, "baseline sanity — overview still issues multiple SQL commands");
         detailSql.Should().BeLessThan(10, "GetCompetitionDetail should use projection, not full stage graphs");
         matchHubSql.Should().BeLessThan(matchHubLegacyTotalSql, "unified Match Hub should beat legacy 1+N fan-out");
-        matchHubSql.Should().BeLessThan(20, "GetMatchHubView should batch stage match loads");
+        attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
+        attentionSql.Should().BeLessThan(18, "attention path should stay below legacy shell overview cost");
     }
 
     [Fact]

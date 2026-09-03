@@ -47,6 +47,18 @@ public interface IStageRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Loads multiple stages without change tracking using an explicit read shape.
+    /// </summary>
+    /// <param name="ids">Stage identities in competition order.</param>
+    /// <param name="capabilities">Base profile plus optional collections.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Stages in the same order as <paramref name="ids"/>.</returns>
+    Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
+        IReadOnlyList<StageId> ids,
+        StageReadCapabilities capabilities,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Projects stage summary fields for competition detail reads.
     /// </summary>
     /// <param name="ids">Stage identities in competition order.</param>
