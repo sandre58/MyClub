@@ -1,0 +1,142 @@
+/*
+ * Toast — ephemeral event feedback (canvas host).
+ * Soft fill: ~8% tone wash, no border; tone via icon + 2px progress bar.
+ * Progress shrinks toward the left. Below Dialog (z-index 40).
+ */
+
+.ds-toaster {
+    position: absolute;
+    inset-inline-end: max(var(--space-16), env(safe-area-inset-right, 0px));
+    inset-block-end: max(var(--space-16), env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    align-items: flex-end;
+    width: min(22rem, calc(100% - var(--space-32)));
+    pointer-events: none;
+}
+
+.ds-toast {
+    --toast-progress-ms: 4000ms;
+    --toast-tone: var(--color-info);
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    border-radius: var(--radius-panel);
+    background: color-mix(in srgb, var(--toast-tone) 16%, var(--color-surface));
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-overlay);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(var(--space-8));
+    transition:
+        opacity var(--motion-duration) var(--motion-easing),
+        transform var(--motion-duration) var(--motion-easing);
+}
+
+.ds-toast[data-open='true'] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.ds-toast[data-tone='success'] {
+    --toast-tone: var(--color-success);
+    --toast-progress-ms: 4000ms;
+}
+
+.ds-toast[data-tone='error'] {
+    --toast-tone: var(--color-error);
+    --toast-progress-ms: 10000ms;
+}
+
+.ds-toast[data-tone='info'] {
+    --toast-tone: var(--color-info);
+    --toast-progress-ms: 4000ms;
+}
+
+.ds-toast[data-tone='attention'] {
+    --toast-tone: var(--color-attention);
+    --toast-progress-ms: 6000ms;
+}
+
+.ds-toast__body {
+    display: flex;
+    gap: var(--space-12);
+    align-items: flex-start;
+    padding: var(--space-12) var(--space-12) var(--space-12) var(--space-16);
+}
+
+.ds-toast__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    margin-block-start: var(--space-4);
+    color: var(--toast-tone);
+}
+
+.ds-toast__message {
+    flex: 1 1 auto;
+    margin: 0;
+    min-width: 0;
+    padding-block: var(--space-4);
+    font-size: var(--text-label);
+    line-height: var(--leading-normal);
+    color: var(--color-text-primary);
+}
+
+.ds-toast__close {
+    flex: none;
+    margin-block-start: calc(var(--space-4) * -1);
+    margin-inline-end: calc(var(--space-4) * -1);
+}
+
+.ds-toast__progress {
+    display: block;
+    width: 100%;
+    height: 2px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    transform-origin: 0 50%;
+    background: var(--toast-tone);
+    animation: ds-toast-progress var(--toast-progress-ms) linear forwards;
+}
+
+.ds-toast:hover .ds-toast__progress,
+.ds-toast[data-paused='true'] .ds-toast__progress {
+    animation-play-state: paused;
+}
+
+@keyframes ds-toast-progress {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-toast {
+        transition: none;
+        transform: none;
+    }
+
+    .ds-toast[data-open='true'] {
+        transform: none;
+    }
+
+    .ds-toast__progress {
+        animation: none;
+        transform: scaleX(1);
+        opacity: 0.45;
+    }
+}

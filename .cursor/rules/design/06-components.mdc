@@ -22,6 +22,7 @@ Search these before building anything new. Reference implementations live in
 | `TeamCrest` | Team initials block | `design-system/TeamCrest.tsx` |
 | Status pill | `ds-status` tones (success/attention/error/info/neutral/live) | design system CSS |
 | `Dialog` | Overlay centré : titre, corps, footer actions | `design-system/components/Dialog.tsx` |
+| `Toaster` / `notify` | Feedback événement éphémère (bas-droit canvas) | `design-system/components/Toaster.tsx`, `toastStore.ts` |
 | Attention drawer | Shell triage (latéral, sous chrome) — pas Dialog | `shell/AttentionDrawer.tsx` |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
 | Shell rail / header | Unified navy chrome + canvas workspace | `foundations/shell.css`, `shell/` |

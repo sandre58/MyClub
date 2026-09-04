@@ -48,6 +48,15 @@ Canonical centered overlay: `design-system/components/Dialog.tsx` + `foundations
 Interactive demos: Design Lab surface **Dialog**, and FoundationsPlayground § Dialog.
 `AttentionDrawer` is Shell triage — do not reuse `Dialog` for it.
 
+## Toast
+
+Ephemeral event feedback: `design-system/components/Toaster.tsx` + `toastStore.ts` (`notify`) + `foundations/toast.css`.
+Mount `Toaster` inside a `position: relative` canvas host (shell-main does this).
+Chrome: soft fill (~8% tone wash, no border), always-on tone icon, 2px progress bar shrinking left (pauses on hover; includes error).
+Interactive demos: Design Lab surface **Toast**.
+Contract: Notion decision Toast — builds on Continuité C1–C10.
+Do not use toast for durable state (À traiter / Cockpit). Distinct from `ds-notice` (inline stripe).
+
 ## Related
 
 - [page-migration.md](./page-migration.md) — when a product task touches a page
