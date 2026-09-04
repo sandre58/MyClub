@@ -89,6 +89,7 @@
   },
   "logo": {
     "clear": "Retirer le logo",
+    "add": "Importer",
     "uploading": "Téléversement…"
   },
   "regulation": {

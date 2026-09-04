@@ -253,10 +253,8 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         }
 
         var entry = new CompetitionEntry(entryId, teamId, displayName);
-        if (presentation is not null)
-        {
-            entry.UpdatePresentation(presentation);
-        }
+        var resolved = presentation ?? new EntryPresentation(ShortName.FromDisplayName(displayName));
+        entry.UpdatePresentation(resolved);
 
         _entries.Add(entry);
         Raise(new CompetitionEntryAdded(Id, entry.Id, teamId, clock));

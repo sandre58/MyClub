@@ -137,6 +137,20 @@ function renderTeamsPage(initialPath = `/competitions/${competitionId}/teams`) {
   return { queryClient }
 }
 
+function identityNameInput(dialog: HTMLElement) {
+  return within(dialog).getByRole('textbox', {
+    name: (accessibleName) =>
+      accessibleName.replace(/\s*\*$/, '').trim() === 'Nom',
+  })
+}
+
+function identityShortNameInput(dialog: HTMLElement) {
+  return within(dialog).getByRole('textbox', {
+    name: (accessibleName) =>
+      accessibleName.replace(/\s*\*$/, '').trim() === 'Nom court',
+  })
+}
+
 describe('TeamsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -336,19 +350,64 @@ describe('TeamsPage', () => {
       await screen.findByRole('button', { name: /Ajouter une équipe/i }),
     )
     const dialog = await screen.findByRole('dialog')
-    await user.type(
-      within(dialog).getByRole('textbox', { name: 'Nom' }),
-      'Beta',
-    )
+    await user.type(identityNameInput(dialog), 'Beta')
+    expect(identityShortNameInput(dialog)).toHaveValue('BETA')
     await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
     await waitFor(() => {
       expect(addCompetitionEntry).toHaveBeenCalledWith(
         competitionId,
-        expect.objectContaining({ displayName: 'Beta' }),
+        expect.objectContaining({
+          displayName: 'Beta',
+          shortName: 'BETA',
+        }),
       )
     })
     expect((await screen.findAllByText('Beta')).length).toBeGreaterThan(0)
+  })
+
+  it('warns on duplicate display name without blocking submit', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderTeamsPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Ajouter une équipe/i }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.type(identityNameInput(dialog), 'Alpha')
+    expect(
+      within(dialog).getByText('Une équipe porte déjà ce nom.'),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('button', { name: 'Ajouter' }),
+    ).toBeEnabled()
+  })
+
+  it('confirms before closing a dirty identity dialog', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderTeamsPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: /Ajouter une équipe/i }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.type(identityNameInput(dialog), 'Gamma')
+    await user.click(within(dialog).getByRole('button', { name: 'Fermer' }))
+
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Quitter sans enregistrer ?',
+    })
+    expect(
+      within(confirm).getByText(
+        'Les modifications non enregistrées seront perdues.',
+      ),
+    ).toBeInTheDocument()
+    await user.click(within(confirm).getByRole('button', { name: 'Annuler' }))
+    expect(screen.getByRole('dialog', { name: /Ajouter une équipe/i })).toBeInTheDocument()
   })
 
   it('greys the add button and shows cap reached in the plateau reading at capacity', async () => {
@@ -613,13 +672,17 @@ describe('TeamsPage', () => {
 
   it('deletes an entry from the selected tile', async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderTeamsPage()
 
     await user.click(await screen.findByRole('button', { name: 'Alpha' }))
     await user.click(screen.getByRole('button', { name: 'Supprimer Alpha' }))
+
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Supprimer « Alpha » ?',
+    })
+    await user.click(within(confirm).getByRole('button', { name: 'Supprimer' }))
 
     await waitFor(() => {
       expect(deleteCompetitionEntry).toHaveBeenCalledWith(competitionId, entryId)
@@ -629,7 +692,6 @@ describe('TeamsPage', () => {
 
   it('withdraws when DeleteEntry is not available', async () => {
     const user = userEvent.setup()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         status: 'Running',
@@ -641,6 +703,11 @@ describe('TeamsPage', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Alpha' }))
     await user.click(screen.getByRole('button', { name: 'Retirer Alpha' }))
+
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Retirer « Alpha » ?',
+    })
+    await user.click(within(confirm).getByRole('button', { name: 'Retirer' }))
 
     await waitFor(() => {
       expect(withdrawCompetitionEntry).toHaveBeenCalledWith(

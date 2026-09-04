@@ -1,10 +1,13 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { CloseIcon } from '../icons/shellIcons'
 import { PipetteIcon } from '../icons/overviewIcons'
 import { TextInput } from './TextInput'
@@ -72,12 +75,14 @@ export function ColorPicker({
   const triggerId = id ?? autoId
   const panelId = `${triggerId}-panel`
   const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const svRef = useRef<HTMLDivElement>(null)
   const hueRef = useRef<HTMLDivElement>(null)
   const hsvRef = useRef<Hsv>(defaultHsv())
   const pickingRef = useRef(false)
 
   const [open, setOpen] = useState(false)
+  const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>()
   const [format, setFormat] = useState<ColorFormat>('hex')
   const [hexDraft, setHexDraft] = useState(value)
   const [hsv, setHsv] = useState<Hsv>(() => {
@@ -100,6 +105,45 @@ export function ColorPicker({
     }
   }, [value])
 
+  useLayoutEffect(() => {
+    if (!open) {
+      setPanelStyle(undefined)
+      return
+    }
+
+    function placePanel() {
+      const anchor = rootRef.current
+      if (!anchor) {
+        return
+      }
+      const rect = anchor.getBoundingClientRect()
+      const gap = 8
+      const panelWidth = Math.min(window.innerWidth - 32, 18.5 * 16)
+      let left = rect.left
+      if (left + panelWidth > window.innerWidth - 16) {
+        left = Math.max(16, window.innerWidth - 16 - panelWidth)
+      }
+      const spaceBelow = window.innerHeight - rect.bottom - gap
+      const preferBelow = spaceBelow >= 280 || spaceBelow >= rect.top
+      setPanelStyle({
+        position: 'fixed',
+        top: preferBelow ? rect.bottom + gap : undefined,
+        bottom: preferBelow ? undefined : window.innerHeight - rect.top + gap,
+        left,
+        width: panelWidth,
+        zIndex: 50,
+      })
+    }
+
+    placePanel()
+    window.addEventListener('resize', placePanel)
+    window.addEventListener('scroll', placePanel, true)
+    return () => {
+      window.removeEventListener('resize', placePanel)
+      window.removeEventListener('scroll', placePanel, true)
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) {
       return
@@ -109,9 +153,14 @@ export function ColorPicker({
       if (pickingRef.current) {
         return
       }
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false)
+      const target = event.target as Node
+      if (
+        rootRef.current?.contains(target) ||
+        panelRef.current?.contains(target)
+      ) {
+        return
       }
+      setOpen(false)
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -120,7 +169,7 @@ export function ColorPicker({
       }
       if (event.key === 'Escape') {
         if (
-          rootRef.current?.querySelector(
+          panelRef.current?.querySelector(
             '.ds-select__shell[data-open="true"]',
           )
         ) {
@@ -314,13 +363,17 @@ export function ColorPicker({
         ) : null}
       </div>
 
-      {open ? (
-        <div
-          id={panelId}
-          className="ds-color-picker__panel"
-          role="dialog"
-          aria-label={ariaLabel}
-        >
+      {open && panelStyle
+        ? createPortal(
+            <div
+              ref={panelRef}
+              id={panelId}
+              className="ds-color-picker__panel"
+              data-portaled="true"
+              role="dialog"
+              aria-label={ariaLabel}
+              style={panelStyle}
+            >
           <div
             ref={svRef}
             className="ds-color-picker__sv"
@@ -584,8 +637,10 @@ export function ColorPicker({
               </div>
             )}
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

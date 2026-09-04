@@ -67,7 +67,7 @@ public sealed class CompetitionPresentationTests
         var competition = CreateDraft();
         var logoId = new LogoMediaId(Guid.CreateVersion7());
         var presentation = new EntryPresentation(
-            ShortName.Create("PSG"),
+            ShortName.CreateRequired("PSG"),
             logoId,
             TeamColor.Create("#004170"),
             TeamColor.Create("#DA291C"));
@@ -81,18 +81,46 @@ public sealed class CompetitionPresentationTests
     }
 
     [Fact]
+    public void AddEntry_without_presentation_derives_short_name()
+    {
+        var competition = CreateDraft();
+
+        var entry = competition.AddEntry(TeamId.New(), "Paris Saint-Germain", _clock);
+
+        entry.ShortName!.Value.Should().Be("PS");
+    }
+
+    [Theory]
+    [InlineData("Lyon", "LYON")]
+    [InlineData("Olympique", "OLYMP")]
+    [InlineData("Real Madrid", "RM")]
+    [InlineData("Olympique de Marseille", "ODM")]
+    [InlineData("Alpha FC United Extra", "AFU")]
+    [InlineData("Paris Saint-Germain", "PS")]
+    public void FromDisplayName_follows_word_count_rules(string displayName, string expected) =>
+        ShortName.FromDisplayName(displayName).Value.Should().Be(expected);
+
+    [Fact]
+    public void Create_rejects_short_name_longer_than_max()
+    {
+        var act = () => ShortName.Create("ABCDEF");
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidShortName);
+    }
+
+    [Fact]
     public void UpdateEntryPresentation_replaces_fields()
     {
         var competition = CreateDraft();
-        var entry = competition.AddEntry(TeamId.New(), "Alpha", _clock, new EntryPresentation(ShortName.Create("ALP")));
+        var entry = competition.AddEntry(TeamId.New(), "Alpha", _clock, new EntryPresentation(ShortName.CreateRequired("ALP")));
         var logoId = new LogoMediaId(Guid.CreateVersion7());
 
         competition.UpdateEntryPresentation(
             entry.Id,
-            new EntryPresentation(null, logoId, TeamColor.Create("#AABBCC")),
+            new EntryPresentation(ShortName.CreateRequired("ALP"), logoId, TeamColor.Create("#AABBCC")),
             _clock);
 
-        entry.ShortName.Should().BeNull();
+        entry.ShortName!.Value.Should().Be("ALP");
         entry.LogoMediaId.Should().Be(logoId);
         entry.PrimaryColor!.Value.Should().Be("#AABBCC");
         entry.SecondaryColor.Should().BeNull();
@@ -123,7 +151,7 @@ public sealed class CompetitionPresentationTests
 
         competition.UpdateEntryPresentation(
             entry.Id,
-            new EntryPresentation(ShortName.Create("ALP")),
+            new EntryPresentation(ShortName.CreateRequired("ALP")),
             _clock);
 
         entry.ShortName!.Value.Should().Be("ALP");
@@ -141,7 +169,7 @@ public sealed class CompetitionPresentationTests
 
         competition.UpdateEntryPresentation(
             entry.Id,
-            new EntryPresentation(ShortName.Create("ALP")),
+            new EntryPresentation(ShortName.CreateRequired("ALP")),
             _clock);
 
         entry.ShortName!.Value.Should().Be("ALP");

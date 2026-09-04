@@ -21,6 +21,11 @@ export type DialogProps = {
   footer?: ReactNode
   /** Blocks Escape, backdrop, and the header close control. */
   closeDisabled?: boolean
+  /**
+   * When false, Tab is not trapped (e.g. parent dialog while a ConfirmDialog
+   * is stacked on top). Default true.
+   */
+  trapFocus?: boolean
   /** Element to restore focus on close. Defaults to the opener at mount. */
   returnFocusRef?: RefObject<HTMLElement | null>
   size?: DialogSize
@@ -39,6 +44,7 @@ export function Dialog({
   children,
   footer,
   closeDisabled = false,
+  trapFocus = true,
   returnFocusRef,
   size = 'sm',
   closeLabel = 'Fermer',
@@ -149,7 +155,7 @@ export function Dialog({
     }
   }, [mounted])
 
-  useFocusTrap(panelRef, open && visible)
+  useFocusTrap(panelRef, open && visible && trapFocus)
 
   if (!mounted) {
     return null
@@ -177,9 +183,9 @@ export function Dialog({
         aria-labelledby={titleId}
       >
         <header className="ds-dialog__header">
-          <h2 id={titleId} className="ds-dialog__title">
+          <h3 id={titleId} className="ds-dialog__title">
             {title}
-          </h2>
+          </h3>
           <button
             ref={closeButtonRef}
             type="button"

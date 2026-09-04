@@ -11,6 +11,7 @@ import {
   publishDraw,
   startStage,
 } from '../api'
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
 import { queryKeys } from '../queryKeys'
 import {
   DrawResolutionBadge,
@@ -609,7 +610,7 @@ function DrawCard({
 
 /**
  * useMutation = “run this write when the user asks”, not “keep this data fresh”.
- * Client state here is only the confirmation gate (window.confirm) — not a copy of the Draw.
+ * Client state here is only the confirmation gate — not a copy of the Draw.
  */
 function DrawActions({
   stageId,
@@ -623,7 +624,9 @@ function DrawActions({
   isApplied: boolean
 }) {
   const { t } = useTranslation('draw')
+  const { t: tCommon } = useTranslation('common')
   const queryClient = useQueryClient()
+  const [applyConfirmOpen, setApplyConfirmOpen] = useState(false)
 
   const canPublish =
     draw.status === 'Draft' && draw.resolutionState === 'Resolved'
@@ -688,14 +691,7 @@ function DrawActions({
   }
 
   function handleApply() {
-    // CLIENT STATE: confirmation is local UI intent, not server state.
-    // window.confirm is acceptable for this phase — replace with a small
-    // accessible dialog later if organizers need richer UX.
-    const confirmed = window.confirm(t('confirmApply'))
-    if (!confirmed) {
-      return
-    }
-    applyMutation.mutate()
+    setApplyConfirmOpen(true)
   }
 
   if (!canPublish && !canApply && !pairingMapBlocked && !mutationError) {
@@ -703,6 +699,7 @@ function DrawActions({
   }
 
   return (
+    <>
     <div className="button-row" aria-busy={busy}>
       {canPublish && (
         <button
@@ -723,7 +720,7 @@ function DrawActions({
         <button
           type="button"
           className="ds-btn ds-btn--primary"
-          disabled={busy}
+          disabled={busy || applyConfirmOpen}
           onClick={handleApply}
         >
           {applyMutation.isPending ? (
@@ -738,7 +735,7 @@ function DrawActions({
         <button
           type="button"
           className="ds-btn ds-btn--primary"
-          disabled={busy}
+          disabled={busy || applyConfirmOpen}
           onClick={handleApply}
         >
           {applyMutation.isPending ? (
@@ -757,5 +754,20 @@ function DrawActions({
 
       {mutationError && <MutationError error={mutationError} />}
     </div>
+    <ConfirmDialog
+      open={applyConfirmOpen}
+      title={t('confirmApplyTitle')}
+      message={t('confirmApply')}
+      confirmLabel={t('apply')}
+      cancelLabel={tCommon('cancel')}
+      closeLabel={tCommon('close')}
+      confirmDisabled={applyMutation.isPending}
+      onCancel={() => setApplyConfirmOpen(false)}
+      onConfirm={() => {
+        setApplyConfirmOpen(false)
+        applyMutation.mutate()
+      }}
+    />
+    </>
   )
 }

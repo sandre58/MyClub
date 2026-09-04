@@ -263,18 +263,28 @@ function CreateCompetitionDialog({
       returnFocusRef={returnFocusRef}
       size="sm"
       footer={
-        <button
-          type="submit"
-          form={formId}
-          className="ds-btn ds-btn--primary"
-          disabled={!canSubmit}
-        >
-          {mutation.isPending ? (
-            <PendingLabel>{t('create.submitting')}</PendingLabel>
-          ) : (
-            t('create.submit')
-          )}
-        </button>
+        <>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            disabled={mutation.isPending}
+            onClick={onClose}
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="submit"
+            form={formId}
+            className="ds-btn ds-btn--primary"
+            disabled={!canSubmit}
+          >
+            {mutation.isPending ? (
+              <PendingLabel>{t('create.submitting')}</PendingLabel>
+            ) : (
+              t('create.submit')
+            )}
+          </button>
+        </>
       }
     >
       <form

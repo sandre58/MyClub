@@ -17,7 +17,8 @@
   "publishing": "Publication…",
   "apply": "Appliquer le tirage",
   "applying": "Application…",
-  "confirmApply": "Appliquer ce tirage ? Cela mettra à jour la phase et peut créer des matchs.",
+  "confirmApplyTitle": "Appliquer le tirage ?",
+  "confirmApply": "Cela mettra à jour la phase et peut créer des matchs.",
   "pairingMapBlocked": "Application indisponible : le nombre d’appariements doit égaler le nombre de rencontres de la phase pour une correspondance 1:1."
 }
 

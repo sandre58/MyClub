@@ -679,13 +679,14 @@ public sealed class UseCaseExecutor(
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
-        var presentation = shortName is null && logoMediaId is null && primaryColor is null && secondaryColor is null
-            ? null
-            : new EntryPresentation(
-                ShortName.Create(shortName),
-                LogoMediaId.Create(logoMediaId),
-                TeamColor.Create(primaryColor),
-                TeamColor.Create(secondaryColor));
+        var resolvedShortName = string.IsNullOrWhiteSpace(shortName)
+            ? ShortName.FromDisplayName(displayName)
+            : ShortName.CreateRequired(shortName);
+        var presentation = new EntryPresentation(
+            resolvedShortName,
+            LogoMediaId.Create(logoMediaId),
+            TeamColor.Create(primaryColor),
+            TeamColor.Create(secondaryColor));
         AddEntry.Execute(
             competition,
             displayName,
@@ -744,7 +745,7 @@ public sealed class UseCaseExecutor(
         UpdateEntryPresentation.Execute(
             competition,
             entryId,
-            shortName,
+            shortName ?? string.Empty,
             logoMediaId,
             primaryColor,
             secondaryColor,

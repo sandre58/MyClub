@@ -27,6 +27,10 @@
     min-width: 0;
 }
 
+.ds-field[data-width='sm'] {
+    max-width: 7.5rem;
+}
+
 .ds-field__label-row {
     display: flex;
     align-items: baseline;
@@ -83,6 +87,17 @@
     border-color: var(--color-error);
     box-shadow: 0 0 0 2px
         color-mix(in srgb, var(--color-error) 22%, transparent);
+}
+
+.ds-field[data-tone='warning'] .ds-input {
+    border-color: var(--color-attention);
+}
+
+.ds-field[data-tone='warning'] .ds-input:hover:not([data-disabled='true']),
+.ds-field[data-tone='warning'] .ds-input:focus-within {
+    border-color: var(--color-attention);
+    box-shadow: 0 0 0 2px
+        color-mix(in srgb, var(--color-attention) 22%, transparent);
 }
 
 /* —— TextInput / ColorPicker shell —— */
@@ -575,6 +590,15 @@
     border-radius: var(--radius-panel);
     background: var(--color-surface);
     box-shadow: var(--shadow-overlay);
+}
+
+.ds-color-picker__panel[data-portaled='true'] {
+    /* Position comes from inline style (fixed + coordinates). */
+    position: fixed;
+    top: auto;
+    inset-inline-start: auto;
+    width: auto;
+    z-index: 50;
 }
 
 .ds-color-picker__panel::before {

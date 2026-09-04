@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// </summary>
 /// <param name="DisplayName">Entry display name.</param>
 /// <param name="TeamId">Optional team identity; generated when omitted.</param>
-/// <param name="ShortName">Optional abbreviated name.</param>
+/// <param name="ShortName">Required abbreviated name.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
 /// <param name="SecondaryColor">Optional secondary kit color (#RRGGBB).</param>

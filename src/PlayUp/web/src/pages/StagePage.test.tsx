@@ -93,6 +93,17 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
   }
 }
 
+async function confirmApplyInDialog(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  const dialog = await screen.findByRole('dialog', {
+    name: 'Appliquer le tirage ?',
+  })
+  await user.click(
+    within(dialog).getByRole('button', { name: 'Appliquer le tirage' }),
+  )
+}
+
 function oneEmptyFixtureRound(): StageRound[] {
   return [
     {
@@ -731,7 +742,6 @@ describe('StagePage draws', () => {
 
   it('Apply Slot confirms then posts empty fixtureIds and shows Applied', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     let applied = false
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
@@ -753,21 +763,18 @@ describe('StagePage draws', () => {
 
     renderStagePage()
     await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
+    await confirmApplyInDialog(user)
 
-    expect(confirmSpy).toHaveBeenCalled()
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalledWith(stageId, slotDrawId, {
         fixtureIds: [],
       })
       expect(screen.getByText('Appliqué')).toBeInTheDocument()
     })
-
-    confirmSpy.mockRestore()
   })
 
   it('disables Apply while pending', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     let resolveApply!: () => void
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -785,6 +792,7 @@ describe('StagePage draws', () => {
 
     renderStagePage()
     await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
+    await confirmApplyInDialog(user)
 
     expect(
       await screen.findByRole('button', { name: 'Application…' }),
@@ -794,13 +802,10 @@ describe('StagePage draws', () => {
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalled()
     })
-
-    confirmSpy.mockRestore()
   })
 
   it('shows Apply error message', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
@@ -812,15 +817,13 @@ describe('StagePage draws', () => {
 
     renderStagePage()
     await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
+    await confirmApplyInDialog(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Apply blocked')
-
-    confirmSpy.mockRestore()
   })
 
   it('cancelling Apply confirmation does not call applyDraw', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
@@ -832,15 +835,16 @@ describe('StagePage draws', () => {
     renderStagePage()
     await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
 
-    expect(confirmSpy).toHaveBeenCalled()
-    expect(applyDraw).not.toHaveBeenCalled()
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Appliquer le tirage ?',
+    })
+    await user.click(within(dialog).getByRole('button', { name: 'Annuler' }))
 
-    confirmSpy.mockRestore()
+    expect(applyDraw).not.toHaveBeenCalled()
   })
 
   it('Apply Pairing posts 1:1 fixtureIds after confirmation', async () => {
     const user = userEvent.setup()
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
@@ -851,14 +855,13 @@ describe('StagePage draws', () => {
 
     renderStagePage()
     await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
+    await confirmApplyInDialog(user)
 
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalledWith(stageId, drawId, {
         fixtureIds: [fixtureId],
       })
     })
-
-    confirmSpy.mockRestore()
   })
 
   it('hides Apply for published Pairing when fixtures already have attachments', async () => {

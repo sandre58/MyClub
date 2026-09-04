@@ -34,7 +34,7 @@ export function Upload({
   uploading = false,
   disabled = false,
   accept = 'image/png,image/jpeg,image/webp',
-  emptyLabel = 'Logo',
+  emptyLabel = 'Importer',
   removeLabel = 'Retirer',
   onChange,
 }: UploadProps) {

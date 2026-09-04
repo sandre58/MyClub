@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 export type FieldMessageTone = 'hint' | 'warning' | 'error'
 
+export type FieldWidth = 'full' | 'sm'
+
 export type FieldProps = {
   label: string
   htmlFor?: string
@@ -9,6 +11,8 @@ export type FieldProps = {
   counter?: string
   message?: string
   messageTone?: FieldMessageTone
+  /** Constrain control width (e.g. short name). Default full. */
+  width?: FieldWidth
   children: ReactNode
 }
 
@@ -23,12 +27,19 @@ export function Field({
   counter,
   message,
   messageTone = 'hint',
+  width = 'full',
   children,
 }: FieldProps) {
-  const invalid = messageTone === 'error' && Boolean(message)
+  const hasMessage = Boolean(message)
+  const invalid = messageTone === 'error' && hasMessage
 
   return (
-    <div className="ds-field" data-invalid={invalid ? 'true' : 'false'}>
+    <div
+      className="ds-field"
+      data-invalid={invalid ? 'true' : 'false'}
+      data-tone={hasMessage ? messageTone : undefined}
+      data-width={width === 'full' ? undefined : width}
+    >
       <div className="ds-field__label-row">
         <label className="ds-field__label" htmlFor={htmlFor}>
           {label}

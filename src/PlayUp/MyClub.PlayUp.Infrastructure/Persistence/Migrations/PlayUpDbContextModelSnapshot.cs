@@ -56,8 +56,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnName("scheduled_start");
 
                     b.Property<string>("ShortName")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
                         .HasColumnName("short_name");
 
                     b.Property<int>("Status")
@@ -456,8 +456,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                                 .HasColumnName("secondary_color");
 
                             b1.Property<string>("ShortName")
-                                .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
+                                .HasMaxLength(5)
+                                .HasColumnType("character varying(5)")
                                 .HasColumnName("short_name");
 
                             b1.Property<int>("SortOrder")

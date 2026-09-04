@@ -590,7 +590,7 @@ export interface SetCompetitionScheduleRequest {
 
 /** POST .../entries/{entryId}/presentation */
 export interface UpdateEntryPresentationRequest {
-  shortName: string | null
+  shortName: string
   logoMediaId: string | null
   primaryColor: string | null
   secondaryColor: string | null

@@ -10,7 +10,7 @@
     gap: var(--space-12);
     margin: 0;
     padding: var(--space-12) var(--space-16);
-    border: none;
+    border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-panel);
     background: var(--color-surface-secondary);
     color: var(--color-text-primary);
@@ -35,29 +35,33 @@
 .ds-alert--danger,
 .ds-notice--danger {
     --ds-alert-tone: var(--color-error);
-    background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-error) 15%, var(--color-surface));
     color: var(--color-text-primary);
+    border-color: color-mix(in srgb, var(--color-error) 60%, var(--color-surface));
 }
 
 .ds-alert--warning,
 .ds-notice--warning {
     --ds-alert-tone: var(--color-attention);
-    background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-attention) 15%, var(--color-surface));
     color: var(--color-text-primary);
+    border-color: color-mix(in srgb, var(--color-attention) 60%, var(--color-surface));
 }
 
 .ds-alert--info,
 .ds-notice--info {
     --ds-alert-tone: var(--color-info);
-    background: color-mix(in srgb, var(--color-info) 12%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-info) 15%, var(--color-surface));
     color: var(--color-text-primary);
+    border-color: color-mix(in srgb, var(--color-info) 60%, var(--color-surface));
 }
 
 .ds-alert--success,
 .ds-notice--success {
     --ds-alert-tone: var(--color-success);
-    background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-success) 15%, var(--color-surface));
     color: var(--color-text-primary);
+    border-color: color-mix(in srgb, var(--color-success) 60%, var(--color-surface));
 }
 
 .ds-wait {

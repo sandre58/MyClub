@@ -15,11 +15,11 @@ namespace MyClub.PlayUp.Application.Competitions;
 public static class UpdateEntryPresentation
 {
     /// <summary>
-    /// Updates entry presentation; null fields clear.
+    /// Updates entry presentation; short name is required (cannot clear).
     /// </summary>
     /// <param name="competition">Target competition.</param>
     /// <param name="entryId">Entry identity.</param>
-    /// <param name="shortName">Short name, or null to clear.</param>
+    /// <param name="shortName">Required short name.</param>
     /// <param name="logoMediaId">Logo Media Guid, or null to clear.</param>
     /// <param name="primaryColor">Primary color, or null to clear.</param>
     /// <param name="secondaryColor">Secondary color, or null to clear.</param>
@@ -27,7 +27,7 @@ public static class UpdateEntryPresentation
     public static void Execute(
         Competition competition,
         EntryId entryId,
-        string? shortName,
+        string shortName,
         Guid? logoMediaId,
         string? primaryColor,
         string? secondaryColor,
@@ -38,7 +38,7 @@ public static class UpdateEntryPresentation
         competition.UpdateEntryPresentation(
             entryId,
             new EntryPresentation(
-                ShortName.Create(shortName),
+                ShortName.CreateRequired(shortName),
                 LogoMediaId.Create(logoMediaId),
                 TeamColor.Create(primaryColor),
                 TeamColor.Create(secondaryColor)),

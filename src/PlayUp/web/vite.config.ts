@@ -30,6 +30,13 @@ function apiProxy(options?: { spaBypass?: boolean }): ProxyOptions {
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    // Prevent duplicate React when both `react-dom/client` and `react-dom` (createPortal) are imported.
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-dom/client'],
+  },
   server: {
     proxy: {
       // 11.3.1 only needed /competitions; multi-view reads need stages + matches too.

@@ -24,10 +24,13 @@ import {
   withdrawCompetitionEntry,
 } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
-import { Field } from '../design-system/components/Field'
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
+import { Field, type FieldMessageTone } from '../design-system/components/Field'
 import { TextInput } from '../design-system/components/TextInput'
 import { ColorPicker } from '../design-system/components/ColorPicker'
 import { TeamCrest } from '../design-system/TeamCrest'
+import { notify } from '../design-system/toastStore'
+import { deriveShortName, SHORT_NAME_MAX_LENGTH } from './deriveShortName'
 import { LogoMediaField } from './LogoMediaField'
 import { CloseIcon } from '../design-system/icons/shellIcons'
 import {
@@ -109,6 +112,7 @@ function TeamsView({
   routeEntryId?: string
 }) {
   const { t } = useTranslation('teams')
+  const { t: tCommon } = useTranslation('common')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const can = (action: string) => data.actions.includes(action)
@@ -130,6 +134,13 @@ function TeamsView({
   )
   const [addOpen, setAddOpen] = useState(false)
   const [identityEntryId, setIdentityEntryId] = useState<string | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<{
+    verb: 'delete' | 'withdraw'
+    targets: string[]
+    title: string
+    message: string
+    confirmLabel: string
+  } | null>(null)
 
   const selectedCount = selectedIds.length
   const multi = selectedCount >= 2
@@ -226,26 +237,36 @@ function TeamsView({
       return
     }
     const first = entries.find((entry) => entry.entryId === targets[0])
-    const confirmed =
-      verb === 'delete'
-        ? window.confirm(
-            targets.length === 1
-              ? t('confirmDelete', { name: first?.displayName ?? targets[0] })
-              : t('confirmDeleteLot', { count: targets.length }),
-          )
-        : window.confirm(
-            targets.length === 1
-              ? t('confirmWithdraw', { name: first?.displayName ?? targets[0] })
-              : t('confirmWithdrawLot', { count: targets.length }),
-          )
-    if (!confirmed) {
-      return
-    }
+    const name = first?.displayName ?? targets[0]
     if (verb === 'delete') {
-      deleteMutation.mutate(targets)
+      setPendingRemove({
+        verb,
+        targets,
+        title:
+          targets.length === 1
+            ? t('confirmDeleteTitle', { name })
+            : t('confirmDeleteLotTitle', { count: targets.length }),
+        message:
+          targets.length === 1
+            ? t('confirmDelete', { name })
+            : t('confirmDeleteLot', { count: targets.length }),
+        confirmLabel: t('deleteEntry'),
+      })
       return
     }
-    withdrawMutation.mutate(targets)
+    setPendingRemove({
+      verb,
+      targets,
+      title:
+        targets.length === 1
+          ? t('confirmWithdrawTitle', { name })
+          : t('confirmWithdrawLotTitle', { count: targets.length }),
+      message:
+        targets.length === 1
+          ? t('confirmWithdraw', { name })
+          : t('confirmWithdrawLot', { count: targets.length }),
+      confirmLabel: t('withdrawEntry'),
+    })
   }
 
   function onTileBody(entryId: string) {
@@ -549,8 +570,32 @@ function TeamsView({
       <IdentityDialog
         competitionId={data.competitionId}
         entry={identityEntry ?? null}
+        entries={data.participants.entries}
         open={identityEntry != null}
         onClose={() => setIdentityEntryId(null)}
+      />
+      <ConfirmDialog
+        open={pendingRemove != null}
+        title={pendingRemove?.title ?? ''}
+        message={pendingRemove?.message ?? ''}
+        confirmLabel={pendingRemove?.confirmLabel ?? t('deleteEntry')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        confirmDisabled={removePending}
+        onCancel={() => setPendingRemove(null)}
+        onConfirm={() => {
+          if (!pendingRemove || removePending) {
+            return
+          }
+          const { verb, targets } = pendingRemove
+          setPendingRemove(null)
+          if (verb === 'delete') {
+            deleteMutation.mutate(targets)
+            return
+          }
+          withdrawMutation.mutate(targets)
+        }}
       />
     </div>
   )
@@ -571,9 +616,13 @@ function AddEntryDialog({
   const formId = useId()
   const [displayName, setDisplayName] = useState('')
   const [shortName, setShortName] = useState('')
+  const [nameTouched, setNameTouched] = useState(false)
+  const [shortNameTouched, setShortNameTouched] = useState(false)
   const [logoMediaId, setLogoMediaId] = useState<string | null>(null)
   const [primaryColor, setPrimaryColor] = useState('')
   const [secondaryColor, setSecondaryColor] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [discardOpen, setDiscardOpen] = useState(false)
 
   useEffect(() => {
     if (!open) {
@@ -581,47 +630,102 @@ function AddEntryDialog({
     }
     setDisplayName('')
     setShortName('')
+    setNameTouched(false)
+    setShortNameTouched(false)
     setLogoMediaId(null)
     setPrimaryColor('')
     setSecondaryColor('')
+    setSubmitted(false)
+    setDiscardOpen(false)
   }, [open])
+
+  const isDirty =
+    displayName.trim().length > 0 ||
+    shortName.trim().length > 0 ||
+    logoMediaId != null ||
+    primaryColor.trim().length > 0 ||
+    secondaryColor.trim().length > 0
+
+  const duplicateName = hasDuplicateEntryName(
+    data.participants.entries,
+    displayName,
+  )
+
+  const nameError =
+    (submitted || nameTouched) && displayName.trim().length === 0
+      ? t('nameRequired')
+      : undefined
+  const shortNameError =
+    (submitted || shortNameTouched) && shortName.trim().length === 0
+      ? t('shortNameRequired')
+      : undefined
 
   const addMutation = useMutation({
     mutationFn: () =>
       addCompetitionEntry(data.competitionId, {
         displayName: displayName.trim(),
-        shortName: shortName.trim() || null,
+        shortName: shortName.trim(),
         logoMediaId,
         primaryColor: primaryColor.trim() || null,
         secondaryColor: secondaryColor.trim() || null,
       }),
     onSuccess: async () => {
       await invalidateAfterTeamsMutation(queryClient, data.competitionId)
+      notify.success(t('entryAddedToast'))
       onClose()
     },
   })
 
+  const canSubmit =
+    displayName.trim().length > 0 &&
+    shortName.trim().length > 0 &&
+    shortName.trim().length <= SHORT_NAME_MAX_LENGTH &&
+    !addMutation.isPending
+
+  function requestClose() {
+    if (addMutation.isPending) {
+      return
+    }
+    if (isDirty) {
+      setDiscardOpen(true)
+      return
+    }
+    onClose()
+  }
+
   return (
+    <>
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={t('addDialogTitle')}
       closeLabel={tCommon('close')}
-      closeDisabled={addMutation.isPending}
+      closeDisabled={addMutation.isPending || discardOpen}
+      trapFocus={!discardOpen}
       size="sm"
       footer={
-        <button
-          type="submit"
-          form={formId}
-          className="ds-btn ds-btn--primary"
-          disabled={addMutation.isPending || displayName.trim().length === 0}
-        >
-          {addMutation.isPending ? (
-            <PendingLabel>{t('adding')}</PendingLabel>
-          ) : (
-            t('add')
-          )}
-        </button>
+        <>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            disabled={addMutation.isPending || discardOpen}
+            onClick={requestClose}
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="submit"
+            form={formId}
+            className="ds-btn ds-btn--primary"
+            disabled={!canSubmit}
+          >
+            {addMutation.isPending ? (
+              <PendingLabel>{t('adding')}</PendingLabel>
+            ) : (
+              t('add')
+            )}
+          </button>
+        </>
       }
     >
       <form
@@ -630,12 +734,14 @@ function AddEntryDialog({
         data-density="comfortable"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
-          if (displayName.trim().length === 0 || addMutation.isPending) {
+          setSubmitted(true)
+          if (!canSubmit) {
             return
           }
           addMutation.mutate()
         }}
       >
+        {addMutation.isError && <MutationError error={addMutation.error} />}
         <IdentityFields
           name={displayName}
           shortName={shortName}
@@ -643,26 +749,54 @@ function AddEntryDialog({
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}
           disabled={addMutation.isPending}
-          onName={setDisplayName}
-          onShortName={setShortName}
+          nameMessage={nameError ?? (duplicateName ? t('duplicateNameWarning') : undefined)}
+          nameMessageTone={nameError ? 'error' : 'warning'}
+          shortNameMessage={shortNameError}
+          shortNameMessageTone="error"
+          onName={(value) => {
+            setNameTouched(true)
+            setDisplayName(value)
+            if (!shortNameTouched) {
+              setShortName(deriveShortName(value))
+            }
+          }}
+          onShortName={(value) => {
+            setShortNameTouched(true)
+            setShortName(value)
+          }}
           onLogo={setLogoMediaId}
           onPrimary={setPrimaryColor}
           onSecondary={setSecondaryColor}
         />
-        {addMutation.isError && <MutationError error={addMutation.error} />}
       </form>
     </Dialog>
+    <ConfirmDialog
+      open={discardOpen}
+      title={t('discardIdentityTitle')}
+      message={t('discardIdentityChanges')}
+      confirmLabel={t('discardIdentityConfirm')}
+      cancelLabel={tCommon('cancel')}
+      closeLabel={tCommon('close')}
+      onCancel={() => setDiscardOpen(false)}
+      onConfirm={() => {
+        setDiscardOpen(false)
+        onClose()
+      }}
+    />
+    </>
   )
 }
 
 function IdentityDialog({
   competitionId,
   entry,
+  entries,
   open,
   onClose,
 }: {
   competitionId: string
   entry: OrganisationEntry | null
+  entries: OrganisationEntry[]
   open: boolean
   onClose: () => void
 }) {
@@ -679,6 +813,10 @@ function IdentityDialog({
   const [secondaryColor, setSecondaryColor] = useState(
     entry?.secondaryColor ?? '',
   )
+  const [nameTouched, setNameTouched] = useState(false)
+  const [shortNameTouched, setShortNameTouched] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [discardOpen, setDiscardOpen] = useState(false)
 
   useEffect(() => {
     if (!entry) {
@@ -689,7 +827,35 @@ function IdentityDialog({
     setLogoMediaId(entry.logoMediaId ?? null)
     setPrimaryColor(entry.primaryColor ?? '')
     setSecondaryColor(entry.secondaryColor ?? '')
+    setNameTouched(false)
+    setShortNameTouched(false)
+    setSubmitted(false)
+    setDiscardOpen(false)
   }, [entry])
+
+  const baselineName = entry?.displayName ?? ''
+  const baselineShort = entry?.shortName ?? ''
+  const baselineLogo = entry?.logoMediaId ?? null
+  const baselinePrimary = entry?.primaryColor ?? ''
+  const baselineSecondary = entry?.secondaryColor ?? ''
+
+  const isDirty =
+    name.trim() !== baselineName.trim() ||
+    shortName.trim() !== baselineShort.trim() ||
+    logoMediaId !== baselineLogo ||
+    primaryColor.trim() !== baselinePrimary.trim() ||
+    secondaryColor.trim() !== baselineSecondary.trim()
+
+  const duplicateName = hasDuplicateEntryName(entries, name, entry?.entryId)
+
+  const nameError =
+    (submitted || nameTouched) && name.trim().length === 0
+      ? t('nameRequired')
+      : undefined
+  const shortNameError =
+    (submitted || shortNameTouched) && shortName.trim().length === 0
+      ? t('shortNameRequired')
+      : undefined
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -702,7 +868,7 @@ function IdentityDialog({
         })
       }
       await updateEntryPresentation(competitionId, entry.entryId, {
-        shortName: shortName.trim() || null,
+        shortName: shortName.trim(),
         logoMediaId,
         primaryColor: primaryColor.trim() || null,
         secondaryColor: secondaryColor.trim() || null,
@@ -710,31 +876,61 @@ function IdentityDialog({
     },
     onSuccess: async () => {
       await invalidateAfterTeamsMutation(queryClient, competitionId)
+      notify.success(t('identitySavedToast'))
       onClose()
     },
   })
 
+  const canSubmit =
+    name.trim().length > 0 &&
+    shortName.trim().length > 0 &&
+    shortName.trim().length <= SHORT_NAME_MAX_LENGTH &&
+    !saveMutation.isPending
+
+  function requestClose() {
+    if (saveMutation.isPending) {
+      return
+    }
+    if (isDirty) {
+      setDiscardOpen(true)
+      return
+    }
+    onClose()
+  }
+
   return (
+    <>
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title={t('identityDialogTitle')}
       closeLabel={tCommon('close')}
-      closeDisabled={saveMutation.isPending}
+      closeDisabled={saveMutation.isPending || discardOpen}
+      trapFocus={!discardOpen}
       size="sm"
       footer={
-        <button
-          type="submit"
-          form={formId}
-          className="ds-btn ds-btn--primary"
-          disabled={saveMutation.isPending || name.trim().length === 0}
-        >
-          {saveMutation.isPending ? (
-            <PendingLabel>{t('saving')}</PendingLabel>
-          ) : (
-            t('saveIdentity')
-          )}
-        </button>
+        <>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            disabled={saveMutation.isPending || discardOpen}
+            onClick={requestClose}
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="submit"
+            form={formId}
+            className="ds-btn ds-btn--primary"
+            disabled={!canSubmit}
+          >
+            {saveMutation.isPending ? (
+              <PendingLabel>{t('saving')}</PendingLabel>
+            ) : (
+              t('saveIdentity')
+            )}
+          </button>
+        </>
       }
     >
       <form
@@ -743,12 +939,14 @@ function IdentityDialog({
         data-density="comfortable"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
-          if (name.trim().length === 0 || saveMutation.isPending) {
+          setSubmitted(true)
+          if (!canSubmit) {
             return
           }
           saveMutation.mutate()
         }}
       >
+        {saveMutation.isError && <MutationError error={saveMutation.error} />}
         <IdentityFields
           name={name}
           shortName={shortName}
@@ -756,15 +954,54 @@ function IdentityDialog({
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}
           disabled={saveMutation.isPending}
-          onName={setName}
-          onShortName={setShortName}
+          nameMessage={nameError ?? (duplicateName ? t('duplicateNameWarning') : undefined)}
+          nameMessageTone={nameError ? 'error' : 'warning'}
+          shortNameMessage={shortNameError}
+          shortNameMessageTone="error"
+          onName={(value) => {
+            setNameTouched(true)
+            setName(value)
+          }}
+          onShortName={(value) => {
+            setShortNameTouched(true)
+            setShortName(value)
+          }}
           onLogo={setLogoMediaId}
           onPrimary={setPrimaryColor}
           onSecondary={setSecondaryColor}
         />
-        {saveMutation.isError && <MutationError error={saveMutation.error} />}
       </form>
     </Dialog>
+    <ConfirmDialog
+      open={discardOpen}
+      title={t('discardIdentityTitle')}
+      message={t('discardIdentityChanges')}
+      confirmLabel={t('discardIdentityConfirm')}
+      cancelLabel={tCommon('cancel')}
+      closeLabel={tCommon('close')}
+      onCancel={() => setDiscardOpen(false)}
+      onConfirm={() => {
+        setDiscardOpen(false)
+        onClose()
+      }}
+    />
+    </>
+  )
+}
+
+function hasDuplicateEntryName(
+  entries: OrganisationEntry[],
+  name: string,
+  excludeEntryId?: string,
+): boolean {
+  const normalized = name.trim().toLocaleLowerCase('fr')
+  if (normalized.length === 0) {
+    return false
+  }
+  return entries.some(
+    (entry) =>
+      entry.entryId !== excludeEntryId &&
+      entry.displayName.trim().toLocaleLowerCase('fr') === normalized,
   )
 }
 
@@ -775,6 +1012,10 @@ function IdentityFields({
   primaryColor,
   secondaryColor,
   disabled,
+  nameMessage,
+  nameMessageTone = 'hint',
+  shortNameMessage,
+  shortNameMessageTone = 'hint',
   onName,
   onShortName,
   onLogo,
@@ -787,6 +1028,10 @@ function IdentityFields({
   primaryColor: string
   secondaryColor: string
   disabled: boolean
+  nameMessage?: string
+  nameMessageTone?: FieldMessageTone
+  shortNameMessage?: string
+  shortNameMessageTone?: FieldMessageTone
   onName: (value: string) => void
   onShortName: (value: string) => void
   onLogo: (value: string | null) => void
@@ -806,6 +1051,8 @@ function IdentityFields({
         htmlFor={nameId}
         required
         counter={`${name.length}/100`}
+        message={nameMessage}
+        messageTone={nameMessageTone}
       >
         <TextInput
           id={nameId}
@@ -814,6 +1061,7 @@ function IdentityFields({
           required
           disabled={disabled}
           allowClear
+          invalid={nameMessageTone === 'error' && Boolean(nameMessage)}
           placeholder={t('newEntryPlaceholder')}
           onChange={(event) => onName(event.target.value)}
         />
@@ -821,14 +1069,22 @@ function IdentityFields({
       <Field
         label={t('shortName')}
         htmlFor={shortId}
-        counter={`${shortName.length}/20`}
+        required
+        width="sm"
+        counter={`${shortName.length}/${SHORT_NAME_MAX_LENGTH}`}
+        message={shortNameMessage}
+        messageTone={shortNameMessageTone}
       >
         <TextInput
           id={shortId}
           value={shortName}
-          maxLength={20}
+          maxLength={SHORT_NAME_MAX_LENGTH}
+          required
           disabled={disabled}
           allowClear
+          invalid={
+            shortNameMessageTone === 'error' && Boolean(shortNameMessage)
+          }
           onChange={(event) => onShortName(event.target.value)}
         />
       </Field>

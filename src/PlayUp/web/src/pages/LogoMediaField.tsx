@@ -79,10 +79,10 @@ export function LogoMediaField({
         name={name}
         value={previewUrl}
         primaryColor={primaryColor}
-        crestFallback={!previewUrl && !uploading}
+        crestFallback={false}
         uploading={uploading}
         disabled={disabled}
-        emptyLabel={label}
+        emptyLabel={t('logo.add')}
         removeLabel={t('logo.clear')}
         onChange={(nextUrl, file) => {
           void onUploadChange(nextUrl, file)

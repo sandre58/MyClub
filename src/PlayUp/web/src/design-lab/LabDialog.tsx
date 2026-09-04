@@ -77,9 +77,18 @@ export function LabDialog() {
         title="Nouvelle compétition"
         size="sm"
         footer={
-          <button type="submit" form={smFormId} className="ds-btn ds-btn--primary">
-            Créer
-          </button>
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              onClick={() => setSmOpen(false)}
+            >
+              Annuler
+            </button>
+            <button type="submit" form={smFormId} className="ds-btn ds-btn--primary">
+              Créer
+            </button>
+          </>
         }
       >
         <form
@@ -109,9 +118,18 @@ export function LabDialog() {
         title="Configurer la structure"
         size="md"
         footer={
-          <button type="submit" form={mdFormId} className="ds-btn ds-btn--primary">
-            Enregistrer
-          </button>
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              onClick={() => setMdOpen(false)}
+            >
+              Annuler
+            </button>
+            <button type="submit" form={mdFormId} className="ds-btn ds-btn--primary">
+              Enregistrer
+            </button>
+          </>
         }
       >
         <form

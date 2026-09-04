@@ -299,7 +299,7 @@
 }
 
 .teams-tile[data-withdrawn="true"] .teams-tile__figure {
-  opacity: 0.68;
+  opacity: 0.40;
 }
 
 .teams-tile__figure {

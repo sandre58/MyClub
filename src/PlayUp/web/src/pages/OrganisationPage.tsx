@@ -18,6 +18,7 @@ import { Dialog } from '../design-system/components/Dialog'
 import { Field } from '../design-system/components/Field'
 import { TextInput } from '../design-system/components/TextInput'
 import { LogoMediaField } from './LogoMediaField'
+import { SHORT_NAME_MAX_LENGTH } from './deriveShortName'
 import {
   CheckIcon,
   RegulationIcon,
@@ -248,12 +249,13 @@ function IdentitySection({ data }: { data: OrganisationView }) {
           <Field
             label={t('identity.shortName')}
             htmlFor={shortNameId}
-            counter={`${shortName.length}/20`}
+            width="sm"
+            counter={`${shortName.length}/${SHORT_NAME_MAX_LENGTH}`}
           >
             <TextInput
               id={shortNameId}
               value={shortName}
-              maxLength={20}
+              maxLength={SHORT_NAME_MAX_LENGTH}
               disabled={presentationMutation.isPending}
               allowClear
               onChange={(event) => setShortName(event.target.value)}
@@ -663,18 +665,28 @@ function RegulationEditorDialog({
       closeDisabled={mutation.isPending}
       size="md"
       footer={
-        <button
-          type="submit"
-          form={formId}
-          className="ds-btn ds-btn--primary"
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? (
-            <PendingLabel>{t('regulation.saving')}</PendingLabel>
-          ) : (
-            t('regulation.save')
-          )}
-        </button>
+        <>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            disabled={mutation.isPending}
+            onClick={onClose}
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="submit"
+            form={formId}
+            className="ds-btn ds-btn--primary"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              <PendingLabel>{t('regulation.saving')}</PendingLabel>
+            ) : (
+              t('regulation.save')
+            )}
+          </button>
+        </>
       }
     >
       <form
@@ -1025,18 +1037,28 @@ function StructureEditorDialog({
       closeDisabled={mutation.isPending}
       size="md"
       footer={
-        <button
-          type="submit"
-          form={formId}
-          className="ds-btn ds-btn--primary"
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? (
-            <PendingLabel>{t('structure.configuring')}</PendingLabel>
-          ) : (
-            t('structure.configure')
-          )}
-        </button>
+        <>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            disabled={mutation.isPending}
+            onClick={onClose}
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="submit"
+            form={formId}
+            className="ds-btn ds-btn--primary"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              <PendingLabel>{t('structure.configuring')}</PendingLabel>
+            ) : (
+              t('structure.configure')
+            )}
+          </button>
+        </>
       }
     >
       <form

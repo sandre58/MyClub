@@ -195,7 +195,7 @@ export function LabForm() {
               <Upload
                 name="Empty"
                 value={null}
-                emptyLabel="Logo"
+                emptyLabel="Image"
                 onChange={() => undefined}
               />
               <figcaption>Vide</figcaption>
@@ -206,7 +206,7 @@ export function LabForm() {
                 value={null}
                 crestFallback
                 primaryColor="#001F5B"
-                emptyLabel="Logo"
+                emptyLabel="Image"
                 onChange={() => undefined}
               />
               <figcaption>Rempli (crest)</figcaption>
@@ -218,7 +218,7 @@ export function LabForm() {
                 crestFallback
                 primaryColor="#001F5B"
                 uploading
-                emptyLabel="Logo"
+                emptyLabel="Image"
                 onChange={() => undefined}
               />
               <figcaption>Loading</figcaption>
@@ -227,7 +227,7 @@ export function LabForm() {
               <Upload
                 name="Interactif"
                 value={demoUploadUrl}
-                emptyLabel="Logo"
+                emptyLabel="Image"
                 onChange={(next) => {
                   setDemoUploadUrl((prev) => {
                     if (prev) {
@@ -312,12 +312,12 @@ export function LabForm() {
               label="Nom court"
               htmlFor={shortId}
               required
-              counter={`${shortName.length}/20`}
+              counter={`${shortName.length}/5`}
             >
               <TextInput
                 id={shortId}
                 value={shortName}
-                maxLength={20}
+                maxLength={5}
                 required
                 allowClear
                 onChange={(event) => setShortName(event.target.value)}
@@ -329,7 +329,7 @@ export function LabForm() {
                 value={logoUrl}
                 primaryColor={primary || null}
                 uploading={logoUploading}
-                emptyLabel="Logo"
+                emptyLabel="Image"
                 onChange={onLogoChange}
               />
             </Field>

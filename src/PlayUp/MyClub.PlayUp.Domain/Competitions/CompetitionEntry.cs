@@ -41,7 +41,7 @@ public sealed class CompetitionEntry : Entity<EntryId>
     public string DisplayName { get; private set; }
 
     /// <summary>
-    /// Gets the optional abbreviated name.
+    /// Gets the abbreviated name (required after add / presentation update).
     /// </summary>
     public ShortName? ShortName { get; private set; }
 
