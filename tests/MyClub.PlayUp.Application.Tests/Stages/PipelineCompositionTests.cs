@@ -320,7 +320,7 @@ public sealed class PipelineCompositionTests
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         foreach (var key in slotKeys)
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         return stage;

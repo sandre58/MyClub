@@ -71,7 +71,7 @@ public sealed class ConsultationAssemblerTests
         competition.AddEntry(TeamId.New(), "B", _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
         var view = ConsultationAssembler.Assemble(

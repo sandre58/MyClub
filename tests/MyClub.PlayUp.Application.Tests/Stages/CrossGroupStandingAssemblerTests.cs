@@ -207,6 +207,14 @@ public sealed class CrossGroupStandingAssemblerTests
                 points: 0))
         ]);
 
+    private static void Assign(Stage stage, GroupId groupId, EntryId[] entries)
+    {
+        foreach (var entry in entries)
+        {
+            stage.AssignEntryToGroup(groupId, entry);
+        }
+    }
+
     private static EntryId[] CreateEntries(int count) =>
         [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
@@ -239,14 +247,6 @@ public sealed class CrossGroupStandingAssemblerTests
         };
 
         return (stage, [groupA, groupB], thirds, standings, matches);
-    }
-
-    private void Assign(Stage stage, GroupId groupId, EntryId[] entries)
-    {
-        foreach (var entry in entries)
-        {
-            stage.AssignEntryToGroup(groupId, entry);
-        }
     }
 
     private Stage CreateLeagueStage(CompetitionId competitionId) =>

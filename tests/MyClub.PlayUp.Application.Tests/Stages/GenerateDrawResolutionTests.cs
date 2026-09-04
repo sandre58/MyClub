@@ -26,7 +26,7 @@ public sealed class GenerateDrawResolutionTests
         var entries = NewEntries(4);
         foreach (var key in new[] { "QF1", "QF2", "QF3", "QF4" })
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -88,7 +88,7 @@ public sealed class GenerateDrawResolutionTests
     public void Execute_rejects_published_draw()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
@@ -108,8 +108,8 @@ public sealed class GenerateDrawResolutionTests
     public void Execute_invalid_request_does_not_mark_no_solution()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
-        stage.AddSlot("B", _clock);
+        stage.AddSlot("A");
+        stage.AddSlot("B");
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(NewEntries(2)));
 
@@ -129,7 +129,7 @@ public sealed class GenerateDrawResolutionTests
     public void Execute_rejects_slot_target_missing_on_stage()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(NewEntries(2)));
 
@@ -152,7 +152,7 @@ public sealed class GenerateDrawResolutionTests
         var entries = NewEntries(4);
         foreach (var key in new[] { "S1", "S2", "S3", "S4" })
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -406,7 +406,7 @@ public sealed class GenerateDrawResolutionTests
             _clock);
         foreach (var key in new[] { "A", "B" })
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -524,7 +524,7 @@ public sealed class GenerateDrawResolutionTests
     {
         foreach (var key in targets)
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);

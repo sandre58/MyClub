@@ -296,7 +296,7 @@ public sealed class QualificationRulesTests
             SampleRegulations.Standard(),
             clock);
         stage.AddRound("Final", clock);
-        stage.AddSlot("A1", clock);
+        stage.AddSlot("A1");
 
         var act = () => stage.ReplaceQualificationRules(
             new QualificationRules(
@@ -322,7 +322,7 @@ public sealed class QualificationRulesTests
             SampleRegulations.Standard(),
             clock);
         stage.AddRound("Final", clock);
-        stage.AddSlot("Champ", clock);
+        stage.AddSlot("Champ");
 
         stage.ReplaceQualificationRules(
             new QualificationRules(
@@ -350,8 +350,8 @@ public sealed class QualificationRulesTests
             SampleRegulations.Standard(),
             clock);
         stage.AddRound("Final", clock);
-        stage.AddSlot("Champ", clock);
-        stage.AssignEntryToSlot("Champ", EntryId.New(), clock);
+        stage.AddSlot("Champ");
+        stage.AssignEntryToSlot("Champ", EntryId.New());
 
         var act = () => stage.ReplaceQualificationRules(
             new QualificationRules(
@@ -377,7 +377,7 @@ public sealed class QualificationRulesTests
             SampleRegulations.Standard(),
             clock);
         stage.AddRound("Final", clock);
-        stage.AddSlot("Champ", clock);
+        stage.AddSlot("Champ");
         stage.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -389,7 +389,7 @@ public sealed class QualificationRulesTests
             ]),
             clock);
 
-        var act = () => stage.AssignEntryToSlot("Champ", EntryId.New(), clock);
+        var act = () => stage.AssignEntryToSlot("Champ", EntryId.New());
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
     }
@@ -405,7 +405,7 @@ public sealed class QualificationRulesTests
             clock);
         var round = stage.AddRound("SF", clock);
         var fixture = stage.AddFixture(round.Id, clock);
-        stage.AddSlot("Final-A", clock);
+        stage.AddSlot("Final-A");
 
         // Progression first (write-time blocks Direct conflict only, not Qual vs Prog).
         stage.ReplaceProgressionRules(

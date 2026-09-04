@@ -40,7 +40,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
         + $"(database name must end with '{DevDatabaseGuard.RequiredDatabaseNameSuffix}').");
 }
 
-DevDatabaseGuard.ValidateForDestructiveUse(connectionString, environmentName: "Development");
+DevDatabaseGuard.ValidateForDestructiveUse(connectionString);
 
 var mediaConnectionString = configuration.GetConnectionString("Media") ?? connectionString;
 

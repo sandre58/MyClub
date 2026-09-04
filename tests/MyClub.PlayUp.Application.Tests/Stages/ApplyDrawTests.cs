@@ -37,7 +37,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         var entry = EntryId.New();
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
             draw.Id,
@@ -75,7 +75,7 @@ public sealed class ApplyDrawTests
     public void Execute_rejects_not_resolved_draw()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
         stage.ClearDomainEvents();
@@ -93,7 +93,7 @@ public sealed class ApplyDrawTests
     public void Execute_rejects_no_solution_draw()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
         stage.MarkDrawNoSolution(draw.Id, _clock);
@@ -245,7 +245,7 @@ public sealed class ApplyDrawTests
             DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "Missing")]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
@@ -262,7 +262,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         var (draw, entry) = PublishSlotDraw(stage, "A");
         var direct = EntryId.New();
-        stage.AssignEntryToSlot("A", direct, _clock);
+        stage.AssignEntryToSlot("A", direct);
         stage.ClearDomainEvents();
 
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
@@ -278,8 +278,8 @@ public sealed class ApplyDrawTests
     public void Execute_slot_preflight_failure_mutates_nothing_on_second_slot()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
-        stage.AddSlot("B", _clock);
+        stage.AddSlot("A");
+        stage.AddSlot("B");
         var e1 = EntryId.New();
         var e2 = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -800,7 +800,7 @@ public sealed class ApplyDrawTests
 
     private (Draw Draw, EntryId Entry) PublishSlotDraw(Stage stage, string slotKey)
     {
-        stage.AddSlot(slotKey, _clock);
+        stage.AddSlot(slotKey);
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));

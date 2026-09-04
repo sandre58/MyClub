@@ -105,13 +105,13 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
 
         var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        quarter.AddSlot("QF1-A", _clock);
-        quarter.AddSlot("QF1-B", _clock);
+        quarter.AddSlot("QF1-A");
+        quarter.AddSlot("QF1-B");
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        semi.AddSlot("SF1-A", _clock);
-        semi.AddSlot("SF1-B", _clock);
+        semi.AddSlot("SF1-A");
+        semi.AddSlot("SF1-B");
 
         competition.AddStage(quarter.Id, _clock);
         competition.AddStage(semi.Id, _clock);

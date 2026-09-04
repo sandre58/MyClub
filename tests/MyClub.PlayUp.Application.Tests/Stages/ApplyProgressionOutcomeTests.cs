@@ -117,7 +117,7 @@ public sealed class ApplyProgressionOutcomeTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
         var home = EntryId.New();
         var away = EntryId.New();
@@ -233,7 +233,7 @@ public sealed class ApplyProgressionOutcomeTests
             "R1",
             new TieFormat(TieFormat.SingleLeg, false, penaltyShootoutRule: new PenaltyShootoutRule()),
             _clock);
-        source.AddSlot("SF1-A", _clock);
+        source.AddSlot("SF1-A");
         var home = EntryId.New();
         var away = EntryId.New();
         var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
@@ -500,7 +500,7 @@ public sealed class ApplyProgressionOutcomeTests
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
         var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
         var directEntry = EntryId.New();
-        destination.AssignEntryToSlot("SF1-A", directEntry, _clock);
+        destination.AssignEntryToSlot("SF1-A", directEntry);
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(source, home, away, 2, 1);
@@ -636,7 +636,7 @@ public sealed class ApplyProgressionOutcomeTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("R1", tieFormat: null, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(stage, home, away, homeGoals: 1, awayGoals: 0);
@@ -666,7 +666,7 @@ public sealed class ApplyProgressionOutcomeTests
             SampleRegulations.Standard(),
             _clock);
         var matchday = stage.AddMatchday(1, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var fixture = stage.AddFixture(matchday.Id, _clock);
         var home = EntryId.New();
         var away = EntryId.New();
@@ -750,7 +750,7 @@ public sealed class ApplyProgressionOutcomeTests
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         foreach (var key in slotKeys)
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         return stage;

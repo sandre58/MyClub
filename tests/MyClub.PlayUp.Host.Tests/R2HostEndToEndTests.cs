@@ -312,8 +312,8 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        semi.AddSlot("SF1-A", _clock);
-        semi.AddSlot("SF1-B", _clock);
+        semi.AddSlot("SF1-A");
+        semi.AddSlot("SF1-B");
 
         competition.AddStage(quarter.Id, _clock);
         competition.AddStage(semi.Id, _clock);

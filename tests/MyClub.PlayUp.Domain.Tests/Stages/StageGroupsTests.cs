@@ -103,7 +103,7 @@ public sealed class StageGroupsTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.RemoveEntryFromGroup(group.Id, entryId, _clock);
+        stage.RemoveEntryFromGroup(group.Id, entryId);
 
         // Assert
         group.EntryIds.Should().NotContain(entryId);
@@ -118,7 +118,7 @@ public sealed class StageGroupsTests
         var group = stage.AddGroup("A", _clock);
 
         // Act
-        var act = () => stage.RemoveEntryFromGroup(group.Id, EntryId.New(), _clock);
+        var act = () => stage.RemoveEntryFromGroup(group.Id, EntryId.New());
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.EntryNotFound);
@@ -137,7 +137,7 @@ public sealed class StageGroupsTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.ArrangeGroups([b.Id, a.Id], _clock);
+        stage.ArrangeGroups([b.Id, a.Id]);
 
         // Assert
         stage.Groups.Select(g => g.Id).Should().Equal(b.Id, a.Id);
@@ -154,7 +154,7 @@ public sealed class StageGroupsTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.ArrangeGroups(order, _clock);
+        stage.ArrangeGroups(order);
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);
@@ -169,7 +169,7 @@ public sealed class StageGroupsTests
         var a = stage.AddGroup("A", _clock);
 
         // Act
-        var act = () => stage.ArrangeGroups([a.Id, GroupId.New()], _clock);
+        var act = () => stage.ArrangeGroups([a.Id, GroupId.New()]);
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidOrder);
@@ -215,9 +215,9 @@ public sealed class StageGroupsTests
         var r2 = cup.AddRound("SF", _clock);
         cup.Prepare(_clock);
         cup.ClearDomainEvents();
-        cup.ArrangeRounds([r1.Id, r2.Id], _clock);
+        cup.ArrangeRounds([r1.Id, r2.Id]);
         cup.Status.Should().Be(StageStatus.Ready);
-        cup.ArrangeRounds([r2.Id, r1.Id], _clock);
+        cup.ArrangeRounds([r2.Id, r1.Id]);
         cup.Status.Should().Be(StageStatus.Draft);
 
         // Arrange — matchdays
@@ -226,9 +226,9 @@ public sealed class StageGroupsTests
         var m2 = league.AddMatchday(2, _clock);
         league.Prepare(_clock);
         league.ClearDomainEvents();
-        league.ArrangeMatchdays([m1.Id, m2.Id], _clock);
+        league.ArrangeMatchdays([m1.Id, m2.Id]);
         league.Status.Should().Be(StageStatus.Ready);
-        league.ArrangeMatchdays([m2.Id, m1.Id], _clock);
+        league.ArrangeMatchdays([m2.Id, m1.Id]);
         league.Status.Should().Be(StageStatus.Draft);
         league.Matchdays.Select(m => m.Id).Should().Equal(m2.Id, m1.Id);
     }

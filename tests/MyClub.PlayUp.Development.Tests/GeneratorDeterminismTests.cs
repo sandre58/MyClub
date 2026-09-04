@@ -22,7 +22,7 @@ public sealed class GeneratorDeterminismTests
 
         for (var i = 0; i < 8; i++)
         {
-            TeamNameGenerator.Create(e1, i).Should().Be(TeamNameGenerator.Create(e2, i));
+            TeamNameGenerator.Create(i).Should().Be(TeamNameGenerator.Create(i));
             ScoreGenerator.Create(e1).Should().Be(ScoreGenerator.Create(e2));
         }
     }

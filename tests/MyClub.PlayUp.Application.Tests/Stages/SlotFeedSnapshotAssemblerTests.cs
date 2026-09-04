@@ -25,7 +25,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
-        target.AddSlot("SF1-A", _clock);
+        target.AddSlot("SF1-A");
 
         source.ReplaceQualificationRules(
             new QualificationRules(
@@ -53,7 +53,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
-        target.AddSlot("SF1-A", _clock);
+        target.AddSlot("SF1-A");
 
         source.ReplaceQualificationRules(
             new QualificationRules(
@@ -83,7 +83,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var round = source.AddRound("QF", _clock);
         var fixture = source.AddFixture(round.Id, _clock);
         target.AddRound("SF", _clock);
-        target.AddSlot("SF1-A", _clock);
+        target.AddSlot("SF1-A");
 
         source.ReplaceProgressionRules(
             new ProgressionRules(
@@ -109,7 +109,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
-        target.AddSlot("SF1-A", _clock);
+        target.AddSlot("SF1-A");
 
         source.ReplaceQualificationRules(
             new QualificationRules(
@@ -135,7 +135,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var other = Stage.Create(competitionId, new StageName("A"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("B"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
-        target.AddSlot("SF1-A", _clock);
+        target.AddSlot("SF1-A");
 
         var act = () => SlotFeedSnapshotAssembler.Assemble(target, [other]);
 
@@ -148,7 +148,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
     {
         var competitionId = CompetitionId.New();
         var stage = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
@@ -172,9 +172,9 @@ public sealed class SlotFeedSnapshotAssemblerTests
     {
         var competitionId = CompetitionId.New();
         var stage = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var directEntry = EntryId.New();
-        stage.AssignEntryToSlot("SF1-A", directEntry, _clock);
+        stage.AssignEntryToSlot("SF1-A", directEntry);
         var drawEntry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([drawEntry]));

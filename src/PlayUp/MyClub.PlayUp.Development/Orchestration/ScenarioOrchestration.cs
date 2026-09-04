@@ -129,7 +129,6 @@ internal static class ScenarioOrchestration
     }
 
     public static void AssignGroupsRoundRobin(
-        ScenarioContext context,
         Stage stage,
         IReadOnlyList<CompetitionEntry> entries)
     {
@@ -413,7 +412,7 @@ internal static class ScenarioOrchestration
         semi.AddRound("Demi-finales", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
         foreach (var key in new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" })
         {
-            semi.AddSlot(key, context.Clock);
+            semi.AddSlot(key);
         }
 
         competition.AddStage(semi.Id, context.Clock);
@@ -861,7 +860,7 @@ internal static class ScenarioOrchestration
         Stage stage,
         IReadOnlyList<CompetitionEntry> entries)
     {
-        AssignGroupsRoundRobin(context, stage, entries);
+        AssignGroupsRoundRobin(stage, entries);
         return MaterializeGroupsMatches(context, competition, stage);
     }
 
@@ -882,7 +881,7 @@ internal static class ScenarioOrchestration
         stage.AddRound(roundName, new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
         foreach (var key in slotKeys)
         {
-            stage.AddSlot(key, context.Clock);
+            stage.AddSlot(key);
         }
 
         competition.AddStage(stage.Id, context.Clock);

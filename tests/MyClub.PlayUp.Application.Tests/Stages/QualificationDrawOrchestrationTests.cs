@@ -114,7 +114,7 @@ public sealed class QualificationDrawOrchestrationTests
         var stage = Stage.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
         foreach (var key in slotKeys)
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         return stage;

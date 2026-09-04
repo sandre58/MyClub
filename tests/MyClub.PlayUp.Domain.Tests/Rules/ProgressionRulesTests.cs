@@ -101,8 +101,8 @@ public sealed class ProgressionRulesTests
             _clock);
         var round = stage.AddRound("QF", _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
-        stage.AddSlot("SF1-A", _clock);
-        stage.AssignEntryToSlot("SF1-A", EntryId.New(), _clock);
+        stage.AddSlot("SF1-A");
+        stage.AssignEntryToSlot("SF1-A", EntryId.New());
 
         var rules = new ProgressionRules(
         [
@@ -184,7 +184,7 @@ public sealed class ProgressionRulesTests
             _clock);
         var round = stage.AddRound("QF", _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
         stage.ClearDomainEvents();

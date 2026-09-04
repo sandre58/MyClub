@@ -26,17 +26,9 @@ public static class DevDatabaseGuard
     /// that may be reset or seeded from DevRunner.
     /// </summary>
     /// <param name="connectionString">PostgreSQL connection string.</param>
-    /// <param name="environmentName">Logical environment name (must not be Production).</param>
-    public static void ValidateForDestructiveUse(string connectionString, string environmentName)
+    public static void ValidateForDestructiveUse(string connectionString)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
-        ArgumentException.ThrowIfNullOrWhiteSpace(environmentName);
-
-        if (string.Equals(environmentName, "Production", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                "DevRunner destructive operations are not allowed when environment is Production.");
-        }
 
         var builder = new NpgsqlConnectionStringBuilder(connectionString);
         var databaseName = builder.Database;

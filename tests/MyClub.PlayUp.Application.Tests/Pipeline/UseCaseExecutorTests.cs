@@ -187,7 +187,7 @@ public sealed class UseCaseExecutorTests
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        semi.AddSlot("SF1-A", _clock);
+        semi.AddSlot("SF1-A");
 
         competition.AddStage(quarter.Id, _clock);
         competition.AddStage(semi.Id, _clock);
@@ -737,7 +737,7 @@ public sealed class UseCaseExecutorTests
     private (Competition Competition, Stage Stage, DrawId DrawId) CreateReadyToPublishSlotDraw()
     {
         var scenario = CreateDraftChampionshipOnCompetition();
-        scenario.Stage.AddSlot("A", _clock);
+        scenario.Stage.AddSlot("A");
         var entry = EntryId.New();
         var draw = scenario.Stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         scenario.Stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
@@ -771,13 +771,13 @@ public sealed class UseCaseExecutorTests
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         source.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        source.AddSlot("QF1-A", _clock);
-        source.AddSlot("QF1-B", _clock);
+        source.AddSlot("QF1-A");
+        source.AddSlot("QF1-B");
 
         var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         destination.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        destination.AddSlot("SF1-A", _clock);
-        destination.AddSlot("SF1-B", _clock);
+        destination.AddSlot("SF1-A");
+        destination.AddSlot("SF1-B");
 
         competition.AddStage(source.Id, _clock);
         competition.AddStage(destination.Id, _clock);

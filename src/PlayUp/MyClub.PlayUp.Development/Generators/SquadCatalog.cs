@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using MyClub.PlayUp.Domain.Common;
@@ -115,6 +116,9 @@ public sealed class SquadCatalog
         return _byDisplayName.TryGetValue(displayName, out members!);
     }
 
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Used by Serialization")]
+    [SuppressMessage("ReSharper", "CollectionNeverUpdated.Local", Justification = "Bound from JSON")]
+    [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local", Justification = "Bound from JSON")]
     private sealed class SquadJson
     {
 #pragma warning disable CA2227 // Bound from JSON.

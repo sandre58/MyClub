@@ -111,45 +111,6 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         context.Set<Stage>().Add(stage);
     }
 
-    private async Task<Stage?> LoadByIdAsync(
-        StageId id,
-        StageLoadProfile profile,
-        bool trackChanges,
-        CancellationToken cancellationToken)
-    {
-        if (trackChanges)
-        {
-            var tracked = context.Set<Stage>().Local.FirstOrDefault(candidate => candidate.Id.Equals(id));
-            if (tracked is not null)
-            {
-                return tracked;
-            }
-        }
-
-        var root = context.Set<Stage>().AsQueryable();
-        if (!trackChanges)
-        {
-            root = root.AsNoTracking();
-        }
-
-        var query = ApplyReadShape(root.AsSplitQuery(), StageReadCapabilities.FromProfile(profile));
-        var stage = await query
-            .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (stage is null)
-        {
-            return null;
-        }
-
-        if (RequiresStructureHydration(StageReadCapabilities.FromProfile(profile)))
-        {
-            await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
-        }
-
-        return stage;
-    }
-
     private static bool RequiresStructureHydration(StageReadCapabilities capabilities) =>
         capabilities.Profile >= StageLoadProfile.Structure;
 
@@ -205,6 +166,45 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .Include(candidate => candidate.SwissByeHistory),
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null)
         };
+
+    private async Task<Stage?> LoadByIdAsync(
+        StageId id,
+        StageLoadProfile profile,
+        bool trackChanges,
+        CancellationToken cancellationToken)
+    {
+        if (trackChanges)
+        {
+            var tracked = context.Set<Stage>().Local.FirstOrDefault(candidate => candidate.Id.Equals(id));
+            if (tracked is not null)
+            {
+                return tracked;
+            }
+        }
+
+        var root = context.Set<Stage>().AsQueryable();
+        if (!trackChanges)
+        {
+            root = root.AsNoTracking();
+        }
+
+        var query = ApplyReadShape(root.AsSplitQuery(), StageReadCapabilities.FromProfile(profile));
+        var stage = await query
+            .SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (stage is null)
+        {
+            return null;
+        }
+
+        if (RequiresStructureHydration(StageReadCapabilities.FromProfile(profile)))
+        {
+            await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
+        }
+
+        return stage;
+    }
 
     private async Task HydrateOrderedCollectionsAsync(Stage stage, CancellationToken cancellationToken)
     {

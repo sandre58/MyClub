@@ -133,7 +133,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         competition.AddStage(league.Id, _clock);
 
         var terminal = Stage.Create(competition.Id, new StageName("Terminal"), SampleRegulations.Standard(), _clock);
-        terminal.AddSlot("Champ", _clock);
+        terminal.AddSlot("Champ");
         competition.AddStage(terminal.Id, _clock);
 
         league.ReplaceQualificationRules(
@@ -191,7 +191,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
         var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
@@ -232,7 +232,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
         var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);

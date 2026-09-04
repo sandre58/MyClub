@@ -218,17 +218,17 @@ public sealed class StagePersistenceTests
             stage.AssignEntryToGroup(group.Id, entryA);
             stage.AssignEntryToGroup(group.Id, entryB);
             stage.AddGroup("Group B", _clock);
-            stage.ArrangeGroups([stage.Groups[1].Id, stage.Groups[0].Id], _clock);
+            stage.ArrangeGroups([stage.Groups[1].Id, stage.Groups[0].Id]);
 
             var matchday = stage.AddMatchday(1, _clock);
             stage.AddMatchday(2, _clock);
-            stage.ArrangeMatchdays([stage.Matchdays[1].Id, stage.Matchdays[0].Id], _clock);
+            stage.ArrangeMatchdays([stage.Matchdays[1].Id, stage.Matchdays[0].Id]);
 
             var fixture = stage.AddFixture(matchday.Id, _clock);
             stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
 
-            stage.AddSlot("W1", _clock);
-            stage.AssignEntryToSlot("W1", entryA, _clock);
+            stage.AddSlot("W1");
+            stage.AssignEntryToSlot("W1", entryA);
 
             stageId = stage.Id;
             groupId = group.Id;
@@ -281,7 +281,7 @@ public sealed class StagePersistenceTests
             var repository = new StageRepository(context);
             var loaded = await repository.GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
-            loaded.ArrangeGroups([second, first], _clock);
+            loaded.ArrangeGroups([second, first]);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
             await ((IUnitOfWork)context).SaveChangesAsync();
         }

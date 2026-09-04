@@ -15,8 +15,7 @@ public sealed class DevDatabaseGuardTests
     public void Accepts_localhost_dev_database()
     {
         var act = () => DevDatabaseGuard.ValidateForDestructiveUse(
-            "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=x",
-            "Development");
+            "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=x");
 
         act.Should().NotThrow();
     }
@@ -25,8 +24,7 @@ public sealed class DevDatabaseGuardTests
     public void Rejects_database_without_required_suffix()
     {
         var act = () => DevDatabaseGuard.ValidateForDestructiveUse(
-            "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=x",
-            "Development");
+            "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=x");
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*_dev*");
@@ -36,8 +34,7 @@ public sealed class DevDatabaseGuardTests
     public void Rejects_non_local_host()
     {
         var act = () => DevDatabaseGuard.ValidateForDestructiveUse(
-            "Host=db.example.com;Port=5432;Database=myclub_dev;Username=myclub;Password=x",
-            "Development");
+            "Host=db.example.com;Port=5432;Database=myclub_dev;Username=myclub;Password=x");
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*local*");
@@ -47,8 +44,7 @@ public sealed class DevDatabaseGuardTests
     public void Rejects_production_environment()
     {
         var act = () => DevDatabaseGuard.ValidateForDestructiveUse(
-            "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=x",
-            "Production");
+            "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=x");
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*Production*");

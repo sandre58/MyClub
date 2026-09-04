@@ -106,7 +106,7 @@ public sealed class PublishDrawEndpointTests(HostPostgresFixture fixture)
         competitions.Add(competition);
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));

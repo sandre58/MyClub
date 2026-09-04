@@ -93,8 +93,8 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             ]);
 
         // Opaque slot keys must not participate in outcome derivation.
-        scenario.Stage.AddSlot("Consolante3", _clock);
-        scenario.Stage.AddSlot("ConsolanteMagic", _clock);
+        scenario.Stage.AddSlot("Consolante3");
+        scenario.Stage.AddSlot("ConsolanteMagic");
 
         FinishAllPlacementFixtures(scenario, homeAlwaysWins: true);
         CompleteCompetition(scenario);

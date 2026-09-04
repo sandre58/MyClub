@@ -39,8 +39,8 @@ public sealed class StageRuntimePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var stage = Stage.Create(CompetitionId.New(), new StageName("Cup"), SampleRegulations.Standard(), _clock);
-            stage.AddSlot("W1", _clock);
-            stage.AddSlot("W2", _clock);
+            stage.AddSlot("W1");
+            stage.AddSlot("W2");
             var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
             stage.ConfigureDrawInputs(draw.Id, inputs);
             stage.RecordDrawResolution(draw.Id, resolution, _clock);
@@ -155,8 +155,8 @@ public sealed class StageRuntimePersistenceTests
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var stage = Stage.Create(CompetitionId.New(), new StageName("Cup"), SampleRegulations.Standard(), _clock);
-            stage.AddSlot("W1", _clock);
-            stage.AddSlot("W2", _clock);
+            stage.AddSlot("W1");
+            stage.AddSlot("W2");
             var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
             stageId = stage.Id;
             drawId = draw.Id;

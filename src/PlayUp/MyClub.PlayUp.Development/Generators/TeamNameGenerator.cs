@@ -6,7 +6,6 @@
 
 using MyClub.PlayUp.Development.Datasets;
 using MyClub.PlayUp.Development.Recipes;
-using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Domain.Competitions;
 
 namespace MyClub.PlayUp.Development.Generators;
@@ -63,7 +62,6 @@ public static class TeamNameGenerator
     /// Generates or resolves a team display name.
     /// </summary>
     public static string Create(
-        DeterministicEntropy entropy,
         int index,
         TeamNameSource source = TeamNameSource.Generated,
         string? datasetKey = null,

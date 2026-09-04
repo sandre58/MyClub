@@ -1232,8 +1232,7 @@ public sealed class UseCaseExecutor(
                 (current, match) =>
                 [
                     .. current,
-                    new MatchSchedulingContext(match.Id, duration, home: MatchParticipantRef.Known(match.HomeEntryId),
-                        away: MatchParticipantRef.Known(match.AwayEntryId))
+                    new MatchSchedulingContext(match.Id, duration, home: MatchParticipantRef.Known(match.HomeEntryId), away: MatchParticipantRef.Known(match.AwayEntryId))
                 ]);
 
         var resources = resourceIds
@@ -1294,8 +1293,7 @@ public sealed class UseCaseExecutor(
             result.IsSuccess,
             result.IsNoSolution,
             result.IsInvalidRequest,
-            result.Schedule?.Assignments
-                .Select(a => new ScheduleAssignmentDto(a.MatchId.Value, a.Start, a.ResourceId.Value)).ToArray() ?? []);
+            result.Schedule?.Assignments.Select(a => new ScheduleAssignmentDto(a.MatchId.Value, a.Start, a.ResourceId.Value)).ToArray() ?? []);
 
     private static MatchId[] ResolveScheduleTargets(
         Stage stage,
@@ -1712,25 +1710,20 @@ public sealed class UseCaseExecutor(
     }
 
     private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageReadOnlyAsync(
-        IReadOnlyList<Stage> competitionStages,
+        List<Stage> competitionStages,
         MatchLoadProfile profile,
-        CancellationToken cancellationToken)
-    {
-        if (competitionStages.Count == 0)
-        {
-            return [];
-        }
-
-        return profile != MatchLoadProfile.Full
-            ? throw new ArgumentOutOfRangeException(
-                nameof(profile),
-                profile,
-                "CompetitionReadBundle currently supports Full match loads only.")
-            : await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken) =>
+        competitionStages.Count == 0
+            ? []
+            : profile != MatchLoadProfile.Full
+                ? throw new ArgumentOutOfRangeException(
+                    nameof(profile),
+                    profile,
+                    "CompetitionReadBundle currently supports Full match loads only.")
+                : await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false);
 
     private async Task<Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>> LoadSummaryRowsByStageReadOnlyAsync(
-        IReadOnlyList<Stage> competitionStages,
+        List<Stage> competitionStages,
         CancellationToken cancellationToken)
     {
         if (competitionStages.Count == 0)
@@ -1754,7 +1747,7 @@ public sealed class UseCaseExecutor(
     }
 
     private async Task<Dictionary<StageId, IReadOnlyList<MatchAttentionSlice>>> LoadAttentionSlicesByStageReadOnlyAsync(
-        IReadOnlyList<Stage> competitionStages,
+        List<Stage> competitionStages,
         CancellationToken cancellationToken)
     {
         if (competitionStages.Count == 0)
@@ -1778,7 +1771,7 @@ public sealed class UseCaseExecutor(
     }
 
     private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageReadOnlyAsync(
-        IReadOnlyList<Stage> competitionStages,
+        List<Stage> competitionStages,
         CancellationToken cancellationToken)
     {
         if (competitionStages.Count == 0)
@@ -1833,14 +1826,14 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken)
     {
         var spec = CompetitionReadBundleSpec.Attention;
-        var stages = await LoadCompetitionStagesReadOnlyAsync(
+        var competitionStages = await LoadCompetitionStagesReadOnlyAsync(
             competition,
             spec.StageCapabilities,
             cancellationToken).ConfigureAwait(false);
         var matchesByStage = await LoadAttentionSlicesByStageReadOnlyAsync(
-            stages,
+            competitionStages,
             cancellationToken).ConfigureAwait(false);
-        return new AttentionReadBundle(competition, stages, matchesByStage);
+        return new AttentionReadBundle(competition, competitionStages, matchesByStage);
     }
 
     private async Task<ConsultationReadBundle> LoadConsultationReadBundleAsync(
@@ -1861,13 +1854,13 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken)
     {
         var spec = CompetitionReadBundleSpec.Consultation;
-        var stages = await LoadCompetitionStagesReadOnlyAsync(
+        var competitionStages = await LoadCompetitionStagesReadOnlyAsync(
             competition,
             spec.StageCapabilities,
             cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadSummaryRowsByStageReadOnlyAsync(stages, cancellationToken)
+        var matchesByStage = await LoadSummaryRowsByStageReadOnlyAsync(competitionStages, cancellationToken)
             .ConfigureAwait(false);
-        return new ConsultationReadBundle(competition, stages, matchesByStage);
+        return new ConsultationReadBundle(competition, competitionStages, matchesByStage);
     }
 
     private async Task<OrganisationReadBundle> LoadOrganisationReadBundleAsync(
@@ -1875,7 +1868,7 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken)
     {
         var spec = CompetitionReadBundleSpec.Organisation;
-        var stages = await LoadCompetitionStagesReadOnlyAsync(
+        var competitionStagesReadOnly = await LoadCompetitionStagesReadOnlyAsync(
             competition,
             spec.StageCapabilities,
             cancellationToken).ConfigureAwait(false);
@@ -1884,7 +1877,7 @@ public sealed class UseCaseExecutor(
                 .ListSheetMemberRefsByCompetitionReadOnlyAsync(competition.Id, cancellationToken)
                 .ConfigureAwait(false)
             : throw new InvalidOperationException("Organisation bundle expects no match aggregate load.");
-        return new OrganisationReadBundle(competition, stages, sheetMemberRefs);
+        return new OrganisationReadBundle(competition, competitionStagesReadOnly, sheetMemberRefs);
     }
 
     private async Task<CompetitionReadBundle> LoadCompetitionReadBundleAsync(
@@ -1906,13 +1899,13 @@ public sealed class UseCaseExecutor(
         CompetitionReadBundleSpec spec,
         CancellationToken cancellationToken)
     {
-        var stages = await LoadCompetitionStagesReadOnlyAsync(
+        var competitionStages = await LoadCompetitionStagesReadOnlyAsync(
             competition,
             spec.StageCapabilities,
             cancellationToken).ConfigureAwait(false);
-        var matchesByStage = await LoadMatchesByStageReadOnlyAsync(stages, spec.MatchProfile, cancellationToken)
+        var matchesByStage = await LoadMatchesByStageReadOnlyAsync(competitionStages, spec.MatchProfile, cancellationToken)
             .ConfigureAwait(false);
-        return new CompetitionReadBundle(competition, stages, matchesByStage);
+        return new CompetitionReadBundle(competition, competitionStages, matchesByStage);
     }
 
     private async Task<List<Stage>> LoadCompetitionStagesForUpdateAsync(

@@ -22,7 +22,7 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
 
-        var slot = stage.AddSlot("QF1-A", _clock);
+        var slot = stage.AddSlot("QF1-A");
 
         slot.SlotKey.Should().Be("QF1-A");
         slot.EntryId.Should().BeNull();
@@ -34,7 +34,7 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
 
-        var act = () => stage.AddSlot("  ", _clock);
+        var act = () => stage.AddSlot("  ");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotKeyInvalid);
     }
@@ -43,9 +43,9 @@ public sealed class StageSlotsTests
     public void AddSlot_rejects_duplicate_key()
     {
         var stage = CreateCup();
-        stage.AddSlot("QF1-A", _clock);
+        stage.AddSlot("QF1-A");
 
-        var act = () => stage.AddSlot("QF1-A", _clock);
+        var act = () => stage.AddSlot("QF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DuplicateSlotKey);
     }
@@ -56,7 +56,7 @@ public sealed class StageSlotsTests
         var stage = CreateCup();
         var tooLong = new string('X', Slot.SlotKeyMaxLength + 1);
 
-        var act = () => stage.AddSlot(tooLong, _clock);
+        var act = () => stage.AddSlot(tooLong);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotKeyInvalid);
     }
@@ -65,10 +65,10 @@ public sealed class StageSlotsTests
     public void AssignEntryToSlot_writes_direct_and_entry()
     {
         var stage = CreateCup();
-        stage.AddSlot("QF1-A", _clock);
+        stage.AddSlot("QF1-A");
         var entryId = EntryId.New();
 
-        stage.AssignEntryToSlot("QF1-A", entryId, _clock);
+        stage.AssignEntryToSlot("QF1-A", entryId);
 
         stage.DirectAssignments.Should().ContainSingle()
             .Which.Should().Be(new DirectAssignment("QF1-A", entryId));
@@ -79,12 +79,12 @@ public sealed class StageSlotsTests
     public void AssignEntryToSlot_replaces_existing_direct()
     {
         var stage = CreateCup();
-        stage.AddSlot("QF1-A", _clock);
+        stage.AddSlot("QF1-A");
         var first = EntryId.New();
         var second = EntryId.New();
-        stage.AssignEntryToSlot("QF1-A", first, _clock);
+        stage.AssignEntryToSlot("QF1-A", first);
 
-        stage.AssignEntryToSlot("QF1-A", second, _clock);
+        stage.AssignEntryToSlot("QF1-A", second);
 
         stage.DirectAssignments.Should().ContainSingle().Which.EntryId.Should().Be(second);
         stage.FindSlot("QF1-A")!.EntryId.Should().Be(second);
@@ -94,12 +94,12 @@ public sealed class StageSlotsTests
     public void AssignEntryToSlot_rejects_duplicate_entry_on_another_slot()
     {
         var stage = CreateCup();
-        stage.AddSlot("A", _clock);
-        stage.AddSlot("B", _clock);
+        stage.AddSlot("A");
+        stage.AddSlot("B");
         var entryId = EntryId.New();
-        stage.AssignEntryToSlot("A", entryId, _clock);
+        stage.AssignEntryToSlot("A", entryId);
 
-        var act = () => stage.AssignEntryToSlot("B", entryId, _clock);
+        var act = () => stage.AssignEntryToSlot("B", entryId);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DuplicateEntry);
     }
@@ -109,7 +109,7 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         var round = stage.AddRound("QF", _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
@@ -121,7 +121,7 @@ public sealed class StageSlotsTests
             ]),
             _clock);
 
-        var act = () => stage.AssignEntryToSlot("SF1-A", EntryId.New(), _clock);
+        var act = () => stage.AssignEntryToSlot("SF1-A", EntryId.New());
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
     }
@@ -130,10 +130,10 @@ public sealed class StageSlotsTests
     public void ClearSlotAssignment_clears_direct_and_entry()
     {
         var stage = CreateCup();
-        stage.AddSlot("QF1-A", _clock);
-        stage.AssignEntryToSlot("QF1-A", EntryId.New(), _clock);
+        stage.AddSlot("QF1-A");
+        stage.AssignEntryToSlot("QF1-A", EntryId.New());
 
-        stage.ClearSlotAssignment("QF1-A", _clock);
+        stage.ClearSlotAssignment("QF1-A");
 
         stage.DirectAssignments.Should().BeEmpty();
         stage.FindSlot("QF1-A")!.EntryId.Should().BeNull();
@@ -143,9 +143,9 @@ public sealed class StageSlotsTests
     public void ClearSlotAssignment_is_noop_when_no_direct_assignment()
     {
         var stage = CreateCup();
-        stage.AddSlot("QF1-A", _clock);
+        stage.AddSlot("QF1-A");
 
-        stage.ClearSlotAssignment("QF1-A", _clock);
+        stage.ClearSlotAssignment("QF1-A");
 
         stage.DirectAssignments.Should().BeEmpty();
         stage.FindSlot("QF1-A")!.EntryId.Should().BeNull();
@@ -155,10 +155,10 @@ public sealed class StageSlotsTests
     public void RemoveSlot_blocked_when_direct_assignment_exists()
     {
         var stage = CreateCup();
-        stage.AddSlot("QF1-A", _clock);
-        stage.AssignEntryToSlot("QF1-A", EntryId.New(), _clock);
+        stage.AddSlot("QF1-A");
+        stage.AssignEntryToSlot("QF1-A", EntryId.New());
 
-        var act = () => stage.RemoveSlot("QF1-A", _clock);
+        var act = () => stage.RemoveSlot("QF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotReferenced);
     }
@@ -169,7 +169,7 @@ public sealed class StageSlotsTests
         var stage = CreateCup();
         var round = stage.AddRound("QF", _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -180,7 +180,7 @@ public sealed class StageSlotsTests
             ]),
             _clock);
 
-        var act = () => stage.RemoveSlot("SF1-A", _clock);
+        var act = () => stage.RemoveSlot("SF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotReferenced);
     }
@@ -189,7 +189,7 @@ public sealed class StageSlotsTests
     public void RemoveSlot_blocked_when_referenced_by_local_qualification()
     {
         var stage = CreateCup();
-        stage.AddSlot("Champ", _clock);
+        stage.AddSlot("Champ");
         stage.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -201,7 +201,7 @@ public sealed class StageSlotsTests
             ]),
             _clock);
 
-        var act = () => stage.RemoveSlot("Champ", _clock);
+        var act = () => stage.RemoveSlot("Champ");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotReferenced);
     }
@@ -214,7 +214,7 @@ public sealed class StageSlotsTests
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
 
-        stage.AddSlot("QF1-A", _clock);
+        stage.AddSlot("QF1-A");
 
         stage.Status.Should().Be(StageStatus.Draft);
     }
@@ -227,7 +227,7 @@ public sealed class StageSlotsTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var act = () => stage.AddSlot("QF1-A", _clock);
+        var act = () => stage.AddSlot("QF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
     }

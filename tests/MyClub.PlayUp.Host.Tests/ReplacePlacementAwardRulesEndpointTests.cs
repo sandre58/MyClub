@@ -130,7 +130,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
         var stage = Stage.Create(competition.Id, new StageName("Final"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
         var addFixture = stage.AddFixture(round.Id, _clock);
-        stage.AddSlot("Unused", _clock);
+        stage.AddSlot("Unused");
         competition.AddStage(stage.Id, _clock);
 
         competitions.Add(competition);

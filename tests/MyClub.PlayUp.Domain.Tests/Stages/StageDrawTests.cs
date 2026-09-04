@@ -143,7 +143,7 @@ public sealed class StageDrawTests
     public void Fixed_slot_placements_do_not_create_DirectAssignment()
     {
         var stage = CreateStage();
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(
@@ -337,7 +337,7 @@ public sealed class StageDrawTests
     public void Single_slot_resolution_remains_a_valid_draw()
     {
         var stage = CreateStage();
-        stage.AddSlot("Only", _clock);
+        stage.AddSlot("Only");
         var entry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
@@ -378,7 +378,7 @@ public sealed class StageDrawTests
     {
         if (stage.FindSlot(slotKey) is null)
         {
-            stage.AddSlot(slotKey, _clock);
+            stage.AddSlot(slotKey);
         }
 
         var entry = EntryId.New();

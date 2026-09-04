@@ -23,7 +23,7 @@ public sealed class StageSlotLifecycleTests
         var stage = CreatePositionalKnockout();
         var qf = stage.Rounds[0];
         var fixture = stage.AddFixture(qf.Id, _clock, "QF1-A", "QF1-B");
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -69,8 +69,8 @@ public sealed class StageSlotLifecycleTests
     {
         var stage = CreatePositionalKnockout();
         stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
-        stage.AssignEntryToSlot("QF1-A", EntryId.New(), _clock);
-        stage.AssignEntryToSlot("QF1-B", EntryId.New(), _clock);
+        stage.AssignEntryToSlot("QF1-A", EntryId.New());
+        stage.AssignEntryToSlot("QF1-B", EntryId.New());
         stage.Prepare(_clock);
 
         stage.Start(_clock);
@@ -84,11 +84,11 @@ public sealed class StageSlotLifecycleTests
         var stage = CreatePositionalKnockout();
         stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
         var sf = stage.AddRound("SF", _clock);
-        stage.AddSlot("SF1-A", _clock);
-        stage.AddSlot("SF1-B", _clock);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
         stage.AddFixture(sf.Id, _clock, "SF1-A", "SF1-B");
-        stage.AssignEntryToSlot("SF1-A", EntryId.New(), _clock);
-        stage.AssignEntryToSlot("SF1-B", EntryId.New(), _clock);
+        stage.AssignEntryToSlot("SF1-A", EntryId.New());
+        stage.AssignEntryToSlot("SF1-B", EntryId.New());
         stage.Prepare(_clock);
 
         var act = () => stage.Start(_clock);
@@ -120,8 +120,8 @@ public sealed class StageSlotLifecycleTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("QF", _clock);
-        stage.AddSlot("QF1-A", _clock);
-        stage.AddSlot("QF1-B", _clock);
+        stage.AddSlot("QF1-A");
+        stage.AddSlot("QF1-B");
         return stage;
     }
 }

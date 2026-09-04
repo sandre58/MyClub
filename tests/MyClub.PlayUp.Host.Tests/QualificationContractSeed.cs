@@ -40,7 +40,7 @@ internal static class QualificationContractSeed
         competition.AddStage(league.Id, Clock);
 
         var terminal = Stage.Create(competition.Id, new StageName("Terminal"), SampleRegulations.Standard(), Clock);
-        terminal.AddSlot("Champ", Clock);
+        terminal.AddSlot("Champ");
         competition.AddStage(terminal.Id, Clock);
 
         league.ReplaceQualificationRules(

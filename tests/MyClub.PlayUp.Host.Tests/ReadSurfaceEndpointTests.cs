@@ -315,7 +315,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home.Id, away.Id]));
         stage.RecordDrawResolution(

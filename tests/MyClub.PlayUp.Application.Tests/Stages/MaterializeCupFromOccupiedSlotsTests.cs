@@ -237,8 +237,8 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         var home = EntryId.New();
         var away = EntryId.New();
         var qfRound = qf.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        qf.AddSlot("QF1-A", _clock);
-        qf.AddSlot("QF1-B", _clock);
+        qf.AddSlot("QF1-A");
+        qf.AddSlot("QF1-B");
         qf.ApplyResolvedEntry("QF1-A", home, _clock);
         qf.ApplyResolvedEntry("QF1-B", away, _clock);
         var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
@@ -281,10 +281,10 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
     {
         var stage = Stage.Create(competitionId, new StageName("SF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("Semi-Finals", tieFormat, _clock);
-        stage.AddSlot("SF1-A", _clock);
-        stage.AddSlot("SF1-B", _clock);
-        stage.AddSlot("SF2-A", _clock);
-        stage.AddSlot("SF2-B", _clock);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
+        stage.AddSlot("SF2-A");
+        stage.AddSlot("SF2-B");
         return stage;
     }
 }

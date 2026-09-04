@@ -230,15 +230,15 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             stage.AddGroup("B", _clock);
             stage.AssignEntryToGroup(groupA.Id, entryA);
             stage.AssignEntryToGroup(groupA.Id, entryB);
-            stage.ArrangeGroups([stage.Groups[1].Id, stage.Groups[0].Id], _clock);
+            stage.ArrangeGroups([stage.Groups[1].Id, stage.Groups[0].Id]);
 
             var matchday1 = stage.AddMatchday(1, _clock);
             stage.AddMatchday(2, _clock);
-            stage.ArrangeMatchdays([stage.Matchdays[1].Id, stage.Matchdays[0].Id], _clock);
+            stage.ArrangeMatchdays([stage.Matchdays[1].Id, stage.Matchdays[0].Id]);
 
             _ = stage.AddFixture(matchday1.Id, _clock);
-            stage.AddSlot("W1", _clock);
-            stage.AssignEntryToSlot("W1", entryA, _clock);
+            stage.AddSlot("W1");
+            stage.AssignEntryToSlot("W1", entryA);
 
             stageId = stage.Id;
             stages.Add(stage);
@@ -481,7 +481,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             stage.AssignEntryToGroup(group.Id, EntryId.New());
             stage.AddMatchday(1, _clock);
             stage.AddFixture(stage.Matchdays[0].Id, _clock);
-            stage.AddSlot("S1", _clock);
+            stage.AddSlot("S1");
             stageId = stage.Id;
             groupId = group.Id;
             stages.Add(stage);
@@ -605,7 +605,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             loaded.Groups.Select(group => group.Id).Should().Equal(first, second, third);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
-            loaded.ArrangeGroups([third, first, second], _clock);
+            loaded.ArrangeGroups([third, first, second]);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
             await unitOfWork.SaveChangesAsync();
@@ -655,7 +655,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             loaded.Should().NotBeNull();
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
-            loaded.ArrangeMatchdays([third, first, second], _clock);
+            loaded.ArrangeMatchdays([third, first, second]);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
             await unitOfWork.SaveChangesAsync();
@@ -706,7 +706,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             loaded.Should().NotBeNull();
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
-            loaded.ArrangeRounds([third, first, second], _clock);
+            loaded.ArrangeRounds([third, first, second]);
             context.Entry(loaded).State.Should().Be(EntityState.Unchanged);
 
             await unitOfWork.SaveChangesAsync();

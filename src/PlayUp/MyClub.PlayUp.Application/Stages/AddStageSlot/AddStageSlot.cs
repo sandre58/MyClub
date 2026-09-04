@@ -30,6 +30,6 @@ public static class AddStageSlot
             ? throw new ApplicationFailureException(
                 "Slot key must be non-empty.",
                 ApplicationErrorCodes.InvalidStructureIntent)
-            : stage.AddSlot(slotKey, clock);
+            : stage.AddSlot(slotKey);
     }
 }

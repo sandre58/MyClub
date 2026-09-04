@@ -79,7 +79,6 @@ public static class CompetitionDetailAssembler
         }
 
         return AssembleCore(competition, ordered);
-
     }
 
     private static CompetitionDetailDto AssembleCore(

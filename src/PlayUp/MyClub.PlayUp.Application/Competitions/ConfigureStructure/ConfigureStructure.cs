@@ -142,7 +142,7 @@ public static class ConfigureStructure
         stage.AddRound("Tour principal", clock);
         for (var index = 1; index <= bracketSize; index++)
         {
-            stage.AddSlot($"S{index}", clock);
+            stage.AddSlot($"S{index}");
         }
 
         stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), clock);
@@ -156,7 +156,7 @@ public static class ConfigureStructure
 
     private static void ClearStructure(Stage stage, IClock clock)
     {
-        stage.ClearSwissConfiguration(clock);
+        stage.ClearSwissConfiguration();
 
         foreach (var round in stage.Rounds.ToList())
         {
@@ -178,10 +178,10 @@ public static class ConfigureStructure
             if (stage.DirectAssignments.Any(a =>
                     string.Equals(a.SlotKey, slot.SlotKey, StringComparison.Ordinal)))
             {
-                stage.ClearSlotAssignment(slot.SlotKey, clock);
+                stage.ClearSlotAssignment(slot.SlotKey);
             }
 
-            stage.RemoveSlot(slot.SlotKey, clock);
+            stage.RemoveSlot(slot.SlotKey);
         }
 
         stage.ReplaceDrawRules(null, clock);

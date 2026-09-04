@@ -96,7 +96,7 @@ public sealed class NeedsAttentionAssemblerTests
         var away = competition.AddEntry(TeamId.New(), "Away", _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);

@@ -52,7 +52,7 @@ public static class ApplyDraw
         return draw.Kind switch
         {
             DrawResolutionKind.Slot => new ApplyDrawResult(ApplySlot(stage, draw, clock), []),
-            DrawResolutionKind.Group => new ApplyDrawResult(ApplyGroup(stage, draw, clock), []),
+            DrawResolutionKind.Group => new ApplyDrawResult(ApplyGroup(stage, draw), []),
             DrawResolutionKind.Pairing => new ApplyDrawResult(
                 [],
                 ApplyPairing(stage, draw, clock, pairingContext, knownMatches ?? [])),
@@ -148,8 +148,7 @@ public static class ApplyDraw
 
     private static IReadOnlyList<SlotAssignmentInstruction> ApplyGroup(
         Stage stage,
-        Draw draw,
-        IClock clock)
+        Draw draw)
     {
         if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {

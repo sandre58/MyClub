@@ -92,7 +92,7 @@ public sealed class ResolvePlacementAwardsTests
     public void ExecuteForFixture_is_pure_no_slot_mutation()
     {
         var (stage, fixtureId, winner, _, match) = CreateAwardStage(1, 2, 3, 1);
-        stage.AddSlot("Unused", _clock);
+        stage.AddSlot("Unused");
 
         var results = ResolvePlacementAwards.ExecuteForFixture(stage, fixtureId, [match]);
 

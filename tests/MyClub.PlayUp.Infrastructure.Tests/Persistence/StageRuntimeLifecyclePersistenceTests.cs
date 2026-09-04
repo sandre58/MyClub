@@ -53,8 +53,8 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
             var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
             competitions.Add(competition);
             var stage = Stage.Create(competition.Id, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
-            stage.AddSlot("SF1", _clock);
-            stage.AddSlot("SF2", _clock);
+            stage.AddSlot("SF1");
+            stage.AddSlot("SF2");
             var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
             stage.ConfigureDrawInputs(draw.Id, inputs);
             stage.RecordDrawResolution(draw.Id, resolution, _clock);

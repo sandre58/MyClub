@@ -64,7 +64,7 @@ public sealed class StageSwissTests
     public void SetSwissSettings_rejects_when_slots_present()
     {
         var stage = CreateDraft();
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
 
         var act = () => stage.SetSwissSettings(new SwissSettings(3));
 
@@ -96,7 +96,7 @@ public sealed class StageSwissTests
     {
         var stage = CreateSwiss(3);
 
-        var act = () => stage.AddSlot("SF1-A", _clock);
+        var act = () => stage.AddSlot("SF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidComposition);
     }

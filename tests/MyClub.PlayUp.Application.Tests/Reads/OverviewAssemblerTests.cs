@@ -311,7 +311,7 @@ public sealed class OverviewAssemblerTests
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var home = competition.AddEntry(TeamId.New(), "Home", _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home.Id]));
@@ -657,8 +657,8 @@ public sealed class OverviewAssemblerTests
             _clock).Stage;
         var sf = Stage.Create(competition.Id, new StageName("Semi-Finals"), SampleRegulations.Standard(), _clock);
         sf.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        sf.AddSlot("SF1-A", _clock);
-        sf.AddSlot("SF1-B", _clock);
+        sf.AddSlot("SF1-A");
+        sf.AddSlot("SF1-B");
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
         competition.AddStage(sf.Id, _clock);
@@ -749,8 +749,8 @@ public sealed class OverviewAssemblerTests
 
         var sf = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         sf.AddRound("SF", _clock);
-        sf.AddSlot("SF1-A", _clock);
-        sf.AddSlot("SF1-B", _clock);
+        sf.AddSlot("SF1-A");
+        sf.AddSlot("SF1-B");
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
         MaterializeCupFromOccupiedSlots.Execute(
@@ -782,8 +782,8 @@ public sealed class OverviewAssemblerTests
 
         var sf = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         sf.AddRound("SF", _clock);
-        sf.AddSlot("SF1-A", _clock);
-        sf.AddSlot("SF1-B", _clock);
+        sf.AddSlot("SF1-A");
+        sf.AddSlot("SF1-B");
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
@@ -1787,7 +1787,7 @@ public sealed class OverviewAssemblerTests
         var away = competition.AddEntry(TeamId.New(), "Away", _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);

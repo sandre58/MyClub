@@ -80,7 +80,7 @@ public sealed class StageStructureTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.RenameRound(round.Id, "Quarter-finals", _clock);
+        stage.RenameRound(round.Id, "Quarter-finals");
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);
@@ -98,7 +98,7 @@ public sealed class StageStructureTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.RenameRound(round.Id, "Final", _clock);
+        stage.RenameRound(round.Id, "Final");
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);
@@ -252,7 +252,7 @@ public sealed class StageStructureTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.RenameGroup(group.Id, group.Name, _clock);
+        stage.RenameGroup(group.Id, group.Name);
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);
@@ -268,7 +268,7 @@ public sealed class StageStructureTests
         stage.ClearDomainEvents();
 
         // Act
-        stage.RenameGroup(group.Id, "Group Z", _clock);
+        stage.RenameGroup(group.Id, "Group Z");
 
         // Assert
         stage.Status.Should().Be(StageStatus.Ready);

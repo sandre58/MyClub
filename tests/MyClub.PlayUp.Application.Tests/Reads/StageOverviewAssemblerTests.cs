@@ -29,8 +29,8 @@ public sealed class StageOverviewAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
-        stage.AddSlot("QF1-A", _clock);
-        stage.AddSlot("QF1-B", _clock);
+        stage.AddSlot("QF1-A");
+        stage.AddSlot("QF1-B");
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
 
         var overview = StageOverviewAssembler.Assemble(stage, competition);
@@ -61,9 +61,9 @@ public sealed class StageOverviewAssemblerTests
         var home = competition.AddEntry(TeamId.New(), "Alpha", _clock);
         var away = competition.AddEntry(TeamId.New(), "Beta", _clock);
         var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
-        stage.AddSlot("SF1-A", _clock);
-        stage.AddSlot("SF1-B", _clock);
-        stage.AssignEntryToSlot("SF1-A", home.Id, _clock);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
+        stage.AssignEntryToSlot("SF1-A", home.Id);
 
         var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home.Id, away.Id]));
@@ -91,7 +91,7 @@ public sealed class StageOverviewAssemblerTests
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var entry = competition.AddEntry(TeamId.New(), "Seeded", _clock);
         var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
-        stage.AddSlot("A", _clock);
+        stage.AddSlot("A");
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry.Id]));
         stage.RecordDrawResolution(
@@ -117,10 +117,10 @@ public sealed class StageOverviewAssemblerTests
         var d = competition.AddEntry(TeamId.New(), "Delta", _clock);
         var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("SF1-A", _clock);
-        stage.AddSlot("SF1-B", _clock);
-        stage.AddSlot("SF2-A", _clock);
-        stage.AddSlot("SF2-B", _clock);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
+        stage.AddSlot("SF2-A");
+        stage.AddSlot("SF2-B");
         stage.ApplyResolvedEntry("SF1-A", a.Id, _clock);
         stage.ApplyResolvedEntry("SF1-B", b.Id, _clock);
         stage.ApplyResolvedEntry("SF2-A", c.Id, _clock);

@@ -778,10 +778,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Clears Swiss Kind settings and bye history (Organisation reconfigure). Draft/Ready only.
     /// </summary>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void ClearSwissConfiguration(IClock clock)
+    public void ClearSwissConfiguration()
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
         _swissByeHistory.Clear();
         SwissSettings = null;
@@ -827,10 +825,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="name">The new name.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void RenameGroup(GroupId groupId, string name, IClock clock)
+    public void RenameGroup(GroupId groupId, string name)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
         GetGroup(groupId).Rename(name);
     }
@@ -867,10 +863,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void RemoveEntryFromGroup(GroupId groupId, EntryId entryId, IClock clock)
+    public void RemoveEntryFromGroup(GroupId groupId, EntryId entryId)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
 
         var group = GetGroup(groupId);
@@ -889,11 +883,9 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Adds a positional slot. Allowed in Draft or Ready; Ready is demoted to Draft.
     /// </summary>
     /// <param name="slotKey">Business slot key unique within the stage.</param>
-    /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created slot.</returns>
-    public Slot AddSlot(string slotKey, IClock clock)
+    public Slot AddSlot(string slotKey)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
         EnsureNotSwiss("Slots");
 
@@ -916,10 +908,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// local qualification, or fixture slots.
     /// </summary>
     /// <param name="slotKey">The slot key to remove.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void RemoveSlot(string slotKey, IClock clock)
+    public void RemoveSlot(string slotKey)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
 
         var key = Slot.NormalizeKey(slotKey);
@@ -951,10 +941,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Entry identity.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void AssignEntryToSlot(string slotKey, EntryId entryId, IClock clock)
+    public void AssignEntryToSlot(string slotKey, EntryId entryId)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
 
         var key = Slot.NormalizeKey(slotKey);
@@ -1003,10 +991,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Clears a direct assignment and the slot's resolved entry.
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void ClearSlotAssignment(string slotKey, IClock clock)
+    public void ClearSlotAssignment(string slotKey)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
 
         var key = Slot.NormalizeKey(slotKey);
@@ -1120,11 +1106,9 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Arranges groups in the given order. No-op when the order is unchanged.
     /// </summary>
     /// <param name="orderedGroupIds">A permutation of current group identities.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void ArrangeGroups(IReadOnlyList<GroupId> orderedGroupIds, IClock clock)
+    public void ArrangeGroups(IReadOnlyList<GroupId> orderedGroupIds)
     {
         ArgumentNullException.ThrowIfNull(orderedGroupIds);
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
         EnsurePermutation(orderedGroupIds, _groups.ConvertAll(g => g.Id));
 
@@ -1213,10 +1197,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="roundId">The round identity.</param>
     /// <param name="name">The new name.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void RenameRound(RoundId roundId, string name, IClock clock)
+    public void RenameRound(RoundId roundId, string name)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureDraftOrReady();
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
@@ -1228,11 +1210,9 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Arranges rounds in the given order. No-op when the order is unchanged.
     /// </summary>
     /// <param name="orderedRoundIds">A permutation of current round identities.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void ArrangeRounds(IReadOnlyList<RoundId> orderedRoundIds, IClock clock)
+    public void ArrangeRounds(IReadOnlyList<RoundId> orderedRoundIds)
     {
         ArgumentNullException.ThrowIfNull(orderedRoundIds);
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
         EnsurePermutation(orderedRoundIds, _rounds.ConvertAll(r => r.Id));
 
@@ -1293,11 +1273,9 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Arranges matchdays in the given order. No-op when the order is unchanged.
     /// </summary>
     /// <param name="orderedMatchdayIds">A permutation of current matchday identities.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void ArrangeMatchdays(IReadOnlyList<MatchdayId> orderedMatchdayIds, IClock clock)
+    public void ArrangeMatchdays(IReadOnlyList<MatchdayId> orderedMatchdayIds)
     {
         ArgumentNullException.ThrowIfNull(orderedMatchdayIds);
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
         EnsurePermutation(orderedMatchdayIds, _matchdays.ConvertAll(m => m.Id));
 
@@ -1371,10 +1349,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="fixtureId">The fixture identity.</param>
     /// <param name="slotAKey">Optional bracket slot A.</param>
     /// <param name="slotBKey">Optional bracket slot B.</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    public void ReplaceFixtureSlots(FixtureId fixtureId, string? slotAKey, string? slotBKey, IClock clock)
+    public void ReplaceFixtureSlots(FixtureId fixtureId, string? slotAKey, string? slotBKey)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
 
         var fixture = GetFixture(fixtureId);

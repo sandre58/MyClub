@@ -41,8 +41,8 @@ public sealed class PrepareStageTests
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
-        target.AddSlot("SF1-A", _clock);
-        target.AddSlot("SF1-B", _clock);
+        target.AddSlot("SF1-A");
+        target.AddSlot("SF1-B");
         source.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -75,7 +75,7 @@ public sealed class PrepareStageTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("QF", _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
 
         var act = () => PrepareStage.Execute(stage, [stage], _clock);
 
@@ -91,8 +91,8 @@ public sealed class PrepareStageTests
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
-        target.AddSlot("SF1-A", _clock);
-        target.AssignEntryToSlot("SF1-A", EntryId.New(), _clock);
+        target.AddSlot("SF1-A");
+        target.AssignEntryToSlot("SF1-A", EntryId.New());
         source.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -121,7 +121,7 @@ public sealed class PrepareStageTests
             _clock);
         var round = stage.AddRound("QuarterFinal", tieFormat: null, _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -151,7 +151,7 @@ public sealed class PrepareStageTests
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
-        stage.AddSlot("SF1-A", _clock);
+        stage.AddSlot("SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -196,8 +196,8 @@ public sealed class PrepareStageTests
             _clock);
         var fixture = source.AddFixture(round.Id, _clock);
         semi.AddRound("SF", _clock);
-        semi.AddSlot("SF1-A", _clock);
-        semi.AddSlot("SF1B", _clock);
+        semi.AddSlot("SF1-A");
+        semi.AddSlot("SF1B");
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -227,8 +227,8 @@ public sealed class PrepareStageTests
         groups.AssignEntryToGroup(group.Id, EntryId.New());
         groups.AddMatchday(1, _clock);
         semi.AddRound("SF", _clock);
-        semi.AddSlot("SF1-A", _clock);
-        semi.AddSlot("SF1B", _clock);
+        semi.AddSlot("SF1-A");
+        semi.AddSlot("SF1B");
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -319,7 +319,7 @@ public sealed class PrepareStageTests
             _clock);
         var fixture = source.AddFixture(round.Id, _clock);
         semi.AddRound("SF", _clock);
-        semi.AddSlot("SF1-A", _clock);
+        semi.AddSlot("SF1-A");
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -345,7 +345,7 @@ public sealed class PrepareStageTests
         groups.AssignEntryToGroup(group.Id, EntryId.New());
         groups.AddMatchday(1, _clock);
         semi.AddRound("SF", _clock);
-        semi.AddSlot("SF1-A", _clock);
+        semi.AddSlot("SF1-A");
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [

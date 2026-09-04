@@ -130,8 +130,8 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
 
             var league = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
             var terminal = Stage.Create(competition.Id, new StageName("Terminal"), SampleRegulations.Standard(), _clock);
-            terminal.AddSlot("Champ", _clock);
-            terminal.AddSlot("Europe1", _clock);
+            terminal.AddSlot("Champ");
+            terminal.AddSlot("Europe1");
             league.ReplaceQualificationRules(
                 new QualificationRules(
                 [
@@ -206,13 +206,13 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
 
             var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
             source.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-            source.AddSlot("QF1-A", _clock);
-            source.AddSlot("QF1-B", _clock);
+            source.AddSlot("QF1-A");
+            source.AddSlot("QF1-B");
 
             var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
             destination.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-            destination.AddSlot("SF1-A", _clock);
-            destination.AddSlot("SF1-B", _clock);
+            destination.AddSlot("SF1-A");
+            destination.AddSlot("SF1-B");
 
             var addFixture = source.AddFixture(source.Rounds[0].Id, _clock);
             fixtureId = addFixture.Id;

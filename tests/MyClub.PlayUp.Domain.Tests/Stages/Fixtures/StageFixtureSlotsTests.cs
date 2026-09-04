@@ -45,7 +45,7 @@ public sealed class StageFixtureSlotsTests
         var stage = CreateCupWithSlots();
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
 
-        stage.ReplaceFixtureSlots(fixture.Id, "QF1-A", "QF1-B", _clock);
+        stage.ReplaceFixtureSlots(fixture.Id, "QF1-A", "QF1-B");
 
         stage.GetFixture(fixture.Id).SlotAKey.Should().Be("QF1-A");
         stage.GetFixture(fixture.Id).SlotBKey.Should().Be("QF1-B");
@@ -59,7 +59,7 @@ public sealed class StageFixtureSlotsTests
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
 
-        stage.ReplaceFixtureSlots(fixture.Id, "QF1-A", "QF1-B", _clock);
+        stage.ReplaceFixtureSlots(fixture.Id, "QF1-A", "QF1-B");
 
         stage.Status.Should().Be(StageStatus.Draft);
     }
@@ -80,7 +80,7 @@ public sealed class StageFixtureSlotsTests
         var stage = CreateCupWithSlots();
         stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
 
-        var act = () => stage.RemoveSlot("QF1-A", _clock);
+        var act = () => stage.RemoveSlot("QF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotReferenced);
     }
@@ -93,8 +93,8 @@ public sealed class StageFixtureSlotsTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("QF", _clock);
-        stage.AddSlot("QF1-A", _clock);
-        stage.AddSlot("QF1-B", _clock);
+        stage.AddSlot("QF1-A");
+        stage.AddSlot("QF1-B");
         return stage;
     }
 }

@@ -89,7 +89,7 @@ public sealed class StageApplyResolvedEntryTests
     {
         var stage = CreateCupWithSlots("A");
         var directEntry = EntryId.New();
-        stage.AssignEntryToSlot("A", directEntry, _clock);
+        stage.AssignEntryToSlot("A", directEntry);
         var directSnapshot = stage.DirectAssignments.ToArray();
 
         var act = () => stage.ApplyResolvedEntry("A", EntryId.New(), _clock);
@@ -222,7 +222,7 @@ public sealed class StageApplyResolvedEntryTests
 
         foreach (var key in slotKeys)
         {
-            stage.AddSlot(key, _clock);
+            stage.AddSlot(key);
         }
 
         return stage;
