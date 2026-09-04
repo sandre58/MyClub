@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   FileText,
   Gauge,
   Settings,
@@ -123,6 +124,11 @@ export function ChevronRightIcon({ size, ...props }: ShellIconProps) {
 /** Split / menu — chevron down. */
 export function ChevronDownIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={ChevronDown} size={size} {...props} />
+}
+
+/** Stepper / expand — chevron up. */
+export function ChevronUpIcon({ size, ...props }: ShellIconProps) {
+  return <LucideIcon icon={ChevronUp} size={size} {...props} />
 }
 
 /** Situation mark — alert triangle (attention drawer rows). */

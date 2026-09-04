@@ -23,6 +23,13 @@ Search these before building anything new. Reference implementations live in
 | Status pill | `ds-status` tones (success/attention/error/info/neutral/live) | design system CSS |
 | `Dialog` | Overlay centré : titre, corps, footer actions | `design-system/components/Dialog.tsx` |
 | `Toaster` / `notify` | Feedback événement éphémère (bas-droit canvas) | `design-system/components/Toaster.tsx`, `toastStore.ts` |
+| `Alert` | Inline soft-fill + tone icon (Ant Alert–inspired) | `design-system/components/Alert.tsx` |
+| `Field` | Label + compteur + contrôle + message | `design-system/components/Field.tsx` |
+| `TextInput` | Coque input, icône G optionnelle | `design-system/components/TextInput.tsx` |
+| `InputNumber` | Coque input numérique + steppers Ant, clear optionnel | `design-system/components/InputNumber.tsx` |
+| `Select` | Coque input + liste déroulante, clear optionnel | `design-system/components/Select.tsx` |
+| `Upload` | Picture-card 1 fichier (crest / image, hover retirer, loading) | `design-system/components/Upload.tsx` |
+| `ColorPicker` | Trigger swatch+hex (+ Vider) ; popup HSV HEX/RGB/HSB + pipette | `design-system/components/ColorPicker.tsx` |
 | Attention drawer | Shell triage (latéral, sous chrome) — pas Dialog | `shell/AttentionDrawer.tsx` |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
 | Shell rail / header | Unified navy chrome + canvas workspace | `foundations/shell.css`, `shell/` |

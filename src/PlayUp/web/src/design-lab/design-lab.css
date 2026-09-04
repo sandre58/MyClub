@@ -436,6 +436,105 @@
   gap: var(--space-4);
 }
 
+/* ---------- Form board ---------- */
+
+.dlab-form-board {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+.dlab-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 64rem;
+}
+
+.dlab-form__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 42rem;
+}
+
+.dlab-form__title {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-form__lede {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.dlab-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.dlab-form__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16);
+}
+
+.dlab-form__panel--compose {
+  grid-column: 1 / -1;
+  max-width: 28rem;
+}
+
+.dlab-form__panel-title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-form__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.dlab-form__upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+}
+
+.dlab-form__specimen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.dlab-form__specimen figcaption {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.dlab-form__hint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.dlab-form__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .dlab-dialog {
   display: flex;
   flex-direction: column;

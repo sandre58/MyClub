@@ -3,9 +3,11 @@ import {
     CalendarPlus,
     Check,
     Clipboard,
+    Copy,
     Flag,
     Layers,
     Pencil,
+    Pipette,
     Plus,
     Trash2,
     UsersRound,
@@ -79,6 +81,16 @@ export function CreateMatchesIcon({ size, ...props }: OverviewIconProps) {
 /** Préparation (presse-papier) — playground / surfaces futures. */
 export function PreparationIcon({ size, ...props }: OverviewIconProps) {
   return <LucideIcon icon={Clipboard} size={size} {...props} />
+}
+
+/** Copier dans le presse-papiers. */
+export function CopyIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={Copy} size={size} {...props} />
+}
+
+/** Pipette — échantillonner une couleur à l’écran (EyeDropper). */
+export function PipetteIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={Pipette} size={size} {...props} />
 }
 
 /**

@@ -1,38 +1,63 @@
 /*
- * Feedback — notices, wait mark (page/region), spinner (buttons).
+ * Feedback — alerts/notices, wait mark (page/region), spinner (buttons).
  */
 
+/* Alert / notice — soft fill, tone icon, no thick rail (Ant Alert–inspired). */
+.ds-alert,
 .ds-notice {
     display: flex;
-    gap: var(--space-8);
+    align-items: flex-start;
+    gap: var(--space-12);
+    margin: 0;
     padding: var(--space-12) var(--space-16);
-    border: var(--border-width) solid var(--color-border);
-    border-inline-start-width: 3px;
+    border: none;
     border-radius: var(--radius-panel);
     background: var(--color-surface-secondary);
     color: var(--color-text-primary);
     font-size: var(--text-label);
+    line-height: var(--leading-normal);
 }
 
+.ds-alert__icon,
+.ds-notice__icon {
+    display: inline-flex;
+    flex: none;
+    margin-top: 0.1em;
+    color: var(--ds-alert-tone, var(--color-text-secondary));
+}
+
+.ds-alert__body,
+.ds-notice__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ds-alert--danger,
 .ds-notice--danger {
-    border-color: color-mix(in srgb, var(--color-error) 35%, var(--color-border));
-    border-inline-start-color: var(--color-error);
-    background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
-    color: var(--color-error);
+    --ds-alert-tone: var(--color-error);
+    background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
+    color: var(--color-text-primary);
 }
 
+.ds-alert--warning,
 .ds-notice--warning {
-    border-color: color-mix(in srgb, var(--color-attention) 35%, var(--color-border));
-    border-inline-start-color: var(--color-attention);
-    background: color-mix(in srgb, var(--color-attention) 8%, var(--color-surface));
-    color: var(--color-attention);
+    --ds-alert-tone: var(--color-attention);
+    background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
+    color: var(--color-text-primary);
 }
 
+.ds-alert--info,
 .ds-notice--info {
-    border-color: color-mix(in srgb, var(--color-info) 35%, var(--color-border));
-    border-inline-start-color: var(--color-info);
-    background: color-mix(in srgb, var(--color-info) 8%, var(--color-surface));
-    color: var(--color-info);
+    --ds-alert-tone: var(--color-info);
+    background: color-mix(in srgb, var(--color-info) 12%, var(--color-surface));
+    color: var(--color-text-primary);
+}
+
+.ds-alert--success,
+.ds-notice--success {
+    --ds-alert-tone: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+    color: var(--color-text-primary);
 }
 
 .ds-wait {
