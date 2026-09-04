@@ -11,7 +11,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { createCompetition, fetchCompetitions } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
+import { Field } from '../design-system/components/Field'
 import { HomeBrand } from '../design-system/components/HomeBrand'
+import { TextInput } from '../design-system/components/TextInput'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { ChevronRightIcon } from '../design-system/icons/shellIcons'
 import { PlusIcon } from '../design-system/icons/overviewIcons'
@@ -30,7 +32,6 @@ import {
   COMPETITION_NAME_MAX_LENGTH,
   type CompetitionListItem,
 } from '../types'
-import './home.css'
 
 /**
  * Accueil hub ops — hors Shell (`.ds-root` seul).
@@ -227,6 +228,7 @@ function CreateCompetitionDialog({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const formId = useId()
+  const nameId = useId()
   const [name, setName] = useState('')
 
   useEffect(() => {
@@ -277,7 +279,8 @@ function CreateCompetitionDialog({
     >
       <form
         id={formId}
-        className="accueil-dialog__form"
+        className="ds-form"
+        data-density="comfortable"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
           if (!canSubmit) {
@@ -286,9 +289,14 @@ function CreateCompetitionDialog({
           mutation.mutate()
         }}
       >
-        <label className="accueil-dialog__field">
-          {t('create.nameLabel')}
-          <input
+        <Field
+          label={t('create.nameLabel')}
+          htmlFor={nameId}
+          required
+          counter={`${name.length}/${COMPETITION_NAME_MAX_LENGTH}`}
+        >
+          <TextInput
+            id={nameId}
             value={name}
             onChange={(event) => setName(event.target.value)}
             disabled={mutation.isPending}
@@ -296,12 +304,11 @@ function CreateCompetitionDialog({
             maxLength={COMPETITION_NAME_MAX_LENGTH}
             required
             autoComplete="off"
+            allowClear
           />
-        </label>
+        </Field>
 
-        {mutation.isError != null && (
-          <MutationError error={mutation.error} />
-        )}
+        {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>
   )

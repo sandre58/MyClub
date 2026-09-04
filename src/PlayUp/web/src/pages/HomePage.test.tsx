@@ -205,8 +205,11 @@ describe('HomePage', () => {
     expect(
       within(dialog).getByRole('heading', { name: /Nouvelle compétition/i }),
     ).toBeInTheDocument()
+    expect(dialog.querySelector('.ds-form')).toBeInTheDocument()
+    expect(within(dialog).getByText('0/100')).toBeInTheDocument()
 
-    await user.type(within(dialog).getByLabelText(/^Nom$/i), 'Tournoi printemps')
+    await user.type(within(dialog).getByRole('textbox', { name: /Nom/i }), 'Tournoi printemps')
+    expect(within(dialog).getByText('17/100')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }))
 
     await waitFor(() => {
@@ -231,7 +234,7 @@ describe('HomePage', () => {
       await screen.findByRole('button', { name: /Créer une compétition/i }),
     )
     const dialog = await screen.findByRole('dialog')
-    await user.type(within(dialog).getByLabelText(/^Nom$/i), 'X')
+    await user.type(within(dialog).getByRole('textbox', { name: /Nom/i }), 'X')
     await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }))
 
     expect(await within(dialog).findByRole('alert')).toBeInTheDocument()
