@@ -21,8 +21,9 @@ Search these before building anything new. Reference implementations live in
 | Match Hero | Match object header, 3 states (scheduled/live/finished) | `design-system/components/MatchHero.tsx` |
 | `TeamCrest` | Team initials block | `design-system/TeamCrest.tsx` |
 | Status pill | `ds-status` tones (success/attention/error/info/neutral/live) | design system CSS |
+| `Dialog` | Overlay centré : titre, corps, footer actions | `design-system/components/Dialog.tsx` |
+| Attention drawer | Shell triage (latéral, sous chrome) — pas Dialog | `shell/AttentionDrawer.tsx` |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
-| Dialog / Drawer | Overlay level | existing shell components |
 | Shell rail / header | Unified navy chrome + canvas workspace | `foundations/shell.css`, `shell/` |
 | Attention row | Count + icon + label + action (D9 recipe) | `design-system/components/AttentionRow.tsx` |
 | Cycle line | Lifecycle progress (Préparation → … → Terminée) | `design-system/components/CycleLine.tsx` |

@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchNeedsAttention } from '../api'
 import { CloseIcon } from '../design-system/icons/shellIcons'
+import { useFocusTrap } from '../design-system/useFocusTrap'
 import { queryKeys } from '../queryKeys'
 import type { OverviewSituation } from '../types'
 import {
@@ -294,51 +295,4 @@ function AttentionDrawerGroup({
       </ul>
     </section>
   )
-}
-
-function useFocusTrap(
-  containerRef: RefObject<HTMLElement | null>,
-  active: boolean,
-) {
-  useEffect(() => {
-    if (!active || !containerRef.current) {
-      return
-    }
-
-    const container = containerRef.current
-
-    function getFocusableElements() {
-      return Array.from(
-        container.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
-        ),
-      )
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Tab') {
-        return
-      }
-
-      const focusable = getFocusableElements()
-      if (focusable.length === 0) {
-        return
-      }
-
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      const activeElement = document.activeElement
-
-      if (event.shiftKey && activeElement === first) {
-        event.preventDefault()
-        last.focus({ preventScroll: true })
-      } else if (!event.shiftKey && activeElement === last) {
-        event.preventDefault()
-        first.focus({ preventScroll: true })
-      }
-    }
-
-    container.addEventListener('keydown', onKeyDown)
-    return () => container.removeEventListener('keydown', onKeyDown)
-  }, [active, containerRef])
 }

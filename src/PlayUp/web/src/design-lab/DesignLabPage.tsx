@@ -25,6 +25,7 @@ import { LabHome } from './LabHome'
 import { LabMatches } from './LabMatches'
 import { LabMatchSheet } from './LabMatchSheet'
 import { LabStandings } from './LabStandings'
+import { LabDialog } from './LabDialog'
 import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait'
 import type { LabLifecycle } from './labData'
 
@@ -35,6 +36,7 @@ type LabView =
   | 'home-empty'
   | 'home-loading'
   | 'wait'
+  | 'dialog'
   | 'overview'
   | 'overview-loading'
   | 'matches'
@@ -62,6 +64,7 @@ export function DesignLabPage() {
   const isHome =
     view === 'home' || view === 'home-empty' || view === 'home-loading'
   const isWaitBoard = view === 'wait'
+  const isDialogBoard = view === 'dialog'
   const labCollapsed = chromeVp === 'phone' ? false : railCollapsed
 
   useEffect(() => {
@@ -141,6 +144,10 @@ export function DesignLabPage() {
 
       {isWaitBoard ? (
         <LabWait />
+      ) : isDialogBoard ? (
+        <main className="dlab-dialog-board ds-shell-workspace">
+          <LabDialog />
+        </main>
       ) : isHome ? (
         <LabHome
           empty={view === 'home-empty'}
@@ -205,6 +212,7 @@ const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'home-empty', label: 'Accueil vide' },
   { key: 'home-loading', label: 'Accueil chargement' },
   { key: 'wait', label: 'Attente' },
+  { key: 'dialog', label: 'Dialog' },
   { key: 'overview', label: "Vue d'ensemble" },
   { key: 'overview-loading', label: "Vue d'ensemble chargement" },
   { key: 'matches', label: 'Matchs' },

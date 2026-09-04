@@ -37,12 +37,16 @@ Content link ink is scoped to `.shell-main` (and `.ds-preview`) so chrome links 
 
 ## Still legacy (out of this foundations lot)
 
-- Global `src/index.css` (13.5 `.btn` / `.card` / `.page`)
 - Shared `ui.tsx` chrome (`PageHeader`, loading/empty notices) still on legacy classes
-- Unmigrated organizer pages (Home, Competitions, Stage, Match, …)
-- Hybrid pages that mix `ds-panel` with page-local shadows/chips
+- Unmigrated organizer pages that still mix page-local CSS with foundations
 
 Page migration is a **separate** lot after foundations are stable.
+
+## Dialog
+
+Canonical centered overlay: `design-system/components/Dialog.tsx` + `foundations/dialog.css`.
+Interactive demos: Design Lab surface **Dialog**, and FoundationsPlayground § Dialog.
+`AttentionDrawer` is Shell triage — do not reuse `Dialog` for it.
 
 ## Related
 

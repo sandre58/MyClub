@@ -6,6 +6,7 @@ import {
   type StatusTone,
   type StatusVariant,
 } from '../design-system/components/Status'
+import { Dialog } from '../design-system/components/Dialog'
 import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
 import { TrendIcon } from '../design-system/TrendIcon'
@@ -458,6 +459,8 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
+        <DialogPlaygroundSection />
+
         <section className="ds-section" aria-labelledby="section-d9">
           <p className="ds-section__kicker">D — Semantic states / D9</p>
           <h2 id="section-d9" className="ds-heading">
@@ -834,5 +837,49 @@ export function FoundationsPlayground() {
         </section>
       </main>
     </div>
+  )
+}
+
+function DialogPlaygroundSection() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <section className="ds-section" aria-labelledby="section-dialog">
+      <p className="ds-section__kicker">C2 — Dialog</p>
+      <h2 id="section-dialog" className="ds-heading">
+        Overlay centré (primitive)
+      </h2>
+      <p className="ds-meta">
+        Titre heading · Fermer icône · footer actions à droite · rythme sans
+        filet · sm 28 rem / md 36 rem. Démo interactive aussi dans le Design Lab
+        (surface Dialog).
+      </p>
+      <button
+        type="button"
+        className="ds-btn ds-btn--secondary"
+        onClick={() => setOpen(true)}
+      >
+        Ouvrir Dialog sm
+      </button>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Exemple Dialog"
+        size="sm"
+        footer={
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            onClick={() => setOpen(false)}
+          >
+            OK
+          </button>
+        }
+      >
+        <p className="ds-body">
+          Chrome DS — pas de window manager. AttentionDrawer reste à part.
+        </p>
+      </Dialog>
+    </section>
   )
 }

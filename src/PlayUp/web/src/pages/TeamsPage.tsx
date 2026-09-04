@@ -23,6 +23,7 @@ import {
   withdrawCompetitionEntries,
   withdrawCompetitionEntry,
 } from '../api'
+import { Dialog } from '../design-system/components/Dialog'
 import { LogoMediaField } from '../design-system/LogoMediaField'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { CloseIcon } from '../design-system/icons/shellIcons'
@@ -537,37 +538,50 @@ function TeamsView({
         </aside>
       </div>
 
-      {addOpen && (
-        <AddEntryDialog
-          data={data}
-          onClose={() => setAddOpen(false)}
-        />
-      )}
-      {identityEntry && (
-        <IdentityDialog
-          competitionId={data.competitionId}
-          entry={identityEntry}
-          onClose={() => setIdentityEntryId(null)}
-        />
-      )}
+      <AddEntryDialog
+        data={data}
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+      />
+      <IdentityDialog
+        competitionId={data.competitionId}
+        entry={identityEntry ?? null}
+        open={identityEntry != null}
+        onClose={() => setIdentityEntryId(null)}
+      />
     </div>
   )
 }
 
 function AddEntryDialog({
   data,
+  open,
   onClose,
 }: {
   data: OrganisationView
+  open: boolean
   onClose: () => void
 }) {
   const { t } = useTranslation('teams')
+  const { t: tCommon } = useTranslation('common')
   const queryClient = useQueryClient()
+  const formId = useId()
   const [displayName, setDisplayName] = useState('')
   const [shortName, setShortName] = useState('')
   const [logoMediaId, setLogoMediaId] = useState<string | null>(null)
   const [primaryColor, setPrimaryColor] = useState('')
   const [secondaryColor, setSecondaryColor] = useState('')
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    setDisplayName('')
+    setShortName('')
+    setLogoMediaId(null)
+    setPrimaryColor('')
+    setSecondaryColor('')
+  }, [open])
 
   const addMutation = useMutation({
     mutationFn: () =>
@@ -585,8 +599,30 @@ function AddEntryDialog({
   })
 
   return (
-    <TeamsDialog title={t('addDialogTitle')} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('addDialogTitle')}
+      closeLabel={tCommon('close')}
+      closeDisabled={addMutation.isPending}
+      size="sm"
+      footer={
+        <button
+          type="submit"
+          form={formId}
+          className="ds-btn ds-btn--primary"
+          disabled={addMutation.isPending || displayName.trim().length === 0}
+        >
+          {addMutation.isPending ? (
+            <PendingLabel>{t('adding')}</PendingLabel>
+          ) : (
+            t('add')
+          )}
+        </button>
+      }
+    >
       <form
+        id={formId}
         className="form"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
@@ -609,44 +645,53 @@ function AddEntryDialog({
           onPrimary={setPrimaryColor}
           onSecondary={setSecondaryColor}
         />
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={addMutation.isPending || displayName.trim().length === 0}
-        >
-          {addMutation.isPending ? (
-            <PendingLabel>{t('adding')}</PendingLabel>
-          ) : (
-            t('add')
-          )}
-        </button>
         {addMutation.isError && <MutationError error={addMutation.error} />}
       </form>
-    </TeamsDialog>
+    </Dialog>
   )
 }
 
 function IdentityDialog({
   competitionId,
   entry,
+  open,
   onClose,
 }: {
   competitionId: string
-  entry: OrganisationEntry
+  entry: OrganisationEntry | null
+  open: boolean
   onClose: () => void
 }) {
   const { t } = useTranslation('teams')
+  const { t: tCommon } = useTranslation('common')
   const queryClient = useQueryClient()
-  const [name, setName] = useState(entry.displayName)
-  const [shortName, setShortName] = useState(entry.shortName ?? '')
+  const formId = useId()
+  const [name, setName] = useState(entry?.displayName ?? '')
+  const [shortName, setShortName] = useState(entry?.shortName ?? '')
   const [logoMediaId, setLogoMediaId] = useState<string | null>(
-    entry.logoMediaId ?? null,
+    entry?.logoMediaId ?? null,
   )
-  const [primaryColor, setPrimaryColor] = useState(entry.primaryColor ?? '')
-  const [secondaryColor, setSecondaryColor] = useState(entry.secondaryColor ?? '')
+  const [primaryColor, setPrimaryColor] = useState(entry?.primaryColor ?? '')
+  const [secondaryColor, setSecondaryColor] = useState(
+    entry?.secondaryColor ?? '',
+  )
+
+  useEffect(() => {
+    if (!entry) {
+      return
+    }
+    setName(entry.displayName)
+    setShortName(entry.shortName ?? '')
+    setLogoMediaId(entry.logoMediaId ?? null)
+    setPrimaryColor(entry.primaryColor ?? '')
+    setSecondaryColor(entry.secondaryColor ?? '')
+  }, [entry])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (!entry) {
+        return
+      }
       if (name.trim() !== entry.displayName) {
         await renameCompetitionEntry(competitionId, entry.entryId, {
           displayName: name.trim(),
@@ -666,8 +711,30 @@ function IdentityDialog({
   })
 
   return (
-    <TeamsDialog title={t('identityDialogTitle')} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('identityDialogTitle')}
+      closeLabel={tCommon('close')}
+      closeDisabled={saveMutation.isPending}
+      size="sm"
+      footer={
+        <button
+          type="submit"
+          form={formId}
+          className="ds-btn ds-btn--primary"
+          disabled={saveMutation.isPending || name.trim().length === 0}
+        >
+          {saveMutation.isPending ? (
+            <PendingLabel>{t('saving')}</PendingLabel>
+          ) : (
+            t('saveIdentity')
+          )}
+        </button>
+      }
+    >
       <form
+        id={formId}
         className="form"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
@@ -690,20 +757,9 @@ function IdentityDialog({
           onPrimary={setPrimaryColor}
           onSecondary={setSecondaryColor}
         />
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={saveMutation.isPending || name.trim().length === 0}
-        >
-          {saveMutation.isPending ? (
-            <PendingLabel>{t('saving')}</PendingLabel>
-          ) : (
-            t('saveIdentity')
-          )}
-        </button>
         {saveMutation.isError && <MutationError error={saveMutation.error} />}
       </form>
-    </TeamsDialog>
+    </Dialog>
   )
 }
 
@@ -906,55 +962,4 @@ function tileStatusBadge(
     )
   }
   return null
-}
-
-function TeamsDialog({
-  title,
-  onClose,
-  children,
-}: {
-  title: string
-  onClose: () => void
-  children: ReactNode
-}) {
-  const { t } = useTranslation('common')
-  const titleId = useId()
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
-
-  return (
-    <div className="teams-dialog">
-      <button
-        type="button"
-        className="teams-dialog__backdrop"
-        aria-label={t('close')}
-        onClick={onClose}
-        tabIndex={-1}
-      />
-      <div
-        className="teams-dialog__panel ds-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <header className="teams-dialog__header">
-          <h2 id={titleId} className="teams-dialog__title">
-            {title}
-          </h2>
-          <button type="button" className="ds-btn ds-btn--ghost" onClick={onClose}>
-            {t('close')}
-          </button>
-        </header>
-        {children}
-      </div>
-    </div>
-  )
 }

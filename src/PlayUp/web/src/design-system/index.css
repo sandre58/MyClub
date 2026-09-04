@@ -24,6 +24,7 @@
 @import './foundations/numbers.css';
 @import './foundations/live.css';
 @import './foundations/surfaces.css';
+@import './foundations/dialog.css';
 @import './foundations/focus.css';
 @import './foundations/states.css';
 @import './foundations/status.css';

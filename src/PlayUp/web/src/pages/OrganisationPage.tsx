@@ -4,13 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query'
-import {
-  useEffect,
-  useId,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from 'react'
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import {
@@ -20,6 +14,7 @@ import {
   setCompetitionSchedule,
   updateCompetitionPresentation,
 } from '../api'
+import { Dialog } from '../design-system/components/Dialog'
 import { LogoMediaField } from '../design-system/LogoMediaField'
 import {
   CheckIcon,
@@ -144,67 +139,16 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
         onConfigure={() => setEditor('structure')}
       />
 
-      {editor === 'regulation' && (
-        <RegulationEditorDialog data={data} onClose={closeEditor} />
-      )}
-      {editor === 'structure' && (
-        <StructureEditorDialog data={data} onClose={closeEditor} />
-      )}
-    </div>
-  )
-}
-
-function OrganisationDialog({
-  title,
-  onClose,
-  children,
-}: {
-  title: string
-  onClose: () => void
-  children: ReactNode
-}) {
-  const { t } = useTranslation('common')
-  const titleId = useId()
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
-
-  return (
-    <div className="organisation-dialog">
-      <button
-        type="button"
-        className="organisation-dialog__backdrop"
-        aria-label={t('close')}
-        onClick={onClose}
-        tabIndex={-1}
+      <RegulationEditorDialog
+        data={data}
+        open={editor === 'regulation'}
+        onClose={closeEditor}
       />
-      <div
-        className="organisation-dialog__panel ds-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <header className="organisation-dialog__header">
-          <h2 id={titleId} className="organisation-dialog__title">
-            {title}
-          </h2>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            onClick={onClose}
-          >
-            {t('close')}
-          </button>
-        </header>
-        <div className="organisation-dialog__body">{children}</div>
-      </div>
+      <StructureEditorDialog
+        data={data}
+        open={editor === 'structure'}
+        onClose={closeEditor}
+      />
     </div>
   )
 }
@@ -645,13 +589,17 @@ function RegulationSection({
 
 function RegulationEditorDialog({
   data,
+  open,
   onClose,
 }: {
   data: OrganisationView
+  open: boolean
   onClose: () => void
 }) {
   const { t } = useTranslation('organisation')
+  const { t: tCommon } = useTranslation('common')
   const queryClient = useQueryClient()
+  const formId = useId()
   const regulation = data.regulation
   const [form, setForm] = useState<ReplaceRegulationRequest>({
     minimumTeams: regulation.minimumTeams,
@@ -698,8 +646,30 @@ function RegulationEditorDialog({
   }
 
   return (
-    <OrganisationDialog title={t('regulation.replaceLegend')} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('regulation.replaceLegend')}
+      closeLabel={tCommon('close')}
+      closeDisabled={mutation.isPending}
+      size="md"
+      footer={
+        <button
+          type="submit"
+          form={formId}
+          className="ds-btn ds-btn--primary"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? (
+            <PendingLabel>{t('regulation.saving')}</PendingLabel>
+          ) : (
+            t('regulation.save')
+          )}
+        </button>
+      }
+    >
       <form
+        id={formId}
         className="form form--wide"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
@@ -826,23 +796,10 @@ function RegulationEditorDialog({
             </div>
           </fieldset>
         </fieldset>
-        <div className="button-row">
-          <button
-            type="submit"
-            className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? (
-              <PendingLabel>{t('regulation.saving')}</PendingLabel>
-            ) : (
-              t('regulation.save')
-            )}
-          </button>
-          <span className="caption">{t('regulation.saveHint')}</span>
-        </div>
+        <p className="caption">{t('regulation.saveHint')}</p>
         {mutation.isError && <MutationError error={mutation.error} />}
       </form>
-    </OrganisationDialog>
+    </Dialog>
   )
 }
 
@@ -993,13 +950,17 @@ function StructureSection({
 
 function StructureEditorDialog({
   data,
+  open,
   onClose,
 }: {
   data: OrganisationView
+  open: boolean
   onClose: () => void
 }) {
   const { t } = useTranslation('organisation')
+  const { t: tCommon } = useTranslation('common')
   const queryClient = useQueryClient()
+  const formId = useId()
   const [format, setFormat] = useState<StructureFormatKind>(
     data.format.kind ?? 'Championship',
   )
@@ -1047,11 +1008,30 @@ function StructureEditorDialog({
   })
 
   return (
-    <OrganisationDialog
-      title={t('structure.configureLegend')}
+    <Dialog
+      open={open}
       onClose={onClose}
+      title={t('structure.configureLegend')}
+      closeLabel={tCommon('close')}
+      closeDisabled={mutation.isPending}
+      size="md"
+      footer={
+        <button
+          type="submit"
+          form={formId}
+          className="ds-btn ds-btn--primary"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? (
+            <PendingLabel>{t('structure.configuring')}</PendingLabel>
+          ) : (
+            t('structure.configure')
+          )}
+        </button>
+      }
     >
       <form
+        id={formId}
         className="form"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
@@ -1192,22 +1172,9 @@ function StructureEditorDialog({
             </label>
           )}
         </fieldset>
-        <div className="button-row">
-          <button
-            type="submit"
-            className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? (
-              <PendingLabel>{t('structure.configuring')}</PendingLabel>
-            ) : (
-              t('structure.configure')
-            )}
-          </button>
-          <span className="caption">{t('structure.configureHint')}</span>
-        </div>
+        <p className="caption">{t('structure.configureHint')}</p>
         {mutation.isError && <MutationError error={mutation.error} />}
       </form>
-    </OrganisationDialog>
+    </Dialog>
   )
 }

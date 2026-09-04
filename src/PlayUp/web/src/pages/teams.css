@@ -793,43 +793,7 @@
   background: var(--color-surface-secondary);
 }
 
-.teams-dialog {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: var(--space-16);
-}
-
-.teams-dialog__backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: color-mix(in srgb, var(--color-ink) 40%, transparent);
-}
-
-.teams-dialog__panel {
-  position: relative;
-  z-index: 1;
-  width: min(28rem, 100%);
-  max-height: min(90vh, 40rem);
-  overflow: auto;
-}
-
-.teams-dialog__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-12);
-  margin-bottom: var(--space-16);
-}
-
-.teams-dialog__title {
-  margin: 0;
-  font-size: var(--text-heading);
-  font-weight: var(--font-weight-bold);
-}
+/* Dialog chrome lives in design-system Dialog. */
 
 /* Narrow: list / detail / multi (below desktop split) */
 @media (max-width: 51.999rem) {

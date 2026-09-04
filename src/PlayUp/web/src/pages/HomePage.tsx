@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { createCompetition, fetchCompetitions } from '../api'
+import { Dialog } from '../design-system/components/Dialog'
 import { HomeBrand } from '../design-system/components/HomeBrand'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { ChevronRightIcon } from '../design-system/icons/shellIcons'
@@ -48,10 +49,7 @@ export function HomePage() {
   })
 
   const openCreate = () => setDialogOpen(true)
-  const closeCreate = () => {
-    setDialogOpen(false)
-    queueMicrotask(() => createTriggerRef.current?.focus())
-  }
+  const closeCreate = () => setDialogOpen(false)
 
   const isEmpty = query.data !== undefined && query.data.length === 0
 
@@ -101,7 +99,11 @@ export function HomePage() {
           />
         )}
 
-        {dialogOpen && <CreateCompetitionDialog onClose={closeCreate} />}
+        <CreateCompetitionDialog
+          open={dialogOpen}
+          onClose={closeCreate}
+          returnFocusRef={createTriggerRef}
+        />
       </main>
     </div>
   )
@@ -211,14 +213,27 @@ function CompetitionRow({ item }: { item: CompetitionListItem }) {
   )
 }
 
-function CreateCompetitionDialog({ onClose }: { onClose: () => void }) {
+function CreateCompetitionDialog({
+  open,
+  onClose,
+  returnFocusRef,
+}: {
+  open: boolean
+  onClose: () => void
+  returnFocusRef: RefObject<HTMLButtonElement | null>
+}) {
   const { t } = useTranslation('competitions')
   const { t: tCommon } = useTranslation('common')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const titleId = useId()
-  const nameInputRef = useRef<HTMLInputElement>(null)
+  const formId = useId()
   const [name, setName] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setName('')
+    }
+  }, [open])
 
   const mutation = useMutation({
     mutationFn: () => createCompetition({ name: name.trim() }),
@@ -230,20 +245,6 @@ function CreateCompetitionDialog({ onClose }: { onClose: () => void }) {
     },
   })
 
-  useEffect(() => {
-    nameInputRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !mutation.isPending) {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [mutation.isPending, onClose])
-
   const trimmed = name.trim()
   const canSubmit =
     trimmed.length > 0 &&
@@ -251,81 +252,57 @@ function CreateCompetitionDialog({ onClose }: { onClose: () => void }) {
     !mutation.isPending
 
   return (
-    <div className="accueil-dialog">
-      <button
-        type="button"
-        className="accueil-dialog__backdrop"
-        aria-label={tCommon('close')}
-        onClick={() => {
-          if (!mutation.isPending) {
-            onClose()
-          }
-        }}
-        tabIndex={-1}
-      />
-      <div
-        className="accueil-dialog__panel ds-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
-        <header className="accueil-dialog__header">
-          <h2 id={titleId} className="accueil-dialog__title">
-            {t('create.heading')}
-          </h2>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            onClick={onClose}
-            disabled={mutation.isPending}
-          >
-            {tCommon('close')}
-          </button>
-        </header>
-
-        <form
-          className="accueil-dialog__form"
-          onSubmit={(event: FormEvent) => {
-            event.preventDefault()
-            if (!canSubmit) {
-              return
-            }
-            mutation.mutate()
-          }}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('create.heading')}
+      closeLabel={tCommon('close')}
+      closeDisabled={mutation.isPending}
+      returnFocusRef={returnFocusRef}
+      size="sm"
+      footer={
+        <button
+          type="submit"
+          form={formId}
+          className="ds-btn ds-btn--primary"
+          disabled={!canSubmit}
         >
-          <label className="accueil-dialog__field">
-            {t('create.nameLabel')}
-            <input
-              ref={nameInputRef}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              disabled={mutation.isPending}
-              placeholder={t('create.namePlaceholder')}
-              maxLength={COMPETITION_NAME_MAX_LENGTH}
-              required
-              autoComplete="off"
-            />
-          </label>
-
-          <div className="accueil-dialog__actions">
-            <button
-              type="submit"
-              className="ds-btn ds-btn--primary"
-              disabled={!canSubmit}
-            >
-              {mutation.isPending ? (
-                <PendingLabel>{t('create.submitting')}</PendingLabel>
-              ) : (
-                t('create.submit')
-              )}
-            </button>
-          </div>
-
-          {mutation.isError != null && (
-            <MutationError error={mutation.error} />
+          {mutation.isPending ? (
+            <PendingLabel>{t('create.submitting')}</PendingLabel>
+          ) : (
+            t('create.submit')
           )}
-        </form>
-      </div>
-    </div>
+        </button>
+      }
+    >
+      <form
+        id={formId}
+        className="accueil-dialog__form"
+        onSubmit={(event: FormEvent) => {
+          event.preventDefault()
+          if (!canSubmit) {
+            return
+          }
+          mutation.mutate()
+        }}
+      >
+        <label className="accueil-dialog__field">
+          {t('create.nameLabel')}
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            disabled={mutation.isPending}
+            placeholder={t('create.namePlaceholder')}
+            maxLength={COMPETITION_NAME_MAX_LENGTH}
+            required
+            autoComplete="off"
+          />
+        </label>
+
+        {mutation.isError != null && (
+          <MutationError error={mutation.error} />
+        )}
+      </form>
+    </Dialog>
   )
 }

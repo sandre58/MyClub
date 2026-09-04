@@ -579,60 +579,7 @@
     padding-top: var(--space-8);
 }
 
-/* ---------- Dialog ---------- */
-
-.organisation-dialog {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-16);
-}
-
-.organisation-dialog__backdrop {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: color-mix(in srgb, var(--color-ink) 40%, transparent);
-    cursor: pointer;
-}
-
-.organisation-dialog__panel {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
-    width: min(100%, 36rem);
-    max-height: min(90vh, 40rem);
-    overflow: auto;
-}
-
-.organisation-dialog__header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-8) var(--space-16);
-}
-
-.organisation-dialog__title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-tight);
-}
-
-.organisation-dialog__body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
-}
+/* Dialog chrome lives in design-system Dialog. */
 
 /* ---------- Page joueurs d’une équipe ---------- */
 

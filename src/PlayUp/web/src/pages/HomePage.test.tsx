@@ -251,7 +251,9 @@ describe('HomePage', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
 
     await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
     expect(createButton).toHaveFocus()
   })
 
