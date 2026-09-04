@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchNeedsAttention } from '../api'
 import { CloseIcon } from '../design-system/icons/shellIcons'
+import { useDismissLayer } from '../design-system/useDismissLayer'
 import { useFocusTrap } from '../design-system/useFocusTrap'
 import { queryKeys } from '../queryKeys'
 import type { OverviewSituation } from '../types'
@@ -93,21 +94,7 @@ export function AttentionDrawer({
     }
   }, [mounted, returnFocusRef])
 
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [open, onClose])
+  useDismissLayer(open, onClose)
 
   useFocusTrap(panelRef, open && visible)
 

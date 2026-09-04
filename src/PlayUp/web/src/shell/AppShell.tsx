@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 import '../design-system/fonts'
 import '../design-system/index.css'
+import { useDismissLayer } from '../design-system/useDismissLayer'
 import './shell.css'
 import { AttentionDrawer } from './AttentionDrawer'
 import { PageErrorBoundary } from './PageErrorBoundary'
@@ -83,22 +84,13 @@ export function AppShell() {
       return
     }
 
-    const nav = document.getElementById('shell-sidebar-nav')
-    nav?.focus()
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') {
-        return
-      }
-
-      event.preventDefault()
-      setPhoneNavOpen(false)
-      navMenuTriggerRef.current?.focus()
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    document.getElementById('shell-sidebar-nav')?.focus()
   }, [viewport, phoneNavOpen])
+
+  useDismissLayer(viewport === 'phone' && phoneNavOpen, () => {
+    setPhoneNavOpen(false)
+    navMenuTriggerRef.current?.focus()
+  })
 
   const navReady = viewport === motionViewport && chromeReady
 

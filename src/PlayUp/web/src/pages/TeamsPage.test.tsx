@@ -670,6 +670,98 @@ describe('TeamsPage', () => {
     })
   })
 
+  it('clears multi-selection on Escape, but not while ConfirmDialog is open', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        participants: {
+          activeCount: 2,
+          occupyingCount: 2,
+          entries: [
+            { entryId, displayName: 'Alpha', status: 'Active' },
+            { entryId: secondEntryId, displayName: 'Beta', status: 'Active' },
+          ],
+        },
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderTeamsPage()
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    )
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+    )
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'multi',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }))
+    const confirm = await screen.findByRole('dialog', {
+      name: /Supprimer/,
+    })
+
+    await user.keyboard('{Escape}')
+    await waitFor(() => {
+      expect(confirm).not.toBeInTheDocument()
+    })
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'multi',
+    )
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Alpha' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Beta' })).toBeChecked()
+
+    await user.keyboard('{Escape}')
+    await waitFor(() => {
+      expect(document.querySelector('.teams')).toHaveAttribute(
+        'data-teams-view',
+        'list',
+      )
+    })
+    expect(
+      screen.getByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    ).not.toBeChecked()
+    expect(
+      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+    ).not.toBeChecked()
+  })
+
+  it('clears selection on Escape when no overlay is open', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        participants: {
+          activeCount: 2,
+          occupyingCount: 2,
+          entries: [
+            { entryId, displayName: 'Alpha', status: 'Active' },
+            { entryId: secondEntryId, displayName: 'Beta', status: 'Active' },
+          ],
+        },
+      }),
+    )
+
+    const user = userEvent.setup()
+    renderTeamsPage()
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    )
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+    )
+
+    await user.keyboard('{Escape}')
+    await waitFor(() => {
+      expect(document.querySelector('.teams')).toHaveAttribute(
+        'data-teams-view',
+        'list',
+      )
+    })
+  })
+
   it('deletes an entry from the selected tile', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())

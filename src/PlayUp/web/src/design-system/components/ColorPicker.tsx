@@ -13,6 +13,7 @@ import { PipetteIcon } from '../icons/overviewIcons'
 import { TextInput } from './TextInput'
 import { InputNumber } from './InputNumber'
 import { Select } from './Select'
+import { useDismissLayer } from '../useDismissLayer'
 import {
   HEX6,
   clamp01,
@@ -144,6 +145,13 @@ export function ColorPicker({
     }
   }, [open])
 
+  useDismissLayer(open && !disabled, () => {
+    if (pickingRef.current) {
+      return
+    }
+    setOpen(false)
+  })
+
   useEffect(() => {
     if (!open) {
       return
@@ -163,27 +171,9 @@ export function ColorPicker({
       setOpen(false)
     }
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (pickingRef.current) {
-        return
-      }
-      if (event.key === 'Escape') {
-        if (
-          panelRef.current?.querySelector(
-            '.ds-select__shell[data-open="true"]',
-          )
-        ) {
-          return
-        }
-        setOpen(false)
-      }
-    }
-
     document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
     }
   }, [open])
 

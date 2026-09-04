@@ -122,6 +122,10 @@ export function LabForm() {
 
         <section className="ds-panel dlab-form__panel" aria-label="Select">
           <h2 className="dlab-form__panel-title">Select</h2>
+          <p className="dlab-form__hint ds-body">
+            Ouverture : ArrowDown / Enter / Espace. Liste ouverte : flèches,
+            Enter pour choisir, Escape (pile dismiss LIFO) pour fermer.
+          </p>
           <div className="dlab-form__stack" data-density="comfortable">
             <Field label="Pays" htmlFor={selectId}>
               <Select

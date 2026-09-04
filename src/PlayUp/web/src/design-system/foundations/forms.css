@@ -495,7 +495,8 @@
     cursor: pointer;
 }
 
-.ds-select__option:hover:not(:disabled) {
+.ds-select__option:hover:not(:disabled),
+.ds-select__option[data-active='true']:not(:disabled) {
     background: color-mix(in srgb, var(--color-brand) 8%, transparent);
 }
 
@@ -503,6 +504,10 @@
     color: var(--color-brand);
     font-weight: var(--font-weight-semibold);
     background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+}
+
+.ds-select__option[data-selected='true'][data-active='true']:not(:disabled) {
+    background: color-mix(in srgb, var(--color-brand) 16%, transparent);
 }
 
 .ds-select__option:disabled {

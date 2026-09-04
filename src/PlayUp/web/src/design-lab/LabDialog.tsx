@@ -64,10 +64,17 @@ export function LabDialog() {
           </button>
         </div>
         <ul className="dlab-dialog__checklist">
-          <li>Escape / backdrop / icône Fermer (X)</li>
+          <li>
+            Escape / backdrop / icône Fermer (X) — Escape via pile dismiss DS
+            (LIFO : couche active la plus haute uniquement)
+          </li>
           <li>Focus initial dans le corps (premier champ)</li>
           <li>Trap Tab · retour de focus au déclencheur</li>
           <li>Footer sticky sans filet quand le corps déborde</li>
+          <li>
+            Clavier propre au composant (ex. flèches Select) reste local — pas
+            une commande applicative globale
+          </li>
         </ul>
       </section>
 

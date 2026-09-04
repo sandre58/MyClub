@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { CloseIcon } from '../icons/shellIcons'
 import { DS_MOTION_EXIT_MS } from '../motion'
+import { useDismissLayer } from '../useDismissLayer'
 import { getFocusableElements, useFocusTrap } from '../useFocusTrap'
 
 export type DialogSize = 'sm' | 'md'
@@ -33,6 +34,17 @@ export type DialogProps = {
   closeLabel?: string
 }
 
+function pickFooterInitialFocus(footer: HTMLElement): HTMLElement | null {
+  const preferred = footer.querySelector<HTMLElement>(
+    '.ds-btn--primary:not(:disabled), .ds-btn--destructive:not(:disabled)',
+  )
+  if (preferred) {
+    return preferred
+  }
+  const focusable = getFocusableElements(footer)
+  return focusable[focusable.length - 1] ?? null
+}
+
 /**
  * Centered overlay chrome — title, body, optional footer.
  * Not a window manager; AttentionDrawer stays separate (Shell triage).
@@ -52,6 +64,7 @@ export function Dialog({
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const hadOpenedRef = useRef(false)
   const fallbackReturnRef = useRef<HTMLElement | null>(null)
@@ -98,26 +111,23 @@ export function Dialog({
 
     const body = bodyRef.current
     const bodyFocusable = body ? getFocusableElements(body) : []
-    const initial = bodyFocusable[0] ?? closeButtonRef.current
+    const footerInitial = footerRef.current
+      ? pickFooterInitialFocus(footerRef.current)
+      : null
+    // Prefer a body field; otherwise the primary footer action (Enter confirms).
+    // Never default to the header close control when an action footer exists.
+    const initial =
+      bodyFocusable[0] ?? footerInitial ?? closeButtonRef.current
     initial?.focus({ preventScroll: true })
   }, [open, visible])
 
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape' || closeDisabled) {
-        return
-      }
-      event.preventDefault()
+  // Stay on the dismiss stack while open so Escape is consumed even when
+  // closeDisabled (nested popovers still dismiss first via LIFO).
+  useDismissLayer(open, () => {
+    if (!closeDisabled) {
       onClose()
     }
-
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [open, onClose, closeDisabled])
+  })
 
   useEffect(() => {
     if (!mounted || !panelRef.current) {
@@ -202,7 +212,9 @@ export function Dialog({
           {children}
         </div>
         {footer != null ? (
-          <div className="ds-dialog__footer">{footer}</div>
+          <div ref={footerRef} className="ds-dialog__footer">
+            {footer}
+          </div>
         ) : null}
       </div>
     </div>

@@ -31,6 +31,30 @@ function Harness() {
 }
 
 describe('ConfirmDialog', () => {
+  it('focuses the primary action so Enter confirms and Escape cancels', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }))
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Quitter sans enregistrer ?',
+    })
+    const confirm = within(dialog).getByRole('button', { name: 'Abandonner' })
+    await waitFor(() => {
+      expect(confirm).toHaveFocus()
+    })
+
+    await user.keyboard('{Enter}')
+    expect(await screen.findByText('Confirmé')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }))
+    await screen.findByRole('dialog', { name: 'Quitter sans enregistrer ?' })
+    await user.keyboard('{Escape}')
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
   it('confirms and cancels', async () => {
     const user = userEvent.setup()
     render(<Harness />)

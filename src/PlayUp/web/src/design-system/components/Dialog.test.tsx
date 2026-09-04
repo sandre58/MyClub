@@ -80,4 +80,43 @@ describe('Dialog', () => {
       within(dialog).getByRole('button', { name: 'Fermer' }),
     ).toBeDisabled()
   })
+
+  it('focuses the primary footer action when the body has no controls', async () => {
+    const user = userEvent.setup()
+
+    function FooterOnlyHarness() {
+      const [open, setOpen] = useState(false)
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Confirmer"
+            footer={
+              <>
+                <button type="button" className="ds-btn ds-btn--ghost">
+                  Annuler
+                </button>
+                <button type="button" className="ds-btn ds-btn--primary">
+                  OK
+                </button>
+              </>
+            }
+          >
+            <p>Message seulement</p>
+          </Dialog>
+        </div>
+      )
+    }
+
+    render(<FooterOnlyHarness />)
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }))
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => {
+      expect(within(dialog).getByRole('button', { name: 'OK' })).toHaveFocus()
+    })
+  })
 })

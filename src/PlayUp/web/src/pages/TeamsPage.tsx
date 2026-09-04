@@ -30,6 +30,7 @@ import { TextInput } from '../design-system/components/TextInput'
 import { ColorPicker } from '../design-system/components/ColorPicker'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { notify } from '../design-system/toastStore'
+import { useDismissLayer } from '../design-system/useDismissLayer'
 import { deriveShortName, SHORT_NAME_MAX_LENGTH } from './deriveShortName'
 import { LogoMediaField } from './LogoMediaField'
 import { CloseIcon } from '../design-system/icons/shellIcons'
@@ -176,17 +177,8 @@ function TeamsView({
     setSelectedIds((current) => (current.length === 1 ? [] : current))
   }, [routeEntryId])
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (addOpen || identityEntryId) {
-          return
-        }
-        goToSelection([])
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+  useDismissLayer(selectedIds.length > 0, () => {
+    goToSelection([])
   })
 
   const deleteMutation = useMutation({
