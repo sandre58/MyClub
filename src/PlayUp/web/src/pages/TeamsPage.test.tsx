@@ -336,7 +336,10 @@ describe('TeamsPage', () => {
       await screen.findByRole('button', { name: /Ajouter une équipe/i }),
     )
     const dialog = await screen.findByRole('dialog')
-    await user.type(within(dialog).getByLabelText(/^Nom$/), 'Beta')
+    await user.type(
+      within(dialog).getByRole('textbox', { name: 'Nom' }),
+      'Beta',
+    )
     await user.click(within(dialog).getByRole('button', { name: 'Ajouter' }))
 
     await waitFor(() => {

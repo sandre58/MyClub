@@ -1,5 +1,8 @@
 import { useId, useState } from 'react'
 import { Dialog } from '../design-system/components/Dialog'
+import { Field } from '../design-system/components/Field'
+import { TextInput } from '../design-system/components/TextInput'
+import { Select } from '../design-system/components/Select'
 
 /**
  * Design Lab — interactive Dialog chrome (sm / md / closeDisabled / scroll).
@@ -10,8 +13,12 @@ export function LabDialog() {
   const [mdOpen, setMdOpen] = useState(false)
   const [lockedOpen, setLockedOpen] = useState(false)
   const [scrollOpen, setScrollOpen] = useState(false)
+  const [format, setFormat] = useState<string | null>('Championship')
   const smFormId = useId()
   const mdFormId = useId()
+  const nameId = useId()
+  const formatId = useId()
+  const stageId = useId()
 
   return (
     <div className="dlab-dialog">
@@ -20,7 +27,8 @@ export function LabDialog() {
         <h1 className="dlab-dialog__title">Dialog</h1>
         <p className="dlab-dialog__lede">
           Chrome overlay centré — titre, corps, footer d’actions à droite,
-          Fermer icône. Pas de filets. Motion 160 ms.
+          Fermer = icône X (aria-label). Pas de filets. Motion 160 ms. Specimens
+          de champs = composants DS (Field / TextInput / Select).
         </p>
       </header>
 
@@ -56,7 +64,7 @@ export function LabDialog() {
           </button>
         </div>
         <ul className="dlab-dialog__checklist">
-          <li>Escape / backdrop / icône Fermer</li>
+          <li>Escape / backdrop / icône Fermer (X)</li>
           <li>Focus initial dans le corps (premier champ)</li>
           <li>Trap Tab · retour de focus au déclencheur</li>
           <li>Footer sticky sans filet quand le corps déborde</li>
@@ -76,20 +84,22 @@ export function LabDialog() {
       >
         <form
           id={smFormId}
-          className="dlab-dialog__form"
+          className="ds-form"
+          data-density="comfortable"
           onSubmit={(event) => {
             event.preventDefault()
             setSmOpen(false)
           }}
         >
-          <label className="dlab-dialog__field">
-            Nom
-            <input
+          <Field label="Nom" htmlFor={nameId} required>
+            <TextInput
+              id={nameId}
               name="name"
               placeholder="Ex. Championnat U15"
               autoComplete="off"
+              required
             />
-          </label>
+          </Field>
         </form>
       </Dialog>
 
@@ -106,23 +116,32 @@ export function LabDialog() {
       >
         <form
           id={mdFormId}
-          className="dlab-dialog__form"
+          className="ds-form"
+          data-density="comfortable"
           onSubmit={(event) => {
             event.preventDefault()
             setMdOpen(false)
           }}
         >
-          <label className="dlab-dialog__field">
-            Format
-            <select defaultValue="Championship">
-              <option value="Championship">Championnat</option>
-              <option value="Cup">Coupe</option>
-            </select>
-          </label>
-          <label className="dlab-dialog__field">
-            Nom de phase
-            <input name="stage" defaultValue="Phase principale" autoComplete="off" />
-          </label>
+          <Field label="Format" htmlFor={formatId}>
+            <Select
+              id={formatId}
+              value={format}
+              options={[
+                { value: 'Championship', label: 'Championnat' },
+                { value: 'Cup', label: 'Coupe' },
+              ]}
+              onChange={setFormat}
+            />
+          </Field>
+          <Field label="Nom de phase" htmlFor={stageId}>
+            <TextInput
+              id={stageId}
+              name="stage"
+              defaultValue="Phase principale"
+              autoComplete="off"
+            />
+          </Field>
         </form>
       </Dialog>
 

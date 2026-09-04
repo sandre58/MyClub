@@ -19,7 +19,32 @@ Workspace → Match hub → Stage / `drawUi` → Organisation → remaining page
 
 ## End of `index.css`
 
-`src/index.css` dies when the last `.btn` / `.card` / `.page` consumer is migrated. Until then both systems coexist by design (14.5).
+`src/index.css` dies when the last `.btn` / `.card` / `.page` / legacy-token consumer is migrated. Until then both systems coexist by design (14.5).
+
+## Legacy tokens (P0 inventory → P1 finish)
+
+**SoT:** `design-system/tokens/*` on `.ds-root`.
+
+### Migrated (P0)
+
+| Legacy | Replacement | Where |
+|---|---|---|
+| `--text-caption` | `--text-label` | `pages/matches.css`, `index.css` usages |
+| `--space-xs` | `--space-8` | `index.css` usages |
+| `--space-sm` | `--space-12` | `index.css` usages |
+| `--space-md` | `--space-16` | `index.css` usages |
+| `--color-primary-border` | `color-mix(… brand 35%, border)` | `index.css` usage |
+| Unused `:root` defs removed | — | `--space-xs/sm/md`, `--text-caption`, `--color-primary*` |
+
+### Remaining (P1 — do not “fix” visually without a decision)
+
+| Token | Files | Notes |
+|---|---|---|
+| `--radius-pill` | `pages/teams.css` (plateau gauge) | DS geometry forbids product pills; gauge track needs explicit SoT |
+| `--space-2xs`, `--space-lg`, `--space-xl`, `--space-2xl` | `index.css` | Map to `--space-4` / `--space-24` / `--space-32` / `--space-48` |
+| `--radius-sm/md/lg` | `index.css` | Map to `--radius-control` / `--radius-panel` |
+| `--text-eyebrow`, `--text-secondary` (size), `--page-pad`, `--layout-max` | `index.css` | Page chrome leftovers |
+| Soft tone aliases (`--color-danger*`, `--color-warning*`, …) | `index.css` | Prefer `--color-error` / `--color-attention` + mixes |
 
 ## Deferred (do not add without an explicit trigger)
 

@@ -15,7 +15,7 @@ import {
   updateCompetitionPresentation,
 } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
-import { LogoMediaField } from '../design-system/LogoMediaField'
+import { LogoMediaField } from './LogoMediaField'
 import {
   CheckIcon,
   RegulationIcon,

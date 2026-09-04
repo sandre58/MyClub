@@ -24,8 +24,11 @@ import {
   withdrawCompetitionEntry,
 } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
-import { LogoMediaField } from '../design-system/LogoMediaField'
+import { Field } from '../design-system/components/Field'
+import { TextInput } from '../design-system/components/TextInput'
+import { ColorPicker } from '../design-system/components/ColorPicker'
 import { TeamCrest } from '../design-system/TeamCrest'
+import { LogoMediaField } from './LogoMediaField'
 import { CloseIcon } from '../design-system/icons/shellIcons'
 import {
   EmptySelectionIcon,
@@ -623,7 +626,8 @@ function AddEntryDialog({
     >
       <form
         id={formId}
-        className="form"
+        className="ds-form"
+        data-density="comfortable"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
           if (displayName.trim().length === 0 || addMutation.isPending) {
@@ -735,7 +739,8 @@ function IdentityDialog({
     >
       <form
         id={formId}
-        className="form"
+        className="ds-form"
+        data-density="comfortable"
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
           if (name.trim().length === 0 || saveMutation.isPending) {
@@ -789,54 +794,71 @@ function IdentityFields({
   onSecondary: (value: string) => void
 }) {
   const { t } = useTranslation('teams')
+  const nameId = useId()
+  const shortId = useId()
+  const primaryId = useId()
+  const secondaryId = useId()
 
   return (
     <>
-      <label className="field">
-        {t('newEntryName')}
-        <input
+      <Field
+        label={t('newEntryName')}
+        htmlFor={nameId}
+        required
+        counter={`${name.length}/100`}
+      >
+        <TextInput
+          id={nameId}
           value={name}
-          onChange={(event) => onName(event.target.value)}
-          disabled={disabled}
-          placeholder={t('newEntryPlaceholder')}
+          maxLength={100}
           required
-        />
-      </label>
-      <label className="field">
-        {t('shortName')}
-        <input
-          value={shortName}
-          onChange={(event) => onShortName(event.target.value)}
           disabled={disabled}
-          maxLength={20}
+          allowClear
+          placeholder={t('newEntryPlaceholder')}
+          onChange={(event) => onName(event.target.value)}
         />
-      </label>
+      </Field>
+      <Field
+        label={t('shortName')}
+        htmlFor={shortId}
+        counter={`${shortName.length}/20`}
+      >
+        <TextInput
+          id={shortId}
+          value={shortName}
+          maxLength={20}
+          disabled={disabled}
+          allowClear
+          onChange={(event) => onShortName(event.target.value)}
+        />
+      </Field>
       <LogoMediaField
         name={name.trim() || t('newEntryPlaceholder')}
         value={logoMediaId}
+        primaryColor={primaryColor.trim() || null}
         onChange={onLogo}
         disabled={disabled}
         label={t('logo')}
       />
-      <div className="form form--inline">
-        <label className="field">
-          {t('primaryColor')}
-          <input
+      <div className="ds-form--inline">
+        <Field label={t('primaryColor')} htmlFor={primaryId}>
+          <ColorPicker
+            id={primaryId}
+            aria-label={t('primaryColor')}
             value={primaryColor}
-            onChange={(event) => onPrimary(event.target.value)}
             disabled={disabled}
-            placeholder="#RRGGBB"
+            onChange={onPrimary}
           />
-        </label>
-        <label className="field">
-          {t('secondaryColor')}
-          <input
+        </Field>
+        <Field label={t('secondaryColor')} htmlFor={secondaryId}>
+          <ColorPicker
+            id={secondaryId}
+            aria-label={t('secondaryColor')}
             value={secondaryColor}
-            onChange={(event) => onSecondary(event.target.value)}
             disabled={disabled}
-            placeholder="#RRGGBB"
+            onChange={onSecondary}
           />
-        </label>
+        </Field>
       </div>
     </>
   )

@@ -14,9 +14,28 @@ Before shipping UI/CSS in Play’Up web, answer:
 
 1. **Is this a one-off page quirk?** → page-local CSS (`pages/*.css`) only if foundations cannot express it.
 2. **Is this a reusable visual language?** → evolve the design system (tokens / foundations / thin React primitives).
-3. **If the DS evolves** → update **FoundationsPlayground** (`/dev/foundations`) in the **same** change. No silent DS growth without playground coverage.
+3. **If the DS evolves** → update the right validation surface in the **same** change:
+   - atoms / tokens / Status / icons / crest → **FoundationsPlayground** (`/dev/foundations`)
+   - Form / Dialog / Toast / composed specimens → **Design Lab** (`/design-lab`)
+   No silent DS growth without coverage.
 
-> Foundations define the language; the playground verifies it; the Shell consumes it; legacy pages stay temporarily outside.
+> One visual SoT. Lab and Foundations demonstrate; they never redefine controls or tokens.
+
+## DS boundary
+
+**In `design-system/`:** palettes, tokens, foundations, generic controls, reusable Play’Up visual primitives, icons.
+
+**Out of `design-system/`:** Media/API, feature i18n, page/route logic (adapters live under `pages/`).
+
+Do not invent `brand/`, `ui/`, or `design-system/product/` without an explicit decision.
+
+## Dialog close
+
+Close = icon **X**; accessible name via `closeLabel`. Never replace with a text « Fermer » button.
+
+## Design Lab anti-drift
+
+Specimens use real DS components only. `design-lab.css` = harness (layout/boards), not a parallel Input/Select stylesheet.
 
 ## What counts as DS evolution
 
@@ -27,17 +46,12 @@ Before shipping UI/CSS in Play’Up web, answer:
 
 **Not** DS evolution: copy/i18n, page composition/layout wiring, Read-driven prominence, one-off spacing tweaks that stay page-local.
 
-## Playground duty
-
-- Route `/dev/foundations` is the **terrain of truth** — not Storybook.
-- New foundation / token / primitive → visible demo section (usage + anti-usage when useful).
-- Do not demo full Shell or full product pages in the playground (except minimal chrome rail / composition sketches already established).
-
 ## Anti-patterns
 
 - Inventing a parallel mini-system in page CSS when a foundation should exist
 - Expanding foundations “just in case” without a real reuse need (`no-cargo-cult.mdc`)
-- Changing tokens/foundations without playground + `docs/design-system.md` when the public API or budget changes
+- Changing tokens/foundations without playground/Lab + `docs/design-system.md` when the public API or budget changes
+- Second Form/Dialog/Toast gallery in Foundations (Lab owns those specimens)
 - Migrating all pages in a big-bang — apply `docs/page-migration.md` when a product task already touches the page
 
 ## Docs

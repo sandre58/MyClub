@@ -1,64 +1,81 @@
 # Design System (Play’Up web)
 
-Operational SoT for the foundations under `src/design-system/`. Product intent: Notion **Identité visuelle**.
+Operational SoT for `src/design-system/`. Product intent: Notion **Identité visuelle**.
 
 ## Principle
 
-> Foundations define the language; the playground verifies it; the Shell consumes it; legacy pages stay temporarily outside.
-
-**Agent rule:** every visual change asks whether the DS must evolve; if yes, update FoundationsPlayground in the same change (`.cursor/rules/design-system.mdc`).
+> **One visual source of truth.** Tokens + foundations live in the Design System. The Design Lab and `/dev/foundations` demonstrate; they never redefine controls or tokens.
 
 ## Layers
 
-| Layer | Role | Rule |
+| Layer | Path | Role |
 |---|---|---|
-| Palette primitives (`--primitive-*`) | Hex / mixes in `palettes/slate.css` | Never consume in UI |
-| Semantic tokens (`--color-*`, spacing, …) | Public API | Foundations + Shell + pages |
-| Foundations (`ds-*` CSS) | Recipes | Prefer these over ad-hoc CSS |
-| React primitives | `Status`, `Icon`, `TeamCrest`, … | Thin wrappers over foundations |
+| Palette | `palettes/slate.css` | Hex / mixes (`--primitive-*`) — never consume in UI |
+| Tokens | `tokens/*.css` | Public API (`--color-*`, `--space-*`, type, geometry, density, motion) |
+| Foundations | `foundations/*.css` | Recipes (`.ds-*` classes) |
+| React | `components/`, icons, brand lockups, product visuals | Primitives without feature API / i18n |
+
+### DS boundary
+
+**Allowed in `design-system/`:** interaction primitives (Dialog, Field, inputs, Status, Toaster…), Play’Up visual primitives reused across surfaces (TeamCrest, MatchRow, Overview*…), icons, hooks.
+
+**Forbidden in `design-system/`:** `api/` calls, Media upload, page/route logic, feature i18n namespaces.
+
+Feature adapters (e.g. logo upload + Media) live under `pages/` (see `pages/LogoMediaField.tsx`).
+
+Do **not** create `brand/`, `ui/`, or `design-system/product/` folders without an explicit architecture decision.
 
 ## Color budget
 
-Public **`--color-*`** roles: **21 / ceiling 70** (content 17 + chrome 4).
+Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole product palette: **Slate** (`data-palette="slate"`).
 
-Chrome roles (`--color-chrome`, `--color-on-chrome`, `--color-chrome-border`, `--color-chrome-accent`) are Shell rail only — not content surfaces. There is no `--color-chrome-active` or `--color-chrome-muted`: active/idle use accent, opacity, and mixes.
+## Validation surfaces
 
-Sole product palette: **Slate** (`data-palette="slate"`).
+| Surface | Role |
+|---|---|
+| `/dev/foundations` | Atom / token playground (Status, icons, crest, density, buttons CSS). **Not** the Form/Dialog/Toast specimen gallery. |
+| `/design-lab` | Compositions + **specimens of real DS components** (Form, Dialog, Toast, …). |
+| Product | Consumes DS; must adopt form stack for new/edited forms. |
 
-## Validation
+### Design Lab anti-drift
 
-Route `/dev/foundations` — `FoundationsPlayground`. Terrain of truth for tokens, foundations, Status, TeamCrest, icons, and a mini chrome rail. Not Storybook.
-
-## Shell / Sidebar
-
-`shell/` is **Play’Up-local**. Do **not** extract a shared MyClub Shell/Sidebar package until a **second MyClub application** actually consumes the same Shell contract.
-
-Content link ink is scoped to `.shell-main` (and `.ds-preview`) so chrome links keep `--color-on-chrome`.
-
-## Still legacy (out of this foundations lot)
-
-- Shared `ui.tsx` chrome (`PageHeader`, loading/empty notices) still on legacy classes
-- Unmigrated organizer pages that still mix page-local CSS with foundations
-
-Page migration is a **separate** lot after foundations are stable.
+- Specimens import DS components only.
+- `design-lab.css` = harness (bar, viewport, boards) — never a parallel Input/Select/Dialog stylesheet.
 
 ## Dialog
 
-Canonical centered overlay: `design-system/components/Dialog.tsx` + `foundations/dialog.css`.
-Interactive demos: Design Lab surface **Dialog**, and FoundationsPlayground § Dialog.
-`AttentionDrawer` is Shell triage — do not reuse `Dialog` for it.
+- Canonical: `components/Dialog.tsx` + `foundations/dialog.css`.
+- **Close = icon X**; accessible name via `closeLabel` (default « Fermer »). Do **not** replace with a text « Fermer » button.
+- Interactive specimen: Design Lab surface **Dialog** only.
+- `AttentionDrawer` is Shell triage — not Dialog.
 
 ## Toast
 
-Ephemeral event feedback: `design-system/components/Toaster.tsx` + `toastStore.ts` (`notify`) + `foundations/toast.css`.
-Mount `Toaster` inside a `position: relative` canvas host (shell-main does this).
-Chrome: soft fill (~8% tone wash, no border), always-on tone icon, 2px progress bar shrinking left (pauses on hover; includes error).
-Interactive demos: Design Lab surface **Toast**.
-Contract: Notion decision Toast — builds on Continuité C1–C10.
-Do not use toast for durable state (À traiter / Cockpit). Distinct from `ds-notice` (inline stripe).
+- `Toaster` + `toastStore` (`notify`) + `foundations/toast.css`.
+- Mount in a `position: relative` canvas host (`ShellMain`).
+- Specimen: Design Lab **Toast**. Contract: Notion Toast decision.
+- Soft-fill % polish is deferred (P2); do not invent a second toast system.
+
+## Form stack
+
+Product forms (e.g. Teams identity dialogs) use:
+
+`Field`, `TextInput`, `InputNumber`, `Select`, `Upload`, `ColorPicker`, `Alert`.
+
+Do not reintroduce raw `<input>` / `<select>` chrome for those flows.
+
+## Shell
+
+`shell/` is Play’Up-local chrome. It consumes the DS; it does not redefine tokens.
+
+## Legacy `src/index.css`
+
+Still hosts admin layout CSS and a shrinking `:root` alias ladder. **SoT for new work = DS tokens on `.ds-root`.**
+
+See [page-migration.md](./page-migration.md) § Legacy tokens for inventory and remaining debt.
 
 ## Related
 
-- [page-migration.md](./page-migration.md) — when a product task touches a page
-- [i18n.md](./i18n.md) — strings
-- Notion Identité visuelle (product SoT)
+- [page-migration.md](./page-migration.md)
+- [i18n.md](./i18n.md)
+- Notion Identité visuelle

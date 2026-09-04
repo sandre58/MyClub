@@ -3,20 +3,20 @@ import {
   MatchRowScore,
 } from '../design-system/components/MatchRow'
 import { PanelHead } from '../design-system/components/PanelHead'
+import { TeamCrest } from '../design-system/TeamCrest'
 import type { LabMatch, LabTeam } from './labData'
 
 export { PanelHead }
 
-/** Crest d'équipe — initiales sur teinte d'équipe (données fictives lab). */
+/** Crest d'équipe lab — délègue à TeamCrest (pas de 2ᵉ implémentation). */
 export function Crest({ team, className }: { team: LabTeam; className?: string }) {
   return (
-    <span
-      className={['dlab-crest', className].filter(Boolean).join(' ')}
-      style={{ ['--crest' as string]: team.hue }}
-      aria-hidden="true"
-    >
-      {team.short}
-    </span>
+    <TeamCrest
+      name={team.name}
+      primaryColor={team.hue}
+      className={className}
+      size="sm"
+    />
   )
 }
 

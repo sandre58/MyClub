@@ -515,7 +515,7 @@
 
 .match-sheet__roster-link {
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-sheet__list {
@@ -553,7 +553,7 @@
 
 .match-sheet__jersey {
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-sheet__row-actions {
@@ -579,7 +579,7 @@
 .match-sheet__status-label {
     margin-inline-start: auto;
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-sheet__confirm,
@@ -664,7 +664,7 @@
 
 .match-goals__meta {
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-goals__row-actions,
@@ -711,7 +711,7 @@
 .match-goals__csc {
     margin: 0;
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-goals__errors {
@@ -755,7 +755,7 @@
 
 .match-subs__meta {
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-subs__row-actions,
@@ -802,7 +802,7 @@
 .match-subs__hint {
     margin: 0;
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-discipline__list {
@@ -840,7 +840,7 @@
 
 .match-discipline__meta {
     color: var(--color-text-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
 }
 
 .match-discipline__row-actions,

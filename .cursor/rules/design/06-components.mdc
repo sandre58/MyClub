@@ -30,6 +30,7 @@ Search these before building anything new. Reference implementations live in
 | `Select` | Coque input + liste déroulante, clear optionnel | `design-system/components/Select.tsx` |
 | `Upload` | Picture-card 1 fichier (crest / image, hover retirer, loading) | `design-system/components/Upload.tsx` |
 | `ColorPicker` | Trigger swatch+hex (+ Vider) ; popup HSV HEX/RGB/HSB + pipette | `design-system/components/ColorPicker.tsx` |
+| `LogoMediaField` | Feature adapter Upload + Media API (not DS) | `pages/LogoMediaField.tsx` |
 | Attention drawer | Shell triage (latéral, sous chrome) — pas Dialog | `shell/AttentionDrawer.tsx` |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
 | Shell rail / header | Unified navy chrome + canvas workspace | `foundations/shell.css`, `shell/` |
