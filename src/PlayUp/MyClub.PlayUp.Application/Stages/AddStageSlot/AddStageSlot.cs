@@ -17,10 +17,9 @@ public static class AddStageSlot
     /// <summary>
     /// Adds a slot key to the stage.
     /// </summary>
-    public static Slot Execute(Stage stage, string slotKey, IClock clock)
+    public static Slot Execute(Stage stage, string slotKey)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(clock);
 
         return stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed
             ? throw new ApplicationFailureException(

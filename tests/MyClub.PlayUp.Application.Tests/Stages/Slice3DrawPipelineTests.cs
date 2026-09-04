@@ -35,7 +35,7 @@ public sealed class Slice3DrawPipelineTests
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
         var inputs = DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Group);
-        ConfigureDrawInputs.Execute(stage, draw.Id, inputs, _clock);
+        ConfigureDrawInputs.Execute(stage, draw.Id, inputs);
 
         var generated = GenerateDrawResolution.Execute(
             stage,
@@ -72,8 +72,7 @@ public sealed class Slice3DrawPipelineTests
         ConfigureDrawInputs.Execute(
             stage,
             draw.Id,
-            DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Pairing),
-            _clock);
+            DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Pairing));
         GenerateDrawResolution.Execute(stage, draw.Id, _clock).IsResolved.Should().BeTrue();
         PublishDraw.Execute(stage, draw.Id, _clock);
 
@@ -107,8 +106,7 @@ public sealed class Slice3DrawPipelineTests
         ConfigureDrawInputs.Execute(
             stage,
             draw.Id,
-            DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Pairing),
-            _clock);
+            DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Pairing));
         GenerateDrawResolution.Execute(stage, draw.Id, _clock);
         PublishDraw.Execute(stage, draw.Id, _clock);
 

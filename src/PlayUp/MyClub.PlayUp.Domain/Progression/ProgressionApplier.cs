@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -24,6 +25,7 @@ public static class ProgressionApplier
     /// <returns>Slot assignment instruction (no Stage mutation).</returns>
     /// <exception cref="ArgumentNullException"><paramref name="path"/> or <paramref name="outcome"/> is <see langword="null"/>.</exception>
     /// <exception cref="DomainException"><paramref name="fixtureId"/> does not match the path source fixture.</exception>
+    [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Global", Justification = "False positive")]
     public static SlotAssignmentInstruction Apply(ProgressionPath path, FixtureId fixtureId, FixtureOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(path);

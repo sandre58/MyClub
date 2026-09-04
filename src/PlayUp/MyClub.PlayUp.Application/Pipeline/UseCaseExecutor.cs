@@ -1005,7 +1005,7 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var slot = AddStageSlot.Execute(stage, slotKey, clock);
+        var slot = AddStageSlot.Execute(stage, slotKey);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return slot;
     }
@@ -1080,7 +1080,7 @@ public sealed class UseCaseExecutor(
         EnsureCompetitionAllowsLifecycleMutation(competition);
         var draw = stage.GetDraw(drawId);
         var inputs = DrawInputsFactory.CreateDefault(competition, stage, draw.Kind);
-        ConfigureDrawInputs.Execute(stage, drawId, inputs, clock);
+        ConfigureDrawInputs.Execute(stage, drawId, inputs);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDrawSummary(stage.Id, stage.GetDraw(drawId));
     }

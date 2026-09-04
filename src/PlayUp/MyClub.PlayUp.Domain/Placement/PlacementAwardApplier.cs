@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -23,6 +24,7 @@ public static class PlacementAwardApplier
     /// <param name="fixtureId">Fixture identity supplied by Application (must match <see cref="PlacementAwardPath.SourceFixtureId"/>).</param>
     /// <param name="outcome">Decided winner/loser of the confrontation.</param>
     /// <returns>Final placement instruction (no Stage mutation).</returns>
+    [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Global", Justification = "False positive")]
     public static FinalPlacementInstruction Apply(
         PlacementAwardPath path,
         FixtureId fixtureId,

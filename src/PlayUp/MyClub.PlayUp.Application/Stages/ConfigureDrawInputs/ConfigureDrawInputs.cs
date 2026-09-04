@@ -20,12 +20,10 @@ public static class ConfigureDrawInputs
     /// <param name="stage">Owning stage.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="inputs">Concrete inputs.</param>
-    /// <param name="clock">Clock for domain events.</param>
-    public static void Execute(Stage stage, DrawId drawId, DrawInputs inputs, IClock clock)
+    public static void Execute(Stage stage, DrawId drawId, DrawInputs inputs)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(inputs);
-        ArgumentNullException.ThrowIfNull(clock);
 
         var draw = stage.GetDraw(drawId);
         if (draw.Status != DrawStatus.Draft)

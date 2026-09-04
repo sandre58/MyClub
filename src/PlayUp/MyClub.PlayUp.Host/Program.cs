@@ -97,11 +97,13 @@ app.MapGet(
 
 app.MapGet(
     "/media/{mediaId:guid}/content",
-    async (Guid mediaId, MediaService mediaService, CancellationToken cancellationToken) =>
+    async (Guid mediaId, MediaService mediaService, HttpContext httpContext, CancellationToken cancellationToken) =>
     {
         var content = await mediaService
             .OpenContentAsync(new MediaId(mediaId), cancellationToken)
             .ConfigureAwait(false);
+
+        httpContext.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
 
         return Results.File(
             content.Content,

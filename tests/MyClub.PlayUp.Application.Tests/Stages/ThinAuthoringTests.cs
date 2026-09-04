@@ -32,8 +32,8 @@ public sealed class ThinAuthoringTests
             "QF",
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
-        AddStageSlot.Execute(qf, "QF1-A", _clock);
-        AddStageSlot.Execute(qf, "QF1-B", _clock);
+        AddStageSlot.Execute(qf, "QF1-A");
+        AddStageSlot.Execute(qf, "QF1-B");
         var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
 
         var sf = AddCompetitionStage.Execute(competition, "Semi-Finals", _clock);
@@ -42,8 +42,8 @@ public sealed class ThinAuthoringTests
             "SF",
             AddStageRound.BuildTieFormat(numberOfLegs: 2, aggregateScoring: true),
             _clock);
-        AddStageSlot.Execute(sf, "SF1-A", _clock);
-        AddStageSlot.Execute(sf, "SF1-B", _clock);
+        AddStageSlot.Execute(sf, "SF1-A");
+        AddStageSlot.Execute(sf, "SF1-B");
 
         ReplaceStageProgressionRules.Execute(
             qf,
@@ -113,7 +113,7 @@ public sealed class ThinAuthoringTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var act = () => AddStageSlot.Execute(stage, "X", _clock);
+        var act = () => AddStageSlot.Execute(stage, "X");
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);

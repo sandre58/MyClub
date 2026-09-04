@@ -81,6 +81,11 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
         using var content = await client.GetAsync($"/media/{competitionLogoId}/content");
         content.StatusCode.Should().Be(HttpStatusCode.OK);
         content.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
+        content.Headers.TryGetValues("Cache-Control", out var cacheControlValues).Should().BeTrue();
+        cacheControlValues!.Single().Should().Be("public, max-age=31536000, immutable");
+        var body = await content.Content.ReadAsByteArrayAsync();
+        body.Should().Equal(Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="));
     }
 
     private static async Task<Guid> UploadPngAsync(HttpClient client, string fileName)

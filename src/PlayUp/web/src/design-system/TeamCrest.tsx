@@ -34,6 +34,7 @@ export function TeamCrest({
           src={mediaContentUrl(logoMediaId)}
           alt=""
           className="team-crest__img"
+          loading="lazy"
         />
       </span>
     )
