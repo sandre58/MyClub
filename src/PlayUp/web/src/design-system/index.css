@@ -1,8 +1,10 @@
 /*
  * Play’Up design-system foundations (14.5).
  *
- * Scoped to .ds-root — does not replace the 13.5 :root in index.css.
- * Components and pages must not read --primitive-* ; semantic tokens are the API.
+ * Scoped primarily to `.ds-root`; token sheets also expose the public API on
+ * `:root` so early paint / admin chrome can consume the same SoT (no ladder in
+ * `src/index.css`).
+ * Components and pages must not read `--primitive-*` ; semantic tokens are the API.
  *
  * Semantic token budget: 54 / ceiling 70
  *   color 24 (content 20 + chrome 4) · spacing 6 · geometry 7 · typography 16 · brand 1 · density 4 · motion 2

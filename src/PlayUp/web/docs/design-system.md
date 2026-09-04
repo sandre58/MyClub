@@ -70,9 +70,11 @@ Do not reintroduce raw `<input>` / `<select>` chrome for those flows.
 
 ## Legacy `src/index.css`
 
-Still hosts admin layout CSS and a shrinking `:root` alias ladder. **SoT for new work = DS tokens on `.ds-root`.**
+Global reset + legacy admin chrome classes only. **No second token ladder.**
 
-See [page-migration.md](./page-migration.md) § Legacy tokens for inventory and remaining debt.
+Token sheets are imported for early paint; product foundations still load via Shell / Lab / Accueil.
+
+Admin-local literals (page max-width/pad, mono, 140ms transitions, gauge `999px`) stay inlined until those surfaces leave this file. See [page-migration.md](./page-migration.md).
 
 ## Related
 

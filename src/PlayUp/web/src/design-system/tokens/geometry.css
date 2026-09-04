@@ -1,6 +1,8 @@
 /*
  * Low geometry. No pill radius, no decorative page shadow, no radius-lg ladder.
+ * Exposed on :root + .ds-root (same SoT as product).
  */
+:root,
 .ds-root {
     --radius-control: 4px;
     --radius-panel: 6px;

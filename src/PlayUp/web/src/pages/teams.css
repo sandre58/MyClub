@@ -151,7 +151,8 @@
 .teams__plateau-gaugeTrack {
   position: relative;
   height: 0.5rem;
-  border-radius: var(--radius-pill);
+  /* Local gauge geometry — DS forbids product pills; SoT deferred to P1-B */
+  border-radius: 999px;
   background: var(--color-surface-secondary);
   overflow: visible;
 }
@@ -222,7 +223,7 @@
   padding: 0 var(--space-12);
   border-radius: var(--radius-control);
   border: var(--border-width) solid var(--color-border);
-  background: var(--color-surface-muted);
+  background: var(--color-surface-secondary);
 }
 
 .teams__add {

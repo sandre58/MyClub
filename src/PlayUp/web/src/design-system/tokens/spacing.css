@@ -1,7 +1,9 @@
 /*
  * Short scale only. Group / section gaps use --space-32.
  * Do not add a second spacing ladder per density.
+ * Exposed on :root + .ds-root so admin chrome and product share one SoT.
  */
+:root,
 .ds-root {
     --space-4: 0.25rem;
     --space-8: 0.5rem;

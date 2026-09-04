@@ -1,76 +1,17 @@
 /*
  * Play'Up admin layout — forms, draws, row lists (Lot 7).
  *
- * Palette bridged to Slate via design-system tokens on :root.
- * Product surfaces use design-system/index.css inside .ds-root.
+ * Visual tokens: design-system/tokens/* (imported below).
+ * This file keeps global reset + legacy admin chrome classes only —
+ * no concurrent spacing / radius / type / color ladder.
  */
 
 @import './design-system/palettes/slate.css';
 @import './design-system/tokens/colors.css';
-
-:root {
-    /* Legacy spacing / geometry still referenced by index.css admin chrome */
-    --space-2xs: 0.25rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
-    --space-2xl: 3rem;
-
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 6px;
-    /* Gauge track only (teams.css) — DS forbids product pills; migrate in P1 */
-    --radius-pill: 999px;
-
-    --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-
-    --text-display: clamp(1.75rem, 1.25rem + 1.6vw, 2.25rem);
-    --text-title: clamp(1.25rem, 1.05rem + 0.7vw, 1.5rem);
-    --text-heading: 1.0625rem;
-    --text-body: 1rem;
-    --text-secondary: 0.9375rem;
-    --text-eyebrow: 0.75rem;
-
-    --leading-tight: 1.15;
-    --leading-snug: 1.35;
-    --leading-normal: 1.55;
-
-    --tracking-tight: -0.015em;
-    --tracking-wide: 0.08em;
-
-    --shadow-sm: 0 1px 3px color-mix(in srgb, var(--color-ink) 8%, transparent);
-
-    --layout-max: 74rem;
-    --layout-narrow: 46rem;
-    --page-pad: clamp(1rem, 4vw, 2rem);
-
-    --transition: 140ms cubic-bezier(0.2, 0, 0.2, 1);
-    --ring: 0 0 0 3px color-mix(in srgb, var(--color-brand) 32%, transparent);
-
-    /* Legacy 13.5 soft-tone aliases still used by admin notices */
-    --color-canvas-deep: var(--color-surface-secondary);
-    --color-surface-muted: var(--color-surface-secondary);
-    --color-surface-sunken: var(--color-surface-secondary);
-    --color-ink-soft: var(--color-text-primary);
-    --color-text: var(--color-text-primary);
-    --color-text-faint: var(--color-text-secondary);
-    --color-text-inverse: var(--color-on-ink);
-    --color-text-inverse-soft: var(--color-on-chrome);
-    --color-success-soft: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
-    --color-success-border: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
-    --color-warning: var(--color-attention);
-    --color-warning-soft: color-mix(in srgb, var(--color-attention) 10%, var(--color-surface));
-    --color-warning-border: color-mix(in srgb, var(--color-attention) 35%, var(--color-border));
-    --color-danger: var(--color-error);
-    --color-danger-strong: var(--color-error);
-    --color-danger-soft: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
-    --color-danger-border: color-mix(in srgb, var(--color-error) 35%, var(--color-border));
-    --color-info-soft: color-mix(in srgb, var(--color-info) 10%, var(--color-surface));
-    --color-info-border: color-mix(in srgb, var(--color-info) 35%, var(--color-border));
-    --color-done: var(--color-text-secondary);
-    --color-done-soft: var(--color-surface-secondary);
-    --color-done-border: var(--color-border);
-}
+@import './design-system/tokens/typography.css';
+@import './design-system/tokens/spacing.css';
+@import './design-system/tokens/geometry.css';
+@import './design-system/tokens/motion.css';
 
 *,
 *::before,
@@ -102,8 +43,9 @@ h2,
 h3,
 h4 {
     margin: 0;
-    line-height: var(--leading-snug);
-    letter-spacing: var(--tracking-tight);
+    /* Local — no DS --leading-snug / --tracking-tight */
+    line-height: 1.35;
+    letter-spacing: -0.015em;
 }
 
 p {
@@ -114,7 +56,8 @@ a {
     color: var(--color-brand);
     text-decoration-thickness: 0.07em;
     text-underline-offset: 0.18em;
-    transition: color var(--transition);
+    /* Local 140ms — keep admin chrome timing (DS motion is 160ms) */
+    transition: color 140ms cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 a:hover {
@@ -124,21 +67,21 @@ a:hover {
 :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-control);
 }
 
 .page {
     flex: 1;
-    width: min(100%, var(--layout-max));
+    width: min(100%, 74rem);
     margin-inline: auto;
-    padding: var(--space-lg) var(--page-pad) var(--space-2xl);
+    padding: var(--space-24) clamp(1rem, 4vw, 2rem) var(--space-48);
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: var(--space-24);
 }
 
 .page--narrow {
-    width: min(100%, var(--layout-narrow));
+    width: min(100%, 46rem);
 }
 
 .lede {
@@ -153,7 +96,7 @@ a:hover {
 
 .hint {
     color: var(--color-text-secondary);
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
 }
 
 .caption {
@@ -164,33 +107,33 @@ a:hover {
 .id-chip {
     display: inline-block;
     padding: 0.05rem 0.4rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-control);
     background: var(--color-surface-secondary);
     color: var(--color-text-secondary);
-    font-family: var(--font-mono);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
     font-size: 0.75rem;
     word-break: break-all;
 }
 
 .mono {
-    font-family: var(--font-mono);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
     font-size: 0.85em;
     word-break: break-all;
 }
 
 code {
     padding: 0.05em 0.35em;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-control);
     background: var(--color-surface-secondary);
     color: var(--color-text-primary);
-    font-family: var(--font-mono);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
     font-size: 0.85em;
 }
 
 .section-stack {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: var(--space-24);
 }
 
 .stack {
@@ -230,14 +173,14 @@ code {
     margin: 0;
     padding-inline-start: 1.15rem;
     display: grid;
-    gap: var(--space-2xs);
+    gap: var(--space-4);
 }
 
 .nested-list {
-    margin: var(--space-2xs) 0 0;
+    margin: var(--space-4) 0 0;
     padding-inline-start: 1.15rem;
     color: var(--color-text-secondary);
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
 }
 
 .row-list {
@@ -256,19 +199,19 @@ code {
     gap: var(--space-8) var(--space-16);
     padding: var(--space-12) var(--space-16);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-panel);
     background: var(--color-surface);
     color: inherit;
     text-decoration: none;
     transition:
-        border-color var(--transition),
-        box-shadow var(--transition),
-        background-color var(--transition);
+        border-color 140ms cubic-bezier(0.2, 0, 0.2, 1),
+        box-shadow 140ms cubic-bezier(0.2, 0, 0.2, 1),
+        background-color 140ms cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 a.row:hover {
     border-color: color-mix(in srgb, var(--color-brand) 35%, var(--color-border));
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 8%, transparent);
 }
 
 .row__main {
@@ -302,7 +245,9 @@ a.row:hover {
     color: var(--color-text-secondary);
     font-size: 1.1rem;
     line-height: 1;
-    transition: transform var(--transition), color var(--transition);
+    transition:
+        transform 140ms cubic-bezier(0.2, 0, 0.2, 1),
+        color 140ms cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 a.row:hover .row__chevron {
@@ -318,7 +263,7 @@ a.row:hover .row__chevron {
     gap: var(--space-8) var(--space-16);
     padding: var(--space-12) var(--space-16);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-panel);
     background: var(--color-surface);
 }
 
@@ -369,8 +314,8 @@ a.row:hover .row__chevron {
 
 .field {
     display: grid;
-    gap: var(--space-2xs);
-    font-size: var(--text-secondary);
+    gap: var(--space-4);
+    font-size: var(--text-body);
     font-weight: 600;
     color: var(--color-text-primary);
 }
@@ -400,16 +345,16 @@ a.row:hover .row__chevron {
     margin: 0;
     padding: var(--space-16);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-panel);
     background: var(--color-surface-secondary);
 }
 
 .fieldset__legend {
-    padding-inline: var(--space-2xs);
+    padding-inline: var(--space-4);
     color: var(--color-text-secondary);
-    font-size: var(--text-eyebrow);
+    font-size: var(--text-meta);
     font-weight: 700;
-    letter-spacing: var(--tracking-wide);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
@@ -422,14 +367,14 @@ textarea {
     min-height: 2.5rem;
     padding: 0.45rem 0.65rem;
     border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-control);
     background: var(--color-surface);
     color: var(--color-text-primary);
     font: inherit;
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
     transition:
-        border-color var(--transition),
-        box-shadow var(--transition);
+        border-color 140ms cubic-bezier(0.2, 0, 0.2, 1),
+        box-shadow 140ms cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 input:hover:not(:disabled),
@@ -442,7 +387,7 @@ select:focus-visible,
 textarea:focus-visible {
     outline: none;
     border-color: var(--color-brand);
-    box-shadow: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 32%, transparent);
 }
 
 input[type='checkbox'] {
@@ -471,24 +416,24 @@ fieldset:disabled {
     gap: var(--space-12);
     padding: var(--space-16);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-panel);
     background: var(--color-surface-secondary);
 }
 
 .draw-card__title {
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
     font-weight: 700;
 }
 
 .draw-card__message {
     color: var(--color-text-secondary);
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
 }
 
 .draw-card__results-title {
-    font-size: var(--text-eyebrow);
+    font-size: var(--text-meta);
     font-weight: 700;
-    letter-spacing: var(--tracking-wide);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-text-secondary);
 }
@@ -509,9 +454,9 @@ fieldset:disabled {
     gap: var(--space-8);
     padding: var(--space-8) var(--space-12);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-control);
     background: var(--color-surface);
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
 }
 
 .draw-pairing__side {
@@ -524,9 +469,9 @@ fieldset:disabled {
 
 .draw-pairing__vs {
     color: var(--color-text-secondary);
-    font-size: var(--text-eyebrow);
+    font-size: var(--text-meta);
     font-weight: 700;
-    letter-spacing: var(--tracking-wide);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
@@ -535,7 +480,7 @@ fieldset:disabled {
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-8);
-    font-size: var(--text-secondary);
+    font-size: var(--text-body);
 }
 
 .draw-placement__entry {

@@ -19,32 +19,38 @@ Workspace → Match hub → Stage / `drawUi` → Organisation → remaining page
 
 ## End of `index.css`
 
-`src/index.css` dies when the last `.btn` / `.card` / `.page` / legacy-token consumer is migrated. Until then both systems coexist by design (14.5).
+`src/index.css` holds global reset + legacy admin chrome classes (`.page`, `.form`, `.row`, draws…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
 
-## Legacy tokens (P0 inventory → P1 finish)
+Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999px`) stay inlined where used until those surfaces migrate off this file.
 
-**SoT:** `design-system/tokens/*` on `.ds-root`.
+## Legacy tokens
 
-### Migrated (P0)
+**SoT:** `design-system/tokens/*` on `:root` + `.ds-root`.
+
+### Migrated (P0 + P1-A)
 
 | Legacy | Replacement | Where |
 |---|---|---|
-| `--text-caption` | `--text-label` | `pages/matches.css`, `index.css` usages |
-| `--space-xs` | `--space-8` | `index.css` usages |
-| `--space-sm` | `--space-12` | `index.css` usages |
-| `--space-md` | `--space-16` | `index.css` usages |
-| `--color-primary-border` | `color-mix(… brand 35%, border)` | `index.css` usage |
-| Unused `:root` defs removed | — | `--space-xs/sm/md`, `--text-caption`, `--color-primary*` |
+| `--text-caption` | `--text-label` | pages / index (P0) |
+| `--space-xs/sm/md` | `--space-8/12/16` | index (P0) |
+| `--space-2xs` | `--space-4` | index |
+| `--space-lg` | `--space-24` | index |
+| `--space-2xl` | `--space-48` | index |
+| `--radius-sm` | `--radius-control` | index |
+| `--radius-md` | `--radius-panel` | index |
+| `--text-eyebrow` | `--text-meta` | index |
+| `--text-secondary` (size) | `--text-body` | index |
+| `--color-surface-muted` | `--color-surface-secondary` | teams.css |
+| `--radius-pill` | literal `999px` | teams.css gauge (P1-B SoT) |
+| Soft-tone aliases / unused `:root` ladder | removed | index `:root` |
 
-### Remaining (P1 — do not “fix” visually without a decision)
+### Remaining local (not a second token ladder)
 
-| Token | Files | Notes |
+| Value | Where | Notes |
 |---|---|---|
-| `--radius-pill` | `pages/teams.css` (plateau gauge) | DS geometry forbids product pills; gauge track needs explicit SoT |
-| `--space-2xs`, `--space-lg`, `--space-xl`, `--space-2xl` | `index.css` | Map to `--space-4` / `--space-24` / `--space-32` / `--space-48` |
-| `--radius-sm/md/lg` | `index.css` | Map to `--radius-control` / `--radius-panel` |
-| `--text-eyebrow`, `--text-secondary` (size), `--page-pad`, `--layout-max` | `index.css` | Page chrome leftovers |
-| Soft tone aliases (`--color-danger*`, `--color-warning*`, …) | `index.css` | Prefer `--color-error` / `--color-attention` + mixes |
+| `74rem` / `46rem` / `clamp(1rem, 4vw, 2rem)` | `.page` | layout chrome local to admin `.page` |
+| `999px` | teams gauge | P1-B visual arbitration |
+| `140ms` easing / focus ring / mono stack | index admin chrome | preserve timing; DS motion is 160ms |
 
 ## Deferred (do not add without an explicit trigger)
 

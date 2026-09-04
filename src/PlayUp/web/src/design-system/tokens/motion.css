@@ -1,6 +1,7 @@
 /*
  * Motion is comprehension, not signature. No glow / bounce tokens.
  */
+:root,
 .ds-root {
     --motion-duration: 160ms;
     --motion-easing: cubic-bezier(0.2, 0, 0.2, 1);

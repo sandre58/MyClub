@@ -2,11 +2,13 @@
  * One grotesque family. Product face = IBM Plex Sans (14.5).
  * Five roles — not a 7-step type scale. No mono, no display sportif.
  */
+:root,
 .ds-root,
 .ds-root[data-font='plex'] {
     --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
 }
 
+:root,
 .ds-root {
     --text-display: 2rem;
     --text-heading: 1.375rem;
