@@ -39,10 +39,8 @@ body:has(.shell),
 .shell-main a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
     ):not(.matches-link):not(.matches__back):not(
-        .matches-result
-    ):not(.organisation-link):not(.organisation__back):not(
-        .organisation-stage-link
-    ),
+        .organisation-link
+    ):not(.organisation__back):not(.organisation-stage-link),
 .ds-preview a:not(.ds-btn) {
     color: var(--color-ink);
     text-decoration-thickness: 0.08em;
@@ -53,10 +51,8 @@ body:has(.shell),
     a:not(.ds-btn):not(.overview-link):not(.classements-link):not(
         .classements__back
     ):not(.matches-link):not(.matches__back):not(
-        .matches-result
-    ):not(.organisation-link):not(.organisation__back):not(
-        .organisation-stage-link
-    ):hover,
+        .organisation-link
+    ):not(.organisation__back):not(.organisation-stage-link):hover,
 .ds-preview a:not(.ds-btn):hover {
     color: var(--color-ink);
     text-decoration-thickness: 0.12em;

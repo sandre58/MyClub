@@ -15,6 +15,8 @@ import {
   updateCompetitionPresentation,
 } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
+import { Field } from '../design-system/components/Field'
+import { TextInput } from '../design-system/components/TextInput'
 import { LogoMediaField } from './LogoMediaField'
 import {
   CheckIcon,
@@ -184,6 +186,7 @@ function ContextBand({ data }: { data: OrganisationView }) {
 function IdentitySection({ data }: { data: OrganisationView }) {
   const { t } = useTranslation('organisation')
   const queryClient = useQueryClient()
+  const shortNameId = useId()
   const [shortName, setShortName] = useState(data.shortName ?? '')
   const [logoMediaId, setLogoMediaId] = useState<string | null>(
     data.logoMediaId ?? null,
@@ -235,21 +238,27 @@ function IdentitySection({ data }: { data: OrganisationView }) {
       </PanelHead>
       <div className="organisation-identity">
         <form
-          className="form"
+          className="ds-form"
+          data-density="comfortable"
           onSubmit={(event: FormEvent) => {
             event.preventDefault()
             presentationMutation.mutate()
           }}
         >
-          <label className="field">
-            {t('identity.shortName')}
-            <input
+          <Field
+            label={t('identity.shortName')}
+            htmlFor={shortNameId}
+            counter={`${shortName.length}/20`}
+          >
+            <TextInput
+              id={shortNameId}
               value={shortName}
-              onChange={(event) => setShortName(event.target.value)}
               maxLength={20}
               disabled={presentationMutation.isPending}
+              allowClear
+              onChange={(event) => setShortName(event.target.value)}
             />
-          </label>
+          </Field>
           <LogoMediaField
             name={data.name}
             value={logoMediaId}

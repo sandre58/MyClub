@@ -1,5 +1,9 @@
+import { LiveStatus } from './LiveStatus'
+import { Status } from './Status'
+
 /**
  * Journée / round status — calendrier sportif (Lab SoT).
+ * Renders via Status / LiveStatus; state mapping stays calendrier-specific.
  */
 export function MatchRoundStatus({
   state,
@@ -15,29 +19,24 @@ export function MatchRoundStatus({
 }) {
   switch (state) {
     case 'current':
-      return (
-        <span className="ds-status-live">
-          <span className="ds-live-dot" />
-          {labels.current}
-        </span>
-      )
+      return <LiveStatus>{labels.current}</LiveStatus>
     case 'partial':
       return (
-        <span className="ds-status ds-status--context ds-status--rounded ds-status--soft ds-status--tone-attention">
+        <Status density="context" tone="attention" variant="soft" shape="rounded">
           {labels.partial}
-        </span>
+        </Status>
       )
     case 'done':
       return (
-        <span className="ds-status ds-status--context ds-status--rounded ds-status--soft ds-status--tone-neutral">
+        <Status density="context" tone="neutral" variant="soft" shape="rounded">
           {labels.done}
-        </span>
+        </Status>
       )
     default:
       return (
-        <span className="ds-status ds-status--dense ds-status--tone-neutral">
+        <Status density="dense" tone="neutral">
           {labels.upcoming}
-        </span>
+        </Status>
       )
   }
 }

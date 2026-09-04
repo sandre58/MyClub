@@ -32,6 +32,7 @@ import {
   type StageSlot,
 } from '../types'
 import { getDrawUiProjection, resolvePairingFixtureIds } from './drawUi'
+import './StagePage.css'
 
 export function StagePage() {
   const { stageId = '' } = useParams()
