@@ -1,6 +1,6 @@
 /*
  * Toast — ephemeral event feedback (canvas host).
- * Soft fill: ~8% tone wash, no border; tone via icon + 2px progress bar.
+ * Soft fill: ~16% tone wash, no border; tone via icon + 2px progress bar.
  * Progress shrinks toward the left. Below Dialog (z-index 40).
  */
 

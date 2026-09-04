@@ -151,7 +151,7 @@
 .teams__plateau-gaugeTrack {
   position: relative;
   height: 0.5rem;
-  /* Local gauge geometry — DS forbids product pills; SoT deferred to P1-B */
+  /* Capsule track ends — local geometry; no DS --radius-pill (P1-B) */
   border-radius: 999px;
   background: var(--color-surface-secondary);
   overflow: visible;

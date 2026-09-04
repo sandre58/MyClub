@@ -19,7 +19,7 @@ export type ToasterProps = {
 /**
  * Canvas-local toast host — mount inside a `position: relative` workspace
  * (shell-main / Design Lab board). Bottom-end stack; does not steal focus.
- * Soft fill (~8% tone), no border; tone icon + 2px progress (pauses on hover; shrinks left).
+ * Soft fill (~16% tone), no border; tone icon + 2px progress (pauses on hover; shrinks left).
  */
 export function Toaster({ closeLabel = 'Fermer' }: ToasterProps) {
   const toasts = useSyncExternalStore(

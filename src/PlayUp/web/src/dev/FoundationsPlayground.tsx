@@ -709,9 +709,10 @@ export function FoundationsPlayground() {
             Live ≠ success
           </h2>
           <div className="ds-row">
+            {/* LiveStatus = pulse clock mark; Status live = tone chip — keep both */}
             <LiveStatus>67&apos; · En cours</LiveStatus>
             <Status density="context" tone="live" variant="soft">
-              live pill
+              live chip
             </Status>
             <Status density="context" tone="success" variant="soft">
               success

@@ -18,7 +18,7 @@ export function LabToast() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-toast__title">Toast</h1>
         <p className="dlab-toast__lede">
-          Feedback d’événement éphémère — bas-droit du canvas. Soft fill ~8 %,
+          Feedback d’événement éphémère — bas-droit du canvas. Soft fill ~16 %,
           sans bordure ; icône tone ; barre 2 px vers la gauche (pause au survol).
           Slot action réservé, pas en V1.
         </p>
@@ -77,7 +77,7 @@ export function LabToast() {
           </button>
         </div>
         <ul className="dlab-toast__checklist">
-          <li>Soft fill ~8 % · sans bordure · shadow overlay</li>
+          <li>Soft fill ~16 % · sans bordure · shadow overlay</li>
           <li>Icône tone · barre 2 px shrink vers la gauche (pause hover)</li>
           <li>Error ~10 s · success/info ~4 s · attention ~6 s</li>
           <li>Ne vole pas le focus · role status / alert</li>

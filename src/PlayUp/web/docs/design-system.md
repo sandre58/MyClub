@@ -54,13 +54,25 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 - `Toaster` + `toastStore` (`notify`) + `foundations/toast.css`.
 - Mount in a `position: relative` canvas host (`ShellMain`).
 - Specimen: Design Lab **Toast**. Contract: Notion Toast decision.
-- Soft-fill % polish is deferred (P2); do not invent a second toast system.
+- Soft fill ≈ **16%** tone wash (icon + progress carry tone; no border). Docs previously said ~8% — CSS recipe is the SoT.
+
+## LiveStatus vs Status
+
+| | `LiveStatus` | `Status tone="live"` |
+|---|---|---|
+| Role | Match clock / in-play indicator | Chip / badge for live tone |
+| Chrome | Pulse `ds-live-dot` + soft live wash | Status density/variant/shape recipes |
+| Product | Prefer where a pulsing live mark is required | Prefer for list/chip “live” labels |
+
+Do not collapse them: pulse activity ≠ tone chip.
 
 ## Form stack
 
 Product forms (e.g. Teams identity dialogs) use:
 
 `Field`, `TextInput`, `InputNumber`, `Select`, `Upload`, `ColorPicker`, `Alert`.
+
+Logo identity uses the DS **Upload** picture-card via `pages/LogoMediaField` (feature adapter). Do not reintroduce a crest+file-row chrome in product forms.
 
 Do not reintroduce raw `<input>` / `<select>` chrome for those flows.
 
@@ -74,7 +86,11 @@ Global reset + legacy admin chrome classes only. **No second token ladder.**
 
 Token sheets are imported for early paint; product foundations still load via Shell / Lab / Accueil.
 
-Admin-local literals (page max-width/pad, mono, 140ms transitions, gauge `999px`) stay inlined until those surfaces leave this file. See [page-migration.md](./page-migration.md).
+Admin-local literals (page max-width/pad, mono, 140ms transitions) stay inlined until those surfaces leave this file. See [page-migration.md](./page-migration.md).
+
+### Capsule / circle geometry
+
+Fully rounded ends (`border-radius: 999px`) stay **local** where needed (progress tracks, circular swatches/avatars, Status `shape="pill"`, live dots). Geometry tokens intentionally have **no** shared product `--radius-pill`.
 
 ## Related
 
