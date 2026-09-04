@@ -896,22 +896,6 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Changes a declared member role and returns the updated organisation view.
-    /// </summary>
-    public async Task<OrganisationViewDto> ChangeDeclaredMemberRoleAsync(
-        CompetitionId competitionId,
-        EntryId entryId,
-        MemberId memberId,
-        DeclaredMemberRole role,
-        CancellationToken cancellationToken = default)
-    {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        ChangeDeclaredMemberRole.Execute(competition, entryId, memberId, role, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
     /// Replaces competition regulation and returns the updated organisation view.
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>

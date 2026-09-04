@@ -2,7 +2,6 @@ import type {
   AddDeclaredMemberRequest,
   AddDeclaredParticipationRequest,
   AddEntryRequest,
-  ChangeDeclaredMemberRoleRequest,
   EntryIdsRequest,
   ApplyDrawRequest,
   OverviewView,
@@ -326,20 +325,6 @@ export function withdrawCompetitionEntries(
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entry-lots/withdraw`,
-    request,
-  )
-}
-
-/** PUT .../declared-members/{memberId}/role → OrganisationView */
-export function changeDeclaredMemberRole(
-  competitionId: string,
-  entryId: string,
-  memberId: string,
-  request: ChangeDeclaredMemberRoleRequest,
-): Promise<OrganisationView> {
-  return sendJson(
-    'PUT',
-    `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}/role`,
     request,
   )
 }

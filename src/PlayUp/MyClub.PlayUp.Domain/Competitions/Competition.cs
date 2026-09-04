@@ -379,17 +379,6 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     }
 
     /// <summary>
-    /// Changes a declared member role within the entry roster.
-    /// </summary>
-    public void ChangeDeclaredMemberRole(EntryId entryId, MemberId memberId, DeclaredMemberRole role, IClock clock)
-    {
-        ArgumentNullException.ThrowIfNull(clock);
-        var entry = GetEntryForDeclaredRosterMutation(entryId);
-        entry.ChangeDeclaredMemberRole(memberId, role);
-        Raise(new CompetitionDeclaredMemberRoleChanged(Id, entryId, memberId, role, clock));
-    }
-
-    /// <summary>
     /// Adds a stage reference to the competition.
     /// </summary>
     /// <param name="stageId">The stage identity.</param>

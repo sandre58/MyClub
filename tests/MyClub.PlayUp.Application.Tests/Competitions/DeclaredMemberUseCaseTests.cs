@@ -82,35 +82,16 @@ public sealed class DeclaredMemberUseCaseTests
     }
 
     [Fact]
-    public void RenameDeclaredMember_and_change_role_work()
+    public void RenameDeclaredMember_updates_display_name()
     {
         var competition = CreateCompetition.Execute("Roster Cup", _clock);
         var entry = AddEntry.Execute(competition, "FC Local", _clock);
         var member = AddDeclaredMember.Execute(competition, entry.Id, "Dupont", DeclaredMemberRole.Player, _clock);
 
         RenameDeclaredMember.Execute(competition, entry.Id, member.Id, "Jean Dupont", _clock);
-        ChangeDeclaredMemberRole.Execute(competition, entry.Id, member.Id, DeclaredMemberRole.Staff, _clock);
 
         var updated = competition.GetEntry(entry.Id).DeclaredMembers.Single(m => m.Id.Equals(member.Id));
         updated.DisplayName.Should().Be("Jean Dupont");
-        updated.Role.Should().Be(DeclaredMemberRole.Staff);
-    }
-
-    [Fact]
-    public void ChangeDeclaredMemberRole_rejects_unknown_role()
-    {
-        var competition = CreateCompetition.Execute("Roster Cup", _clock);
-        var entry = AddEntry.Execute(competition, "FC Local", _clock);
-        var member = AddDeclaredMember.Execute(competition, entry.Id, "Dupont", DeclaredMemberRole.Player, _clock);
-
-        var act = () => ChangeDeclaredMemberRole.Execute(
-            competition,
-            entry.Id,
-            member.Id,
-            (DeclaredMemberRole)99,
-            _clock);
-
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.InvalidDeclaredMemberRole);
+        updated.Role.Should().Be(DeclaredMemberRole.Player);
     }
 }

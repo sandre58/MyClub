@@ -118,9 +118,6 @@ public sealed class CompetitionEntry : Entity<EntryId>
     internal void RenameDeclaredMember(MemberId memberId, string displayName) =>
         GetDeclaredMember(memberId).Rename(displayName);
 
-    internal void ChangeDeclaredMemberRole(MemberId memberId, DeclaredMemberRole role) =>
-        GetDeclaredMember(memberId).ChangeRole(role);
-
     private static string NormalizeDisplayName(string displayName)
     {
         ArgumentNullException.ThrowIfNull(displayName);

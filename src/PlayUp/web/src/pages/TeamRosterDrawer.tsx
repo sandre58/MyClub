@@ -14,16 +14,18 @@ import {
 import { useTranslation } from 'react-i18next'
 import {
   addDeclaredMember,
-  changeDeclaredMemberRole,
   removeDeclaredMember,
   renameDeclaredMember,
 } from '../api'
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
 import { TeamCrest } from '../design-system/TeamCrest'
 import {
   ChevronDownIcon,
+  CloseIcon,
   SidebarCollapseIcon,
 } from '../design-system/icons/shellIcons'
 import {
+  CheckIcon,
   PencilIcon,
   PersonIcon,
   PlusIcon,
@@ -33,7 +35,6 @@ import { queryKeys } from '../queryKeys'
 import {
   EntryStatusBadge,
   MutationError,
-  PendingLabel,
 } from '../ui'
 import {
   MEMBER_DISPLAY_NAME_MAX_LENGTH,
@@ -164,15 +165,15 @@ export function TeamRosterDrawer({
   onBack?: () => void
 }) {
   const { t } = useTranslation('teams')
+  const { t: tCommon } = useTranslation('common')
   const queryClient = useQueryClient()
   const nameRef = useRef<HTMLInputElement>(null)
   const splitRef = useRef<HTMLDivElement>(null)
   const [displayName, setDisplayName] = useState('')
   const [staffMenuOpen, setStaffMenuOpen] = useState(false)
-  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
+  const [pendingRemove, setPendingRemove] = useState<DeclaredMember | null>(null)
   const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
-  const [roleDraft, setRoleDraft] = useState<DeclaredMemberRole>('Player')
 
   const entry = data.participants.entries.find(
     (candidate) => candidate.entryId === entryId,
@@ -208,28 +209,11 @@ export function TeamRosterDrawer({
     mutationFn: (memberId: string) =>
       removeDeclaredMember(data.competitionId, entryId, memberId),
     onSuccess: async () => {
-      setPendingRemoveId(null)
+      setPendingRemove(null)
       await invalidateAfterRosterMutation(queryClient, data.competitionId)
     },
     onError: () => {
-      setPendingRemoveId(null)
-    },
-  })
-
-  const roleMutation = useMutation({
-    mutationFn: ({
-      memberId,
-      nextRole,
-    }: {
-      memberId: string
-      nextRole: DeclaredMemberRole
-    }) =>
-      changeDeclaredMemberRole(data.competitionId, entryId, memberId, {
-        role: nextRole,
-      }),
-    onSuccess: async () => {
-      setPendingRenameId(null)
-      await invalidateAfterRosterMutation(queryClient, data.competitionId)
+      setPendingRemove(null)
     },
   })
 
@@ -251,10 +235,8 @@ export function TeamRosterDrawer({
   }, [staffMenuOpen])
 
   function clearRowEditors() {
-    setPendingRemoveId(null)
     setPendingRenameId(null)
     setRenameDraft('')
-    setRoleDraft('Player')
   }
 
   function submitAdd(role: DeclaredMemberRole) {
@@ -263,6 +245,7 @@ export function TeamRosterDrawer({
       return
     }
     clearRowEditors()
+    setPendingRemove(null)
     renameMutation.reset()
     removeMutation.reset()
     addMutation.mutate({ name, role })
@@ -283,17 +266,61 @@ export function TeamRosterDrawer({
   const canMutate = canMutateRoster(entry.status)
   const avatarStyle = kitAvatarStyle(entry.primaryColor, entry.secondaryColor)
   const mutationError =
-    addMutation.error ??
-    renameMutation.error ??
-    removeMutation.error ??
-    roleMutation.error
+    addMutation.error ?? renameMutation.error ?? removeMutation.error
   const rowBusy =
     addMutation.isPending ||
     renameMutation.isPending ||
-    removeMutation.isPending ||
-    roleMutation.isPending
+    removeMutation.isPending
   const addDisabled =
     !canMutate || addMutation.isPending || displayName.trim().length === 0
+
+  function startRename(member: DeclaredMember) {
+    addMutation.reset()
+    renameMutation.reset()
+    removeMutation.reset()
+    setPendingRemove(null)
+    setPendingRenameId(member.memberId)
+    setRenameDraft(member.displayName)
+  }
+
+  function startRemove(member: DeclaredMember) {
+    if (member.referencedOnMatchSheet) {
+      return
+    }
+    addMutation.reset()
+    renameMutation.reset()
+    removeMutation.reset()
+    clearRowEditors()
+    setPendingRemove(member)
+  }
+
+  function confirmRename(member: DeclaredMember) {
+    const name = renameDraft.trim()
+    if (name.length === 0 || rowBusy) {
+      return
+    }
+    if (name === member.displayName) {
+      clearRowEditors()
+      return
+    }
+    addMutation.reset()
+    removeMutation.reset()
+    renameMutation.mutate({ memberId: member.memberId, name })
+  }
+
+  const rosterGroupProps = {
+    avatarStyle,
+    canMutate,
+    rowBusy,
+    pendingRenameId,
+    renameDraft,
+    renamePending: renameMutation.isPending,
+    onRenameDraft: setRenameDraft,
+    onStartRename: startRename,
+    onStartRemove: startRemove,
+    onConfirmRename: confirmRename,
+    onCancelRow: clearRowEditors,
+  } as const
 
   return (
     <>
@@ -332,71 +359,14 @@ export function TeamRosterDrawer({
                 {t('roster.playersHeading')}
               </span>
               <span className="teams-roster-heading__count">
-                {' · '}{players.length}
+                {' · '}
+                {players.length}
               </span>
             </>
           }
           emptyLabel={t('roster.emptyPlayers')}
           members={players}
-          avatarStyle={avatarStyle}
-          canMutate={canMutate}
-          rowBusy={rowBusy}
-          pendingRemoveId={pendingRemoveId}
-          pendingRenameId={pendingRenameId}
-          renameDraft={renameDraft}
-          roleDraft={roleDraft}
-          renamePending={renameMutation.isPending || roleMutation.isPending}
-          removePending={removeMutation.isPending}
-          onRenameDraft={setRenameDraft}
-          onRoleDraft={setRoleDraft}
-          onStartRename={(member) => {
-            addMutation.reset()
-            renameMutation.reset()
-            removeMutation.reset()
-            setPendingRemoveId(null)
-            setPendingRenameId(member.memberId)
-            setRenameDraft(member.displayName)
-            setRoleDraft(member.role)
-          }}
-          onStartRemove={(member) => {
-            if (member.referencedOnMatchSheet) {
-              return
-            }
-            addMutation.reset()
-            renameMutation.reset()
-            removeMutation.reset()
-            setPendingRenameId(null)
-            setRenameDraft('')
-            setPendingRemoveId(member.memberId)
-          }}
-          onConfirmRename={(member) => {
-            const name = renameDraft.trim()
-            if (name.length === 0 || rowBusy) {
-              return
-            }
-            const nameChanged = name !== member.displayName
-            const roleChanged = roleDraft !== member.role
-            if (!nameChanged && !roleChanged) {
-              clearRowEditors()
-              return
-            }
-            addMutation.reset()
-            removeMutation.reset()
-            if (nameChanged) {
-              renameMutation.mutate({ memberId: member.memberId, name })
-            }
-            if (roleChanged) {
-              roleMutation.mutate({
-                memberId: member.memberId,
-                nextRole: roleDraft,
-              })
-            }
-            if (!nameChanged) {
-              setPendingRenameId(null)
-            }
-          }}
-          onConfirmRemove={(member) => removeMutation.mutate(member.memberId)}
-          onCancelRow={clearRowEditors}
+          {...rosterGroupProps}
         />
 
         <RosterGroup
@@ -407,71 +377,14 @@ export function TeamRosterDrawer({
                 {t('roster.staffHeading')}
               </span>
               <span className="teams-roster-heading__count">
-                {' · '}{staff.length}
+                {' · '}
+                {staff.length}
               </span>
             </>
           }
           emptyLabel={t('roster.emptyStaff')}
           members={staff}
-          avatarStyle={avatarStyle}
-          canMutate={canMutate}
-          rowBusy={rowBusy}
-          pendingRemoveId={pendingRemoveId}
-          pendingRenameId={pendingRenameId}
-          renameDraft={renameDraft}
-          roleDraft={roleDraft}
-          renamePending={renameMutation.isPending || roleMutation.isPending}
-          removePending={removeMutation.isPending}
-          onRenameDraft={setRenameDraft}
-          onRoleDraft={setRoleDraft}
-          onStartRename={(member) => {
-            addMutation.reset()
-            renameMutation.reset()
-            removeMutation.reset()
-            setPendingRemoveId(null)
-            setPendingRenameId(member.memberId)
-            setRenameDraft(member.displayName)
-            setRoleDraft(member.role)
-          }}
-          onStartRemove={(member) => {
-            if (member.referencedOnMatchSheet) {
-              return
-            }
-            addMutation.reset()
-            renameMutation.reset()
-            removeMutation.reset()
-            setPendingRenameId(null)
-            setRenameDraft('')
-            setPendingRemoveId(member.memberId)
-          }}
-          onConfirmRename={(member) => {
-            const name = renameDraft.trim()
-            if (name.length === 0 || rowBusy) {
-              return
-            }
-            const nameChanged = name !== member.displayName
-            const roleChanged = roleDraft !== member.role
-            if (!nameChanged && !roleChanged) {
-              clearRowEditors()
-              return
-            }
-            addMutation.reset()
-            removeMutation.reset()
-            if (nameChanged) {
-              renameMutation.mutate({ memberId: member.memberId, name })
-            }
-            if (roleChanged) {
-              roleMutation.mutate({
-                memberId: member.memberId,
-                nextRole: roleDraft,
-              })
-            }
-            if (!nameChanged) {
-              setPendingRenameId(null)
-            }
-          }}
-          onConfirmRemove={(member) => removeMutation.mutate(member.memberId)}
-          onCancelRow={clearRowEditors}
+          {...rosterGroupProps}
         />
       </div>
 
@@ -540,6 +453,28 @@ export function TeamRosterDrawer({
           )}
         </div>
       </form>
+
+      <ConfirmDialog
+        open={pendingRemove != null}
+        title={t('roster.removeTitle', {
+          name: pendingRemove?.displayName ?? '',
+        })}
+        message={t('roster.removeConsequence', {
+          name: pendingRemove?.displayName ?? '',
+        })}
+        confirmLabel={t('roster.confirmRemove')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        confirmDisabled={removeMutation.isPending}
+        onCancel={() => setPendingRemove(null)}
+        onConfirm={() => {
+          if (!pendingRemove || removeMutation.isPending) {
+            return
+          }
+          removeMutation.mutate(pendingRemove.memberId)
+        }}
+      />
     </>
   )
 }
@@ -552,18 +487,13 @@ function RosterGroup({
   avatarStyle,
   canMutate,
   rowBusy,
-  pendingRemoveId,
   pendingRenameId,
   renameDraft,
-  roleDraft,
   renamePending,
-  removePending,
   onRenameDraft,
-  onRoleDraft,
   onStartRename,
   onStartRemove,
   onConfirmRename,
-  onConfirmRemove,
   onCancelRow,
 }: {
   headingId: string
@@ -573,18 +503,13 @@ function RosterGroup({
   avatarStyle?: CSSProperties
   canMutate: boolean
   rowBusy: boolean
-  pendingRemoveId: string | null
   pendingRenameId: string | null
   renameDraft: string
-  roleDraft: DeclaredMemberRole
   renamePending: boolean
-  removePending: boolean
   onRenameDraft: (value: string) => void
-  onRoleDraft: (value: DeclaredMemberRole) => void
   onStartRename: (member: DeclaredMember) => void
   onStartRemove: (member: DeclaredMember) => void
   onConfirmRename: (member: DeclaredMember) => void
-  onConfirmRemove: (member: DeclaredMember) => void
   onCancelRow: () => void
 }) {
   const { t } = useTranslation('teams')
@@ -607,7 +532,6 @@ function RosterGroup({
         <ul className="teams-drawer__list">
           {members.map((member) => {
             const editing = pendingRenameId === member.memberId
-            const removing = pendingRemoveId === member.memberId
             const onMatchSheet = member.referencedOnMatchSheet === true
             const removeBlocked = !canMutate || onMatchSheet
             const removeHint = onMatchSheet
@@ -634,8 +558,10 @@ function RosterGroup({
                           onConfirmRename(member)
                         }}
                       >
-                        <label className="field">
-                          {t('roster.renameName')}
+                        <label className="teams-member__edit-field">
+                          <span className="ds-visually-hidden">
+                            {t('roster.renameName')}
+                          </span>
                           <input
                             value={renameDraft}
                             onChange={(event) =>
@@ -647,45 +573,31 @@ function RosterGroup({
                             autoFocus
                           />
                         </label>
-                        <label className="field">
-                          {t('roster.changeRole')}
-                          <select
-                            value={roleDraft}
-                            disabled={renamePending}
-                            aria-label={t('roster.changeRole')}
-                            onChange={(event) =>
-                              onRoleDraft(
-                                event.target.value as DeclaredMemberRole,
-                              )
-                            }
-                          >
-                            <option value="Player">
-                              {t('roster.rolePlayer')}
-                            </option>
-                            <option value="Staff">{t('roster.roleStaff')}</option>
-                          </select>
-                        </label>
-                        <div className="teams-member__confirm-actions">
+                        <div className="ds-icon-toolbar">
                           <button
                             type="submit"
-                            className="ds-btn ds-btn--primary"
+                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
                             disabled={
                               renamePending || renameDraft.trim().length === 0
                             }
+                            title={t('roster.confirmRename')}
+                            aria-label={t('roster.confirmRename')}
                           >
                             {renamePending ? (
-                              <PendingLabel>{t('roster.renaming')}</PendingLabel>
+                              <span className="ds-spinner" aria-hidden="true" />
                             ) : (
-                              t('roster.confirmRename')
+                              <CheckIcon size="sm" />
                             )}
                           </button>
                           <button
                             type="button"
-                            className="ds-btn ds-btn--ghost"
+                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
                             disabled={renamePending}
+                            title={tc('cancel')}
+                            aria-label={tc('cancel')}
                             onClick={onCancelRow}
                           >
-                            {tc('cancel')}
+                            <CloseIcon size="sm" />
                           </button>
                         </div>
                       </form>
@@ -695,7 +607,7 @@ function RosterGroup({
                       </span>
                     )}
                   </span>
-                  {!editing && !removing && (
+                  {!editing && (
                     <div className="ds-icon-toolbar">
                       <button
                         type="button"
@@ -728,43 +640,6 @@ function RosterGroup({
                     </div>
                   )}
                 </div>
-                {removing && (
-                  <div
-                    className="teams-member__confirm ds-notice ds-notice--warning"
-                    role="group"
-                    aria-label={t('roster.removeConsequence', {
-                      name: member.displayName,
-                    })}
-                  >
-                    <p>
-                      {t('roster.removeConsequence', {
-                        name: member.displayName,
-                      })}
-                    </p>
-                    <div className="teams-member__confirm-actions">
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--destructive"
-                        disabled={removePending}
-                        onClick={() => onConfirmRemove(member)}
-                      >
-                        {removePending ? (
-                          <PendingLabel>{t('roster.removing')}</PendingLabel>
-                        ) : (
-                          t('roster.confirmRemove')
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--ghost"
-                        disabled={removePending}
-                        onClick={onCancelRow}
-                      >
-                        {tc('cancel')}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </li>
             )
           })}

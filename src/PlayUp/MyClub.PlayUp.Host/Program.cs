@@ -414,27 +414,6 @@ app.MapPost(
     });
 
 app.MapPut(
-    "/competitions/{competitionId:guid}/entries/{entryId:guid}/declared-members/{memberId:guid}/role",
-    async (
-        Guid competitionId,
-        Guid entryId,
-        Guid memberId,
-        ChangeDeclaredMemberRoleRequest request,
-        UseCaseExecutor executor,
-        CancellationToken cancellationToken) =>
-    {
-        var view = await executor
-            .ChangeDeclaredMemberRoleAsync(
-                new CompetitionId(competitionId),
-                new EntryId(entryId),
-                new MemberId(memberId),
-                request.Role,
-                cancellationToken)
-            .ConfigureAwait(false);
-        return Results.Ok(view);
-    });
-
-app.MapPut(
     "/competitions/{competitionId:guid}/regulation",
     async (
         Guid competitionId,

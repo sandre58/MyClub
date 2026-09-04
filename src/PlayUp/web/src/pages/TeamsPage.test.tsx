@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   addCompetitionEntry,
   addDeclaredMember,
-  changeDeclaredMemberRole,
   deleteCompetitionEntry,
   fetchOrganisationView,
   removeDeclaredMember,
@@ -30,7 +29,6 @@ vi.mock('../api', async (importOriginal) => {
     addDeclaredMember: vi.fn(),
     removeDeclaredMember: vi.fn(),
     renameDeclaredMember: vi.fn(),
-    changeDeclaredMemberRole: vi.fn(),
   }
 })
 
@@ -161,7 +159,6 @@ describe('TeamsPage', () => {
     vi.mocked(addDeclaredMember).mockResolvedValue(organisationView())
     vi.mocked(removeDeclaredMember).mockResolvedValue(organisationView())
     vi.mocked(renameDeclaredMember).mockResolvedValue(organisationView())
-    vi.mocked(changeDeclaredMemberRole).mockResolvedValue(organisationView())
   })
 
   it('shows the plateau gauge in Draft and Ready', async () => {
@@ -635,9 +632,11 @@ describe('TeamsPage', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Supprimer Dupont' }))
     expect(removeDeclaredMember).not.toHaveBeenCalled()
-    await user.click(
-      screen.getByRole('button', { name: 'Confirmer le retrait' }),
-    )
+
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Retirer « Dupont » ?',
+    })
+    await user.click(within(confirm).getByRole('button', { name: 'Retirer' }))
 
     await waitFor(() => {
       expect(removeDeclaredMember).toHaveBeenCalledWith(
@@ -648,26 +647,39 @@ describe('TeamsPage', () => {
     })
   })
 
-  it('changes a member role', async () => {
+  it('renames a member inline without changing role', async () => {
     const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({}, { declaredMembers: [player()] }),
-    )
+    vi.mocked(fetchOrganisationView).mockImplementation(async () => {
+      if (vi.mocked(renameDeclaredMember).mock.calls.length > 0) {
+        return organisationView(
+          {},
+          {
+            declaredMembers: [
+              { ...player(), displayName: 'Jean Dupont' },
+            ],
+          },
+        )
+      }
+      return organisationView({}, { declaredMembers: [player()] })
+    })
 
     renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`)
 
     await user.click(await screen.findByRole('button', { name: 'Modifier Dupont' }))
-    await user.selectOptions(screen.getByLabelText('Rôle'), 'Staff')
+    const input = screen.getByDisplayValue('Dupont')
+    await user.clear(input)
+    await user.type(input, 'Jean Dupont')
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
     await waitFor(() => {
-      expect(changeDeclaredMemberRole).toHaveBeenCalledWith(
+      expect(renameDeclaredMember).toHaveBeenCalledWith(
         competitionId,
         entryId,
         playerId,
-        { role: 'Staff' },
+        { displayName: 'Jean Dupont' },
       )
     })
+    expect(await screen.findByText('Jean Dupont')).toBeInTheDocument()
   })
 
   it('clears multi-selection on Escape, but not while ConfirmDialog is open', async () => {

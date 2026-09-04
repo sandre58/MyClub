@@ -323,7 +323,6 @@ public sealed class CompetitionPersistenceTests
             loadedEntry.DeclaredMembers[1].Role.Should().Be(DeclaredMemberRole.Staff);
 
             loaded.RenameDeclaredMember(entryId, player.Id, "J. Dupont", _clock);
-            loaded.ChangeDeclaredMemberRole(entryId, staff.Id, DeclaredMemberRole.Player, _clock);
             await ((IUnitOfWork)context).SaveChangesAsync();
         }
 
@@ -334,7 +333,7 @@ public sealed class CompetitionPersistenceTests
             var members = reloaded.Entries.Single(e => e.Id == entryId).DeclaredMembers;
             members.Should().HaveCount(2);
             members.Single(m => m.Id == player.Id).DisplayName.Should().Be("J. Dupont");
-            members.Single(m => m.Id == staff.Id).Role.Should().Be(DeclaredMemberRole.Player);
+            members.Single(m => m.Id == staff.Id).Role.Should().Be(DeclaredMemberRole.Staff);
         }
     }
 

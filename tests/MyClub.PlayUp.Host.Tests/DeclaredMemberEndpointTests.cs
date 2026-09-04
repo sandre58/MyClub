@@ -62,17 +62,6 @@ public sealed class DeclaredMemberEndpointTests(HostPostgresFixture fixture)
         view!.Participants.Entries.Single(e => e.EntryId == seed.EntryId.Value)
             .DeclaredMembers.Should().ContainSingle(m => m.DisplayName == "Jean Dupont");
 
-        using (var changeRole = await client.PutAsJsonAsync(
-            RoleUri(seed.CompetitionId, seed.EntryId, memberId),
-            new ChangeDeclaredMemberRoleRequest(DeclaredMemberRole.Staff)))
-        {
-            changeRole.StatusCode.Should().Be(HttpStatusCode.OK);
-            view = await changeRole.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
-        }
-
-        view!.Participants.Entries.Single(e => e.EntryId == seed.EntryId.Value)
-            .DeclaredMembers.Should().ContainSingle(m => m.Role == DeclaredMemberRole.Staff);
-
         using (var remove = await client.DeleteAsync(
             MemberUri(seed.CompetitionId, seed.EntryId, memberId)))
         {
@@ -122,9 +111,6 @@ public sealed class DeclaredMemberEndpointTests(HostPostgresFixture fixture)
 
     private static Uri RenameUri(CompetitionId competitionId, EntryId entryId, Guid memberId) =>
         new($"/competitions/{competitionId.Value}/entries/{entryId.Value}/declared-members/{memberId}/rename", UriKind.Relative);
-
-    private static Uri RoleUri(CompetitionId competitionId, EntryId entryId, Guid memberId) =>
-        new($"/competitions/{competitionId.Value}/entries/{entryId.Value}/declared-members/{memberId}/role", UriKind.Relative);
 
     private static string? GetCode(ProblemDetails? problem) =>
         problem is null || !problem.Extensions.TryGetValue("code", out var raw) || raw is null

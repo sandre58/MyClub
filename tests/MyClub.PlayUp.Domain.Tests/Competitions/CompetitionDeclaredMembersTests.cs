@@ -77,10 +77,9 @@ public sealed class CompetitionDeclaredMembersTests
 
         var member = competition.AddDeclaredMember(entry.Id, "Dupont", DeclaredMemberRole.Player, _clock);
         competition.RenameDeclaredMember(entry.Id, member.Id, "Jean Dupont", _clock);
-        competition.ChangeDeclaredMemberRole(entry.Id, member.Id, DeclaredMemberRole.Staff, _clock);
 
         member.DisplayName.Should().Be("Jean Dupont");
-        member.Role.Should().Be(DeclaredMemberRole.Staff);
+        member.Role.Should().Be(DeclaredMemberRole.Player);
 
         competition.Suspend(_clock);
         competition.ClearDomainEvents();

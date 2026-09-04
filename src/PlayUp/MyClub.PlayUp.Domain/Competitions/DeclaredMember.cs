@@ -41,12 +41,6 @@ public sealed class DeclaredMember : Entity<MemberId>
 
     internal void Rename(string displayName) => DisplayName = NormalizeDisplayName(displayName);
 
-    internal void ChangeRole(DeclaredMemberRole role)
-    {
-        EnsureDefinedRole(role);
-        Role = role;
-    }
-
     private static string NormalizeDisplayName(string displayName)
     {
         ArgumentNullException.ThrowIfNull(displayName);
