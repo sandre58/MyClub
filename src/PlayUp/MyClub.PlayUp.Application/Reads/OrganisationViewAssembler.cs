@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Globalization;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
@@ -17,9 +18,14 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 public static class OrganisationViewAssembler
 {
+    /// <summary>
+    /// Display-name order for entries and declared members (Équipes SoT: nom affiché).
+    /// </summary>
+    private static readonly StringComparer DisplayNameComparer =
+        StringComparer.Create(CultureInfo.CurrentCulture, ignoreCase: true);
+
     /// <summary>Blocker: fewer Active entries than EntryRules.MinimumTeams.</summary>
     public const string BlockerInsufficientParticipants = "InsufficientParticipants";
-
     /// <summary>Blocker: no primary stage.</summary>
     public const string BlockerMissingStage = "MissingStage";
 
@@ -108,6 +114,7 @@ public static class OrganisationViewAssembler
     {
         var sheetReferenced = BuildSheetReferencedMemberIds(sheetMemberRefs);
         var entries = competition.Entries
+            .OrderBy(entry => entry.DisplayName, DisplayNameComparer)
             .Select(entry => new OrganisationEntryDto(
                 entry.Id.Value,
                 entry.DisplayName,
@@ -117,11 +124,13 @@ public static class OrganisationViewAssembler
                 entry.PrimaryColor?.Value,
                 entry.SecondaryColor?.Value,
                 [
-                    .. entry.DeclaredMembers.Select(member => new DeclaredMemberDto(
-                        member.Id.Value,
-                        member.DisplayName,
-                        member.Role,
-                        sheetReferenced.Contains((entry.Id, member.Id))))
+                    .. entry.DeclaredMembers
+                        .OrderBy(member => member.DisplayName, DisplayNameComparer)
+                        .Select(member => new DeclaredMemberDto(
+                            member.Id.Value,
+                            member.DisplayName,
+                            member.Role,
+                            sheetReferenced.Contains((entry.Id, member.Id))))
                 ]))
             .ToList();
         var active = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);

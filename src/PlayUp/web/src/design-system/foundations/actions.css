@@ -135,3 +135,21 @@
     width: var(--icon-size-sm);
     height: var(--icon-size-sm);
 }
+
+/*
+ * Commit pair in dense icon toolbars (inline rename, etc.):
+ * affirm = brand ink — not primary fill (fill stays for surface CTAs).
+ * dismiss = secondary ink — quieter than affirm, still ghost chrome.
+ */
+.ds-btn.ds-icon-button--affirm {
+    color: var(--color-brand);
+}
+
+.ds-btn.ds-icon-button--affirm:hover:not(:disabled) {
+    color: var(--color-brand-hover);
+    background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+}
+
+.ds-btn.ds-icon-button--dismiss {
+    color: var(--color-text-secondary);
+}

@@ -467,7 +467,14 @@ export function TeamRosterDrawer({
         closeLabel={tCommon('close')}
         danger
         confirmDisabled={removeMutation.isPending}
-        onCancel={() => setPendingRemove(null)}
+        confirmPending={removeMutation.isPending}
+        confirmPendingLabel={t('roster.removing')}
+        onCancel={() => {
+          if (removeMutation.isPending) {
+            return
+          }
+          setPendingRemove(null)
+        }}
         onConfirm={() => {
           if (!pendingRemove || removeMutation.isPending) {
             return
@@ -576,7 +583,7 @@ function RosterGroup({
                         <div className="ds-icon-toolbar">
                           <button
                             type="submit"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
                             disabled={
                               renamePending || renameDraft.trim().length === 0
                             }
@@ -591,7 +598,7 @@ function RosterGroup({
                           </button>
                           <button
                             type="button"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
                             disabled={renamePending}
                             title={tc('cancel')}
                             aria-label={tc('cancel')}

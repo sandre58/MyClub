@@ -104,4 +104,29 @@ describe('ConfirmDialog', () => {
     await user.keyboard('{Escape}')
     expect(onCancel).toHaveBeenCalled()
   })
+
+  it('shows a spinner on the confirm action while pending', () => {
+    render(
+      <div className="ds-root" data-font="plex" data-palette="slate">
+        <ConfirmDialog
+          open
+          title="Retirer ?"
+          message="Cette inscription sera perdue."
+          confirmLabel="Retirer"
+          cancelLabel="Annuler"
+          confirmPending
+          confirmPendingLabel="Retrait…"
+          danger
+          onCancel={() => undefined}
+          onConfirm={() => undefined}
+        />
+      </div>,
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Retirer ?' })
+    const confirm = within(dialog).getByRole('button', { name: 'Retrait…' })
+    expect(confirm).toBeDisabled()
+    expect(confirm.querySelector('.ds-spinner')).not.toBeNull()
+    expect(within(dialog).getByRole('button', { name: 'Annuler' })).toBeDisabled()
+  })
 })

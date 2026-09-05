@@ -12,6 +12,13 @@ export type ConfirmDialogProps = {
   /** Primary confirm uses danger styling when true (destructive). Default false. */
   danger?: boolean
   confirmDisabled?: boolean
+  /**
+   * API / mutation in flight on the confirm action.
+   * Shows spinner + pending label; blocks cancel, close, and re-submit.
+   */
+  confirmPending?: boolean
+  /** Label while pending. Defaults to `confirmLabel`. */
+  confirmPendingLabel?: string
   onConfirm: () => void
   onCancel: () => void
 }
@@ -30,9 +37,14 @@ export function ConfirmDialog({
   closeLabel = 'Fermer',
   danger = false,
   confirmDisabled = false,
+  confirmPending = false,
+  confirmPendingLabel,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const busy = confirmPending
+  const confirmLocked = confirmDisabled || busy
+
   return (
     <Dialog
       open={open}
@@ -40,11 +52,13 @@ export function ConfirmDialog({
       title={title}
       size="sm"
       closeLabel={closeLabel}
+      closeDisabled={busy}
       footer={
         <>
           <button
             type="button"
             className="ds-btn ds-btn--ghost"
+            disabled={busy}
             onClick={onCancel}
           >
             {cancelLabel}
@@ -54,10 +68,17 @@ export function ConfirmDialog({
             className={
               danger ? 'ds-btn ds-btn--destructive' : 'ds-btn ds-btn--primary'
             }
-            disabled={confirmDisabled}
+            disabled={confirmLocked}
             onClick={onConfirm}
           >
-            {confirmLabel}
+            {busy ? (
+              <>
+                <span className="ds-spinner" aria-hidden="true" />
+                {confirmPendingLabel ?? confirmLabel}
+              </>
+            ) : (
+              confirmLabel
+            )}
           </button>
         </>
       }

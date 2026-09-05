@@ -613,6 +613,27 @@ export function FoundationsPlayground() {
                 <TrashIcon size="sm" />
               </button>
             </div>
+            <p className="ds-label">
+              Commit inline (✓ brand ink · ✕ secondaire — pas de primary fill)
+            </p>
+            <div className="ds-icon-toolbar">
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
+                aria-label="Enregistrer"
+                title="Enregistrer"
+              >
+                <CheckIcon size="sm" />
+              </button>
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
+                aria-label="Annuler"
+                title="Annuler"
+              >
+                <CloseIcon size="sm" />
+              </button>
+            </div>
           </div>
           <div className="ds-group">
             <p className="ds-label">Destructive · pas un primaire rouge</p>

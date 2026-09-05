@@ -203,4 +203,29 @@ public sealed class OrganisationUseCaseTests
         view.Readiness.ReadyForDraw.Should().BeTrue();
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
     }
+
+    [Fact]
+    public void OrganisationView_orders_entries_and_declared_members_by_display_name()
+    {
+        var competition = CreateCompetition.Execute("Sort Cup", _clock);
+        AddEntry.Execute(competition, "Zebra", _clock);
+        var middle = AddEntry.Execute(competition, "Lyon", _clock);
+        AddEntry.Execute(competition, "Alpha", _clock);
+
+        AddDeclaredMember.Execute(competition, middle.Id, "Martin", DeclaredMemberRole.Player, _clock);
+        AddDeclaredMember.Execute(competition, middle.Id, "Bernard", DeclaredMemberRole.Player, _clock);
+        AddDeclaredMember.Execute(competition, middle.Id, "Dupont", DeclaredMemberRole.Staff, _clock);
+        AddDeclaredMember.Execute(competition, middle.Id, "Alain", DeclaredMemberRole.Staff, _clock);
+
+        var view = OrganisationViewAssembler.Assemble(competition, []);
+
+        view.Participants.Entries.Select(entry => entry.DisplayName)
+            .Should()
+            .Equal("Alpha", "Lyon", "Zebra");
+
+        var roster = view.Participants.Entries.Single(entry => entry.EntryId == middle.Id.Value)
+            .DeclaredMembers!
+            .Select(member => member.DisplayName);
+        roster.Should().Equal("Alain", "Bernard", "Dupont", "Martin");
+    }
 }

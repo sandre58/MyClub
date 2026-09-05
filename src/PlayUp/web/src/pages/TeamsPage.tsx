@@ -187,6 +187,7 @@ function TeamsView({
         ? deleteCompetitionEntry(data.competitionId, ids[0])
         : deleteCompetitionEntries(data.competitionId, { entryIds: ids }),
     onSuccess: async () => {
+      setPendingRemove(null)
       goToSelection([])
       await invalidateAfterTeamsMutation(queryClient, data.competitionId)
     },
@@ -198,6 +199,7 @@ function TeamsView({
         ? withdrawCompetitionEntry(data.competitionId, ids[0])
         : withdrawCompetitionEntries(data.competitionId, { entryIds: ids }),
     onSuccess: async () => {
+      setPendingRemove(null)
       goToSelection([])
       await invalidateAfterTeamsMutation(queryClient, data.competitionId)
     },
@@ -575,13 +577,21 @@ function TeamsView({
         closeLabel={tCommon('close')}
         danger
         confirmDisabled={removePending}
-        onCancel={() => setPendingRemove(null)}
+        confirmPending={removePending}
+        confirmPendingLabel={
+          pendingRemove?.verb === 'withdraw' ? t('withdrawing') : t('deleting')
+        }
+        onCancel={() => {
+          if (removePending) {
+            return
+          }
+          setPendingRemove(null)
+        }}
         onConfirm={() => {
           if (!pendingRemove || removePending) {
             return
           }
           const { verb, targets } = pendingRemove
-          setPendingRemove(null)
           if (verb === 'delete') {
             deleteMutation.mutate(targets)
             return

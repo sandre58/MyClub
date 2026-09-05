@@ -672,6 +672,7 @@ function DrawActions({
       throw new Error('Apply is not available for this draw kind.')
     },
     onSuccess: async () => {
+      setApplyConfirmOpen(false)
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
       })
@@ -762,9 +763,18 @@ function DrawActions({
       cancelLabel={tCommon('cancel')}
       closeLabel={tCommon('close')}
       confirmDisabled={applyMutation.isPending}
-      onCancel={() => setApplyConfirmOpen(false)}
-      onConfirm={() => {
+      confirmPending={applyMutation.isPending}
+      confirmPendingLabel={t('applying')}
+      onCancel={() => {
+        if (applyMutation.isPending) {
+          return
+        }
         setApplyConfirmOpen(false)
+      }}
+      onConfirm={() => {
+        if (applyMutation.isPending) {
+          return
+        }
         applyMutation.mutate()
       }}
     />
