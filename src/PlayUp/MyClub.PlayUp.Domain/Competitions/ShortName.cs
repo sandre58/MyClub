@@ -77,7 +77,7 @@ public sealed record ShortName
             1 => parts[0].Length <= MaxLength
                 ? parts[0].ToUpperInvariant()
                 : parts[0][..MaxLength].ToUpperInvariant(),
-            _ => string.Concat(parts.Take(3).Select(part => char.ToUpperInvariant(part[0]))),
+            _ => string.Concat(parts.Take(3).Select(part => char.ToUpperInvariant(part[0])))
         };
         return CreateRequired(derived);
     }

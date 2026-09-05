@@ -101,6 +101,8 @@ public sealed class DeclaredParticipationUseCaseTests
     public void AddDeclaredParticipation_rejects_inactive_entry()
     {
         var (match, competition, member) = CreateScheduledMatchWithHomePlayer();
+        competition.Prepare(_clock);
+        competition.Start(_clock);
         competition.WithdrawEntry(match.HomeEntryId, _clock);
 
         var act = () => AddDeclaredParticipation.Execute(

@@ -66,11 +66,6 @@ public sealed class CompetitionEntry : Entity<EntryId>
     public EntryStatus Status { get; private set; }
 
     /// <summary>
-    /// Gets a value indicating whether this entry currently occupies the team slot.
-    /// </summary>
-    public bool IsOccupying => Status is EntryStatus.Active or EntryStatus.Qualified or EntryStatus.Eliminated;
-
-    /// <summary>
     /// Gets the members declared for this participation.
     /// </summary>
     public IReadOnlyList<DeclaredMember> DeclaredMembers => _declaredMembers.AsReadOnly();

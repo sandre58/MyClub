@@ -37,7 +37,7 @@ public sealed class DeclaredMember : Entity<MemberId>
     /// <summary>
     /// Gets the declared role within this participation.
     /// </summary>
-    public DeclaredMemberRole Role { get; private set; }
+    public DeclaredMemberRole Role { get; }
 
     internal void Rename(string displayName) => DisplayName = NormalizeDisplayName(displayName);
 

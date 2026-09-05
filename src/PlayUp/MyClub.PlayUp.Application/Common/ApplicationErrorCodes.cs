@@ -194,11 +194,6 @@ public static class ApplicationErrorCodes
     public const string DeclaredMemberNotFound = "Application.DeclaredMemberNotFound";
 
     /// <summary>
-    /// Gets the code when hard-delete is refused because a match references the entry.
-    /// </summary>
-    public const string EntryHasSportingHistory = "Application.EntryHasSportingHistory";
-
-    /// <summary>
     /// Gets the code when a named entry lot is empty.
     /// </summary>
     public const string EmptyEntryLot = "Application.EmptyEntryLot";

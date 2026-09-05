@@ -38,7 +38,7 @@ public static class AddEntry
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var occupying = competition.Entries.Count(entry => entry.IsOccupying);
+        var occupying = competition.Entries.Count;
         return occupying >= competition.Regulation.EntryRules.MaximumTeams
             ? throw new ApplicationFailureException(
                 $"Competition already has the maximum of {competition.Regulation.EntryRules.MaximumTeams} occupying entries.",

@@ -95,4 +95,10 @@ public interface IMatchRepository
     /// </summary>
     /// <param name="match">The match to add.</param>
     void Add(Match match);
+
+    /// <summary>
+    /// Removes a match from the current unit of work (after fixture detach / placement clear).
+    /// </summary>
+    /// <param name="match">The match to remove.</param>
+    void Remove(Match match);
 }

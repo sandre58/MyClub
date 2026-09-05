@@ -43,7 +43,7 @@ public sealed record OrganisationViewDto(
 
 /// <summary>Participants section.</summary>
 /// <param name="ActiveCount">Active entries.</param>
-/// <param name="OccupyingCount">Occupying entries (Active/Qualified/Eliminated).</param>
+/// <param name="OccupyingCount">Entries still present (Active + Withdrawn — forfait keeps the place).</param>
 /// <param name="Entries">Light entry rows.</param>
 public sealed record OrganisationParticipantsSummaryDto(
     int ActiveCount,

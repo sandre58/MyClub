@@ -4,44 +4,63 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Application use case: hard-delete an entry during construction when it has no sporting history.
+/// Application use case: hard-delete an entry during construction (Draft/Ready).
+/// Detaches and removes matches that reference the entry; structure holes are left as-is.
 /// </summary>
-/// <remarks>
-/// Domain owns Draft/Ready. Application owns the match/nominative-history gate (matches are another aggregate).
-/// Structure holes do not block delete. After Start, Domain refuses — use <see cref="WithdrawEntry"/>.
-/// </remarks>
 public static class DeleteEntry
 {
     /// <summary>
-    /// Deletes the entry when no competition match references it.
+    /// Deletes matches referencing the entry, then deletes the entry.
     /// </summary>
     public static void Execute(
         Competition competition,
         EntryId entryId,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<Match> competitionMatches,
+        IMatchRepository matchRepository,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(competitionMatches);
+        ArgumentNullException.ThrowIfNull(matchRepository);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureNoSportingHistory(entryId, competitionMatches);
+
+        _ = competition.GetEntry(entryId);
+        RemoveMatchesForEntry(entryId, competitionStages, competitionMatches, matchRepository, clock);
         competition.DeleteEntry(entryId, clock);
     }
 
-    internal static void EnsureNoSportingHistory(EntryId entryId, IReadOnlyList<Match> competitionMatches)
+    internal static void RemoveMatchesForEntry(
+        EntryId entryId,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<Match> competitionMatches,
+        IMatchRepository matchRepository,
+        IClock clock)
     {
-        if (EntrySportingHistory.Exists(entryId, competitionMatches))
+        var stagesById = competitionStages.ToDictionary(stage => stage.Id);
+        foreach (var match in competitionMatches.Where(candidate =>
+                     candidate.HomeEntryId.Equals(entryId) || candidate.AwayEntryId.Equals(entryId)))
         {
-            throw new ApplicationFailureException(
-                $"Entry '{entryId}' cannot be deleted because it is referenced by a match.",
-                ApplicationErrorCodes.EntryHasSportingHistory);
+            if (stagesById.TryGetValue(match.StageId, out var stage))
+            {
+                var fixtureId = stage.FindFixtureIdContainingMatch(match.Id);
+                if (fixtureId is { } attached)
+                {
+                    stage.DetachMatch(attached, match.Id, clock);
+                }
+            }
+
+            matchRepository.Remove(match);
         }
     }
 }

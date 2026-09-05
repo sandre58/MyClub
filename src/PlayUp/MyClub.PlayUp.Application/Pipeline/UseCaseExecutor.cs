@@ -770,7 +770,7 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Withdraws an entry and returns the updated organisation view.
+    /// Withdraws an entry (forfait) and returns the updated organisation view.
     /// </summary>
     public async Task<OrganisationViewDto> WithdrawEntryAsync(
         CompetitionId competitionId,
@@ -778,7 +778,10 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        WithdrawEntry.Execute(competition, entryId, clock);
+        var (competitionStages, competitionMatches) =
+            await LoadCompetitionStagesAndMatchesForUpdateAsync(competition, cancellationToken)
+                .ConfigureAwait(false);
+        WithdrawEntry.Execute(competition, entryId, competitionStages, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
@@ -792,9 +795,10 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var competitionMatches =
-            await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
-        DeleteEntry.Execute(competition, entryId, competitionMatches, clock);
+        var (competitionStages, competitionMatches) =
+            await LoadCompetitionStagesAndMatchesForUpdateAsync(competition, cancellationToken)
+                .ConfigureAwait(false);
+        DeleteEntry.Execute(competition, entryId, competitionStages, competitionMatches, matches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
@@ -808,9 +812,10 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var competitionMatches =
-            await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
-        DeleteEntries.Execute(competition, entryIds, competitionMatches, clock);
+        var (competitionStages, competitionMatches) =
+            await LoadCompetitionStagesAndMatchesForUpdateAsync(competition, cancellationToken)
+                .ConfigureAwait(false);
+        DeleteEntries.Execute(competition, entryIds, competitionStages, competitionMatches, matches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
@@ -824,7 +829,10 @@ public sealed class UseCaseExecutor(
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        WithdrawEntries.Execute(competition, entryIds, clock);
+        var (competitionStages, competitionMatches) =
+            await LoadCompetitionStagesAndMatchesForUpdateAsync(competition, cancellationToken)
+                .ConfigureAwait(false);
+        WithdrawEntries.Execute(competition, entryIds, competitionStages, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
@@ -1791,6 +1799,28 @@ public sealed class UseCaseExecutor(
         var matchesByStage = await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken)
             .ConfigureAwait(false);
         return [.. matchesByStage.Values.SelectMany(stageMatches => stageMatches)];
+    }
+
+    private async Task<(List<Stage> Stages, IReadOnlyList<Match> Matches)> LoadCompetitionStagesAndMatchesForUpdateAsync(
+        Competition competition,
+        CancellationToken cancellationToken)
+    {
+        if (competition.StageIds.Count == 0)
+        {
+            return ([], []);
+        }
+
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var allMatches = new List<Match>();
+        foreach (var stage in competitionStages)
+        {
+            var stageMatches = await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken)
+                .ConfigureAwait(false);
+            allMatches.AddRange(stageMatches);
+        }
+
+        return (competitionStages, allMatches);
     }
 
     private async Task<AttentionReadBundle> LoadAttentionReadBundleAsync(

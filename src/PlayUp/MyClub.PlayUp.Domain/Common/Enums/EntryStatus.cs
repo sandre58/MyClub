@@ -7,7 +7,8 @@
 namespace MyClub.PlayUp.Domain.Common;
 
 /// <summary>
-/// Participation status of a CompetitionEntry.
+/// Participation status of a <c>CompetitionEntry</c>.
+/// Sporting progression (qualified / eliminated) lives on Qualification / Progression — not here.
 /// </summary>
 public enum EntryStatus
 {
@@ -17,17 +18,7 @@ public enum EntryStatus
     Active = 0,
 
     /// <summary>
-    /// Entry has qualified to a further stage.
-    /// </summary>
-    Qualified = 1,
-
-    /// <summary>
-    /// Entry has been eliminated.
-    /// </summary>
-    Eliminated = 2,
-
-    /// <summary>
-    /// Entry has withdrawn from the competition.
+    /// Entry has declared a forfait (withdrawn) during the competition. Still occupies a place.
     /// </summary>
     Withdrawn = 3
 }

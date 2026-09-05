@@ -21,11 +21,7 @@ export type CompetitionStatus =
 /** Host CompletionMode — string enum member names. */
 export type CompletionMode = 'Normal' | 'Administrative' | 'Abandoned'
 
-export type EntryStatus =
-  | 'Active'
-  | 'Qualified'
-  | 'Eliminated'
-  | 'Withdrawn'
+export type EntryStatus = 'Active' | 'Withdrawn'
 
 export type StageStatus =
   | 'Draft'

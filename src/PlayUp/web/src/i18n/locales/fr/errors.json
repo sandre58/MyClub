@@ -26,10 +26,9 @@
     "StageNotInCompetition": "La phase n’appartient pas à cette compétition.",
     "DeclaredMemberReferencedByMatchSheet": "Ce joueur figure encore sur une feuille de match. Retirez-le de la feuille avant de le retirer de l’équipe.",
     "DeclaredMemberNotFound": "Cette personne n’est plus dans l’effectif.",
-    "EntryHasSportingHistory": "Cette équipe a déjà un historique sportif (match). Elle ne peut pas être supprimée — retirez-la.",
     "EmptyEntryLot": "Aucune équipe sélectionnée.",
     "DuplicateEntryLotId": "La sélection contient un doublon.",
-    "EntryNotWithdrawable": "Cette équipe ne peut pas être retirée.",
+    "EntryNotWithdrawable": "Cette équipe ne peut pas faire forfait.",
     "ParticipationNotEligible": "Ce joueur n’est pas éligible pour cette feuille (effectif, rôle ou côté).",
     "InvalidDisciplinaryType": "Type disciplinaire invalide.",
     "DisciplinaryTypeNotAllowed": "Ce type disciplinaire n’est pas autorisé par le règlement de la compétition."

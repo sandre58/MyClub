@@ -48,7 +48,7 @@
     "add": "Ajouter",
     "adding": "Ajout…",
     "rename": "Renommer",
-    "withdraw": "Retirer",
+    "withdraw": "Faire forfait",
     "exclude": "Exclure",
     "confirmWithdraw": "Retirer « {{name}} » de cette compétition ?",
     "confirmExclude": "Exclure « {{name}} » de cette compétition ?",

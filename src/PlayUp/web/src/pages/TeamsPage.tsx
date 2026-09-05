@@ -51,7 +51,6 @@ import {
   PendingLabel,
   StatusBadge,
 } from '../ui'
-import { entryStatusLabel } from '../i18n/enumLabels'
 import type {
   EntryStatus,
   OrganisationEntry,
@@ -326,7 +325,7 @@ function TeamsView({
                   <>
                     <span className="teams__title-sep"> · </span>
                     <span className="teams__title-count ds-num">
-                      {data.participants.activeCount}
+                      {data.participants.occupyingCount}
                     </span>
                   </>
                 )}
@@ -1139,7 +1138,7 @@ function TeamsPlateauReading({
   const atCap = occupyingCount >= maximumTeams
   const missingMinimum = Math.max(0, minimumTeams - activeCount)
   const fillRatio =
-    maximumTeams > 0 ? Math.min(1, activeCount / maximumTeams) : 0
+    maximumTeams > 0 ? Math.min(1, occupyingCount / maximumTeams) : 0
   const markerRatio =
     maximumTeams > 0 ? Math.min(1, minimumTeams / maximumTeams) : 0
   const showMarker =
@@ -1160,7 +1159,8 @@ function TeamsPlateauReading({
       : t('plateauMinimumReached')
 
   const gaugeAria = t('plateauGaugeAria', {
-    count: activeCount,
+    count: occupyingCount,
+    occupying: occupyingCount,
     active: activeCount,
     min: minimumTeams,
     max: maximumTeams,
@@ -1182,7 +1182,7 @@ function TeamsPlateauReading({
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={maximumTeams}
-            aria-valuenow={activeCount}
+            aria-valuenow={occupyingCount}
             aria-valuetext={gaugeAria}
             data-tone={statusTone}
           >
@@ -1224,20 +1224,6 @@ function tileStatusBadge(
     return (
       <StatusBadge tone="warn" density="compact">
         {t('withdrawnBadge')}
-      </StatusBadge>
-    )
-  }
-  if (status === 'Qualified') {
-    return (
-      <StatusBadge tone="info" density="compact">
-        {entryStatusLabel(status)}
-      </StatusBadge>
-    )
-  }
-  if (status === 'Eliminated') {
-    return (
-      <StatusBadge tone="done" density="compact">
-        {entryStatusLabel(status)}
       </StatusBadge>
     )
   }

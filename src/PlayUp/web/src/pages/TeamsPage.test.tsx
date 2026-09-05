@@ -205,26 +205,62 @@ describe('TeamsPage', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
-  it('shows Qualifié and Éliminé badges on season tiles', async () => {
+  it('counts withdrawn entries in the title and gauge (occupation)', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        status: 'Running',
+        actions: ['WithdrawEntry', 'RenameEntry'],
+        participants: {
+          activeCount: 1,
+          occupyingCount: 2,
+          entries: [
+            {
+              entryId,
+              displayName: 'Alpha',
+              status: 'Active',
+              declaredMembers: [],
+            },
+            {
+              entryId: secondEntryId,
+              displayName: 'Beta',
+              status: 'Withdrawn',
+              declaredMembers: [],
+            },
+          ],
+        },
+      }),
+    )
+
+    renderTeamsPage()
+
+    expect(
+      await screen.findByRole('heading', { name: /Équipes.*2/ }),
+    ).toBeInTheDocument()
+    expect(document.querySelector('.teams__title-count')).toHaveTextContent('2')
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2')
+    expect(screen.getByText('Forfait')).toBeInTheDocument()
+  })
+
+  it('does not show Qualified or Eliminated badges (statuses removed from entry)', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView(
         {
           status: 'Running',
           actions: ['WithdrawEntry', 'RenameEntry'],
           participants: {
-            activeCount: 0,
+            activeCount: 2,
             occupyingCount: 2,
             entries: [
               {
                 entryId,
                 displayName: 'Alpha',
-                status: 'Qualified',
+                status: 'Active',
                 declaredMembers: [],
               },
               {
                 entryId: secondEntryId,
                 displayName: 'Beta',
-                status: 'Eliminated',
+                status: 'Active',
                 declaredMembers: [],
               },
             ],
@@ -235,8 +271,9 @@ describe('TeamsPage', () => {
 
     renderTeamsPage()
 
-    expect(await screen.findByText('Qualifié')).toBeInTheDocument()
-    expect(screen.getByText('Éliminé')).toBeInTheDocument()
+    expect(await screen.findByText('Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Qualifié')).not.toBeInTheDocument()
+    expect(screen.queryByText('Éliminé')).not.toBeInTheDocument()
   })
 
   it('shows player counts on the tile and in the fiche headings', async () => {
@@ -303,7 +340,7 @@ describe('TeamsPage', () => {
     renderTeamsPage()
 
     expect(await screen.findByText('Forfait')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Retirer Alpha' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Faire forfait — Alpha' })).toBeDisabled()
   })
 
   it('shows empty tiles for the missing minimum and adds from them', async () => {
@@ -786,6 +823,9 @@ describe('TeamsPage', () => {
     const confirm = await screen.findByRole('dialog', {
       name: 'Supprimer « Alpha » ?',
     })
+    expect(confirm).toHaveTextContent(
+      'Les matchs qui la concernent seront aussi supprimés',
+    )
     await user.click(within(confirm).getByRole('button', { name: 'Supprimer' }))
 
     await waitFor(() => {
@@ -806,12 +846,15 @@ describe('TeamsPage', () => {
     renderTeamsPage()
 
     await user.click(await screen.findByRole('button', { name: 'Alpha' }))
-    await user.click(screen.getByRole('button', { name: 'Retirer Alpha' }))
+    await user.click(screen.getByRole('button', { name: 'Faire forfait — Alpha' }))
 
     const confirm = await screen.findByRole('dialog', {
-      name: 'Retirer « Alpha » ?',
+      name: 'Faire forfait — « Alpha » ?',
     })
-    await user.click(within(confirm).getByRole('button', { name: 'Retirer' }))
+    expect(confirm).toHaveTextContent(
+      'Ses matchs restants seront terminés par forfait administratif',
+    )
+    await user.click(within(confirm).getByRole('button', { name: 'Faire forfait' }))
 
     await waitFor(() => {
       expect(withdrawCompetitionEntry).toHaveBeenCalledWith(
@@ -843,7 +886,7 @@ describe('TeamsPage', () => {
       screen.getByRole('button', { name: 'Modifier Alpha' }),
     ).toBeEnabled()
     expect(
-      screen.getByRole('button', { name: 'Retirer Alpha' }),
+      screen.getByRole('button', { name: 'Faire forfait — Alpha' }),
     ).toBeDisabled()
   })
 

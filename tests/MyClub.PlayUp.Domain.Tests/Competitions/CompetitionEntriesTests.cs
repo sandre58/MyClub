@@ -50,21 +50,34 @@ public sealed class CompetitionEntriesTests
     }
 
     [Fact]
-    public void AddEntry_allows_reentry_after_Withdraw()
+    public void Withdrawn_entry_still_occupies_team_slot()
     {
         // Arrange
-        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
-        var teamId = TeamId.New();
-        var first = competition.AddEntry(teamId, "Team A", _clock);
-        competition.WithdrawEntry(first.Id, _clock);
+        var competition = CreateRunning();
+        var entry = competition.Entries[0];
+        var teamId = entry.TeamId;
 
         // Act
-        var second = competition.AddEntry(teamId, "Team A return", _clock);
+        competition.WithdrawEntry(entry.Id, _clock);
 
         // Assert
-        second.Id.Should().NotBe(first.Id);
+        entry.Status.Should().Be(EntryStatus.Withdrawn);
         competition.ContainsTeam(teamId).Should().BeTrue();
-        competition.FindEntry(teamId)!.Id.Should().Be(second.Id);
+        competition.FindEntry(teamId)!.Id.Should().Be(entry.Id);
+    }
+
+    [Fact]
+    public void WithdrawEntry_is_rejected_while_Ready()
+    {
+        // Arrange
+        var competition = CreateReady();
+        var entry = competition.Entries[0];
+
+        // Act
+        var act = () => competition.WithdrawEntry(entry.Id, _clock);
+
+        // Assert
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
     }
 
     [Fact]
@@ -85,24 +98,6 @@ public sealed class CompetitionEntriesTests
     }
 
     [Fact]
-    public void WithdrawEntry_on_Ready_keeps_Ready()
-    {
-        // Arrange
-        var competition = CreateReady();
-        var entry = competition.Entries[0];
-        competition.ClearDomainEvents();
-
-        // Act
-        competition.WithdrawEntry(entry.Id, _clock);
-
-        // Assert
-        competition.Status.Should().Be(CompetitionStatus.Ready);
-        entry.Status.Should().Be(EntryStatus.Withdrawn);
-        competition.ContainsTeam(entry.TeamId).Should().BeFalse();
-        competition.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<CompetitionEntryWithdrawn>();
-    }
-
-    [Fact]
     public void WithdrawEntry_is_allowed_while_Running()
     {
         // Arrange
@@ -114,6 +109,7 @@ public sealed class CompetitionEntriesTests
 
         // Assert
         entry.Status.Should().Be(EntryStatus.Withdrawn);
+        competition.ContainsTeam(entry.TeamId).Should().BeTrue();
     }
 
     [Fact]
@@ -201,8 +197,8 @@ public sealed class CompetitionEntriesTests
     public void WithdrawEntry_rejects_non_active_entry()
     {
         // Arrange
-        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
-        var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
+        var competition = CreateRunning();
+        var entry = competition.Entries[0];
         competition.WithdrawEntry(entry.Id, _clock);
 
         // Act

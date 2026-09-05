@@ -202,8 +202,6 @@ const matchStatusTone: Record<MatchStatus, StatusTone> = {
 
 const entryStatusTone: Record<EntryStatus, StatusTone> = {
   Active: 'ok',
-  Qualified: 'info',
-  Eliminated: 'done',
   Withdrawn: 'warn',
 }
 

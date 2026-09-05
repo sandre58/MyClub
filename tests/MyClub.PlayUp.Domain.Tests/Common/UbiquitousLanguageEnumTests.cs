@@ -44,7 +44,7 @@ public sealed class UbiquitousLanguageEnumTests
 
     [Fact]
     public void EntryStatus_matches_documented_values() =>
-        Enum.GetNames<EntryStatus>().Should().BeEquivalentTo("Active", "Qualified", "Eliminated", "Withdrawn");
+        Enum.GetNames<EntryStatus>().Should().BeEquivalentTo("Active", "Withdrawn");
 
     [Fact]
     public void ResultType_matches_documented_values() =>

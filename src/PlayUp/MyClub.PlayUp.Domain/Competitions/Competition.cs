@@ -134,18 +134,18 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         ?? throw new DomainException($"Entry '{entryId}' was not found.", CompetitionErrorCodes.EntryNotFound);
 
     /// <summary>
-    /// Finds the occupying entry for a team, if any.
+    /// Finds the entry for a team, if any (Active or Withdrawn — both occupy a place).
     /// </summary>
     /// <param name="teamId">The team identity.</param>
-    /// <returns>The occupying entry, or <see langword="null"/>.</returns>
+    /// <returns>The entry, or <see langword="null"/>.</returns>
     public CompetitionEntry? FindEntry(TeamId teamId) =>
-        _entries.FirstOrDefault(e => e.TeamId.Equals(teamId) && e.IsOccupying);
+        _entries.FirstOrDefault(e => e.TeamId.Equals(teamId));
 
     /// <summary>
-    /// Determines whether a team currently occupies a slot in this competition.
+    /// Determines whether a team already has an entry in this competition (including forfait).
     /// </summary>
     /// <param name="teamId">The team identity.</param>
-    /// <returns><see langword="true"/> if an occupying entry exists; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if an entry exists; otherwise, <see langword="false"/>.</returns>
     public bool ContainsTeam(TeamId teamId) => FindEntry(teamId) is not null;
 
     /// <summary>
@@ -248,7 +248,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         if (ContainsTeam(teamId))
         {
             throw new DomainException(
-                $"Team '{teamId}' already has an occupying entry.",
+                $"Team '{teamId}' already has an entry in this competition.",
                 CompetitionErrorCodes.DuplicateTeam);
         }
 
@@ -587,8 +587,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
 
     private void EnsureCanWithdraw()
     {
-        if (Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-            or CompetitionStatus.Running or CompetitionStatus.Suspended)
+        if (Status is CompetitionStatus.Running or CompetitionStatus.Suspended)
         {
             return;
         }

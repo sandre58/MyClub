@@ -6,24 +6,30 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Named atomic batch: withdraw several entries. One gate failure refuses the whole lot.
+/// Named atomic batch: forfait several entries. One gate failure refuses the whole lot.
 /// </summary>
 public static class WithdrawEntries
 {
     /// <summary>
-    /// Withdraws every listed entry after all exist and are Active.
+    /// Withdraws every listed entry after all exist and are Active (forfeit remaining matches first).
     /// </summary>
     public static void Execute(
         Competition competition,
         IReadOnlyList<EntryId> entryIds,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<Match> competitionMatches,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(entryIds);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        ArgumentNullException.ThrowIfNull(competitionMatches);
         ArgumentNullException.ThrowIfNull(clock);
         EntryBatch.EnsureNonEmptyDistinct(entryIds);
 
@@ -40,6 +46,11 @@ public static class WithdrawEntries
 
         foreach (var entryId in entryIds)
         {
+            WithdrawEntry.FinishRemainingMatchesAsForfeit(
+                entryId,
+                competitionStages,
+                competitionMatches,
+                clock);
             competition.WithdrawEntry(entryId, clock);
         }
     }

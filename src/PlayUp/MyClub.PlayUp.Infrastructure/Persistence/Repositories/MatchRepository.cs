@@ -165,6 +165,13 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         context.Set<Match>().Add(match);
     }
 
+    /// <inheritdoc />
+    public void Remove(Match match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        context.Set<Match>().Remove(match);
+    }
+
     private async Task<Match?> LoadByIdAsync(
         MatchId id,
         bool trackChanges,

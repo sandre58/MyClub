@@ -23,9 +23,7 @@
   },
   "entryStatus": {
     "Active": "Actif",
-    "Qualified": "Qualifié",
-    "Eliminated": "Éliminé",
-    "Withdrawn": "Retiré"
+    "Withdrawn": "Forfait"
   },
   "drawStatus": {
     "Draft": "Brouillon",

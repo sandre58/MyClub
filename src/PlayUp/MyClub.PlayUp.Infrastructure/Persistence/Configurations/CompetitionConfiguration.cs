@@ -156,8 +156,6 @@ internal sealed class CompetitionConfiguration : IEntityTypeConfiguration<Compet
             .IsRequired()
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
-        entries.Ignore(entry => entry.IsOccupying);
-
         entries.Property<int>("SortOrder")
             .HasColumnName("sort_order")
             .IsRequired();

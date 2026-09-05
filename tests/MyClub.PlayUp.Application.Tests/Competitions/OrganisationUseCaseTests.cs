@@ -5,10 +5,12 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using Xunit;
 
@@ -19,7 +21,7 @@ public sealed class OrganisationUseCaseTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 10, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void AddEntry_then_rename_withdraw_delete_work()
+    public void AddEntry_then_rename_and_delete_work_in_draft()
     {
         var competition = CreateCompetition.Execute("Org Cup", _clock);
         var entry = AddEntry.Execute(competition, "Alpha", _clock);
@@ -29,10 +31,22 @@ public sealed class OrganisationUseCaseTests
         competition.GetEntry(entry.Id).DisplayName.Should().Be("Alpha FC");
 
         var other = AddEntry.Execute(competition, "Beta", _clock);
-        DeleteEntry.Execute(competition, other.Id, [], _clock);
+        DeleteEntry.Execute(competition, other.Id, [], [], new NoOpMatchRepository(), _clock);
         competition.Entries.Should().ContainSingle(e => e.Id.Equals(entry.Id));
+    }
 
-        WithdrawEntry.Execute(competition, entry.Id, _clock);
+    [Fact]
+    public void WithdrawEntry_marks_forfait_while_running()
+    {
+        var competition = CreateCompetition.Execute("Org Cup", _clock);
+        var entry = AddEntry.Execute(competition, "Alpha", _clock);
+        AddEntry.Execute(competition, "Beta", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        WithdrawEntry.Execute(competition, entry.Id, [], [], _clock);
+
         competition.GetEntry(entry.Id).Status.Should().Be(EntryStatus.Withdrawn);
     }
 
@@ -227,5 +241,52 @@ public sealed class OrganisationUseCaseTests
             .DeclaredMembers!
             .Select(member => member.DisplayName);
         roster.Should().Equal("Alain", "Bernard", "Dupont", "Martin");
+    }
+
+    private sealed class NoOpMatchRepository : IMatchRepository
+    {
+        public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Match?> GetByIdReadOnlyAsync(MatchId id, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<Match>> ListByStageForUpdateAsync(
+            StageId stageId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyDictionary<StageId, IReadOnlyList<Match>>> ListByStageIdsReadOnlyAsync(
+            IReadOnlyList<StageId> stageIds,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<MatchSummaryRow>> ListSummaryRowsByStageReadOnlyAsync(
+            StageId stageId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>> ListSummaryRowsByStageIdsReadOnlyAsync(
+            IReadOnlyList<StageId> stageIds,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>>> ListAttentionSlicesByStageIdsReadOnlyAsync(
+            IReadOnlyList<StageId> stageIds,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<MatchSheetMemberRef>> ListSheetMemberRefsByCompetitionReadOnlyAsync(
+            CompetitionId competitionId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public void Add(Match match)
+        {
+        }
+
+        public void Remove(Match match)
+        {
+        }
     }
 }

@@ -51,21 +51,23 @@ public sealed class CompetitionDeclaredMembersTests
     }
 
     [Fact]
-    public void Case3_reentry_starts_with_empty_roster_while_old_entry_keeps_members_read_only()
+    public void Case3_withdrawn_entry_keeps_members_read_only_and_blocks_same_team_reentry()
     {
-        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
-        var teamId = TeamId.New();
-        var first = competition.AddEntry(teamId, "Team A", _clock);
-        var kept = competition.AddDeclaredMember(first.Id, "Dupont", DeclaredMemberRole.Player, _clock);
+        var competition = CreateRunning();
+        var entry = competition.Entries[0];
+        var teamId = entry.TeamId;
+        var kept = competition.AddDeclaredMember(entry.Id, "Dupont", DeclaredMemberRole.Player, _clock);
 
-        competition.WithdrawEntry(first.Id, _clock);
-        var second = competition.AddEntry(teamId, "Team A return", _clock);
+        competition.WithdrawEntry(entry.Id, _clock);
 
-        second.DeclaredMembers.Should().BeEmpty();
-        first.DeclaredMembers.Should().ContainSingle(m => m.Id.Equals(kept.Id));
+        entry.DeclaredMembers.Should().ContainSingle(m => m.Id.Equals(kept.Id));
+        competition.ContainsTeam(teamId).Should().BeTrue();
 
-        var mutateWithdrawn = () => competition.AddDeclaredMember(first.Id, "Other", DeclaredMemberRole.Player, _clock);
+        var mutateWithdrawn = () => competition.AddDeclaredMember(entry.Id, "Other", DeclaredMemberRole.Player, _clock);
         mutateWithdrawn.Should().Throw<DomainException>().Which.Code.Should().Be(CompetitionErrorCodes.InvalidTransition);
+
+        var reentry = () => competition.AddEntry(teamId, "Team A return", _clock);
+        reentry.Should().Throw<DomainException>();
     }
 
     [Fact]
@@ -106,8 +108,8 @@ public sealed class CompetitionDeclaredMembersTests
     [Fact]
     public void Case4_mutations_rejected_when_entry_withdrawn()
     {
-        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
-        var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
+        var competition = CreateRunning();
+        var entry = competition.Entries[0];
         competition.WithdrawEntry(entry.Id, _clock);
 
         var act = () => competition.AddDeclaredMember(entry.Id, "Late", DeclaredMemberRole.Player, _clock);

@@ -124,7 +124,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
     }
 
     [IntegrationFact]
-    public async Task Rename_withdraw_exclude_and_replace_regulationAsync()
+    public async Task Rename_delete_and_replace_regulationAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
@@ -154,10 +154,10 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             new { });
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        using var withdrawResponse = await client.PostAsJsonAsync(
+        using var withdrawWhileDraft = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/entries/{entryId}/withdraw",
             new { });
-        withdrawResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        withdrawWhileDraft.StatusCode.Should().Be(HttpStatusCode.Conflict);
 
         using var regulationResponse = await client.PutAsJsonAsync(
             $"/competitions/{competitionId}/regulation",

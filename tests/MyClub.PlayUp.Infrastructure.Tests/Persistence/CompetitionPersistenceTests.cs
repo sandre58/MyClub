@@ -218,12 +218,16 @@ public sealed class CompetitionPersistenceTests
     }
 
     [Fact]
-    public async Task Withdrawn_team_can_reenter_with_new_entry_idAsync()
+    public async Task Withdrawn_entry_still_blocks_same_team_reentry_after_reloadAsync()
     {
         var databaseName = Guid.NewGuid().ToString();
         var teamId = TeamId.New();
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Team B", _clock);
         var first = competition.AddEntry(teamId, "Team A", _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
         competition.WithdrawEntry(first.Id, _clock);
         var id = competition.Id;
 
@@ -233,15 +237,13 @@ public sealed class CompetitionPersistenceTests
             await ((IUnitOfWork)context).SaveChangesAsync();
         }
 
-        EntryId secondId;
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var repository = new CompetitionRepository(context);
             var loaded = await repository.GetByIdForUpdateAsync(id);
             loaded.Should().NotBeNull();
-            var second = loaded.AddEntry(teamId, "Team A return", _clock);
-            secondId = second.Id;
-            await ((IUnitOfWork)context).SaveChangesAsync();
+            loaded.ContainsTeam(teamId).Should().BeTrue();
+            loaded.Entries.Single(entry => entry.Id == first.Id).Status.Should().Be(EntryStatus.Withdrawn);
         }
 
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
@@ -249,10 +251,7 @@ public sealed class CompetitionPersistenceTests
             var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
             reloaded.Entries.Should().HaveCount(2);
-            reloaded.Entries.Select(entry => entry.Id).Should().BeEquivalentTo([first.Id, secondId]);
-            reloaded.Entries.Should().OnlyContain(entry => entry.TeamId == teamId);
             reloaded.Entries.Single(entry => entry.Id == first.Id).Status.Should().Be(EntryStatus.Withdrawn);
-            reloaded.Entries.Single(entry => entry.Id == secondId).Status.Should().Be(EntryStatus.Active);
         }
     }
 
@@ -338,13 +337,17 @@ public sealed class CompetitionPersistenceTests
     }
 
     [Fact]
-    public async Task Reentry_starts_with_empty_declared_members_after_reloadAsync()
+    public async Task Withdrawn_entry_keeps_declared_members_and_blocks_reentry_after_reloadAsync()
     {
         var databaseName = Guid.NewGuid().ToString();
         var teamId = TeamId.New();
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Team B", _clock);
         var first = competition.AddEntry(teamId, "Team A", _clock);
         competition.AddDeclaredMember(first.Id, "Dupont", DeclaredMemberRole.Player, _clock);
+        competition.AddStage(StageId.New(), _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
         competition.WithdrawEntry(first.Id, _clock);
         var id = competition.Id;
 
@@ -354,25 +357,14 @@ public sealed class CompetitionPersistenceTests
             await ((IUnitOfWork)context).SaveChangesAsync();
         }
 
-        EntryId secondId;
-        await using (var context = PlayUpInMemory.CreateContext(databaseName))
-        {
-            var repository = new CompetitionRepository(context);
-            var loaded = await repository.GetByIdForUpdateAsync(id);
-            loaded.Should().NotBeNull();
-            var second = loaded.AddEntry(teamId, "Team A return", _clock);
-            secondId = second.Id;
-            second.DeclaredMembers.Should().BeEmpty();
-            await ((IUnitOfWork)context).SaveChangesAsync();
-        }
-
         await using (var context = PlayUpInMemory.CreateContext(databaseName))
         {
             var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(id);
             reloaded.Should().NotBeNull();
-            reloaded.Entries.Single(e => e.Id == first.Id).DeclaredMembers.Should().ContainSingle()
-                .Which.DisplayName.Should().Be("Dupont");
-            reloaded.Entries.Single(e => e.Id == secondId).DeclaredMembers.Should().BeEmpty();
+            var withdrawn = reloaded.Entries.Single(e => e.Id == first.Id);
+            withdrawn.Status.Should().Be(EntryStatus.Withdrawn);
+            withdrawn.DeclaredMembers.Should().ContainSingle(m => m.DisplayName == "Dupont");
+            reloaded.ContainsTeam(teamId).Should().BeTrue();
         }
     }
 
@@ -392,7 +384,7 @@ public sealed class CompetitionPersistenceTests
             "Paris Saint-Germain",
             _clock,
             new EntryPresentation(
-                ShortName.Create("PSG"),
+                ShortName.CreateRequired("PSG"),
                 entryLogo,
                 TeamColor.Create("#004170"),
                 TeamColor.Create("#DA291C")));

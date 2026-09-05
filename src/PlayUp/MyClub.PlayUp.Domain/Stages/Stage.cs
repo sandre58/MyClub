@@ -564,6 +564,24 @@ public sealed class Stage : AggregateRoot<StageId>
         ?? _matchdays.Select(m => m.FindFixture(fixtureId)).FirstOrDefault(f => f is not null);
 
     /// <summary>
+    /// Finds the fixture that currently attaches <paramref name="matchId"/>, if any.
+    /// </summary>
+    /// <param name="matchId">The match identity.</param>
+    /// <returns>The fixture identity, or <see langword="null"/>.</returns>
+    public FixtureId? FindFixtureIdContainingMatch(MatchId matchId)
+    {
+        foreach (var fixture in EnumerateFixtures())
+        {
+            if (fixture.Contains(matchId))
+            {
+                return fixture.Id;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Determines whether a fixture is present.
     /// </summary>
     /// <param name="fixtureId">The fixture identity.</param>

@@ -26,6 +26,7 @@ public static class OrganisationViewAssembler
 
     /// <summary>Blocker: fewer Active entries than EntryRules.MinimumTeams.</summary>
     public const string BlockerInsufficientParticipants = "InsufficientParticipants";
+
     /// <summary>Blocker: no primary stage.</summary>
     public const string BlockerMissingStage = "MissingStage";
 
@@ -134,7 +135,7 @@ public static class OrganisationViewAssembler
                 ]))
             .ToList();
         var active = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
-        var occupying = competition.Entries.Count(entry => entry.IsOccupying);
+        var occupying = competition.Entries.Count;
         return new OrganisationParticipantsSummaryDto(active, occupying, entries);
     }
 
