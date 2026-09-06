@@ -1171,6 +1171,7 @@ public static class OverviewAssembler
     /// <remarks>
     /// AttentionSummary V1 = Blocking only (not a second calculation).
     /// Organisation readiness blockers become situations only during Draft/Ready (construction).
+    /// <c>InsufficientParticipants</c> is projected from Needs Attention (single SoT); other org blockers still merge here.
     /// Completion blockers stay on ClosureHint — never merged here.
     /// Identity = Source + TargetType + TargetId; duplicates collapsed.
     /// </remarks>
@@ -1181,12 +1182,43 @@ public static class OverviewAssembler
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
-        var items = (from item in attention.Items let actionCode = MapAttentionAction(item.Source) select CreateSituation(item.Source, NatureBlocking, item.TargetType, item.TargetId, ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch), actionCode, MapAttentionImpact(item.Source), BuildSituationParams(item))).ToList();
+        var items = attention.Items
+            .Select(item =>
+            {
+                var actionCode = MapAttentionAction(item.Source);
+                var parameters = BuildSituationParams(item, organisation);
+                return CreateSituation(
+                    item.Source,
+                    NatureBlocking,
+                    item.TargetType,
+                    item.TargetId,
+                    ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch),
+                    actionCode,
+                    MapAttentionImpact(item.Source),
+                    parameters);
+            })
+            .ToList();
 
         switch (competition.Status)
         {
             case CompetitionStatus.Draft or CompetitionStatus.Ready:
-                items.AddRange(from blocker in organisation.Readiness.Blockers let actionCode = MapOrgBlockerAction(blocker) select CreateSituation(blocker, NatureBlocking, "Organisation", competition.Id.Value.ToString(), null, actionCode, ImpactBlocksConstruction, new Dictionary<string, string> { ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture), ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture) }));
+                items.AddRange(
+                    from blocker in organisation.Readiness.Blockers
+                    where blocker != OrganisationViewAssembler.BlockerInsufficientParticipants
+                    let actionCode = MapOrgBlockerAction(blocker)
+                    select CreateSituation(
+                        blocker,
+                        NatureBlocking,
+                        "Organisation",
+                        competition.Id.Value.ToString(),
+                        null,
+                        actionCode,
+                        ImpactBlocksConstruction,
+                        new Dictionary<string, string>
+                        {
+                            ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                            ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                        }));
                 break;
             case CompetitionStatus.Suspended:
                 // Domain Resume exists; Host exposure OPEN — informational, not actionable.
@@ -1232,6 +1264,8 @@ public static class OverviewAssembler
                 or NeedsAttentionAssembler.SourceProgressionConflict => ActionApplyProgression,
             NeedsAttentionAssembler.SourceQualificationPending
                 or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
+            NeedsAttentionAssembler.SourceInsufficientParticipants =>
+                OrganisationViewAssembler.ActionAddEntry,
 
             // DrawNoSolution: regenerate/reconfigure lives on Stage — no Host action projected here.
             _ => null
@@ -1245,6 +1279,7 @@ public static class OverviewAssembler
                 or NeedsAttentionAssembler.SourceProgressionConflict
                 or NeedsAttentionAssembler.SourceQualificationPending
                 or NeedsAttentionAssembler.SourceQualificationConflict => ImpactBlocksProgression,
+            NeedsAttentionAssembler.SourceInsufficientParticipants => ImpactBlocksConstruction,
             _ => null
         };
 
@@ -1258,12 +1293,44 @@ public static class OverviewAssembler
             .Select(group => group.First())
     ];
 
-    private static Dictionary<string, string> BuildSituationParams(NeedsAttentionItemDto item)
+    private static Dictionary<string, string> BuildSituationParams(
+        NeedsAttentionItemDto item,
+        OrganisationViewDto organisation)
     {
+        if (item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants)
+        {
+            // Prefer wire params from Needs Attention when present; else Organisation facts.
+            if (item.Params is { Count: > 0 })
+            {
+                return item.Params.ToDictionary(
+                    pair => pair.Key,
+                    pair => pair.Value,
+                    StringComparer.Ordinal);
+            }
+
+            return new Dictionary<string, string>
+            {
+                ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                ["missingCount"] = Math.Max(
+                        0,
+                        organisation.Regulation.MinimumTeams - organisation.Participants.ActiveCount)
+                    .ToString(CultureInfo.InvariantCulture),
+            };
+        }
+
         var parameters = new Dictionary<string, string>();
-        if (item is not { TargetType: "Slot", TargetId: not null }) return parameters;
+        if (item is not { TargetType: "Slot", TargetId: not null })
+        {
+            return parameters;
+        }
+
         var parts = item.TargetId.Split(':', 2);
-        if (parts.Length != 2) return parameters;
+        if (parts.Length != 2)
+        {
+            return parameters;
+        }
+
         parameters["slotKey"] = parts[1];
         parameters["destinationStageId"] = parts[0];
 

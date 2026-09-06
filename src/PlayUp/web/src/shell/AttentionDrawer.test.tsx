@@ -36,6 +36,7 @@ function needsAttention(items: Partial<NeedsAttentionItem>[] = []) {
     severity: item.severity ?? 'Blocking',
     targetType: item.targetType ?? 'Stage',
     targetId: item.targetId ?? stageId,
+    params: item.params ?? null,
   }))
   return {
     competitionId,

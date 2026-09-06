@@ -455,6 +455,8 @@ export interface NeedsAttentionItem {
   severity: string
   targetType: string | null
   targetId: string | null
+  /** Optional structured params for SPA templates (e.g. activeCount, minimumTeams). */
+  params?: Record<string, string> | null
 }
 
 export interface CompetitionDetail {

@@ -71,6 +71,12 @@ public static class CompletionAnalyzer
                 continue;
             }
 
+            // Construction deficit is Needs Attention for Shell / Overview, not a sporting completion reason.
+            if (item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants)
+            {
+                continue;
+            }
+
             if (reasons.Exists(reason => reason.Code == item.Source))
             {
                 continue;

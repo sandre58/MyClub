@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon } from '../design-system/icons/shellIcons'
 import { attentionTargetTypeLabel } from '../i18n/enumLabels'
-import { situationTitle } from '../i18n/situationCopy'
+import { situationDescription, situationTitle } from '../i18n/situationCopy'
 import { situationHref } from '../pages/overviewNavigation'
 import type { OverviewSituation } from '../types'
 
@@ -14,6 +14,7 @@ type AttentionSituationRowProps = {
 /**
  * Shared À traiter row (drawer + Vue d'ensemble preview).
  * Hover A via `.ds-interactive-row` — no rest fill, no pills.
+ * Meta: prefer situation description when available; else targetType label.
  */
 export function AttentionSituationRow({
   item,
@@ -22,9 +23,11 @@ export function AttentionSituationRow({
 }: AttentionSituationRowProps) {
   const href = situationHref(item, competitionId)
   const isBlocking = item.nature === 'Blocking'
+  const description = situationDescription(item.source, item.params)
   const targetLabel = item.targetType
     ? attentionTargetTypeLabel(item.targetType)
     : null
+  const meta = description ?? targetLabel
   const toneClass = isBlocking
     ? 'shell-attention-drawer__row--blocking'
     : 'shell-attention-drawer__row--attention'
@@ -35,9 +38,9 @@ export function AttentionSituationRow({
         <span className="shell-attention-drawer__row-title">
           {situationTitle(item.source, item.params)}
         </span>
-        {targetLabel ? (
+        {meta ? (
           <span className="shell-attention-drawer__row-meta ds-meta">
-            {targetLabel}
+            {meta}
           </span>
         ) : null}
       </span>

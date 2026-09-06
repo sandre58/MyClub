@@ -81,6 +81,10 @@
     "SwissInsufficientParticipants": "Participants insuffisants pour un tour Swiss",
     "CompetitionSuspended": "Compétition suspendue"
   },
+  "attentionDescription": {
+    "InsufficientParticipants_one": "Il manque {{count}} équipe pour démarrer ({{activeCount}} / {{minimumTeams}}).",
+    "InsufficientParticipants_other": "Il manque {{count}} équipes pour démarrer ({{activeCount}} / {{minimumTeams}})."
+  },
   "attentionSeverity": {
     "Blocking": "Bloquant",
     "Warning": "Avertissement",

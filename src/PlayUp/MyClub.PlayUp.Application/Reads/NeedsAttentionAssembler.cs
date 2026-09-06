@@ -27,6 +27,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Draw Draft / Published / Resolved / Applied / Cancelled are normal states — only NoSolution is attention.
 /// Schedule NoSolution is not persisted today — omitted until a durable diagnostic exists.
 /// Completion blockers are not Needs Attention (see <see cref="CompletionAnalyzer"/>).
+/// Construction participant deficit (<c>InsufficientParticipants</c>) is Needs Attention only in Draft/Ready —
+/// never after Start (forfait reducing actives does not reopen this attention).
 /// </remarks>
 public static class NeedsAttentionAssembler
 {
@@ -44,6 +46,11 @@ public static class NeedsAttentionAssembler
 
     /// <summary>Progression destination occupied by a different entry than outcome implies.</summary>
     public const string SourceProgressionConflict = "ProgressionConflict";
+
+    /// <summary>
+    /// Fewer Active entries than EntryRules.MinimumTeams during construction (Draft/Ready only).
+    /// </summary>
+    public const string SourceInsufficientParticipants = "InsufficientParticipants";
 
     /// <summary>Blocking severity.</summary>
     public const string SeverityBlocking = "Blocking";
@@ -78,6 +85,7 @@ public static class NeedsAttentionAssembler
         ArgumentNullException.ThrowIfNull(matchesByStage);
 
         var items = new List<NeedsAttentionItemDto>();
+        CollectInsufficientParticipants(competition, items);
         foreach (var stage in stages)
         {
             CollectDrawNoSolutions(stage, items);
@@ -87,6 +95,37 @@ public static class NeedsAttentionAssembler
         }
 
         return new NeedsAttentionDto(competition.Id.Value, items);
+    }
+
+    private static void CollectInsufficientParticipants(
+        Competition competition,
+        List<NeedsAttentionItemDto> items)
+    {
+        if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready))
+        {
+            return;
+        }
+
+        var activeCount = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
+        var minimum = competition.Regulation.EntryRules.MinimumTeams;
+        if (activeCount >= minimum)
+        {
+            return;
+        }
+
+        items.Add(
+            new NeedsAttentionItemDto(
+                SourceInsufficientParticipants,
+                SeverityBlocking,
+                "Competition",
+                competition.Id.Value.ToString(),
+                new Dictionary<string, string>
+                {
+                    ["activeCount"] = activeCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["minimumTeams"] = minimum.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["missingCount"] = (minimum - activeCount).ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                }));
     }
 
     private static void CollectDrawNoSolutions(Stage stage, List<NeedsAttentionItemDto> items) =>

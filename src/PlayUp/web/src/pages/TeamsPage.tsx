@@ -77,6 +77,9 @@ async function invalidateAfterTeamsMutation(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.overview(competitionId),
     }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.attention(competitionId),
+    }),
   ])
 }
 

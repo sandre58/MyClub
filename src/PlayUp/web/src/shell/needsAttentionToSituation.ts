@@ -8,6 +8,8 @@ function mapAttentionAction(source: string): string | null {
     case 'QualificationPending':
     case 'QualificationConflict':
       return 'ApplyQualification'
+    case 'InsufficientParticipants':
+      return 'AddEntry'
     default:
       return null
   }
@@ -22,12 +24,18 @@ function mapAttentionImpact(source: string): string | null {
     case 'QualificationPending':
     case 'QualificationConflict':
       return 'BlocksProgression'
+    case 'InsufficientParticipants':
+      return 'BlocksConstruction'
     default:
       return null
   }
 }
 
 function buildSituationParams(item: NeedsAttentionItem): Record<string, string> {
+  if (item.params && Object.keys(item.params).length > 0) {
+    return { ...item.params }
+  }
+
   if (item.targetType !== 'Slot' || !item.targetId) {
     return {}
   }

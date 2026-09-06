@@ -21,6 +21,37 @@ export function situationTitle(
   })
 }
 
+/**
+ * Optional secondary line under the title (e.g. missing teams).
+ * Returns null when the source has no dedicated description template.
+ */
+export function situationDescription(
+  source: string,
+  params?: Record<string, string | number | undefined>,
+): string | null {
+  if (source !== 'InsufficientParticipants') {
+    return null
+  }
+
+  const activeCount = Number(params?.activeCount)
+  const minimumTeams = Number(params?.minimumTeams)
+  if (!Number.isFinite(activeCount) || !Number.isFinite(minimumTeams)) {
+    return null
+  }
+
+  const missingFromParams = Number(params?.missingCount)
+  const count = Number.isFinite(missingFromParams)
+    ? Math.max(0, missingFromParams)
+    : Math.max(0, minimumTeams - activeCount)
+
+  return i18n.t('attentionDescription.InsufficientParticipants', {
+    ns: 'enums',
+    count,
+    activeCount,
+    minimumTeams,
+  })
+}
+
 export function situationMeta(source: string, targetType?: string | null): string {
   const parts = [attentionSourceLabel(source)]
   if (targetType) {

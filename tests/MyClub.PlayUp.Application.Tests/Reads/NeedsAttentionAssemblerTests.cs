@@ -89,6 +89,63 @@ public sealed class NeedsAttentionAssemblerTests
             item.Source == NeedsAttentionAssembler.SourceDrawNoSolution);
     }
 
+    [Fact]
+    public void Assemble_reports_insufficient_participants_in_draft_when_below_minimum()
+    {
+        var competition = Competition.Create(new CompetitionName("Thin"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Only", _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
+            && item.TargetType == "Competition"
+            && item.TargetId == competition.Id.Value.ToString()
+            && item.Params != null
+            && item.Params["activeCount"] == "1"
+            && item.Params["minimumTeams"] == "2"
+            && item.Params["missingCount"] == "1");
+    }
+
+    [Fact]
+    public void Assemble_does_not_report_insufficient_participants_when_at_minimum()
+    {
+        var competition = Competition.Create(new CompetitionName("Full"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
+    }
+
+    [Fact]
+    public void Assemble_does_not_report_insufficient_participants_after_start()
+    {
+        var competition = Competition.Create(new CompetitionName("Running thin"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "Only", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
+    }
+
     private (Competition Competition, Stage Stage, Match Match) CreateFinishedKnockoutWithProgression()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
