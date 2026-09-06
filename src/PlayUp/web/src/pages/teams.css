@@ -85,7 +85,7 @@
   min-height: var(--control-height);
 }
 
-.teams__ops-tail:has(.teams-bar) {
+.teams__ops-tail:has(.ds-selection-bar) {
   min-width: min(
     100%,
     calc(
@@ -209,21 +209,10 @@
   text-align: right;
 }
 
-.teams-bar {
+.teams__ops-tail .ds-selection-bar {
   flex: 1 1 auto;
   min-width: var(--teams-bar-min-width);
   flex-shrink: 0;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-8);
-  height: var(--control-height);
-  box-sizing: border-box;
-  padding: 0 var(--space-12);
-  border-radius: var(--radius-control);
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-surface-secondary);
 }
 
 .teams__add {
@@ -238,21 +227,6 @@
 
 .teams__add-label {
   white-space: nowrap;
-}
-
-.teams-bar__count {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-label);
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.teams-bar .ds-icon-toolbar {
-  flex: none;
 }
 
 .teams__grid {
@@ -325,6 +299,10 @@
   pointer-events: auto;
 }
 
+.teams-tile__chrome .ds-icon-toolbar {
+  margin-inline-start: auto;
+}
+
 .teams-tile__check {
   display: flex;
   align-items: center;
@@ -332,6 +310,32 @@
   width: 1.75rem;
   height: 1.75rem;
   margin: 0;
+}
+
+/* Fine pointer + hover:
+ * - toolbar: hover ∪ :has(:focus-visible)
+ * - checkbox: mounted only when n ≥ 1; at n = 1 same reveal; at n ≥ 2 always on
+ * Coarse / no-hover: checkbox stays visible whenever mounted. */
+@media (hover: hover) and (pointer: fine) {
+  .teams-tile .teams-tile__chrome .ds-icon-toolbar {
+    opacity: 0;
+    transition: opacity var(--motion-duration) var(--motion-easing);
+  }
+
+  .teams-tile:hover .teams-tile__chrome .ds-icon-toolbar,
+  .teams-tile:has(:focus-visible) .teams-tile__chrome .ds-icon-toolbar {
+    opacity: 1;
+  }
+
+  .teams[data-teams-multi='false'] .teams-tile .teams-tile__check {
+    opacity: 0;
+    transition: opacity var(--motion-duration) var(--motion-easing);
+  }
+
+  .teams[data-teams-multi='false'] .teams-tile:hover .teams-tile__check,
+  .teams[data-teams-multi='false'] .teams-tile:has(:focus-visible) .teams-tile__check {
+    opacity: 1;
+  }
 }
 
 .teams-tile__hit {
@@ -512,6 +516,7 @@
 .teams-drawer__head {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: var(--space-12);
   flex: none;
 }
@@ -521,6 +526,11 @@
   align-items: center;
   gap: var(--space-12);
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.teams-drawer__identity-actions {
+  flex: none;
 }
 
 .teams-drawer__crest.team-crest--lg {
@@ -545,6 +555,22 @@
   font-size: var(--text-heading);
   font-weight: var(--font-weight-bold);
   line-height: var(--leading-tight);
+}
+
+.teams-confirm-remove__list {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.teams-confirm-remove__list li + li {
+  margin-top: var(--space-4);
+}
+
+.teams-drawer__roster-bar-slot .ds-selection-bar {
+  width: 100%;
 }
 
 .teams-drawer__body {
@@ -595,7 +621,36 @@
   justify-content: space-between;
   gap: var(--space-12);
   padding: var(--space-8) 0;
-  min-height: 2.25rem;
+  min-height: 2.75rem;
+}
+
+.teams-member__check {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+}
+
+.teams-member__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: 1.75rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .teams-member__actions .ds-icon-toolbar {
+    opacity: 0;
+    transition: opacity var(--motion-duration) var(--motion-easing);
+  }
+
+  .teams-member:hover .teams-member__actions .ds-icon-toolbar,
+  .teams-member:has(:focus-visible) .teams-member__actions .ds-icon-toolbar {
+    opacity: 1;
+  }
 }
 
 .teams-drawer__list > li + li .teams-member {

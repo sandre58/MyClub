@@ -9,6 +9,7 @@ import {
   deleteCompetitionEntry,
   fetchOrganisationView,
   removeDeclaredMember,
+  removeDeclaredMembers,
   renameCompetitionEntry,
   renameDeclaredMember,
   withdrawCompetitionEntry,
@@ -28,6 +29,7 @@ vi.mock('../api', async (importOriginal) => {
     withdrawCompetitionEntry: vi.fn(),
     addDeclaredMember: vi.fn(),
     removeDeclaredMember: vi.fn(),
+    removeDeclaredMembers: vi.fn(),
     renameDeclaredMember: vi.fn(),
   }
 })
@@ -158,6 +160,7 @@ describe('TeamsPage', () => {
     vi.mocked(withdrawCompetitionEntry).mockResolvedValue(organisationView())
     vi.mocked(addDeclaredMember).mockResolvedValue(organisationView())
     vi.mocked(removeDeclaredMember).mockResolvedValue(organisationView())
+    vi.mocked(removeDeclaredMembers).mockResolvedValue(organisationView())
     vi.mocked(renameDeclaredMember).mockResolvedValue(organisationView())
   })
 
@@ -496,7 +499,7 @@ describe('TeamsPage', () => {
     expect(screen.getByRole('heading', { name: /Équipes.*1/ })).toBeInTheDocument()
   })
 
-  it('keeps list view when selecting one team via checkbox on a narrow viewport', async () => {
+  it('keeps list view with selection after roster back on a narrow viewport', async () => {
     vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
       matches: query === '(max-width: 51.999rem)',
       media: query,
@@ -513,15 +516,22 @@ describe('TeamsPage', () => {
 
     renderTeamsPage()
 
-    await user.click(
-      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    await user.click(await screen.findByRole('button', { name: 'Alpha' }))
+    expect(document.querySelector('.teams')).toHaveAttribute(
+      'data-teams-view',
+      'detail',
     )
+
+    await user.click(screen.getByRole('button', { name: 'Équipes' }))
 
     expect(document.querySelector('.teams')).toHaveAttribute(
       'data-teams-view',
       'list',
     )
     expect(screen.getByRole('checkbox', { name: 'Sélectionner Alpha' })).toBeChecked()
+    expect(document.querySelector('.ds-selection-bar__count')).toHaveTextContent(
+      '1 équipe sélectionnée',
+    )
   })
 
   it('opens the roster drawer from a tile and keeps the grid', async () => {
@@ -570,11 +580,9 @@ describe('TeamsPage', () => {
     const user = userEvent.setup()
     renderTeamsPage()
 
+    await user.click(await screen.findByRole('button', { name: 'Alpha' }))
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
-    )
-    await user.click(
-      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+      await screen.findByRole('checkbox', { name: 'Sélectionner Beta' }),
     )
 
     expect(document.querySelector('.teams')).toHaveAttribute(
@@ -582,7 +590,7 @@ describe('TeamsPage', () => {
       'multi',
     )
     expect(document.querySelector('.teams__ops-row')).toBeInTheDocument()
-    expect(document.querySelector('.teams-bar__count')).toHaveTextContent(
+    expect(document.querySelector('.ds-selection-bar__count')).toHaveTextContent(
       '2 équipes sélectionnées',
     )
     expect(document.querySelector('.teams__multi-band')).toBeNull()
@@ -601,9 +609,10 @@ describe('TeamsPage', () => {
       'data-teams-view',
       'list',
     )
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Alpha' })).toBeChecked()
     expect(
-      screen.getByText('Aucune équipe sélectionnée'),
-    ).toBeInTheDocument()
+      screen.queryByText('Aucune équipe sélectionnée'),
+    ).not.toBeInTheDocument()
   })
 
   it('lists players and staff in the drawer', async () => {
@@ -654,6 +663,76 @@ describe('TeamsPage', () => {
       })
     })
     expect(await screen.findByText('Coach')).toBeInTheDocument()
+  })
+
+  it('opens identity dialog from the roster fiche pencil', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier l’identité' }),
+    )
+    expect(
+      await screen.findByRole('dialog', { name: 'Identité de l’équipe' }),
+    ).toBeInTheDocument()
+  })
+
+  it('removes a selectable lot of members and skips those on match sheets', async () => {
+    const user = userEvent.setup()
+    const blockedId = '33333333-3333-3333-3333-333333333333'
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView(
+        {},
+        {
+          declaredMembers: [
+            player(),
+            {
+              memberId: blockedId,
+              displayName: 'Sheeted',
+              role: 'Player',
+              referencedOnMatchSheet: true,
+            },
+            {
+              memberId: staffId,
+              displayName: 'Coach',
+              role: 'Staff',
+            },
+          ],
+        },
+      ),
+    )
+
+    renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`)
+
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Dupont' }),
+    )
+    await user.click(screen.getByRole('checkbox', { name: 'Sélectionner Sheeted' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sélectionner Coach' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Supprimer la sélection' }),
+    )
+
+    const confirm = await screen.findByRole('dialog')
+    expect(confirm).toHaveTextContent('2 personnes peuvent être retirées')
+    expect(within(confirm).getByRole('listitem')).toHaveTextContent('Sheeted')
+    expect(confirm).toHaveTextContent(
+      '1 personne ne peut pas être retirée (encore sur une feuille de match)',
+    )
+    await user.click(
+      within(confirm).getByRole('button', { name: 'Supprimer 2 personnes' }),
+    )
+
+    await waitFor(() => {
+      expect(removeDeclaredMembers).toHaveBeenCalledWith(
+        competitionId,
+        entryId,
+        { memberIds: [playerId, staffId] },
+      )
+    })
+    expect(removeDeclaredMember).not.toHaveBeenCalled()
   })
 
   it('asks for confirmation before removing a player', async () => {
@@ -719,6 +798,37 @@ describe('TeamsPage', () => {
     expect(await screen.findByText('Jean Dupont')).toBeInTheDocument()
   })
 
+  it('suspends member selection while a row is being renamed', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView(
+        {},
+        {
+          declaredMembers: [
+            player(),
+            { memberId: staffId, displayName: 'Coach', role: 'Staff' },
+          ],
+        },
+      ),
+    )
+
+    renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`)
+
+    const selectDupont = await screen.findByRole('checkbox', {
+      name: 'Sélectionner Dupont',
+    })
+    await user.click(selectDupont)
+    expect(selectDupont).toBeChecked()
+    expect(screen.getByText('1 personne sélectionnée')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Modifier Dupont' }))
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Dupont' })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: 'Sélectionner Coach' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Supprimer la sélection' }),
+    ).toBeDisabled()
+  })
+
   it('clears multi-selection on Escape, but not while ConfirmDialog is open', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
@@ -736,11 +846,9 @@ describe('TeamsPage', () => {
     const user = userEvent.setup()
     renderTeamsPage()
 
+    await user.click(await screen.findByRole('button', { name: 'Alpha' }))
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
-    )
-    await user.click(
-      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+      await screen.findByRole('checkbox', { name: 'Sélectionner Beta' }),
     )
     expect(document.querySelector('.teams')).toHaveAttribute(
       'data-teams-view',
@@ -771,11 +879,11 @@ describe('TeamsPage', () => {
       )
     })
     expect(
-      screen.getByRole('checkbox', { name: 'Sélectionner Alpha' }),
-    ).not.toBeChecked()
+      screen.queryByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    ).not.toBeInTheDocument()
     expect(
-      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
-    ).not.toBeChecked()
+      screen.queryByRole('checkbox', { name: 'Sélectionner Beta' }),
+    ).not.toBeInTheDocument()
   })
 
   it('clears selection on Escape when no overlay is open', async () => {
@@ -795,11 +903,9 @@ describe('TeamsPage', () => {
     const user = userEvent.setup()
     renderTeamsPage()
 
+    await user.click(await screen.findByRole('button', { name: 'Alpha' }))
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Sélectionner Alpha' }),
-    )
-    await user.click(
-      screen.getByRole('checkbox', { name: 'Sélectionner Beta' }),
+      await screen.findByRole('checkbox', { name: 'Sélectionner Beta' }),
     )
 
     await user.keyboard('{Escape}')
@@ -809,6 +915,9 @@ describe('TeamsPage', () => {
         'list',
       )
     })
+    expect(
+      screen.queryByRole('checkbox', { name: 'Sélectionner Alpha' }),
+    ).not.toBeInTheDocument()
   })
 
   it('deletes an entry from the selected tile', async () => {
@@ -880,8 +989,8 @@ describe('TeamsPage', () => {
       screen.getByRole('button', { name: /Ajouter une équipe/i }),
     ).toBeDisabled()
     expect(
-      screen.getByRole('checkbox', { name: /Sélectionner Alpha/ }),
-    ).toBeInTheDocument()
+      screen.queryByRole('checkbox', { name: /Sélectionner Alpha/ }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Modifier Alpha' }),
     ).toBeEnabled()

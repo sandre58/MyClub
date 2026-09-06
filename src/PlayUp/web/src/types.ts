@@ -117,6 +117,11 @@ export interface EntryIdsRequest {
   entryIds: string[]
 }
 
+/** POST .../declared-member-lots/remove */
+export interface MemberIdsRequest {
+  memberIds: string[]
+}
+
 /**
  * GET /competitions/{id}/workspace — Accueil / competition landing.
  * nextActionCode and attention/completion fields are Read facts from the Host.

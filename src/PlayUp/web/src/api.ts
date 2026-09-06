@@ -3,6 +3,7 @@ import type {
   AddDeclaredParticipationRequest,
   AddEntryRequest,
   EntryIdsRequest,
+  MemberIdsRequest,
   ApplyDrawRequest,
   OverviewView,
   CompetitionListItem,
@@ -277,6 +278,19 @@ export function removeDeclaredMember(
   return sendJson(
     'DELETE',
     `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}`,
+  )
+}
+
+/** POST .../declared-member-lots/remove → OrganisationView */
+export function removeDeclaredMembers(
+  competitionId: string,
+  entryId: string,
+  request: MemberIdsRequest,
+): Promise<OrganisationView> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/entries/${entryId}/declared-member-lots/remove`,
+    request,
   )
 }
 

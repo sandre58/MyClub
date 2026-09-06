@@ -171,9 +171,7 @@ function TeamsView({
   useEffect(() => {
     if (routeEntryId) {
       setSelectedIds([routeEntryId])
-      return
     }
-    setSelectedIds((current) => (current.length === 1 ? [] : current))
   }, [routeEntryId])
 
   useDismissLayer(selectedIds.length > 0, () => {
@@ -314,7 +312,7 @@ function TeamsView({
     selectedCount >= 2 ? 'multi' : rosterOpen ? 'detail' : 'list'
 
   return (
-    <div className="teams" data-teams-view={teamsView}>
+    <div className="teams" data-teams-view={teamsView} data-teams-multi={multi ? 'true' : 'false'}>
       <div className="teams__layout">
         <div className="teams__main">
           <header className="teams__head">
@@ -342,8 +340,8 @@ function TeamsView({
               )}
               <div className="teams__ops-tail">
                 {selectedCount >= 1 && (
-                  <div className="teams-bar" role="status">
-                    <p className="teams-bar__count">
+                  <div className="ds-selection-bar" role="status">
+                    <p className="ds-selection-bar__count">
                       {t('selectionCount', { count: selectedCount })}
                     </p>
                     <div className="ds-icon-toolbar">
@@ -423,16 +421,18 @@ function TeamsView({
                       onClick={() => onTileBody(entry.entryId)}
                     />
                     <div className="teams-tile__chrome">
-                      <label className="teams-tile__check">
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          aria-label={t('selectEntry', {
-                            name: entry.displayName,
-                          })}
-                          onChange={() => onToggleCheck(entry.entryId)}
-                        />
-                      </label>
+                      {selectedCount >= 1 && (
+                        <label className="teams-tile__check">
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            aria-label={t('selectEntry', {
+                              name: entry.displayName,
+                            })}
+                            onChange={() => onToggleCheck(entry.entryId)}
+                          />
+                        </label>
+                      )}
                       {!multi && (
                         <div className="ds-icon-toolbar">
                           <button
@@ -549,7 +549,8 @@ function TeamsView({
             <TeamRosterDrawer
               data={data}
               entryId={drawerEntryId}
-              onBack={() => goToSelection([])}
+              onBack={() => navigate(teamsHref, { replace: true })}
+              onEditIdentity={() => setIdentityEntryId(drawerEntryId)}
             />
           )}
         </aside>

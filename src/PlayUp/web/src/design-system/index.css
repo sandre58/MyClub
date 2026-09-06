@@ -33,6 +33,7 @@
 @import './foundations/status.css';
 @import './foundations/icons.css';
 @import './foundations/actions.css';
+@import './foundations/selection-bar.css';
 @import './foundations/controls.css';
 @import './foundations/forms.css';
 @import './foundations/team-crest.css';
