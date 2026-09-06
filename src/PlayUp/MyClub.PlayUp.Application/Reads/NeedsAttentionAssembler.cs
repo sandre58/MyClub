@@ -124,7 +124,7 @@ public static class NeedsAttentionAssembler
                     ["activeCount"] = activeCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                     ["minimumTeams"] = minimum.ToString(System.Globalization.CultureInfo.InvariantCulture),
                     ["missingCount"] = (minimum - activeCount).ToString(
-                        System.Globalization.CultureInfo.InvariantCulture),
+                        System.Globalization.CultureInfo.InvariantCulture)
                 }));
     }
 

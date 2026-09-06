@@ -1217,7 +1217,7 @@ public static class OverviewAssembler
                         new Dictionary<string, string>
                         {
                             ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                            ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                            ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture)
                         }));
                 break;
             case CompetitionStatus.Suspended:
@@ -1315,7 +1315,7 @@ public static class OverviewAssembler
                 ["missingCount"] = Math.Max(
                         0,
                         organisation.Regulation.MinimumTeams - organisation.Participants.ActiveCount)
-                    .ToString(CultureInfo.InvariantCulture),
+                    .ToString(CultureInfo.InvariantCulture)
             };
         }
 
