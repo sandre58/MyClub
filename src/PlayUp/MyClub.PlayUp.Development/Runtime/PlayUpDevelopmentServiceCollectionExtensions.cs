@@ -49,6 +49,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<ICompetitionTemplate, ChampionsLeagueTemplate>();
         services.AddSingleton<ICompetitionTemplate, WorldCupTemplate>();
         services.AddSingleton<ICompetitionTemplate, CoupeDeFranceTemplate>();
+        services.AddSingleton<ICompetitionTemplate, RegulationDemoTemplate>();
         services.AddSingleton(static sp => new TemplateCatalog(sp.GetServices<ICompetitionTemplate>()));
 
         services.AddSingleton(sp => new ScenarioRunner(

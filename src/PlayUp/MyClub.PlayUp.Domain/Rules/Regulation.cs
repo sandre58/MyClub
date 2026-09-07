@@ -7,9 +7,13 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Competition regulation value object: entry, match, standing, and disciplinary rules.
+/// Competition regulation value object: entry, match, standing defaults, and disciplinary rules.
 /// Immutable; replace as a whole on change.
 /// </summary>
+/// <remarks>
+/// <see cref="StandingRules"/> on Competition are <strong>defaults de classement</strong> (A4 seed)
+/// for classifying stages — not a competition-wide standing consumed at runtime.
+/// </remarks>
 public sealed record Regulation
 {
     /// <summary>
@@ -49,7 +53,8 @@ public sealed record Regulation
     public MatchRules MatchRules { get; }
 
     /// <summary>
-    /// Gets the standing rules.
+    /// Gets the standing rules (defaults de classement for classifying stages — A4).
+    /// Not consumed by runtime standing calculation; stages carry their own copy when classifying.
     /// </summary>
     public StandingRules StandingRules { get; }
 

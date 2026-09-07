@@ -41,6 +41,24 @@ internal static class MatchEnrichment
                 new DisciplinaryRules([DisciplinaryType.Yellow, DisciplinaryType.Red]));
     }
 
+    /// <summary>
+    /// Adds standard football extra time (2×15) and TAB (5 kicks) for cup / regulation demos.
+    /// </summary>
+    public static Regulation WithExtraTimeAndPenalties(Regulation regulation)
+    {
+        ArgumentNullException.ThrowIfNull(regulation);
+        var match = regulation.MatchRules;
+        return new Regulation(
+            regulation.EntryRules,
+            new MatchRules(
+                match.Duration,
+                match.AdministrativeResultPolicy,
+                new ExtraTimePolicy(durationPerPeriod: 15, numberOfPeriods: 2),
+                new PenaltyShootoutPolicy(initialKicksPerTeam: 5)),
+            regulation.StandingRules,
+            regulation.DisciplinaryRules);
+    }
+
     public static void ApplyRandomCompetitionSchedule(
         ScenarioContext context,
         Competition competition,

@@ -231,4 +231,9 @@ public static class StageErrorCodes
     /// Gets the code when a Swiss pairing request is structurally invalid (≠ NoSolution).
     /// </summary>
     public const string SwissPairingInvalid = "Stage.SwissPairingInvalid";
+
+    /// <summary>
+    /// Gets the code when standing rules presence violates A5 (classifying vs non-classifying topology).
+    /// </summary>
+    public const string StandingRulesInvariant = "Stage.StandingRulesInvariant";
 }

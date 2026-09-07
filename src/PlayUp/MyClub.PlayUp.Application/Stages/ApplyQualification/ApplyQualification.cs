@@ -181,12 +181,17 @@ public static class ApplyQualification
                                ApplicationErrorCodes.QualificationCandidatesEmpty);
 
             if (derivedCache.TryGetValue(position, out var derived)) return derived;
+
+            var standingRules = sourceStage.Regulation.StandingRules
+                ?? throw new ApplicationFailureException(
+                    "Standing rules are required for across-groups qualification.",
+                    StandingErrorCodes.RulesRequired);
             derived = CrossGroupStandingAssembler.Build(
                 sourceStage.Groups,
                 groupStandings,
                 position,
                 matches,
-                sourceStage.Regulation.StandingRules,
+                standingRules,
                 CalculateStanding.ToStandingPenalties(sourceStage.Penalties));
             derivedCache[position] = derived;
 

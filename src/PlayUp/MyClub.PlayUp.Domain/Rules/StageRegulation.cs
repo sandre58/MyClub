@@ -8,15 +8,22 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Stage regulation value object: materialized phase rules (independent from <see cref="Regulation"/>).
-/// Active families: match, standing, optional draw / qualification / progression / placement-award rules and default <see cref="TieFormat"/>.
+/// Active families: match, optional standing (A5 — required when the phase classifies), optional draw /
+/// qualification / progression / placement-award rules and default <see cref="TieFormat"/>.
 /// </summary>
+/// <remarks>
+/// <see cref="StandingRules"/> is nullable for the two valid A5 states only: classifying → non-null;
+/// non-classifying (Cup/KO) → null. Null is not a free-form optional everywhere — topology invariants live on <c>Stage</c>.
+/// </remarks>
 public sealed record StageRegulation
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="StageRegulation"/> class.
     /// </summary>
     /// <param name="matchRules">How an individual match is played in this stage.</param>
-    /// <param name="standingRules">How standings are calculated in this stage.</param>
+    /// <param name="standingRules">
+    /// How standings are calculated when this stage classifies; <see langword="null"/> for non-classifying phases.
+    /// </param>
     /// <param name="tieFormat">Default tie format copied to rounds on add; <see langword="null"/> when absent.</param>
     /// <param name="drawRules">Draw parameters when the stage uses a draw; <see langword="null"/> when absent.</param>
     /// <param name="qualificationRules">Ranking-based routing when participants leave this stage; <see langword="null"/> when absent.</param>
@@ -24,7 +31,7 @@ public sealed record StageRegulation
     /// <param name="placementAwardRules">Fixture/Tie outcome awards of final ranks; <see langword="null"/> when absent.</param>
     public StageRegulation(
         MatchRules matchRules,
-        StandingRules standingRules,
+        StandingRules? standingRules = null,
         TieFormat? tieFormat = null,
         DrawRules? drawRules = null,
         QualificationRules? qualificationRules = null,
@@ -32,7 +39,6 @@ public sealed record StageRegulation
         PlacementAwardRules? placementAwardRules = null)
     {
         ArgumentNullException.ThrowIfNull(matchRules);
-        ArgumentNullException.ThrowIfNull(standingRules);
 
         MatchRules = matchRules;
         StandingRules = standingRules;
@@ -49,9 +55,10 @@ public sealed record StageRegulation
     public MatchRules MatchRules { get; }
 
     /// <summary>
-    /// Gets the standing rules.
+    /// Gets the standing rules when this stage classifies; otherwise <see langword="null"/>.
+    /// Canonical runtime signal for standings applicability (do not re-derive “classifying” in reads).
     /// </summary>
-    public StandingRules StandingRules { get; }
+    public StandingRules? StandingRules { get; }
 
     /// <summary>
     /// Gets the default tie format for rounds when present; otherwise <see langword="null"/>.
@@ -80,17 +87,21 @@ public sealed record StageRegulation
 
     /// <summary>
     /// Materializes an independent stage regulation from a competition regulation.
-    /// Copies match and standing rules by value; optional families default to <see langword="null"/>.
+    /// Copies match rules; seeds standing from competition defaults only when <paramref name="isClassifyingPhase"/> is <see langword="true"/>.
     /// </summary>
     /// <param name="competitionRegulation">The source competition regulation.</param>
+    /// <param name="isClassifyingPhase">
+    /// When <see langword="true"/>, copies competition standing defaults (A4 seed).
+    /// When <see langword="false"/> (Cup/KO), standing remains absent.
+    /// </param>
     /// <returns>A new stage regulation with no shared nested references.</returns>
-    public static StageRegulation MaterializeFrom(Regulation competitionRegulation)
+    public static StageRegulation MaterializeFrom(Regulation competitionRegulation, bool isClassifyingPhase = true)
     {
         ArgumentNullException.ThrowIfNull(competitionRegulation);
 
         return new StageRegulation(
             CloneMatchRules(competitionRegulation.MatchRules),
-            CloneStandingRules(competitionRegulation.StandingRules));
+            isClassifyingPhase ? CloneStandingRules(competitionRegulation.StandingRules) : null);
     }
 
     /// <summary>
@@ -100,7 +111,7 @@ public sealed record StageRegulation
     public StageRegulation Copy() =>
         new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules),
+            CloneStandingRulesOrNull(StandingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
             QualificationRules?.Copy(),
@@ -110,20 +121,17 @@ public sealed record StageRegulation
     /// <summary>
     /// Returns a copy with replaced standing rules (new nested instances for standing only).
     /// </summary>
-    /// <param name="standingRules">The new standing rules.</param>
+    /// <param name="standingRules">The new standing rules, or <see langword="null"/> to clear.</param>
     /// <returns>A new stage regulation.</returns>
-    public StageRegulation WithStandingRules(StandingRules standingRules)
-    {
-        ArgumentNullException.ThrowIfNull(standingRules);
-        return new StageRegulation(
+    public StageRegulation WithStandingRules(StandingRules? standingRules) =>
+        new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(standingRules),
+            CloneStandingRulesOrNull(standingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
             QualificationRules?.Copy(),
             ProgressionRules?.Copy(),
             PlacementAwardRules?.Copy());
-    }
 
     /// <summary>
     /// Returns a copy with replaced default tie format.
@@ -133,7 +141,7 @@ public sealed record StageRegulation
     public StageRegulation WithTieFormat(TieFormat? tieFormat) =>
         new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules),
+            CloneStandingRulesOrNull(StandingRules),
             tieFormat?.Copy(),
             DrawRules?.Copy(),
             QualificationRules?.Copy(),
@@ -148,7 +156,7 @@ public sealed record StageRegulation
     public StageRegulation WithDrawRules(DrawRules? drawRules) =>
         new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules),
+            CloneStandingRulesOrNull(StandingRules),
             TieFormat?.Copy(),
             drawRules?.Copy(),
             QualificationRules?.Copy(),
@@ -163,7 +171,7 @@ public sealed record StageRegulation
     public StageRegulation WithQualificationRules(QualificationRules? qualificationRules) =>
         new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules),
+            CloneStandingRulesOrNull(StandingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
             qualificationRules?.Copy(),
@@ -178,7 +186,7 @@ public sealed record StageRegulation
     public StageRegulation WithProgressionRules(ProgressionRules? progressionRules) =>
         new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules),
+            CloneStandingRulesOrNull(StandingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
             QualificationRules?.Copy(),
@@ -193,7 +201,7 @@ public sealed record StageRegulation
     public StageRegulation WithPlacementAwardRules(PlacementAwardRules? placementAwardRules) =>
         new(
             CloneMatchRules(MatchRules),
-            CloneStandingRules(StandingRules),
+            CloneStandingRulesOrNull(StandingRules),
             TieFormat?.Copy(),
             DrawRules?.Copy(),
             QualificationRules?.Copy(),
@@ -218,6 +226,9 @@ public sealed record StageRegulation
 
         return new MatchRules(duration, administrative, extraTime, shootout);
     }
+
+    private static StandingRules? CloneStandingRulesOrNull(StandingRules? source) =>
+        source is null ? null : CloneStandingRules(source);
 
     private static StandingRules CloneStandingRules(StandingRules source) =>
         new(

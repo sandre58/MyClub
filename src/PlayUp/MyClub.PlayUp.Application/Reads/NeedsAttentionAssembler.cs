@@ -346,7 +346,7 @@ public static class NeedsAttentionAssembler
         return CalculateStanding.Execute(
             participants,
             matches,
-            source.Regulation.StandingRules,
+            RequireStandingRules(source),
             MatchFilter.All,
             CalculateStanding.ToStandingPenalties(source.Penalties));
     }
@@ -354,18 +354,25 @@ public static class NeedsAttentionAssembler
     private static Dictionary<GroupId, Standing> BuildGroups(Stage source, IReadOnlyList<MatchAttentionSlice> matches)
     {
         var result = new Dictionary<GroupId, Standing>();
+        var rules = RequireStandingRules(source);
         foreach (var group in source.Groups)
         {
             result[group.Id] = CalculateStanding.Execute(
                 group.EntryIds,
                 matches,
-                source.Regulation.StandingRules,
+                rules,
                 MatchFilter.All,
                 CalculateStanding.ToStandingPenalties(source.Penalties));
         }
 
         return result;
     }
+
+    private static StandingRules RequireStandingRules(Stage source) =>
+        source.Regulation.StandingRules
+        ?? throw new ApplicationFailureException(
+            "Standing rules are required for qualification attention evaluation.",
+            StandingErrorCodes.RulesRequired);
 
     private static Standing ResolveStanding(
         Stage sourceStage,
@@ -383,7 +390,7 @@ public static class NeedsAttentionAssembler
                 groupStandings,
                 position,
                 matches,
-                sourceStage.Regulation.StandingRules,
+                RequireStandingRules(sourceStage),
                 CalculateStanding.ToStandingPenalties(sourceStage.Penalties));
         }
 

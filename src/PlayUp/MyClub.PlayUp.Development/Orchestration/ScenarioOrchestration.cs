@@ -54,12 +54,17 @@ internal static class ScenarioOrchestration
     private static async Task<Competition> CreateCompetitionFromRecipeAsync(
         ScenarioContext context,
         CompetitionRecipe recipe,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Regulation? regulation = null)
     {
         if (recipe.TeamNames != TeamNameSource.Dataset
             || string.IsNullOrWhiteSpace(recipe.DatasetCompetitionKey))
         {
-            return await CreateCompetitionAsync(context, recipe.DisplayName, cancellationToken: cancellationToken)
+            return await CreateCompetitionAsync(
+                    context,
+                    recipe.DisplayName,
+                    regulation: regulation,
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -67,6 +72,7 @@ internal static class ScenarioOrchestration
         return await CreateCompetitionAsync(
             context,
             recipe.DisplayName,
+            regulation: regulation,
             shortName: dataset.ShortName,
             logoAsset: dataset.LogoAsset,
             scheduledStart: dataset.ScheduledStart,
@@ -489,7 +495,11 @@ internal static class ScenarioOrchestration
             DatasetCompetitionKey = "coupe-de-france"
         };
 
-        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                MatchEnrichment.WithExtraTimeAndPenalties(BootstrapRegulation.Standard()))
             .ConfigureAwait(false);
         await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
@@ -599,7 +609,11 @@ internal static class ScenarioOrchestration
             DatasetCompetitionKey = "world-cup"
         };
 
-        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                MatchEnrichment.WithExtraTimeAndPenalties(BootstrapRegulation.Standard()))
             .ConfigureAwait(false);
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
@@ -635,7 +649,7 @@ internal static class ScenarioOrchestration
             groupStandings[group.Id] = CalculateStanding.Execute(
                 group.EntryIds,
                 groupMatches,
-                groups.Regulation.StandingRules);
+                groups.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules);
         }
 
         Stage[] allStages = [groups, roundOf16, quarter, semi, final, bronze];
@@ -683,6 +697,84 @@ internal static class ScenarioOrchestration
         PlayDecisiveMatches(context, competition, bronzeMatches);
 
         CompleteAllRunning(context, competition, allStages);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Hub Règlement QA seed: poules classantes + finale KO, ET+TAB, remains <see cref="CompetitionStatus.Draft"/>
+    /// so <c>ReplaceRegulation</c> stays available.
+    /// </summary>
+    public static async Task BuildRegulationHubDemoAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Démo Règlement",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            ParticipantsPerGroup = 4,
+            StageName = "Poules",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var regulation = MatchEnrichment.WithExtraTimeAndPenalties(
+            new Regulation(
+                new EntryRules(minimumTeams: 8, maximumTeams: 16),
+                BootstrapRegulation.Standard().MatchRules,
+                BootstrapRegulation.Standard().StandingRules));
+
+        var competition = await CreateCompetitionAsync(
+                context,
+                recipe.DisplayName,
+                regulation: regulation,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(
+                context,
+                competition,
+                recipe,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        AssignGroupsRoundRobin(groups, entries);
+        _ = MaterializeGroupsMatches(context, competition, groups);
+
+        var final = CreateKnockoutStage(
+            context,
+            competition,
+            "final",
+            "Finale",
+            "Finale",
+            ["F-A", "F-B"]);
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 groups for regulation-demo, found {orderedGroups.Length}.");
+        }
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(final.Id, "F-A")),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(final.Id, "F-B")),
+            ]),
+            context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -872,10 +964,14 @@ internal static class ScenarioOrchestration
         string roundName,
         IReadOnlyList<string> slotKeys)
     {
+        // A5: knockout / from-slots phases do not classify — no StandingRules seed.
+        var regulation = StageRegulation.MaterializeFrom(
+            competition.Regulation,
+            isClassifyingPhase: false);
         var stage = Stage.Create(
             competition.Id,
             new StageName(stageName),
-            competition.Regulation,
+            regulation,
             context.Ids.Stage(stageKey),
             context.Clock);
         stage.AddRound(roundName, new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);

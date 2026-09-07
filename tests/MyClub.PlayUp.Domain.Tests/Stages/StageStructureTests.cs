@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Stages.Events;
 using MyClub.PlayUp.Domain.Tests.Common;
@@ -215,8 +216,12 @@ public sealed class StageStructureTests
     [Fact]
     public void AddRound_raises_StageRoundAdded()
     {
-        // Arrange
-        var stage = Stage.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
+        // Arrange — Cup seed without standing so AddRound does not also clear StandingRules
+        var stage = Stage.Create(
+            _competitionId,
+            new StageName("Cup"),
+            StageRegulation.MaterializeFrom(SampleRegulations.Standard(), isClassifyingPhase: false),
+            _clock);
         stage.ClearDomainEvents();
 
         // Act
@@ -226,6 +231,22 @@ public sealed class StageStructureTests
         var added = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageRoundAdded>().Subject;
         added.RoundId.Should().Be(round.Id);
         added.StageId.Should().Be(stage.Id);
+    }
+
+    [Fact]
+    public void AddRound_clears_standing_rules_when_becoming_knockout()
+    {
+        var stage = Stage.Create(
+            _competitionId,
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        stage.Regulation.StandingRules.Should().NotBeNull();
+
+        stage.AddRound("Final", _clock);
+
+        stage.Regulation.StandingRules.Should().BeNull();
+        StageClassification.IsNonClassifyingPhase(stage).Should().BeTrue();
     }
 
     [Fact]

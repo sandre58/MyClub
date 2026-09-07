@@ -9,6 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Domain.Standings;
 
 namespace MyClub.PlayUp.Application.Stages;
 
@@ -81,10 +82,14 @@ public static class GenerateNextRound
         }
 
         var attached = IndexAttachedMatches(stage, existingMatches);
+        var standingRules = stage.Regulation.StandingRules
+            ?? throw new ApplicationFailureException(
+                "Standing rules are required to generate a Swiss round.",
+                StandingErrorCodes.RulesRequired);
         var standing = CalculateStanding.Execute(
             participants,
             attached.Values,
-            stage.Regulation.StandingRules,
+            standingRules,
             penalties: CalculateStanding.ToStandingPenalties(stage.Penalties));
 
         var swissStandings = standing.Rows

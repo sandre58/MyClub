@@ -27,10 +27,6 @@ body:has(.shell),
     box-sizing: border-box;
 }
 
-.ds-root :is(h1, h2, h3, h4, p) {
-    margin: 0;
-}
-
 /*
  * Content links only — scoped to shell main + playground preview.
  * Chrome (sidebar) and overlays are outside this scope so they keep

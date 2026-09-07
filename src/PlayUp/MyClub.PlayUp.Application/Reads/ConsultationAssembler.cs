@@ -144,12 +144,18 @@ public static class ConsultationAssembler
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(matches);
 
-        var format = InferFormat(stage);
-        if (format is StructureFormatKind.Cup)
+        // Canonical runtime signal (A5/C1): materialized StandingRules, not a second classifying predicate.
+        var rules = stage.Regulation.StandingRules;
+        if (rules is null)
         {
-            return new ConsultationStandingsSectionDto(false, NotApplicableCupFormat, []);
+            var formatHint = InferFormat(stage);
+            var reason = formatHint is StructureFormatKind.Cup
+                ? NotApplicableCupFormat
+                : NotApplicableNoStructure;
+            return new ConsultationStandingsSectionDto(false, reason, []);
         }
 
+        var format = InferFormat(stage);
         if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
         {
             return new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, []);
@@ -157,7 +163,6 @@ public static class ConsultationAssembler
 
         var names = EntryDisplayNames.ToMap(competition);
         var penalties = CalculateStanding.ToStandingPenalties(stage.Penalties);
-        var rules = stage.Regulation.StandingRules;
         var tables = new List<ConsultationStandingTableDto>();
 
         if (format is StructureFormatKind.Championship or StructureFormatKind.Swiss)
@@ -318,7 +323,7 @@ public static class ConsultationAssembler
             case StructureFormatKind.Championship:
             case StructureFormatKind.Groups:
                 break;
-            case null when stages.All(stage => InferFormat(stage) is null or StructureFormatKind.Cup):
+            case null when stages.All(stage => stage.Regulation.StandingRules is null):
                 {
                     var onlyCup = stages.Count > 0 &&
                                   stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
@@ -335,6 +340,12 @@ public static class ConsultationAssembler
         var tables = new List<ConsultationStandingTableDto>();
         foreach (var stage in stages)
         {
+            var rules = stage.Regulation.StandingRules;
+            if (rules is null)
+            {
+                continue;
+            }
+
             var format = InferFormat(stage);
             if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
             {
@@ -343,7 +354,6 @@ public static class ConsultationAssembler
 
             var rows = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
             var penalties = CalculateStanding.ToStandingPenalties(stage.Penalties);
-            var rules = stage.Regulation.StandingRules;
 
             if (format is StructureFormatKind.Championship or StructureFormatKind.Swiss)
             {
@@ -386,7 +396,7 @@ public static class ConsultationAssembler
             case StructureFormatKind.Championship:
             case StructureFormatKind.Groups:
                 break;
-            case null when stages.All(stage => InferFormat(stage) is null or StructureFormatKind.Cup):
+            case null when stages.All(stage => stage.Regulation.StandingRules is null):
                 {
                     var onlyCup = stages.Count > 0 &&
                                   stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
@@ -403,6 +413,12 @@ public static class ConsultationAssembler
         var tables = new List<ConsultationStandingTableDto>();
         foreach (var stage in stages)
         {
+            var rules = stage.Regulation.StandingRules;
+            if (rules is null)
+            {
+                continue;
+            }
+
             var format = InferFormat(stage);
             if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
             {
@@ -411,7 +427,6 @@ public static class ConsultationAssembler
 
             var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
             var penalties = CalculateStanding.ToStandingPenalties(stage.Penalties);
-            var rules = stage.Regulation.StandingRules;
 
             if (format is StructureFormatKind.Championship or StructureFormatKind.Swiss)
             {

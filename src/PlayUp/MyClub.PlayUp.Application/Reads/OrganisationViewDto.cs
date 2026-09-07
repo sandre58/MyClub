@@ -167,10 +167,14 @@ public sealed record OrganisationReadinessDto(
 /// <param name="NumberOfPeriods">MatchRules periods.</param>
 /// <param name="DurationPerPeriod">MatchRules duration.</param>
 /// <param name="HasExtraTime">Match ExtraTimePolicy present.</param>
+/// <param name="ExtraTimeNumberOfPeriods">Extra-time periods when HasExtraTime.</param>
+/// <param name="ExtraTimeDurationPerPeriod">Extra-time minutes per period when HasExtraTime.</param>
 /// <param name="HasPenaltyShootout">Match PenaltyShootoutPolicy present.</param>
-/// <param name="WinPoints">Standing win points.</param>
-/// <param name="DrawPoints">Standing draw points.</param>
-/// <param name="LossPoints">Standing loss points.</param>
+/// <param name="PenaltyInitialKicksPerTeam">Initial TAB kicks per team when HasPenaltyShootout.</param>
+/// <param name="HasStandingRules">Whether StandingRules are present (classifying phase).</param>
+/// <param name="WinPoints">Standing win points when HasStandingRules.</param>
+/// <param name="DrawPoints">Standing draw points when HasStandingRules.</param>
+/// <param name="LossPoints">Standing loss points when HasStandingRules.</param>
 /// <param name="HasDrawRules">DrawRules present.</param>
 /// <param name="DrawMode">DrawRules.Mode when HasDrawRules.</param>
 /// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
@@ -192,10 +196,14 @@ public sealed record OrganisationStageHubSummaryDto(
     int NumberOfPeriods,
     int DurationPerPeriod,
     bool HasExtraTime,
+    int? ExtraTimeNumberOfPeriods,
+    int? ExtraTimeDurationPerPeriod,
     bool HasPenaltyShootout,
-    int WinPoints,
-    int DrawPoints,
-    int LossPoints,
+    int? PenaltyInitialKicksPerTeam,
+    bool HasStandingRules,
+    int? WinPoints,
+    int? DrawPoints,
+    int? LossPoints,
     bool HasDrawRules,
     DrawMode? DrawMode,
     int? NumberOfPots,

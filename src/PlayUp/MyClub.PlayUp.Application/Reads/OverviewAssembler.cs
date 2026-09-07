@@ -728,7 +728,9 @@ public static class OverviewAssembler
         }
 
         var match = reference.Regulation.MatchRules;
-        var standing = reference.Regulation.StandingRules.Points;
+
+        // Stage StandingRules when classifying; otherwise competition defaults (A4 seed) for display.
+        var standing = (reference.Regulation.StandingRules ?? competition.Regulation.StandingRules).Points;
         var tie = TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
         var formatKind = ResolveGameRulesFormatKind(reference, competitionFormatKind);
 

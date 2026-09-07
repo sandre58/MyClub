@@ -37,7 +37,10 @@ public static class QualificationStandingFactory
 
         var paths = sourceStage.Regulation.QualificationRules?.Paths ?? [];
         var penalties = CalculateStanding.ToStandingPenalties(sourceStage.Penalties);
-        var rules = sourceStage.Regulation.StandingRules;
+        var rules = sourceStage.Regulation.StandingRules
+            ?? throw new ApplicationFailureException(
+                "Standing rules are required to calculate qualification standings.",
+                StandingErrorCodes.RulesRequired);
 
         var needsOverall = paths.Any(path =>
             path.Source.Scope != RankingScope.AcrossGroups && !isGroupScoped(path));

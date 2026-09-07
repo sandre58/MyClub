@@ -121,7 +121,7 @@ public sealed class RegulationIntegrationTests
             new StageName("Cup"),
             new StageRegulation(
                 SampleRegulations.Standard().MatchRules,
-                SampleRegulations.Standard().StandingRules,
+                standingRules: null,
                 defaultTie),
             _clock);
 
@@ -138,35 +138,45 @@ public sealed class RegulationIntegrationTests
     }
 
     [Fact]
-    public void After_Start_structural_rules_are_frozen_and_standing_remains_mutable()
+    public void After_Start_structural_rules_are_frozen_and_standing_remains_mutable_on_classifying_stage()
     {
-        // Arrange
-        var stage = CreateRunningCupStage();
-        var standing = new StandingRules(
-            new PointsPolicy(2, 1, 0),
-            [RankingCriterion.Points, RankingCriterion.Wins]);
-
-        // Act / Assert structural
-        var replaceRegulation = () => stage.ReplaceRegulation(
-            StageRegulation.MaterializeFrom(SampleRegulations.Standard()),
+        // Arrange — Cup (non-classifying): structure locked; standing absent / not replaceable
+        var cup = CreateRunningCupStage();
+        var replaceRegulation = () => cup.ReplaceRegulation(
+            StageRegulation.MaterializeFrom(SampleRegulations.Standard(), isClassifyingPhase: false),
             _clock);
-        var replaceDraw = () => stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
-        var replaceQual = () => stage.ReplaceQualificationRules(null, _clock);
-        var replaceDefaultTie = () => stage.ReplaceDefaultTieFormat(new TieFormat(1, false), _clock);
-        var replaceRoundTie = () => stage.ReplaceRoundTieFormat(stage.Rounds[0].Id, new TieFormat(1, false), _clock);
+        var replaceDraw = () => cup.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        var replaceQual = () => cup.ReplaceQualificationRules(null, _clock);
+        var replaceDefaultTie = () => cup.ReplaceDefaultTieFormat(new TieFormat(1, false), _clock);
+        var replaceRoundTie = () => cup.ReplaceRoundTieFormat(cup.Rounds[0].Id, new TieFormat(1, false), _clock);
+        var replaceStandingOnCup = () => cup.ReplaceStandingRules(
+            new StandingRules(new PointsPolicy(2, 1, 0), [RankingCriterion.Points]),
+            _clock);
 
         replaceRegulation.Should().Throw<DomainException>();
         replaceDraw.Should().Throw<DomainException>();
         replaceQual.Should().Throw<DomainException>();
         replaceDefaultTie.Should().Throw<DomainException>();
         replaceRoundTie.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        replaceStandingOnCup.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StandingRulesInvariant);
 
-        // Act standing
-        stage.ReplaceStandingRules(standing, _clock);
+        // Arrange — Championship (classifying): standing remains mutable after Start
+        var league = Stage.Create(
+            CompetitionId.New(),
+            new StageName("League"),
+            StageRegulation.MaterializeFrom(SampleRegulations.Standard(), isClassifyingPhase: true),
+            _clock);
+        league.AddMatchday(1, _clock);
+        league.Prepare(_clock);
+        league.Start(_clock);
+        var standing = new StandingRules(
+            new PointsPolicy(2, 1, 0),
+            [RankingCriterion.Points, RankingCriterion.Wins]);
 
-        // Assert
-        stage.Regulation.StandingRules.Should().Be(standing);
-        stage.Status.Should().Be(StageStatus.Running);
+        league.ReplaceStandingRules(standing, _clock);
+
+        league.Regulation.StandingRules.Should().Be(standing);
+        league.Status.Should().Be(StageStatus.Running);
     }
 
     [Fact]
@@ -178,7 +188,7 @@ public sealed class RegulationIntegrationTests
             new StageName("Cup"),
             new StageRegulation(
                 SampleRegulations.Standard().MatchRules,
-                SampleRegulations.Standard().StandingRules,
+                standingRules: null,
                 new TieFormat(2, true)),
             _clock);
         var round = stage.AddRound("QF", _clock);
@@ -198,7 +208,7 @@ public sealed class RegulationIntegrationTests
             new StageName("Cup"),
             new StageRegulation(
                 SampleRegulations.Standard().MatchRules,
-                SampleRegulations.Standard().StandingRules,
+                standingRules: null,
                 new TieFormat(2, true),
                 new DrawRules(DrawMode.Random)),
             _clock);

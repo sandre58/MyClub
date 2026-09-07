@@ -89,6 +89,7 @@ function organisationView(
         durationPerPeriod: 45,
         hasExtraTime: false,
         hasPenaltyShootout: false,
+        hasStandingRules: true,
         winPoints: 3,
         drawPoints: 1,
         lossPoints: 0,
@@ -114,10 +115,14 @@ function organisationView(
         numberOfPeriods: 2,
         durationPerPeriod: 45,
         hasExtraTime: true,
+        extraTimeNumberOfPeriods: 2,
+        extraTimeDurationPerPeriod: 15,
         hasPenaltyShootout: true,
-        winPoints: 3,
-        drawPoints: 1,
-        lossPoints: 0,
+        penaltyInitialKicksPerTeam: 5,
+        hasStandingRules: false,
+        winPoints: null,
+        drawPoints: null,
+        lossPoints: null,
         hasDrawRules: false,
         hasQualificationRules: false,
         qualificationPathCount: 0,
@@ -156,60 +161,101 @@ function renderPage() {
 }
 
 describe('RegulationPage', () => {
-  it('renders rich frame tiles and phase schematics', async () => {
+  it('renders frame tiles, phases, and a single edit action', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Entrées' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Match' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Classement' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Capacité 8 à 16 équipes')).toBeInTheDocument()
+    expect(screen.getByLabelText('Équipes : 8 à 16')).toBeInTheDocument()
+    expect(
+      screen.getByText(/phases qui produisent un classement/),
+    ).toBeInTheDocument()
     expect(screen.getByText('1re MT')).toBeInTheDocument()
-    expect(screen.getByText('2e MT')).toBeInTheDocument()
     expect(screen.getByText('Pause')).toBeInTheDocument()
-    expect(screen.getByText('90 min de jeu')).toBeInTheDocument()
-    expect(screen.getByText('Prolongations')).toBeInTheDocument()
     expect(screen.getByText('PR1')).toBeInTheDocument()
-    expect(screen.getByText('5 tirs / équipe')).toBeInTheDocument()
-    expect(screen.getByText('Attribution des points')).toBeInTheDocument()
-    expect(screen.getByText('Goal average')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Poules/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Finale/i })).toBeInTheDocument()
-    expect(screen.getByText('Qualification')).toBeInTheDocument()
-    expect(screen.getByLabelText('2 poules')).toBeInTheDocument()
-    expect(screen.getByLabelText('Tableau éliminatoire')).toBeInTheDocument()
+    expect(
+      screen.getByLabelText(/Durée maximale du match 120 minutes/),
+    ).toBeInTheDocument()
     expect(
       screen.getByText(/Les règles générales s’appliquent/),
     ).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /Structure →/ })).toHaveLength(2)
+    expect(screen.queryByText('Le cadre de la compétition')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Modifier le règlement' })).toBeEnabled()
+    expect(screen.getByRole('heading', { name: 'Poules' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Finale' })).toBeInTheDocument()
+    expect(screen.getByText('Phase de groupe')).toBeInTheDocument()
+    expect(screen.getByText('Élimination directe')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Structure' })).toHaveLength(2)
   })
 
-  it('shows Modifier on frame tiles and opens the editor when allowed', async () => {
+  it('hides Classement when no classifying phase exists', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          {
+            stageId: stageFinaleId,
+            name: 'Finale',
+            status: 'Draft',
+            teamCount: 2,
+            matchCount: 1,
+            groupCount: 0,
+            roundCount: 1,
+            numberOfPeriods: 2,
+            durationPerPeriod: 45,
+            hasExtraTime: true,
+            extraTimeNumberOfPeriods: 2,
+            extraTimeDurationPerPeriod: 15,
+            hasPenaltyShootout: true,
+            penaltyInitialKicksPerTeam: 5,
+            hasStandingRules: false,
+            winPoints: null,
+            drawPoints: null,
+            lossPoints: null,
+            hasDrawRules: false,
+            hasQualificationRules: false,
+            qualificationPathCount: 0,
+            hasProgressionRules: false,
+            progressionPathCount: 0,
+            hasTieFormat: true,
+            numberOfLegs: 1,
+            aggregateScoring: null,
+          },
+        ],
+      }),
+    )
+
+    renderPage()
+
+    expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Classement' })).not.toBeInTheDocument()
+  })
+
+  it('opens the regulation editor from the page action', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
     renderPage()
 
-    const editButtons = await screen.findAllByRole('button', {
-      name: 'Modifier →',
-    })
-    expect(editButtons).toHaveLength(3)
-    await user.click(editButtons[0]!)
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
   })
 
-  it('disables Modifier when ReplaceRegulation is unavailable', async () => {
+  it('keeps the edit action visible but disabled when ReplaceRegulation is unavailable', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({ actions: [] }),
     )
 
     renderPage()
 
-    const editButtons = await screen.findAllByRole('button', {
-      name: 'Modifier →',
-    })
-    expect(editButtons[0]).toBeDisabled()
+    expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Modifier le règlement' }),
+    ).toBeDisabled()
   })
 })

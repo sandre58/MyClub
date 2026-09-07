@@ -60,10 +60,11 @@ public static class ConfigureStructure
                     ApplicationErrorCodes.StageNotFound);
             }
 
+            var isClassifying = intent.Format is not StructureFormatKind.Cup;
             stage = Stage.Create(
                 competition.Id,
                 new StageName(intent.StageName),
-                competition.Regulation,
+                StageRegulation.MaterializeFrom(competition.Regulation, isClassifying),
                 clock);
             competition.AddStage(stage.Id, clock);
             stageCreated = true;
@@ -84,6 +85,7 @@ public static class ConfigureStructure
             }
 
             ClearStructure(stage, clock);
+            AlignStandingRulesForIntent(stage, intent.Format, competition.Regulation.StandingRules, clock);
         }
 
         switch (intent.Format)
@@ -106,12 +108,34 @@ public static class ConfigureStructure
                     ApplicationErrorCodes.InvalidStructureIntent);
         }
 
+        // After topology exists, ensure A5: Cup has no Standing; classifying formats are seeded.
+        AlignStandingRulesForIntent(stage, intent.Format, competition.Regulation.StandingRules, clock);
+
         if (intent.Format is not StructureFormatKind.Swiss)
         {
             stage.SetMatchGenerationFormat(intent.MatchGenerationFormat);
         }
 
         return new ConfigureStructureResult(stage, stageCreated);
+    }
+
+    /// <summary>
+    /// Aligns StandingRules with format intent before/after topology mutation (A4 seed / A5 Cup absent).
+    /// Cup clears Standing before AddRound so Domain invariant is never violated mid-build.
+    /// </summary>
+    private static void AlignStandingRulesForIntent(
+        Stage stage,
+        StructureFormatKind format,
+        StandingRules standingDefaults,
+        IClock clock)
+    {
+        if (format is StructureFormatKind.Cup)
+        {
+            stage.ClearStandingRules(clock);
+            return;
+        }
+
+        stage.SeedStandingRules(standingDefaults, clock);
     }
 
     private static void BuildChampionship(Stage stage, int matchdayCount, IClock clock)
@@ -139,6 +163,8 @@ public static class ConfigureStructure
 
     private static void BuildCup(Stage stage, int bracketSize, IClock clock)
     {
+        // Standing must be cleared before rounds exist (A5 / Domain invariant).
+        stage.ClearStandingRules(clock);
         stage.AddRound("Tour principal", clock);
         for (var index = 1; index <= bracketSize; index++)
         {

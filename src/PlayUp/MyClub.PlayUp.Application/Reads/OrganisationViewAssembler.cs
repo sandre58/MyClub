@@ -117,7 +117,7 @@ public static class OrganisationViewAssembler
     {
         var regulation = stage.Regulation;
         var match = regulation.MatchRules;
-        var standing = regulation.StandingRules.Points;
+        var standing = regulation.StandingRules;
         var draw = regulation.DrawRules;
         var qualificationPaths = regulation.QualificationRules?.Paths.Count ?? 0;
         var progressionPaths = regulation.ProgressionRules?.Paths.Count ?? 0;
@@ -135,10 +135,14 @@ public static class OrganisationViewAssembler
             match.Duration.NumberOfPeriods,
             match.Duration.DurationPerPeriod,
             HasExtraTime: match.ExtraTimePolicy is not null,
+            ExtraTimeNumberOfPeriods: match.ExtraTimePolicy?.NumberOfPeriods,
+            ExtraTimeDurationPerPeriod: match.ExtraTimePolicy?.DurationPerPeriod,
             HasPenaltyShootout: match.PenaltyShootoutPolicy is not null,
-            standing.WinPoints,
-            standing.DrawPoints,
-            standing.LossPoints,
+            PenaltyInitialKicksPerTeam: match.PenaltyShootoutPolicy?.InitialKicksPerTeam,
+            HasStandingRules: standing is not null,
+            standing?.Points.WinPoints,
+            standing?.Points.DrawPoints,
+            standing?.Points.LossPoints,
             HasDrawRules: draw is not null,
             DrawMode: draw?.Mode,
             NumberOfPots: draw?.PotRules?.NumberOfPots,

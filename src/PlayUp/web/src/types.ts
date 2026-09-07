@@ -604,10 +604,15 @@ export interface OrganisationStageHubSummary {
   numberOfPeriods: number
   durationPerPeriod: number
   hasExtraTime: boolean
+  extraTimeNumberOfPeriods?: number | null
+  extraTimeDurationPerPeriod?: number | null
   hasPenaltyShootout: boolean
-  winPoints: number
-  drawPoints: number
-  lossPoints: number
+  penaltyInitialKicksPerTeam?: number | null
+  /** A5: standing present only when the phase classifies. */
+  hasStandingRules?: boolean
+  winPoints?: number | null
+  drawPoints?: number | null
+  lossPoints?: number | null
   hasDrawRules: boolean
   drawMode?: DrawMode | null
   numberOfPots?: number | null

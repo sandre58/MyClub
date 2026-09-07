@@ -213,11 +213,13 @@ public sealed class Stage : AggregateRoot<StageId>
         DemoteToDraftIfReady();
 
         Regulation = regulation.Copy();
+        EnsureStandingRulesInvariant();
         Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
     /// Replaces standing rules only. Allowed after Start (calculation ≠ structure).
+    /// Rejects explicitly when the stage has no standing capacity (non-classifying / Standing absent).
     /// </summary>
     /// <param name="standingRules">The new standing rules.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -227,8 +229,58 @@ public sealed class Stage : AggregateRoot<StageId>
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStandingRulesMutable();
 
+        if (Regulation.StandingRules is null || StageClassification.IsNonClassifyingPhase(this))
+        {
+            throw new DomainException(
+                "Standing rules cannot be replaced on a non-classifying stage (StandingRules absent).",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+
         Regulation = Regulation.WithStandingRules(standingRules);
         Raise(new StageStandingRulesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Clears standing rules (Cup/KO alignment). Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearStandingRules(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        if (Regulation.StandingRules is null)
+        {
+            return;
+        }
+
+        Regulation = Regulation.WithStandingRules(null);
+        EnsureStandingRulesInvariant();
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Seeds standing rules from competition defaults when absent (classifying phases).
+    /// Allowed in Draft or Ready; Ready is demoted to Draft. No-op when standing already present.
+    /// </summary>
+    /// <param name="standingDefaults">Competition standing defaults (A4 seed).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void SeedStandingRules(StandingRules standingDefaults, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(standingDefaults);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        if (Regulation.StandingRules is not null)
+        {
+            return;
+        }
+
+        DemoteToDraftIfReady();
+        Regulation = Regulation.WithStandingRules(standingDefaults);
+        EnsureStandingRulesInvariant();
+        Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
@@ -1169,6 +1221,15 @@ public sealed class Stage : AggregateRoot<StageId>
         DemoteToDraftIfReady();
         var round = new Round(RoundId.New(), name, tieFormat?.Copy());
         _rounds.Add(round);
+
+        // Becoming knockout (A5): standing capacity is removed with the topology change.
+        if (Regulation.StandingRules is not null)
+        {
+            Regulation = Regulation.WithStandingRules(null);
+            Raise(new StageRegulationReplaced(Id, clock));
+        }
+
+        EnsureStandingRulesInvariant();
         Raise(new StageRoundAdded(Id, round.Id, clock));
         return round;
     }
@@ -1733,6 +1794,27 @@ public sealed class Stage : AggregateRoot<StageId>
             throw new DomainException(
                 $"Standing rules cannot be modified when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    /// <summary>
+    /// Enforces A5 against current topology: classifying ⇒ Standing present; knockout ⇒ Standing absent.
+    /// Unstructured stages impose no presence constraint (seed may exist before ConfigureStructure).
+    /// </summary>
+    private void EnsureStandingRulesInvariant()
+    {
+        if (StageClassification.IsClassifyingPhase(this) && Regulation.StandingRules is null)
+        {
+            throw new DomainException(
+                "A classifying stage must have StandingRules.",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+
+        if (StageClassification.IsNonClassifyingPhase(this) && Regulation.StandingRules is not null)
+        {
+            throw new DomainException(
+                "A non-classifying (knockout) stage must not have StandingRules.",
+                StageErrorCodes.StandingRulesInvariant);
         }
     }
 
