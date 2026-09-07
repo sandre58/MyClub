@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -125,13 +125,14 @@ function organisationView(): OrganisationView {
       attachedMatchCount: 0,
       blockers: [],
     },
+    stages: [],
   }
 }
 
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'Journée 1',
+  name: 'JournÃ©e 1',
   status: 'Draft',
   rounds: [],
   slots: [],
@@ -202,7 +203,7 @@ describe('MatchPage sheet (Lot 2)', () => {
       await screen.findByRole('heading', { name: 'Feuille de match' }),
     ).toBeInTheDocument()
     expect(
-      await screen.findByRole('link', { name: /Effectif · Alpha/i }),
+      await screen.findByRole('link', { name: /Effectif Â· Alpha/i }),
     ).toBeInTheDocument()
 
     const homeHeading = screen.getByRole('heading', { name: 'Domicile' })
@@ -218,7 +219,7 @@ describe('MatchPage sheet (Lot 2)', () => {
     )
     await user.click(
       within(homeColumn as HTMLElement).getByRole('button', {
-        name: 'Ajouter à la feuille',
+        name: 'Ajouter Ã  la feuille',
       }),
     )
 
@@ -233,7 +234,7 @@ describe('MatchPage sheet (Lot 2)', () => {
     expect(
       await screen.findByText('Dupont', { selector: '.match-sheet__name' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('n°9')).toBeInTheDocument()
+    expect(screen.getByText('nÂ°9')).toBeInTheDocument()
   })
 
   it('toggles starter to bench', async () => {
@@ -256,7 +257,7 @@ describe('MatchPage sheet (Lot 2)', () => {
 
     renderMatchPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Remplaçant' }))
+    await user.click(await screen.findByRole('button', { name: 'RemplaÃ§ant' }))
 
     await waitFor(() => {
       expect(changeDeclaredParticipationCompositionStatus).toHaveBeenCalledWith(
@@ -310,10 +311,10 @@ describe('MatchPage sheet (Lot 2)', () => {
       await screen.findByText('Dupont', { selector: '.match-sheet__name' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/n’est plus modifiable/i),
+      screen.getByText(/nâ€™est plus modifiable/i),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Ajouter à la feuille' }),
+      screen.queryByRole('button', { name: 'Ajouter Ã  la feuille' }),
     ).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Retirer' })).not.toBeInTheDocument()
   })

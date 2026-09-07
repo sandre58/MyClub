@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -74,6 +75,7 @@ public static class OrganisationViewAssembler
         var attachedMatchCount = CountAttachedMatches(primary);
         var readiness = BuildReadiness(competition, primary, format.Kind, structure, attachedMatchCount);
         var actions = BuildActions(competition);
+        var stageHubs = BuildStageHubSummaries(competition, stages);
 
         return new OrganisationViewDto(
             competition.Id.Value,
@@ -85,10 +87,86 @@ public static class OrganisationViewAssembler
             structure,
             actions,
             readiness,
+            stageHubs,
             competition.ShortName?.Value,
             competition.LogoMediaId?.Value,
             competition.ScheduledStart,
             competition.ScheduledEnd);
+    }
+
+    private static IReadOnlyList<OrganisationStageHubSummaryDto> BuildStageHubSummaries(
+        Competition competition,
+        IReadOnlyList<Stage> stages)
+    {
+        var byId = stages.ToDictionary(stage => stage.Id);
+        var ordered = new List<OrganisationStageHubSummaryDto>(competition.StageIds.Count);
+        foreach (var stageId in competition.StageIds)
+        {
+            if (!byId.TryGetValue(stageId, out var stage))
+            {
+                continue;
+            }
+
+            ordered.Add(BuildStageHubSummary(competition, stage));
+        }
+
+        return ordered;
+    }
+
+    private static OrganisationStageHubSummaryDto BuildStageHubSummary(Competition competition, Stage stage)
+    {
+        var regulation = stage.Regulation;
+        var match = regulation.MatchRules;
+        var standing = regulation.StandingRules.Points;
+        var draw = regulation.DrawRules;
+        var qualificationPaths = regulation.QualificationRules?.Paths.Count ?? 0;
+        var progressionPaths = regulation.ProgressionRules?.Paths.Count ?? 0;
+        var hasTie = regulation.TieFormat is not null;
+        var tie = hasTie ? TieFormat.OrDefaultOneLeg(regulation.TieFormat) : null;
+
+        return new OrganisationStageHubSummaryDto(
+            stage.Id.Value,
+            stage.Name.Value,
+            stage.Status,
+            CountStageTeams(competition, stage),
+            CountAttachedMatches(stage),
+            stage.Groups.Count,
+            stage.Rounds.Count,
+            match.Duration.NumberOfPeriods,
+            match.Duration.DurationPerPeriod,
+            HasExtraTime: match.ExtraTimePolicy is not null,
+            HasPenaltyShootout: match.PenaltyShootoutPolicy is not null,
+            standing.WinPoints,
+            standing.DrawPoints,
+            standing.LossPoints,
+            HasDrawRules: draw is not null,
+            DrawMode: draw?.Mode,
+            NumberOfPots: draw?.PotRules?.NumberOfPots,
+            HasQualificationRules: regulation.QualificationRules is not null,
+            QualificationPathCount: qualificationPaths,
+            HasProgressionRules: regulation.ProgressionRules is not null,
+            ProgressionPathCount: progressionPaths,
+            HasTieFormat: hasTie,
+            NumberOfLegs: tie?.NumberOfLegs,
+            AggregateScoring: tie?.AggregateScoring);
+    }
+
+    /// <summary>
+    /// Topology team count: distinct group occupants, else slot capacity, else competition occupying.
+    /// </summary>
+    private static int CountStageTeams(Competition competition, Stage stage)
+    {
+        if (stage.Groups.Count > 0)
+        {
+            return stage.Groups.SelectMany(group => group.EntryIds).Distinct().Count();
+        }
+
+        if (stage.Slots.Count > 0)
+        {
+            return stage.Slots.Count;
+        }
+
+        return competition.Entries.Count;
     }
 
     private static int CountAttachedMatches(Stage? primary) =>
@@ -158,15 +236,24 @@ public static class OrganisationViewAssembler
     private static OrganisationRegulationSummaryDto BuildRegulation(Competition competition)
     {
         var regulation = competition.Regulation;
+        var match = regulation.MatchRules;
+        var extra = match.ExtraTimePolicy;
         return new OrganisationRegulationSummaryDto(
             regulation.EntryRules.MinimumTeams,
             regulation.EntryRules.MaximumTeams,
-            regulation.MatchRules.Duration.DurationPerPeriod,
-            regulation.MatchRules.Duration.NumberOfPeriods,
+            match.Duration.DurationPerPeriod,
+            match.Duration.NumberOfPeriods,
             regulation.StandingRules.Points.WinPoints,
             regulation.StandingRules.Points.DrawPoints,
             regulation.StandingRules.Points.LossPoints,
-            regulation.DisciplinaryRules.AllowedTypes);
+            regulation.DisciplinaryRules.AllowedTypes,
+            match.Duration.HalfTimeDuration,
+            HasExtraTime: extra is not null,
+            ExtraTimeDurationPerPeriod: extra?.DurationPerPeriod,
+            ExtraTimeNumberOfPeriods: extra?.NumberOfPeriods,
+            HasPenaltyShootout: match.PenaltyShootoutPolicy is not null,
+            PenaltyInitialKicksPerTeam: match.PenaltyShootoutPolicy?.InitialKicksPerTeam,
+            RankingCriteria: regulation.StandingRules.RankingCriteria);
     }
 
     private static OrganisationFormatSummaryDto BuildFormatSummary(Stage? primary) =>

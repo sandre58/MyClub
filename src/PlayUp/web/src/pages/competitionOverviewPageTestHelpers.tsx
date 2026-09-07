@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { expect, vi } from 'vitest'
@@ -171,6 +171,7 @@ export function defaultOrgView(): OrganisationView {
       attachedMatchCount: 0,
       blockers: [],
     },
+    stages: [],
   }
 }
 

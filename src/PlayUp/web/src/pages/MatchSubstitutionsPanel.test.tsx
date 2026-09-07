@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -161,12 +161,13 @@ const emptyOrganisation: OrganisationView = {
     attachedMatchCount: 0,
     blockers: [],
   },
+    stages: [],
 }
 
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'Journée 1',
+  name: 'JournÃ©e 1',
   status: 'Draft',
   rounds: [],
   slots: [],
@@ -215,7 +216,7 @@ describe('deriveOnFieldMembers / canMutateRecordedSubstitutions', () => {
     expect(before.has(martinId)).toBe(false)
   })
 
-  it('allows Live and Finished∧¬Live only', () => {
+  it('allows Live and Finishedâˆ§Â¬Live only', () => {
     expect(canMutateRecordedSubstitutions(baseMatch({ status: 'Live' }))).toBe(
       true,
     )
@@ -247,7 +248,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
     vi.mocked(removeRecordedSubstitution).mockResolvedValue()
   })
 
-  it('Live: records Dupont → Martin without touching RunningScore', async () => {
+  it('Live: records Dupont â†’ Martin without touching RunningScore', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(recordSubstitution).mock.calls.length > 0) {
@@ -278,7 +279,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
     })
     expect(setRunningScore).not.toHaveBeenCalled()
     expect(
-      within(panel).getByText(/Dupont → Martin/, {
+      within(panel).getByText(/Dupont â†’ Martin/, {
         selector: '.match-subs__pair',
       }),
     ).toBeInTheDocument()
@@ -310,7 +311,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('Finished∧Live: read-only (CorrectAfterFinish hors V1)', async () => {
+  it('Finishedâˆ§Live: read-only (CorrectAfterFinish hors V1)', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
       baseMatch({
         status: 'Finished',
@@ -334,7 +335,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
     const panel = heading.closest('section') as HTMLElement
 
     expect(
-      within(panel).getByText(/Dupont → Martin/, {
+      within(panel).getByText(/Dupont â†’ Martin/, {
         selector: '.match-subs__pair',
       }),
     ).toBeInTheDocument()
@@ -374,7 +375,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
     })
   })
 
-  it('Finished∧¬Live: allows create (reconstruction)', async () => {
+  it('Finishedâˆ§Â¬Live: allows create (reconstruction)', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(recordSubstitution).mock.calls.length > 0) {

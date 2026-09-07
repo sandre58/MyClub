@@ -1,0 +1,81 @@
+﻿{
+  "capacity": {
+    "aria": "Capacité {{min}} à {{max}} équipes",
+    "min": "Min.",
+    "max": "Max."
+  },
+  "criteria": {
+    "aria": "Ordre de départage",
+    "heading": "Ordre de départage",
+    "Points": "Points",
+    "GoalDifference": "Goal average",
+    "GoalsFor": "Buts marqués",
+    "GoalsAgainst": "Buts encaissés",
+    "Wins": "Victoires",
+    "HeadToHead": "Confrontation directe"
+  },
+  "edit": "Modifier →",
+  "editUnavailable": "Le règlement n’est pas modifiable dans cet état.",
+  "emptyPhases": "Aucune phase pour l’instant.",
+  "families": {
+    "entries": "Entrées",
+    "match": "Match",
+    "standing": "Classement"
+  },
+  "frameHeading": "Cadre de la compétition",
+  "frameNote": "Les règles générales s’appliquent à l’ensemble de la compétition.",
+  "loadError": "Impossible de charger le règlement.",
+  "matchFlags": {
+    "extraTime": "Prolongations",
+    "penalties": "Tirs au but"
+  },
+  "matchTimeline": {
+    "aria": "Déroulement du match",
+    "regulationHeading": "Temps réglementaire",
+    "extraHeading": "Prolongations",
+    "tabHeading": "Tirs au but",
+    "periodFirst": "1re MT",
+    "periodSecond": "2e MT",
+    "periodNth": "{{n}}e MT",
+    "extra": "PR{{n}}",
+    "break": "Pause",
+    "tab": "TAB",
+    "tabAria": "{{count}} tirs au but par équipe",
+    "tabMeta": "{{count}} tirs / équipe"
+  },
+  "matchTotal": "{{minutes}} min de jeu",
+  "matchExtraTotal": "{{minutes}} min",
+  "openInStructure": "Structure →",
+  "phasesHeading": "Phases",
+  "points": {
+    "aria": "Attribution des points",
+    "heading": "Attribution des points",
+    "win": "Victoire",
+    "draw": "Nul",
+    "loss": "Défaite"
+  },
+  "qualificationBridge": "Qualification",
+  "schematic": {
+    "bracket": "Tableau éliminatoire",
+    "groups": "{{count}} poules",
+    "qualify": "{{count}} →"
+  },
+  "subtitle": "Le cadre de la compétition",
+  "title": "Règlement",
+  "tokens": {
+    "aria": "Règles de la phase",
+    "match": "{{periods}} × {{minutes}}",
+    "extraTimeSuffix": " + PR",
+    "penaltiesSuffix": " + TAB",
+    "standing": "{{win}} · {{draw}} · {{loss}}",
+    "qualification": "{{count}} →",
+    "drawAuto": "Auto",
+    "tieTwoLegs": "A/R",
+    "tieOneLeg": "Finale"
+  },
+  "topology": {
+    "aria": "{{teams}} équipes · {{matches}} matchs",
+    "teams": "{{count}} équipes",
+    "matches": "{{count}} matchs"
+  }
+}

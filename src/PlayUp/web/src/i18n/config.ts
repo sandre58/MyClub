@@ -16,6 +16,7 @@ export const I18N_NAMESPACES = [
   'draw',
   'organisation',
   'teams',
+  'regulation',
   'stage',
   'home',
   'competitions',

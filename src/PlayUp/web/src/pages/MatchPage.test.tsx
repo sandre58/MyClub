@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -50,7 +50,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'Journée 1',
+  name: 'JournÃ©e 1',
   status: 'Draft',
   rounds: [],
   slots: [],
@@ -104,6 +104,7 @@ const emptyOrganisation: OrganisationView = {
     attachedMatchCount: 0,
     blockers: [],
   },
+    stages: [],
 }
 
 function renderMatchPage() {
@@ -147,9 +148,9 @@ describe('MatchPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Alpha vs Beta' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Planifié')).toBeInTheDocument()
+    expect(screen.getByText('PlanifiÃ©')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Démarrer le match' }),
+      screen.getByRole('button', { name: 'DÃ©marrer le match' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Terminer le match' }),
@@ -171,7 +172,7 @@ describe('MatchPage', () => {
     renderMatchPage()
 
     await user.click(
-      await screen.findByRole('button', { name: 'Démarrer le match' }),
+      await screen.findByRole('button', { name: 'DÃ©marrer le match' }),
     )
 
     await waitFor(() => {
@@ -189,8 +190,8 @@ describe('MatchPage', () => {
 
     await screen.findByRole('button', { name: 'Terminer le match' })
 
-    const homeGoals = screen.getByLabelText(/Alpha — résultat/i)
-    const awayGoals = screen.getByLabelText(/Beta — résultat/i)
+    const homeGoals = screen.getByLabelText(/Alpha â€” rÃ©sultat/i)
+    const awayGoals = screen.getByLabelText(/Beta â€” rÃ©sultat/i)
     await user.clear(homeGoals)
     await user.type(homeGoals, '2')
     await user.clear(awayGoals)
@@ -222,17 +223,17 @@ describe('MatchPage', () => {
 
     expect(await screen.findByText('En direct')).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Démarrer le match' }),
+      screen.queryByRole('button', { name: 'DÃ©marrer le match' }),
     ).not.toBeInTheDocument()
 
-    const runningHome = screen.getByLabelText(/Alpha — compteur/i)
-    const runningAway = screen.getByLabelText(/Beta — compteur/i)
+    const runningHome = screen.getByLabelText(/Alpha â€” compteur/i)
+    const runningAway = screen.getByLabelText(/Beta â€” compteur/i)
     await user.clear(runningHome)
     await user.type(runningHome, '4')
     await user.clear(runningAway)
     await user.type(runningAway, '1')
     await user.click(
-      screen.getByRole('button', { name: 'Mettre à jour le compteur' }),
+      screen.getByRole('button', { name: 'Mettre Ã  jour le compteur' }),
     )
 
     await waitFor(() => {
@@ -242,8 +243,8 @@ describe('MatchPage', () => {
       })
     })
 
-    expect(screen.getByLabelText(/Alpha — résultat/i)).toHaveValue(3)
-    expect(screen.getByLabelText(/Beta — résultat/i)).toHaveValue(1)
+    expect(screen.getByLabelText(/Alpha â€” rÃ©sultat/i)).toHaveValue(3)
+    expect(screen.getByLabelText(/Beta â€” rÃ©sultat/i)).toHaveValue(1)
 
     await user.click(screen.getByRole('button', { name: 'Terminer le match' }))
 
@@ -265,7 +266,7 @@ describe('MatchPage', () => {
     )
 
     renderMatchPage()
-    await screen.findByRole('button', { name: 'Démarrer le match' })
+    await screen.findByRole('button', { name: 'DÃ©marrer le match' })
     const callsBeforeClick = fetchMatch.mock.calls.length
 
     fetchMatch.mockImplementation(async () =>
@@ -276,7 +277,7 @@ describe('MatchPage', () => {
       }),
     )
 
-    await user.click(screen.getByRole('button', { name: 'Démarrer le match' }))
+    await user.click(screen.getByRole('button', { name: 'DÃ©marrer le match' }))
 
     await waitFor(() => {
       expect(startMatch).toHaveBeenCalledWith(matchId)
@@ -304,7 +305,7 @@ describe('MatchPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Alpha vs Beta' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Résultat officiel')).toBeInTheDocument()
+    expect(screen.getByText('RÃ©sultat officiel')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Terminer le match' }),
     ).not.toBeInTheDocument()

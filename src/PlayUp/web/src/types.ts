@@ -496,6 +496,8 @@ export interface OrganisationView {
   structure: OrganisationStructureSummary
   actions: string[]
   readiness: OrganisationReadiness
+  /** Per-stage topology + regulation tokens (Règlement hub). */
+  stages: OrganisationStageHubSummary[]
   shortName?: string | null
   logoMediaId?: string | null
   scheduledStart?: string | null
@@ -536,7 +538,28 @@ export interface OrganisationRegulationSummary {
   lossPoints: number
   /** Authorized disciplinary catalogue types (empty = none). Omitted only in older fixtures. */
   allowedTypes?: DisciplinaryType[]
+  /** Half-time break minutes (Host). Optional in older fixtures. */
+  halfTimeDuration?: number
+  /** Competition MatchRules ExtraTimePolicy present. */
+  hasExtraTime?: boolean
+  extraTimeDurationPerPeriod?: number | null
+  extraTimeNumberOfPeriods?: number | null
+  /** Competition MatchRules PenaltyShootoutPolicy present. */
+  hasPenaltyShootout?: boolean
+  /** TAB initial kicks per team when hasPenaltyShootout. */
+  penaltyInitialKicksPerTeam?: number | null
+  /** Ordered standing ranking criteria. */
+  rankingCriteria?: RankingCriterion[]
 }
+
+/** Host RankingCriterion — string enum member names. */
+export type RankingCriterion =
+  | 'Points'
+  | 'GoalDifference'
+  | 'GoalsFor'
+  | 'GoalsAgainst'
+  | 'Wins'
+  | 'HeadToHead'
 
 /** Host DisciplinaryType — string enum member names. */
 export type DisciplinaryType = 'Yellow' | 'Red' | 'White'
@@ -562,6 +585,39 @@ export interface OrganisationReadiness {
   readyForSchedulePath: boolean
   attachedMatchCount: number
   blockers: string[]
+}
+
+/** Host DrawMode — string enum member names. */
+export type DrawMode = 'Random'
+
+/** GET organisation `stages[]` — Règlement hub phase row. */
+export interface OrganisationStageHubSummary {
+  stageId: string
+  name: string
+  status: StageStatus
+  teamCount: number
+  matchCount: number
+  /** Topology: groups in this phase. Optional in older fixtures. */
+  groupCount?: number
+  /** Topology: cup rounds in this phase. Optional in older fixtures. */
+  roundCount?: number
+  numberOfPeriods: number
+  durationPerPeriod: number
+  hasExtraTime: boolean
+  hasPenaltyShootout: boolean
+  winPoints: number
+  drawPoints: number
+  lossPoints: number
+  hasDrawRules: boolean
+  drawMode?: DrawMode | null
+  numberOfPots?: number | null
+  hasQualificationRules: boolean
+  qualificationPathCount: number
+  hasProgressionRules: boolean
+  progressionPathCount: number
+  hasTieFormat: boolean
+  numberOfLegs?: number | null
+  aggregateScoring?: boolean | null
 }
 
 /** POST /competitions/{id}/entries */

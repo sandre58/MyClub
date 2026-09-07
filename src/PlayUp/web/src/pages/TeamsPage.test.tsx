@@ -105,6 +105,7 @@ function organisationView(
       attachedMatchCount: 0,
       blockers: ['InsufficientParticipants'],
     },
+    stages: [],
     ...overrides,
   }
 }

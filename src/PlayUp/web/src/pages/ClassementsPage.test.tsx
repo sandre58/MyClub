@@ -73,6 +73,7 @@ function organisationView(
       attachedMatchCount: 1,
       blockers: [],
     },
+    stages: [],
     ...overrides,
   }
 }

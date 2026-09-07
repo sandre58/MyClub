@@ -72,6 +72,10 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             element={<p>Teams page</p>}
           />
           <Route
+            path="/competitions/:competitionId/regulation"
+            element={<p>Regulation page</p>}
+          />
+          <Route
             path="/competitions/:competitionId/organisation/entries/:entryId"
             element={<p>Roster page</p>}
           />
@@ -138,11 +142,9 @@ describe('AppShell', () => {
     expect(screen.getByText('Compétition')).toBeInTheDocument()
     expect(screen.getByText('Référentiel')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Règlement' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
-    ).toBeDisabled()
-    expect(
-      screen.getByRole('button', { name: 'Règlement — bientôt disponible' }),
     ).toBeDisabled()
   })
 
@@ -217,6 +219,18 @@ describe('AppShell', () => {
       'page',
     )
     expect(screen.getByText('Teams drawer page')).toBeInTheDocument()
+  })
+
+  it('marks Règlement active for regulation routes', () => {
+    renderWithShell(
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/regulation',
+    )
+
+    expect(screen.getByRole('link', { name: 'Règlement' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.getByText('Regulation page')).toBeInTheDocument()
   })
 
   it('maps stage deep links to Matchs', () => {
@@ -350,11 +364,9 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Calendrier & matchs' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Classements' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Règlement' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
-    ).toBeDisabled()
-    expect(
-      screen.getByRole('button', { name: 'Règlement — bientôt disponible' }),
     ).toBeDisabled()
   })
 })

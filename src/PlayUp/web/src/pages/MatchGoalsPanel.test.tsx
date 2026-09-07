@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -151,12 +151,13 @@ const emptyOrganisation: OrganisationView = {
     attachedMatchCount: 0,
     blockers: [],
   },
+    stages: [],
 }
 
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'Journée 1',
+  name: 'JournÃ©e 1',
   status: 'Draft',
   rounds: [],
   slots: [],
@@ -196,7 +197,7 @@ describe('adjustRunningScore / canMutateRecordedGoals', () => {
     })
   })
 
-  it('blocks create/remove UI after Finished∧Live', () => {
+  it('blocks create/remove UI after Finishedâˆ§Live', () => {
     expect(
       canMutateRecordedGoals(
         baseMatch({ status: 'Finished', hasObservedLive: true }),
@@ -313,7 +314,7 @@ describe('MatchPage goals (Lot 3)', () => {
     )
 
     expect(
-      await within(goalsPanel).findByText(/mise à jour du score live a échoué/i),
+      await within(goalsPanel).findByText(/mise Ã  jour du score live a Ã©chouÃ©/i),
     ).toBeInTheDocument()
     expect(
       within(goalsPanel).getByText('Dupont', { selector: '.match-goals__scorer' }),
@@ -350,7 +351,7 @@ describe('MatchPage goals (Lot 3)', () => {
     expect(setRunningScore).not.toHaveBeenCalled()
   })
 
-  it('Finished∧Live: goals are read-only (no create form)', async () => {
+  it('Finishedâˆ§Live: goals are read-only (no create form)', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
       baseMatch({
         status: 'Finished',

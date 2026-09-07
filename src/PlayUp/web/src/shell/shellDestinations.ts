@@ -4,12 +4,11 @@ export type ShellDestinationKey =
   | 'matches'
   | 'classements'
   | 'teams'
+  | 'regulation'
 
 export type ShellNavItemKey =
   | ShellDestinationKey
-  | 'teams'
   | 'venues'
-  | 'regulation'
 
 export type ShellNavGroupId = 'pilotage' | 'competition' | 'referentiel'
 
@@ -25,7 +24,7 @@ export type ShellNavGroupSpec = {
   items: readonly ShellNavItemSpec[]
 }
 
-/** Visual SoT (Shell A). Stades / Règlement have no product route yet. */
+/** Visual SoT (Shell A). Stades has no product route yet. */
 export const shellNavGroups: readonly ShellNavGroupSpec[] = [
   { id: 'pilotage', items: [{ key: 'overview', hrefKey: 'overview' }] },
   {
@@ -41,7 +40,7 @@ export const shellNavGroups: readonly ShellNavGroupSpec[] = [
     items: [
       { key: 'teams', hrefKey: 'teams' },
       { key: 'venues' },
-      { key: 'regulation' },
+      { key: 'regulation', hrefKey: 'regulation' },
     ],
   },
 ]
@@ -79,6 +78,9 @@ export function shellDestinationHrefs({
     teams: competitionId
       ? `/competitions/${competitionId}/teams`
       : competitionListHref,
+    regulation: competitionId
+      ? `/competitions/${competitionId}/regulation`
+      : competitionListHref,
   }
 }
 
@@ -97,6 +99,10 @@ export function resolveActiveDestination(pathname: string): ShellDestinationKey 
 
   if (/^\/competitions\/[^/]+\/teams(?:\/[^/]+)?$/.test(pathname)) {
     return 'teams'
+  }
+
+  if (/^\/competitions\/[^/]+\/regulation$/.test(pathname)) {
+    return 'regulation'
   }
 
   if (

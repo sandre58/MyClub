@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -154,13 +154,14 @@ function organisationWithTypes(
       attachedMatchCount: 1,
       blockers: [],
     },
+    stages: [],
   }
 }
 
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'Journée 1',
+  name: 'JournÃ©e 1',
   status: 'Draft',
   rounds: [],
   slots: [],
@@ -264,7 +265,7 @@ describe('MatchPage discipline (Lot 1)', () => {
       })
     })
     expect(setRunningScore).not.toHaveBeenCalled()
-    expect(within(panel).getByText(/Jaune · Dupont/)).toBeInTheDocument()
+    expect(within(panel).getByText(/Jaune Â· Dupont/)).toBeInTheDocument()
   })
 
   it('Scheduled: still allows Create (#4-like)', async () => {
@@ -301,10 +302,10 @@ describe('MatchPage discipline (Lot 1)', () => {
     const panel = heading.closest('section') as HTMLElement
 
     expect(
-      await within(panel).findByText(/Aucun type disciplinaire autorisé/i),
+      await within(panel).findByText(/Aucun type disciplinaire autorisÃ©/i),
     ).toBeInTheDocument()
     expect(
-      within(panel).getByRole('link', { name: /Configurer le règlement/i }),
+      within(panel).getByRole('link', { name: /Configurer le rÃ¨glement/i }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/organisation`)
     expect(
       within(panel).queryByRole('button', { name: 'Enregistrer le fait' }),

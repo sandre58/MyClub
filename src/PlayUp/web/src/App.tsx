@@ -12,6 +12,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { OrganisationPage } from './pages/OrganisationPage'
 import { StageMatchesPage } from './pages/StageMatchesPage'
 import { StagePage } from './pages/StagePage'
+import { RegulationPage } from './pages/RegulationPage'
 import { TeamsPage } from './pages/TeamsPage'
 
 const FoundationsPlayground = lazy(async () => {
@@ -73,6 +74,10 @@ export default function App() {
         <Route
           path="/competitions/:competitionId/teams"
           element={<TeamsPage />}
+        />
+        <Route
+          path="/competitions/:competitionId/regulation"
+          element={<RegulationPage />}
         />
         <Route
           path="/competitions/:competitionId/organisation/entries/:entryId"

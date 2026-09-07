@@ -13,6 +13,7 @@ describe('shellDestinationHrefs', () => {
       matches: '/',
       classements: '/',
       teams: '/',
+      regulation: '/',
     })
   })
 
@@ -23,6 +24,7 @@ describe('shellDestinationHrefs', () => {
       matches: `/competitions/${competitionId}/matches`,
       classements: `/competitions/${competitionId}/classements`,
       teams: `/competitions/${competitionId}/teams`,
+      regulation: `/competitions/${competitionId}/regulation`,
     })
   })
 
@@ -33,6 +35,7 @@ describe('shellDestinationHrefs', () => {
       matches: `/stages/${stageId}/matches`,
       classements: '/',
       teams: '/',
+      regulation: '/',
     })
   })
 
@@ -43,6 +46,7 @@ describe('shellDestinationHrefs', () => {
       matches: `/matches/${matchId}`,
       classements: '/',
       teams: '/',
+      regulation: '/',
     })
   })
 })
@@ -73,6 +77,12 @@ describe('resolveActiveDestination', () => {
         `/competitions/${competitionId}/teams/${competitionId}`,
       ),
     ).toBe('teams')
+  })
+
+  it('maps regulation routes to Règlement', () => {
+    expect(
+      resolveActiveDestination(`/competitions/${competitionId}/regulation`),
+    ).toBe('regulation')
   })
 
   it('maps match hub and stage routes to Matchs', () => {

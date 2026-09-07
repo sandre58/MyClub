@@ -22,6 +22,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Structure">Structure counts (not full Domain graph).</param>
 /// <param name="Actions">Available organisation action codes.</param>
 /// <param name="Readiness">Application readiness diagnostic for Slice 3.</param>
+/// <param name="Stages">Per-stage topology + regulation tokens (Règlement hub Lot 1).</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
@@ -36,6 +37,7 @@ public sealed record OrganisationViewDto(
     OrganisationStructureSummaryDto Structure,
     IReadOnlyList<string> Actions,
     OrganisationReadinessDto Readiness,
+    IReadOnlyList<OrganisationStageHubSummaryDto> Stages,
     string? ShortName = null,
     Guid? LogoMediaId = null,
     DateTimeOffset? ScheduledStart = null,
@@ -89,6 +91,13 @@ public sealed record OrganisationFormatSummaryDto(
 /// <param name="DrawPoints">Standing draw points.</param>
 /// <param name="LossPoints">Standing loss points.</param>
 /// <param name="AllowedTypes">Authorized disciplinary catalogue types (empty = none).</param>
+/// <param name="HalfTimeDuration">Half-time break minutes.</param>
+/// <param name="HasExtraTime">Match ExtraTimePolicy present.</param>
+/// <param name="ExtraTimeDurationPerPeriod">ET minutes per period when HasExtraTime.</param>
+/// <param name="ExtraTimeNumberOfPeriods">ET period count when HasExtraTime.</param>
+/// <param name="HasPenaltyShootout">Match PenaltyShootoutPolicy present.</param>
+/// <param name="PenaltyInitialKicksPerTeam">TAB initial kicks when HasPenaltyShootout.</param>
+/// <param name="RankingCriteria">Ordered standing ranking criteria.</param>
 public sealed record OrganisationRegulationSummaryDto(
     int MinimumTeams,
     int MaximumTeams,
@@ -97,7 +106,14 @@ public sealed record OrganisationRegulationSummaryDto(
     int WinPoints,
     int DrawPoints,
     int LossPoints,
-    IReadOnlyList<DisciplinaryType> AllowedTypes);
+    IReadOnlyList<DisciplinaryType> AllowedTypes,
+    int HalfTimeDuration = 0,
+    bool HasExtraTime = false,
+    int? ExtraTimeDurationPerPeriod = null,
+    int? ExtraTimeNumberOfPeriods = null,
+    bool HasPenaltyShootout = false,
+    int? PenaltyInitialKicksPerTeam = null,
+    IReadOnlyList<RankingCriterion>? RankingCriteria = null);
 
 /// <summary>Structure counts for the primary stage.</summary>
 /// <param name="GroupCount">Groups.</param>
@@ -136,3 +152,57 @@ public sealed record OrganisationReadinessDto(
     bool ReadyForSchedulePath,
     int AttachedMatchCount,
     IReadOnlyList<string> Blockers);
+
+/// <summary>
+/// Per-stage hub row for Règlement lecture (topology facts + regulation tokens).
+/// Optional families omitted when absent (présence seule).
+/// </summary>
+/// <param name="StageId">Stage identity.</param>
+/// <param name="Name">Stage display name.</param>
+/// <param name="Status">Stage lifecycle status.</param>
+/// <param name="TeamCount">Topology: teams in this phase (Host-derived).</param>
+/// <param name="MatchCount">Topology: attached matches in this phase.</param>
+/// <param name="GroupCount">Topology: groups in this phase.</param>
+/// <param name="RoundCount">Topology: cup rounds in this phase.</param>
+/// <param name="NumberOfPeriods">MatchRules periods.</param>
+/// <param name="DurationPerPeriod">MatchRules duration.</param>
+/// <param name="HasExtraTime">Match ExtraTimePolicy present.</param>
+/// <param name="HasPenaltyShootout">Match PenaltyShootoutPolicy present.</param>
+/// <param name="WinPoints">Standing win points.</param>
+/// <param name="DrawPoints">Standing draw points.</param>
+/// <param name="LossPoints">Standing loss points.</param>
+/// <param name="HasDrawRules">DrawRules present.</param>
+/// <param name="DrawMode">DrawRules.Mode when HasDrawRules.</param>
+/// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
+/// <param name="HasQualificationRules">QualificationRules present.</param>
+/// <param name="QualificationPathCount">Qualification path count.</param>
+/// <param name="HasProgressionRules">ProgressionRules present.</param>
+/// <param name="ProgressionPathCount">Progression path count.</param>
+/// <param name="HasTieFormat">TieFormat present.</param>
+/// <param name="NumberOfLegs">TieFormat legs when present (default one-leg if none).</param>
+/// <param name="AggregateScoring">TieFormat aggregate scoring when multi-leg.</param>
+public sealed record OrganisationStageHubSummaryDto(
+    Guid StageId,
+    string Name,
+    StageStatus Status,
+    int TeamCount,
+    int MatchCount,
+    int GroupCount,
+    int RoundCount,
+    int NumberOfPeriods,
+    int DurationPerPeriod,
+    bool HasExtraTime,
+    bool HasPenaltyShootout,
+    int WinPoints,
+    int DrawPoints,
+    int LossPoints,
+    bool HasDrawRules,
+    DrawMode? DrawMode,
+    int? NumberOfPots,
+    bool HasQualificationRules,
+    int QualificationPathCount,
+    bool HasProgressionRules,
+    int ProgressionPathCount,
+    bool HasTieFormat,
+    int? NumberOfLegs,
+    bool? AggregateScoring);
