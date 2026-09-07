@@ -66,6 +66,34 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 Do not collapse them: pulse activity ≠ tone chip.
 
+## PageHead
+
+- Canonical: `components/PageHead.tsx` + `foundations/page-head.css`.
+- Workspace Shell destinations (Équipes, Règlement, Organisation, Matchs, Classements): **title `--text-display`**, optional `actions` / `note` / `tools`, **no back** (rail is enough).
+- Drill-downs (Stage, fiche match…): `back` + optional `eyebrow` / badges — `PageHeader` in `ui.tsx` is a thin adapter.
+- Do **not** confuse with `PanelHead` (panel/section titles, `--text-body`).
+
+## TextLink / SkipLink
+
+- Cross-surface CTA: `TextLink` + `.ds-text-link` (replaces page-local overview/classements links).
+- Skip to main: `.ds-skip-link` (Accueil) / `.ds-skip-link--on-chrome` (Shell).
+
+## Meter
+
+- Capsule track + fill (+ optional marker): `Meter` + `.ds-meter`.
+- Used by Teams plateau and Règlement point gauges. **Not** the Règlement capacity min/max rail (page-local).
+
+## Alert
+
+- Prefer `Alert` over bare `.ds-notice` when an icon helps scan. Soft-fill tone recipes in `feedback.css`.
+
+## Attention rows (two models — do not merge)
+
+| | `AttentionRow` (DS) | `AttentionSituationRow` (Shell) |
+|---|---|---|
+| Role | D9 Lab / Match Hub count+icon recipe | Product triage from GET /attention |
+| Where | Overview Lab, MatchHub needs-result | AttentionDrawer + Vue d'ensemble preview |
+
 ## Form stack
 
 Product forms (e.g. Teams identity dialogs) use:

@@ -21,53 +21,6 @@
     min-width: 0;
 }
 
-/* —— Header —— */
-
-.regulation-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-12) var(--space-16);
-}
-
-.regulation-header__main {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-12);
-    min-width: 0;
-}
-
-.regulation-header__title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-display);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-}
-
-.regulation-header__accent {
-    display: block;
-    width: 2.5rem;
-    height: 3px;
-    margin-top: var(--space-4);
-    border-radius: 999px;
-    background: var(--color-brand);
-}
-
-.regulation-header__edit {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
-    flex: none;
-    align-self: flex-start;
-}
-
-.regulation-note--header {
-    margin-top: var(--space-12);
-    max-width: 36rem;
-}
-
 /* —— Cadre cards —— */
 
 .regulation-frame {
@@ -142,28 +95,6 @@
     justify-content: flex-start;
     align-items: stretch;
 }
-
-.regulation-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-8);
-    margin: 0;
-    padding: var(--space-12);
-    border-radius: var(--radius-panel);
-    border: var(--border-width) solid color-mix(in srgb, var(--color-brand) 22%, var(--color-border));
-    background: color-mix(in srgb, var(--color-brand) 8%, var(--color-surface));
-    color: var(--color-text-primary);
-    font-size: var(--text-meta);
-    line-height: var(--leading-normal);
-}
-
-.regulation-notice .ds-icon {
-    flex: none;
-    margin-top: 0.1rem;
-    color: var(--color-brand);
-}
-
-/* Entrées — bornes min (bloquante) / max (plafond) */
 
 .regulation-capacity {
     display: flex;
@@ -563,33 +494,6 @@
     color: var(--color-text-secondary);
     font-size: 0.55em;
     font-weight: var(--font-weight-semibold);
-}
-
-.regulation-gauge__track {
-    display: block;
-    height: 0.55rem;
-    border-radius: 999px;
-    background: var(--color-surface-secondary);
-    overflow: hidden;
-}
-
-.regulation-gauge__fill {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--color-brand);
-}
-
-.regulation-gauge--win .regulation-gauge__fill {
-    background: var(--color-success);
-}
-
-.regulation-gauge--draw .regulation-gauge__fill {
-    background: var(--color-attention);
-}
-
-.regulation-gauge--loss .regulation-gauge__fill {
-    background: var(--color-border-strong);
 }
 
 .regulation-criteria {

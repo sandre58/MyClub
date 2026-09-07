@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { ApiError } from './api'
 import { apiErrorLabel } from './i18n/apiErrorLabel'
+import { PageHead } from './design-system/components/PageHead'
 import { Status, statusToneFromLegacy } from './design-system/components/Status'
+import { Alert } from './design-system/components/Alert'
 import {
   WaitMark,
   type WaitSize,
@@ -29,8 +31,8 @@ import {
  * Shared page primitives: header, status badges and the loading / error /
  * empty / pending states every read page needs.
  *
- * PageHeader expresses page title and local context only — global navigation
- * and competition context live in the Shell (14.6).
+ * PageHeader is a drill-down adapter over PageHead. Shell workspace pages
+ * use PageHead directly (no back — rail navigation).
  */
 
 /** Visual meaning of a state, shared by every status family. */
@@ -43,6 +45,9 @@ export type StatusTone =
   | 'warn'
   | 'danger'
 
+/**
+ * Drill-down page header — thin adapter over PageHead (eyebrow + back + badges).
+ */
 export function PageHeader({
   eyebrow,
   title,
@@ -59,20 +64,14 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <header className="ds-admin-page-head">
-      {back && (
-        <p className="ds-admin-page-head__top">
-          <BackLink to={back.to}>{back.label}</BackLink>
-        </p>
-      )}
-      <p className="ds-eyebrow">{eyebrow}</p>
-      <div className="ds-admin-page-head__title-row">
-        <h1 className="ds-admin-page-head__title">{title}</h1>
-        {badges}
-        {actions && <div className="row__aside">{actions}</div>}
-      </div>
-      {lede && <p className="lede">{lede}</p>}
-    </header>
+    <PageHead
+      eyebrow={eyebrow}
+      title={title}
+      badges={badges}
+      actions={actions}
+      note={lede ? <p className="lede">{lede}</p> : undefined}
+      back={back ? <BackLink to={back.to}>{back.label}</BackLink> : undefined}
+    />
   )
 }
 
@@ -235,9 +234,9 @@ export function ErrorState({ error }: { error: unknown }) {
   const notFound = error instanceof ApiError && error.status === 404
 
   return (
-    <p className="ds-notice ds-notice--danger" role="alert">
+    <Alert tone="danger" role="alert">
       {notFound ? t('notFound') : formatError(error, t)}
-    </p>
+    </Alert>
   )
 }
 
@@ -246,27 +245,40 @@ export function MutationError({ error }: { error: unknown }) {
   const { t } = useTranslation('common')
 
   return (
-    <p className="ds-notice ds-notice--danger" role="alert">
+    <Alert tone="danger" role="alert">
       {formatError(error, t)}
-    </p>
+    </Alert>
   )
 }
 
 /**
  * Empty lists are product states, not blanks: say what is missing and,
  * when the Host really exposes one, what the organizer can do next.
+ * variant="idle" — centered icon + title + body (drawer / region empty).
  */
 export function EmptyState({
   title,
   children,
   action,
+  icon,
+  variant = 'default',
 }: {
   title?: string
   children: ReactNode
   action?: ReactNode
+  icon?: ReactNode
+  variant?: 'default' | 'idle'
 }) {
+  const classes =
+    variant === 'idle' ? 'ds-empty ds-empty--idle' : 'ds-empty'
+
   return (
-    <div className="ds-empty">
+    <div className={classes}>
+      {icon ? (
+        <span className="ds-empty__icon" aria-hidden="true">
+          {icon}
+        </span>
+      ) : null}
       {title && <p className="ds-empty__title">{title}</p>}
       <p className="ds-empty__body">{children}</p>
       {action}

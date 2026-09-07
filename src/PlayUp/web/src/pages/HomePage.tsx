@@ -61,7 +61,7 @@ export function HomePage() {
       data-palette="slate"
       data-density="standard"
     >
-      <a className="ds-home-skip" href="#main">
+      <a className="ds-skip-link" href="#main">
         {tCommon('skipToContent')}
       </a>
 

@@ -25,6 +25,10 @@ import {
 } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
+import { Meter, type MeterTone } from '../design-system/components/Meter'
+import { PageHead } from '../design-system/components/PageHead'
+import { SelectionBar } from '../design-system/components/SelectionBar'
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm'
 import { Field, type FieldMessageTone } from '../design-system/components/Field'
 import { TextInput } from '../design-system/components/TextInput'
 import { ColorPicker } from '../design-system/components/ColorPicker'
@@ -48,6 +52,7 @@ import {
   ErrorState,
   LoadingState,
   MutationError,
+  EmptyState,
   PendingLabel,
   StatusBadge,
 } from '../ui'
@@ -318,21 +323,15 @@ function TeamsView({
     <div className="teams" data-teams-view={teamsView} data-teams-multi={multi ? 'true' : 'false'}>
       <div className="teams__layout">
         <div className="teams__main">
-          <header className="teams__head">
-            <div className="teams__head-row">
-              <h1 className="teams__title">
-                {t('title')}
-                {showPlateauReading && (
-                  <>
-                    <span className="teams__title-sep"> · </span>
-                    <span className="teams__title-count ds-num">
-                      {data.participants.occupyingCount}
-                    </span>
-                  </>
-                )}
-              </h1>
-            </div>
-            <div className="teams__ops-row">
+          <PageHead
+            title={t('title')}
+            titleMeta={
+              showPlateauReading
+                ? data.participants.occupyingCount
+                : undefined
+            }
+            tools={
+              <div className="teams__ops-row">
               {showPlateauReading && (
                 <TeamsPlateauReading
                   activeCount={data.participants.activeCount}
@@ -343,11 +342,9 @@ function TeamsView({
               )}
               <div className="teams__ops-tail">
                 {selectedCount >= 1 && (
-                  <div className="ds-selection-bar" role="status">
-                    <p className="ds-selection-bar__count">
-                      {t('selectionCount', { count: selectedCount })}
-                    </p>
-                    <div className="ds-icon-toolbar">
+                  <SelectionBar
+                    countLabel={t('selectionCount', { count: selectedCount })}
+                  >
                       <button
                         type="button"
                         className={compactIcon}
@@ -371,8 +368,7 @@ function TeamsView({
                       >
                         <CloseIcon size="sm" />
                       </button>
-                    </div>
-                  </div>
+                  </SelectionBar>
                 )}
                 <button
                   type="button"
@@ -387,7 +383,8 @@ function TeamsView({
                 </button>
               </div>
             </div>
-          </header>
+            }
+          />
 
           {mutationError && <MutationError error={mutationError} />}
 
@@ -529,24 +526,22 @@ function TeamsView({
 
         <aside className="ds-panel teams-drawer" aria-label={t('roster.panelLabel')}>
           {selectedCount === 0 && (
-            <div className="teams-drawer__idle">
-              <span className="teams-drawer__idle-icon" aria-hidden="true">
-                <EmptySelectionIcon size="lg" />
-              </span>
-              <p className="teams-drawer__idle-title">{t('roster.idleTitle')}</p>
-              <p className="teams-drawer__idle-body">{t('roster.idleBody')}</p>
-            </div>
+            <EmptyState
+              variant="idle"
+              icon={<EmptySelectionIcon size="lg" />}
+              title={t('roster.idleTitle')}
+            >
+              {t('roster.idleBody')}
+            </EmptyState>
           )}
           {selectedCount >= 2 && (
-            <div className="teams-drawer__idle">
-              <span className="teams-drawer__idle-icon" aria-hidden="true">
-                <LayersIcon size="lg" />
-              </span>
-              <p className="teams-drawer__idle-title">
-                {t('roster.multiTitle', { count: selectedCount })}
-              </p>
-              <p className="teams-drawer__idle-body">{t('roster.multiBody')}</p>
-            </div>
+            <EmptyState
+              variant="idle"
+              icon={<LayersIcon size="lg" />}
+              title={t('roster.multiTitle', { count: selectedCount })}
+            >
+              {t('roster.multiBody')}
+            </EmptyState>
           )}
           {drawerEntryId && (
             <TeamRosterDrawer
@@ -627,7 +622,21 @@ function AddEntryDialog({
   const [primaryColor, setPrimaryColor] = useState('')
   const [secondaryColor, setSecondaryColor] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const [discardOpen, setDiscardOpen] = useState(false)
+
+  const isDirty =
+    displayName.trim().length > 0 ||
+    shortName.trim().length > 0 ||
+    logoMediaId != null ||
+    primaryColor.trim().length > 0 ||
+    secondaryColor.trim().length > 0
+
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(isDirty, onClose)
 
   useEffect(() => {
     if (!open) {
@@ -641,15 +650,8 @@ function AddEntryDialog({
     setPrimaryColor('')
     setSecondaryColor('')
     setSubmitted(false)
-    setDiscardOpen(false)
-  }, [open])
-
-  const isDirty =
-    displayName.trim().length > 0 ||
-    shortName.trim().length > 0 ||
-    logoMediaId != null ||
-    primaryColor.trim().length > 0 ||
-    secondaryColor.trim().length > 0
+    resetDiscard()
+  }, [open, resetDiscard])
 
   const duplicateName = hasDuplicateEntryName(
     data.participants.entries,
@@ -688,14 +690,7 @@ function AddEntryDialog({
     !addMutation.isPending
 
   function requestClose() {
-    if (addMutation.isPending) {
-      return
-    }
-    if (isDirty) {
-      setDiscardOpen(true)
-      return
-    }
-    onClose()
+    requestDiscardClose(addMutation.isPending)
   }
 
   return (
@@ -782,11 +777,8 @@ function AddEntryDialog({
       confirmLabel={t('discardIdentityConfirm')}
       cancelLabel={tCommon('cancel')}
       closeLabel={tCommon('close')}
-      onCancel={() => setDiscardOpen(false)}
-      onConfirm={() => {
-        setDiscardOpen(false)
-        onClose()
-      }}
+      onCancel={cancelDiscard}
+      onConfirm={confirmDiscard}
     />
     </>
   )
@@ -821,22 +813,6 @@ function IdentityDialog({
   const [nameTouched, setNameTouched] = useState(false)
   const [shortNameTouched, setShortNameTouched] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [discardOpen, setDiscardOpen] = useState(false)
-
-  useEffect(() => {
-    if (!entry) {
-      return
-    }
-    setName(entry.displayName)
-    setShortName(entry.shortName ?? '')
-    setLogoMediaId(entry.logoMediaId ?? null)
-    setPrimaryColor(entry.primaryColor ?? '')
-    setSecondaryColor(entry.secondaryColor ?? '')
-    setNameTouched(false)
-    setShortNameTouched(false)
-    setSubmitted(false)
-    setDiscardOpen(false)
-  }, [entry])
 
   const baselineName = entry?.displayName ?? ''
   const baselineShort = entry?.shortName ?? ''
@@ -850,6 +826,29 @@ function IdentityDialog({
     logoMediaId !== baselineLogo ||
     primaryColor.trim() !== baselinePrimary.trim() ||
     secondaryColor.trim() !== baselineSecondary.trim()
+
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(isDirty, onClose)
+
+  useEffect(() => {
+    if (!entry) {
+      return
+    }
+    setName(entry.displayName)
+    setShortName(entry.shortName ?? '')
+    setLogoMediaId(entry.logoMediaId ?? null)
+    setPrimaryColor(entry.primaryColor ?? '')
+    setSecondaryColor(entry.secondaryColor ?? '')
+    setNameTouched(false)
+    setShortNameTouched(false)
+    setSubmitted(false)
+    resetDiscard()
+  }, [entry, resetDiscard])
 
   const duplicateName = hasDuplicateEntryName(entries, name, entry?.entryId)
 
@@ -893,14 +892,7 @@ function IdentityDialog({
     !saveMutation.isPending
 
   function requestClose() {
-    if (saveMutation.isPending) {
-      return
-    }
-    if (isDirty) {
-      setDiscardOpen(true)
-      return
-    }
-    onClose()
+    requestDiscardClose(saveMutation.isPending)
   }
 
   return (
@@ -984,11 +976,8 @@ function IdentityDialog({
       confirmLabel={t('discardIdentityConfirm')}
       cancelLabel={tCommon('cancel')}
       closeLabel={tCommon('close')}
-      onCancel={() => setDiscardOpen(false)}
-      onConfirm={() => {
-        setDiscardOpen(false)
-        onClose()
-      }}
+      onCancel={cancelDiscard}
+      onConfirm={confirmDiscard}
     />
     </>
   )
@@ -1156,6 +1145,15 @@ function TeamsPlateauReading({
         : 'warning'
       : 'ok'
 
+  const meterTone: MeterTone =
+    statusTone === 'cap'
+      ? 'info'
+      : statusTone === 'blocking'
+        ? 'error'
+        : statusTone === 'warning'
+          ? 'attention'
+          : 'success'
+
   const statusLabel = atCap
     ? t('plateauCapReached')
     : belowMinimum
@@ -1181,33 +1179,22 @@ function TeamsPlateauReading({
 
       {maximumTeams > 0 && (
         <div className="teams__plateau-gaugeBlock">
-          <div
-            className="teams__plateau-gauge"
-            role="progressbar"
+          <Meter
+            ratio={fillRatio}
+            tone={meterTone}
             aria-valuemin={0}
             aria-valuemax={maximumTeams}
             aria-valuenow={occupyingCount}
             aria-valuetext={gaugeAria}
-            data-tone={statusTone}
-          >
-            <div className="teams__plateau-gaugeTrack">
-              <div
-                className="teams__plateau-gaugeFill"
-                style={{ width: `${fillRatio * 100}%` }}
-              />
-              {showMarker && (
-                <span
-                  className="teams__plateau-gaugeMarker"
-                  style={{ left: `${markerRatio * 100}%` }}
-                  aria-hidden="true"
-                >
-                  <span className="teams__plateau-gaugeMarkerLabel">
-                    {t('plateauMinMarker', { min: minimumTeams })}
-                  </span>
-                </span>
-              )}
-            </div>
-          </div>
+            marker={
+              showMarker
+                ? {
+                    ratio: markerRatio,
+                    label: t('plateauMinMarker', { min: minimumTeams }),
+                  }
+                : undefined
+            }
+          />
 
           {!atCap && (
             <p className="teams__plateau-capacity">

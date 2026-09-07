@@ -29,6 +29,11 @@ gutters only** (`--space-16` on the main padding). No centered max-width column.
 - Standard density everywhere; grids may be denser but rows stay ≥ 40px tall.
 - Whitespace between groups > whitespace inside groups.
 
+## Page head
+
+Workspace Shell pages use `PageHead` (`--text-display`, optional actions/note/tools).
+No back link on primary rail destinations. Drill-downs use `back` / `PageHeader`.
+
 ## Responsive
 
 Three **independent** breakpoint tiers — do not unify into a single value.

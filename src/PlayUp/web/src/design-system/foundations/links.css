@@ -1,0 +1,57 @@
+/*
+ * Text links — exit / cross-surface CTAs (label + optional chevron).
+ * Not content body links (those stay underlined ink under .shell-main a).
+ */
+
+.ds-text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    color: var(--color-info);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+}
+
+.ds-root a.ds-text-link,
+.ds-root a.ds-text-link:hover {
+    color: var(--color-info);
+    text-decoration: none;
+}
+
+.ds-root a.ds-text-link:hover {
+    color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
+}
+
+.ds-text-link__arrow {
+    color: inherit;
+    display: inline-flex;
+}
+
+/* Skip to main — shared Accueil + Shell; inverse on chrome. */
+.ds-skip-link {
+    position: absolute;
+    inset-inline-start: var(--space-16);
+    inset-block-start: var(--space-16);
+    z-index: 50;
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: var(--text-label);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    transform: translateY(-200%);
+}
+
+.ds-skip-link:focus {
+    transform: translateY(0);
+}
+
+.ds-skip-link--on-chrome {
+    z-index: 3;
+    padding: var(--space-8) var(--space-16);
+    border-radius: 0;
+    background: var(--color-ink);
+    color: var(--color-on-ink);
+}

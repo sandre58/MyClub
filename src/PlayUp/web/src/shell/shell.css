@@ -34,24 +34,6 @@
     background: var(--color-chrome);
 }
 
-.shell-skip {
-    position: absolute;
-    inset-inline-start: var(--space-16);
-    inset-block-start: var(--space-16);
-    z-index: 3;
-    padding: var(--space-8) var(--space-16);
-    background: var(--color-ink);
-    color: var(--color-on-ink);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-semibold);
-    text-decoration: none;
-    transform: translateY(-200%);
-}
-
-.shell-skip:focus {
-    transform: translateY(0);
-}
-
 .shell__frame {
     display: flex;
     flex: 1;

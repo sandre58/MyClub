@@ -32,43 +32,6 @@
     box-shadow: var(--classements-shadow);
 }
 
-/* ---------- En-tête de page ---------- */
-
-.classements__page-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-12) var(--space-16);
-}
-
-.classements__back {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
-    color: var(--color-info);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-semibold);
-    text-decoration: none;
-}
-
-.ds-root a.classements__back,
-.ds-root a.classements__back:hover {
-    color: var(--color-info);
-    text-decoration: none;
-}
-
-.ds-root a.classements__back:hover {
-    color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
-}
-
-.classements__title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-heading);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-}
-
 /* ---------- En-tête de panneau (comme overview) ---------- */
 
 .classements-panel__head {
@@ -106,26 +69,6 @@
 .page--classements .ds-panel .classements-panel__footer {
     margin-top: auto;
     padding-top: var(--space-8);
-}
-
-.classements-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
-    color: var(--color-info);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-semibold);
-    text-decoration: none;
-}
-
-.ds-root a.classements-link,
-.ds-root a.classements-link:hover {
-    color: var(--color-info);
-    text-decoration: none;
-}
-
-.ds-root a.classements-link:hover {
-    color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
 }
 
 /* ---------- Bandeau contexte ---------- */

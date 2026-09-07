@@ -6,6 +6,7 @@ import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
 import { AttentionRow } from '../design-system/components/AttentionRow'
 import { MatchRound } from '../design-system/components/MatchRound'
 import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus'
+import { PageHead } from '../design-system/components/PageHead'
 import { PanelHead } from '../design-system/components/PanelHead'
 import { Status } from '../design-system/components/Status'
 import { TeamCrest } from '../design-system/TeamCrest'
@@ -118,7 +119,6 @@ function MatchesView({
   matchesError: unknown
 }) {
   const { t } = useTranslation('matches')
-  const overviewHref = `/competitions/${data.id}`
   const classementsHref = `/competitions/${data.id}/classements`
   const buckets = groupMatchesBySportingBucket(rows, t)
   const needsResult = rows.filter(
@@ -127,13 +127,7 @@ function MatchesView({
 
   return (
     <div className="ds-page matches">
-      <header className="matches__page-head">
-        <Link className="matches__back" to={overviewHref}>
-          <span aria-hidden="true">←</span>
-          {t('back')}
-        </Link>
-        <h1 className="matches__title">{t('title')}</h1>
-      </header>
+      <PageHead title={t('title')} />
 
       <ContextBand data={data} matchCount={rows.length} />
 

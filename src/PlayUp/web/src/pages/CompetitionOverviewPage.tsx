@@ -15,6 +15,7 @@ import {
   MatchesNavIcon,
 } from '../design-system/icons/shellIcons'
 import { AttentionSituationRow } from '../shell/AttentionSituationRow'
+import { TextLink } from '../design-system/components/TextLink'
 import { CalendarIcon } from '../design-system/icons/overviewIcons'
 import { actionLabel } from '../i18n/actionLabels'
 import { structureFormatKindLabel } from '../i18n/enumLabels'
@@ -648,12 +649,7 @@ function OutcomePodiumPanel({
         </div>
       )}
       <p className="overview-panel__footer">
-        <Link className="overview-link" to={href}>
-          {t('sport.outcomeOpenFull')}
-          <span className="overview-link__arrow" aria-hidden="true">
-            <ChevronRightIcon size="sm" />
-          </span>
-        </Link>
+        <TextLink to={href}>{t('sport.outcomeOpenFull')}</TextLink>
       </p>
     </section>
   )
@@ -743,12 +739,7 @@ function StandingCompactPanel({
         </table>
       </div>
       <p className="overview-panel__footer">
-        <Link className="overview-link" to={href}>
-          {t('sport.standingOpen')}
-          <span className="overview-link__arrow" aria-hidden="true">
-            <ChevronRightIcon size="sm" />
-          </span>
-        </Link>
+        <TextLink to={href}>{t('sport.standingOpen')}</TextLink>
       </p>
     </section>
   )
@@ -810,12 +801,7 @@ function CalendarSummaryPanel({
         </div>
       ) : null}
       <p className="overview-panel__footer">
-        <Link className="overview-link" to={matchesHref}>
-          {t('dimensions.openMatches')}
-          <span className="overview-link__arrow" aria-hidden="true">
-            <ChevronRightIcon size="sm" />
-          </span>
-        </Link>
+        <TextLink to={matchesHref}>{t('dimensions.openMatches')}</TextLink>
       </p>
     </section>
   )
@@ -853,12 +839,7 @@ function SportUnitPanel({
         </div>
       )}
       <p className="overview-panel__footer">
-        <Link className="overview-link" to={matchesHref}>
-          {t('dimensions.openMatches')}
-          <span className="overview-link__arrow" aria-hidden="true">
-            <ChevronRightIcon size="sm" />
-          </span>
-        </Link>
+        <TextLink to={matchesHref}>{t('dimensions.openMatches')}</TextLink>
       </p>
     </section>
   )
@@ -1141,14 +1122,7 @@ function PointsChip({
 
 /** Exit link toward the owning workspace — right-aligned, réf. V9. */
 function OverviewLink({ to, children }: { to: string; children: ReactNode }) {
-  return (
-    <Link className="overview-link" to={to}>
-      {children}
-      <span className="overview-link__arrow" aria-hidden="true">
-        →
-      </span>
-    </Link>
-  )
+  return <TextLink to={to}>{children}</TextLink>
 }
 
 function TeamsPanel({

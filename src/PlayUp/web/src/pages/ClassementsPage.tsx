@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { fetchConsultation, fetchOrganisationView } from '../api'
 import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
+import { TextLink } from '../design-system/components/TextLink'
+import { PageHead } from '../design-system/components/PageHead'
 import { PanelHead } from '../design-system/components/PanelHead'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { RegulationIcon } from '../design-system/icons/overviewIcons'
@@ -52,7 +54,6 @@ export function ClassementsPage() {
 
 function ClassementsView({ data }: { data: ConsultationView }) {
   const { t } = useTranslation('classements')
-  const overviewHref = `/competitions/${data.competitionId}`
   const organisationHref = `/competitions/${data.competitionId}/organisation`
 
   const orgQuery = useQuery({
@@ -62,13 +63,7 @@ function ClassementsView({ data }: { data: ConsultationView }) {
 
   return (
     <div className="ds-page classements">
-      <header className="classements__page-head">
-        <Link className="classements__back" to={overviewHref}>
-          <span aria-hidden="true">←</span>
-          {t('back')}
-        </Link>
-        <h1 className="classements__title">{t('title')}</h1>
-      </header>
+      <PageHead title={t('title')} />
 
       <ContextBand data={data} />
 
@@ -290,10 +285,7 @@ function LastMatchdayPanel({
       )}
 
       <div className="classements-panel__footer classements-panel__footer--start">
-        <Link className="classements-link" to={matchesHref}>
-          {t('lastMatchday.openMatches')}
-          <span aria-hidden="true">→</span>
-        </Link>
+        <TextLink to={matchesHref}>{t('lastMatchday.openMatches')}</TextLink>
       </div>
     </section>
   )
@@ -426,10 +418,7 @@ function RegulationPanel({
       )}
 
       <div className="classements-panel__footer">
-        <Link className="classements-link" to={href}>
-          {t('regulation.openOrganisation')}
-          <span aria-hidden="true">→</span>
-        </Link>
+        <TextLink to={href}>{t('regulation.openOrganisation')}</TextLink>
       </div>
     </section>
   )

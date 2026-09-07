@@ -139,24 +139,6 @@
     line-height: var(--leading-normal);
 }
 
-.shell-attention-drawer__empty {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-}
-
-.shell-attention-drawer__empty-title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-tight);
-}
-
-.shell-attention-drawer__hint {
-    margin: 0;
-}
-
 .shell-attention-drawer__groups {
     display: flex;
     flex-direction: column;

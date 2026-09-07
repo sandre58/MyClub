@@ -175,7 +175,7 @@ describe('TeamsPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Alpha')).toBeInTheDocument()
 
-    const titleCount = document.querySelector('.teams__title-count')
+    const titleCount = document.querySelector('.ds-page-head__title-meta')
     expect(titleCount).not.toBeNull()
     expect(titleCount).toHaveTextContent('1')
 
@@ -190,7 +190,7 @@ describe('TeamsPage', () => {
     const gauge = screen.getByRole('progressbar')
     expect(gauge).toHaveAttribute('aria-valuenow', '1')
     expect(gauge).toHaveAttribute('aria-valuemax', '64')
-    expect(gauge).toHaveAttribute('data-tone', 'blocking')
+    expect(gauge).toHaveAttribute('data-tone', 'error')
   })
 
   it('shows the plateau gauge in all competition statuses', async () => {
@@ -240,7 +240,7 @@ describe('TeamsPage', () => {
     expect(
       await screen.findByRole('heading', { name: /Équipes.*2/ }),
     ).toBeInTheDocument()
-    expect(document.querySelector('.teams__title-count')).toHaveTextContent('2')
+    expect(document.querySelector('.ds-page-head__title-meta')).toHaveTextContent('2')
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2')
     expect(screen.getByText('Forfait')).toBeInTheDocument()
   })
@@ -486,7 +486,7 @@ describe('TeamsPage', () => {
     const gauge = screen.getByRole('progressbar')
     expect(gauge).toHaveAttribute('aria-valuenow', '2')
     expect(gauge).toHaveAttribute('aria-valuemax', '2')
-    expect(gauge).toHaveAttribute('data-tone', 'cap')
+    expect(gauge).toHaveAttribute('data-tone', 'info')
   })
 
   it('keeps the roster panel visible with an idle state', async () => {

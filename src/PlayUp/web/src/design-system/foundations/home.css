@@ -50,23 +50,6 @@
     filter: blur(64px);
 }
 
-.ds-home-skip {
-    position: absolute;
-    left: var(--space-16);
-    top: var(--space-16);
-    z-index: 50;
-    padding: var(--space-8) var(--space-12);
-    border-radius: var(--radius-control);
-    background: var(--color-surface);
-    color: var(--color-ink);
-    text-decoration: none;
-    transform: translateY(-200%);
-}
-
-.ds-home-skip:focus {
-    transform: translateY(0);
-}
-
 .ds-home__main {
     position: relative;
     z-index: 1;

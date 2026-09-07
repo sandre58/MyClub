@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react'
 
+/**
+ * D9 attention recipe — count + icon + title + detail + optional action.
+ * Lab / Match Hub. Not the product triage row (`AttentionSituationRow` in shell/).
+ */
 export function AttentionRow({
   count,
   icon,

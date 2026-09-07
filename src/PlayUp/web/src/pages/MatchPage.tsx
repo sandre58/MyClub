@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-query'
 import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import {
   fetchMatchDetail,
   fetchStageOverview,
@@ -20,6 +20,7 @@ import {
   MatchHeroScore,
   MatchHeroScoreActions,
 } from '../design-system/components/MatchHero'
+import { PageHead } from '../design-system/components/PageHead'
 import { Status } from '../design-system/components/Status'
 import { TeamCrest } from '../design-system/TeamCrest'
 import { CalendarIcon } from '../design-system/icons/overviewIcons'
@@ -27,6 +28,7 @@ import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons'
 import { matchStatusLabel } from '../i18n/enumLabels'
 import { queryKeys } from '../queryKeys'
 import {
+  BackLink,
   ErrorState,
   LoadingState,
   MutationError,
@@ -199,18 +201,14 @@ function MatchDetailView({
 
   return (
     <div className="ds-page matches match-detail">
-      <header className="matches__page-head">
-        <Link
-          className="matches__back"
-          to={`/competitions/${data.competitionId}/matches`}
-        >
-          <span aria-hidden="true">←</span>
-          {t('detail.backToMatches')}
-        </Link>
-        <h1 className="matches__title">
-          {t('detail.titleVs', { home: homeName, away: awayName })}
-        </h1>
-      </header>
+      <PageHead
+        title={t('detail.titleVs', { home: homeName, away: awayName })}
+        back={
+          <BackLink to={`/competitions/${data.competitionId}/matches`}>
+            {t('detail.backToMatches')}
+          </BackLink>
+        }
+      />
 
       <MatchHero
         eyebrow={stageName}

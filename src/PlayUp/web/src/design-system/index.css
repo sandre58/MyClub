@@ -39,10 +39,13 @@
 @import './foundations/team-crest.css';
 @import './foundations/shell.css';
 @import './foundations/panels.css';
+@import './foundations/page-head.css';
 @import './foundations/match.css';
 @import './foundations/overview.css';
 @import './foundations/standings.css';
 @import './foundations/interactive-row.css';
+@import './foundations/links.css';
+@import './foundations/meter.css';
 @import './foundations/home.css';
 @import './foundations/feedback.css';
 @import './foundations/visually-hidden.css';

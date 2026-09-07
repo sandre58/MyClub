@@ -13,11 +13,14 @@ import {
 } from 'lucide-react'
 import {useState, type ReactNode} from 'react'
 import {useTranslation} from 'react-i18next'
-import {Link, useParams} from 'react-router-dom'
+import {useParams} from 'react-router-dom'
 import {fetchOrganisationView} from '../api'
+import {Alert} from '../design-system/components/Alert'
+import {Meter, type MeterTone} from '../design-system/components/Meter'
+import {PageHead} from '../design-system/components/PageHead'
+import {TextLink} from '../design-system/components/TextLink'
 import {LucideIcon} from '../design-system/icons/Icon'
 import {PencilIcon, PersonIcon} from '../design-system/icons/overviewIcons'
-import {ChevronRightIcon} from '../design-system/icons/shellIcons'
 import {queryKeys} from '../queryKeys'
 import {ErrorState, LoadingState, StatusBadge} from '../ui'
 import type {
@@ -26,7 +29,6 @@ import type {
     RankingCriterion,
 } from '../types'
 import {RegulationEditorDialog} from './RegulationEditorDialog'
-import './overview.css'
 import './regulation.css'
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
@@ -77,28 +79,32 @@ export function RegulationPage() {
     return (
         <main id="main" className="page page--regulation">
             <div className="regulation">
-                <header className="regulation-header">
-                    <div className="regulation-header__main">
-                        <h1 className="regulation-header__title">{t('title')}</h1>
-                        <p className="regulation-note regulation-note--header" role="note">
+                <PageHead
+                    title={t('title')}
+                    note={
+                        <p className="regulation-note" role="note">
                             <LucideIcon icon={Info} size="sm"/>
                             <span>{t('frameNote')}</span>
                         </p>
-                    </div>
-                    <button
-                        type="button"
-                        className="ds-btn ds-btn--primary regulation-header__edit"
-                        disabled={!canReplace}
-                        title={
-                            canReplace ? t('editRegulation') : t('editRegulationDisabledHint')
-                        }
-                        aria-label={t('editRegulation')}
-                        onClick={openEditor}
-                    >
-                        <PencilIcon size="sm"/>
-                        <span>{t('editRegulation')}</span>
-                    </button>
-                </header>
+                    }
+                    actions={
+                        <button
+                            type="button"
+                            className="ds-btn ds-btn--primary"
+                            disabled={!canReplace}
+                            title={
+                                canReplace
+                                    ? t('editRegulation')
+                                    : t('editRegulationDisabledHint')
+                            }
+                            aria-label={t('editRegulation')}
+                            onClick={openEditor}
+                        >
+                            <PencilIcon size="sm"/>
+                            <span>{t('editRegulation')}</span>
+                        </button>
+                    }
+                />
 
                 <section
                     className={[
@@ -185,10 +191,9 @@ function EntriesTile({
             icon={<PersonIcon size="md"/>}
             title={t('families.entries')}
         >
-            <p className="regulation-notice" role="note">
-                <LucideIcon icon={Info} size="sm"/>
-                <span>{t('capacity.notice', {min, max})}</span>
-            </p>
+            <Alert tone="info" role="status">
+                {t('capacity.notice', {min, max})}
+            </Alert>
             <div
                 className="regulation-capacity"
                 aria-label={t('capacity.aria', {min, max})}
@@ -473,10 +478,9 @@ function StandingTile({
             icon={<LucideIcon icon={Trophy} size="md"/>}
             title={t('families.standing')}
         >
-            <p className="regulation-notice" role="note">
-                <LucideIcon icon={Info} size="sm"/>
-                <span>{t('standingNote')}</span>
-            </p>
+            <Alert tone="info" role="status">
+                {t('standingNote')}
+            </Alert>
             <div className="regulation-standing">
                 <div className="regulation-standing__points">
                     <p className="regulation-standing__heading">{t('points.heading')}</p>
@@ -536,9 +540,11 @@ function PointGauge({
     tone: 'win' | 'draw' | 'loss'
 }) {
     const {t} = useTranslation('regulation')
-    const width = `${Math.max(value === 0 ? 0 : 12, (value / max) * 100)}%`
+    const ratio = max > 0 ? Math.max(value === 0 ? 0 : 0.12, value / max) : 0
+    const meterTone: MeterTone =
+        tone === 'win' ? 'success' : tone === 'draw' ? 'attention' : 'neutral'
     return (
-        <li className={`regulation-gauge regulation-gauge--${tone}`}>
+        <li className="regulation-gauge">
             <div className="regulation-gauge__top">
                 <span className="regulation-gauge__label">{label}</span>
                 <span className="regulation-gauge__value">
@@ -546,9 +552,7 @@ function PointGauge({
                     <small> {t('points.unit')}</small>
         </span>
             </div>
-            <span className="regulation-gauge__track" aria-hidden="true">
-        <span className="regulation-gauge__fill" style={{width}}/>
-      </span>
+            <Meter ratio={ratio} tone={meterTone} size="lg" clip aria-hidden="true" />
         </li>
     )
 }
@@ -658,12 +662,7 @@ function PhaseTile({
             </div>
 
             <div className="regulation-phase__footer">
-                <Link className="overview-link" to={structureHref}>
-                    <span>{t('openInStructure')}</span>
-                    <span className="overview-link__arrow" aria-hidden="true">
-                      <ChevronRightIcon size="sm" />
-                    </span>
-                </Link>
+                <TextLink to={structureHref}>{t('openInStructure')}</TextLink>
             </div>
         </article>
     )

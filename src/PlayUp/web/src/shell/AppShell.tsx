@@ -171,7 +171,7 @@ export function AppShell() {
       data-nav-open={phoneNavOpen ? 'true' : 'false'}
       data-nav-ready={navReady ? 'true' : 'false'}
     >
-      <a className="shell-skip" href="#main">
+      <a className="ds-skip-link ds-skip-link--on-chrome" href="#main">
         {t('skipToContent')}
       </a>
 

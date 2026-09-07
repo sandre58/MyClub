@@ -1,0 +1,99 @@
+/*
+ * Page head — workspace page title row (+ optional drill-down chrome).
+ * Distinct from .ds-panel-head (section/panel titles).
+ */
+
+.ds-page-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    width: 100%;
+    min-width: 0;
+}
+
+.ds-page-head__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-12) var(--space-16);
+    width: 100%;
+}
+
+.ds-page-head__title-block {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-8) var(--space-12);
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ds-page-head__title {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--text-display);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+}
+
+.ds-page-head__title-meta {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-bold);
+}
+
+.ds-page-head__title-sep {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-regular);
+}
+
+.ds-page-head__actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+    flex: none;
+    align-self: flex-start;
+}
+
+.ds-page-head__note {
+    margin: 0;
+    max-width: 36rem;
+}
+
+.ds-page-head__tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-12);
+    width: 100%;
+    min-width: 0;
+}
+
+/* Legacy admin alias — keep selectors working until full migration. */
+.ds-admin-page-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.ds-admin-page-head__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-12);
+}
+
+.ds-admin-page-head__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-12) var(--space-16);
+}
+
+.ds-admin-page-head__title {
+    margin: 0;
+    font-size: var(--text-display);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--leading-tight);
+}

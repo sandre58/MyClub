@@ -18,7 +18,9 @@ import {
   removeDeclaredMembers,
   renameDeclaredMember,
 } from '../api'
+import { SelectionBar } from '../design-system/components/SelectionBar'
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
+import { Alert } from '../design-system/components/Alert'
 import { TeamCrest } from '../design-system/TeamCrest'
 import {
   ChevronDownIcon,
@@ -273,9 +275,9 @@ export function TeamRosterDrawer({
   if (!entry) {
     return (
       <div className="teams-drawer__idle">
-        <p className="ds-notice ds-notice--danger" role="alert">
+        <Alert tone="danger" role="alert">
           {t('roster.entryMissing')}
-        </p>
+        </Alert>
       </div>
     )
   }
@@ -479,11 +481,9 @@ export function TeamRosterDrawer({
       {canMutate && (
         <div className="ds-selection-bar-slot teams-drawer__roster-bar-slot">
           {selectedCount >= 1 && (
-            <div className="ds-selection-bar" role="status">
-              <p className="ds-selection-bar__count">
-                {t('roster.selectionCount', { count: selectedCount })}
-              </p>
-              <div className="ds-icon-toolbar">
+            <SelectionBar
+              countLabel={t('roster.selectionCount', { count: selectedCount })}
+            >
                 <button
                   type="button"
                   className={compactIcon}
@@ -504,8 +504,7 @@ export function TeamRosterDrawer({
                 >
                   <CloseIcon size="sm" />
                 </button>
-              </div>
-            </div>
+            </SelectionBar>
           )}
         </div>
       )}

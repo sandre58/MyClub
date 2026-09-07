@@ -14,6 +14,7 @@ import {
 } from '../api'
 import { Dialog } from '../design-system/components/Dialog'
 import { Field } from '../design-system/components/Field'
+import { PageHead } from '../design-system/components/PageHead'
 import { TextInput } from '../design-system/components/TextInput'
 import { LogoMediaField } from './LogoMediaField'
 import { SHORT_NAME_MAX_LENGTH } from './deriveShortName'
@@ -77,7 +78,6 @@ export function OrganisationPage() {
 function OrganisationViewPanel({ data }: { data: OrganisationView }) {
   const { t } = useTranslation('organisation')
   const can = (action: string) => data.actions.includes(action)
-  const overviewHref = `/competitions/${data.competitionId}`
   const [editor, setEditor] = useState<OrganisationEditor>(null)
 
   const canReplace = can('ReplaceRegulation')
@@ -87,13 +87,7 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
 
   return (
     <div className="organisation">
-      <header className="organisation__page-head">
-        <Link className="organisation__back" to={overviewHref}>
-          <span aria-hidden="true">←</span>
-          {t('back')}
-        </Link>
-        <h1 className="organisation__title">{t('title')}</h1>
-      </header>
+      <PageHead title={t('title')} />
 
       <ContextBand data={data} />
       <IdentitySection data={data} />

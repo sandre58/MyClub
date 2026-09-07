@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchNeedsAttention } from '../api'
 import { CloseIcon } from '../design-system/icons/shellIcons'
+import { EmptyState } from '../ui'
 import { useDismissLayer } from '../design-system/useDismissLayer'
 import { useFocusTrap } from '../design-system/useFocusTrap'
 import { queryKeys } from '../queryKeys'
@@ -221,14 +222,9 @@ function AttentionDrawerContent({
 
   if (items.length === 0) {
     return (
-      <div className="shell-attention-drawer__empty">
-        <p className="shell-attention-drawer__empty-title">
-          {t('attention.emptyTitle')}
-        </p>
-        <p className="shell-attention-drawer__hint ds-meta">
-          {t('attention.emptyHint')}
-        </p>
-      </div>
+      <EmptyState variant="idle" title={t('attention.emptyTitle')}>
+        {t('attention.emptyHint')}
+      </EmptyState>
     )
   }
 

@@ -88,44 +88,48 @@
     padding: var(--space-24) 0;
 }
 
+.ds-empty__icon {
+    display: flex;
+    color: var(--color-text-secondary);
+}
+
+.ds-empty__icon .ds-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+}
+
 .ds-empty__title {
+    margin: 0;
     font-weight: var(--font-weight-bold);
 }
 
 .ds-empty__body {
+    margin: 0;
     font-size: var(--text-label);
     color: var(--color-text-secondary);
     max-width: 26rem;
 }
 
-/* Admin pages (Stage, Competition overview) — pending full ds-page migration. */
-.ds-admin-page-head {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-}
-
-.ds-admin-page-head__top {
-    display: flex;
-    flex-wrap: wrap;
+.ds-empty--idle {
+    flex: 1 1 auto;
     align-items: center;
-    gap: var(--space-12);
+    justify-content: center;
+    min-height: 0;
+    padding: var(--space-16);
+    text-align: center;
 }
 
-.ds-admin-page-head__title-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-12) var(--space-16);
-}
-
-.ds-admin-page-head__title {
-    margin: 0;
-    font-size: var(--text-display);
-    font-weight: var(--font-weight-bold);
+.ds-empty--idle .ds-empty__title {
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-semibold);
     line-height: var(--leading-tight);
 }
 
+.ds-empty--idle .ds-empty__body {
+    max-width: 18rem;
+}
+
+/* Admin pages (Stage) — prefer PageHead; keep back-link recipe here. */
 .ds-back-link {
     display: inline-flex;
     align-items: center;

@@ -31,43 +31,6 @@
     box-shadow: var(--organisation-shadow);
 }
 
-/* ---------- En-tête ---------- */
-
-.organisation__page-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-12) var(--space-16);
-}
-
-.organisation__back {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
-    color: var(--color-info);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-semibold);
-    text-decoration: none;
-}
-
-.ds-root a.organisation__back,
-.ds-root a.organisation__back:hover {
-    color: var(--color-info);
-    text-decoration: none;
-}
-
-.ds-root a.organisation__back:hover {
-    color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
-}
-
-.organisation__title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-heading);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-}
-
 /* ---------- Panneau ---------- */
 
 .organisation-panel__head {
