@@ -643,6 +643,14 @@ export interface OrganisationStageHubSummary {
   formatKind?: StructureFormatKind | null
   /** Planned Swiss rounds when formatKind is Swiss. */
   swissRoundCount?: number | null
+  /** Administrative forfeit score — winner goals. */
+  forfeitWinnerGoals?: number | null
+  /** Administrative forfeit score — loser goals. */
+  forfeitLoserGoals?: number | null
+  /** SeedingRules.NumberOfSeeds when draw seeding is set. */
+  numberOfSeeds?: number | null
+  /** DrawRules.Constraints (all stored constraints). */
+  drawConstraints?: OrganisationDrawConstraint[]
 }
 
 /** Host ProgressionOutcome — placement / progression selector. */
@@ -651,6 +659,22 @@ export type ProgressionOutcome = 'Winner' | 'Loser'
 export interface OrganisationPlacementAward {
   rank: number
   outcome: ProgressionOutcome
+}
+
+/** Host DrawConstraintType — string enum member names. */
+export type DrawConstraintType =
+  | 'SameTeamAvoidance'
+  | 'SameGroupAvoidance'
+  | 'SameAssociationAvoidance'
+  | 'MaxSameAssociationPerGroup'
+
+/** Host ConstraintEnforcement — string enum member names. */
+export type ConstraintEnforcement = 'Preferred' | 'Required'
+
+export interface OrganisationDrawConstraint {
+  type: DrawConstraintType
+  enforcement: ConstraintEnforcement
+  maxPerGroup?: number | null
 }
 
 /** POST /competitions/{id}/entries */

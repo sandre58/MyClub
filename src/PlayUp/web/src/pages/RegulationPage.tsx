@@ -12,6 +12,7 @@ import {
     PlayingCardsFan,
     Shuffle,
     Sigma,
+    ShieldBan,
     Timer,
     Podium,
     Trophy,
@@ -30,7 +31,7 @@ import {TextLink} from '../design-system/components/TextLink'
 import {LucideIcon} from '../design-system/icons/Icon'
 import {PencilIcon, PersonIcon} from '../design-system/icons/overviewIcons'
 import {queryKeys} from '../queryKeys'
-import {ErrorState, LoadingState, StageStatusBadge} from '../ui'
+import {ErrorState, LoadingState, StageStatusBadge, StatusBadge} from '../ui'
 import type {
     DisciplinaryType,
     OrganisationPlacementAward,
@@ -41,6 +42,7 @@ import type {
 } from '../types'
 import {RegulationEditorDialog} from './RegulationEditorDialog'
 import './regulation.css'
+import {stageStatusLabel} from "../i18n/enumLabels.ts";
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
 
@@ -150,6 +152,7 @@ export function RegulationPage() {
                                     key={stage.stageId}
                                     stage={stage}
                                     ordinal={index + 1}
+                                    frame={regulation}
                                 />
                             ))}
                         </div>
@@ -603,6 +606,7 @@ function StandingTile({
                             })}
                         >
                             <p className="regulation-standing__heading">{t('forfeit.heading')}</p>
+                            <p className="regulation-forfeit-score__hint">{t('forfeit.hint')}</p>
                             <div className="regulation-forfeit-score__board" aria-hidden="true">
                 <span className="regulation-forfeit-score__goals regulation-forfeit-score__goals--win">
                   {forfeitWinner}
@@ -612,7 +616,6 @@ function StandingTile({
                   {forfeitLoser}
                 </span>
                             </div>
-                            <p className="regulation-forfeit-score__hint">{t('forfeit.hint')}</p>
                         </div>
                     ) : null}
                 </div>
@@ -656,14 +659,17 @@ function PointGauge({
 function PhaseTile({
                        stage,
                        ordinal,
+                       frame,
                    }: {
     stage: OrganisationStageHubSummary
     ordinal: number
+    frame: OrganisationRegulationSummary
 }) {
     const {t} = useTranslation('regulation')
     const structureHref = `/stages/${stage.stageId}`
     const flows = buildPhaseFlows(stage, t)
     const ruleColumns = buildPhaseRuleColumns(stage, t)
+    const differsFromFrame = phaseDiffersFromFrame(stage, frame)
 
     return (
         <article className="regulation-phase">
@@ -674,8 +680,13 @@ function PhaseTile({
                     </span>
                     <h3 className="regulation-card__title">{stage.name}</h3>
                 </div>
-                <span className="regulation-phase__badge-wrap">
+                <span className="regulation-phase__head-meta">
                     <StageStatusBadge status={stage.status} density="compact"/>
+                    {differsFromFrame ? (
+                            <StatusBadge tone="warn" density="compact">
+                                {t('differsFromFrame')}
+                            </StatusBadge>
+                    ) : null}
                 </span>
             </header>
 
@@ -889,14 +900,27 @@ function PhaseSchematic({stage}: { stage: OrganisationStageHubSummary }) {
     }
 
     if (kind === 'swiss') {
-        const rounds = Math.min(
-            Math.max((stage.swissRoundCount ?? roundCount) || 3, 2),
-            5,
-        )
+        const knownRounds = stage.swissRoundCount
+        if (knownRounds == null || knownRounds <= 0) {
+            return (
+                <div
+                    className="regulation-schematic regulation-schematic--swiss"
+                    aria-label={t('schematic.swissGeneric')}
+                >
+                    <div className="regulation-schematic__swiss-rounds">
+                        <div className="regulation-schematic__swiss-round">
+                            <span className="regulation-schematic__swiss-pair"/>
+                            <span className="regulation-schematic__swiss-pair"/>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+        const rounds = Math.min(knownRounds, 5)
         return (
             <div
                 className="regulation-schematic regulation-schematic--swiss"
-                aria-label={t('schematic.swiss', {rounds})}
+                aria-label={t('schematic.swiss', {rounds: knownRounds})}
             >
                 <div className="regulation-schematic__swiss-rounds">
                     {Array.from({length: rounds}, (_, i) => (
@@ -1198,10 +1222,17 @@ function buildPhaseRuleColumns(
 
     if (stage.hasDrawRules) {
         const pots = stage.numberOfPots
+        const seeds = stage.numberOfSeeds
+        const constraints = stage.drawConstraints ?? []
         const items: PhaseRuleItem[] = [
             {
-                key: 'random',
-                label: t('tokens.drawRandom'),
+                key: 'mode',
+                label:
+                    stage.drawMode === 'Random' || stage.drawMode == null
+                        ? t('tokens.drawRandom')
+                        : t(`tokens.drawMode.${stage.drawMode}`, {
+                              defaultValue: stage.drawMode,
+                          }),
                 icon: Dices,
                 title: t('tokens.drawRandomTip'),
             },
@@ -1221,6 +1252,46 @@ function buildPhaseRuleColumns(
                 title: t('tokens.drawPotsTip', {count: pots}),
             })
         }
+        if (seeds != null && seeds > 0) {
+            items.push({
+                key: 'seeds',
+                label: (
+                    <span className="regulation-rule-list__label-row">
+                        <Chip tone="soft" title={t('tokens.drawSeedsTip', {count: seeds})}>
+                            {seeds}
+                        </Chip>
+                        <span>{t('tokens.drawSeedsUnit', {count: seeds})}</span>
+                    </span>
+                ),
+                title: t('tokens.drawSeedsTip', {count: seeds}),
+            })
+        }
+        for (const constraint of constraints) {
+            const typeLabel = t(`tokens.drawConstraint.${constraint.type}`, {
+                defaultValue: constraint.type,
+            })
+            const enforcementLabel = t(
+                `tokens.drawEnforcement.${constraint.enforcement}`,
+                {defaultValue: constraint.enforcement},
+            )
+            const max =
+                constraint.maxPerGroup != null
+                    ? t('tokens.drawConstraintMax', {count: constraint.maxPerGroup})
+                    : null
+            items.push({
+                key: `constraint-${constraint.type}-${constraint.enforcement}-${constraint.maxPerGroup ?? 'x'}`,
+                label: (
+                    <span className="regulation-rule-list__label-row">
+                        <span>{typeLabel}</span>
+                        <span className="regulation-detail">
+                            · {enforcementLabel}
+                            {max ? ` · ${max}` : ''}
+                        </span>
+                    </span>
+                ),
+                title: `${typeLabel} · ${enforcementLabel}${max ? ` · ${max}` : ''}`,
+            })
+        }
         columns.push({
             key: 'draw',
             title: t('columns.draw'),
@@ -1229,46 +1300,145 @@ function buildPhaseRuleColumns(
         })
     }
 
-    if (
+    const forfeitWinner = stage.forfeitWinnerGoals
+    const forfeitLoser = stage.forfeitLoserGoals
+    const showForfeit = forfeitWinner != null && forfeitLoser != null
+    const showStandingPoints =
         stage.hasStandingRules !== false &&
         stage.winPoints != null &&
         stage.drawPoints != null &&
         stage.lossPoints != null
-    ) {
-        const criteria = stage.rankingCriteria ?? []
+
+    if (showStandingPoints || showForfeit) {
+        const criteria = showStandingPoints ? (stage.rankingCriteria ?? []) : []
+        const items: PhaseRuleItem[] = criteria.map((criterion, index) => ({
+            key: criterion,
+            label: criterionLabel(criterion, t),
+            index: index + 1,
+        }))
+        if (showForfeit) {
+            items.push({
+                key: 'forfeit',
+                label: (
+                    <span className="regulation-rule-list__label-row">
+                        <span>&nbsp;{t('forfeit.heading')}</span>
+                        <span className="regulation-detail">
+                            {forfeitWinner}–{forfeitLoser}
+                        </span>
+                    </span>
+                ),
+                icon: ShieldBan,
+                title: t('forfeit.aria', {
+                    winner: forfeitWinner,
+                    loser: forfeitLoser,
+                }),
+            })
+        }
         columns.push({
             key: 'standing',
             title: t('columns.standing'),
             icon: Trophy,
-            chips: [
-                {
-                    key: 'win',
-                    label: stage.winPoints,
-                    tone: 'win',
-                    title: t('tokens.standingWinTip', {value: stage.winPoints}),
-                },
-                {
-                    key: 'draw',
-                    label: stage.drawPoints,
-                    tone: 'draw',
-                    title: t('tokens.standingDrawTip', {value: stage.drawPoints}),
-                },
-                {
-                    key: 'loss',
-                    label: stage.lossPoints,
-                    tone: 'loss',
-                    title: t('tokens.standingLossTip', {value: stage.lossPoints}),
-                },
-            ],
-            items: criteria.map((criterion, index) => ({
-                key: criterion,
-                label: criterionLabel(criterion, t),
-                index: index + 1,
-            })),
+            chips: showStandingPoints
+                ? [
+                      {
+                          key: 'win',
+                          label: stage.winPoints,
+                          tone: 'win',
+                          title: t('tokens.standingWinTip', {value: stage.winPoints}),
+                      },
+                      {
+                          key: 'draw',
+                          label: stage.drawPoints,
+                          tone: 'draw',
+                          title: t('tokens.standingDrawTip', {value: stage.drawPoints}),
+                      },
+                      {
+                          key: 'loss',
+                          label: stage.lossPoints,
+                          tone: 'loss',
+                          title: t('tokens.standingLossTip', {value: stage.lossPoints}),
+                      },
+                  ]
+                : undefined,
+            items,
         })
     }
 
     return columns
+}
+
+function phaseDiffersFromFrame(
+    stage: OrganisationStageHubSummary,
+    frame: OrganisationRegulationSummary,
+): boolean {
+    if (stage.numberOfPeriods !== frame.numberOfPeriods) {
+        return true
+    }
+    if (stage.durationPerPeriod !== frame.durationPerPeriod) {
+        return true
+    }
+    if (Boolean(stage.hasExtraTime) !== Boolean(frame.hasExtraTime)) {
+        return true
+    }
+    if (stage.hasExtraTime) {
+        if (
+            (stage.extraTimeNumberOfPeriods ?? null) !==
+            (frame.extraTimeNumberOfPeriods ?? null)
+        ) {
+            return true
+        }
+        if (
+            (stage.extraTimeDurationPerPeriod ?? null) !==
+            (frame.extraTimeDurationPerPeriod ?? null)
+        ) {
+            return true
+        }
+    }
+    if (Boolean(stage.hasPenaltyShootout) !== Boolean(frame.hasPenaltyShootout)) {
+        return true
+    }
+    if (
+        stage.hasPenaltyShootout &&
+        (stage.penaltyInitialKicksPerTeam ?? null) !==
+            (frame.penaltyInitialKicksPerTeam ?? null)
+    ) {
+        return true
+    }
+
+    const stageForfeitWinner = stage.forfeitWinnerGoals
+    const stageForfeitLoser = stage.forfeitLoserGoals
+    const frameForfeitWinner = frame.forfeitWinnerGoals
+    const frameForfeitLoser = frame.forfeitLoserGoals
+    if (
+        stageForfeitWinner != null &&
+        stageForfeitLoser != null &&
+        frameForfeitWinner != null &&
+        frameForfeitLoser != null &&
+        (stageForfeitWinner !== frameForfeitWinner ||
+            stageForfeitLoser !== frameForfeitLoser)
+    ) {
+        return true
+    }
+
+    if (stage.hasStandingRules === true) {
+        if (
+            stage.winPoints != null &&
+            stage.drawPoints != null &&
+            stage.lossPoints != null &&
+            (stage.winPoints !== frame.winPoints ||
+                stage.drawPoints !== frame.drawPoints ||
+                stage.lossPoints !== frame.lossPoints)
+        ) {
+            return true
+        }
+        const stageCriteria = (stage.rankingCriteria ?? []).join('|')
+        const frameCriteria = (frame.rankingCriteria ?? []).join('|')
+        if (stageCriteria !== frameCriteria) {
+            return true
+        }
+    }
+
+    return false
 }
 
 function PlacementAwardsList({

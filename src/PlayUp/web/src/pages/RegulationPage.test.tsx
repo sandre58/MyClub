@@ -209,6 +209,7 @@ describe('RegulationPage', () => {
     expect(screen.getByText('Tirage aléatoire')).toBeInTheDocument()
     expect(screen.getByText('pots')).toBeInTheDocument()
     expect(screen.getAllByText('4').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Diffère du règlement global')).toBeInTheDocument()
     expect(screen.getByLabelText('Vainqueur → place 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Perdant → place 2')).toBeInTheDocument()
     expect(
@@ -291,5 +292,131 @@ describe('RegulationPage', () => {
     expect(
       screen.getByRole('button', { name: 'Modifier le règlement' }),
     ).toBeDisabled()
+  })
+
+  it('shows forfeit under phase Classement and draw seeds with constraints', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          {
+            stageId,
+            name: 'Groupes',
+            status: 'Draft',
+            teamCount: 8,
+            matchCount: 12,
+            groupCount: 2,
+            roundCount: 0,
+            numberOfPeriods: 2,
+            durationPerPeriod: 45,
+            hasExtraTime: true,
+            extraTimeNumberOfPeriods: 2,
+            extraTimeDurationPerPeriod: 15,
+            hasPenaltyShootout: true,
+            penaltyInitialKicksPerTeam: 5,
+            hasStandingRules: true,
+            winPoints: 3,
+            drawPoints: 1,
+            lossPoints: 0,
+            rankingCriteria: [
+              'Points',
+              'GoalDifference',
+              'GoalsFor',
+              'HeadToHead',
+            ],
+            forfeitWinnerGoals: 3,
+            forfeitLoserGoals: 0,
+            hasDrawRules: true,
+            drawMode: 'Random',
+            numberOfPots: 4,
+            numberOfSeeds: 2,
+            drawConstraints: [
+              {
+                type: 'SameAssociationAvoidance',
+                enforcement: 'Preferred',
+              },
+              {
+                type: 'MaxSameAssociationPerGroup',
+                enforcement: 'Required',
+                maxPerGroup: 1,
+              },
+            ],
+            hasQualificationRules: false,
+            qualificationPathCount: 0,
+            hasProgressionRules: false,
+            progressionPathCount: 0,
+            hasTieFormat: false,
+            numberOfLegs: null,
+            aggregateScoring: null,
+            formatKind: 'Groups',
+          },
+        ],
+      }),
+    )
+
+    renderPage()
+
+    expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
+    expect(screen.queryByText('Diffère du règlement global')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Forfait').length).toBeGreaterThanOrEqual(2)
+    expect(
+      screen.getByTitle('Score administratif en cas de forfait : 3–0'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('têtes de série')).toBeInTheDocument()
+    expect(screen.getByText('Éviter la même association')).toBeInTheDocument()
+    expect(screen.getByText(/Souhaité/)).toBeInTheDocument()
+    expect(screen.getByText('Max. même association / groupe')).toBeInTheDocument()
+    expect(screen.getByText(/Obligatoire/)).toBeInTheDocument()
+    expect(screen.getByText(/max\. 1/)).toBeInTheDocument()
+  })
+
+  it('does not invent Swiss rounds when swissRoundCount is unknown', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          {
+            stageId,
+            name: 'Suisse',
+            status: 'Draft',
+            teamCount: 16,
+            matchCount: 0,
+            groupCount: 0,
+            roundCount: 0,
+            numberOfPeriods: 2,
+            durationPerPeriod: 45,
+            hasExtraTime: true,
+            extraTimeNumberOfPeriods: 2,
+            extraTimeDurationPerPeriod: 15,
+            hasPenaltyShootout: true,
+            penaltyInitialKicksPerTeam: 5,
+            hasStandingRules: true,
+            winPoints: 3,
+            drawPoints: 1,
+            lossPoints: 0,
+            rankingCriteria: [
+              'Points',
+              'GoalDifference',
+              'GoalsFor',
+              'HeadToHead',
+            ],
+            hasDrawRules: false,
+            hasQualificationRules: false,
+            qualificationPathCount: 0,
+            hasProgressionRules: false,
+            progressionPathCount: 0,
+            hasTieFormat: false,
+            numberOfLegs: null,
+            aggregateScoring: null,
+            formatKind: 'Swiss',
+            swissRoundCount: null,
+          },
+        ],
+      }),
+    )
+
+    renderPage()
+
+    expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Système suisse')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Système suisse · 3 rondes/)).not.toBeInTheDocument()
   })
 })

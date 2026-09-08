@@ -198,6 +198,10 @@ public sealed record OrganisationReadinessDto(
 /// <param name="PlacementAwards">Placement paths (rank + outcome), ordered by rank.</param>
 /// <param name="FormatKind">Inferred structure format for this stage.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds when FormatKind is Swiss.</param>
+/// <param name="ForfeitWinnerGoals">Administrative forfeit goals for the winning side.</param>
+/// <param name="ForfeitLoserGoals">Administrative forfeit goals for the losing side.</param>
+/// <param name="NumberOfSeeds">SeedingRules.NumberOfSeeds when DrawRules seeding is set.</param>
+/// <param name="DrawConstraints">DrawRules.Constraints (all stored constraints).</param>
 public sealed record OrganisationStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -235,7 +239,11 @@ public sealed record OrganisationStageHubSummaryDto(
     int PlacementAwardCount = 0,
     IReadOnlyList<OrganisationPlacementAwardDto>? PlacementAwards = null,
     StructureFormatKind? FormatKind = null,
-    int? SwissRoundCount = null);
+    int? SwissRoundCount = null,
+    int? ForfeitWinnerGoals = null,
+    int? ForfeitLoserGoals = null,
+    int? NumberOfSeeds = null,
+    IReadOnlyList<OrganisationDrawConstraintDto>? DrawConstraints = null);
 
 /// <summary>One placement-award path for the Règlement hub.</summary>
 /// <param name="Rank">1-based final competition rank.</param>
@@ -243,3 +251,12 @@ public sealed record OrganisationStageHubSummaryDto(
 public sealed record OrganisationPlacementAwardDto(
     int Rank,
     ProgressionOutcome Outcome);
+
+/// <summary>One draw constraint for the Règlement hub Tirage column.</summary>
+/// <param name="Type">DrawConstraintType member name.</param>
+/// <param name="Enforcement">Preferred or Required.</param>
+/// <param name="MaxPerGroup">Only for MaxSameAssociationPerGroup.</param>
+public sealed record OrganisationDrawConstraintDto(
+    DrawConstraintType Type,
+    ConstraintEnforcement Enforcement,
+    int? MaxPerGroup = null);

@@ -29,6 +29,7 @@
     "Red": "Rouge",
     "White": "Blanc"
   },
+  "differsFromFrame": "Diffère du règlement global",
   "editRegulation": "Modifier le règlement",
   "editRegulationDisabledHint": "Le règlement ne peut pas être modifié dans cet état.",
   "emptyPhases": "Aucune phase pour l’instant.",
@@ -77,7 +78,8 @@
     "bracket": "Tableau éliminatoire",
     "groups": "{{count}} groupes",
     "championship": "Championnat · {{teams}} équipes",
-    "swiss": "Système suisse · {{rounds}} rondes"
+    "swiss": "Système suisse · {{rounds}} rondes",
+    "swissGeneric": "Système suisse"
   },
   "title": "Règlement",
   "tokens": {
@@ -97,9 +99,26 @@
     "qualifyOut": "chemins",
     "drawRandom": "Tirage aléatoire",
     "drawRandomTip": "Tirage au sort aléatoire",
+    "drawMode": {
+      "Random": "Tirage aléatoire"
+    },
     "drawPotsUnit_one": "pot",
     "drawPotsUnit_other": "pots",
     "drawPotsTip": "Organisation en {{count}} pots",
+    "drawSeedsUnit_one": "tête de série",
+    "drawSeedsUnit_other": "têtes de série",
+    "drawSeedsTip": "{{count}} têtes de série",
+    "drawConstraint": {
+      "SameTeamAvoidance": "Éviter la même équipe",
+      "SameGroupAvoidance": "Éviter le même groupe",
+      "SameAssociationAvoidance": "Éviter la même association",
+      "MaxSameAssociationPerGroup": "Max. même association / groupe"
+    },
+    "drawEnforcement": {
+      "Preferred": "Souhaité",
+      "Required": "Obligatoire"
+    },
+    "drawConstraintMax": "max. {{count}}",
     "progression": "{{count}} progressions",
     "progressionOut_one": "progression",
     "progressionOut_other": "progressions",

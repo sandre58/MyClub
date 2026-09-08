@@ -132,6 +132,14 @@ public static class OrganisationViewAssembler
                 .OrderBy(path => path.Rank)
                 .Select(path => new OrganisationPlacementAwardDto(path.Rank, path.Outcome))
                 .ToArray();
+        IReadOnlyList<OrganisationDrawConstraintDto>? drawConstraints = draw is null
+            ? null
+            : draw.Constraints
+                .Select(constraint => new OrganisationDrawConstraintDto(
+                    constraint.ConstraintType,
+                    constraint.Enforcement,
+                    constraint.MaxPerGroup))
+                .ToArray();
 
         return new OrganisationStageHubSummaryDto(
             stage.Id.Value,
@@ -170,7 +178,11 @@ public static class OrganisationViewAssembler
             PlacementAwardCount: placement?.Paths.Count ?? 0,
             PlacementAwards: placementAwards,
             FormatKind: InferFormat(stage),
-            SwissRoundCount: stage.SwissSettings?.RoundCount);
+            SwissRoundCount: stage.SwissSettings?.RoundCount,
+            ForfeitWinnerGoals: match.AdministrativeResultPolicy.ForfeitWinnerGoals,
+            ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals,
+            NumberOfSeeds: draw?.SeedingRules?.NumberOfSeeds,
+            DrawConstraints: drawConstraints);
     }
 
     /// <summary>
